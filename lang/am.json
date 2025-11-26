@@ -1,0 +1,33 @@
+{
+  "Dashboard": "ዳሽቦርድ",
+  "Appeals": "አቤቱታዎች",
+  "Cases": "ክስዎች",
+  "Notifications": "ማስታወቂያዎች",
+  "Users": "ተጠቃሚዎች",
+  "Roles": "ሚናዎች",
+
+  "Sidebar": "የጎን ምናሌ",
+  "Open sidebar": "ጎን ምናሌን ክፈት",
+  "Close sidebar": "ጎን ምናሌን ዝጋ",
+  "Toggle sidebar width": "የጎን ምናሌ ስፋት ቀይር",
+
+  "Language": "ቋንቋ",
+  "English": "እንግሊዝኛ",
+  "Amharic": "አማርኛ",
+  "Language updated.": "ቋንቋ ዘምኗል።",
+
+  "Mark all as seen": "ሁሉንም እንደታዩ ምልክት ያድርጉ",
+  "Seen": "ታይቷል",
+  "View all": "ሁሉንም ይመልከቱ",
+  "You're all caught up.": "ሁሉንም አይተዋል።",
+  "Applicant messages": "የአመልካች መልዕክቶች",
+  "New cases": "አዲስ ክስዎች",
+  "Upcoming hearings": "የሚመጡ ስማቶች",
+  "Hearing": "ስማት",
+
+  "Hi, :name": "ሰላም፣ :name",
+  "Avatar": "አቫታር",
+  "Signed in as": "በመግቢያ ስም",
+  "Profile": "መገለጫ",
+  "Logout": "ውጣ"
+}

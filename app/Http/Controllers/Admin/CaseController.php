@@ -1,0 +1,675 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
+
+class CaseController extends Controller
+{
+    /**
+     * Admin: list cases with optional search & filters.
+     */
+    public function index(Request $request)
+    {
+        // Permission is enforced in routes via perm:cases.view
+        $q          = trim($request->string('q')->toString());
+        $status     = $request->string('status')->toString();          // pending|active|adjourned|dismissed|closed
+        $caseTypeId = $request->integer('case_type_id');
+
+        $assigneeId = $request->integer('assignee_id');
+        $from       = $request->date('from'); // yyyy-mm-dd
+        $to         = $request->date('to');   // yyyy-mm-dd
+
+        $builder = DB::table('court_cases as c')
+            ->leftJoin('case_types as ct', 'ct.id', '=', 'c.case_type_id')
+
+            ->leftJoin('users as ass', 'ass.id', '=', 'c.assigned_user_id')
+            ->select(
+                'c.*',
+                'ct.name as case_type',
+
+                'ass.name as assignee_name'
+            );
+
+        if ($q !== '') {
+            $builder->where(function ($w) use ($q) {
+                $w->where('c.case_number', 'like', "%{$q}%")
+                    ->orWhere('c.title', 'like', "%{$q}%")
+
+                    ->orWhere('ct.name', 'like', "%{$q}%");
+            });
+        }
+
+        if ($status !== '')   $builder->where('c.status', $status);
+        if ($caseTypeId)      $builder->where('c.case_type_id', $caseTypeId);
+
+        if ($assigneeId)      $builder->where('c.assigned_user_id', $assigneeId);
+        if ($from)            $builder->whereDate('c.filing_date', '>=', $from->format('Y-m-d'));
+        if ($to)              $builder->whereDate('c.filing_date', '<=', $to->format('Y-m-d'));
+
+        $cases = $builder
+            ->orderByRaw('COALESCE(c.created_at, c.filing_date) DESC')
+            ->paginate(10)
+            ->withQueryString();
+
+        // For filter dropdowns
+        $types  = DB::table('case_types')->orderBy('name')->get(['id', 'name']);
+
+        $users  = DB::table('users')->where('status', 'active')->orderBy('name')->get(['id', 'name']);
+
+        return view('admin.cases.index', compact(
+            'cases',
+            'q',
+            'status',
+            'caseTypeId',
+
+            'assigneeId',
+            'from',
+            'to',
+            'types',
+
+            'users'
+        ));
+    }
+
+    /**
+     * Admin: export filtered list as CSV.
+     */
+    public function export(Request $request)
+    {
+        $q          = trim($request->string('q')->toString());
+        $status     = $request->string('status')->toString();
+        $caseTypeId = $request->integer('case_type_id');
+
+        $assigneeId = $request->integer('assignee_id');
+        $from       = $request->date('from');
+        $to         = $request->date('to');
+
+        $builder = DB::table('court_cases as c')
+            ->leftJoin('case_types as ct', 'ct.id', '=', 'c.case_type_id')
+
+            ->leftJoin('users as ass', 'ass.id', '=', 'c.assigned_user_id')
+            ->select(
+                'c.case_number',
+                'c.title',
+                'ct.name as case_type',
+
+                'c.status',
+                'c.filing_date',
+                'ass.name as assignee_name'
+            );
+
+        if ($q !== '') {
+            $builder->where(function ($w) use ($q) {
+                $w->where('c.case_number', 'like', "%{$q}%")
+                    ->orWhere('c.title', 'like', "%{$q}%")
+
+                    ->orWhere('ct.name', 'like', "%{$q}%");
+            });
+        }
+        if ($status !== '')   $builder->where('c.status', $status);
+        if ($caseTypeId)      $builder->where('c.case_type_id', $caseTypeId);
+
+        if ($assigneeId)      $builder->where('c.assigned_user_id', $assigneeId);
+        if ($from)            $builder->whereDate('c.filing_date', '>=', $from->format('Y-m-d'));
+        if ($to)              $builder->whereDate('c.filing_date', '<=', $to->format('Y-m-d'));
+
+        $rows = $builder->orderBy('c.filing_date')->get();
+
+        $filename = 'cases-export-' . now()->format('Ymd_His') . '.csv';
+        $headers = [
+            'Content-Type'        => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+
+        $callback = function () use ($rows) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['Case #', 'Title', 'Type',  'Status', 'Filed', 'Assignee']);
+            foreach ($rows as $r) {
+                fputcsv($out, [
+                    $r->case_number,
+                    $r->title,
+                    $r->case_type,
+
+                    ucfirst($r->status),
+                    \Illuminate\Support\Carbon::parse($r->filing_date)->format('Y-m-d'),
+                    $r->assignee_name,
+                ]);
+            }
+            fclose($out);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Admin: show assign form.
+     */
+    public function assignForm(int $caseId)
+    {
+        $case = DB::table('court_cases as c')
+            ->leftJoin('users as u', 'u.id', '=', 'c.assigned_user_id')
+            ->select('c.*', 'u.name as assignee_name', 'u.email as assignee_email')
+            ->where('c.id', $caseId)
+            ->first();
+
+        abort_if(!$case, 404);
+
+        $users = DB::table('users')
+            ->select('id', 'name', 'email')
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.cases.assign', compact('case', 'users'));
+    }
+
+    /**
+     * Admin: update assignment (assign / unassign).
+     */
+    public function assignUpdate(Request $request, int $caseId)
+    {
+        $validated = $request->validate([
+            'assigned_user_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('users', 'id')->where(fn($q) => $q->where('status', 'active')),
+            ],
+            'unassign' => ['sometimes', 'boolean'],
+        ]);
+
+        $case = DB::table('court_cases')->where('id', $caseId)->first();
+        abort_if(!$case, 404);
+
+        $assigning = !$request->boolean('unassign') && !empty($validated['assigned_user_id']);
+
+        DB::table('court_cases')
+            ->where('id', $caseId)
+            ->update([
+                'assigned_user_id' => $assigning ? $validated['assigned_user_id'] : null,
+                'assigned_at'      => $assigning ? Carbon::now() : null,
+                'updated_at'       => Carbon::now(),
+            ]);
+
+        return redirect()
+            ->route('cases.index')
+            ->with('success', $assigning ? 'Case assigned successfully.' : 'Case unassigned.');
+    }
+
+    /**
+     * Admin: show a case (with context).
+     * Evidence REMOVED (we use Uploaded Files only). $docs left empty to keep the Blade happy.
+     *
+     * NOTE: description/relief were already purified on applicant save/update.
+     * We expose them as *_html so Blade can render with `{!! $case->description_html !!}` safely.
+     */
+    public function show(int $id)
+    {
+        $this->authorizeView();
+
+        $case = DB::table('court_cases as c')
+            ->leftJoin('case_types as ct', 'ct.id', '=', 'c.case_type_id')
+
+            ->leftJoin('users as ass', 'ass.id', '=', 'c.assigned_user_id')
+            ->leftJoin('applicants as ap', 'ap.id', '=', 'c.applicant_id')
+            ->select(
+                'c.*',
+                'ct.name as case_type',
+
+                'ass.name as assignee_name',
+                'ass.email as assignee_email',
+                DB::raw("CONCAT(COALESCE(ap.first_name,''),' ',COALESCE(ap.last_name,'')) as applicant_name"),
+                'ap.email as applicant_email'
+            )
+            ->where('c.id', $id)
+            ->first();
+
+        abort_if(!$case, 404, 'Case not found.');
+
+        // Make HTML fields explicit for Blade raw rendering
+        $case->description_html        = (string) ($case->description ?? '');
+        $case->relief_requested_html   = (string) ($case->relief_requested ?? '');
+
+        $timeline = DB::table('case_status_logs')
+            ->select(
+                'case_status_logs.*',
+                DB::raw('NULL AS note') // so $t->note always exists
+            )
+            ->where('case_id', $id)
+            ->orderBy('created_at')
+            ->get();
+
+        // Uploaded Files (admin + applicant)
+        $files = DB::table('case_files as f')
+            ->leftJoin('applicants as a', 'a.id', '=', 'f.uploaded_by_applicant_id')
+            ->leftJoin('users as u', 'u.id', '=', 'f.uploaded_by_user_id')
+            ->select('f.*', 'a.first_name', 'a.last_name', 'u.name as uploader_name')
+            ->where('f.case_id', $id)
+            ->orderByDesc('f.created_at')
+            ->get();
+
+        // Messages
+        $messages = DB::table('case_messages as m')
+            ->leftJoin('applicants as a', 'a.id', '=', 'm.sender_applicant_id')
+            ->leftJoin('users as u', 'u.id', '=', 'm.sender_user_id')
+            ->select('m.*', 'a.first_name', 'a.last_name', 'u.name as admin_name')
+            ->where('m.case_id', $id)
+            ->orderBy('m.created_at')
+            ->get();
+
+        // Hearings
+        $hearings = DB::table('case_hearings')
+            ->where('case_id', $id)
+            ->orderBy('hearing_at')
+            ->get();
+
+        // Submitted documents – tolerate partial schemas by selecting only existing columns.
+        $docColumns = ['e.id', 'e.created_at'];
+        $hasColumn = fn(string $col) => Schema::hasColumn('case_evidences', $col);
+
+        foreach (['title', 'description', 'file_path', 'path', 'mime', 'size', 'type'] as $col) {
+            if ($hasColumn($col)) {
+                $docColumns[] = "e.{$col}";
+            }
+        }
+
+        $docs = DB::table('case_evidences as e')
+            ->select($docColumns)
+            ->where('e.case_id', $id)
+            ->when(
+                $hasColumn('type'),
+                fn($q) => $q->where('e.type', 'document')
+            )
+            ->orderBy('e.id')
+            ->get();
+
+        // Witnesses
+        $witnesses = DB::table('case_witnesses')
+            ->where('case_id', $id)
+            ->orderBy('full_name')
+            ->get();
+
+        return view('admin.cases.show', [
+            'case'       => $case,
+            'timeline'   => $timeline,
+            'files'      => $files,
+            'messages'   => $messages,
+            'hearings'   => $hearings,
+            'docs'       => $docs,        // empty collection; Blade stays compatible
+            'witnesses'  => $witnesses,
+        ]);
+    }
+
+    /**
+     * Admin: update case status + log timeline + email applicant.
+     */
+    public function updateStatus(Request $request, int $id)
+    {
+        $allowed = ['pending', 'active', 'adjourned', 'dismissed', 'closed'];
+
+        $data = $request->validate([
+            'status' => ['required', 'in:' . implode(',', $allowed)],
+            'note'   => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $case = DB::table('court_cases')->where('id', $id)->first();
+        abort_if(!$case, 404);
+
+        $old = $case->status;
+        $new = $data['status'];
+
+        if ($old === $new) {
+            return back()->with('success', 'Status unchanged (already ' . $new . ').');
+        }
+
+        DB::table('court_cases')->where('id', $id)->update([
+            'status'     => $new,
+            'updated_at' => now(),
+        ]);
+
+        // Email applicant (best-effort) — uses applicant_notification_prefs
+        try {
+            if (!empty($case->applicant_id)) {
+                $to = DB::table('applicants')->where('id', $case->applicant_id)->value('email');
+                if ($to) {
+                    $prefs = DB::table('applicant_notification_prefs')->where('applicant_id', $case->applicant_id)->first();
+                    $wants = !$prefs || ($prefs->email_status ?? true);
+
+                    if ($wants) {
+                        Mail::to($to)->send(
+                            new \App\Mail\CaseStatusChangedMail($case, $old, $new, $data['note'] ?? null)
+                        );
+                    }
+                } else {
+                    Log::info('Status mail skipped (no applicant email)', ['case_id' => $case->id]);
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::error('Failed sending case status email', ['case_id' => $case->id, 'error' => $e->getMessage()]);
+        }
+
+        // Log timeline
+        DB::table('case_status_logs')->insert([
+            'case_id'            => $id,
+            'from_status'        => $old,
+            'to_status'          => $new,
+            'changed_by_user_id' => Auth::id(),
+            'created_at'         => now(),
+            'updated_at'         => now(),
+        ]);
+
+        // Optional: visible note to thread
+        if (!empty($data['note'])) {
+            DB::table('case_messages')->insert([
+                'case_id'             => $id,
+                'sender_user_id'      => Auth::id(),
+                'sender_applicant_id' => null,
+                'body'                => '[Status changed to ' . ucfirst($new) . '] ' . $data['note'],
+                'created_at'          => now(),
+                'updated_at'          => now(),
+            ]);
+        }
+
+        return back()->with('success', 'Case status updated to ' . ucfirst($new) . '.');
+    }
+
+    /**
+     * Admin → Applicant message (and email).
+     */
+    public function postAdminMessage(Request $request, int $id)
+    {
+        $data = $request->validate([
+            'body' => ['required', 'string', 'max:5000'],
+        ]);
+
+        $case = DB::table('court_cases')->where('id', $id)->first();
+        abort_if(!$case, 404);
+
+        DB::table('case_messages')->insert([
+            'case_id'             => $id,
+            'sender_user_id'      => Auth::id(),
+            'sender_applicant_id' => null,
+            'body'                => $data['body'],
+            'created_at'          => now(),
+            'updated_at'          => now(),
+        ]);
+
+        // Notify applicant by email (best-effort)
+        try {
+            if (!empty($case->applicant_id)) {
+                $to = DB::table('applicants')->where('id', $case->applicant_id)->value('email');
+                if ($to) {
+                    $prefs = DB::table('applicant_notification_prefs')->where('applicant_id', $case->applicant_id)->first();
+                    $wants = !$prefs || ($prefs->email_message ?? true);
+
+                    if ($wants) {
+                        $preview = mb_strimwidth($data['body'], 0, 180, '…');
+                        Mail::to($to)->send(new \App\Mail\CaseMessageMail($case, 'Court Staff', $preview));
+                    }
+                } else {
+                    Log::info('Message mail skipped (no applicant email)', ['case_id' => $id]);
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::error('Admin message email failed', ['case_id' => $id, 'error' => $e->getMessage()]);
+        }
+
+        return back()->with('success', 'Message sent to applicant.');
+    }
+
+    /**
+     * Admin: create hearing and email applicant.
+     */
+    public function storeHearing(Request $request, int $case)
+    {
+        $c = DB::table('court_cases')->where('id', $case)->first();
+        abort_if(!$c, 404);
+
+        $data = $request->validate([
+            'hearing_at' => ['required', 'date'],             // e.g., "2025-10-20 10:30"
+            'location'   => ['nullable', 'string', 'max:255'],
+            'type'       => ['nullable', 'string', 'max:100'],
+            'notes'      => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $hearingId = DB::table('case_hearings')->insertGetId([
+            'case_id'            => $case,
+            'hearing_at'         => $data['hearing_at'],
+            'location'           => $data['location'] ?? null,
+            'type'               => $data['type'] ?? null,
+            'notes'              => $data['notes'] ?? null,
+            'created_by_user_id' => Auth::id(),
+            'created_at'         => now(),
+            'updated_at'         => now(),
+        ]);
+
+        // Email applicant (best-effort)
+        try {
+            if (!empty($c->applicant_id)) {
+                $to = DB::table('applicants')->where('id', $c->applicant_id)->value('email');
+                if ($to) {
+                    $prefs = DB::table('applicant_notification_prefs')->where('applicant_id', $c->applicant_id)->first();
+                    $wants = !$prefs || ($prefs->email_hearing ?? true);
+
+                    if ($wants) {
+                        $hearing = DB::table('case_hearings')->where('id', $hearingId)->first();
+                        Mail::to($to)->send(new \App\Mail\CaseHearingScheduledMail($c, $hearing));
+                    }
+                } else {
+                    Log::info('Hearing mail skipped (no applicant email)', ['case_id' => $case]);
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Hearing mail failed', ['case_id' => $case, 'error' => $e->getMessage()]);
+        }
+
+        return back()->with('success', 'Hearing scheduled.');
+    }
+
+    /**
+     * Admin: update hearing.
+     */
+    public function updateHearing(Request $request, int $hearing)
+    {
+        $h = DB::table('case_hearings')->where('id', $hearing)->first();
+        abort_if(!$h, 404);
+
+        $data = $request->validate([
+            'hearing_at' => ['required', 'date'],
+            'location'   => ['nullable', 'string', 'max:255'],
+            'type'       => ['nullable', 'string', 'max:100'],
+            'notes'      => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        DB::table('case_hearings')->where('id', $hearing)->update([
+            'hearing_at' => $data['hearing_at'],
+            'location'   => $data['location'] ?? null,
+            'type'       => $data['type'] ?? null,
+            'notes'      => $data['notes'] ?? null,
+            'updated_at' => now(),
+        ]);
+
+        return back()->with('success', 'Hearing updated.');
+    }
+
+    /**
+     * Admin: delete hearing.
+     */
+    public function deleteHearing(int $hearing)
+    {
+        DB::table('case_hearings')->where('id', $hearing)->delete();
+        return back()->with('success', 'Hearing removed.');
+    }
+
+    /**
+     * Uploaded Files (Evidence merged here) — store.
+     */
+    public function storeFile(Request $request, int $case)
+    {
+        $c = DB::table('court_cases')->where('id', $case)->first();
+        abort_if(!$c, 404);
+
+        $data = $request->validate([
+            'label' => ['nullable', 'string', 'max:255'],
+            'file'  => ['required', 'file', 'max:10240'], // 10MB
+        ]);
+
+        $stored = $request->file('file')->store('case_files', 'public');
+
+        DB::table('case_files')->insert([
+            'case_id'                   => $case,
+            'label'                     => $data['label'] ?? null,
+            'path'                      => $stored,
+            'mime'                      => $request->file('file')->getClientMimeType(),
+            'size'                      => $request->file('file')->getSize(),
+            'uploaded_by_user_id'       => Auth::id(),
+            'uploaded_by_applicant_id'  => null,
+            'created_at'                => now(),
+            'updated_at'                => now(),
+        ]);
+
+        return back()->with('success', 'File uploaded.');
+    }
+
+    /**
+     * Uploaded Files — delete.
+     */
+    public function deleteFile(int $case, int $file)
+    {
+        $row = DB::table('case_files')->where('id', $file)->where('case_id', $case)->first();
+        abort_if(!$row, 404);
+
+        if (!empty($row->path)) {
+            Storage::disk('public')->delete($row->path);
+        }
+        DB::table('case_files')->where('id', $file)->delete();
+
+        return back()->with('success', 'File removed.');
+    }
+
+    /**
+     * View a submitted document (case_evidences).
+     */
+    public function viewDocument(int $caseId, int $docId)
+    {
+        $this->authorizeView();
+
+        $doc = DB::table('case_evidences')
+            ->where('id', $docId)
+            ->where('case_id', $caseId)
+            ->first();
+
+        abort_if(!$doc, 404, 'Document not found.');
+
+        $filePath = $doc->file_path ?? $doc->path ?? null;
+        abort_if(!$filePath, 404, 'Document file missing.');
+
+        $disk = Storage::disk('public');
+        abort_if(!$disk->exists($filePath), 404, 'Stored file missing.');
+
+        $downloadName = ($doc->title ?? basename($filePath)) ?: basename($filePath);
+        $mime = $doc->mime ?? $disk->mimeType($filePath) ?? 'application/octet-stream';
+
+        return $disk->response($filePath, $downloadName, [
+            'Content-Type'        => $mime,
+            'Content-Disposition' => 'inline; filename="' . basename($downloadName) . '"',
+        ]);
+    }
+
+    /**
+     * Witnesses — create.
+     */
+    public function storeWitness(Request $request, int $case)
+    {
+        $c = DB::table('court_cases')->where('id', $case)->first();
+        abort_if(!$c, 404);
+
+        $data = $request->validate([
+            'full_name' => ['required', 'string', 'max:255'],
+            'phone'     => ['nullable', 'string', 'max:60'],
+            'email'     => ['nullable', 'email', 'max:150'],
+            'address'   => ['nullable', 'string', 'max:255'],
+            'notes'     => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        DB::table('case_witnesses')->insert([
+            'case_id'            => $case,
+            'full_name'          => $data['full_name'],
+            'phone'              => $data['phone'] ?? null,
+            'email'              => $data['email'] ?? null,
+            'address'            => $data['address'] ?? null,
+            'notes'              => $data['notes'] ?? null,
+            'created_by_user_id' => Auth::id(),
+            'updated_by_user_id' => Auth::id(),
+            'created_at'         => now(),
+            'updated_at'         => now(),
+        ]);
+
+        return back()->with('success', 'Witness added.');
+    }
+
+    /**
+     * Witnesses — update.
+     */
+    public function updateWitness(Request $request, int $case, int $witness)
+    {
+        $exists = DB::table('case_witnesses')
+            ->where('id', $witness)
+            ->where('case_id', $case)
+            ->exists();
+        abort_if(!$exists, 404);
+
+        $data = $request->validate([
+            'full_name' => ['required', 'string', 'max:255'],
+            'phone'     => ['nullable', 'string', 'max:60'],
+            'email'     => ['nullable', 'email', 'max:150'],
+            'address'   => ['nullable', 'string', 'max:255'],
+            'notes'     => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        DB::table('case_witnesses')->where('id', $witness)->update([
+            'full_name'          => $data['full_name'],
+            'phone'              => $data['phone'] ?? null,
+            'email'              => $data['email'] ?? null,
+            'address'            => $data['address'] ?? null,
+            'notes'              => $data['notes'] ?? null,
+            'updated_by_user_id' => Auth::id(),
+            'updated_at'         => now(),
+        ]);
+
+        return back()->with('success', 'Witness updated.');
+    }
+
+    /**
+     * Witnesses — delete.
+     */
+    public function deleteWitness(int $case, int $witness)
+    {
+        DB::table('case_witnesses')
+            ->where('id', $witness)
+            ->where('case_id', $case)
+            ->delete();
+
+        return back()->with('success', 'Witness deleted.');
+    }
+
+    /**
+     * Gate for admin view (uses your helper).
+     */
+    private function authorizeView(): void
+    {
+        if (!userHasPermission('cases.view')) {
+            abort(403, 'You do not have permission: cases.view');
+        }
+    }
+}

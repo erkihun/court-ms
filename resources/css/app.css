@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root { color-scheme: light; }
+  body { @apply text-slate-800 bg-gray-100; } /* readable text on light bg */
+}
+@layer components {
+  .btn {
+    @apply inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium transition;
+  }
+  .btn-primary {
+    /* <-- change this color to what you want (indigo/emerald/sky/etc.) */
+    @apply bg-indigo-600 text-white hover:bg-indigo-700;
+  }
+  .btn-outline {
+    @apply border border-indigo-200 text-indigo-700 bg-white hover:bg-indigo-50;
+  }
+  .btn-danger {
+    @apply bg-rose-600 text-white hover:bg-rose-700;
+  }
+  .btn-muted {
+    @apply border border-slate-200 bg-white text-slate-700 hover:bg-slate-50;
+  }
+}

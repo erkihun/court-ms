@@ -1,0 +1,33 @@
+{
+  "Dashboard": "Dashboard",
+  "Appeals": "Appeals",
+  "Cases": "Cases",
+  "Notifications": "Notifications",
+  "Users": "Users",
+  "Roles": "Roles",
+
+  "Sidebar": "Sidebar",
+  "Open sidebar": "Open sidebar",
+  "Close sidebar": "Close sidebar",
+  "Toggle sidebar width": "Toggle sidebar width",
+
+  "Language": "Language",
+  "English": "English",
+  "Amharic": "Amharic",
+  "Language updated.": "Language updated.",
+
+  "Mark all as seen": "Mark all as seen",
+  "Seen": "Seen",
+  "View all": "View all",
+  "You're all caught up.": "You're all caught up.",
+  "Applicant messages": "Applicant messages",
+  "New cases": "New cases",
+  "Upcoming hearings": "Upcoming hearings",
+  "Hearing": "Hearing",
+
+  "Hi, :name": "Hi, :name",
+  "Avatar": "Avatar",
+  "Signed in as": "Signed in as",
+  "Profile": "Profile",
+  "Logout": "Logout"
+}
