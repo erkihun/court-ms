@@ -1,5 +1,35 @@
+@php
+$settings = null;
+try {
+    $settings = \App\Models\SystemSetting::query()->first();
+} catch (\Throwable $e) {
+    $settings = null;
+}
+$bannerPath = $settings?->banner_path ?? null;
+@endphp
+
 <x-public-layout title="{{ __('auth.registration_title') }}">
-    <div class="max-w-6xl mx-auto bg-white rounded-xl border border-slate-300 shadow-lg p-6 md:p-8">
+    @if($bannerPath)
+    @push('head')
+    <style>
+        body {
+            background: url("{{ asset('storage/'.$bannerPath) }}") center / cover no-repeat,
+                #e5e7eb;
+            backdrop-filter: blur(8px);
+        }
+
+        .guest-container {
+            background: transparent;
+        }
+
+        .applicant-register-card {
+            backdrop-filter: blur(4px);
+            background-color: rgba(255, 255, 255, 0.92);
+        }
+    </style>
+    @endpush
+    @endif
+    <div class="max-w-6xl mx-auto bg-white applicant-register-card rounded-xl border border-slate-300 shadow-lg p-6 md:p-8">
 
         {{-- Header --}}
         <div class="flex items-center justify-between mb-6">
