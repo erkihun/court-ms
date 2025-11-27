@@ -13,6 +13,8 @@ return [
     'male' => 'Male',
     'female' => 'Female',
     'other' => 'Other',
+    'position' => 'Position',
+    'organization_name' => 'Organization Name',
     'phone' => 'Phone',
     'national_id' => 'National ID Number',
     'national_id_format' => 'Use the format 0000 0000 0000 0000',

@@ -29,12 +29,14 @@ class ApplicantAuthController extends Controller
 
         $data = $request->validate([
             'first_name'         => ['required', 'string', 'max:100'],
-            'middle_name'        => ['nullable', 'string', 'max:100'],
+            'middle_name'        => ['required', 'string', 'max:100'],
             'last_name'          => ['required', 'string', 'max:100'],
             'gender'             => ['nullable', Rule::in(['male', 'female', 'other'])],
+            'position'           => ['required', 'string', 'max:150'],
+            'organization_name'  => ['required', 'string', 'max:150'],
             'phone'              => ['required', 'string', 'max:30', 'unique:applicants,phone'],
             'email'              => ['required', 'email', 'max:255', 'unique:applicants,email'],
-            'address'            => ['nullable', 'string', 'max:255'],
+            'address'            => ['required', 'string', 'max:255'],
 
             // normalized (digits-only) National ID
             'national_id_number' => ['required', 'string', 'bail', 'regex:/^\d{16}$/', 'unique:applicants,national_id_number'],

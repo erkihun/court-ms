@@ -193,6 +193,36 @@
                         <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
                         @enderror
                     </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600" for="position">
+                            {{ __('auth.position') }}
+                        </label>
+                        <input id="position" name="position"
+                            value="{{ old('position', $user->position) }}"
+                            autocomplete="organization-title"
+                            @error('position') aria-invalid="true" @enderror
+                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
+                                      focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+                        @error('position')
+                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600" for="organization_name">
+                            {{ __('auth.organization_name') }}
+                        </label>
+                        <input id="organization_name" name="organization_name"
+                            value="{{ old('organization_name', $user->organization_name) }}"
+                            autocomplete="organization"
+                            @error('organization_name') aria-invalid="true" @enderror
+                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
+                                      focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+                        @error('organization_name')
+                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
                 </div>
             </section>
 

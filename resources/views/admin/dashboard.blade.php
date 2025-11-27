@@ -141,7 +141,7 @@
         <div class="p-6 rounded-xl border border-gray-200 bg-white xl:w-[60%]">
             <div class="flex items-center justify-between mb-3">
                 <h3 class="text-sm font-semibold text-gray-900">{{ __('dashboard.new_cases_per_month') }}</h3>
-                <span class="text-[11px] text-gray-500">{{ __('Last 6 months') }}</span>
+                <span class="text-[11px] text-gray-500">{{ __('dashboard.last_6_months') }}</span>
             </div>
             <div class="{{ empty($values) ? 'skeleton h-40 rounded-lg' : '' }}">
                 <canvas id="casesChart"
@@ -157,7 +157,7 @@
         {{-- Gender pie --}}
         <div class="p-6 rounded-xl border border-gray-200 bg-white xl:w-[40%]">
             <div class="flex items-center justify-between mb-3">
-                <h3 class="text-sm font-semibold text-gray-900">{{ __('Applicants by Gender') }}</h3>
+                <h3 class="text-sm font-semibold text-gray-900">{{ __('dashboard.applicants_by_gender') }}</h3>
                 <span class="text-[11px] text-gray-500">{{ __('dashboard.last_30_days') }}</span>
             </div>
             <div class="mx-auto max-w-[360px] {{ empty($genderCounts) ? 'skeleton h-40 rounded-lg' : '' }}">
@@ -165,7 +165,7 @@
                     data-labels='@json(array_keys($genderCounts))'
                     data-values='@json(array_values($genderCounts))'
                     height="200"
-                    aria-label="{{ __('Applicants by Gender') }}"
+                    aria-label="{{ __('dashboard.applicants_by_gender') }}"
                     role="img"></canvas>
             </div>
         </div>
@@ -175,7 +175,7 @@
     <div class="mt-6">
         <div class="p-6 rounded-xl border border-gray-200 bg-white">
             <div class="flex items-center justify-between mb-3">
-                <h3 class="text-sm font-semibold text-gray-900">{{ __('Cases by Type') }}</h3>
+                <h3 class="text-sm font-semibold text-gray-900">{{ __('dashboard.cases_by_type') }}</h3>
                 <a href="{{ route('cases.index') }}"
                     class="text-[11px] text-blue-700 hover:text-blue-800 hover:underline">{{ __('dashboard.view_report') }}</a>
             </div>
@@ -184,7 +184,7 @@
                     data-labels='@json(array_keys($caseTypeCounts))'
                     data-values='@json(array_values($caseTypeCounts))'
                     height="90"
-                    aria-label="{{ __('Cases by Type') }}"
+                    aria-label="{{ __('dashboard.cases_by_type') }}"
                     role="img"></canvas>
             </div>
         </div>
@@ -194,36 +194,36 @@
     <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="p-4 rounded-xl border border-gray-200 bg-white">
             <div class="flex items-center justify-between">
-                <h4 class="text-sm font-semibold text-gray-900">{{ __('System Uptime') }}</h4>
+                <h4 class="text-sm font-semibold text-gray-900">{{ __('dashboard.system_uptime') }}</h4>
                 <svg class="h-4 w-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path stroke-width="1.8" d="M5 13l4 4L19 7" />
                 </svg>
             </div>
-            <p class="text-[12px] text-gray-500 mb-2">{{ __('Last restart') }}: {{ now()->subHours(5)->format('M d, H:i') }}</p>
+            <p class="text-[12px] text-gray-500 mb-2">{{ __('dashboard.last_restart') }}: {{ now()->subHours(5)->format('M d, H:i') }}</p>
             <p class="text-2xl font-bold text-emerald-600">99.9%</p>
         </div>
 
         <div class="p-4 rounded-xl border border-gray-200 bg-white">
             <div class="flex items-center justify-between">
-                <h4 class="text-sm font-semibold text-gray-900">{{ __('Queue Status') }}</h4>
+                <h4 class="text-sm font-semibold text-gray-900">{{ __('dashboard.queue_status') }}</h4>
                 <svg class="h-4 w-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path stroke-width="1.8" d="M3 7h18M3 12h12M3 17h6" />
                 </svg>
             </div>
-            <p class="text-[12px] text-gray-500 mb-2">{{ __('Jobs waiting to process') }}</p>
+            <p class="text-[12px] text-gray-500 mb-2">{{ __('dashboard.jobs_waiting') }}</p>
             <p class="text-2xl font-bold text-blue-600">12</p>
         </div>
 
         <div class="p-4 rounded-xl border border-gray-200 bg-white">
             <div class="flex items-center justify-between">
-                <h4 class="text-sm font-semibold text-gray-900">{{ __('Notifications service') }}</h4>
+                <h4 class="text-sm font-semibold text-gray-900">{{ __('dashboard.notifications_service') }}</h4>
                 <svg class="h-4 w-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path stroke-width="1.8" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
             </div>
-            <p class="text-[12px] text-gray-500 mb-2">{{ __('Email & SMS gateways') }}</p>
+            <p class="text-[12px] text-gray-500 mb-2">{{ __('dashboard.email_sms_gateways') }}</p>
             <span class="inline-flex items-center px-2.5 py-1 text-[12px] font-medium rounded-full bg-emerald-50 text-emerald-700">
-                {{ __('Operational') }}
+                {{ __('dashboard.operational') }}
             </span>
         </div>
     </div>
@@ -232,8 +232,8 @@
     <div class="mt-6 p-4 rounded-xl border border-gray-200 bg-white">
         <div class="flex items-center justify-between">
             <div>
-                <h3 class="text-sm font-semibold text-gray-900">{{ __('Recent Users') }}</h3>
-                <p class="text-[12px] text-gray-500">{{ __('Latest staff activity') }}</p>
+                <h3 class="text-sm font-semibold text-gray-900">{{ __('dashboard.recent_users') }}</h3>
+                <p class="text-[12px] text-gray-500">{{ __('dashboard.latest_staff_activity') }}</p>
             </div>
             <a href="{{ route('users.index') }}"
                 class="text-[11px] text-blue-700 hover:text-blue-800 hover:underline">{{ __('dashboard.view_all') }}</a>
@@ -407,7 +407,7 @@
                         data: {
                             labels: cLabels,
                             datasets: [{
-                                label: '{{ __("Cases by Type") }}',
+                                label: '{{ __("dashboard.cases_by_type") }}',
                                 data: cValues,
                                 backgroundColor: 'rgba(99,102,241,0.65)', // indigo-500
                                 borderColor: 'rgba(79,70,229,1)', // indigo-600

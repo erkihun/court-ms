@@ -25,11 +25,14 @@
     </div>
     @endif
 
-    <form method="POST"
+    @php($applicantUser = auth('applicant')->user())
+
+    <form id="applicant-case-create-form" method="POST"
         action="{{ route('applicant.cases.store') }}"
         enctype="multipart/form-data"
         class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 md:p-8 space-y-8">
         @csrf
+        <input type="hidden" name="filing_date" id="filing_date_field" value="{{ old('filing_date', now()->toDateString()) }}">
 
         {{-- Basic meta --}}
         <section class="space-y-4">
@@ -37,29 +40,31 @@
             <div class="grid md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-slate-700">
-                        {{ __('cases.title') }} <span class="text-red-600">*</span>
+                        {{ __('Applicant Full Name') }} <span class="text-red-600">*</span>
                     </label>
                     <input
                         name="title"
-                        value="{{ old('title') }}"
-                        placeholder="{{ __('cases.title_placeholder') }}"
+                        value="{{ old('title', $applicantUser->full_name ?? $applicantUser->name ?? '') }}"
+                        placeholder="{{ __('Enter applicant full name') }}"
+                        readonly
                         class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
-                               focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+                               bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                     @error('title')
                     <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700">
-                        {{ __('cases.filing_date') }} <span class="text-red-600">*</span>
+                        {{ __('Applicant Address') }} <span class="text-red-600">*</span>
                     </label>
                     <input
-                        type="date"
-                        name="filing_date"
-                        value="{{ old('filing_date', now()->toDateString()) }}"
+                        name="applicant_address"
+                        value="{{ old('applicant_address', $applicantUser->address ?? '') }}"
+                        placeholder="{{ __('Enter applicant address') }}"
+                        readonly
                         class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
-                               focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
-                    @error('filing_date')
+                               bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+                    @error('applicant_address')
                     <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
@@ -163,6 +168,16 @@
             @error('relief_requested')
             <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
             @enderror
+
+            <label class="flex items-start gap-2 text-sm text-slate-700 mt-3">
+                <input type="checkbox" name="certify_appeal" value="1"
+                    class="mt-1 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                    {{ old('certify_appeal') ? 'checked' : '' }} required>
+                <span>I certify the validity of my appeal in accordance with F/S/S/No. 92.</span>
+            </label>
+            @error('certify_appeal')
+            <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+            @enderror
         </section>
 
         {{-- Documents --}}
@@ -209,8 +224,10 @@
             @enderror
         </section>
 
+        @php($oldWitnessCount = max(1, count((array) old('witnesses', []))))
+
         {{-- Witnesses --}}
-        <section x-data="{ rows: 1 }" class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 md:p-5 space-y-3">
+        <section x-data="{ rows: {{ $oldWitnessCount }} }" class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 md:p-5 space-y-3">
             <div class="flex items-center justify-between">
                 <div>
                     <h3 class="text-sm font-semibold text-slate-800">
@@ -228,14 +245,6 @@
                     {{ __('cases.add_witness') }}
                 </button>
             </div>
-
-            @php
-            $oldWitnesses = old('witnesses', []);
-            $oldCount = is_array($oldWitnesses) ? count($oldWitnesses) : 0;
-            @endphp
-            <template x-if="{{ $oldCount ?: 0 }} > 0">
-                <div x-init="rows = {{ $oldCount }}"></div>
-            </template>
 
             <template x-for="i in rows" :key="'w'+i">
                 <div class="grid md:grid-cols-6 gap-3 mb-2">
@@ -277,7 +286,77 @@
             @error('witnesses.*.email')
             <div class="text-xs text-red-600 -mt-1">{{ $message }}</div>
             @enderror
+            @error('witnesses_duplicate_phone')
+            <div class="text-xs text-red-600 -mt-1">{{ $message }}</div>
+            @enderror
+            @error('witnesses_duplicate_email')
+            <div class="text-xs text-red-600 -mt-1">{{ $message }}</div>
+            @enderror
         </section>
+
+        <label class="flex items-start gap-2 text-sm text-slate-700">
+            <input type="checkbox" name="certify_evidence" value="1"
+                class="mt-1 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                {{ old('certify_evidence') ? 'checked' : '' }} required>
+            <span>I certify that the evidence I have presented is true in accordance with F.S./S.H./No. 92.</span>
+        </label>
+        @error('certify_evidence')
+        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+        @enderror
+
+        @if(!empty($activeTerms))
+        <section x-data="{ showTerms: false }" class="rounded-xl border border-slate-200 bg-slate-50/80 p-4 md:p-5 space-y-3 relative">
+            <div>
+                <h3 class="text-sm font-semibold text-slate-800">
+                    Terms &amp; Conditions
+                </h3>
+                <p class="text-xs text-slate-600 mt-1">
+                    Please review our latest terms before submitting your case.
+                    <button type="button" @click="showTerms = true"
+                        class="text-blue-600 hover:underline font-medium">
+                        Read full terms
+                    </button>
+                </p>
+            </div>
+            <label class="flex items-start gap-2 text-sm text-slate-700">
+                <input type="checkbox" name="accept_terms" value="1"
+                    class="mt-1 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                    {{ old('accept_terms') ? 'checked' : '' }} required>
+                <span>I confirm that I have read and agree to the Terms &amp; Conditions.</span>
+            </label>
+            @error('accept_terms')
+            <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+            @enderror
+
+            <template x-if="showTerms">
+                <div x-cloak
+                    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+                    @keydown.escape.window="showTerms=false">
+                    <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-y-auto p-6 relative">
+                        <button type="button" class="absolute top-3 right-3 text-slate-500 hover:text-slate-700"
+                            @click="showTerms=false">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                        <h2 class="text-xl font-semibold text-slate-900 mb-2">{{ $activeTerms->title }}</h2>
+                        <p class="text-xs text-slate-500 mb-4">
+                            {{ optional($activeTerms->published_at)->format('M d, Y H:i') }}
+                        </p>
+                        <div class="text-sm text-slate-800 whitespace-pre-line leading-relaxed tiny-content">
+                            {!! clean(nl2br(e($activeTerms->body)), 'cases') !!}
+                        </div>
+                        <div class="mt-4 text-right">
+                            <button type="button" @click="showTerms=false"
+                                class="inline-flex items-center px-4 py-2 rounded-md bg-orange-500 text-white text-sm font-semibold hover:bg-orange-600">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </section>
+        @endif
 
         {{-- Actions --}}
         <div class="pt-2 flex flex-wrap gap-3">
@@ -293,6 +372,18 @@
             </a>
         </div>
     </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('applicant-case-create-form');
+            const filingInput = document.getElementById('filing_date_field');
+            if (form && filingInput) {
+                form.addEventListener('submit', function() {
+                    filingInput.value = new Date().toISOString().split('T')[0];
+                });
+            }
+        });
+    </script>
 
     {{-- Load LOCAL TinyMCE --}}
     <script src="{{ asset('vendor/tinymce/tinymce.min.js') }}"></script>

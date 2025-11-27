@@ -23,9 +23,11 @@ class ApplicantProfileController extends Controller
             'middle_name'        => ['nullable', 'string', 'max:100'],
             'last_name'          => ['required', 'string', 'max:100'],
             'gender'             => ['nullable', 'in:male,female,other'],
+            'position'           => ['required', 'string', 'max:150'],
+            'organization_name'  => ['required', 'string', 'max:150'],
             'phone'              => ['required', 'string', 'max:30', 'unique:applicants,phone,' . $user->id],
             'email'              => ['required', 'email', 'max:255', 'unique:applicants,email,' . $user->id],
-            'address'            => ['nullable', 'string', 'max:255'],
+            'address'            => ['required', 'string', 'max:255'],
             'national_id_number' => ['required', 'string', 'max:100', 'unique:applicants,national_id_number,' . $user->id],
 
             'current_password'   => ['nullable', 'current_password:applicant'],

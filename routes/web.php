@@ -10,6 +10,8 @@ use App\Http\Controllers\Applicant\ApplicantProfileController;
 use App\Http\Controllers\Applicant\ApplicantNotificationController;
 use App\Http\Controllers\Applicant\ApplicantPasswordController;
 use App\Http\Controllers\Applicant\ApplicantVerificationController;
+use App\Http\Controllers\Respondent\RespondentAuthController;
+use App\Http\Controllers\Respondent\DashboardController as RespondentDashboardController;
 
 // Admin-facing controllers
 use App\Http\Controllers\Admin\DashboardController;
@@ -26,9 +28,11 @@ use App\Http\Controllers\Admin\SystemSettingController;
 use App\Http\Controllers\Admin\LetterTemplateController;
 use App\Http\Controllers\Admin\LetterController;
 use App\Http\Controllers\Admin\LetterComposerController;
+use App\Http\Controllers\Admin\TermsAndConditionsController;
 
 // Localization middleware
 use App\Http\Middleware\SetLocale;
+use App\Http\Controllers\TermsDisplayController;
 
 /*
 |--------------------------------------------------------------------------
@@ -48,6 +52,26 @@ Route::middleware(SetLocale::class)->group(function () {
 
     Route::get('/debug-locale', fn() => 'locale=' . app()->getLocale());
     Route::get('/', fn() => redirect()->route('applicant.login'))->name('root');
+    Route::get('/terms', [TermsDisplayController::class, 'show'])->name('public.terms');
+    Route::get('/applicant', fn () => redirect()->route('applicant.login'))->name('applicant.login.shortcut');
+    Route::get('/respondent', fn () => redirect()->route('respondent.login'))->name('respondent.login.shortcut');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Respondent Public Routes (guest:respondent)
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware('guest:respondent')->group(function () {
+        Route::get('/respondent/register', [RespondentAuthController::class, 'showRegister'])->name('respondent.register');
+        Route::post('/respondent/register', [RespondentAuthController::class, 'register'])->name('respondent.register.submit');
+        Route::get('/respondent/login', [RespondentAuthController::class, 'showLogin'])->name('respondent.login');
+        Route::post('/respondent/login', [RespondentAuthController::class, 'login'])->name('respondent.login.submit');
+    });
+
+    Route::middleware('auth:respondent')->group(function () {
+        Route::post('/respondent/logout', [RespondentAuthController::class, 'logout'])->name('respondent.logout');
+        Route::get('/respondent/dashboard', [RespondentDashboardController::class, 'index'])->name('respondent.dashboard');
+    });
 
     /*
     |--------------------------------------------------------------------------
@@ -240,6 +264,11 @@ Route::middleware(SetLocale::class)->group(function () {
                 ->except('show')
                 ->middleware('perm:templates.manage')
                 ->names('letter-templates');
+
+            Route::resource('terms', TermsAndConditionsController::class)
+                ->except(['show'])
+                ->middleware('perm:settings.manage')
+                ->names('terms');
 
             Route::get('/letters/compose', [LetterComposerController::class, 'create'])
                 ->middleware('perm:cases.edit')

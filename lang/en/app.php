@@ -24,6 +24,8 @@ return [
     'Letter Templates' => 'Letter Templates',
     'Compose Letter' => 'Compose Letter',
     'Letters' => 'Letters',
+    'User Control' => 'User Control',
+    'Terms' => 'Terms & Conditions',
     'System_Settings' => 'System Settings',
 
     // Notifications dropdown

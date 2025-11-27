@@ -80,6 +80,32 @@
                 </div>
             </div>
 
+            {{-- Position / Organization --}}
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-md font-medium text-slate-700">
+                        {{ __('auth.position') }}
+                    </label>
+                    <input
+                        name="position"
+                        value="{{ old('position') }}"
+                        required
+                        class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
+                               focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+                </div>
+                <div>
+                    <label class="block text-md font-medium text-slate-700">
+                        {{ __('auth.organization_name') }}
+                    </label>
+                    <input
+                        name="organization_name"
+                        value="{{ old('organization_name') }}"
+                        required
+                        class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
+                               focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+                </div>
+            </div>
+
             {{-- Gender / Phone / National ID --}}
             <div class="grid md:grid-cols-3 gap-4">
                 <div>
@@ -149,6 +175,7 @@
                     <input
                         name="address"
                         value="{{ old('address') }}"
+                        required
                         class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
                                focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                 </div>

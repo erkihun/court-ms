@@ -17,6 +17,8 @@ class Applicant extends Authenticatable implements MustVerifyEmailContract
         'middle_name',
         'last_name',
         'gender',
+        'position',
+        'organization_name',
         'phone',
         'email',
         'address',

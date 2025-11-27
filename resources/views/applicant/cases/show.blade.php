@@ -1,4 +1,7 @@
 {{-- resources/views/apply/cases/show.blade.php --}}
+@php
+    $applicantUser = auth('applicant')->user();
+@endphp
 <x-public-layout :title="$case->case_number">
     <style>
         /* Lightweight, non-invasive styling so we don't destroy TinyMCE/Word HTML */
@@ -136,12 +139,17 @@
                 </h3>
                 <dl class="grid md:grid-cols-2 gap-4 text-sm">
                     <div>
-                        <dt class="text-slate-500">{{ __('cases.title') }}</dt>
-                        <dd class="font-medium text-slate-900">{{ $case->title }}</dd>
+                        <dt class="text-slate-500">{{ __('Applicant Full Name') }}</dt>
+                        <dd class="font-medium text-slate-900">{{ $case->title ?: ($applicantUser->full_name ?? $applicantUser->name ?? '-') }}</dd>
                     </div>
                     <div>
+                        <dt class="text-slate-500">{{ __('Applicant Address') }}</dt>
+                        <dd class="font-medium text-slate-900">{{ $applicantUser->address ?? '-' }}</dd>
+                    </div>
+
+                    <div>
                         <dt class="text-slate-500">{{ __('cases.case_type') }}</dt>
-                        <dd class="font-medium text-slate-900">{{ $case->case_type ?? '—' }}</dd>
+                        <dd class="font-medium text-slate-900">{{ $case->case_type ?? '-' }}</dd>
                     </div>
 
                     <div>
