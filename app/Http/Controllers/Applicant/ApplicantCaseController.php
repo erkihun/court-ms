@@ -121,7 +121,7 @@ class ApplicantCaseController extends Controller
         $messages = [
             'certify_appeal.accepted' => 'You must certify the validity of your appeal.',
             'certify_evidence.accepted' => 'You must certify that your evidence is true.',
-            'accept_terms.accepted' => 'You must agree to the Terms & Conditions.',
+            'accept_terms.accepted' => __('terms.validation_accept_terms'),
         ];
 
         $validator = Validator::make($request->all(), $rules, $messages);

@@ -1,11 +1,11 @@
-<x-admin-layout title="Terms">
+<x-admin-layout title="{{ __('terms.title') }}">
     <div class="flex items-center justify-between mb-6">
         <div>
-            <h1 class="text-2xl font-semibold text-gray-900">Terms &amp; Conditions</h1>
-            <p class="text-sm text-gray-600">Manage the Terms applicants must accept.</p>
+            <h1 class="text-2xl font-semibold text-gray-900">{{ __('terms.title') }}</h1>
+            <p class="text-sm text-gray-600">{{ __('terms.manage_description') }}</p>
         </div>
         <a href="{{ route('terms.create') }}" class="inline-flex items-center px-4 py-2 rounded-md bg-orange-500 text-white text-sm font-semibold hover:bg-orange-600">
-            Create New
+            {{ __('terms.create_new') }}
         </a>
     </div>
 
@@ -19,9 +19,9 @@
         <table class="min-w-full divide-y divide-gray-200 text-sm">
             <thead class="bg-gray-50">
                 <tr>
-                    <th class="px-4 py-2 text-left font-medium text-gray-600">Title</th>
-                    <th class="px-4 py-2 text-left font-medium text-gray-600">Published</th>
-                    <th class="px-4 py-2 text-left font-medium text-gray-600">Updated</th>
+                    <th class="px-4 py-2 text-left font-medium text-gray-600">{{ __('terms.table_title') }}</th>
+                    <th class="px-4 py-2 text-left font-medium text-gray-600">{{ __('terms.table_published') }}</th>
+                    <th class="px-4 py-2 text-left font-medium text-gray-600">{{ __('terms.table_updated') }}</th>
                     <th class="px-4 py-2"></th>
                 </tr>
             </thead>
@@ -31,26 +31,26 @@
                     <td class="px-4 py-2 font-medium text-gray-900">{{ $term->title }}</td>
                     <td class="px-4 py-2 text-gray-700">
                         @if($term->is_published)
-                        <span class="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Published</span>
+                        <span class="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">{{ __('terms.status_published') }}</span>
                         <div class="text-xs text-gray-500 mt-0.5">{{ optional($term->published_at)->format('M d, Y H:i') }}</div>
                         @else
-                        <span class="text-xs text-gray-500">Draft</span>
+                        <span class="text-xs text-gray-500">{{ __('terms.status_draft') }}</span>
                         @endif
                     </td>
                     <td class="px-4 py-2 text-gray-700">{{ $term->updated_at->format('M d, Y H:i') }}</td>
                     <td class="px-4 py-2 text-right space-x-2">
-                        <a href="{{ route('terms.edit', $term) }}" class="text-blue-600 text-sm hover:underline">Edit</a>
+                        <a href="{{ route('terms.edit', $term) }}" class="text-blue-600 text-sm hover:underline">{{ __('terms.action_edit') }}</a>
                         <form action="{{ route('terms.destroy', $term) }}" method="POST" class="inline"
-                            onsubmit="return confirm('Delete this Terms & Conditions entry?');">
+                            onsubmit="return confirm('{{ __('terms.confirm_delete') }}');">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="text-red-600 text-sm hover:underline">Delete</button>
+                            <button type="submit" class="text-red-600 text-sm hover:underline">{{ __('terms.action_delete') }}</button>
                         </form>
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="4" class="px-4 py-6 text-center text-gray-500">No terms created yet.</td>
+                    <td colspan="4" class="px-4 py-6 text-center text-gray-500">{{ __('terms.empty_state') }}</td>
                 </tr>
                 @endforelse
             </tbody>
