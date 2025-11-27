@@ -5,7 +5,7 @@
 return [
     'encoding'      => 'UTF-8',
     'finalize'      => true,
-    'cachePath'     => storage_path('app/purifier'),
+    'cachePath'     => env('PURIFIER_CACHE_PATH', storage_path('framework/cache/purifier')),
     // File mode for cache files (directories are handled by the package)
     'cacheFileMode' => 0644,
 
