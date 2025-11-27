@@ -12,10 +12,21 @@ class Authenticate extends Middleware
      */
     protected function redirectTo(Request $request): ?string
     {
-        if (! $request->expectsJson()) {
-            // Adjust if your login route is different
-            return route('login');
+        if ($request->expectsJson()) {
+            return null;
         }
-        return null;
+
+        // Applicant area (/apply prefix or applicant.* named routes)
+        if ($request->is('apply/*') || $request->routeIs('applicant.*')) {
+            return route('applicant.login');
+        }
+
+        // Respondent area (/respondent prefix or respondent.* named routes)
+        if ($request->is('respondent/*') || $request->routeIs('respondent.*')) {
+            return route('respondent.login');
+        }
+
+        // Default back-office login
+        return route('login');
     }
 }
