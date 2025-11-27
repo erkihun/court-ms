@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Applicant;
 
 use App\Http\Controllers\Controller;
 
+use App\Models\ApplicantTermAcceptance;
+use App\Models\TermsAndCondition;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -11,6 +13,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
@@ -53,8 +56,9 @@ class ApplicantCaseController extends Controller
     public function create()
     {
         $types  = DB::table('case_types')->orderBy('name')->get(['id', 'name']);
+        $activeTerms = TermsAndCondition::published()->orderByDesc('published_at')->first();
 
-        return view('applicant.cases.create', compact('types'));
+        return view('applicant.cases.create', compact('types', 'activeTerms'));
     }
 
     private function generateCaseNumber(): string
@@ -84,10 +88,13 @@ class ApplicantCaseController extends Controller
         $aid = auth('applicant')->id();
         abort_if(!$aid, 403);
 
-        $data = $request->validate([
+        $activeTerms = TermsAndCondition::published()->orderByDesc('published_at')->first();
+
+        $rules = [
             'title'              => ['required', 'string', 'max:255'],
             'description'        => ['required', 'string', 'max:10000'],
             'relief_requested'   => ['nullable', 'string', 'max:5000'],
+            'certify_appeal'     => ['accepted'],
             'respondent_name'    => ['nullable', 'string', 'max:255'],
             'respondent_address' => ['nullable', 'string', 'max:500'],
             'case_type_id'       => ['required', 'integer', 'exists:case_types,id'],
@@ -104,7 +111,38 @@ class ApplicantCaseController extends Controller
             'witnesses.*.phone'      => ['nullable', 'string', 'max:60'],
             'witnesses.*.email'      => ['nullable', 'email', 'max:150'],
             'witnesses.*.address'    => ['nullable', 'string', 'max:255'],
-        ]);
+            'certify_evidence'       => ['accepted'],
+        ];
+
+        if ($activeTerms) {
+            $rules['accept_terms'] = ['accepted'];
+        }
+
+        $messages = [
+            'certify_appeal.accepted' => 'You must certify the validity of your appeal.',
+            'certify_evidence.accepted' => 'You must certify that your evidence is true.',
+            'accept_terms.accepted' => 'You must agree to the Terms & Conditions.',
+        ];
+
+        $validator = Validator::make($request->all(), $rules, $messages);
+
+        $validator->after(function ($validator) use ($request) {
+            $witnesses = collect($request->input('witnesses', []));
+
+            $phones = $witnesses->pluck('phone')->filter(fn($phone) => filled($phone))
+                ->map(fn($phone) => mb_strtolower(trim($phone)));
+            if ($phones->count() !== $phones->unique()->count()) {
+                $validator->errors()->add('witnesses_duplicate_phone', 'Witness phone numbers must be unique.');
+            }
+
+            $emails = $witnesses->pluck('email')->filter(fn($email) => filled($email))
+                ->map(fn($email) => mb_strtolower(trim($email)));
+            if ($emails->count() !== $emails->unique()->count()) {
+                $validator->errors()->add('witnesses_duplicate_email', 'Witness email addresses must be unique.');
+            }
+        });
+
+        $data = $validator->validate();
 
         // Sanitize TinyMCE HTML (decode if entity-encoded, then Purifier 'cases' profile)
         $descHtml   = $this->cleanHtml($data['description'] ?? '');
@@ -160,6 +198,18 @@ class ApplicantCaseController extends Controller
                 'created_at'         => now(),
                 'updated_at'         => now(),
             ]);
+
+            if ($activeTerms) {
+                ApplicantTermAcceptance::updateOrCreate(
+                    [
+                        'applicant_id' => $aid,
+                        'terms_and_condition_id' => $activeTerms->id,
+                    ],
+                    [
+                        'accepted_at' => now(),
+                    ]
+                );
+            }
 
             // 4) Initial evidence PDFs (ensure mime/size + file_path/path)
             if ($request->hasFile('evidence_files')) {
@@ -431,10 +481,11 @@ class ApplicantCaseController extends Controller
                 ->with('error', 'You can only edit pending cases.');
         }
 
-        $data = $request->validate([
+        $rules = [
             'title'              => ['required', 'string', 'max:255'],
             'description'        => ['required', 'string', 'max:10000'],
             'relief_requested'   => ['nullable', 'string', 'max:5000'],
+            'certify_appeal'     => ['accepted'],
             'respondent_name'    => ['nullable', 'string', 'max:255'],
             'respondent_address' => ['nullable', 'string', 'max:500'],
             'case_type_id'       => ['required', 'integer', 'exists:case_types,id'],
@@ -451,7 +502,55 @@ class ApplicantCaseController extends Controller
             'witnesses.*.phone'         => ['nullable', 'string', 'max:60'],
             'witnesses.*.email'         => ['nullable', 'email', 'max:150'],
             'witnesses.*.address'       => ['nullable', 'string', 'max:255'],
-        ]);
+            'certify_evidence'          => ['accepted'],
+        ];
+
+        $messages = [
+            'certify_appeal.accepted' => 'You must certify the validity of your appeal.',
+            'certify_evidence.accepted' => 'You must certify that your evidence is true.',
+        ];
+
+        $validator = Validator::make($request->all(), $rules, $messages);
+
+        $validator->after(function ($validator) use ($request, $id) {
+            $newWitnesses = collect($request->input('witnesses', []));
+
+            $newPhones = $newWitnesses->pluck('phone')
+                ->filter(fn($phone) => filled($phone))
+                ->map(fn($phone) => mb_strtolower(trim($phone)))
+                ->values();
+            if ($newPhones->count() !== $newPhones->unique()->count()) {
+                $validator->errors()->add('witnesses_duplicate_phone', 'Witness phone numbers must be unique.');
+            }
+
+            $existingPhones = DB::table('case_witnesses')
+                ->where('case_id', $id)
+                ->pluck('phone')
+                ->filter(fn($phone) => filled($phone))
+                ->map(fn($phone) => mb_strtolower(trim($phone)));
+            if ($existingPhones->intersect($newPhones)->isNotEmpty()) {
+                $validator->errors()->add('witnesses_duplicate_phone', 'Witness phone numbers must be unique.');
+            }
+
+            $newEmails = $newWitnesses->pluck('email')
+                ->filter(fn($email) => filled($email))
+                ->map(fn($email) => mb_strtolower(trim($email)))
+                ->values();
+            if ($newEmails->count() !== $newEmails->unique()->count()) {
+                $validator->errors()->add('witnesses_duplicate_email', 'Witness email addresses must be unique.');
+            }
+
+            $existingEmails = DB::table('case_witnesses')
+                ->where('case_id', $id)
+                ->pluck('email')
+                ->filter(fn($email) => filled($email))
+                ->map(fn($email) => mb_strtolower(trim($email)));
+            if ($existingEmails->intersect($newEmails)->isNotEmpty()) {
+                $validator->errors()->add('witnesses_duplicate_email', 'Witness email addresses must be unique.');
+            }
+        });
+
+        $data = $validator->validate();
 
         // Sanitize TinyMCE HTML (decode if entity-encoded, then Purifier 'cases' profile)
         $descHtml   = $this->cleanHtml($data['description'] ?? '');

@@ -187,8 +187,7 @@
                             <div class="text-[11px] uppercase tracking-wide text-gray-500">
                                 Current Logo
                             </div>
-                            <div
-                                class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-xs">
+                            <div class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-xs">
                                 <img src="{{ asset('storage/'.$settings->logo_path) }}"
                                     alt="Logo"
                                     class="h-12 w-auto object-contain">
@@ -197,6 +196,41 @@
                         @else
                         <div class="text-xs text-gray-500 italic">
                             No logo uploaded yet.
+                        </div>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Banner --}}
+                <div class="grid md:grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)] gap-4 md:gap-6 items-start">
+                    <div class="space-y-1.5">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Banner (optional)
+                        </label>
+                        <div
+                            class="border border-gray-200 rounded-xl px-3 py-2.5 bg-gray-50/60 flex flex-col gap-2">
+                            <input type="file" name="banner"
+                                class="block w-full text-xs md:text-sm text-gray-700
+                                          file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0
+                                          file:text-xs md:file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700
+                                          hover:file:bg-indigo-100">
+                            <p class="text-xs text-gray-500">
+                                Wide image for headers; PNG, JPG, WEBP up to <span class="font-medium">3MB</span>.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        @if($settings->banner_path ?? false)
+                        <div class="text-[11px] uppercase tracking-wide text-gray-500">Current Banner</div>
+                        <div class="rounded-xl border border-gray-200 bg-white shadow-xs overflow-hidden">
+                            <img src="{{ asset('storage/'.$settings->banner_path) }}"
+                                alt="Banner"
+                                class="w-full max-h-40 object-cover">
+                        </div>
+                        @else
+                        <div class="text-xs text-gray-500 italic">
+                            No banner uploaded yet.
                         </div>
                         @endif
                     </div>

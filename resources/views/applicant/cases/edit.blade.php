@@ -217,6 +217,17 @@
                         @error('relief_requested')
                         <div class="text-xs text-red-600 mt-1">{{ $message }}</div>
                         @enderror
+
+                        <label class="flex items-start gap-2 text-sm text-slate-700 mt-3">
+                            <input type="checkbox" name="certify_appeal" value="1"
+                                class="mt-1 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                                {{ old('certify_appeal') ? 'checked' : '' }}
+                                :disabled="!canEdit" {{ $editable ? '' : 'disabled' }} required>
+                            <span>I certify the validity of my appeal in accordance with F/S/S/No. 92.</span>
+                        </label>
+                        @error('certify_appeal')
+                        <div class="text-xs text-red-600 mt-1">{{ $message }}</div>
+                        @enderror
                     </div>
                 </div>
 
@@ -325,7 +336,24 @@
                     @error('witnesses.*.email')
                     <div class="text-xs text-red-600 -mt-1">{{ $message }}</div>
                     @enderror
+                    @error('witnesses_duplicate_phone')
+                    <div class="text-xs text-red-600 -mt-1">{{ $message }}</div>
+                    @enderror
+                    @error('witnesses_duplicate_email')
+                    <div class="text-xs text-red-600 -mt-1">{{ $message }}</div>
+                    @enderror
                 </div>
+
+                <label class="mt-4 flex items-start gap-2 text-sm text-slate-700">
+                    <input type="checkbox" name="certify_evidence" value="1"
+                        class="mt-1 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                        {{ old('certify_evidence') ? 'checked' : '' }}
+                        :disabled="!canEdit" {{ $editable ? '' : 'disabled' }} required>
+                    <span>I certify that the evidence I have presented is true in accordance with F.S./S.H./No. 92.</span>
+                </label>
+                @error('certify_evidence')
+                <div class="text-xs text-red-600 -mt-1">{{ $message }}</div>
+                @enderror
 
                 {{-- Submit --}}
                 <div class="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">

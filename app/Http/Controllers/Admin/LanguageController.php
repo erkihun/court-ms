@@ -33,6 +33,6 @@ class LanguageController extends Controller
         if (!$return) $return = url()->previous() ?: route('root');
 
         // use GROUP key for the flash text
-        return redirect()->to($return)->with('success', __('app.Language updated.'));
+        return redirect()->to($return);
     }
 }

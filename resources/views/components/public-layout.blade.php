@@ -1,4 +1,14 @@
-@props(['title' => __('app.court_portal')])
+@props(['title' => __('app.court_portal'), 'hideFooter' => false])
+
+@php
+$layout = $publicLayout ?? [];
+$systemSettings = $layout['systemSettings'] ?? null;
+$brandName = $layout['brandName'] ?? config('app.name', __('app.court_ms'));
+$shortName = $layout['shortName'] ?? $brandName;
+$logoPath = $layout['logoPath'] ?? null;
+$footerText = $layout['footerText'] ?? __('app.all_rights_reserved');
+$notificationCount = $layout['notificationCount'] ?? 0;
+@endphp
 
 <!DOCTYPE html>
 <html lang="{{ str_replace('_','-',app()->getLocale()) }}">
@@ -8,27 +18,6 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width,initial-scale=1">
 
-    @php
-    // Load system settings safely (works even during fresh migrations)
-    $systemSettings = $systemSettings ?? null;
-
-    try {
-    if (! $systemSettings && \Illuminate\Support\Facades\Schema::hasTable('system_settings')) {
-    $found = \App\Models\SystemSetting::query()->first();
-    if ($found) {
-    $systemSettings = $found;
-    }
-    }
-    } catch (\Throwable $e) {
-    $systemSettings = $systemSettings ?? null;
-    }
-
-    $brandName = $systemSettings->app_name ?? config('app.name', __('app.court_ms'));
-    $shortName = $systemSettings->short_name ?: $brandName;
-    $logoPath = $systemSettings->logo_path ?? null;
-    $footerText = $systemSettings->footer_text ?? __('app.all_rights_reserved');
-    @endphp
-
     <title>{{ $title }} | {{ $brandName }}</title>
 
     {{-- Optional favicon if you later store it in system_settings --}}
@@ -37,6 +26,7 @@
     @endif
 
     @vite(['resources/css/app.css','resources/js/app.js'])
+    @stack('head')
 
 </head>
 
@@ -70,65 +60,6 @@
                     </div>
                 </div>
             </a>
-
-            @php
-            // Precompute unseen notifications count (safe on fresh DBs)
-            $__aid = auth('applicant')->id();
-            $__notifCount = 0;
-
-            if ($__aid) {
-            try {
-            $has = fn($t) => \Illuminate\Support\Facades\Schema::hasTable($t);
-
-            if ($has('court_cases') && $has('case_hearings') && $has('case_messages') && $has('case_status_logs') && $has('notification_reads')) {
-            // Unseen upcoming hearings (next 60 days) + grace window of 1 day past
-            $unseenHearings = \DB::table('case_hearings as h')
-            ->join('court_cases as c','c.id','=','h.case_id')
-            ->where('c.applicant_id', $__aid)
-            ->whereBetween('h.hearing_at', [now()->subDay(), now()->addDays(60)])
-            ->whereNotExists(function($q) use ($__aid){
-            $q->from('notification_reads as nr')
-            ->whereColumn('nr.source_id','h.id')
-            ->where('nr.type','hearing')
-            ->where('nr.applicant_id',$__aid);
-            })
-            ->count();
-
-            // Unseen admin messages (last 14 days)
-            $unseenMsgs = \DB::table('case_messages as m')
-            ->join('court_cases as c','c.id','=','m.case_id')
-            ->whereNotNull('m.sender_user_id')
-            ->where('c.applicant_id', $__aid)
-            ->where('m.created_at','>=',now()->subDays(14))
-            ->whereNotExists(function($q) use ($__aid){
-            $q->from('notification_reads as nr')
-            ->whereColumn('nr.source_id','m.id')
-            ->where('nr.type','message')
-            ->where('nr.applicant_id',$__aid);
-            })
-            ->count();
-
-            // Unseen status changes (last 14 days)
-            $unseenStatus = \DB::table('case_status_logs as l')
-            ->join('court_cases as c','c.id','=','l.case_id')
-            ->where('c.applicant_id', $__aid)
-            ->where('l.created_at','>=',now()->subDays(14))
-            ->whereNotExists(function($q) use ($__aid){
-            $q->from('notification_reads as nr')
-            ->whereColumn('nr.source_id','l.id')
-            ->where('nr.type','status')
-            ->where('nr.applicant_id',$__aid);
-            })
-            ->count();
-
-            $__notifCount = $unseenHearings + $unseenMsgs + $unseenStatus;
-            }
-            } catch (\Throwable $e) {
-            // Swallow silently: keep header resilient
-            $__notifCount = 0;
-            }
-            }
-            @endphp
 
             <nav x-data="{ open:false }" class="relative">
                 {{-- Desktop --}}
@@ -216,10 +147,10 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"
                                     d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 1 1-6 0h6z" />
                             </svg>
-                            <span>{{ __('app.notifications') }}</span>
-                            @if($__notifCount > 0)
+
+                            @if($notificationCount > 0)
                             <span class="absolute -top-1 -right-1 grid h-5 min-w-[20px] place-items-center rounded-full bg-orange-500 px-1 text-[11px] font-semibold text-white">
-                                {{ $__notifCount > 9 ? '9+' : $__notifCount }}
+                                {{ $notificationCount > 9 ? '9+' : $notificationCount }}
                             </span>
                             @endif
                         </button>
@@ -368,9 +299,9 @@
                                     </svg>
                                     {{ __('app.notifications') }}
                                 </div>
-                                @if($__notifCount > 0)
+                                @if($notificationCount > 0)
                                 <span class="ml-2 inline-flex items-center justify-center rounded-full bg-orange-500 px-2 py-0.5 text-[11px] font-semibold text-white">
-                                    {{ $__notifCount > 9 ? '9+' : $__notifCount }}
+                                    {{ $notificationCount > 9 ? '9+' : $notificationCount }}
                                 </span>
                                 @endif
                             </button>
@@ -474,11 +405,12 @@
 
     </main>
 
+    @unless($hideFooter)
     {{-- Footer --}}
     <footer class="mt-10 border-t border-slate-200 bg-white">
         <div class="max-w-7xl mx-auto px-4 py-5  sm:text-sm text-slate-500 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <div>
-                © {{ date('Y') }} <span class="font-semibold text-blue-700">{{ $brandName }}</span>.
+                Ac {{ date('Y') }} <span class="font-semibold text-blue-700">{{ $brandName }}</span>.
                 <span class="text-slate-500">{{ $footerText }}</span>
             </div>
             <div class="flex items-center gap-2 text-[11px] uppercase tracking-wide text-slate-400">
@@ -487,6 +419,8 @@
             </div>
         </div>
     </footer>
+    @endunless
 </body>
 
 </html>
+

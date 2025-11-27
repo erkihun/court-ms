@@ -13,6 +13,8 @@ return [
     'male' => 'ወንድ',
     'female' => 'ሴት',
     'other' => 'ሌላ',
+    'position' => 'Position',
+    'organization_name' => 'Organization Name',
     'phone' => 'ስልክ',
     'national_id' => 'የብሄራዊ መታወቂያ ቁጥር',
     'national_id_format' => 'ቅርጸት 0000 0000 0000 0000 ይጠቀሙ',

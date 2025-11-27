@@ -22,11 +22,13 @@ return [
     'Users' => 'ተጠቃሚዎች',
     'Permissions' => 'ፈቃዶች',
     'Roles' => 'ሚናዎች',
-    'Letter Templates' => 'Letter Templates',
-    'Compose Letter' => 'Compose Letter',
-    'Letters' => 'Letters',
+    'Letter Templates' => 'የደብዳቤ አብነቶች',
+    'Compose Letter' => 'ደብዳቤ ይጻፉ',
+    'Letters' => 'ደብዳቤዎች',
 
-    // Notifications dropdown
+    'User Control' => 'የተጠቃሚ ቁጥጥር',
+    'Terms' => '??????????',
+// Notifications dropdown
     'Mark all as seen' => 'ሁሉንም እንደታዩ ምልክት ያድርጉ',
     'Seen' => 'ታይቷል',
     'View all' => 'ሁሉንም ይመልከቱ',

@@ -25,6 +25,10 @@
         .transition-padding {
             transition: padding-left .3s ease-in-out
         }
+
+        .icon-green {
+            color: #059669 !important;
+        }
     </style>
     @vite(['resources/css/app.css','resources/js/app.js'])
     @stack('styles')
@@ -51,9 +55,24 @@
     $hasLogout = Route::has('logout');
     $hasLangSwitch = Route::has('language.switch');
     $hasSystemSettings = Route::has('settings.system.edit');
+    $hasTerms = Route::has('terms.index');
     $hasLetterTemplates = Route::has('letter-templates.index');
     $hasLetterComposer = Route::has('letters.compose');
     $hasLetters = Route::has('letters.index');
+    $canManageTemplates = $hasLetterTemplates && auth()->user()?->hasPermission('templates.manage');
+    $canViewLetters = $hasLetters && auth()->user()?->hasPermission('cases.edit');
+    $canComposeLetters = $hasLetterComposer && auth()->user()?->hasPermission('cases.edit');
+    $canManageUsers = $hasUsers && auth()->user()?->hasPermission('users.manage');
+    $canManagePermissions = $hasPermissions && auth()->user()?->hasPermission('permissions.manage');
+    $canManageRoles = $hasRoles && auth()->user()?->hasPermission('roles.manage');
+    $letterTemplatesActive = request()->routeIs('letter-templates.*');
+    $lettersActive = request()->routeIs('letters.index') || request()->routeIs('letters.show');
+    $composeActive = request()->routeIs('letters.compose');
+    $letterMenuOpen = $letterTemplatesActive || $lettersActive || $composeActive;
+    $usersActive = request()->routeIs('users.*');
+    $permissionsActive = request()->routeIs('permissions.*');
+    $rolesActive = request()->routeIs('roles.*');
+    $userControlOpen = $usersActive || $permissionsActive || $rolesActive;
     @endphp
 
     <aside
@@ -104,7 +123,7 @@
                 class="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-md text-blue-100 hover:bg-orange-800"
                 @click="sidebar=false"
                 aria-label="{{ __('app.Close sidebar') }}">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -119,7 +138,7 @@
                 class="flex items-center gap-3 px-3 py-2 rounded-md transition
                       {{ request()->routeIs('dashboard') ? 'bg-orange-600 text-white' : 'hover:bg-orange-600 text-blue-100 hover:text-white' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -143,7 +162,7 @@
             <a href="{{ route('appeals.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-md {{ request()->routeIs('appeals.*') ? 'bg-orange-600 text-white' : 'hover:bg-orange-800 text-blue-100 hover:text-white' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -167,7 +186,7 @@
             <a href="{{ route('cases.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-md {{ request()->routeIs('cases.*') ? 'bg-orange-600 text-white' : 'hover:bg-orange-800 text-blue-100 hover:text-white' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -192,7 +211,7 @@
                 class="flex items-center gap-3 px-3 py-2 rounded-md {{ request()->routeIs('case-types.*') ? 'bg-orange-600 text-white' : 'hover:bg-orange-800 text-blue-100 hover:text-white' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
                     {{-- tags icon --}}
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M7 7h.01M3 10l7.586-7.586a2 2 0 012.828 0L21 9.999a2 2 0 010 2.828L13.828 20a2 2 0 01-2.828 0L3 12.999V10z" />
@@ -211,66 +230,80 @@
             </a>
             @endif
 
-            {{-- Letter Templates --}}
-            @if($hasLetterTemplates && auth()->user()?->hasPermission('templates.manage'))
-            <a href="{{ route('letter-templates.index') }}"
-                class="flex items-center gap-3 px-3 py-2 rounded-md {{ request()->routeIs('letter-templates.*') ? 'bg-orange-600 text-white' : 'hover:bg-orange-800 text-blue-100 hover:text-white' }}">
-                <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M8 4h10a2 2 0 012 2v11a2 2 0 01-2 2H8l-4 3V6a2 2 0 012-2h2z" />
+            {{-- Letters dropdown --}}
+            @if($canManageTemplates || $canViewLetters || $canComposeLetters)
+            <div x-data="{ open: {{ $letterMenuOpen ? 'true' : 'false' }} }" class="space-y-1">
+                <button type="button"
+                    class="w-full flex items-center justify-between px-3 py-2 rounded-md {{ $letterMenuOpen ? 'bg-orange-600 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-800' }}"
+                    @click="open=!open"
+                    aria-haspopup="true"
+                    :aria-expanded="open.toString()">
+                    <span class="flex items-center gap-3">
+                        <div class="grid place-items-center w-6" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 5h18M4 7l8 5 8-5M4 19h16a1 1 0 001-1V6M3 19a1 1 0 01-1-1V6" />
+                            </svg>
+                        </div>
+                        <span class="truncate origin-left"
+                            x-show="!compact"
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 -translate-x-1"
+                            x-transition:enter-end="opacity-100 translate-x-0"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100 translate-x-0"
+                            x-transition:leave-end="opacity-0 -translate-x-1">
+                            {{ __('app.Letters') }}
+                        </span>
+                    </span>
+                    <svg x-show="!compact" xmlns="http://www.w3.org/2000/svg" class="icon-green h-4 w-4 transition-transform duration-200"
+                        :class="{ 'rotate-90': open }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
-                </div>
-                <span class="truncate origin-left"
-                    x-show="!compact"
-                    x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 -translate-x-1"
-                    x-transition:enter-end="opacity-100 translate-x-0"
-                    x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100 translate-x-0"
-                    x-transition:leave-end="opacity-0 -translate-x-1">
-                    {{ __('app.Letter Templates') }}
-                </span>
-            </a>
-            @endif
+                </button>
 
-            {{-- Letters --}}
-            @if($hasLetters && auth()->user()?->hasPermission('cases.edit'))
-            <a href="{{ route('letters.index') }}"
-                class="flex items-center gap-3 px-3 py-2 rounded-md {{ request()->routeIs('letters.index') || request()->routeIs('letters.show') ? 'bg-orange-600 text-white' : 'hover:bg-orange-800 text-blue-100 hover:text-white' }}">
-                <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M3 5h18M4 7l8 5 8-5M4 19h16a1 1 0 001-1V6M3 19a1 1 0 01-1-1V6" />
-                    </svg>
-                </div>
-                <span class="truncate origin-left"
-                    x-show="!compact"
-                    x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 -translate-x-1"
-                    x-transition:enter-end="opacity-100 translate-x-0"
-                    x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100 translate-x-0"
-                    x-transition:leave-end="opacity-0 -translate-x-1">
-                    {{ __('app.Letters') }}
-                </span>
-            </a>
-            @endif
+                <div x-show="open && !compact"
+                    x-transition:enter="transition ease-out duration-150"
+                    x-transition:enter-start="opacity-0 -translate-y-1"
+                    x-transition:enter-end="opacity-100 translate-y-0"
+                    x-transition:leave="transition ease-in duration-100"
+                    x-transition:leave-start="opacity-100 translate-y-0"
+                    x-transition:leave-end="opacity-0 -translate-y-1"
+                    class="pl-11 space-y-1">
+                    @if($canManageTemplates)
+                    <a href="{{ route('letter-templates.index') }}"
+                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-md {{ $letterTemplatesActive ? 'bg-white/10 text-white' : 'text-blue-100 hover:text-white hover:bg-white/10' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 4h10a2 2 0 012 2v11a2 2 0 01-2 2H8l-4 3V6a2 2 0 012-2h2z" />
+                        </svg>
+                        <span>{{ __('app.Letter Templates') }}</span>
+                    </a>
+                    @endif
 
-            {{-- Compose Letter --}}
-            @if($hasLetterComposer && auth()->user()?->hasPermission('cases.edit'))
-            <a href="{{ route('letters.compose') }}"
-                class="flex items-center gap-3 px-3 py-2 rounded-md {{ request()->routeIs('letters.compose') ? 'bg-orange-600 text-white' : 'hover:bg-orange-800 text-blue-100 hover:text-white' }}">
-                <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M8 16h8M8 12h8m-5-8h5l3 3v11a2 2 0 01-2 2H8a2 2 0 01-2-2V5a2 2 0 012-2h3z" />
-                    </svg>
+                    @if($canViewLetters)
+                    <a href="{{ route('letters.index') }}"
+                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-md {{ $lettersActive ? 'bg-white/10 text-white' : 'text-blue-100 hover:text-white hover:bg-white/10' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 5h18M4 7l8 5 8-5M4 19h16a1 1 0 001-1V6M3 19a1 1 0 01-1-1V6" />
+                        </svg>
+                        <span>{{ __('app.Letters') }}</span>
+                    </a>
+                    @endif
+
+                    @if($canComposeLetters)
+                    <a href="{{ route('letters.compose') }}"
+                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-md {{ $composeActive ? 'bg-white/10 text-white' : 'text-blue-100 hover:text-white hover:bg-white/10' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 16h8M8 12h8m-5-8h5l3 3v11a2 2 0 01-2 2H8a2 2 0 01-2-2V5a2 2 0 012-2h3z" />
+                        </svg>
+                        <span>{{ __('app.Compose Letter') }}</span>
+                    </a>
+                    @endif
                 </div>
-                <span class="truncate origin-left" x-show="!compact">
-                    {{ __('app.Compose Letter') }}
-                </span>
-            </a>
+            </div>
             @endif
 
             {{-- Notifications --}}
@@ -278,7 +311,7 @@
             <a href="{{ route('admin.notifications.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-md {{ request()->routeIs('admin.notifications.*') ? 'bg-orange-600 text-white' : 'hover:bg-orange-800 text-blue-100 hover:text-white' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 1 1-6 0h6z" />
@@ -297,69 +330,82 @@
             </a>
             @endif
 
-            {{-- Users --}}
-            @if($hasUsers && auth()->user()?->hasPermission('users.manage'))
-            <a href="{{ route('users.index') }}"
-                class="flex items-center gap-3 px-3 py-2 rounded-md {{ request()->routeIs('users.*') ? 'bg-orange-600 text-white' : 'hover:bg-orange-800 text-blue-100 hover:text-white' }}">
-                <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            {{-- User Control --}}
+            @if($canManageUsers || $canManagePermissions || $canManageRoles)
+            <div x-data="{ open: {{ $userControlOpen ? 'true' : 'false' }} }" class="space-y-1">
+                <button type="button"
+                    class="w-full flex items-center justify-between px-3 py-2 rounded-md {{ $userControlOpen ? 'bg-orange-600 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-800' }}"
+                    @click="open=!open"
+                    aria-haspopup="true"
+                    :aria-expanded="open.toString()">
+                    <span class="flex items-center gap-3">
+                        <div class="grid place-items-center w-6" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                        </div>
+                        <span class="truncate origin-left"
+                            x-show="!compact"
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 -translate-x-1"
+                            x-transition:enter-end="opacity-100 translate-x-0"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100 translate-x-0"
+                            x-transition:leave-end="opacity-0 -translate-x-1">
+                            {{ __('app.User Control') }}
+                        </span>
+                    </span>
+                    <svg x-show="!compact" xmlns="http://www.w3.org/2000/svg" class="icon-green h-4 w-4 transition-transform duration-200"
+                        :class="{ 'rotate-90': open }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
-                </div>
-                <span class="truncate origin-left"
-                    x-show="!compact"
-                    x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 -translate-x-1"
-                    x-transition:enter-end="opacity-100 translate-x-0"
-                    x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100 translate-x-0"
-                    x-transition:leave-end="opacity-0 -translate-x-1">
-                    {{ __('app.Users') }}
-                </span>
-            </a>
-            @endif
+                </button>
 
-            {{-- Permissions --}}
-            @if($hasPermissions && auth()->user()?->hasPermission('permissions.manage'))
-            <a href="{{ route('permissions.index') }}"
-                class="flex items-center gap-3 px-3 py-2 rounded-md {{ request()->routeIs('permissions.*') ? 'bg-orange-600 text-white' : 'hover:bg-orange-800 text-blue-100 hover:text-white' }}">
-                <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M7 7h.01M3 10l7.586-7.586a2 2 0 012.828 0L21 10a2 2 0 010 2.828L13.828 20a2 2 0 01-2.828 0L3 13v-3z" />
-                    </svg>
-                </div>
-                <span class="truncate origin-left" x-show="!compact">{{ __('app.Permissions') }}</span>
-            </a>
-            @endif
+                <div x-show="open && !compact"
+                    x-transition:enter="transition ease-out duration-150"
+                    x-transition:enter-start="opacity-0 -translate-y-1"
+                    x-transition:enter-end="opacity-100 translate-y-0"
+                    x-transition:leave="transition ease-in duration-100"
+                    x-transition:leave-start="opacity-100 translate-y-0"
+                    x-transition:leave-end="opacity-0 -translate-y-1"
+                    class="pl-11 space-y-1">
+                    @if($canManageUsers)
+                    <a href="{{ route('users.index') }}"
+                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-md {{ $usersActive ? 'bg-white/10 text-white' : 'text-blue-100 hover:text-white hover:bg-white/10' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        <span>{{ __('app.Users') }}</span>
+                    </a>
+                    @endif
 
-            {{-- Roles --}}
-            @if($hasRoles && auth()->user()?->hasPermission('roles.manage'))
-            <a href="{{ route('roles.index') }}"
-                class="flex items-center gap-3 px-3 py-2 rounded-md {{ request()->routeIs('roles.*') ? 'bg-orange-600 text-white' : 'hover:bg-orange-800 text-blue-100 hover:text-white' }}">
-                <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
+                    @if($canManagePermissions)
+                    <a href="{{ route('permissions.index') }}"
+                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-md {{ $permissionsActive ? 'bg-white/10 text-white' : 'text-blue-100 hover:text-white hover:bg-white/10' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 7h.01M3 10l7.586-7.586a2 2 0 012.828 0L21 10a2 2 0 010 2.828L13.828 20a2 2 0 01-2.828 0L3 13v-3z" />
+                        </svg>
+                        <span>{{ __('app.Permissions') }}</span>
+                    </a>
+                    @endif
+
+                    @if($canManageRoles)
+                    <a href="{{ route('roles.index') }}"
+                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-md {{ $rolesActive ? 'bg-white/10 text-white' : 'text-blue-100 hover:text-white hover:bg-white/10' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span>{{ __('app.Roles') }}</span>
+                    </a>
+                    @endif
                 </div>
-                <span class="truncate origin-left"
-                    x-show="!compact"
-                    x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 -translate-x-1"
-                    x-transition:enter-end="opacity-100 translate-x-0"
-                    x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100 translate-x-0"
-                    x-transition:leave-end="opacity-0 -translate-x-1">
-                    {{ __('app.Roles') }}
-                </span>
-            </a>
+            </div>
             @endif
 
             {{-- System Settings --}}
@@ -367,7 +413,7 @@
             <a href="{{ route('settings.system.edit') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-md {{ request()->routeIs('settings.system.*') ? 'bg-orange-600 text-white' : 'hover:bg-orange-800 text-blue-100 hover:text-white' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M10.325 4.317L9.6 2.4m4.075 1.917l.725-1.917M4.318 10.325L2.4 9.6m1.918 4.075L2.4 14.4M19.682 10.325l1.918-.725m-1.918 4.075l1.918.725M12 8a4 4 0 100 8 4 4 0 000-8z" />
@@ -375,6 +421,25 @@
                 </div>
                 <span class="truncate origin-left" x-show="!compact">
                     {{ __('app.System_Settings') }}
+                </span>
+            </a>
+            @endif
+
+            {{-- Terms & Conditions --}}
+            @if($hasTerms && auth()->user()?->hasPermission('settings.manage'))
+            <a href="{{ route('terms.index') }}"
+                class="flex items-center gap-3 px-3 py-2 rounded-md {{ request()->routeIs('terms.*') ? 'bg-orange-600 text-white' : 'hover:bg-orange-800 text-blue-100 hover:text-white' }}">
+                <div class="grid place-items-center w-6" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6l-2-2H6a2 2 0 00-2 2v13a1 1 0 001 1h14a1 1 0 001-1V6H12z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6l2-2h4a2 2 0 012 2v13a1 1 0 01-1 1H7a1 1 0 01-1-1V6h6z" />
+                    </svg>
+                </div>
+                <span class="truncate origin-left" x-show="!compact">
+                    {{ __('app.Terms') }}
                 </span>
             </a>
             @endif
@@ -406,7 +471,7 @@
                     class="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
                     @click="sidebar=true"
                     aria-label="{{ __('app.Open sidebar') }}">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5"
                         viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 6h16M4 12h16M4 18h16" />
@@ -418,12 +483,12 @@
                     class="hidden md:inline-flex items-center justify-center w-9 h-9 rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 transition"
                     @click="toggleCompact()" :aria-pressed="compact.toString()"
                     aria-label="{{ __('app.Toggle sidebar width') }}">
-                    <svg x-show="!compact" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" x-cloak
+                    <svg x-show="!compact" xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" x-cloak
                         viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M20 12H4m6 6l-6-6 6-6" />
                     </svg>
-                    <svg x-show="compact" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" x-cloak
+                    <svg x-show="compact" xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" x-cloak
                         viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 12h16m-6-6l6 6-6 6" />
@@ -508,7 +573,7 @@
                     <button @click="open=!open"
                         class="flex items-center gap-1 px-3 py-1.5 rounded-md border border-gray-300 hover:bg-gray-50 text-sm">
                         <span class="fi fi-{{ app()->getLocale() == 'am' ? 'et' : 'us' }}"></span>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M4 5h16M4 10h16M10 15h10M4 20h10" />
                         </svg>
@@ -539,7 +604,7 @@
                     <button @click="bell=!bell" type="button"
                         class="relative inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-2.5 py-1.5 hover:bg-gray-50 shadow-sm"
                         aria-label="{{ __('app.Notifications') }}" :aria-expanded="bell.toString()">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"
                                 d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 1 1-6 0h6z" />
                         </svg>
@@ -708,7 +773,7 @@
                         @if($hasProfileEdit)
                         <a href="{{ route('profile.edit') }}"
                             class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-4 w-4" fill="none"
                                 viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -722,7 +787,7 @@
                             @csrf
                             <button type="submit"
                                 class="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-4 w-4" fill="none"
                                     viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

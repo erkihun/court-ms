@@ -34,6 +34,7 @@ class SystemSettingController extends Controller
             'maintenance_mode' => ['nullable', 'boolean'],
             'logo'           => ['nullable', 'image', 'mimes:png,jpg,jpeg,svg,webp', 'max:2048'],
             'favicon'        => ['nullable', 'image', 'mimes:png,ico', 'max:512'],
+            'banner'         => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:3072'],
         ]);
 
         $settings = SystemSetting::first() ?? new SystemSetting();
@@ -49,6 +50,12 @@ class SystemSettingController extends Controller
         if ($request->hasFile('logo')) {
             $path = $request->file('logo')->store('logos', 'public');
             $settings->logo_path = $path;
+        }
+
+        // Banner upload -> banner_path
+        if ($request->hasFile('banner')) {
+            $path = $request->file('banner')->store('banners', 'public');
+            $settings->banner_path = $path;
         }
 
         // Favicon upload -> favicon_path

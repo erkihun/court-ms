@@ -12,6 +12,7 @@ class SystemSetting extends Model
         'app_name',
         'short_name',
         'logo_path',
+        'banner_path',
         'favicon_path',
         'contact_email',
         'contact_phone',
