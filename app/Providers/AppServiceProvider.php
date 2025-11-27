@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\SystemSetting;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -17,6 +18,17 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        try {
+            $purifierCachePath = config('purifier.cachePath');
+            if ($purifierCachePath) {
+                File::ensureDirectoryExists($purifierCachePath, 0755, true);
+                File::ensureDirectoryExists($purifierCachePath . DIRECTORY_SEPARATOR . 'HTML', 0755, true);
+                File::ensureDirectoryExists($purifierCachePath . DIRECTORY_SEPARATOR . 'URI', 0755, true);
+            }
+        } catch (\Throwable $e) {
+            // Don't block the app if the directory can't be created; it will be reported when Purifier runs
+        }
+
         // Share system settings with the admin layout component
         View::composer('components.admin-layout', function ($view) {
             $default = (object) [
