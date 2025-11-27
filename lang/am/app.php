@@ -27,7 +27,7 @@ return [
     'Letters' => 'ደብዳቤዎች',
 
     'User Control' => 'የተጠቃሚ ቁጥጥር',
-    'Terms' => '??????????',
+    'Terms' => 'ውሎች እና ሁኔታዎች',
 // Notifications dropdown
     'Mark all as seen' => 'ሁሉንም እንደታዩ ምልክት ያድርጉ',
     'Seen' => 'ታይቷል',
