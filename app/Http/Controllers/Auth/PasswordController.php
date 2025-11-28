@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rules\Password;
 
 class PasswordController extends Controller
@@ -20,9 +21,22 @@ class PasswordController extends Controller
             'password' => ['required', Password::defaults(), 'confirmed'],
         ]);
 
-        $request->user()->update([
+        $user = $request->user();
+        $wasForced = (bool) ($user?->must_change_password);
+
+        $user->update([
             'password' => Hash::make($validated['password']),
+            'must_change_password' => false,
         ]);
+
+        // If they were forced to change password, log them out and send to login.
+        if ($wasForced) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->with('status', 'Password updated. Please log in again.');
+        }
 
         return back()->with('status', 'password-updated');
     }

@@ -40,7 +40,27 @@ class Kernel extends HttpKernel
 
 
     /**
-     * The application's route middleware.
+     * The application's route middleware / aliases.
+     */
+    protected $middlewareAliases = [
+        'auth'               => \App\Http\Middleware\Authenticate::class,
+        'auth.basic'         => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
+        'cache.headers'      => \Illuminate\Http\Middleware\SetCacheHeaders::class,
+        'can'                => \Illuminate\Auth\Middleware\Authorize::class,
+        'guest'              => \App\Http\Middleware\RedirectIfAuthenticated::class,
+        'password.confirm'   => \Illuminate\Auth\Middleware\RequirePassword::class,
+        'signed'             => \Illuminate\Routing\Middleware\ValidateSignature::class,
+        'throttle'           => \Illuminate\Routing\Middleware\ThrottleRequests::class,
+        'verified'           => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        'force.password.change' => \App\Http\Middleware\ForcePasswordChange::class,
+
+        // Custom
+        'perm'               => \App\Http\Middleware\RequirePermission::class,
+        'role'               => \App\Http\Middleware\RequireRole::class,
+    ];
+
+    /**
+     * Backwards-compatibility: some stacks still read $routeMiddleware.
      */
     protected $routeMiddleware = [
         'auth'               => \App\Http\Middleware\Authenticate::class,
@@ -52,6 +72,7 @@ class Kernel extends HttpKernel
         'signed'             => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle'           => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified'           => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        'force.password.change' => \App\Http\Middleware\ForcePasswordChange::class,
 
         // Custom
         'perm'               => \App\Http\Middleware\RequirePermission::class,

@@ -56,17 +56,29 @@ class UsersController extends Controller
     /** Store (requires users.manage via routes) */
     public function store(Request $request)
     {
+        // Normalize national ID (strip spaces/non-digits before validation)
+        $normalizedNationalId = preg_replace('/\D+/', '', (string) $request->input('national_id'));
+        $request->merge(['national_id' => $normalizedNationalId ?: null]);
+
         $data = $request->validate([
             'name'                  => ['required', 'string', 'max:255'],
             'email'                 => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
-            'password'              => ['required', 'confirmed', 'min:6'],
             'status'                => ['required', Rule::in(['active', 'inactive'])],
+            'gender'                => ['nullable', Rule::in(['male','female','other'])],
+            'date_of_birth'         => ['nullable', 'date'],
+            'national_id'           => ['nullable', 'digits:16'],
+            'position'              => ['nullable', 'string', 'max:255'],
+            'phone'                 => ['nullable', 'string', 'max:255'],
+            'address'               => ['nullable', 'string'],
             'roles'                 => ['nullable', 'array'],
             'roles.*'               => ['integer', 'exists:roles,id'],
 
             'avatar'                => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'signature'             => ['nullable', 'image', 'mimes:png,webp,jpg,jpeg', 'max:2048'],
         ]);
+
+        // Always assign the configured default password; user will be forced to change on first login.
+        $rawPassword = config('auth.default_user_password', 'ChangeMe123!');
 
         $avatarPath = $request->hasFile('avatar')
             ? $request->file('avatar')->store('avatars', 'public')
@@ -79,8 +91,15 @@ class UsersController extends Controller
         $user = User::create([
             'name'           => $data['name'],
             'email'          => $data['email'],
-            'password'       => Hash::make($data['password']),
+            'password'       => Hash::make($rawPassword),
+            'must_change_password' => true,
             'status'         => $data['status'],
+            'gender'         => $data['gender'] ?? null,
+            'date_of_birth'  => $data['date_of_birth'] ?? null,
+            'national_id'    => $data['national_id'] ?? null,
+            'position'       => $data['position'] ?? null,
+            'phone'          => $data['phone'] ?? null,
+            'address'        => $data['address'] ?? null,
             'avatar_path'    => $avatarPath,
             'signature_path' => $signaturePath,
         ]);
@@ -108,12 +127,22 @@ class UsersController extends Controller
     {
         $this->authorize('update', $user);
 
+        // Normalize national ID (strip spaces/non-digits before validation)
+        $normalizedNationalId = preg_replace('/\D+/', '', (string) $request->input('national_id'));
+        $request->merge(['national_id' => $normalizedNationalId ?: null]);
+
         $data = $request->validate([
             'name'                  => ['required', 'string', 'max:255'],
             'email'                 => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'status'                => ['required', Rule::in(['active', 'inactive'])],
 
             'password'              => ['nullable', 'confirmed', 'min:6'],
+            'gender'                => ['nullable', Rule::in(['male','female','other'])],
+            'date_of_birth'         => ['nullable', 'date'],
+            'national_id'           => ['nullable', 'digits:16'],
+            'position'              => ['nullable', 'string', 'max:255'],
+            'phone'                 => ['nullable', 'string', 'max:255'],
+            'address'               => ['nullable', 'string'],
 
             'roles'                 => ['nullable', 'array'],
             'roles.*'               => ['integer', 'exists:roles,id'],
@@ -128,6 +157,7 @@ class UsersController extends Controller
         // Update password if provided
         if (!empty($data['password'])) {
             $user->password = Hash::make($data['password']);
+            $user->must_change_password = true;
         }
 
         // Avatar remove / replace
@@ -153,6 +183,12 @@ class UsersController extends Controller
             'name'           => $data['name'],
             'email'          => $data['email'],
             'status'         => $data['status'],
+            'gender'         => $data['gender'] ?? null,
+            'date_of_birth'  => $data['date_of_birth'] ?? null,
+            'national_id'    => $data['national_id'] ?? null,
+            'position'       => $data['position'] ?? null,
+            'phone'          => $data['phone'] ?? null,
+            'address'        => $data['address'] ?? null,
             'avatar_path'    => $data['avatar_path']    ?? $user->avatar_path,
             'signature_path' => $data['signature_path'] ?? $user->signature_path,
         ])->save();

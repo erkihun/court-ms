@@ -13,6 +13,12 @@
     : (auth()->user()?->hasPermission('cases.assign') ?? false);
 
     $currentStatus = $case->status ?? 'pending';
+    $reviewStatus  = $case->review_status ?? 'accepted';
+    $reviewNote    = $case->review_note ?? null;
+
+    $canReview = function_exists('userHasPermission')
+        ? userHasPermission('cases.review')
+        : (auth()->user()?->can('cases.review') ?? false);
 
     $statuses = [
     'pending' => __('cases.status.pending'),
@@ -29,6 +35,19 @@
     'dismissed' => 'bg-rose-100 text-rose-800 border border-rose-300',
     'closed' => 'bg-emerald-100 text-emerald-800 border border-emerald-300',
     default => 'bg-gray-100 text-gray-800 border border-gray-300',
+    };
+
+    $reviewChip = fn (string $s) => match ($s) {
+        'awaiting_review' => 'bg-amber-100 text-amber-800 border border-amber-300',
+        'returned'        => 'bg-yellow-100 text-yellow-800 border border-yellow-300',
+        'rejected'        => 'bg-rose-100 text-rose-800 border border-rose-300',
+        default           => 'bg-emerald-100 text-emerald-800 border border-emerald-300',
+    };
+    $reviewLabel = fn (string $s) => match ($s) {
+        'awaiting_review' => 'Awaiting approval',
+        'returned'        => 'Needs correction',
+        'rejected'        => 'Rejected',
+        default           => 'Approved',
     };
     @endphp
 
@@ -128,12 +147,26 @@
                     {{ $currentStatus }}
                 </span>
 
+                <span class="px-3 py-1.5 rounded-full text-xs font-medium capitalize {{ $reviewChip($reviewStatus) }}">
+                    {{ $reviewLabel($reviewStatus) }}
+                </span>
+
 
 
             </div>
 
 
             <div class="flex flex-wrap items-center gap-2">
+                @if(in_array($reviewStatus, ['awaiting_review','returned']) && $canReview)
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" class="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-sm font-medium text-white"
+                        onclick="submitReviewDecision('accept')">Accept</button>
+                    <button type="button" class="px-4 py-2 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-sm font-medium text-white"
+                        onclick="openReviewModal('return')">Return</button>
+                    <button type="button" class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-sm font-medium text-white"
+                        onclick="openReviewModal('reject')">Reject</button>
+                </div>
+                @endif
                 @if($canAssign)
                 <a href="{{ route('cases.assign.form', $case->id) }}"
                     class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-sm font-medium text-white transition-colors duration-150 flex items-center gap-1">
@@ -161,6 +194,60 @@
             </div>
         </div>
     </div>
+
+    {{-- Review status + note --}}
+    <div class="p-3 rounded-xl border border-gray-200 bg-white shadow-sm mb-3">
+        <div class="flex flex-col gap-2">
+            <div class="flex flex-wrap items-center gap-3">
+                <span class="text-sm font-semibold text-gray-900">Review status:</span>
+                <span class="px-3 py-1.5 rounded-full text-xs font-medium capitalize {{ $reviewChip($reviewStatus) }}">
+                    {{ $reviewLabel($reviewStatus) }}
+                </span>
+                @if(!empty($case->reviewed_at))
+                <span class="text-xs text-gray-500">
+                    Updated {{ \Illuminate\Support\Carbon::parse($case->reviewed_at)->format('M d, Y h:i A') }}
+                </span>
+                @endif
+            </div>
+            @if(!empty($reviewNote))
+            <div class="text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                <div class="text-xs uppercase text-gray-500 font-semibold mb-1">Reviewer note</div>
+                <div>{{ $reviewNote }}</div>
+            </div>
+            @elseif(in_array($reviewStatus, ['returned','rejected']))
+            <div class="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                Please add a reviewer note for returned/rejected decisions.
+            </div>
+            @endif
+        </div>
+    </div>
+
+    {{-- Modal for return/reject note --}}
+    <div id="review-modal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-30">
+        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full p-5 border border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2" id="review-modal-title">Review decision</h3>
+            <form method="POST" action="{{ route('cases.review.update', $case->id) }}" id="review-form" class="space-y-3">
+                @csrf
+                @method('PATCH')
+                <input type="hidden" name="decision" id="review-decision" value="">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Reason / note</label>
+                    <textarea name="note" id="review-note" rows="3" required
+                        class="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-900 focus:ring-2 focus:ring-blue-600 focus:border-blue-600"></textarea>
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="closeReviewModal()" class="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-800 border border-gray-300">Cancel</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-sm font-medium text-white">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <form id="review-quick-form" method="POST" action="{{ route('cases.review.update', $case->id) }}" class="hidden">
+        @csrf
+        @method('PATCH')
+        <input type="hidden" name="decision" id="review-quick-decision" value="accept">
+        <input type="hidden" name="note" value="">
+    </form>
 
     {{-- Status change (admins) --}}
     @if($canEditStatus)
@@ -292,6 +379,15 @@
                         </svg>
                         <span class="font-medium">{{ __('cases.navigation.messages') }}</span>
                     </button>
+
+                    <button @click="switchSection('audits')"
+                        :class="activeSection === 'audits' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'"
+                        class="flex items-center gap-3 px-3 py-2 rounded-lg border border-transparent transition-all duration-200 group w-full text-left">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" :class="activeSection === 'audits' ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-600'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h8" />
+                        </svg>
+                        <span class="font-medium">Case Audits</span>
+                    </button>
                 </nav>
             </div>
         </div>
@@ -395,6 +491,68 @@
                     </div>
                 </div>
 
+            </section>
+
+            {{-- Case Audits --}}
+            <section x-show="activeSection === 'audits'"
+                x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0 transform translate-y-4"
+                x-transition:enter-end="opacity-100 transform translate-y-0"
+                class="p-6 rounded-xl border border-gray-200 bg-white shadow-sm space-y-3">
+                <div class="flex items-center justify-between border-b border-gray-200 pb-3">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                        Case Audit Trail
+                    </h3>
+                    <span class="text-xs text-gray-500">{{ ($audits ?? collect())->count() }} entries</span>
+                </div>
+                @if(($audits ?? collect())->isEmpty())
+                <div class="text-gray-500 text-sm border border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
+                    No audit records yet.
+                </div>
+                @else
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                        <thead class="bg-gray-50 text-gray-700">
+                            <tr>
+                                <th class="p-2 text-left">When</th>
+                                <th class="p-2 text-left">Action</th>
+                                <th class="p-2 text-left">Actor</th>
+                                <th class="p-2 text-left">Details</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @foreach($audits as $a)
+                            <tr class="hover:bg-gray-50">
+                                <td class="p-2 text-gray-700 whitespace-nowrap">
+                                    {{ \Illuminate\Support\Carbon::parse($a->created_at)->format('M d, Y H:i') }}
+                                </td>
+                                <td class="p-2 text-gray-900 font-medium">{{ str_replace('_',' ', ucfirst($a->action)) }}</td>
+                                <td class="p-2 text-gray-700 text-xs">
+                                    @if(!empty($a->actor_name))
+                                        {{ $a->actor_name }} @if($a->actor_id)(#{{ $a->actor_id }})@endif
+                                    @elseif(!empty($a->actor_id))
+                                        {{ $a->actor_type ?? 'system' }} (#{{ $a->actor_id }})
+                                    @else
+                                        {{ $a->actor_type ?? 'system' }}
+                                    @endif
+                                </td>
+                                <td class="p-2 text-gray-700 text-xs">
+                                    @php $meta = $a->meta ? json_decode($a->meta, true) : []; @endphp
+                                    @if($meta)
+                                    <pre class="bg-gray-100 border border-gray-200 rounded px-2 py-1 whitespace-pre-wrap text-[11px]">{{ json_encode($meta, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES) }}</pre>
+                                    @else
+                                    <span class="text-gray-400">-</span>
+                                    @endif
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @endif
             </section>
 
             {{-- Case Details --}}
@@ -911,3 +1069,29 @@
         </div>
     </div>
 </x-admin-layout>
+
+<script>
+    function openReviewModal(decision) {
+        const modal = document.getElementById('review-modal');
+        document.getElementById('review-decision').value = decision;
+        document.getElementById('review-note').value = '';
+        const title = decision === 'return' ? 'Return for correction' : 'Reject case';
+        document.getElementById('review-modal-title').textContent = title;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.getElementById('review-note').focus();
+    }
+    function closeReviewModal() {
+        const modal = document.getElementById('review-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+    function submitReviewDecision(decision) {
+        if (decision === 'accept') {
+            document.getElementById('review-quick-decision').value = decision;
+            document.getElementById('review-quick-form').submit();
+            return;
+        }
+        openReviewModal(decision);
+    }
+</script>

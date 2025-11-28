@@ -12,6 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         // Add/keep your other aliases here too
         $middleware->alias([
+            'force.password.change' => \App\Http\Middleware\ForcePasswordChange::class,
             'perm' => \App\Http\Middleware\RequirePermission::class,
         ]);
 

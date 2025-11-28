@@ -1,6 +1,7 @@
 {{-- resources/views/roles/index.blade.php --}}
 <x-admin-layout title="Roles">
     @section('page_header','Roles')
+    <style>[x-cloak]{display:none !important;}</style>
 
     <div x-data="rolesPage()" class="space-y-4">
 
@@ -156,10 +157,11 @@
 
     {{-- Delete modal --}}
     <div
+        x-cloak
         x-show="modal.open"
         x-transition.opacity
         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-        <div x-show="modal.open" x-transition
+        <div x-cloak x-show="modal.open" x-transition
             class="w-full max-w-md rounded-xl bg-white shadow-xl border border-gray-200">
             <div class="px-5 py-4 border-b border-gray-200">
                 <h3 class="text-base font-semibold text-gray-900">Delete role</h3>

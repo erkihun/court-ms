@@ -39,6 +39,9 @@ class ApplicantCaseController extends Controller
                 'c.case_number',
                 'c.title',
                 'c.status',
+                'c.review_status',
+                'c.review_note',
+                'c.reviewed_at',
                 'c.filing_date',
                 'ct.name as case_type',
 
@@ -174,6 +177,7 @@ class ApplicantCaseController extends Controller
                 'filing_date'        => $data['filing_date'],
                 'first_hearing_date' => $data['first_hearing_date'] ?? null,
                 'status'             => 'pending',
+                'review_status'      => 'awaiting_review',
                 'assigned_user_id'   => null,
                 'assigned_at'        => null,
                 'notes'              => $data['notes'] ?? null,
@@ -398,6 +402,39 @@ class ApplicantCaseController extends Controller
             );
         }
 
+        $audits = DB::table('case_audits')
+            ->where('case_id', $id)
+            ->orderByDesc('id')
+            ->limit(200)
+            ->get();
+
+        // Enrich audits with actor names
+        $userNames = collect();
+        $applicantNames = collect();
+        $userIds = $audits->where('actor_type', 'user')->pluck('actor_id')->filter()->unique();
+        $applicantIds = $audits->where('actor_type', 'applicant')->pluck('actor_id')->filter()->unique();
+
+        if ($userIds->isNotEmpty()) {
+            $userNames = DB::table('users')->whereIn('id', $userIds)->pluck('name', 'id');
+        }
+        if ($applicantIds->isNotEmpty()) {
+            $applicantNames = DB::table('applicants')
+                ->whereIn('id', $applicantIds)
+                ->select('id', 'first_name', 'last_name')
+                ->get()
+                ->mapWithKeys(fn($r) => [$r->id => trim(($r->first_name ?? '') . ' ' . ($r->last_name ?? ''))]);
+        }
+
+        foreach ($audits as $a) {
+            if ($a->actor_type === 'user' && $a->actor_id) {
+                $a->actor_name = $userNames[$a->actor_id] ?? null;
+            } elseif ($a->actor_type === 'applicant' && $a->actor_id) {
+                $a->actor_name = $applicantNames[$a->actor_id] ?? null;
+            } else {
+                $a->actor_name = null;
+            }
+        }
+
         return view('applicant.cases.show', compact(
             'case',
             'timeline',
@@ -405,7 +442,8 @@ class ApplicantCaseController extends Controller
             'msgs',
             'hearings',
             'docs',
-            'witnesses'
+            'witnesses',
+            'audits'
         ));
     }
 
@@ -576,6 +614,9 @@ class ApplicantCaseController extends Controller
                 'case_type_id'       => $data['case_type_id'],
 
                 'filing_date'        => $data['filing_date'],
+                'review_status'      => 'awaiting_review',
+                'reviewed_by_user_id'=> null,
+                'reviewed_at'        => null,
                 'updated_at'         => now(),
             ]);
 
@@ -650,6 +691,11 @@ class ApplicantCaseController extends Controller
             }
 
             DB::commit();
+            $case = DB::table('court_cases')->where('id', $id)->first();
+            if ($case) {
+                $this->notifyAdminCaseUpdated($case, $me);
+                $this->logCaseAudit($id, 'applicant_updated', ['sections' => 'case_core']);
+            }
             return redirect()->route('applicant.cases.show', $id)->with('success', 'Case updated.');
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -749,6 +795,11 @@ class ApplicantCaseController extends Controller
             'updated_at'                => now(),
         ]);
 
+        $this->logCaseAudit($id, 'file_uploaded', [
+            'label' => $data['label'] ?? null,
+            'path'  => $path,
+        ]);
+
         return back()->with('success', 'File uploaded.');
     }
 
@@ -766,6 +817,11 @@ class ApplicantCaseController extends Controller
 
         Storage::disk('public')->delete($file->path);
         DB::table('case_files')->where('id', $fileId)->delete();
+
+        $this->logCaseAudit($id, 'file_deleted', [
+            'file_id' => $fileId,
+            'label'   => $file->label ?? null,
+        ]);
 
         return back()->with('success', 'File removed.');
     }
@@ -802,9 +858,14 @@ class ApplicantCaseController extends Controller
         $to = $assigneeEmail ?: config('mail.from.address');
 
         if ($to) {
-            $preview = mb_strimwidth($data['body'], 0, 180, '…');
+            $preview = mb_strimwidth($data['body'], 0, 180, '...');
             Mail::to($to)->send(new CaseMessageMail($caseRow, 'Applicant', $preview));
         }
+
+        $this->logCaseAudit($id, 'message_posted', [
+            'by'   => 'applicant',
+            'body' => mb_strimwidth($data['body'], 0, 200, '...'),
+        ]);
 
         return back()->with('success', 'Message sent.');
     }
@@ -1055,4 +1116,58 @@ class ApplicantCaseController extends Controller
     {
         return str_word_count(strip_tags($html));
     }
+
+    /**
+     * Notify admins/reviewers that the applicant changed the case (triggers admin notifications + email).
+     */
+    private function notifyAdminCaseUpdated(object $case, int $applicantId): void
+    {
+        try {
+            $body = 'Applicant updated the case details. Please review the submission.';
+            DB::table('case_messages')->insert([
+                'case_id'             => $case->id,
+                'sender_applicant_id' => $applicantId,
+                'sender_user_id'      => null,
+                'body'                => $body,
+                'created_at'          => now(),
+                'updated_at'          => now(),
+            ]);
+
+            $to = null;
+            if (!empty($case->assigned_user_id)) {
+                $to = DB::table('users')->where('id', $case->assigned_user_id)->value('email');
+            }
+            $to = $to ?: config('mail.from.address');
+
+            if ($to) {
+                $preview = mb_strimwidth($body, 0, 180, '...');
+                Mail::to($to)->send(new CaseMessageMail($case, 'Applicant', $preview));
+            }
+        } catch (\Throwable $e) {
+            Log::error('Failed sending admin update notification', [
+                'case_id' => $case->id ?? null,
+                'error'   => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Record a case audit entry as applicant.
+     */
+    private function logCaseAudit(int $caseId, string $action, array $meta = []): void
+    {
+        try {
+            DB::table('case_audits')->insert([
+                'case_id'    => $caseId,
+                'action'     => $action,
+                'actor_type' => 'applicant',
+                'actor_id'   => auth('applicant')->id(),
+                'meta'       => empty($meta) ? null : json_encode($meta),
+                'created_at' => now(),
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Failed to log applicant case audit', ['case_id' => $caseId, 'action' => $action, 'error' => $e->getMessage()]);
+        }
+    }
 }
+

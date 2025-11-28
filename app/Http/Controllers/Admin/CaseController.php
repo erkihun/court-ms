@@ -30,6 +30,13 @@ class CaseController extends Controller
         $from       = $request->date('from'); // yyyy-mm-dd
         $to         = $request->date('to');   // yyyy-mm-dd
 
+        $isReviewer = false;
+        if (function_exists('userHasPermission')) {
+            $isReviewer = (bool) userHasPermission('cases.review');
+        } elseif (Auth::user()) {
+            $isReviewer = (bool) Auth::user()->can('cases.review');
+        }
+
         $builder = DB::table('court_cases as c')
             ->leftJoin('case_types as ct', 'ct.id', '=', 'c.case_type_id')
 
@@ -56,6 +63,7 @@ class CaseController extends Controller
         if ($assigneeId)      $builder->where('c.assigned_user_id', $assigneeId);
         if ($from)            $builder->whereDate('c.filing_date', '>=', $from->format('Y-m-d'));
         if ($to)              $builder->whereDate('c.filing_date', '<=', $to->format('Y-m-d'));
+        if (!$isReviewer)     $builder->where('c.review_status', 'accepted');
 
         $cases = $builder
             ->orderByRaw('COALESCE(c.created_at, c.filing_date) DESC')
@@ -78,7 +86,8 @@ class CaseController extends Controller
             'to',
             'types',
 
-            'users'
+            'users',
+            'isReviewer'
         ));
     }
 
@@ -201,6 +210,10 @@ class CaseController extends Controller
                 'updated_at'       => Carbon::now(),
             ]);
 
+        $this->logCaseAudit($caseId, $assigning ? 'assigned' : 'unassigned', [
+            'assigned_user_id' => $assigning ? $validated['assigned_user_id'] : null,
+        ]);
+
         return redirect()
             ->route('cases.index')
             ->with('success', $assigning ? 'Case assigned successfully.' : 'Case unassigned.');
@@ -299,6 +312,39 @@ class CaseController extends Controller
             ->orderBy('full_name')
             ->get();
 
+        $audits = DB::table('case_audits')
+            ->where('case_id', $id)
+            ->orderByDesc('id')
+            ->limit(200)
+            ->get();
+
+        // Enrich audits with actor names
+        $userNames = collect();
+        $applicantNames = collect();
+        $userIds = $audits->where('actor_type', 'user')->pluck('actor_id')->filter()->unique();
+        $applicantIds = $audits->where('actor_type', 'applicant')->pluck('actor_id')->filter()->unique();
+
+        if ($userIds->isNotEmpty()) {
+            $userNames = DB::table('users')->whereIn('id', $userIds)->pluck('name', 'id');
+        }
+        if ($applicantIds->isNotEmpty()) {
+            $applicantNames = DB::table('applicants')
+                ->whereIn('id', $applicantIds)
+                ->select('id', 'first_name', 'last_name')
+                ->get()
+                ->mapWithKeys(fn($r) => [$r->id => trim(($r->first_name ?? '') . ' ' . ($r->last_name ?? ''))]);
+        }
+
+        foreach ($audits as $a) {
+            if ($a->actor_type === 'user' && $a->actor_id) {
+                $a->actor_name = $userNames[$a->actor_id] ?? null;
+            } elseif ($a->actor_type === 'applicant' && $a->actor_id) {
+                $a->actor_name = $applicantNames[$a->actor_id] ?? null;
+            } else {
+                $a->actor_name = null;
+            }
+        }
+
         return view('admin.cases.show', [
             'case'       => $case,
             'timeline'   => $timeline,
@@ -307,7 +353,63 @@ class CaseController extends Controller
             'hearings'   => $hearings,
             'docs'       => $docs,        // empty collection; Blade stays compatible
             'witnesses'  => $witnesses,
+            'audits'     => $audits,
         ]);
+    }
+
+    /**
+     * Registrar/Reviewer: accept, return for correction, or reject a submitted case.
+     */
+    public function reviewDecision(Request $request, int $id)
+    {
+        $case = DB::table('court_cases')->where('id', $id)->first();
+        abort_if(!$case, 404, 'Case not found.');
+
+        $data = $request->validate([
+            'decision' => ['required', 'in:accept,return,reject'],
+            'note'     => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $decision = $data['decision'];
+        $note     = trim((string) ($data['note'] ?? ''));
+
+        if (in_array($decision, ['return', 'reject'], true) && $note === '') {
+            return back()->withErrors(['note' => 'Please add a note when returning or rejecting.'])->withInput();
+        }
+
+        $newStatus = match ($decision) {
+            'accept' => 'accepted',
+            'return' => 'returned', // needs applicant correction
+            'reject' => 'rejected',
+        };
+
+        DB::table('court_cases')->where('id', $id)->update([
+            'review_status'       => $newStatus,
+            'review_note'         => $note !== '' ? $note : null,
+            'reviewed_by_user_id' => Auth::id(),
+            'reviewed_at'         => now(),
+            'updated_at'          => now(),
+        ]);
+
+        $this->logCaseAudit($id, 'review_decision', [
+            'decision' => $newStatus,
+            'note'     => $note ?: null,
+        ]);
+
+        $this->notifyApplicantOfReview($case, $newStatus, $note);
+
+        return back()->with('success', 'Review updated: ' . ucfirst($newStatus) . '.');
+    }
+
+    /**
+     * POST alias (legacy) for reviewDecision; expects case_id/id in the payload.
+     */
+    public function review(Request $request)
+    {
+        $caseId = $request->integer('case_id') ?: $request->integer('id');
+        abort_if(!$caseId, 400, 'Case id is required.');
+
+        return $this->reviewDecision($request, $caseId);
     }
 
     /**
@@ -368,6 +470,12 @@ class CaseController extends Controller
             'updated_at'         => now(),
         ]);
 
+        $this->logCaseAudit($id, 'status_updated', [
+            'from' => $old,
+            'to'   => $new,
+            'note' => $data['note'] ?? null,
+        ]);
+
         // Optional: visible note to thread
         if (!empty($data['note'])) {
             DB::table('case_messages')->insert([
@@ -424,6 +532,11 @@ class CaseController extends Controller
             Log::error('Admin message email failed', ['case_id' => $id, 'error' => $e->getMessage()]);
         }
 
+        $this->logCaseAudit($id, 'message_posted', [
+            'by'   => 'admin',
+            'body' => mb_strimwidth($data['body'], 0, 200, '...'),
+        ]);
+
         return back()->with('success', 'Message sent to applicant.');
     }
 
@@ -451,6 +564,13 @@ class CaseController extends Controller
             'created_by_user_id' => Auth::id(),
             'created_at'         => now(),
             'updated_at'         => now(),
+        ]);
+
+        $this->logCaseAudit($case, 'hearing_created', [
+            'hearing_id' => $hearingId,
+            'when'       => $data['hearing_at'],
+            'location'   => $data['location'] ?? null,
+            'type'       => $data['type'] ?? null,
         ]);
 
         // Email applicant (best-effort)
@@ -499,6 +619,11 @@ class CaseController extends Controller
             'updated_at' => now(),
         ]);
 
+        $this->logCaseAudit($h->case_id, 'hearing_updated', [
+            'hearing_id' => $hearing,
+            'when'       => $data['hearing_at'],
+        ]);
+
         return back()->with('success', 'Hearing updated.');
     }
 
@@ -507,7 +632,11 @@ class CaseController extends Controller
      */
     public function deleteHearing(int $hearing)
     {
+        $caseId = DB::table('case_hearings')->where('id', $hearing)->value('case_id');
         DB::table('case_hearings')->where('id', $hearing)->delete();
+        if ($caseId) {
+            $this->logCaseAudit($caseId, 'hearing_deleted', ['hearing_id' => $hearing]);
+        }
         return back()->with('success', 'Hearing removed.');
     }
 
@@ -538,6 +667,11 @@ class CaseController extends Controller
             'updated_at'                => now(),
         ]);
 
+        $this->logCaseAudit($case, 'file_uploaded', [
+            'label' => $data['label'] ?? null,
+            'path'  => $stored,
+        ]);
+
         return back()->with('success', 'File uploaded.');
     }
 
@@ -553,6 +687,11 @@ class CaseController extends Controller
             Storage::disk('public')->delete($row->path);
         }
         DB::table('case_files')->where('id', $file)->delete();
+
+        $this->logCaseAudit($row->case_id, 'file_deleted', [
+            'file_id' => $file,
+            'label'   => $row->label ?? null,
+        ]);
 
         return back()->with('success', 'File removed.');
     }
@@ -670,6 +809,73 @@ class CaseController extends Controller
     {
         if (!userHasPermission('cases.view')) {
             abort(403, 'You do not have permission: cases.view');
+        }
+    }
+
+    /**
+     * Send a review decision note to the applicant (message + optional email).
+     */
+    private function notifyApplicantOfReview(object $case, string $reviewStatus, ?string $note): void
+    {
+        if (empty($case->applicant_id)) {
+            return;
+        }
+
+        $decisionText = match ($reviewStatus) {
+            'accepted' => 'accepted',
+            'returned' => 'returned for correction',
+            'rejected' => 'rejected',
+            default    => $reviewStatus,
+        };
+
+        $body = "Your case {$case->case_number} has been {$decisionText}.";
+        if ($note !== '') {
+            $body .= "\n\nNotes from reviewer:\n{$note}";
+        }
+
+        DB::table('case_messages')->insert([
+            'case_id'             => $case->id,
+            'sender_user_id'      => Auth::id(),
+            'sender_applicant_id' => null,
+            'body'                => $body,
+            'created_at'          => now(),
+            'updated_at'          => now(),
+        ]);
+
+        try {
+            $to = DB::table('applicants')->where('id', $case->applicant_id)->value('email');
+            if ($to) {
+                $prefs = DB::table('applicant_notification_prefs')->where('applicant_id', $case->applicant_id)->first();
+                $wants = !$prefs || ($prefs->email_message ?? true);
+
+                if ($wants) {
+                    $preview = mb_strimwidth($body, 0, 180, '...');
+                    Mail::to($to)->send(new \App\Mail\CaseMessageMail($case, 'Court Staff', $preview));
+                }
+            } else {
+                Log::info('Review note email skipped (no applicant email)', ['case_id' => $case->id]);
+            }
+        } catch (\Throwable $e) {
+            Log::error('Failed sending review decision email', ['case_id' => $case->id, 'error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Record a case audit trail entry.
+     */
+    private function logCaseAudit(int $caseId, string $action, array $meta = []): void
+    {
+        try {
+            DB::table('case_audits')->insert([
+                'case_id'    => $caseId,
+                'action'     => $action,
+                'actor_type' => Auth::check() ? 'user' : 'system',
+                'actor_id'   => Auth::id(),
+                'meta'       => empty($meta) ? null : json_encode($meta),
+                'created_at' => now(),
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Failed to log case audit', ['case_id' => $caseId, 'action' => $action, 'error' => $e->getMessage()]);
         }
     }
 }

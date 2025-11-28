@@ -36,6 +36,9 @@
                         {{ __('cases.table.status') }}
                     </th>
                     <th class="p-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                        Review
+                    </th>
+                    <th class="p-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                         {{ __('cases.table.filed') }}
                     </th>
                     <th class="p-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
@@ -75,6 +78,34 @@
                         <span class="{{ $badgeClass }}">
                             {{ __('cases.status.' . $status) }}
                         </span>
+                    </td>
+                    <td class="p-3">
+                        @php
+                        $review = $c->review_status ?? 'accepted';
+                        $reviewBase = 'inline-flex items-center px-2.5 py-0.5 rounded-full border text-xs font-medium';
+                        $reviewClass = match($review) {
+                        'awaiting_review' => $reviewBase.' bg-amber-50 text-amber-800 border-amber-200',
+                        'returned' => $reviewBase.' bg-yellow-50 text-yellow-800 border-yellow-200',
+                        'rejected' => $reviewBase.' bg-red-50 text-red-800 border-red-200',
+                        default => $reviewBase.' bg-green-50 text-green-800 border-green-200',
+                        };
+                        $reviewLabel = match($review) {
+                        'awaiting_review' => 'Awaiting admin approval',
+                        'returned' => 'Needs correction',
+                        'rejected' => 'Rejected',
+                        default => 'Accepted',
+                        };
+                        @endphp
+                        <div class="space-y-1">
+                            <span class="{{ $reviewClass }}">
+                                {{ $reviewLabel }}
+                            </span>
+                            @if(!empty($c->review_note) && in_array($review, ['returned','rejected']))
+                            <div class="text-[11px] text-slate-600 leading-snug line-clamp-2">
+                                {{ $c->review_note }}
+                            </div>
+                            @endif
+                        </div>
                     </td>
                     <td class="p-3 text-slate-700 whitespace-nowrap">
                         {{ \Illuminate\Support\Carbon::parse($c->filing_date)->format('M d, Y') }}
@@ -119,7 +150,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="6" class="p-6 text-center text-slate-500 text-sm">
+                    <td colspan="7" class="p-6 text-center text-slate-500 text-sm">
                         {{ __('cases.table.no_cases_yet') }}
                     </td>
                 </tr>

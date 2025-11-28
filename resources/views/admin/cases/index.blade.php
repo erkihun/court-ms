@@ -7,7 +7,8 @@
             class="w-full md:w-96 px-3 py-2 rounded bg-white text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-600">
         <button class="px-3 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white">{{ __('cases.search') }}</button>
         @if(($q ?? request('q','')) !== '')
-        <a href="{{ route('cases.index') }}" class="px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800">{{ __('cases.reset') }}</a>
+        <a href="{{ route('cases.index') }}"
+            class="px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800">{{ __('cases.reset') }}</a>
         @endif
     </form>
 
@@ -36,16 +37,21 @@
 
         <div class="flex gap-2">
             <input type="date" name="from" value="{{ optional($from)->format('Y-m-d') }}"
-                class="px-3 py-2 rounded bg-white text-gray-900 border border-gray-300 w-full" placeholder="{{ __('cases.filters.from') }}">
+                class="px-3 py-2 rounded bg-white text-gray-900 border border-gray-300 w-full"
+                placeholder="{{ __('cases.filters.from') }}">
             <input type="date" name="to" value="{{ optional($to)->format('Y-m-d') }}"
-                class="px-3 py-2 rounded bg-white text-gray-900 border border-gray-300 w-full" placeholder="{{ __('cases.filters.to') }}">
+                class="px-3 py-2 rounded bg-white text-gray-900 border border-gray-300 w-full"
+                placeholder="{{ __('cases.filters.to') }}">
         </div>
 
         <div class="lg:col-span-6 flex flex-wrap gap-2">
-            <button class="px-3 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white">{{ __('cases.filters.apply_filters') }}</button>
+            <button
+                class="px-3 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white">{{ __('cases.filters.apply_filters') }}</button>
 
-            @if(request()->hasAny(['q','status','case_type_id','assignee_id','from','to']) && ($q||$status||$caseTypeId||$assigneeId||$from||$to))
-            <a href="{{ route('cases.index') }}" class="px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800">{{ __('cases.reset') }}</a>
+            @if(request()->hasAny(['q','status','case_type_id','assignee_id','from','to']) &&
+            ($q||$status||$caseTypeId||$assigneeId||$from||$to))
+            <a href="{{ route('cases.index') }}"
+                class="px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800">{{ __('cases.reset') }}</a>
             @endif
 
             <a href="{{ route('cases.export', request()->query()) }}"
@@ -81,7 +87,7 @@
                     <td class="p-3 font-mono text-gray-900">{{ $c->case_number }}</td>
                     <td class="p-3 text-gray-900">{{ $c->title }}</td>
                     <td class="p-3 text-gray-900">{{ $c->case_type }}</td>
-                    <td class="p-3 text-gray-900">{{ $c->assignee_name ?? '—' }}</td>
+                    <td class="p-3 text-gray-900">{{ $c->assignee_name ?? '-' }}</td>
 
                     <td class="p-3 capitalize">
                         <span class="px-2 py-0.5 rounded text-xs
@@ -91,6 +97,7 @@
                             @else bg-gray-100 text-gray-800 border border-gray-200 @endif">
                             {{ __('cases.status.' . $c->status) }}
                         </span>
+
                     </td>
 
                     <td class="p-3 text-gray-900">
@@ -99,38 +106,29 @@
 
                     {{-- Review cell --}}
                     <td class="p-3">
-                        @php $rs = $c->review_status ?? 'accepted'; @endphp
+                        @php
+                        $rs = $c->review_status ?? 'accepted';
+                        // Be lenient: check multiple permission helpers so reviewers always see full status.
+                        $canReview = ($isReviewer ?? false);
+                        if (!$canReview && function_exists('userHasPermission')) {
+                            $canReview = userHasPermission('cases.review');
+                        }
+                        if (!$canReview && auth()->check()) {
+                            $canReview = auth()->user()->can('cases.review');
+                        }
+                        $displayRs = $canReview ? $rs : 'accepted';
+                        @endphp
                         <span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded border
                             @class([
-                              'bg-amber-50 text-amber-800 border-amber-200' => $rs==='awaiting_review',
-                              'bg-green-50 text-green-800 border-green-200' => $rs==='accepted',
-                              'bg-yellow-50 text-yellow-800 border-yellow-200' => $rs==='returned',
-                              'bg-red-50 text-red-800 border-red-200' => $rs==='rejected',
-                              'bg-gray-50 text-gray-700 border-gray-200' => !in_array($rs,['awaiting_review','accepted','returned','rejected'])
+                              'bg-amber-50 text-amber-800 border-amber-200' => $displayRs==='awaiting_review',
+                              'bg-green-50 text-green-800 border-green-200' => $displayRs==='accepted',
+                              'bg-yellow-50 text-yellow-800 border-yellow-200' => $displayRs==='returned',
+                              'bg-red-50 text-red-800 border-red-200' => $displayRs==='rejected',
+                              'bg-gray-50 text-gray-700 border-gray-200' => !in_array($displayRs,['awaiting_review','accepted','returned','rejected'])
                             ])">
-                            {{ ucfirst(str_replace('_',' ', $rs)) }}
+                            {{ ucfirst(str_replace('_',' ', $displayRs)) }}
                         </span>
 
-                        {{-- Quick review actions for Registrars --}}
-                        @if(!empty($isReviewer) && in_array($rs, ['awaiting_review','returned']))
-                        <form method="POST" action="{{ route('cases.review.update', $c->id) }}" class="mt-2 flex gap-1">
-                            @csrf
-                            @method('PATCH')
-                            <input type="hidden" name="note" value="">
-                            <button name="decision" value="accept" class="px-2 py-1 text-xs rounded bg-green-600 hover:bg-green-700 text-white">Accept</button>
-                            <button name="decision" value="return" class="px-2 py-1 text-xs rounded bg-yellow-600 hover:bg-yellow-700 text-white" onclick="return promptNote(this)">Return</button>
-                            <button name="decision" value="reject" class="px-2 py-1 text-xs rounded bg-red-600 hover:bg-red-700 text-white" onclick="return promptNote(this)">Reject</button>
-                        </form>
-                        <script>
-                            function promptNote(btn) {
-                                const form = btn.closest('form');
-                                const note = prompt('Add a short note / reason (required):', '');
-                                if (!note) return false;
-                                form.querySelector('input[name=note]').value = note;
-                                return true;
-                            }
-                        </script>
-                        @endif
                     </td>
 
                     {{-- Actions --}}
