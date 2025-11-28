@@ -52,6 +52,10 @@ Route::middleware('auth')->group(function () {
 
     Route::post('confirm-password', [ConfirmablePasswordController::class, 'store']);
 
+    // Force password change screen when user is flagged
+    Route::get('force-password', [\App\Http\Controllers\Auth\ForcePasswordController::class, 'show'])
+        ->name('password.force');
+
     Route::put('password', [PasswordController::class, 'update'])->name('password.update');
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])

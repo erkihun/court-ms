@@ -29,15 +29,21 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        // Normalize national ID (strip non-digits)
+        $normalizedNationalId = preg_replace('/\D+/', '', (string) $request->input('national_id_number'));
+        $request->merge(['national_id_number' => $normalizedNationalId]);
+
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'national_id_number' => ['required', 'digits:16'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
+            'national_id' => $normalizedNationalId,
             'password' => Hash::make($request->password),
         ]);
 

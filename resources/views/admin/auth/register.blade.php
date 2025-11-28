@@ -16,6 +16,25 @@
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
+        <!-- National ID -->
+        <div class="mt-4">
+            <x-input-label for="national_id_number" :value="__('National ID')" />
+            <input id="national_id_number"
+                name="national_id_number"
+                value="{{ old('national_id_number') }}"
+                required
+                inputmode="numeric"
+                autocomplete="off"
+                maxlength="19"
+                pattern="\d{4}\s\d{4}\s\d{4}\s\d{4}"
+                title="{{ __('auth.national_id_format') }}"
+                placeholder="{{ __('auth.national_id_placeholder') }}"
+                aria-describedby="national_id_help"
+                class="block mt-1 w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-gray-900" />
+            <p id="national_id_help" class="text-xs text-gray-500 mt-1">{{ __('auth.national_id_hint') }}</p>
+            <x-input-error :messages="$errors->get('national_id_number')" class="mt-2" />
+        </div>
+
         <!-- Password -->
         <div class="mt-4">
             <x-input-label for="password" :value="__('Password')" />
@@ -49,4 +68,30 @@
             </x-primary-button>
         </div>
     </form>
+
+    {{-- National ID auto-formatter --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const idInput = document.querySelector('input[name="national_id_number"]');
+            if (idInput) {
+                const format = (val) => {
+                    const digits = (val || '').replace(/\D/g, '').slice(0, 16);
+                    const parts = digits.match(/.{1,4}/g) || [];
+                    return parts.join(' ');
+                };
+
+                // Format prefilled value (e.g., old input)
+                idInput.value = format(idInput.value);
+
+                idInput.addEventListener('input', (e) => {
+                    const after = format(e.target.value);
+                    e.target.value = after;
+                });
+
+                idInput.addEventListener('blur', () => {
+                    idInput.value = format(idInput.value);
+                });
+            }
+        });
+    </script>
 </x-guest-layout>

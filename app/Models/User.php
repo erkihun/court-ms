@@ -19,7 +19,14 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'must_change_password',
         'status',          // 'active' | 'inactive'
+        'gender',
+        'date_of_birth',
+        'national_id',
+        'position',
+        'phone',
+        'address',
         'avatar_path',
         'signature_path',
     ];
@@ -40,6 +47,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password'          => 'hashed',
+            'must_change_password' => 'boolean',
+            'date_of_birth'     => 'date',
         ];
     }
 

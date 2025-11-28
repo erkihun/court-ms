@@ -23,16 +23,65 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm text-gray-700">Password</label>
-                    <input name="password" type="password"
-                        class="mt-1 w-full px-3 py-2 rounded bg-white text-gray-900 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
-                    @error('password') <p class="text-red-500 text-sm">{{ $message }}</p> @enderror
+                    <label class="block text-sm text-gray-700">Gender</label>
+                    <select name="gender" class="mt-1 w-full px-3 py-2 rounded bg-white text-gray-900 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                        <option value="">Select</option>
+                        <option value="male" @selected(old('gender')==='male')>Male</option>
+                        <option value="female" @selected(old('gender')==='female')>Female</option>
+                        <option value="other" @selected(old('gender')==='other')>Other</option>
+                    </select>
+                    @error('gender') <p class="text-red-500 text-sm">{{ $message }}</p> @enderror
                 </div>
                 <div>
-                    <label class="block text-sm text-gray-700">Confirm Password</label>
-                    <input name="password_confirmation" type="password"
+                    <label class="block text-sm text-gray-700">Date of Birth</label>
+                    <input name="date_of_birth" type="date" value="{{ old('date_of_birth') }}"
                         class="mt-1 w-full px-3 py-2 rounded bg-white text-gray-900 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                    @error('date_of_birth') <p class="text-red-500 text-sm">{{ $message }}</p> @enderror
                 </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm text-gray-700">National ID</label>
+                    <input name="national_id" value="{{ old('national_id') }}"
+                        inputmode="numeric" maxlength="19"
+                        placeholder="0000 0000 0000 0000"
+                        oninput="
+                            const digits = this.value.replace(/\\D/g, '').slice(0,16);
+                            this.value = (digits.match(/.{1,4}/g) || []).join(' ');
+                        "
+                        class="mt-1 w-full px-3 py-2 rounded bg-white text-gray-900 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                        aria-describedby="national_id_help">
+                    @error('national_id') <p class="text-red-500 text-sm">{{ $message }}</p> @enderror
+                    <p id="national_id_help" class="text-xs text-gray-500 mt-1">Enter 16 digits; spaces are added automatically.</p>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-700">Position</label>
+                    <input name="position" value="{{ old('position') }}"
+                        class="mt-1 w-full px-3 py-2 rounded bg-white text-gray-900 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                    @error('position') <p class="text-red-500 text-sm">{{ $message }}</p> @enderror
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm text-gray-700">Phone</label>
+                    <input name="phone" value="{{ old('phone') }}"
+                        class="mt-1 w-full px-3 py-2 rounded bg-white text-gray-900 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                    @error('phone') <p class="text-red-500 text-sm">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-700">Address</label>
+                    <input name="address" value="{{ old('address') }}"
+                        class="mt-1 w-full px-3 py-2 rounded bg-white text-gray-900 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                    @error('address') <p class="text-red-500 text-sm">{{ $message }}</p> @enderror
+                </div>
+            </div>
+
+            <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                The user will be created with the default password
+                <span class="font-semibold">{{ config('auth.default_user_password', 'ChangeMe123!') }}</span>
+                and must change it at first login.
             </div>
 
             <div>

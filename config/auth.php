@@ -67,4 +67,15 @@ return [
     */
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Default user password for admin-created accounts
+    |--------------------------------------------------------------------------
+    |
+    | When an admin creates a new user without specifying a password, this
+    | value will be used and the user will be forced to change it at first login.
+    |
+    */
+    'default_user_password' => env('DEFAULT_USER_PASSWORD', 'ChangeMe123!'),
+
 ];

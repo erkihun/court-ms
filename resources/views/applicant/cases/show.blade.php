@@ -101,11 +101,43 @@
                     in_array($status, ['closed','dismissed']) => $statusBase.' bg-slate-100 text-slate-700 border-slate-200',
                     default => $statusBase.' bg-slate-50 text-slate-700 border-slate-200',
                     };
+
+                    $reviewStatus = $case->review_status ?? 'accepted';
+                    $reviewBase = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border';
+                    $reviewClass = match ($reviewStatus) {
+                        'awaiting_review' => $reviewBase.' bg-amber-50 text-amber-800 border-amber-200',
+                        'returned' => $reviewBase.' bg-yellow-50 text-yellow-800 border-yellow-200',
+                        'rejected' => $reviewBase.' bg-red-50 text-red-800 border-red-200',
+                        default => $reviewBase.' bg-emerald-50 text-emerald-800 border-emerald-200',
+                    };
+                    $reviewLabel = match ($reviewStatus) {
+                        'awaiting_review' => 'Awaiting approval',
+                        'returned' => 'Needs correction',
+                        'rejected' => 'Rejected',
+                        default => 'Approved',
+                    };
                     @endphp
 
-                    <span class="{{ $statusClass }}">
-                        {{ __('cases.status.' . $case->status) }}
-                    </span>
+                    <div class="flex flex-col gap-1">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="{{ $statusClass }}">
+                                {{ __('cases.status.' . $case->status) }}
+                            </span>
+                            <span class="{{ $reviewClass }}">
+                                {{ $reviewLabel }}
+                            </span>
+                        </div>
+                        @if(!empty($case->review_note))
+                        <div class="text-xs text-slate-600 leading-snug max-w-3xl">
+                            <span class="font-semibold text-slate-700">Reviewer note:</span>
+                            {{ $case->review_note }}
+                            @if($reviewStatus === 'returned' && $case->status === 'pending')
+                            <a href="{{ route('applicant.cases.edit', $case->id) }}"
+                                class="text-blue-700 font-semibold hover:underline ml-1">Edit your case</a>
+                            @endif
+                        </div>
+                        @endif
+                    </div>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">
@@ -131,6 +163,20 @@
 
         {{-- LEFT: CASE INFO + RESPONDENT + DESCRIPTION + RELIEF + DOCS + WITNESSES --}}
         <section class="lg:col-span-2 rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-5">
+            @php $reviewStatus = $reviewStatus ?? ($case->review_status ?? 'accepted'); @endphp
+            @if($reviewStatus === 'returned')
+            <div class="rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-900">
+                This case needs corrections based on the reviewer note above. Update your filing and resubmit.
+            </div>
+            @elseif($reviewStatus === 'rejected')
+            <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-900">
+                This case has been rejected. Please review the reviewer note above for details.
+            </div>
+            @elseif($reviewStatus === 'awaiting_review')
+            <div class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                Your submission is awaiting admin approval. We will notify you once a decision is made.
+            </div>
+            @endif
 
             {{-- CASE INFO --}}
             <div>
@@ -484,6 +530,44 @@
                         </button>
                     </div>
                 </form>
+            </aside>
+
+            {{-- CASE AUDIT --}}
+            <aside class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-semibold text-slate-800">Case Audit Trail</h3>
+                    <span class="text-[11px] text-slate-500">{{ ($audits ?? collect())->count() }}</span>
+                </div>
+                @if(($audits ?? collect())->isEmpty())
+                <div class="text-slate-500 text-sm border border-dashed border-slate-300 rounded-lg p-4 text-center bg-slate-50">
+                    No audit records yet.
+                </div>
+                @else
+                <div class="max-h-64 overflow-y-auto space-y-3 text-sm">
+                    @foreach($audits as $a)
+                    @php $meta = $a->meta ? json_decode($a->meta, true) : []; @endphp
+                    <div class="p-3 rounded-lg border border-slate-200 bg-slate-50">
+                        <div class="text-xs text-slate-500 flex items-center gap-2">
+                            <span>{{ \Illuminate\Support\Carbon::parse($a->created_at)->format('M d, Y H:i') }}</span>
+                            <span class="px-2 py-0.5 rounded-full border bg-white text-slate-700">{{ ucfirst(str_replace('_',' ', $a->action)) }}</span>
+                        </div>
+                        <div class="text-[11px] text-slate-600 mt-1">
+                            Actor:
+                            @if(!empty($a->actor_name))
+                                {{ $a->actor_name }} @if($a->actor_id)(#{{ $a->actor_id }})@endif
+                            @elseif(!empty($a->actor_id))
+                                {{ $a->actor_type ?? 'system' }} (#{{ $a->actor_id }})
+                            @else
+                                {{ $a->actor_type ?? 'system' }}
+                            @endif
+                        </div>
+                        @if($meta)
+                        <pre class="mt-2 bg-white border border-slate-200 rounded px-2 py-1 whitespace-pre-wrap text-[11px]">{{ json_encode($meta, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES) }}</pre>
+                        @endif
+                    </div>
+                    @endforeach
+                </div>
+                @endif
             </aside>
         </div>
 
