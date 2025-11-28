@@ -43,16 +43,17 @@
                 <div>
                     <label class="block text-sm text-gray-700">National ID</label>
                     <input name="national_id" value="{{ old('national_id',$user->national_id) }}"
-                        inputmode="numeric" maxlength="19"
-                        placeholder="0000 0000 0000 0000"
+                        inputmode="text" maxlength="19"
+                        placeholder="XXXX XXXX XXXX XXXX"
+                        pattern="[A-Za-z0-9]{4}\s[A-Za-z0-9]{4}\s[A-Za-z0-9]{4}\s[A-Za-z0-9]{4}"
                         oninput="
-                            const digits = this.value.replace(/\\D/g, '').slice(0,16);
-                            this.value = (digits.match(/.{1,4}/g) || []).join(' ');
+                            const cleaned = this.value.replace(/[^A-Za-z0-9]/g, '').slice(0,16).toUpperCase();
+                            this.value = (cleaned.match(/.{1,4}/g) || []).join(' ');
                         "
                         class="mt-1 w-full px-3 py-2 rounded bg-white text-gray-900 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                         aria-describedby="national_id_help_edit">
                     @error('national_id') <p class="text-red-500 text-sm">{{ $message }}</p> @enderror
-                    <p id="national_id_help_edit" class="text-xs text-gray-500 mt-1">Enter 16 digits; spaces are added automatically.</p>
+                    <p id="national_id_help_edit" class="text-xs text-gray-500 mt-1">Enter 16 letters or digits; spaces are added automatically.</p>
                 </div>
                 <div>
                     <label class="block text-sm text-gray-700">Position</label>

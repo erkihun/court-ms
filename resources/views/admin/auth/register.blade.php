@@ -23,10 +23,10 @@
                 name="national_id_number"
                 value="{{ old('national_id_number') }}"
                 required
-                inputmode="numeric"
+                inputmode="text"
                 autocomplete="off"
                 maxlength="19"
-                pattern="\d{4}\s\d{4}\s\d{4}\s\d{4}"
+                pattern="[A-Za-z0-9]{4}\s[A-Za-z0-9]{4}\s[A-Za-z0-9]{4}\s[A-Za-z0-9]{4}"
                 title="{{ __('auth.national_id_format') }}"
                 placeholder="{{ __('auth.national_id_placeholder') }}"
                 aria-describedby="national_id_help"
@@ -75,8 +75,11 @@
             const idInput = document.querySelector('input[name="national_id_number"]');
             if (idInput) {
                 const format = (val) => {
-                    const digits = (val || '').replace(/\D/g, '').slice(0, 16);
-                    const parts = digits.match(/.{1,4}/g) || [];
+                    const cleaned = (val || '')
+                        .replace(/[^A-Za-z0-9]/g, '')
+                        .slice(0, 16)
+                        .toUpperCase();
+                    const parts = cleaned.match(/.{1,4}/g) || [];
                     return parts.join(' ');
                 };
 

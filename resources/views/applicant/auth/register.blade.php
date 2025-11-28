@@ -12,20 +12,21 @@ $bannerPath = $settings?->banner_path ?? null;
     @if($bannerPath)
     @push('head')
     <style>
-    body {
-        background: url("{{ asset('storage/'.$bannerPath) }}") center / cover no-repeat,
-        #e5e7eb;
-        backdrop-filter: blur(8px);
-    }
+        body {
+            background: url("{{ asset('storage/'.$bannerPath) }}") center / cover no-repeat,
+            #e5e7eb;
+            backdrop-filter: blur(8px);
+            opacity: 0.97;
+        }
 
-    .guest-container {
-        background: transparent;
-    }
+        .guest-container {
+            background: transparent;
+        }
 
-    .applicant-register-card {
-        backdrop-filter: blur(4px);
-        background-color: rgba(255, 255, 255, 0.92);
-    }
+        .applicant-register-card {
+            backdrop-filter: blur(4px);
+            background-color: rgba(255, 255, 255, 0.92);
+        }
     </style>
     @endpush
     @endif
@@ -140,7 +141,7 @@ $bannerPath = $settings?->banner_path ?? null;
                         {{ __('auth.national_id') }}
                     </label>
                     <input name="national_id_number" value="{{ old('national_id_number') }}" required
-                        inputmode="numeric" autocomplete="off" maxlength="19" pattern="\d{4}\s\d{4}\s\d{4}\s\d{4}"
+                        inputmode="text" autocomplete="off" maxlength="19" pattern="[A-Za-z0-9]{4}\s[A-Za-z0-9]{4}\s[A-Za-z0-9]{4}\s[A-Za-z0-9]{4}"
                         title="{{ __('auth.national_id_format') }}"
                         placeholder="{{ __('auth.national_id_placeholder') }}" class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
                                focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
@@ -230,39 +231,42 @@ $bannerPath = $settings?->banner_path ?? null;
 
     {{-- National ID auto-formatter + password toggles --}}
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // National ID formatter
-        const idInput = document.querySelector('input[name="national_id_number"]');
-        if (idInput) {
-            const format = (val) => {
-                const digits = (val || '').replace(/\D/g, '').slice(0, 16);
-                const parts = digits.match(/.{1,4}/g) || [];
-                return parts.join(' ');
-            };
+        document.addEventListener('DOMContentLoaded', function() {
+            // National ID formatter
+            const idInput = document.querySelector('input[name="national_id_number"]');
+            if (idInput) {
+                const format = (val) => {
+                    const cleaned = (val || '')
+                        .replace(/[^A-Za-z0-9]/g, '')
+                        .slice(0, 16)
+                        .toUpperCase();
+                    const parts = cleaned.match(/.{1,4}/g) || [];
+                    return parts.join(' ');
+                };
 
-            idInput.addEventListener('input', (e) => {
-                const before = e.target.value;
-                const after = format(before);
-                e.target.value = after;
-            });
+                idInput.addEventListener('input', (e) => {
+                    const before = e.target.value;
+                    const after = format(before);
+                    e.target.value = after;
+                });
 
-            idInput.addEventListener('blur', () => {
-                idInput.value = format(idInput.value);
-            });
-        }
+                idInput.addEventListener('blur', () => {
+                    idInput.value = format(idInput.value);
+                });
+            }
 
-        // Show / hide password toggles
-        document.querySelectorAll('[data-toggle-password]').forEach((btn) => {
-            const targetId = btn.getAttribute('data-toggle-password');
-            const input = document.getElementById(targetId);
-            if (!input) return;
+            // Show / hide password toggles
+            document.querySelectorAll('[data-toggle-password]').forEach((btn) => {
+                const targetId = btn.getAttribute('data-toggle-password');
+                const input = document.getElementById(targetId);
+                if (!input) return;
 
-            btn.addEventListener('click', () => {
-                const isHidden = input.type === 'password';
-                input.type = isHidden ? 'text' : 'password';
-                btn.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
+                btn.addEventListener('click', () => {
+                    const isHidden = input.type === 'password';
+                    input.type = isHidden ? 'text' : 'password';
+                    btn.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
+                });
             });
         });
-    });
     </script>
 </x-public-layout>
