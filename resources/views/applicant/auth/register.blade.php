@@ -141,12 +141,12 @@ $bannerPath = $settings?->banner_path ?? null;
                         {{ __('auth.national_id') }}
                     </label>
                     <input name="national_id_number" value="{{ old('national_id_number') }}" required
-                        inputmode="text" autocomplete="off" maxlength="19" pattern="[A-Za-z0-9]{4}\s[A-Za-z0-9]{4}\s[A-Za-z0-9]{4}\s[A-Za-z0-9]{4}"
-                        title="{{ __('auth.national_id_format') }}"
-                        placeholder="{{ __('auth.national_id_placeholder') }}" class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
+                        inputmode="numeric" autocomplete="off" maxlength="19" pattern="\d{4}\s\d{4}\s\d{4}\s\d{4}"
+                        title="Format: XXXX XXXX XXXX XXXX (only numbers allowed)"
+                        placeholder="1234 5678 9012 3456" class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
                                focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                     <p class="mt-1 text-[11px] text-slate-500">
-                        {{ __('auth.national_id_hint') }}
+                        Format: XXXX XXXX XXXX XXXX (only numbers allowed)
                     </p>
                 </div>
             </div>
@@ -237,9 +237,8 @@ $bannerPath = $settings?->banner_path ?? null;
             if (idInput) {
                 const format = (val) => {
                     const cleaned = (val || '')
-                        .replace(/[^A-Za-z0-9]/g, '')
-                        .slice(0, 16)
-                        .toUpperCase();
+                        .replace(/[^0-9]/g, '')
+                        .slice(0, 16);
                     const parts = cleaned.match(/.{1,4}/g) || [];
                     return parts.join(' ');
                 };
