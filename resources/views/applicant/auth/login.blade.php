@@ -29,6 +29,7 @@ $bannerPath = $settings?->banner_path ?? null;
 
             backdrop-filter: blur(8px);
 
+
         }
 
         .guest-container {
@@ -36,10 +37,11 @@ $bannerPath = $settings?->banner_path ?? null;
 
         }
 
-        .auth-card {
-            backdrop-filter: blur(4px);
-            background-color: rgba(255, 255, 255, 0.92);
 
+        .applicant-login-card {
+            backdrop-filter: blur(4px);
+            opacity: 0.8;
+            background-color: rgba(255, 255, 255, 0.92);
         }
     </style>
     @endpush
@@ -68,18 +70,22 @@ $bannerPath = $settings?->banner_path ?? null;
             </div>
 
             {{-- ERROR MESSAGE --}}
-            @if ($errors->any())
-            <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-sm">
+            <div
+                data-login-errors
+                @class([
+                    'mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-sm',
+                    'hidden' => !$errors->any(),
+                ])
+                aria-live="assertive">
                 <ul class="list-disc pl-5 space-y-1">
                     @foreach ($errors->all() as $e)
                     <li>{{ $e }}</li>
                     @endforeach
                 </ul>
             </div>
-            @endif
 
             {{-- FORM --}}
-            <form method="POST" action="{{ route('applicant.login.submit') }}" class="space-y-6">
+            <form method="POST" action="{{ route('applicant.login.submit') }}" class="space-y-6" data-ajax-login>
                 @csrf
 
                 {{-- EMAIL --}}
@@ -165,7 +171,7 @@ $bannerPath = $settings?->banner_path ?? null;
         </div>
     </div>
 
-    {{-- SHOW/HIDE PASSWORD SCRIPT --}}
+    {{-- SCRIPTS --}}
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('[data-toggle-password]').forEach(btn => {
@@ -177,6 +183,84 @@ $bannerPath = $settings?->banner_path ?? null;
                     input.type = hidden ? 'text' : 'password';
                     btn.setAttribute('aria-pressed', hidden ? 'true' : 'false');
                 });
+            });
+
+            const loginForm = document.querySelector('form[data-ajax-login]');
+            const errorContainer = document.querySelector('[data-login-errors]');
+            const errorList = errorContainer?.querySelector('ul');
+
+            const renderErrors = (errors) => {
+                if (!errorContainer || !errorList) return;
+                const messages = [];
+                if (errors && typeof errors === 'object') {
+                    Object.values(errors).forEach(value => {
+                        if (Array.isArray(value)) {
+                            value.forEach(item => {
+                                if (item) messages.push(String(item));
+                            });
+                        } else if (value) {
+                            messages.push(String(value));
+                        }
+                    });
+                }
+                if (!messages.length) {
+                    errorList.innerHTML = '';
+                    errorContainer.classList.add('hidden');
+                    return;
+                }
+                errorList.innerHTML = '';
+                messages.forEach(message => {
+                    const li = document.createElement('li');
+                    li.textContent = message;
+                    errorList.appendChild(li);
+                });
+                errorContainer.classList.remove('hidden');
+            };
+
+            if (!loginForm) return;
+
+            loginForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const submitButton = loginForm.querySelector('button[type="submit"]');
+                const formData = new FormData(loginForm);
+
+                errorList?.innerHTML = '';
+                errorContainer?.classList.add('hidden');
+
+                if (submitButton) {
+                    submitButton.setAttribute('disabled', 'true');
+                }
+
+                try {
+                    const response = await fetch(loginForm.action, {
+                        method: loginForm.method,
+                        body: formData,
+                        headers: {
+                            'Accept': 'application/json',
+                        },
+                        credentials: 'same-origin',
+                    });
+
+                    const payload = await response.json().catch(() => null);
+
+                    if (response.ok) {
+                        const redirectUrl = payload?.redirect;
+                        if (redirectUrl) {
+                            window.location.href = redirectUrl;
+                            return;
+                        }
+                        window.location.reload();
+                        return;
+                    }
+
+                    const fallbackMessage = payload?.message || 'Login failed. Please check your credentials.';
+                    renderErrors(payload?.errors ?? { general: [fallbackMessage] });
+                } catch (error) {
+                    console.error(error);
+                    renderErrors({ general: ['Unable to complete login. Please try again.'] });
+                } finally {
+                    submitButton?.removeAttribute('disabled');
+                }
             });
         });
     </script>
