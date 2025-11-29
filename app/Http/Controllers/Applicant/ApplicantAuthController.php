@@ -96,11 +96,36 @@ class ApplicantAuthController extends Controller
                     Log::error('[VerifyEmail] resend on login failed: ' . $e->getMessage());
                 }
 
-                return redirect()->route('applicant.verification.notice')
+                $redirectResponse = redirect()->route('applicant.verification.notice')
                     ->with('success', 'Verification link sent.');
+
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'redirect' => $redirectResponse->getTargetUrl(),
+                        'message'  => 'Verification link sent.',
+                    ]);
+                }
+
+                return $redirectResponse;
             }
 
-            return redirect()->intended(route('applicant.dashboard'))->with('success', 'Signed in.');
+            $successResponse = redirect()->intended(route('applicant.dashboard'))
+                ->with('success', 'Signed in.');
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'redirect' => $successResponse->getTargetUrl(),
+                    'message'  => 'Signed in.',
+                ]);
+            }
+
+            return $successResponse;
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'errors' => ['email' => ['Invalid credentials.']],
+            ], 422);
         }
 
         return back()->withErrors(['email' => 'Invalid credentials.'])->onlyInput('email');
