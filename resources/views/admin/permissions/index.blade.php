@@ -1,7 +1,11 @@
 {{-- resources/views/permissions/index.blade.php --}}
 <x-admin-layout title="Permissions">
     @section('page_header','Permissions')
-    <style>[x-cloak]{display:none !important;}</style>
+    <style>
+    [x-cloak] {
+        display: none !important;
+    }
+    </style>
 
     <div x-data="permissionsPage()" class="space-y-4">
 
@@ -17,11 +21,7 @@
             <div class="flex flex-col sm:flex-row gap-2 sm:items-center">
                 <form method="GET" class="flex items-center gap-2">
                     <div class="relative">
-                        <input
-                            type="text"
-                            name="q"
-                            value="{{ request('q') }}"
-                            placeholder="Search permissions…"
+                        <input type="text" name="q" value="{{ request('q') }}" placeholder="Search permissions…"
                             class="w-64 pl-9 pr-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                         <svg class="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
@@ -36,8 +36,7 @@
                 <a href="{{ route('permissions.create') }}"
                     class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 4v16m8-8H4" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
                     New Permission
                 </a>
@@ -72,11 +71,11 @@
                             </td>
 
                             {{-- Label --}}
-                            <td class="p-3 text-gray-700">{{ $perm->label ?: '—' }}</td>
+                            <td class="p-3 text-gray-700">{{ $perm->labelLocalized ?: '—' }}</td>
 
                             {{-- Description --}}
                             <td class="p-3 text-gray-600">
-                                <span class="line-clamp-2">{{ $perm->description }}</span>
+                                <span class="line-clamp-2">{{ $perm->descriptionLocalized ?: '—' }}</span>
                             </td>
 
                             {{-- Roles with "+N more" expander --}}
@@ -90,7 +89,8 @@
                                 <div x-data="{open:false}" class="space-y-2">
                                     <div class="flex flex-wrap gap-1.5">
                                         @foreach($rs->take($limit) as $r)
-                                        <span class="px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700 border border-gray-200">
+                                        <span
+                                            class="px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700 border border-gray-200">
                                             {{ $r->name }}
                                         </span>
                                         @endforeach
@@ -106,7 +106,8 @@
                                     @if($extra > 0)
                                     <div x-show="open" x-transition class="flex flex-wrap gap-1.5">
                                         @foreach($rs->skip($limit) as $r)
-                                        <span class="px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700 border border-gray-200">
+                                        <span
+                                            class="px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700 border border-gray-200">
                                             {{ $r->name }}
                                         </span>
                                         @endforeach
@@ -120,7 +121,8 @@
 
                             {{-- Users count (from selectSub) --}}
                             <td class="p-3">
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200">
+                                <span
+                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200">
                                     <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M17 20h5v-2a3 3 0 00-5.356-1.857M9 20H4v-2a3 3 0 015.356-1.857M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -137,11 +139,11 @@
                                         Edit
                                     </a>
 
-                                    <form id="delForm-{{ $perm->id }}" action="{{ route('permissions.destroy',$perm) }}" method="POST" class="hidden">
+                                    <form id="delForm-{{ $perm->id }}" action="{{ route('permissions.destroy',$perm) }}"
+                                        method="POST" class="hidden">
                                         @csrf @method('DELETE')
                                     </form>
-                                    <button
-                                        @click.prevent="openDelete({ id: {{ $perm->id }}, name: @js($perm->name) })"
+                                    <button @click.prevent="openDelete({ id: {{ $perm->id }}, name: @js($perm->name) })"
                                         class="px-2.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs">
                                         Delete
                                     </button>
@@ -152,8 +154,10 @@
                         <tr>
                             <td colspan="6" class="p-8">
                                 <div class="text-center text-gray-500">
-                                    <svg class="h-10 w-10 mx-auto mb-2 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h6" />
+                                    <svg class="h-10 w-10 mx-auto mb-2 text-gray-300" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 17v-6a2 2 0 012-2h6" />
                                     </svg>
                                     No permissions found.
                                 </div>
@@ -176,8 +180,10 @@
         </div>
 
         {{-- Delete modal --}}
-        <div x-cloak x-show="modal.open" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-            <div x-cloak x-show="modal.open" x-transition class="w-full max-w-md rounded-xl bg-white shadow-xl border border-gray-200">
+        <div x-cloak x-show="modal.open" x-transition.opacity
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+            <div x-cloak x-show="modal.open" x-transition
+                class="w-full max-w-md rounded-xl bg-white shadow-xl border border-gray-200">
                 <div class="px-5 py-4 border-b border-gray-200">
                     <h3 class="text-base font-semibold text-gray-900">Delete permission</h3>
                 </div>
@@ -190,8 +196,7 @@
                         class="px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50">
                         Cancel
                     </button>
-                    <button @click="submitDelete()"
-                        class="px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">
+                    <button @click="submitDelete()" class="px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">
                         Delete
                     </button>
                 </div>
@@ -202,28 +207,28 @@
 
     {{-- Alpine helpers --}}
     <script>
-        function permissionsPage() {
-            return {
-                modal: {
-                    open: false,
-                    id: null,
-                    name: ''
-                },
-                openDelete({
+    function permissionsPage() {
+        return {
+            modal: {
+                open: false,
+                id: null,
+                name: ''
+            },
+            openDelete({
+                id,
+                name
+            }) {
+                this.modal = {
+                    open: true,
                     id,
                     name
-                }) {
-                    this.modal = {
-                        open: true,
-                        id,
-                        name
-                    };
-                },
-                submitDelete() {
-                    if (!this.modal.id) return;
-                    document.getElementById('delForm-' + this.modal.id)?.submit();
-                }
+                };
+            },
+            submitDelete() {
+                if (!this.modal.id) return;
+                document.getElementById('delForm-' + this.modal.id)?.submit();
             }
         }
+    }
     </script>
 </x-admin-layout>

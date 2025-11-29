@@ -11,11 +11,14 @@ use App\Http\Controllers\Applicant\ApplicantNotificationController;
 use App\Http\Controllers\Applicant\ApplicantPasswordController;
 use App\Http\Controllers\Applicant\ApplicantVerificationController;
 use App\Http\Controllers\Respondent\RespondentAuthController;
+use App\Http\Controllers\Respondent\ResponseController;
 use App\Http\Controllers\Respondent\DashboardController as RespondentDashboardController;
+use App\Http\Controllers\Respondent\ProfileController;
+use App\Http\Controllers\Respondent\CaseSearchController;
 
 // Admin-facing controllers
 use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Admin\RolesController;
 use App\Http\Controllers\Admin\CaseController;
@@ -71,7 +74,21 @@ Route::middleware(SetLocale::class)->group(function () {
     Route::middleware('auth:respondent')->group(function () {
         Route::post('/respondent/logout', [RespondentAuthController::class, 'logout'])->name('respondent.logout');
         Route::get('/respondent/dashboard', [RespondentDashboardController::class, 'index'])->name('respondent.dashboard');
+        Route::get('/respondent/case-search/results', [CaseSearchController::class, 'myCases'])->name('respondent.cases.my');
+        Route::get('/respondent/responses', [ResponseController::class, 'index'])->name('respondent.responses.index');
+        Route::get('/respondent/responses/create', [ResponseController::class, 'create'])->name('respondent.responses.create');
+        Route::post('/respondent/responses', [ResponseController::class, 'store'])->name('respondent.responses.store');
+        Route::get('/respondent/responses/{response}', [ResponseController::class, 'show'])->name('respondent.responses.show');
+        Route::get('/respondent/responses/{response}/edit', [ResponseController::class, 'edit'])->name('respondent.responses.edit');
+        Route::patch('/respondent/responses/{response}', [ResponseController::class, 'update'])->name('respondent.responses.update');
+        Route::delete('/respondent/responses/{response}', [ResponseController::class, 'destroy'])->name('respondent.responses.destroy');
+        Route::get('/respondent/profile', [ProfileController::class, 'edit'])->name('respondent.profile.edit');
+        Route::patch('/respondent/profile', [ProfileController::class, 'update'])->name('respondent.profile.update');
+        Route::patch('/respondent/profile/password', [ProfileController::class, 'updatePassword'])->name('respondent.profile.password');
     });
+
+    Route::get('/respondent/case-search', [CaseSearchController::class, 'index'])->name('respondent.case.search');
+    Route::get('/respondent/cases/{caseNumber}', [CaseSearchController::class, 'show'])->name('respondent.cases.show');
 
     /*
     |--------------------------------------------------------------------------
@@ -164,9 +181,9 @@ Route::middleware(SetLocale::class)->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         // Admin self profile
-        Route::get('/profile',    [ProfileController::class, 'edit'])->name('profile.edit');
-        Route::patch('/profile',  [ProfileController::class, 'update'])->name('profile.update');
-        Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+        Route::get('/profile',    [AdminProfileController::class, 'edit'])->name('profile.edit');
+        Route::patch('/profile',  [AdminProfileController::class, 'update'])->name('profile.update');
+        Route::delete('/profile', [AdminProfileController::class, 'destroy'])->name('profile.destroy');
 
         // Admin section with /admin prefix
         Route::prefix('admin')->group(function () {

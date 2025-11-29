@@ -18,6 +18,9 @@ class RespondentAuthController extends Controller
 
     public function register(Request $request)
     {
+        $normalizedNationalId = preg_replace('/\D+/', '', (string) $request->input('national_id'));
+        $request->merge(['national_id' => $normalizedNationalId ?: null]);
+
         $data = $request->validate([
             'first_name'         => ['required', 'string', 'max:100'],
             'middle_name'        => ['required', 'string', 'max:100'],
@@ -26,6 +29,7 @@ class RespondentAuthController extends Controller
             'position'           => ['required', 'string', 'max:150'],
             'organization_name'  => ['required', 'string', 'max:150'],
             'address'            => ['required', 'string', 'max:255'],
+            'national_id'        => ['required', 'digits:16', 'unique:respondents,national_id'],
             'phone'              => ['required', 'string', 'max:30', 'unique:respondents,phone'],
             'email'              => ['required', 'email', 'max:255', 'unique:respondents,email', 'confirmed'],
             'email_confirmation' => ['required', 'email'],
@@ -40,13 +44,14 @@ class RespondentAuthController extends Controller
             'position'          => $data['position'],
             'organization_name' => $data['organization_name'],
             'address'           => $data['address'],
+            'national_id'       => $data['national_id'],
             'phone'             => $data['phone'],
             'email'             => $data['email'],
             'password'          => Hash::make($data['password']),
         ]);
 
         return redirect()->route('respondent.register')
-            ->with('success', 'Registration submitted successfully.');
+            ->with('success', __('respondent.registration_success'));
     }
 
     public function showLogin()
@@ -67,10 +72,10 @@ class RespondentAuthController extends Controller
             $request->session()->regenerate();
 
             return redirect()->intended(route('respondent.dashboard'))
-                ->with('success', 'Logged in successfully.');
+                ->with('success', __('respondent.login_success'));
         }
 
-        return back()->withErrors(['email' => 'Invalid credentials.'])->onlyInput('email');
+        return back()->withErrors(['email' => __('respondent.invalid_credentials')])->onlyInput('email');
     }
 
     public function logout(Request $request)
@@ -79,6 +84,6 @@ class RespondentAuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('respondent.login')->with('success', 'Logged out.');
+        return redirect()->route('respondent.login')->with('success', __('respondent.logout_success'));
     }
 }

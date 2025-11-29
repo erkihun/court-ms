@@ -1,4 +1,4 @@
-<x-respondant-layout title="{{ __('Respondent Login') }}">
+<x-respondant-layout title="{{ __('respondent.login_title') }}">
     {{-- FULLSCREEN wrapper – prevents scrolling --}}
     <div class="min-h-screen w-full flex items-center justify-center overflow-hidden px-4">
 
@@ -7,10 +7,10 @@
             {{-- Header --}}
             <div class="mb-6">
                 <h1 class="text-xl md:text-2xl font-semibold text-slate-900">
-                    {{ __('Respondent Login') }}
+                    {{ __('respondent.login_title') }}
                 </h1>
                 <p class="text-xs md:text-sm text-slate-600 mt-1">
-                    {{ __('Sign in to your respondent account.') }}
+                    {{ __('respondent.login_description') }}
                 </p>
             </div>
 
@@ -38,7 +38,7 @@
 
                 {{-- Email --}}
                 <div>
-                    <label class="block text-sm font-medium text-slate-700">{{ __('Email') }}</label>
+                    <label class="block text-sm font-medium text-slate-700">{{ __('respondent.email') }}</label>
                     <input
                         type="email"
                         name="email"
@@ -52,7 +52,7 @@
 
                 {{-- Password --}}
                 <div>
-                    <label class="block text-sm font-medium text-slate-700">{{ __('Password') }}</label>
+                    <label class="block text-sm font-medium text-slate-700">{{ __('respondent.password') }}</label>
                     <input
                         type="password"
                         name="password"
@@ -67,12 +67,12 @@
                     <label class="inline-flex items-center gap-2 text-slate-700">
                         <input type="checkbox" name="remember" value="1"
                             class="rounded border-slate-300 text-blue-600 focus:ring-blue-600">
-                        <span>{{ __('Remember me') }}</span>
+                        <span>{{ __('auth.remember_me') }}</span>
                     </label>
 
                     <a href="{{ route('respondent.register') }}"
                         class="text-blue-700 hover:text-blue-800 font-medium">
-                        {{ __('Register') }}
+                        {{ __('respondent.register_action') }}
                     </a>
                 </div>
 
@@ -81,7 +81,7 @@
                     type="submit"
                     class="w-full inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-lg bg-blue-700 text-white text-sm font-semibold
                            hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-400">
-                    {{ __('Login') }}
+                    {{ __('respondent.login_action') }}
                 </button>
             </form>
 
