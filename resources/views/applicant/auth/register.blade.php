@@ -16,7 +16,7 @@ $bannerPath = $settings?->banner_path ?? null;
             background: url("{{ asset('storage/'.$bannerPath) }}") center / cover no-repeat,
             #e5e7eb;
             backdrop-filter: blur(8px);
-            opacity: 0.97;
+
         }
 
         .guest-container {
@@ -26,6 +26,7 @@ $bannerPath = $settings?->banner_path ?? null;
         .applicant-register-card {
             backdrop-filter: blur(4px);
             background-color: rgba(255, 255, 255, 0.92);
+            opacity: 0.8;
         }
     </style>
     @endpush
