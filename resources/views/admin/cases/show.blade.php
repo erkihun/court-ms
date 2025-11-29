@@ -652,7 +652,7 @@
                                 </details>
 
                                 <form method="POST" action="{{ route('cases.hearings.delete',$h->id) }}"
-                                    onsubmit="return confirm('{{ __('cases.hearings.remove_confirm') }}')">
+                                onsubmit="return confirm(@json(__('cases.hearings.remove_confirm')))">
                                     @csrf @method('DELETE')
                                     <button class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors duration-150 flex items-center gap-1">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1050,7 +1050,7 @@
                             </a>
                             @if($canEditStatus)
                             <form method="POST" action="{{ route('cases.files.delete', [$case->id, $f->id]) }}"
-                                onsubmit="return confirm('{{ __('cases.files.remove_confirm') }}')">
+                                onsubmit="return confirm(@json(__('cases.files.remove_confirm')))">
                                 @csrf @method('DELETE')
                                 <button class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors duration-150 flex items-center gap-1">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">

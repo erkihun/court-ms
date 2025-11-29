@@ -17,6 +17,7 @@ class Respondent extends Authenticatable
         'position',
         'organization_name',
         'address',
+        'national_id',
         'phone',
         'email',
         'password',

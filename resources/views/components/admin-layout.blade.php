@@ -464,7 +464,7 @@
     <div class="flex-1 flex flex-col md:[transition-property:padding] md:duration-300 md:ease-in-out transition-padding">
 
         {{-- Topbar --}}
-        <header class="flex items-center justify-between bg-white backdrop-blur px-3 md:px-4 py-3 border-b border-gray-200 shadow-sm">
+        <header class="relative z-50 flex items-center justify-between bg-white backdrop-blur px-3 md:px-4 py-3 border-b border-gray-200 shadow-sm">
             <div class="flex items-center gap-2">
                 {{-- Mobile: open sidebar --}}
                 <button type="button"
@@ -623,7 +623,7 @@
                         x-transition:leave="transition ease-in duration-100"
                         x-transition:leave-start="opacity-100 translate-y-0"
                         x-transition:leave-end="opacity-0 -translate-y-1"
-                        class="absolute right-0 mt-2 w-[32rem] max-w-[90vw] rounded-md border border-gray-200 bg-white shadow-xl">
+                    class="absolute right-0 mt-2 w-[32rem] max-w-[90vw] rounded-md border border-gray-200 bg-white shadow-xl z-50">
                         <div class="p-3">
                             <div class="mb-2 flex items-center justify-between">
                                 <div class="text-sm font-semibold text-gray-800">{{ __('app.Notifications') }}</div>

@@ -276,4 +276,9 @@ return [
         'confirm' => 'Confirm',
         'loading' => 'Loading...',
     ],
+    'review_notice' => 'This case is currently flagged for administrative review. Updates are read-only.',
+    'reviewer_note' => 'Reviewer note:',
+    'applicant_full_name' => 'Applicant full name',
+    'applicant_email' => 'Applicant email',
+    'no_audit_records' => 'No audit records yet.',
 ];

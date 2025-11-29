@@ -276,4 +276,9 @@ return [
         'confirm' => 'አረጋግጥ',
         'loading' => 'በማቅረብ ላይ...',
     ],
+    'review_notice' => 'This case is currently under review. Information is view-only.',
+    'reviewer_note' => 'Reviewer note:',
+    'applicant_full_name' => 'Applicant full name',
+    'applicant_email' => 'Applicant email',
+    'no_audit_records' => 'No audit records yet.',
 ];
