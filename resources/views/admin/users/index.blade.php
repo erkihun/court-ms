@@ -26,6 +26,7 @@
                     <th class="p-3 text-left font-medium">Email</th>
                     <th class="p-3 text-left font-medium">Roles</th>
                     <th class="p-3 text-left font-medium">Status</th>
+                    <th class="p-3 text-left font-medium">Verified</th>
                     <th class="p-3 text-left font-medium">Created</th>
                     <th class="p-3 text-left font-medium">Actions</th>
                 </tr>
@@ -61,6 +62,14 @@
                                 ? 'bg-green-100 text-green-700 border border-green-200'
                                 : 'bg-gray-100 text-gray-600 border border-gray-200' }}">
                             {{ ucfirst($u->status) }}
+                        </span>
+                    </td>
+                    <td class="p-3">
+                        <span class="px-2 py-0.5 rounded text-xs font-medium
+                            {{ $u->hasVerifiedEmail()
+                                ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                                : 'bg-yellow-100 text-yellow-700 border border-yellow-200' }}">
+                            {{ $u->hasVerifiedEmail() ? 'Verified' : 'Unverified' }}
                         </span>
                     </td>
                     <td class="p-3 text-gray-600">{{ optional($u->created_at)->format('M d, Y') }}</td>
