@@ -1,5 +1,5 @@
 {{-- resources/views/apply/notifications/index.blade.php --}}
-<x-public-layout title="Notifications">
+<x-applicant-layout title="Notifications">
     <div class="mb-4 flex items-center justify-between">
         <h1 class="text-lg font-semibold">Notifications</h1>
         <form method="POST" action="{{ route('applicant.notifications.markAll') }}">
@@ -77,6 +77,44 @@
         @endif
     </div>
 
+    {{-- Respondent views --}}
+    <div class="mt-6 rounded-lg border bg-white p-4">
+        <div class="mb-2 flex items-center justify-between">
+            <h2 class="text-sm font-semibold text-slate-700">Respondent viewed case</h2>
+            <span class="text-[11px] rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">
+                {{ $respondentViews->total() }}
+            </span>
+        </div>
+
+        @if($respondentViews->count())
+        <ul class="divide-y">
+            @foreach($respondentViews as $v)
+            <li class="py-2 flex items-center justify-between">
+                <a href="{{ route('applicant.cases.show', $v->case_id) }}" class="text-sm">
+                    <div class="font-medium text-slate-800">
+                        {{ $v->case_number }}
+                    </div>
+                    <div class="text-xs text-slate-500">
+                        {{ $v->respondent_name ?: 'Respondent' }}
+                        viewed this case
+                        A� {{ \Illuminate\Support\Carbon::parse($v->viewed_at)->diffForHumans() }}
+                    </div>
+                </a>
+                <form method="POST" action="{{ route('applicant.notifications.markOne') }}">
+                    @csrf
+                    <input type="hidden" name="type" value="respondent_view">
+                    <input type="hidden" name="sourceId" value="{{ $v->id }}">
+                    <button class="text-xs px-2 py-1 rounded border hover:bg-slate-50">Seen</button>
+                </form>
+            </li>
+            @endforeach
+        </ul>
+        <div class="mt-3">{{ $respondentViews->onEachSide(0)->links() }}</div>
+        @else
+        <div class="text-sm text-slate-500">No recent respondent views.</div>
+        @endif
+    </div>
+
     {{-- Status --}}
     <div class="mt-6 rounded-lg border bg-white p-4">
         <div class="mb-2 flex items-center justify-between">
@@ -111,4 +149,4 @@
         <div class="text-sm text-slate-500">No new status updates.</div>
         @endif
     </div>
-</x-public-layout>
+</x-applicant-layout>

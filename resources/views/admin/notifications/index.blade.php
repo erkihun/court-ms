@@ -110,5 +110,37 @@
             <div class="px-4 py-3">{{ $hearings->withQueryString()->links() }}</div>
             @endif
         </div>
+
+        {{-- Respondent views --}}
+        <div class="rounded-lg border border-gray-200 bg-white shadow-sm">
+            <div class="flex items-center justify-between border-b border-gray-200 px-4 py-2">
+                <h3 class="text-sm font-semibold text-gray-900">Respondent views</h3>
+                <span class="text-[11px] rounded-full bg-gray-100 px-2 py-0.5 text-gray-600">{{ $respondentViews->total() }}</span>
+            </div>
+            <div class="divide-y divide-gray-200">
+                @forelse($respondentViews as $v)
+                <div class="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors duration-150">
+                    <a class="text-sm" href="{{ route('cases.show', $v->case_id) }}">
+                        <div class="font-medium text-gray-900">{{ $v->case_number }}</div>
+                        <div class="text-xs text-gray-600">
+                            {{ $v->respondent_name ?: 'Respondent' }} viewed this case
+                            A� {{ \Illuminate\Support\Carbon::parse($v->viewed_at)->diffForHumans() }}
+                        </div>
+                    </a>
+                    <form method="POST" action="{{ route('admin.notifications.markOne') }}">
+                        @csrf
+                        <input type="hidden" name="type" value="respondent_view">
+                        <input type="hidden" name="sourceId" value="{{ $v->id }}">
+                        <button class="text-xs rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-gray-50 transition-colors duration-200">Seen</button>
+                    </form>
+                </div>
+                @empty
+                <div class="px-4 py-6 text-sm text-gray-500">No respondent views.</div>
+                @endforelse
+            </div>
+            @if($respondentViews->hasPages())
+            <div class="px-4 py-3">{{ $respondentViews->withQueryString()->links() }}</div>
+            @endif
+        </div>
     </div>
 </x-admin-layout>

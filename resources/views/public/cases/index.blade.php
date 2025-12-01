@@ -1,4 +1,4 @@
-<x-public-layout title="Cases">
+<x-applicant-layout title="Cases">
     <h1 class="text-2xl font-semibold mb-4">Public Cases</h1>
 
     <form method="GET" class="mb-4 flex gap-2">
@@ -47,4 +47,4 @@
     </div>
 
     <div class="mt-4">{{ $cases->links() }}</div>
-</x-public-layout>
+</x-applicant-layout>

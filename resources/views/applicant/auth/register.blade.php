@@ -8,7 +8,7 @@ $settings = null;
 $bannerPath = $settings?->banner_path ?? null;
 @endphp
 
-<x-public-layout title="{{ __('auth.registration_title') }}">
+<x-applicant-layout title="{{ __('auth.registration_title') }}">
     @if($bannerPath)
     @push('head')
     <style>
@@ -269,4 +269,4 @@ $bannerPath = $settings?->banner_path ?? null;
             });
         });
     </script>
-</x-public-layout>
+</x-applicant-layout>

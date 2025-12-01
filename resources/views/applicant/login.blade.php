@@ -1,4 +1,4 @@
-<x-public-layout title="Apply - Login" hide-footer="true">
+<x-applicant-layout title="Apply - Login" hide-footer="true">
     <div class="min-h-[70vh] flex items-center justify-center">
         <form method="POST" action="{{ route('applicant.login.submit') }}" class="bg-white p-6 rounded-lg border space-y-4 w-full max-w-md shadow">
             @csrf
@@ -23,4 +23,4 @@
             </div>
         </form>
     </div>
-</x-public-layout>
+</x-applicant-layout>

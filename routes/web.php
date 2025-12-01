@@ -15,6 +15,7 @@ use App\Http\Controllers\Respondent\ResponseController;
 use App\Http\Controllers\Respondent\DashboardController as RespondentDashboardController;
 use App\Http\Controllers\Respondent\ProfileController;
 use App\Http\Controllers\Respondent\CaseSearchController;
+use App\Http\Controllers\Respondent\NotificationController as RespondentNotificationController;
 
 // Admin-facing controllers
 use App\Http\Controllers\Admin\DashboardController;
@@ -56,8 +57,8 @@ Route::middleware(SetLocale::class)->group(function () {
     Route::get('/debug-locale', fn() => 'locale=' . app()->getLocale());
     Route::get('/', fn() => redirect()->route('applicant.login'))->name('root');
     Route::get('/terms', [TermsDisplayController::class, 'show'])->name('public.terms');
-    Route::get('/applicant', fn () => redirect()->route('applicant.login'))->name('applicant.login.shortcut');
-    Route::get('/respondent', fn () => redirect()->route('respondent.login'))->name('respondent.login.shortcut');
+    Route::get('/applicant', fn() => redirect()->route('applicant.login'))->name('applicant.login.shortcut');
+    Route::get('/respondent', fn() => redirect()->route('respondent.login'))->name('respondent.login.shortcut');
 
     /*
     |--------------------------------------------------------------------------
@@ -85,6 +86,8 @@ Route::middleware(SetLocale::class)->group(function () {
         Route::get('/respondent/profile', [ProfileController::class, 'edit'])->name('respondent.profile.edit');
         Route::patch('/respondent/profile', [ProfileController::class, 'update'])->name('respondent.profile.update');
         Route::patch('/respondent/profile/password', [ProfileController::class, 'updatePassword'])->name('respondent.profile.password');
+        Route::post('/respondent/notifications/mark-one', [RespondentNotificationController::class, 'markOne'])->name('respondent.notifications.markOne');
+        Route::post('/respondent/notifications/mark-all', [RespondentNotificationController::class, 'markAll'])->name('respondent.notifications.markAll');
     });
 
     Route::get('/respondent/case-search', [CaseSearchController::class, 'index'])->name('respondent.case.search');
@@ -97,18 +100,14 @@ Route::middleware(SetLocale::class)->group(function () {
     */
     Route::middleware('guest:applicant')->group(function () {
         // Register
-        Route::get('/apply/register',  [ApplicantAuthController::class, 'showRegister'])->name('applicant.register');
-        Route::post('/apply/register', [ApplicantAuthController::class, 'register'])->name('applicant.register.submit');
-
-        // Login
-        Route::get('/apply/login',  [ApplicantAuthController::class, 'showLogin'])->name('applicant.login');
-        Route::post('/apply/login', [ApplicantAuthController::class, 'login'])->name('applicant.login.submit');
-
-        // Password reset (applicant)
-        Route::get('/apply/forgot-password',        [ApplicantPasswordController::class, 'showLinkRequestForm'])->name('applicant.password.request');
-        Route::post('/apply/forgot-password',       [ApplicantPasswordController::class, 'sendResetLinkEmail'])->name('applicant.password.email');
-        Route::get('/apply/reset-password/{token}', [ApplicantPasswordController::class, 'showResetForm'])->name('applicant.password.reset');
-        Route::post('/apply/reset-password',        [ApplicantPasswordController::class, 'reset'])->name('applicant.password.update');
+        Route::get('/applicant/register',  [ApplicantAuthController::class, 'showRegister'])->name('applicant.register');
+        Route::post('/applicant/register', [ApplicantAuthController::class, 'register'])->name('applicant.register.submit');
+        Route::get('/applicant/login',  [ApplicantAuthController::class, 'showLogin'])->name('applicant.login');
+        Route::post('/applicant/login', [ApplicantAuthController::class, 'login'])->name('applicant.login.submit');
+        Route::get('/applicant/forgot-password',        [ApplicantPasswordController::class, 'showLinkRequestForm'])->name('applicant.password.request');
+        Route::post('/applicant/forgot-password',       [ApplicantPasswordController::class, 'sendResetLinkEmail'])->name('applicant.password.email');
+        Route::get('/applicant/reset-password/{token}', [ApplicantPasswordController::class, 'showResetForm'])->name('applicant.password.reset');
+        Route::post('/applicant/reset-password',        [ApplicantPasswordController::class, 'reset'])->name('applicant.password.update');
     });
 
     /*
@@ -116,59 +115,59 @@ Route::middleware(SetLocale::class)->group(function () {
     | Applicant Portal (auth:applicant)
     |--------------------------------------------------------------------------
     */
-    Route::prefix('apply')->name('applicant.')->middleware('auth:applicant')->group(function () {
-        Route::post('/logout', [ApplicantAuthController::class, 'logout'])->name('logout');
+    Route::middleware('auth:applicant')->group(function () {
+        Route::post('/applicant/logout', [ApplicantAuthController::class, 'logout'])->name('applicant.logout');
 
         // Email verification
-        Route::get('/email/verify', [ApplicantVerificationController::class, 'notice'])->name('verification.notice');
-        Route::post('/email/verification-notification', [ApplicantVerificationController::class, 'send'])
-            ->middleware('throttle:6,1')->name('verification.send');
-        Route::get('/email/verify/{id}/{hash}', [ApplicantVerificationController::class, 'verify'])
-            ->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
+        Route::get('/applicant/email/verify', [ApplicantVerificationController::class, 'notice'])->name('applicant.verification.notice');
+        Route::post('/applicant/email/verification-notification', [ApplicantVerificationController::class, 'send'])
+            ->middleware('throttle:6,1')->name('applicant.verification.send');
+        Route::get('/applicant/email/verify/{id}/{hash}', [ApplicantVerificationController::class, 'verify'])
+            ->middleware(['signed', 'throttle:6,1'])->name('applicant.verification.verify');
 
         // Dashboard (add ->middleware('verified') if you want to enforce it)
-        Route::get('/dashboard', [ApplicantDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/applicant/dashboard', [ApplicantDashboardController::class, 'index'])->name('applicant.dashboard');
 
         // Profile
-        Route::get('/profile',  [ApplicantProfileController::class, 'edit'])->name('profile.edit');
-        Route::patch('/profile', [ApplicantProfileController::class, 'update'])->name('profile.update');
+        Route::get('/applicant/profile',  [ApplicantProfileController::class, 'edit'])->name('applicant.profile.edit');
+        Route::patch('/applicant/profile', [ApplicantProfileController::class, 'update'])->name('applicant.profile.update');
 
         // Cases (only applicant's own)
-        Route::get('/cases',            [ApplicantCaseController::class, 'index'])->name('cases.index');
-        Route::get('/cases/create',     [ApplicantCaseController::class, 'create'])->name('cases.create');
-        Route::post('/cases',           [ApplicantCaseController::class, 'store'])->name('cases.store');
-        Route::get('/cases/{id}',       [ApplicantCaseController::class, 'show'])->name('cases.show');
-        Route::get('/cases/{id}/edit',  [ApplicantCaseController::class, 'edit'])->name('cases.edit');
-        Route::patch('/cases/{id}',     [ApplicantCaseController::class, 'update'])->name('cases.update');
-        Route::delete('/cases/{id}', [ApplicantCaseController::class, 'destroy'])
-            ->name('cases.destroy');
+        Route::get('/applicant/cases',            [ApplicantCaseController::class, 'index'])->name('applicant.cases.index');
+        Route::get('/applicant/cases/create',     [ApplicantCaseController::class, 'create'])->name('applicant.cases.create');
+        Route::post('/applicant/cases',           [ApplicantCaseController::class, 'store'])->name('applicant.cases.store');
+        Route::get('/applicant/cases/{id}',       [ApplicantCaseController::class, 'show'])->name('applicant.cases.show');
+        Route::get('/applicant/cases/{id}/edit',  [ApplicantCaseController::class, 'edit'])->name('applicant.cases.edit');
+        Route::patch('/applicant/cases/{id}',     [ApplicantCaseController::class, 'update'])->name('applicant.cases.update');
+        Route::delete('/applicant/cases/{id}', [ApplicantCaseController::class, 'destroy'])
+            ->name('applicant.cases.destroy');
         // Files
-        Route::post('/cases/{id}/files',            [ApplicantCaseController::class, 'uploadFile'])->name('cases.files.upload');
-        Route::delete('/cases/{id}/files/{fileId}', [ApplicantCaseController::class, 'deleteFile'])->name('cases.files.delete');
+        Route::post('/applicant/cases/{id}/files',            [ApplicantCaseController::class, 'uploadFile'])->name('applicant.cases.files.upload');
+        Route::delete('/applicant/cases/{id}/files/{fileId}', [ApplicantCaseController::class, 'deleteFile'])->name('applicant.cases.files.delete');
 
         // Evidences / Witnesses
-        Route::delete('/cases/{id}/evidences/{evidenceId}', [ApplicantCaseController::class, 'deleteEvidence'])->name('cases.evidences.delete');
-        Route::delete('/cases/{id}/witnesses/{witnessId}',  [ApplicantCaseController::class, 'deleteWitness'])->name('cases.witnesses.delete');
+        Route::delete('/applicant/cases/{id}/evidences/{evidenceId}', [ApplicantCaseController::class, 'deleteEvidence'])->name('applicant.cases.evidences.delete');
+        Route::delete('/applicant/cases/{id}/witnesses/{witnessId}',  [ApplicantCaseController::class, 'deleteWitness'])->name('applicant.cases.witnesses.delete');
 
         // Messages
-        Route::post('/cases/{id}/messages', [ApplicantCaseController::class, 'postMessage'])->name('cases.messages.post');
+        Route::post('/applicant/cases/{id}/messages', [ApplicantCaseController::class, 'postMessage'])->name('applicant.cases.messages.post');
 
         // Receipts / exports
-        Route::get('/cases/{id}/receipt',        [ApplicantCaseController::class, 'receipt'])->name('cases.receipt');
-        Route::get('/cases/{id}/receipt/pdf',    [ApplicantCaseController::class, 'receiptPdf'])->name('cases.receipt.pdf');
-        Route::post('/cases/{id}/receipt/email', [ApplicantCaseController::class, 'emailReceipt'])->name('cases.receipt.email');
+        Route::get('/applicant/cases/{id}/receipt',        [ApplicantCaseController::class, 'receipt'])->name('applicant.cases.receipt');
+        Route::get('/applicant/cases/{id}/receipt/pdf',    [ApplicantCaseController::class, 'receiptPdf'])->name('applicant.cases.receipt.pdf');
+        Route::post('/applicant/cases/{id}/receipt/email', [ApplicantCaseController::class, 'emailReceipt'])->name('applicant.cases.receipt.email');
 
         // Hearing ICS
-        Route::get('/cases/{id}/hearings/{hearingId}/ics', [ApplicantCaseController::class, 'downloadHearingIcs'])->name('cases.hearings.ics');
+        Route::get('/applicant/cases/{id}/hearings/{hearingId}/ics', [ApplicantCaseController::class, 'downloadHearingIcs'])->name('applicant.cases.hearings.ics');
 
         // Notifications
-        Route::get('/notifications',           [ApplicantNotificationController::class, 'index'])->name('notifications.index');
-        Route::post('/notifications/mark-one', [ApplicantNotificationController::class, 'markOne'])->name('notifications.markOne');
-        Route::post('/notifications/mark-all', [ApplicantNotificationController::class, 'markAll'])->name('notifications.markAll');
+        Route::get('/applicant/notifications',           [ApplicantNotificationController::class, 'index'])->name('applicant.notifications.index');
+        Route::post('/applicant/notifications/mark-one', [ApplicantNotificationController::class, 'markOne'])->name('applicant.notifications.markOne');
+        Route::post('/applicant/notifications/mark-all', [ApplicantNotificationController::class, 'markAll'])->name('applicant.notifications.markAll');
 
         // Notification settings
-        Route::get('/notifications/settings',  [ApplicantNotificationController::class, 'settingsEdit'])->name('notifications.settings');
-        Route::post('/notifications/settings', [ApplicantNotificationController::class, 'settingsUpdate'])->name('notifications.settings.update');
+        Route::get('/applicant/notifications/settings',  [ApplicantNotificationController::class, 'settingsEdit'])->name('applicant.notifications.settings');
+        Route::post('/applicant/notifications/settings', [ApplicantNotificationController::class, 'settingsUpdate'])->name('applicant.notifications.settings.update');
     });
 
     /*
@@ -176,7 +175,7 @@ Route::middleware(SetLocale::class)->group(function () {
     | Admin area (auth:web)
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['auth','force.password.change'])->group(function () {
+    Route::middleware(['auth', 'force.password.change'])->group(function () {
         // Admin dashboard
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -187,7 +186,7 @@ Route::middleware(SetLocale::class)->group(function () {
 
         // Admin section with /admin prefix
         Route::prefix('admin')->group(function () {
-            Route::get('/', fn () => redirect()->route('admin.dashboard'))
+            Route::get('/', fn() => redirect()->route('admin.dashboard'))
                 ->name('admin.home');
 
             Route::get('/dashboard', [DashboardController::class, 'index'])

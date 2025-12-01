@@ -1,18 +1,18 @@
 <?php
 
 return [
-    'title' => 'ውሎች እና ሁኔታዎች',
-    'manage_description' => 'ተመዝጋቢዎች ሊቀበሉት ያለባቸውን ውሎች እዚህ ያቆጣጠሩ።',
-    'create_new' => 'አዲስ ይፍጠሩ',
+    'title' => 'ውሎች እና ቅድመ ሁኔታዎች',
+    'manage_description' => 'ተመዝጋቢዎች ሊቀበሉት ያለባቸውን ውሎች ይቆጣጠሩ።',
+    'create_new' => 'አዲስ ይመዝግቡ',
 
-    'table_title' => 'አርእስት',
+    'table_title' => 'ርዕስ',
     'table_published' => 'ታተመ',
-    'table_updated' => 'የተዘመነ',
+    'table_updated' => 'የተስተካከለ',
 
     'status_published' => 'ታተመ',
     'status_draft' => 'ረቂቅ',
 
-    'action_edit' => 'አርትዕ',
+    'action_edit' => 'አዘምን',
     'action_delete' => 'ሰርዝ',
     'confirm_delete' => 'ይህን ውል ማስወገድ ይፈልጋሉ?',
 

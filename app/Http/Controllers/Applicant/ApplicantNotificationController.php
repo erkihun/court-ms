@@ -76,7 +76,28 @@ class ApplicantNotificationController extends Controller
                 pageName: 'status_page'
             );
 
-        return view('applicant.notifications.index', compact('unseenHearings', 'unseenMsgs', 'unseenStatus'));
+        $respondentViews = DB::table('respondent_case_views as v')
+            ->join('court_cases as c', 'c.id', '=', 'v.case_id')
+            ->join('respondents as r', 'r.id', '=', 'v.respondent_id')
+            ->select(
+                'v.id',
+                'v.viewed_at',
+                'v.case_id',
+                'c.case_number',
+                DB::raw("TRIM(CONCAT_WS(' ', r.first_name, r.middle_name, r.last_name)) as respondent_name")
+            )
+            ->where('c.applicant_id', $aid)
+            ->where('v.viewed_at', '>=', now()->subDays(14))
+            ->whereNotExists(function ($q) use ($aid) {
+                $q->from('notification_reads as nr')
+                    ->whereColumn('nr.source_id', 'v.id')
+                    ->where('nr.type', 'respondent_view')
+                    ->where('nr.applicant_id', $aid);
+            })
+            ->orderByDesc('v.viewed_at')
+            ->paginate(10, ['*'], 'respondent_views_page');
+
+        return view('applicant.notifications.index', compact('unseenHearings', 'unseenMsgs', 'unseenStatus', 'respondentViews'));
     }
 
     /**
@@ -88,7 +109,7 @@ class ApplicantNotificationController extends Controller
         abort_if(!$aid, 403);
 
         $data = $request->validate([
-            'type'     => 'required|in:hearing,message,status',
+            'type'     => 'required|in:hearing,message,status,respondent_view',
             'sourceId' => 'required|integer',
         ]);
 
@@ -151,6 +172,19 @@ class ApplicantNotificationController extends Controller
             ->pluck('l.id')
             ->all();
 
+        $respondentViewIds = DB::table('respondent_case_views as v')
+            ->join('court_cases as c', 'c.id', '=', 'v.case_id')
+            ->where('c.applicant_id', $aid)
+            ->where('v.viewed_at', '>=', now()->subDays(14))
+            ->whereNotExists(function ($q) use ($aid) {
+                $q->from('notification_reads as nr')
+                    ->whereColumn('nr.source_id', 'v.id')
+                    ->where('nr.type', 'respondent_view')
+                    ->where('nr.applicant_id', $aid);
+            })
+            ->pluck('v.id')
+            ->all();
+
         $rows = [];
         foreach ($hIds as $id) {
             $rows[] = [
@@ -176,6 +210,16 @@ class ApplicantNotificationController extends Controller
             $rows[] = [
                 'applicant_id' => $aid,
                 'type'         => 'status',
+                'source_id'    => $id,
+                'seen_at'      => $now,
+                'created_at'   => $now,
+                'updated_at'   => $now,
+            ];
+        }
+        foreach ($respondentViewIds as $id) {
+            $rows[] = [
+                'applicant_id' => $aid,
+                'type'         => 'respondent_view',
                 'source_id'    => $id,
                 'seen_at'      => $now,
                 'created_at'   => $now,

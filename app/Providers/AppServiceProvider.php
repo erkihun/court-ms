@@ -57,7 +57,7 @@ class AppServiceProvider extends ServiceProvider
             $view->with('systemSettings', $settings);
         });
 
-        View::composer('components.public-layout', function ($view) {
+        View::composer('components.applicant-layout', function ($view) {
             $systemSettings = null;
             try {
                 if (Schema::hasTable('system_settings')) {

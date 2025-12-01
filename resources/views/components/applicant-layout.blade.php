@@ -8,6 +8,60 @@ $shortName = $layout['shortName'] ?? $brandName;
 $logoPath = $layout['logoPath'] ?? null;
 $footerText = $layout['footerText'] ?? __('app.all_rights_reserved');
 $notificationCount = $layout['notificationCount'] ?? 0;
+
+if ($notificationCount === 0 && auth('applicant')->check()) {
+    $aid = auth('applicant')->id();
+    $now = now();
+
+    $notificationCount += \DB::table('case_messages as m')
+        ->join('court_cases as c', 'c.id', '=', 'm.case_id')
+        ->where('c.applicant_id', $aid)
+        ->whereNotNull('m.sender_user_id')
+        ->where('m.created_at', '>=', $now->copy()->subDays(60))
+        ->whereNotExists(function ($q) use ($aid) {
+            $q->from('notification_reads as nr')
+                ->whereColumn('nr.source_id', 'm.id')
+                ->where('nr.type', 'message')
+                ->where('nr.applicant_id', $aid);
+        })
+        ->count();
+
+    $notificationCount += \DB::table('case_hearings as h')
+        ->join('court_cases as c', 'c.id', '=', 'h.case_id')
+        ->where('c.applicant_id', $aid)
+        ->whereBetween('h.hearing_at', [$now->copy()->subDay(), $now->copy()->addDays(60)])
+        ->whereNotExists(function ($q) use ($aid) {
+            $q->from('notification_reads as nr')
+                ->whereColumn('nr.source_id', 'h.id')
+                ->where('nr.type', 'hearing')
+                ->where('nr.applicant_id', $aid);
+        })
+        ->count();
+
+    $notificationCount += \DB::table('case_status_logs as s')
+        ->join('court_cases as c', 'c.id', '=', 's.case_id')
+        ->where('c.applicant_id', $aid)
+        ->where('s.created_at', '>=', $now->copy()->subDays(60))
+        ->whereNotExists(function ($q) use ($aid) {
+            $q->from('notification_reads as nr')
+                ->whereColumn('nr.source_id', 's.id')
+                ->where('nr.type', 'status')
+                ->where('nr.applicant_id', $aid);
+        })
+        ->count();
+
+    $notificationCount += \DB::table('respondent_case_views as v')
+        ->join('court_cases as c', 'c.id', '=', 'v.case_id')
+        ->where('c.applicant_id', $aid)
+        ->where('v.viewed_at', '>=', $now->copy()->subDays(60))
+        ->whereNotExists(function ($q) use ($aid) {
+            $q->from('notification_reads as nr')
+                ->whereColumn('nr.source_id', 'v.id')
+                ->where('nr.type', 'respondent_view')
+                ->where('nr.applicant_id', $aid);
+        })
+        ->count();
+}
 @endphp
 
 <!DOCTYPE html>

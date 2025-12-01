@@ -1,4 +1,4 @@
-<x-public-layout title="Apply - Register">
+<x-applicant-layout title="Apply - Register">
     <h1 class="text-2xl font-semibold mb-4">Applicant Registration</h1>
 
     <form method="POST" action="{{ route('applicant.register.submit') }}" class="bg-white p-6 rounded-lg border space-y-4">
@@ -75,4 +75,4 @@
             <a href="{{ route('applicant.login') }}" class="text-sm text-blue-700 hover:underline">Already registered? Sign in</a>
         </div>
     </form>
-</x-public-layout>
+</x-applicant-layout>

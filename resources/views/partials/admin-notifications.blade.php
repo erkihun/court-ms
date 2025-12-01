@@ -54,7 +54,24 @@ $q->from('admin_notification_reads as r')
 })
 ->orderBy('h.hearing_at')->limit(5)->get();
 
-$hasAny = $newCases->isNotEmpty() || $msgs->isNotEmpty() || $status->isNotEmpty() || $hearings->isNotEmpty();
+$respondentViews = \DB::table('respondent_case_views as v')
+->join('court_cases as c','c.id','=','v.case_id')
+->join('respondents as r','r.id','=','v.respondent_id')
+->select('v.id','v.viewed_at','v.case_id','c.case_number', \DB::raw("TRIM(CONCAT_WS(' ', r.first_name, r.middle_name, r.last_name)) as respondent_name"))
+->where(function($q) use ($uid){
+$q->where('c.assigned_user_id',$uid)
+->orWhereNull('c.assigned_user_id');
+})
+->where('v.viewed_at','>=', now()->subDays(14))
+->whereNotExists(function($q) use ($uid){
+$q->from('admin_notification_reads as r2')
+->whereColumn('r2.source_id','v.id')
+->where('r2.type','respondent_view')
+->where('r2.user_id',$uid);
+})
+->orderByDesc('v.viewed_at')->limit(5)->get();
+
+$hasAny = $newCases->isNotEmpty() || $msgs->isNotEmpty() || $status->isNotEmpty() || $hearings->isNotEmpty() || $respondentViews->isNotEmpty();
 @endphp
 
 <div class="p-3">
@@ -166,6 +183,35 @@ $hasAny = $newCases->isNotEmpty() || $msgs->isNotEmpty() || $status->isNotEmpty(
                     <input type="hidden" name="type" value="hearing">
                     <input type="hidden" name="sourceId" value="{{ $h->id }}">
                     <button class="text-xs px-2 py-1 rounded border hover:bg-slate-50">Seen</button>
+                </form>
+            </li>
+            @endforeach
+        </ul>
+    </div>
+    @endif
+
+    {{-- Respondent views --}}
+    @if($respondentViews->isNotEmpty())
+    <div class="mt-3">
+        <div class="text-xs font-medium text-slate-500 mb-1">Respondents viewed</div>
+        <ul class="divide-y">
+            @foreach($respondentViews as $v)
+            <li class="py-2 flex items-center justify-between gap-3">
+                <a href="{{ route('cases.show', $v->case_id) }}" class="text-sm flex-1">
+                    <div class="font-medium text-slate-800">{{ $v->case_number }}</div>
+                    <div class="text-xs text-slate-500">
+                        {{ $v->respondent_name ?: 'Respondent' }} viewed this case
+                        <span class="text-slate-400">A�</span>
+                        {{ \Illuminate\Support\Carbon::parse($v->viewed_at)->diffForHumans() }}
+                    </div>
+                </a>
+                <form method="POST" action="{{ route('admin.notifications.markOne') }}">
+                    @csrf
+                    <input type="hidden" name="type" value="respondent_view">
+                    <input type="hidden" name="sourceId" value="{{ $v->id }}">
+                    <button class="text-xs px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">
+                        Seen
+                    </button>
                 </form>
             </li>
             @endforeach

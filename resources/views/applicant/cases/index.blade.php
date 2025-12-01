@@ -1,4 +1,4 @@
-<x-public-layout title="{{ __('cases.my_cases') }}">
+<x-applicant-layout title="{{ __('cases.my_cases') }}">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
         <div>
             <h1 class="text-xl sm:text-2xl font-semibold text-slate-900">
@@ -162,4 +162,4 @@
     <div class="mt-4 flex justify-end">
         {{ $cases->links() }}
     </div>
-</x-public-layout>
+</x-applicant-layout>

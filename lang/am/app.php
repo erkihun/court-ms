@@ -6,13 +6,13 @@ return [
     'English' => 'እንግሊዝኛ',
     'Amharic' => 'አማርኛ',
     'Language updated.' => 'ቋንቋ ዘምኗል።',
-    'System_Settings' => 'የስርዓት ቅንብሮች',
+    'System_Settings' => 'የሲስተም ማስተካከያ',
 
     // Layout / UI
-    'Sidebar' => 'የጎን ምናሌ',
-    'Open sidebar' => 'ጎን ምናሌን ክፈት',
-    'Close sidebar' => 'ጎን ምናሌን ዝጋ',
-    'Toggle sidebar width' => 'የጎን ምናሌ ስፋት ቀይር',
+    'Sidebar' => 'የጎን ማውጫ',
+    'Open sidebar' => 'ጎን ማውጫ ክፈት',
+    'Close sidebar' => 'ጎን ማውጫ ዝጋ',
+    'Toggle sidebar width' => 'የጎን ማውጫ ስፋት ቀይር',
 
     // Modules / Nav
     'Appeals' => 'አቤቱታዎች',
@@ -22,13 +22,13 @@ return [
     'Users' => 'ተጠቃሚዎች',
     'Permissions' => 'ፈቃዶች',
     'Roles' => 'ሚናዎች',
-    'Letter Templates' => 'የደብዳቤ አብነቶች',
+    'Letter Templates' => 'የደብዳቤ ቴምፕሌቶች',
     'Compose Letter' => 'ደብዳቤ ይጻፉ',
     'Letters' => 'ደብዳቤዎች',
 
-    'User Control' => 'የተጠቃሚ ቁጥጥር',
-    'Terms' => 'ውሎች እና ሁኔታዎች',
-// Notifications dropdown
+    'User Control' => 'የተጠቃሚ መቆጣጠሪያ',
+    'Terms' => 'ውሎች እና ቅድመ ሁኔታዎች',
+    // Notifications dropdown
     'Mark all as seen' => 'ሁሉንም እንደታዩ ምልክት ያድርጉ',
     'Seen' => 'ታይቷል',
     'View all' => 'ሁሉንም ይመልከቱ',
@@ -45,8 +45,8 @@ return [
     'Profile' => 'ፕሮፈይል',
     'Logout' => 'ውጣ',
     'Search' => 'ፈልግ',
-    'Reset' => 'ዳግም አስጀምር',
-    'Apply Filters' => 'ማጣሪያዎችን ተግብር',
+    'Reset' => 'ወደነበረበት መልስ',
+    'Apply Filters' => 'አጣራ',
     'Export CSV' => 'CSV ላክ',
     'Title' => 'ርዕስ',
     'Type' => 'አይነት',
@@ -59,7 +59,7 @@ return [
     'No cases found.' => 'ምንም ክስ አልተገኘም።',
     'All statuses' => 'ሁሉም ሁኔታዎች',
     'All types' => 'ሁሉም አይነቶች',
-    'All assignees' => 'ሁሉም ተመድቦች',
+    'All assignees' => 'የተመደቡት ሁሉም',
     'case_number' => 'የክስ ቁጥር',
     'showing_from_to_of_total' => 'ከ :total ውስጥ :from–:to ታይቷል',
     'court_portal' => 'የ Court መተግበሪያ',

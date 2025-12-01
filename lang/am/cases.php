@@ -41,18 +41,18 @@ return [
     'scheduled' => 'ተዘጋጅቷል',
     'add_to_calendar' => 'ካሌንደር ላይ አደርግልኘ',
     'no_hearings_scheduled' => 'ምንም የችሎት ቀን  አልተዘጋጀም።',
-    'timeline' => 'የመገብ ሂደት',
+    'timeline' => 'የመዝገብ ሂደት',
     'events' => 'ሂደት',
     'no_history_yet' => 'እስካሁን ምንም ታሪክ የለም።',
-    'case_information' => 'የጉዳይ መረጃ',
+    'case_information' => 'የመዝገብ መረጃ',
     'filed' => 'ቀርቧል',
     'messages' => 'መልዕክቶች',
     'total' => 'ጠቅላላ',
     'you' => 'እርስዎ',
-    'court_staff' => 'የ court ሰራተኛ',
+    'court_staff' => 'የ ፍርድ ቤት ሰራተኛ',
     'no_messages_yet' => 'እስካሁን ምንም መልዕክት የለም።',
     'new_message' => 'አዲስ መልዕክት',
-    'write_message_placeholder' => 'ለ court መልዕክት ይጻፉ…',
+    'write_message_placeholder' => 'ለ ፍርድ ቤት መልዕክት ይጻፉ…',
     'send' => 'ላክ',
     'respondent_defendant' => 'የተከሰሰ / ተከሳሽ',
     'name' => 'ስም',
@@ -72,9 +72,9 @@ return [
     'not_pending_readonly' => 'ይህ ክስ አሁን በመጠባበቅ ላይ አይደለም። መስኮች ለንባብ ብቻ ናቸው።',
 
     'section' => [
-        'case_details' => 'የክስ ዝርዝር',
-        'add_documents' => 'ሰነዶች መጨመር (PDF)',
-        'witnesses' => 'ምስክሮች',
+        'case_details' => 'የመዝገብ ዝርዝር',
+        'add_documents' => 'የሰነድ ማስረጃ  (PDF)',
+        'witnesses' => 'የሰው ምስክሮች',
         'existing_documents' => 'ቀድሞ ያሉ ሰነዶች',
         'existing_witnesses' => 'ቀድሞ ያሉ ምስክሮች',
     ],
@@ -84,7 +84,7 @@ return [
         'filing_date' => 'የማቅረብ ቀን',
         'case_type' => 'የክስ አይነት',
         'description' => 'ዝርዝር መግለጫ',
-        'relief_requested' => 'የተጠየቀ መርዳት (አማራጭ)',
+        'relief_requested' => 'የምጠይቀው ዳኝነት / ፍርድ',
         'respondent_name' => 'ክስ ተከሳሽ / ተከሳሽ',
         'respondent_address' => 'የተከሳሽ አድራሻ',
         'document' => 'ሰነድ',
@@ -96,7 +96,7 @@ return [
 
     'buttons' => [
         'add_row' => 'ሰነድ ጨምር',
-        'add_witness' => 'ምስክር አክል',
+        'add_witness' => 'ምስክር ጨምር',
         'save_changes' => 'ለውጦችን መዝግብ',
     ],
 
@@ -127,7 +127,7 @@ return [
     ],
 
     'words_total' => ':count / :max ቃላት ጠቅላላ',
-    'limit_reached' => 'መጠን ተደርሷል፡ ከፍተኛው ስለ 3 ወረቀት (~:max ቃላት).',
+    'limit_reached' => ' ከፍተኛው  3 ወረቀት (~:max ቃላት).',
     'witnesses_fields' => [
         'full_name_placeholder' => 'ሙሉ ስም *',
         'phone_placeholder' => 'ስልክ',

@@ -24,7 +24,7 @@ $bannerPath = $settings?->banner_path ?? null;
             background: url("{{ asset('storage/'.$bannerPath) }}") center / cover no-repeat,
             #e5e7eb;
 
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(4px);
 
         }
 
@@ -44,49 +44,49 @@ $bannerPath = $settings?->banner_path ?? null;
 
     <div class="max-w-md mx-auto w-full space-y-8">
 
-        {{-- BRAND HEADER --}}
-        <div class="flex items-center justify-center gap-3">
-            @if($logoPath)
-            <div class="h-16 w-16 rounded-xl overflow-hidden">
-                <img src="{{ asset('storage/'.$faviconPath) }}"
-                    alt="{{ $brandName }}"
-                    class="h-full w-full object-contain">
-            </div>
-            @else
-            <div class="h-16 w-16 rounded-xl bg-indigo-100 text-indigo-700 border border-indigo-300 flex items-center justify-center font-bold uppercase tracking-wide">
-                {{ \Illuminate\Support\Str::of($brandName)->substr(0,2) }}
-            </div>
-            @endif
 
-            <div class="text-left">
-                <h1 class="text-2xl font-bold text-gray-900">{{ $brandName }}</h1>
-                <p class="text-xs font-semibold uppercase tracking-wider text-indigo-600">Admin Login Panel</p>
-            </div>
-        </div>
 
-        {{-- STATUS MESSAGE --}}
-        @if (session('status'))
-        <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 shadow-sm">
-            {{ session('status') }}
-        </div>
-        @endif
 
-        {{-- ERROR BLOCK --}}
-        @if ($errors->any())
-        <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-sm">
-            <ul class="list-disc pl-5 space-y-0.5">
-                @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-        @endif
 
         {{-- LOGIN CARD --}}
         <div class="auth-card rounded-2xl p-6 space-y-6">
 
+            {{-- BRAND HEADER --}}
+            <div class="flex items-center justify-center gap-3">
+                @if($logoPath)
+                <div class="h-16 w-16 rounded-xl overflow-hidden">
+                    <img src="{{ asset('storage/'.$faviconPath) }}"
+                        alt="{{ $brandName }}"
+                        class="h-full w-full object-contain">
+                </div>
+                @else
+                <div class="h-16 w-16 rounded-xl bg-indigo-100 text-indigo-700 border border-indigo-300 flex items-center justify-center font-bold uppercase tracking-wide">
+                    {{ \Illuminate\Support\Str::of($brandName)->substr(0,2) }}
+                </div>
+                @endif
 
+                <div class="text-left">
+                    <h1 class="text-2xl font-bold text-gray-900">{{ $brandName }}</h1>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-indigo-600">Admin Login Panel</p>
+                </div>
+            </div>
+            {{-- STATUS MESSAGE --}}
+            @if (session('status'))
+            <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 shadow-sm">
+                {{ session('status') }}
+            </div>
+            @endif
 
+            {{-- ERROR BLOCK --}}
+            @if ($errors->any())
+            <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-sm">
+                <ul class="list-disc pl-5 space-y-0.5">
+                    @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+            @endif
             {{-- LOGIN FORM --}}
             <form method="POST" action="{{ route('login') }}" class="space-y-4">
                 @csrf

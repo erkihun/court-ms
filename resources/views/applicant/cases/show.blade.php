@@ -2,7 +2,7 @@
 @php
     $applicantUser = auth('applicant')->user();
 @endphp
-<x-public-layout :title="$case->case_number">
+<x-applicant-layout :title="$case->case_number">
     <style>
         /* Lightweight, non-invasive styling so we don't destroy TinyMCE/Word HTML */
         .tiny-content * {
@@ -573,4 +573,4 @@
 
     </div>
 
-</x-public-layout>
+</x-applicant-layout>

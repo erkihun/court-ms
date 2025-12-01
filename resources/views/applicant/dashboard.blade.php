@@ -1,4 +1,4 @@
-<x-public-layout title="{{ __('dashboard.my_dashboard') }}">
+<x-applicant-layout title="{{ __('dashboard.my_dashboard') }}">
     @php
     $total = $total ?? 0;
     $pending = $pending ?? 0;
@@ -203,4 +203,4 @@
             @endif
         </div>
     </div>
-</x-public-layout>
+</x-applicant-layout>
