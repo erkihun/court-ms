@@ -49,6 +49,8 @@ return [
     'verify_email_subtitle' => 'We\'ve sent a verification link to your email address. Please click the link to continue.',
     'resend_verification_email' => 'Resend verification email',
     'verification_link_sent' => 'A new verification link has been sent to your email address.',
+    'email_not_verified' => 'Please verify your email before logging in.',
+    'verify_email_hint' => 'Check your inbox (including spam) and click the verification link before signing in.',
     'back_to_dashboard' => 'Back to dashboard',
     'log_out' => 'Log out',
 

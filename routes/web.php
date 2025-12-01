@@ -175,7 +175,7 @@ Route::middleware(SetLocale::class)->group(function () {
     | Admin area (auth:web)
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['auth', 'force.password.change'])->group(function () {
+    Route::middleware(['auth', 'force.password.change', 'verified'])->group(function () {
         // Admin dashboard
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
