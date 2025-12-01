@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'dashboard' => 'Dashboard',
+
     'profile' => 'Profile',
     'first_name' => 'First name',
     'middle_name' => 'Middle name',
@@ -76,5 +78,13 @@ return [
     'case_number_label' => 'Case number',
     'search' => 'Search',
     'no_matching_case' => 'No matching case found.',
-    'view_case_details' => 'View case details'
+    'view_case_details' => 'View case details',
+    'notifications' => 'Notifications',
+    'recent_replies' => 'Recent replies',
+    'view_all' => 'View all',
+    'mark_all_seen' => 'Mark all as seen',
+    'no_notifications' => 'No new notifications yet.',
+    'court_staff' => 'Court staff',
+    'respondent_view' => 'Respondent view',
+    'seen' => 'Seen',
 ];

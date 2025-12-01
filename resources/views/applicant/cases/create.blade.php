@@ -1,4 +1,4 @@
-<x-public-layout title="{{ __('cases.submit_case') }}">
+<x-applicant-layout title="{{ __('cases.submit_case') }}">
     <div class="mb-6">
         <h1 class="text-2xl md:text-3xl font-semibold text-slate-900">
             {{ __('cases.submit_case') }}
@@ -463,4 +463,4 @@
             });
         })();
     </script>
-</x-public-layout>
+</x-applicant-layout>

@@ -1,4 +1,4 @@
-<x-public-layout title="Case Details">
+<x-applicant-layout title="Case Details">
     <a href="{{ route('public.cases') }}" class="inline-block mb-4 text-sm text-blue-700 hover:underline">← Back to cases</a>
 
     <div class="rounded-xl border bg-white p-6 md:p-8 space-y-4">
@@ -33,4 +33,4 @@
             <div class="whitespace-pre-line text-slate-700">{{ $case->description ?? '—' }}</div>
         </div>
     </div>
-</x-public-layout>
+</x-applicant-layout>

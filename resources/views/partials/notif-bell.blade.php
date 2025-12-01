@@ -42,6 +42,18 @@ $q->from('notification_reads as nr')
 })
 ->count();
 
+$count += \DB::table('respondent_case_views as v')
+->join('court_cases as c','c.id','=','v.case_id')
+->where('c.applicant_id',$me)
+->where('v.viewed_at','>=', $now->copy()->subDays(60))
+->whereNotExists(function($q) use ($me){
+$q->from('notification_reads as nr')
+->whereColumn('nr.source_id','v.id')
+->where('nr.type','respondent_view')
+->where('nr.applicant_id',$me);
+})
+->count();
+
 // Latest 5 (mixed)
 $msgs = \DB::table('case_messages as m')
 ->join('court_cases as c','c.id','=','m.case_id')
@@ -81,7 +93,20 @@ $q->from('notification_reads as nr')
 })
 ->selectRaw("'status' as type, s.id as source_id, s.case_id, s.created_at, s.from_status as meta1, s.to_status as meta2, NULL as meta3");
 
-$items = $msgs->unionAll($hrs)->unionAll($sts)->orderBy('created_at','desc')->limit(5)->get();
+$views = \DB::table('respondent_case_views as v')
+->join('court_cases as c','c.id','=','v.case_id')
+->join('respondents as r','r.id','=','v.respondent_id')
+->where('c.applicant_id',$me)
+->where('v.viewed_at','>=', now()->subDays(60))
+->whereNotExists(function($q) use ($me){
+$q->from('notification_reads as nr')
+->whereColumn('nr.source_id','v.id')
+->where('nr.type','respondent_view')
+->where('nr.applicant_id',$me);
+})
+->selectRaw("'respondent_view' as type, v.id as source_id, v.case_id, v.viewed_at as created_at, TRIM(CONCAT_WS(' ', r.first_name, r.middle_name, r.last_name)) as meta1, NULL as meta2, NULL as meta3");
+
+$items = $msgs->unionAll($hrs)->unionAll($sts)->unionAll($views)->orderBy('created_at','desc')->limit(5)->get();
 @endphp
 
 <div x-data="{ open:false }" class="relative">
@@ -105,7 +130,7 @@ $items = $msgs->unionAll($hrs)->unionAll($sts)->orderBy('created_at','desc')->li
         class="absolute right-0 mt-2 w-80 rounded-md border bg-white shadow-lg">
         <div class="flex items-center justify-between px-3 py-2 border-b">
             <div class="text-sm font-semibold">Notifications</div>
-            <form method="POST" action="{{ route('applicant.notifications.read_all') }}">
+            <form method="POST" action="{{ route('applicant.notifications.markAll') }}">
                 @csrf
                 <button class="text-xs text-slate-600 hover:text-slate-900">Mark all as read</button>
             </form>
@@ -134,8 +159,10 @@ $items = $msgs->unionAll($hrs)->unionAll($sts)->orderBy('created_at','desc')->li
                         @elseif($n->type === 'hearing')
                         Hearing {{ $n->meta2 ? "($n->meta2) " : '' }}on
                         {{ \Illuminate\Support\Carbon::parse($n->meta3)->format('M d, Y H:i') }}
+                        @elseif($n->type === 'respondent_view')
+                        Respondent {{ $n->meta1 ?? 'Viewed the case' }} viewed this case
                         @else
-                        Status changed: {{ ucfirst($n->meta1 ?? '-') }} → {{ ucfirst($n->meta2 ?? '-') }}
+                        Status changed: {{ ucfirst($n->meta1 ?? '-') }} &rarr; {{ ucfirst($n->meta2 ?? '-') }}
                         @endif
                     </div>
                 </a>

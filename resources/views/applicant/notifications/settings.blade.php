@@ -1,5 +1,5 @@
 {{-- resources/views/apply/notifications/settings.blade.php --}}
-<x-public-layout title="Email preferences">
+<x-applicant-layout title="Email preferences">
     <div class="max-w-xl space-y-4">
         <h1 class="text-lg font-semibold text-slate-800">Email preferences</h1>
 
@@ -62,4 +62,4 @@
             </div>
         </form>
     </div>
-</x-public-layout>
+</x-applicant-layout>

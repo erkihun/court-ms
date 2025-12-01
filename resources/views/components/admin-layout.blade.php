@@ -513,6 +513,7 @@
             $adminUnseenMsgs = collect();
             $adminUnseenCases = collect();
             $adminUpcomingHearings = collect();
+            $adminRespondentViews = collect();
 
             if ($uid) {
             $adminUnseenMsgs = \DB::table('case_messages as m')
@@ -559,9 +560,34 @@
             ->orderBy('h.hearing_at')
             ->limit(5)
             ->get();
+            
+$adminRespondentViews = \DB::table('respondent_case_views as v')
+            ->join('court_cases as c', 'c.id', '=', 'v.case_id')
+            ->join('respondents as r', 'r.id', '=', 'v.respondent_id')
+            ->select(
+                'v.id',
+                'v.viewed_at',
+                'v.case_id',
+                'c.case_number',
+                \DB::raw("TRIM(CONCAT_WS(' ', r.first_name, r.middle_name, r.last_name)) as respondent_name")
+            )
+            ->where(function($q) use ($uid) {
+            $q->where('c.assigned_user_id', $uid)
+            ->orWhereNull('c.assigned_user_id');
+            })
+            ->where('v.viewed_at', '>=', $cut14)
+            ->whereNotExists(function($q) use ($uid) {
+            $q->from('admin_notification_reads as nr')
+            ->whereColumn('nr.source_id', 'v.id')
+            ->where('nr.type', 'respondent_view')
+            ->where('nr.user_id', $uid);
+            })
+            ->orderByDesc('v.viewed_at')
+            ->limit(5)
+            ->get();
             }
 
-            $__adminNotifCount = $adminUnseenMsgs->count() + $adminUnseenCases->count() + $adminUpcomingHearings->count();
+            $__adminNotifCount = $adminUnseenMsgs->count() + $adminUnseenCases->count() + $adminUpcomingHearings->count() + ($adminRespondentViews->count() ?? 0);
             $u = auth()->user();
             @endphp
 
@@ -725,6 +751,34 @@
                                     </li>
                                     @endforeach
 
+                                </ul>
+                            </div>
+                            @endif
+
+                            {{-- Respondent views --}}
+                            @if($adminRespondentViews->isNotEmpty())
+                            <div class="mt-3">
+                                <div class="text-xs font-medium text-gray-600 mb-1">Respondent views</div>
+                                <ul class="divide-y divide-gray-200">
+                                    @foreach($adminRespondentViews as $v)
+                                    <li class="py-2 flex items-center justify-between">
+                                        <a href="{{ $hasCases ? route('cases.show', $v->case_id) : '#' }}" class="text-sm">
+                                            <div class="font-medium text-gray-900">{{ $v->case_number }}</div>
+                                            <div class="text-xs text-gray-600">
+                                                {{ $v->respondent_name ?: 'Respondent' }} viewed this case
+                                                A· {{ \Illuminate\Support\Carbon::parse($v->viewed_at)->diffForHumans() }}
+                                            </div>
+                                        </a>
+                                        @if($hasNotifMarkOne)
+                                        <form method="POST" action="{{ route('admin.notifications.markOne') }}">
+                                            @csrf
+                                            <input type="hidden" name="type" value="respondent_view">
+                                            <input type="hidden" name="sourceId" value="{{ $v->id }}">
+                                            <button class="text-xs px-2 py-1 rounded border border-gray-300 bg-white hover:bg-gray-50 text-gray-700">{{ __('app.Seen') }}</button>
+                                        </form>
+                                        @endif
+                                    </li>
+                                    @endforeach
                                 </ul>
                             </div>
                             @endif

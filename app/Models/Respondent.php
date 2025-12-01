@@ -2,8 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\CourtCase;
+use App\Models\RespondentCaseView;
 
 class Respondent extends Authenticatable
 {
@@ -36,5 +40,22 @@ class Respondent extends Authenticatable
     public function getFullNameAttribute(): string
     {
         return trim("{$this->first_name} {$this->middle_name} {$this->last_name}");
+    }
+
+    public function caseViews(): HasMany
+    {
+        return $this->hasMany(RespondentCaseView::class);
+    }
+
+    public function viewedCases(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            CourtCase::class,
+            'respondent_case_views',
+            'respondent_id',
+            'case_id'
+        )
+        ->withPivot('viewed_at')
+        ->withTimestamps();
     }
 }

@@ -1,4 +1,4 @@
-<x-public-layout title="Home">
+<x-applicant-layout title="Home">
     <div class="max-w-3xl">
         <h1 class="text-3xl md:text-4xl font-bold tracking-tight">Welcome to the Court Public Portal</h1>
         <p class="mt-4 text-slate-600">
@@ -13,4 +13,4 @@
             </button>
         </form>
     </div>
-</x-public-layout>
+</x-applicant-layout>

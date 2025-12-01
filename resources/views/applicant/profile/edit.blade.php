@@ -1,5 +1,5 @@
 {{-- resources/views/apply/profile/edit.blade.php --}}
-<x-public-layout title="{{ __('auth.my_profile') }}">
+<x-applicant-layout title="{{ __('auth.my_profile') }}">
     <div class="max-w-6xl mx-auto bg-white rounded-xl border border-slate-200 shadow-sm p-6 md:p-8">
 
         {{-- Page header --}}
@@ -334,4 +334,4 @@
             });
         });
     </script>
-</x-public-layout>
+</x-applicant-layout>

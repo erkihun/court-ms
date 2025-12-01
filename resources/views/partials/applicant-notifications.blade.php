@@ -58,7 +58,23 @@ $q->from('notification_reads as nr')
 ->limit(10)
 ->get();
 
-$hasAny = $unseenHearings->isNotEmpty() || $unseenMsgs->isNotEmpty() || $unseenStatus->isNotEmpty();
+$respondentViews = \DB::table('respondent_case_views as v')
+->join('court_cases as c', 'c.id', '=', 'v.case_id')
+->join('respondents as r', 'r.id', '=', 'v.respondent_id')
+->select('v.id','v.viewed_at','v.case_id','c.case_number', \DB::raw("TRIM(CONCAT_WS(' ', r.first_name, r.middle_name, r.last_name)) as respondent_name"))
+->where('c.applicant_id', $aid)
+->where('v.viewed_at','>=', now()->subDays(14))
+->whereNotExists(function($q) use ($aid){
+$q->from('notification_reads as nr')
+->whereColumn('nr.source_id','v.id')
+->where('nr.type','respondent_view')
+->where('nr.applicant_id',$aid);
+})
+->orderByDesc('v.viewed_at')
+->limit(5)
+->get();
+
+$hasAny = $unseenHearings->isNotEmpty() || $unseenMsgs->isNotEmpty() || $unseenStatus->isNotEmpty() || $respondentViews->isNotEmpty();
 @endphp
 
 <div class="p-3">
@@ -68,7 +84,7 @@ $hasAny = $unseenHearings->isNotEmpty() || $unseenMsgs->isNotEmpty() || $unseenS
         @if($hasAny)
         <form method="POST" action="{{ route('applicant.notifications.markAll') }}">
             @csrf
-            <button class="text-xs px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">
+            <button class="text-xs  text-slate-700 px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">
                 Mark all as seen
             </button>
         </form>
@@ -107,7 +123,7 @@ $hasAny = $unseenHearings->isNotEmpty() || $unseenMsgs->isNotEmpty() || $unseenS
                 <form method="POST"
                     action="{{ route('applicant.notifications.markOne', ['type'=>'hearing','sourceId'=>$h->id]) }}">
                     @csrf
-                    <button class="text-xs px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">
+                    <button class="text-xs  text-slate-700  px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">
                         Seen
                     </button>
                 </form>
@@ -140,7 +156,40 @@ $hasAny = $unseenHearings->isNotEmpty() || $unseenMsgs->isNotEmpty() || $unseenS
                 <form method="POST"
                     action="{{ route('applicant.notifications.markOne', ['type'=>'message','sourceId'=>$m->id]) }}">
                     @csrf
-                    <button class="text-xs px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">
+                    <button class="text-xs  text-slate-700 px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">
+                        Seen
+                    </button>
+                </form>
+            </li>
+            @endforeach
+        </ul>
+    </div>
+    @endif
+
+    {{-- Respondent views --}}
+    @if($respondentViews->isNotEmpty())
+    <div class="mt-4">
+        <div class="mb-1 flex items-center justify-between">
+            <div class="text-xs font-medium text-slate-500">Respondents viewed</div>
+            <span class="text-[11px] rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">
+                {{ $respondentViews->count() }}
+            </span>
+        </div>
+        <ul class="divide-y">
+            @foreach($respondentViews as $v)
+            <li class="py-2 flex items-center justify-between gap-3">
+                <a href="{{ route('applicant.cases.show', $v->case_id) }}" class="text-sm flex-1">
+                    <div class="font-medium text-slate-800">{{ $v->case_number }}</div>
+                    <div class="text-xs text-slate-500">
+                        {{ $v->respondent_name ?: 'Respondent' }} viewed this case
+                        <span class="text-slate-400">A�</span>
+                        {{ \Illuminate\Support\Carbon::parse($v->viewed_at)->diffForHumans() }}
+                    </div>
+                </a>
+                <form method="POST"
+                    action="{{ route('applicant.notifications.markOne', ['type'=>'respondent_view','sourceId'=>$v->id]) }}">
+                    @csrf
+                    <button class="text-xs  text-slate-700 px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">
                         Seen
                     </button>
                 </form>

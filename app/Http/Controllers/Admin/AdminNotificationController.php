@@ -59,7 +59,32 @@ class AdminNotificationController extends Controller
             ->orderBy('h.hearing_at')
             ->paginate(10, ['*'], 'hearings_page');
 
-        return view('admin.notifications.index', compact('msgs', 'cases', 'hearings'));
+        $respondentViews = DB::table('respondent_case_views as v')
+            ->join('court_cases as c', 'c.id', '=', 'v.case_id')
+            ->join('respondents as r', 'r.id', '=', 'v.respondent_id')
+            ->select(
+                'v.id',
+                'v.viewed_at',
+                'v.case_id',
+                'c.case_number',
+                'c.title',
+                DB::raw("TRIM(CONCAT_WS(' ', r.first_name, r.middle_name, r.last_name)) as respondent_name")
+            )
+            ->where(function ($q) use ($uid) {
+                $q->where('c.assigned_user_id', $uid)
+                    ->orWhereNull('c.assigned_user_id');
+            })
+            ->where('v.viewed_at', '>=', now()->subDays(14))
+            ->whereNotExists(function ($q) use ($uid) {
+                $q->from('admin_notification_reads as nr')
+                    ->whereColumn('nr.source_id', 'v.id')
+                    ->where('nr.type', 'respondent_view')
+                    ->where('nr.user_id', $uid);
+            })
+            ->orderByDesc('v.viewed_at')
+            ->paginate(10, ['*'], 'respondent_views_page');
+
+        return view('admin.notifications.index', compact('msgs', 'cases', 'hearings', 'respondentViews'));
     }
 
     public function markOne(Request $request)
@@ -68,7 +93,7 @@ class AdminNotificationController extends Controller
         abort_if(!$uid, 403);
 
         $data = $request->validate([
-            'type'     => 'required|in:message,case,hearing',
+            'type'     => 'required|in:message,case,hearing,respondent_view',
             'sourceId' => 'required|integer',
         ]);
 
@@ -118,10 +143,25 @@ class AdminNotificationController extends Controller
                     ->where('nr.user_id', $uid);
             })->pluck('h.id')->all();
 
+        $respondentViewIds = DB::table('respondent_case_views as v')
+            ->join('court_cases as c', 'c.id', '=', 'v.case_id')
+            ->where(function ($q) use ($uid) {
+                $q->where('c.assigned_user_id', $uid)
+                    ->orWhereNull('c.assigned_user_id');
+            })
+            ->where('v.viewed_at', '>=', now()->subDays(14))
+            ->whereNotExists(function ($q) use ($uid) {
+                $q->from('admin_notification_reads as nr')
+                    ->whereColumn('nr.source_id', 'v.id')
+                    ->where('nr.type', 'respondent_view')
+                    ->where('nr.user_id', $uid);
+            })->pluck('v.id')->all();
+
         $rows = [];
         foreach ($msgIds as $id)     $rows[] = ['user_id' => $uid, 'type' => 'message', 'source_id' => $id, 'seen_at' => $now, 'created_at' => $now, 'updated_at' => $now];
         foreach ($caseIds as $id)    $rows[] = ['user_id' => $uid, 'type' => 'case', 'source_id' => $id, 'seen_at' => $now, 'created_at' => $now, 'updated_at' => $now];
         foreach ($hearingIds as $id) $rows[] = ['user_id' => $uid, 'type' => 'hearing', 'source_id' => $id, 'seen_at' => $now, 'created_at' => $now, 'updated_at' => $now];
+        foreach ($respondentViewIds as $id) $rows[] = ['user_id' => $uid, 'type' => 'respondent_view', 'source_id' => $id, 'seen_at' => $now, 'created_at' => $now, 'updated_at' => $now];
 
         if (!empty($rows)) {
             // upsert avoids duplicate-key issues

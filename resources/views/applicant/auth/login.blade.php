@@ -11,7 +11,7 @@ $faviconPath = $settings?->favicon_path ?? null;
 $bannerPath = $settings?->banner_path ?? null;
 @endphp
 
-<x-public-layout title="{{ __('auth.login_title') }}" :hide-footer="true">
+<x-applicant-layout title="{{ __('auth.login_title') }}" :hide-footer="true">
 
 
     {{-- Favicon --}}
@@ -265,4 +265,4 @@ $bannerPath = $settings?->banner_path ?? null;
         });
     </script>
 
-</x-public-layout>
+</x-applicant-layout>

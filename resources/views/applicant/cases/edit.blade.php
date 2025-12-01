@@ -1,4 +1,4 @@
-<x-public-layout :title="__('cases.edit_title', ['no' => $case->case_number])">
+<x-applicant-layout :title="__('cases.edit_title', ['no' => $case->case_number])">
     @php $editable = ($case->status === 'pending'); @endphp
     <style>
         .tiny-content p,
@@ -620,4 +620,4 @@
         })();
     </script>
 
-</x-public-layout>
+</x-applicant-layout>

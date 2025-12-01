@@ -1,4 +1,4 @@
-<x-public-layout title="{{ __('auth.verify_email_title') }}">
+<x-applicant-layout title="{{ __('auth.verify_email_title') }}">
     <div class="mx-auto max-w-md">
         <div class="rounded-xl border bg-white p-6">
 
@@ -40,4 +40,4 @@
             </div>
         </div>
     </div>
-</x-public-layout>
+</x-applicant-layout>
