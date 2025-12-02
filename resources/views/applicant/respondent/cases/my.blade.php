@@ -5,10 +5,12 @@
                 <p class="text-sm uppercase tracking-wide text-slate-500">{{ __('cases.navigation.title') }}</p>
                 <h1 class="text-2xl font-semibold text-slate-900">{{ __('respondent.my_cases') }}</h1>
             </div>
+            @if(Route::has('applicant.respondent.cases.search'))
             <a href="{{ route('applicant.respondent.cases.search') }}"
                 class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-700 text-white text-sm font-semibold hover:bg-blue-800">
                 {{ __('respondent.find_case') }}
             </a>
+            @endif
         </div>
 
         @if($cases->isEmpty())
