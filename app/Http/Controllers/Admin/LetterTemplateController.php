@@ -64,6 +64,7 @@ class LetterTemplateController extends Controller
         $data = $request->validate([
             'title'               => ['required', 'string', 'max:255'],
             'category'            => ['nullable', 'string', 'max:120'],
+            'subject_prefix'      => ['nullable', 'string', 'max:80'],
             'placeholders'        => ['nullable', 'string', 'max:2000'],
             'body'                => ['required', 'string'],
             'header_image'        => ['nullable', 'image', 'max:3072'],
@@ -73,8 +74,20 @@ class LetterTemplateController extends Controller
         ]);
 
         $data['placeholders'] = $this->normalizePlaceholders($data['placeholders'] ?? null);
+        $data['subject_prefix'] = $this->normalizePrefix($data['subject_prefix'] ?? null);
 
         return $data;
+    }
+
+    private function normalizePrefix(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = trim($value);
+
+        return $value === '' ? null : $value;
     }
 
     private function normalizePlaceholders(?string $raw): ?array
