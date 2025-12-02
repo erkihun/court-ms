@@ -1,4 +1,8 @@
-﻿{{-- resources/views/letters/index.blade.php --}}
+{{-- resources/views/letters/index.blade.php --}}
+@php
+use Illuminate\Support\Str;
+$latestLetter = $letters->first();
+@endphp
 <x-admin-layout title="Letters">
     @section('page_header','Letters')
 
@@ -17,6 +21,30 @@
             </a>
         </div>
 
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4">
+                <p class="text-xs uppercase tracking-wide text-gray-500">Total letters</p>
+                <p class="text-3xl font-semibold text-gray-900">
+                    {{ $letters instanceof \Illuminate\Contracts\Pagination\Paginator ? $letters->total() : $letters->count() }}
+                </p>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4">
+                <p class="text-xs uppercase tracking-wide text-gray-500">Latest created</p>
+                <p class="text-sm text-gray-900">
+                    {{ optional($latestLetter)->subject ?? 'No letters yet' }}
+                </p>
+                <p class="text-xs text-gray-500 mt-1">
+                    {{ optional(optional($latestLetter)->created_at)->diffForHumans() ?? '—' }}
+                </p>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4">
+                <p class="text-xs uppercase tracking-wide text-gray-500">Template preview</p>
+                <p class="text-sm text-gray-900">
+                    {{ optional(optional($latestLetter)->template)->title ?? 'Add your first letter' }}
+                </p>
+            </div>
+        </div>
+
         <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
             @if($letters->isEmpty())
             <div class="p-8 text-center text-gray-500 text-sm">No letters yet.</div>
@@ -26,25 +54,65 @@
                     <thead>
                         <tr class="bg-gray-50 text-left text-gray-600">
                             <th class="px-4 py-3 font-medium">Subject</th>
+                            <th class="px-4 py-3 font-medium">Reference</th>
                             <th class="px-4 py-3 font-medium">Recipient</th>
                             <th class="px-4 py-3 font-medium">Template</th>
+                            <th class="px-4 py-3 font-medium">CC</th>
                             <th class="px-4 py-3 font-medium">Created</th>
                             <th class="px-4 py-3 font-medium text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         @foreach($letters as $letter)
+                        @php
+                            $subjectLabel = Str::of($letter->subject ?: 'Untitled Letter')->limit(60, '…');
+                            $recipientLabel = Str::of($letter->recipient_name ?: '—')->limit(40, '…');
+                            $ccLabel = $letter->cc ? Str::of($letter->cc)->limit(40, '…') : '—';
+                        @endphp
                         <tr class="hover:bg-gray-50">
-                            <td class="px-4 py-3 font-medium text-gray-900">{{ $letter->subject ?? 'Untitled Letter' }}</td>
-                            <td class="px-4 py-3 text-gray-600">{{ $letter->recipient_name }}</td>
-                            <td class="px-4 py-3 text-gray-600">{{ optional($letter->template)->title ?? '-' }}</td>
+                            <td class="px-4 py-3 font-medium text-gray-900" title="{{ $letter->subject ?? 'Untitled Letter' }}">
+                                {{ $subjectLabel }}
+                                <p class="text-xs text-gray-500 mt-0.5">Subject line</p>
+                            </td>
+                            <td class="px-4 py-3 text-gray-600">
+                                <span class="font-semibold text-xs text-gray-600">
+                                    {{ $letter->reference_number ?? '—' }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-gray-600" title="{{ $letter->recipient_name }}">
+                                <strong>{{ $recipientLabel }}</strong>
+                                <p class="text-xs text-gray-500 mt-0.5">{{ $letter->recipient_title ?? 'Recipient' }}</p>
+                            </td>
+                            <td class="px-4 py-3 text-gray-600" title="{{ optional($letter->template)->title }}">
+                                {{ optional($letter->template)->title ?? '—' }}
+                            </td>
+                            <td class="px-4 py-3 text-gray-600" title="{{ $letter->cc ?? 'None' }}">
+                                {{ $ccLabel }}
+                            </td>
                             <td class="px-4 py-3 text-gray-500">{{ optional($letter->created_at)->diffForHumans() }}</td>
                             <td class="px-4 py-3">
-                                <div class="flex justify-end">
-                                    <a href="{{ route('letters.show', $letter) }}"
-                                        class="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100">
+                                <div class="flex justify-end gap-2">
+                                    <button type="button"
+                                        onclick="window.location='{{ route('letters.show', $letter) }}'"
+                                        class="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
+                                        title="Open this letter">
                                         View
-                                    </a>
+                                    </button>
+                                    <button type="button"
+                                        onclick="window.location='{{ route('letters.edit', $letter) }}'"
+                                        class="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
+                                        title="Edit letter">
+                                        Edit
+                                    </button>
+                                    <form method="POST" action="{{ route('letters.destroy', $letter) }}"
+                                        onsubmit="return confirm('Delete this letter permanently?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                            class="px-3 py-1.5 text-xs font-medium rounded-lg border border-red-200 text-red-700 hover:bg-red-50">
+                                            Delete
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>

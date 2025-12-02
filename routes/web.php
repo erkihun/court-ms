@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 // Applicant-facing controllers
@@ -92,6 +93,17 @@ Route::middleware(SetLocale::class)->group(function () {
 
     Route::get('/respondent/case-search', [CaseSearchController::class, 'index'])->name('respondent.case.search');
     Route::get('/respondent/cases/{caseNumber}', [CaseSearchController::class, 'show'])->name('respondent.cases.show');
+
+    // Legacy "/apply" prefix for email verification links emitted on production domains.
+    Route::get('/apply/email/verify', function () {
+        return redirect()->route('applicant.verification.notice');
+    });
+    Route::get('/apply/email/verify/{id}/{hash}', function ($id, $hash, Request $request) {
+        return redirect()->route(
+            'applicant.verification.verify',
+            array_merge(['id' => $id, 'hash' => $hash], $request->query())
+        );
+    });
 
     /*
     |--------------------------------------------------------------------------
@@ -321,6 +333,15 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::get('/letters/{letter}', [LetterController::class, 'show'])
                 ->middleware('perm:cases.edit')
                 ->name('letters.show');
+            Route::get('/letters/{letter}/edit', [LetterController::class, 'edit'])
+                ->middleware('perm:cases.edit')
+                ->name('letters.edit');
+            Route::patch('/letters/{letter}', [LetterController::class, 'update'])
+                ->middleware('perm:cases.edit')
+                ->name('letters.update');
+            Route::delete('/letters/{letter}', [LetterController::class, 'destroy'])
+                ->middleware('perm:cases.edit')
+                ->name('letters.destroy');
         });
 
         /*

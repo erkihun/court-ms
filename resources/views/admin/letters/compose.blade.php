@@ -1,4 +1,5 @@
 {{-- resources/views/letters/compose.blade.php --}}
+@php use Illuminate\Support\Str; @endphp
 <x-admin-layout title="Compose Letter">
     @section('page_header','Compose Letter')
 
@@ -36,36 +37,53 @@
                 </div>
                 @endif
 
+                @if($errors->any())
+                <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    Please fix the highlighted fields before saving.
+                </div>
+                @endif
+
                 <div class="grid md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Recipient Name<span class="text-red-500">*</span></label>
                         <input type="text" name="recipient_name" value="{{ $recipientName }}"
                             class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2" required>
+                        @error('recipient_name')
+                            <p class="text-xs text-red-600 mt-1" role="alert">{{ $message }}</p>
+                        @enderror
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Recipient Title</label>
                         <input type="text" name="recipient_title" value="{{ $recipientTitle }}"
                             class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2">
+                        @error('recipient_title')
+                            <p class="text-xs text-red-600 mt-1" role="alert">{{ $message }}</p>
+                        @enderror
                     </div>
                 </div>
 
                 <div class="grid md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Recipient Company</label>
-                        <input type="text" name="recipient_company" value="{{ $recipientCompany }}"
-                            class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">CC</label>
-                        <input type="text" name="cc" value="{{ $cc }}"
-                            class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="e.g. Jane Smith">
-                    </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Recipient Company</label>
+                    <input type="text" name="recipient_company" value="{{ $recipientCompany }}"
+                        class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2">
+                    <p class="text-xs text-gray-500 mt-1">Separate multiple companies with commas; each will appear as its own bullet on the preview.</p>
                 </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">CC</label>
+                    <input type="text" name="cc" value="{{ $cc }}"
+                        class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="e.g. Jane Smith">
+                    <p class="text-xs text-gray-500 mt-1">You can add multiple CC recipients by comma-separating their names or emails.</p>
+                </div>
+            </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Subject</label>
                     <input type="text" name="subject" value="{{ $subject ?? '' }}"
                         class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2">
+                    @error('subject')
+                        <p class="text-xs text-red-600 mt-1" role="alert">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 @if($selectedTemplate && $selectedTemplate->placeholders)
@@ -76,10 +94,23 @@
                 </div>
                 @endif
 
+                @if($selectedTemplate)
+                <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                    <p class="text-xs uppercase tracking-wide text-gray-500">Selected template</p>
+                    <p class="font-semibold text-gray-900">{{ $selectedTemplate->title }}</p>
+                    <p class="text-xs">{{ $selectedTemplate->category ?? 'General' }}</p>
+                    <p class="mt-1 text-xs text-gray-500">{{ Str::limit($selectedTemplate->body, 100, '…') }}</p>
+                </div>
+                @endif
+
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Body<span class="text-red-500">*</span></label>
-                    <textarea name="body" rows="12" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm" required>{{ old('body', $body) }}</textarea>
+                    <textarea id="letter-body-editor" name="body" rows="12"
+                        class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm" required>{{ old('body', $body) }}</textarea>
                     <p class="text-xs text-gray-500 mt-1">The preview page will render this on A4 paper with the template header/footer.</p>
+                    @error('body')
+                        <p class="text-xs text-red-600 mt-1" role="alert">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div class="flex items-center justify-end">
@@ -91,4 +122,6 @@
             </form>
         </div>
     </div>
+
+    @include('admin.letters._tinymce-script')
 </x-admin-layout>

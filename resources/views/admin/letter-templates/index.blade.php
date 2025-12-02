@@ -1,4 +1,6 @@
 {{-- resources/views/letter-templates/index.blade.php --}}
+@php use Illuminate\Support\Str; @endphp
+
 <x-admin-layout title="Letter Templates">
     @section('page_header','Letter Templates')
 
@@ -45,17 +47,18 @@
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         @foreach($templates as $template)
+                        @php
+                            $placeholderList = $template->placeholders ? implode(', ', $template->placeholders) : '';
+                            $placeholderDisplay = $placeholderList ? Str::limit($placeholderList, 60, '…') : 'None';
+                        @endphp
                         <tr class="hover:bg-gray-50">
                             <td class="px-4 py-3 font-medium text-gray-900">{{ $template->title }}</td>
-                            <td class="px-4 py-3 text-gray-600">{{ $template->category ?? '�' }}</td>
+                            <td class="px-4 py-3 text-gray-600">{{ $template->category ?? '—' }}</td>
                             <td class="px-4 py-3 text-gray-600">
-                                @if($template->placeholders)
-                                    <span class="text-xs text-gray-500">
-                                        {{ implode(', ', $template->placeholders) }}
-                                    </span>
-                                @else
-                                    <span class="text-xs text-gray-400">None</span>
-                                @endif
+                                <span class="text-xs text-gray-500"
+                                    title="{{ $placeholderList ?: 'None' }}">
+                                    {{ $placeholderDisplay }}
+                                </span>
                             </td>
                             <td class="px-4 py-3 text-gray-500">{{ optional($template->updated_at)->diffForHumans() }}</td>
                             <td class="px-4 py-3">

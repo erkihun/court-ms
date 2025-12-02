@@ -17,6 +17,7 @@ class Letter extends Model
         'recipient_title',
         'recipient_company',
         'subject',
+        'reference_number',
         'body',
         'cc',
     ];
