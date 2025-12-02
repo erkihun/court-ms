@@ -16,12 +16,12 @@ class ResponseController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        return view('respondant.responses.index', compact('responses'));
+        return view('applicant.respondent.responses.index', compact('responses'));
     }
 
     public function create()
     {
-        return view('respondant.responses.create');
+        return view('applicant.respondent.responses.create');
     }
 
     public function store(Request $request)
@@ -50,14 +50,14 @@ class ResponseController extends Controller
     {
         $this->authorizeOwnership($response);
 
-        return view('respondant.responses.show', compact('response'));
+        return view('applicant.respondent.responses.show', compact('response'));
     }
 
     public function edit(RespondentResponse $response)
     {
         $this->authorizeOwnership($response);
 
-        return view('respondant.responses.edit', compact('response'));
+        return view('applicant.respondent.responses.edit', compact('response'));
     }
 
     public function update(Request $request, RespondentResponse $response)

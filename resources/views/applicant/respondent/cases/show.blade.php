@@ -26,7 +26,7 @@ default => 'Approved',
 };
 @endphp
 
-<x-respondant-layout :title="$case->case_number">
+<x-applicant-layout :title="$case->case_number">
     <style>
     .tiny-content * {
         font-family: inherit !important;
@@ -112,7 +112,7 @@ default => 'Approved',
                     <div class="flex flex-col gap-1">
 
                         <div>
-                            <a href="{{ route('respondent.responses.create') }}?case_number={{ urlencode($case->case_number) }}"
+                            <a href="{{ route('applicant.respondent.responses.create') }}?case_number={{ urlencode($case->case_number) }}"
                                 class="mt-1 inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-blue-200 text-xs font-medium text-blue-700 hover:bg-blue-50">
                                 {{ __('respondent.give_response') }}
                             </a>

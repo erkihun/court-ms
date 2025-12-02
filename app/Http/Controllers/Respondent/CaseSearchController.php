@@ -26,7 +26,7 @@ class CaseSearchController extends Controller
             }
         }
 
-        return view('respondant.cases.search', [
+        return view('applicant.respondent.cases.search', [
             'caseNumber' => $caseNumber,
             'case' => $case,
         ]);
@@ -96,7 +96,7 @@ class CaseSearchController extends Controller
             ->limit(200)
             ->get();
 
-        return view('respondant.cases.show', compact(
+        return view('applicant.respondent.cases.show', compact(
             'case',
             'timeline',
             'files',
@@ -230,7 +230,7 @@ class CaseSearchController extends Controller
                 ->get();
         }
 
-        return view('respondant.cases.my', [
+        return view('applicant.respondent.cases.my', [
             'cases' => $cases,
         ]);
     }
