@@ -243,6 +243,7 @@ if (auth('applicant')->check()) {
                     </li>
 
 
+                    @if(Route::has('applicant.respondent.cases.search'))
                     <li>
                         <a href="{{ route('applicant.respondent.cases.search') }}"
                             class="{{ $navBase }} {{ request()->routeIs('applicant.respondent.cases.search') ? $navActive : $navIdle }}">
@@ -254,7 +255,9 @@ if (auth('applicant')->check()) {
                             {{ __('respondent.find_case') }}
                         </a>
                     </li>
+                    @endif
 
+                    @if(Route::has('applicant.respondent.responses.index'))
                     <li>
                         <a href="{{ route('applicant.respondent.responses.index') }}"
                             class="{{ $navBase }} {{ request()->routeIs('applicant.respondent.responses.*') ? $navActive : $navIdle }}">
@@ -267,6 +270,7 @@ if (auth('applicant')->check()) {
                             {{ __('respondent.my_responses') }}
                         </a>
                     </li>
+                    @endif
 
                     {{-- Notifications (desktop) --}}
                     <li x-data="{ open:false, tab:'notifications', messageModal:false }" class="relative">
@@ -675,6 +679,7 @@ if (auth('applicant')->check()) {
                             </a>
                         </li>
 
+                        @if(Route::has('applicant.respondent.cases.search'))
                         <li>
                             <a href="{{ route('applicant.respondent.cases.search') }}"
                                 class="flex items-center gap-2 px-4 py-2 hover:bg-slate-50 {{ request()->routeIs('applicant.respondent.cases.search') ? 'text-blue-700 font-medium' : '' }}">
@@ -686,7 +691,9 @@ if (auth('applicant')->check()) {
                                 {{ __('respondent.find_case') }}
                             </a>
                         </li>
+                        @endif
 
+                        @if(Route::has('applicant.respondent.responses.index'))
                         <li>
                             <a href="{{ route('applicant.respondent.responses.index') }}"
                                 class="flex items-center gap-2 px-4 py-2 hover:bg-slate-50 {{ request()->routeIs('applicant.respondent.responses.*') ? 'text-blue-700 font-medium' : '' }}">
@@ -700,6 +707,7 @@ if (auth('applicant')->check()) {
                                 {{ __('respondent.my_responses') }}
                             </a>
                         </li>
+                        @endif
 
                         {{-- Mobile: notifications (inline list) --}}
                         <li x-data="{ bell:false }" class="relative">
