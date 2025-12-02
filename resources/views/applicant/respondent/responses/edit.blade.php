@@ -1,11 +1,11 @@
-<x-respondant-layout title="{{ __('respondent.edit_response') }}">
+<x-applicant-layout title="{{ __('respondent.edit_response') }}">
     <div class="max-w-4xl mx-auto bg-white rounded-2xl border border-slate-200 shadow p-6">
         <div class="mb-4">
             <h1 class="text-xl font-semibold text-slate-900">{{ __('respondent.edit_response') }}</h1>
             <p class="text-sm text-slate-600">{{ __('respondent.response_edit_description') }}</p>
         </div>
 
-        <form method="POST" action="{{ route('respondent.responses.update', $response) }}" enctype="multipart/form-data" class="space-y-4">
+        <form method="POST" action="{{ route('applicant.respondent.responses.update', $response) }}" enctype="multipart/form-data" class="space-y-4">
             @csrf
             @method('PATCH')
 
@@ -38,7 +38,7 @@
             </div>
 
             <div class="text-right flex flex-wrap gap-2 justify-end">
-                <a href="{{ route('respondent.responses.index') }}"
+                <a href="{{ route('applicant.respondent.responses.index') }}"
                     class="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-100">
                     {{ __('respondent.back_to_responses') }}
                 </a>

@@ -1,6 +1,6 @@
 @props(['response'])
 
-<x-respondant-layout :title="__('respondent.response_title', ['title' => $response->title])">
+<x-applicant-layout :title="__('respondent.response_title', ['title' => $response->title])">
     <div class="max-w-4xl mx-auto bg-white rounded-2xl border border-slate-200 shadow p-6 space-y-6">
         <div class="flex flex-col gap-1">
             <p class="text-xs uppercase tracking-wide text-slate-500">{{ __('respondent.response_title_label') }}</p>
@@ -27,7 +27,7 @@
         @endif
 
         <div class="text-right">
-            <a href="{{ route('respondent.cases.my') }}"
+            <a href="{{ route('applicant.respondent.responses.index') }}"
                 class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-100">
                 {{ __('respondent.back_to_responses') }}
             </a>

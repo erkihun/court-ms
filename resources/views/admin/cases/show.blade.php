@@ -939,15 +939,20 @@
                     $fromAdmin = !is_null($m->sender_user_id);
                     $fromApplicant = !is_null($m->sender_applicant_id);
                     $who = $fromAdmin
-                    ? ($m->admin_name ?: __('cases.messages.court_staff'))
-                    : ($fromApplicant ? trim(($m->first_name ?? '').' '.($m->last_name ?? '')) : __('cases.messages_section.system'));
+                        ? ($m->admin_name ?: __('cases.messages.court_staff'))
+                        : ($fromApplicant ? trim(($m->first_name ?? '').' '.($m->last_name ?? '')) : __('cases.messages_section.system'));
                     @endphp
-                    <div class="rounded-lg border border-gray-200 p-4 {{ $fromAdmin ? 'bg-blue-50 ml-8' : 'bg-gray-50 mr-8' }}">
-                        <div class="text-xs text-gray-600 mb-2 flex items-center justify-between">
-                            <span class="font-medium text-gray-900">{{ $who }}</span>
-                            <span>{{ \Illuminate\Support\Carbon::parse($m->created_at)->format('M d, Y H:i') }}</span>
+                    <div class="flex {{ $fromAdmin ? 'justify-end' : 'justify-start' }}">
+                        <div class="relative w-full max-w-[78%] rounded-2xl border px-4 py-3 shadow-sm transition hover:shadow-lg
+                            {{ $fromAdmin ? 'bg-blue-50 border-blue-200 text-right' : 'bg-white border-gray-200' }}">
+                            <div class="flex items-center justify-between text-xs text-gray-600 mb-2 gap-2">
+                                <span class="font-medium text-gray-900">{{ $who }}</span>
+                                <span>{{ \Illuminate\Support\Carbon::parse($m->created_at)->format('M d, Y H:i') }}</span>
+                            </div>
+                            <div class="whitespace-pre-wrap text-gray-800 text-sm">
+                                {{ $m->body }}
+                            </div>
                         </div>
-                        <div class="whitespace-pre-wrap text-gray-800 text-sm">{{ $m->body }}</div>
                     </div>
                     @empty
                     <div class="text-gray-500 text-sm border border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">

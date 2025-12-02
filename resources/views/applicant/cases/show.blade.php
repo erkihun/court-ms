@@ -475,60 +475,86 @@
             </aside>
 
             {{-- MESSAGES --}}
-            <aside class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-sm font-semibold text-slate-800">
-                        {{ __('cases.messages_section.title') }}
-                    </h3>
+            <aside class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <div>
+                        <h3 class="text-sm font-semibold text-slate-800">
+                            {{ __('cases.messages_section.title') }}
+                        </h3>
+                        <p class="text-xs text-slate-500">
+                            {{ __('cases.messages_section.subtitle', ['count' => ($msgs ?? collect())->count()]) ?? '' }}
+                        </p>
+                    </div>
                     <span class="text-[11px] text-slate-500">
-                        {{ ($msgs ?? collect())->count() }}
+                        {{ ($msgs ?? collect())->count() }} {{ __('cases.messages') }}
                     </span>
                 </div>
 
-                <div class="space-y-3 max-h-72 overflow-auto pr-1.5 text-sm">
+                <div class="space-y-3 max-h-80 overflow-auto pr-1.5 text-sm">
                     @forelse(($msgs ?? collect()) as $m)
-                    <div class="rounded-lg border p-2
-                            {{ $m->sender_applicant_id
-                                ? 'bg-blue-50 border-blue-200'
-                                : 'bg-orange-50 border-orange-200' }}">
-                        <div class="text-xs text-slate-500 mb-1">
-                            @if($m->sender_applicant_id)
-                            {{ __('cases.you') }}
-                            @else
-                            {{ $m->admin_name ?? __('cases.court_staff') }}
-                            @endif
-                            · {{ \Illuminate\Support\Carbon::parse($m->created_at)->format('M d, Y H:i') }}
-                        </div>
-                        <div class="text-sm whitespace-pre-line text-slate-800">
-                            {{ $m->body }}
+                    <div class="flex {{ $m->sender_applicant_id ? 'justify-end' : 'justify-start' }}">
+                        <div class="relative w-full max-w-[80%] rounded-2xl border px-4 py-3 shadow-sm transition hover:shadow-lg
+                            {{ $m->sender_applicant_id ? 'border-blue-200 bg-blue-50 text-right' : 'border-slate-100 bg-white text-left' }}">
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="flex items-center gap-3">
+                                    <div class="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-[11px] font-semibold text-slate-600">
+                                        @if($m->sender_applicant_id)
+                                        {{ __('cases.you') }}
+                                        @else
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-orange-500" fill="none" viewBox="0 0 24 24"
+                                            stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                                                d="M12 2a4 4 0 1 1-4 4 4 4 0 0 1 4-4zm0 9c-4 0-7.333 2-7.333 4.5V20h14.666v-4.5C19.333 13 16 11 12 11z" />
+                                        </svg>
+                                        @endif
+                                    </div>
+                                    <div>
+                                        <p class="text-[11px] uppercase tracking-wide text-slate-500">
+                                            @if($m->sender_applicant_id)
+                                            {{ __('cases.you') }}
+                                            @else
+                                            {{ $m->admin_name ?? __('cases.court_staff') }}
+                                            @endif
+                                        </p>
+                                        <p class="text-xs font-semibold text-slate-800 leading-tight">
+                                            {{ \Illuminate\Support\Carbon::parse($m->created_at)->format('M d, Y H:i') }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <span class="text-[11px] rounded-full border px-2 py-0.5 {{ $m->sender_applicant_id ? 'border-blue-200 bg-blue-100 text-blue-700' : 'border-orange-200 bg-orange-50 text-orange-700' }}">
+                                    {{ $m->sender_applicant_id ? __('cases.sent') : __('cases.received') }}
+                                </span>
+                            </div>
+                            <p class="mt-2 text-sm text-slate-800 whitespace-pre-line">
+                                {{ $m->body }}
+                            </p>
                         </div>
                     </div>
                     @empty
-                    <div class="rounded-lg border border-dashed border-slate-300 py-10 text-center text-slate-500 text-sm">
+                    <div class="rounded-2xl border border-dashed border-slate-200 py-10 text-center text-slate-500 text-sm">
                         {{ __('cases.no_messages_yet') }}
                     </div>
                     @endforelse
                 </div>
 
-                <form class="mt-3" method="POST" action="{{ route('applicant.cases.messages.post', $case->id) }}">
+                <form class="mt-4 space-y-3" method="POST" action="{{ route('applicant.cases.messages.post', $case->id) }}">
                     @csrf
-                    <label class="block text-xs text-slate-500 mb-1">
+                    <label class="block text-xs font-semibold text-slate-500">
                         {{ __('cases.new_message') }}
                     </label>
                     <textarea
                         name="body"
-                        rows="3"
+                        rows="4"
                         placeholder="{{ __('cases.write_message_placeholder') }}"
-                        class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"></textarea>
+                        class="w-full rounded-2xl border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+                        required></textarea>
                     @error('body')
-                    <div class="text-red-600 text-xs mt-1">{{ $message }}</div>
+                    <p class="text-xs text-red-600">{{ $message }}</p>
                     @enderror
-                    <div class="mt-2">
-                        <button
-                            class="btn btn-primary w-full inline-flex justify-center items-center gap-1.5 px-3 py-2.5 rounded-lg bg-orange-500 text-white text-sm font-semibold hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-1">
-                            {{ __('cases.send') }}
-                        </button>
-                    </div>
+                    <button
+                        class="w-full rounded-2xl bg-gradient-to-r from-orange-500 to-rose-500 px-3 py-2 text-sm font-semibold text-white shadow-md transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-1">
+                        {{ __('cases.send') }}
+                    </button>
                 </form>
             </aside>
 

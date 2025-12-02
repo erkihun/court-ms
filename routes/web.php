@@ -160,6 +160,29 @@ Route::middleware(SetLocale::class)->group(function () {
         // Hearing ICS
         Route::get('/applicant/cases/{id}/hearings/{hearingId}/ics', [ApplicantCaseController::class, 'downloadHearingIcs'])->name('applicant.cases.hearings.ics');
 
+        // Respondent / client actions (case search + responses)
+        Route::get('/applicant/respondent/case-search', [CaseSearchController::class, 'index'])
+            ->name('applicant.respondent.cases.search');
+        Route::get('/applicant/respondent/cases/{caseNumber}', [CaseSearchController::class, 'show'])
+            ->name('applicant.respondent.cases.show');
+        Route::get('/applicant/respondent/cases/my', [CaseSearchController::class, 'myCases'])
+            ->name('applicant.respondent.cases.my');
+
+        Route::get('/applicant/respondent/responses', [ResponseController::class, 'index'])
+            ->name('applicant.respondent.responses.index');
+        Route::get('/applicant/respondent/responses/create', [ResponseController::class, 'create'])
+            ->name('applicant.respondent.responses.create');
+        Route::post('/applicant/respondent/responses', [ResponseController::class, 'store'])
+            ->name('applicant.respondent.responses.store');
+        Route::get('/applicant/respondent/responses/{response}', [ResponseController::class, 'show'])
+            ->name('applicant.respondent.responses.show');
+        Route::get('/applicant/respondent/responses/{response}/edit', [ResponseController::class, 'edit'])
+            ->name('applicant.respondent.responses.edit');
+        Route::patch('/applicant/respondent/responses/{response}', [ResponseController::class, 'update'])
+            ->name('applicant.respondent.responses.update');
+        Route::delete('/applicant/respondent/responses/{response}', [ResponseController::class, 'destroy'])
+            ->name('applicant.respondent.responses.destroy');
+
         // Notifications
         Route::get('/applicant/notifications',           [ApplicantNotificationController::class, 'index'])->name('applicant.notifications.index');
         Route::post('/applicant/notifications/mark-one', [ApplicantNotificationController::class, 'markOne'])->name('applicant.notifications.markOne');
