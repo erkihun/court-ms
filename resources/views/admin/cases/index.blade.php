@@ -67,6 +67,15 @@
         </div>
     </form>
 
+    @php
+    $canAssignCases = false;
+    if ($user = auth()->user()) {
+    $canAssignCases = $user->hasPermission('cases.assign.team')
+    || $user->hasPermission('cases.assign.member')
+    || $user->hasPermission('cases.assign');
+    }
+    @endphp
+
     <div class="overflow-x-auto rounded-xl border border-gray-300">
         <table class="min-w-full text-sm">
             <thead class="bg-gray-100 text-gray-700">
@@ -111,10 +120,10 @@
                         // Be lenient: check multiple permission helpers so reviewers always see full status.
                         $canReview = ($isReviewer ?? false);
                         if (!$canReview && function_exists('userHasPermission')) {
-                            $canReview = userHasPermission('cases.review');
+                        $canReview = userHasPermission('cases.review');
                         }
                         if (!$canReview && auth()->check()) {
-                            $canReview = auth()->user()->can('cases.review');
+                        $canReview = auth()->user()->can('cases.review');
                         }
                         $displayRs = $canReview ? $rs : 'accepted';
                         @endphp
@@ -140,12 +149,12 @@
                             </a>
 
                             {{-- Use your @perm directive or @can; avoid calling unknown methods --}}
-                            @can('cases.assign')
+                            @if($canAssignCases)
                             <a href="{{ route('cases.assign.form', $c->id) }}"
                                 class="px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-700 text-xs text-white">
                                 {{ __('cases.table.assign') }}
                             </a>
-                            @endcan
+                            @endif
                         </div>
                     </td>
                 </tr>

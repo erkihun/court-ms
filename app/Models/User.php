@@ -121,4 +121,9 @@ class User extends Authenticatable implements MustVerifyEmailContract
     {
         return $query->where('status', 'active');
     }
+
+    public function teams(): BelongsToMany
+    {
+        return $this->belongsToMany(Team::class, 'team_user')->withTimestamps();
+    }
 }

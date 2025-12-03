@@ -19,7 +19,9 @@ use App\Http\Controllers\Respondent\CaseSearchController;
 use App\Http\Controllers\Respondent\NotificationController as RespondentNotificationController;
 
 // Admin-facing controllers
+use App\Http\Controllers\Admin\ApplicantController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\TeamController;
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Admin\RolesController;
@@ -250,8 +252,12 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::get('/cases/{id}',              [CaseController::class, 'show'])->middleware('perm:cases.view')->name('cases.show');
             Route::get('/cases/{case}/documents/{doc}', [CaseController::class, 'viewDocument'])->middleware('perm:cases.view')->name('cases.documents.view');
 
-            Route::get('/cases/{caseId}/assign',   [CaseController::class, 'assignForm'])->middleware('perm:cases.assign')->name('cases.assign.form');
-            Route::patch('/cases/{caseId}/assign', [CaseController::class, 'assignUpdate'])->middleware('perm:cases.assign')->name('cases.assign.update');
+            Route::get('/cases/{caseId}/assign',   [CaseController::class, 'assignForm'])
+                ->middleware('perm:cases.assign.team|cases.assign.member|cases.assign')
+                ->name('cases.assign.form');
+            Route::patch('/cases/{caseId}/assign', [CaseController::class, 'assignUpdate'])
+                ->middleware('perm:cases.assign.team|cases.assign.member|cases.assign')
+                ->name('cases.assign.update');
 
             Route::patch('/cases/{id}/status',     [CaseController::class, 'updateStatus'])->middleware('perm:cases.edit')->name('cases.status.update');
             Route::post('/cases/{id}/messages',    [CaseController::class, 'postAdminMessage'])->middleware('perm:cases.edit')->name('cases.messages.post');
@@ -272,6 +278,40 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::post('/cases/{case}/witnesses',            [CaseController::class, 'storeWitness'])->middleware('perm:cases.edit')->name('cases.witnesses.store');
             Route::patch('/cases/{case}/witnesses/{witness}', [CaseController::class, 'updateWitness'])->middleware('perm:cases.edit')->name('cases.witnesses.update');
             Route::delete('/cases/{case}/witnesses/{witness}', [CaseController::class, 'deleteWitness'])->middleware('perm:cases.edit')->name('cases.witnesses.delete');
+
+            // Applicants
+            Route::get('/applicants', [ApplicantController::class, 'index'])
+                ->middleware('perm:applicants.view')
+                ->name('applicants.index');
+            Route::patch('/applicants/{applicant}/status', [ApplicantController::class, 'updateStatus'])
+                ->middleware('perm:applicants.manage')
+                ->name('applicants.status.update');
+
+            // Teams
+            Route::get('/teams', [TeamController::class, 'index'])
+                ->middleware('perm:teams.manage')
+                ->name('teams.index');
+            Route::get('/teams/create', [TeamController::class, 'create'])
+                ->middleware('perm:teams.manage')
+                ->name('teams.create');
+            Route::post('/teams', [TeamController::class, 'store'])
+                ->middleware('perm:teams.manage')
+                ->name('teams.store');
+            Route::get('/teams/{team}', [TeamController::class, 'show'])
+                ->middleware('perm:teams.manage')
+                ->name('teams.show');
+            Route::get('/teams/{team}/edit', [TeamController::class, 'edit'])
+                ->middleware('perm:teams.manage')
+                ->name('teams.edit');
+            Route::patch('/teams/{team}', [TeamController::class, 'update'])
+                ->middleware('perm:teams.manage')
+                ->name('teams.update');
+            Route::patch('/teams/{team}/users', [TeamController::class, 'updateUsers'])
+                ->middleware('perm:teams.manage')
+                ->name('teams.users.update');
+            Route::delete('/teams/{team}', [TeamController::class, 'destroy'])
+                ->middleware('perm:teams.manage')
+                ->name('teams.destroy');
 
             /*
              * Permissions (admin)

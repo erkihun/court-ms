@@ -24,6 +24,7 @@ class Applicant extends Authenticatable implements MustVerifyEmailContract
         'address',
         'national_id_number',
         'password',
+        'is_active',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -33,6 +34,7 @@ class Applicant extends Authenticatable implements MustVerifyEmailContract
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
     }
 

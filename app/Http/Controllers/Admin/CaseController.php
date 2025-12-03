@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Team;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -174,13 +175,14 @@ class CaseController extends Controller
 
         abort_if(!$case, 404);
 
-        $users = DB::table('users')
-            ->select('id', 'name', 'email')
-            ->where('status', 'active')
-            ->orderBy('name')
-            ->get();
+        $scope = $this->buildAssignmentScope();
 
-        return view('admin.cases.assign', compact('case', 'users'));
+        return view('admin.cases.assign', [
+            'case' => $case,
+            'assignmentMode' => $scope['mode'],
+            'teams' => $scope['teams'],
+            'leaderTeam' => $scope['leaderTeam'],
+        ]);
     }
 
     /**
@@ -188,14 +190,22 @@ class CaseController extends Controller
      */
     public function assignUpdate(Request $request, int $caseId)
     {
-        $validated = $request->validate([
+        $scope = $this->buildAssignmentScope();
+
+        $rules = [
             'assigned_user_id' => [
                 'nullable',
                 'integer',
                 Rule::exists('users', 'id')->where(fn($q) => $q->where('status', 'active')),
             ],
             'unassign' => ['sometimes', 'boolean'],
-        ]);
+        ];
+
+        if (!empty($scope['allowedUserIds'])) {
+            $rules['assigned_user_id'][] = Rule::in($scope['allowedUserIds']);
+        }
+
+        $validated = $request->validate($rules);
 
         $case = DB::table('court_cases')->where('id', $caseId)->first();
         abort_if(!$case, 404);
@@ -217,6 +227,63 @@ class CaseController extends Controller
         return redirect()
             ->route('cases.index')
             ->with('success', $assigning ? 'Case assigned successfully.' : 'Case unassigned.');
+    }
+
+    private function buildAssignmentScope(): array
+    {
+        $user = Auth::user();
+        abort_if(!$user, 403, 'Authenticated user required.');
+
+        $memberPerms = ['cases.assign.member', 'cases.assign'];
+        $teamPerms = ['cases.assign.team', 'cases.assign'];
+
+        $hasMemberPerm = false;
+        foreach ($memberPerms as $perm) {
+            if ($user->hasPermission($perm)) {
+                $hasMemberPerm = true;
+                break;
+            }
+        }
+
+        $hasTeamPerm = false;
+        foreach ($teamPerms as $perm) {
+            if ($user->hasPermission($perm)) {
+                $hasTeamPerm = true;
+                break;
+            }
+        }
+
+        if ($hasMemberPerm) {
+            $leaderTeam = Team::with(['users' => fn ($q) => $q->where('status', 'active')->orderBy('name')])
+                ->where('team_leader_id', $user->id)
+                ->first();
+
+            if ($leaderTeam) {
+                return [
+                    'mode' => 'leader',
+                    'leaderTeam' => $leaderTeam,
+                    'teams' => collect(),
+                    'allowedUserIds' => $leaderTeam->users->pluck('id')->unique()->values()->all(),
+                ];
+            }
+        }
+
+        abort_if(!$hasTeamPerm, 403, 'Insufficient permission to assign cases to team leaders.');
+
+        $teams = Team::with(['leader' => fn ($q) => $q->where('status', 'active')])
+            ->whereNotNull('team_leader_id')
+            ->whereHas('leader', fn ($q) => $q->where('status', 'active'))
+            ->orderBy('name')
+            ->get();
+
+        $leaderIds = $teams->pluck('team_leader_id')->filter()->unique();
+
+        return [
+            'mode' => 'admin',
+            'leaderTeam' => null,
+            'teams' => $teams,
+            'allowedUserIds' => $leaderIds->unique()->values()->all(),
+        ];
     }
 
     /**

@@ -9,8 +9,16 @@
     : (auth()->user()?->hasPermission('cases.edit') ?? false);
 
     $canAssign = function_exists('userHasPermission')
-    ? userHasPermission('cases.assign')
-    : (auth()->user()?->hasPermission('cases.assign') ?? false);
+    ? (
+        userHasPermission('cases.assign.team')
+        || userHasPermission('cases.assign.member')
+        || userHasPermission('cases.assign')
+    )
+    : (
+        (auth()->user()?->hasPermission('cases.assign.team') ?? false)
+        || (auth()->user()?->hasPermission('cases.assign.member') ?? false)
+        || (auth()->user()?->hasPermission('cases.assign') ?? false)
+    );
 
     $currentStatus = $case->status ?? 'pending';
     $reviewStatus  = $case->review_status ?? 'accepted';
