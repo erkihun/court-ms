@@ -12,9 +12,13 @@ class CheckPermission
     {
         $user = $request->user();
         abort_if(!$user, 403);
-        if (!$user->hasPermission($perm)) {
-            abort(403, 'Insufficient permissions.');
+        $perms = array_filter(array_map('trim', explode('|', $perm)));
+        foreach ($perms as $permission) {
+            if ($user->hasPermission($permission)) {
+                return $next($request);
+            }
         }
-        return $next($request);
+
+        abort(403, 'Insufficient permissions.');
     }
 }

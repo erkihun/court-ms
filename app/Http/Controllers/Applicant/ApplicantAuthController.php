@@ -8,8 +8,10 @@ use App\Models\Applicant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class ApplicantAuthController extends Controller
 {
@@ -49,6 +51,7 @@ class ApplicantAuthController extends Controller
         $applicant = Applicant::create([
             ...$data,
             'password' => Hash::make($data['password']),
+            'is_active' => true,
         ]);
 
         Auth::guard('applicant')->login($applicant);
@@ -81,7 +84,33 @@ class ApplicantAuthController extends Controller
             'password' => ['required'],
         ]);
 
+        $existing = Applicant::where('email', $credentials['email'])->first();
+        if ($existing && !$existing->is_active) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'errors' => ['email' => ['Your account has been deactivated.']],
+                ], 422);
+            }
+
+            return back()->withErrors(['email' => 'This account has been deactivated.'])->onlyInput('email');
+        }
+
         $remember = $request->boolean('remember');
+
+        $throttleKey = Str::lower($credentials['email']) . '|' . $request->ip();
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            $message = "Too many login attempts. Please try again in {$seconds} seconds.";
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'errors' => ['email' => [$message]],
+                ], 429);
+            }
+
+            return back()->withErrors(['email' => $message])->onlyInput('email');
+        }
+
+        $credentials['is_active'] = true;
 
         if (Auth::guard('applicant')->attempt($credentials, $remember)) {
             $request->session()->regenerate();
@@ -112,6 +141,8 @@ class ApplicantAuthController extends Controller
             $successResponse = redirect()->intended(route('applicant.dashboard'))
                 ->with('success', 'Signed in.');
 
+            RateLimiter::clear($throttleKey);
+
             if ($request->expectsJson()) {
                 return response()->json([
                     'redirect' => $successResponse->getTargetUrl(),
@@ -121,6 +152,8 @@ class ApplicantAuthController extends Controller
 
             return $successResponse;
         }
+
+        RateLimiter::hit($throttleKey, 300);
 
         if ($request->expectsJson()) {
             return response()->json([

@@ -22,6 +22,11 @@ class PermissionSeeder extends Seeder
             ['name' => 'cases.edit',     'label' => 'Edit case',      'description' => null],
             ['name' => 'cases.delete',   'label' => 'Delete case',    'description' => null],
             ['name' => 'cases.assign',   'label' => 'Assign case',    'description' => null],
+            ['name' => 'cases.assign.team', 'label' => 'Assign case to team leaders', 'description' => null],
+            ['name' => 'cases.assign.member', 'label' => 'Assign case to team members', 'description' => null],
+            ['name' => 'applicants.view', 'label' => 'View applicants', 'description' => null],
+            ['name' => 'applicants.manage', 'label' => 'Manage applicants', 'description' => null],
+            ['name' => 'teams.manage', 'label' => 'Manage teams', 'description' => null],
 
             // Appeals
             ['name' => 'appeals.view',   'label' => 'View appeals',   'description' => null],

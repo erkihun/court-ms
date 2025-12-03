@@ -44,10 +44,12 @@
     $hasDashboard = Route::has('dashboard');
     $hasAppeals = Route::has('appeals.index');
     $hasCases = Route::has('cases.index');
+    $hasApplicants = Route::has('applicants.index');
     $hasCaseTypes = Route::has('case-types.index');
     $hasUsers = Route::has('users.index');
     $hasPermissions = Route::has('permissions.index');
     $hasRoles = Route::has('roles.index');
+    $hasTeams = Route::has('teams.index');
     $hasNotifIndex = Route::has('admin.notifications.index');
     $hasNotifMarkAll = Route::has('admin.notifications.markAll');
     $hasNotifMarkOne = Route::has('admin.notifications.markOne');
@@ -69,9 +71,11 @@
     $lettersActive = request()->routeIs('letters.index') || request()->routeIs('letters.show');
     $composeActive = request()->routeIs('letters.compose');
     $letterMenuOpen = $letterTemplatesActive || $lettersActive || $composeActive;
+    $applicantsActive = request()->routeIs('applicants.*');
     $usersActive = request()->routeIs('users.*');
     $permissionsActive = request()->routeIs('permissions.*');
     $rolesActive = request()->routeIs('roles.*');
+    $teamsActive = request()->routeIs('teams.*');
     $userControlOpen = $usersActive || $permissionsActive || $rolesActive;
     @endphp
 
@@ -201,6 +205,30 @@
                     x-transition:leave-start="opacity-100 translate-x-0"
                     x-transition:leave-end="opacity-0 -translate-x-1">
                     {{ __('app.Cases') }}
+                </span>
+            </a>
+            @endif
+
+            {{-- Applicants --}}
+            @if($hasApplicants && auth()->user()?->hasPermission('applicants.view'))
+            <a href="{{ route('applicants.index') }}"
+                class="flex items-center gap-3 px-3 py-2 rounded-md {{ $applicantsActive ? 'bg-orange-600 text-white' : 'hover:bg-orange-800 text-blue-100 hover:text-white' }}">
+                <div class="grid place-items-center w-6" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                    </svg>
+                </div>
+                <span class="truncate origin-left"
+                    x-show="!compact"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 -translate-x-1"
+                    x-transition:enter-end="opacity-100 translate-x-0"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100 translate-x-0"
+                    x-transition:leave-end="opacity-0 -translate-x-1">
+                    {{ __('app.Applicant') }}
                 </span>
             </a>
             @endif
@@ -389,6 +417,17 @@
                                 d="M7 7h.01M3 10l7.586-7.586a2 2 0 012.828 0L21 10a2 2 0 010 2.828L13.828 20a2 2 0 01-2.828 0L3 13v-3z" />
                         </svg>
                         <span>{{ __('app.Permissions') }}</span>
+                    </a>
+                    @endif
+
+                    @if($hasTeams && auth()->user()?->hasPermission('teams.manage'))
+                    <a href="{{ route('teams.index') }}"
+                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-md {{ $teamsActive ? 'bg-white/10 text-white' : 'text-blue-100 hover:text-white hover:bg-white/10' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 7h12M6 11h12M6 15h12M6 5h12a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2z" />
+                        </svg>
+                        <span>{{ __('app.Teams') }}</span>
                     </a>
                     @endif
 

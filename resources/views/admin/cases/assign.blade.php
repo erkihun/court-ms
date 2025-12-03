@@ -14,7 +14,7 @@
                     <span class="text-gray-900">{{ $case->assignee_name }}</span>
                     <span class="text-gray-500 text-xs">({{ $case->assignee_email }})</span>
                     @else
-                    <span class="text-gray-500">— Unassigned —</span>
+                    <span class="text-gray-500">Unassigned</span>
                     @endif
                 </div>
                 @if($case->assigned_at)
@@ -33,19 +33,50 @@
             <form method="POST" action="{{ route('cases.assign.update',$case->id) }}" class="space-y-4">
                 @csrf @method('PATCH')
 
+                @php
+                $mode = $assignmentMode ?? 'admin';
+                @endphp
+                @if($mode === 'leader' && $leaderTeam)
+                <div class="rounded-md border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-700">
+                    Assigning as leader of <span class="font-semibold text-blue-900">{{ $leaderTeam->name }}</span>;
+                    you can route cases to your team members only.
+                </div>
+                @else
+                <div class="rounded-md border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-gray-700">
+                    Admins assign cases to the listed team leaders; a team leader can then reassign to their members.
+                </div>
+                @endif
+
                 <div>
                     <label class="block text-sm text-gray-700 mb-1 font-medium">Assign to</label>
                     <select name="assigned_user_id"
                         class="w-full px-3 py-2 rounded bg-white text-gray-900 border border-gray-300">
-                        <option value="">— Select a user —</option>
-                        @foreach($users as $u)
-                        <option value="{{ $u->id }}"
-                            @selected(old('assigned_user_id', $case->assigned_user_id)==$u->id)>
-                            {{ $u->name }} — {{ $u->email }}
-                        </option>
+                        <option value="">Select a user</option>
+                        @if($mode === 'leader' && $leaderTeam)
+                        <optgroup label="Team members">
+                            @foreach($leaderTeam->users as $user)
+                            <option value="{{ $user->id }}"
+                                @selected(old('assigned_user_id', $case->assigned_user_id)==$user->id)>
+                                {{ $user->name }} - {{ $user->email }}
+                            </option>
+                            @endforeach
+                        </optgroup>
+                        @else
+                        @foreach(($teams ?? collect()) as $team)
+                        @if($team->leader)
+                        <optgroup label="{{ $team->name }} / Leader">
+                            <option value="{{ $team->leader->id }}"
+                                @selected(old('assigned_user_id', $case->assigned_user_id)==$team->leader->id)>
+                                {{ $team->leader->name }} - {{ $team->leader->email }}
+                            </option>
+                        </optgroup>
+                        @endif
                         @endforeach
+                        @endif
                     </select>
-                    @error('assigned_user_id') <p class="text-red-600 text-sm">{{ $message }}</p> @enderror
+                    @error('assigned_user_id')
+                    <p class="text-red-600 text-sm">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 {{-- Unassign toggle --}}
