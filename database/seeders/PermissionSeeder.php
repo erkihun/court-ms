@@ -24,6 +24,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'cases.assign',   'label' => 'Assign case',    'description' => null],
             ['name' => 'cases.assign.team', 'label' => 'Assign case to team leaders', 'description' => null],
             ['name' => 'cases.assign.member', 'label' => 'Assign case to team members', 'description' => null],
+            ['name' => 'bench-notes.manage', 'label' => 'Manage bench notes', 'description' => null],
             ['name' => 'applicants.view', 'label' => 'View applicants', 'description' => null],
             ['name' => 'applicants.manage', 'label' => 'Manage applicants', 'description' => null],
             ['name' => 'teams.manage', 'label' => 'Manage teams', 'description' => null],

@@ -26,6 +26,7 @@ use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Admin\RolesController;
 use App\Http\Controllers\Admin\CaseController;
+use App\Http\Controllers\Admin\BenchNoteController;
 use App\Http\Controllers\Admin\AdminNotificationController;
 use App\Http\Controllers\Admin\AppealController;
 use App\Http\Controllers\Admin\LanguageController;
@@ -253,10 +254,10 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::get('/cases/{case}/documents/{doc}', [CaseController::class, 'viewDocument'])->middleware('perm:cases.view')->name('cases.documents.view');
 
             Route::get('/cases/{caseId}/assign',   [CaseController::class, 'assignForm'])
-                ->middleware('perm:cases.assign.team|cases.assign.member|cases.assign')
+                ->middleware('perm:cases.assign')
                 ->name('cases.assign.form');
             Route::patch('/cases/{caseId}/assign', [CaseController::class, 'assignUpdate'])
-                ->middleware('perm:cases.assign.team|cases.assign.member|cases.assign')
+                ->middleware('perm:cases.assign')
                 ->name('cases.assign.update');
 
             Route::patch('/cases/{id}/status',     [CaseController::class, 'updateStatus'])->middleware('perm:cases.edit')->name('cases.status.update');
@@ -278,6 +279,16 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::post('/cases/{case}/witnesses',            [CaseController::class, 'storeWitness'])->middleware('perm:cases.edit')->name('cases.witnesses.store');
             Route::patch('/cases/{case}/witnesses/{witness}', [CaseController::class, 'updateWitness'])->middleware('perm:cases.edit')->name('cases.witnesses.update');
             Route::delete('/cases/{case}/witnesses/{witness}', [CaseController::class, 'deleteWitness'])->middleware('perm:cases.edit')->name('cases.witnesses.delete');
+
+            Route::middleware('perm:bench-notes.manage')->group(function () {
+                Route::get('/bench-notes', [BenchNoteController::class, 'index'])->name('bench-notes.index');
+                Route::get('/bench-notes/create', [BenchNoteController::class, 'create'])->name('bench-notes.create');
+                Route::post('/bench-notes', [BenchNoteController::class, 'store'])->name('bench-notes.store');
+                Route::get('/bench-notes/{benchNote}', [BenchNoteController::class, 'show'])->name('bench-notes.show');
+                Route::get('/bench-notes/{benchNote}/edit', [BenchNoteController::class, 'edit'])->name('bench-notes.edit');
+                Route::patch('/bench-notes/{benchNote}', [BenchNoteController::class, 'update'])->name('bench-notes.update');
+                Route::delete('/bench-notes/{benchNote}', [BenchNoteController::class, 'destroy'])->name('bench-notes.destroy');
+            });
 
             // Applicants
             Route::get('/applicants', [ApplicantController::class, 'index'])

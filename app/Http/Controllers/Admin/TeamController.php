@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class TeamController extends Controller
 {
@@ -19,7 +20,7 @@ class TeamController extends Controller
     public function create()
     {
         $teams = Team::orderBy('name')->get();
-        $users = User::orderBy('name')->get();
+        $users = $this->availableUsers();
 
         return view('admin.teams.create', compact('teams', 'users'));
     }
@@ -34,7 +35,7 @@ class TeamController extends Controller
     public function edit(Team $team)
     {
         $teams = Team::where('id', '!=', $team->id)->orderBy('name')->get();
-        $users = User::orderBy('name')->get();
+        $users = $this->availableUsers($team);
 
         return view('admin.teams.edit', compact('team', 'teams', 'users'));
     }
@@ -51,6 +52,7 @@ class TeamController extends Controller
         $team = Team::create($data);
 
         if (!empty($data['team_leader_id'])) {
+            $this->ensureSingleTeamForUser($data['team_leader_id'], $team->id);
             $team->users()->syncWithoutDetaching([$data['team_leader_id']]);
         }
 
@@ -69,6 +71,7 @@ class TeamController extends Controller
         $team->update($data);
 
         if (!empty($data['team_leader_id'])) {
+            $this->ensureSingleTeamForUser($data['team_leader_id'], $team->id);
             $team->users()->syncWithoutDetaching([$data['team_leader_id']]);
         }
 
@@ -101,9 +104,9 @@ class TeamController extends Controller
             $leaderAdded = true;
         }
 
-        \DB::transaction(function () use ($team, $userIds) {
+        DB::transaction(function () use ($team, $userIds) {
             if (!empty($userIds)) {
-                \DB::table('team_user')
+                DB::table('team_user')
                     ->whereIn('user_id', $userIds)
                     ->where('team_id', '!=', $team->id)
                     ->delete();
@@ -117,5 +120,25 @@ class TeamController extends Controller
         }
 
         return redirect()->route('teams.edit', $team)->with('success', $message);
+    }
+
+    private function ensureSingleTeamForUser(int $userId, ?int $currentTeamId = null): void
+    {
+        $query = DB::table('team_user')->where('user_id', $userId);
+        if ($currentTeamId !== null) {
+            $query->where('team_id', '!=', $currentTeamId);
+        }
+        $query->delete();
+    }
+
+    private function availableUsers(?Team $team = null)
+    {
+        $assigned = DB::table('team_user')
+            ->when($team, fn($q) => $q->where('team_id', '!=', $team->id))
+            ->pluck('user_id');
+
+        return User::whereNotIn('id', $assigned)
+            ->orderBy('name')
+            ->get();
     }
 }
