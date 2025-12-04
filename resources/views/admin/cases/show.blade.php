@@ -184,6 +184,15 @@
                     {{ __('cases.assign_change') }}
                 </a>
                 @endif
+                @if(auth()->user()?->hasPermission('bench-notes.manage'))
+                <a href="{{ route('bench-notes.index', ['case_id' => $case->id]) }}"
+                    class="px-4 py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-sm font-medium text-white transition-colors duration-150 flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4M7 16h8M11 4h2a2 2 0 012 2v14h-4V6a2 2 0 012-2h2" />
+                    </svg>
+                    Bench note
+                </a>
+                @endif
                 <a href="{{ route('cases.index') }}"
                     class="px-4 py-2 rounded-lg bg-white hover:bg-gray-50 text-sm font-medium text-gray-700 border border-gray-300 transition-colors duration-150 flex items-center gap-1">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

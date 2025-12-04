@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
 
@@ -64,6 +65,17 @@ class CaseController extends Controller
         if ($assigneeId)      $builder->where('c.assigned_user_id', $assigneeId);
         if ($from)            $builder->whereDate('c.filing_date', '>=', $from->format('Y-m-d'));
         if ($to)              $builder->whereDate('c.filing_date', '<=', $to->format('Y-m-d'));
+
+        $memberScopeIds = $this->teamLeaderAssignmentIds(Auth::user());
+        if (!empty($memberScopeIds)) {
+            $builder->whereIn('c.assigned_user_id', $memberScopeIds);
+        }
+
+        $memberScopeIds = $this->teamLeaderAssignmentIds(Auth::user());
+        if (!empty($memberScopeIds)) {
+            $builder->whereIn('c.assigned_user_id', $memberScopeIds);
+        }
+
         if (!$isReviewer)     $builder->where('c.review_status', 'accepted');
 
         $cases = $builder
@@ -233,27 +245,15 @@ class CaseController extends Controller
     {
         $user = Auth::user();
         abort_if(!$user, 403, 'Authenticated user required.');
-
-        $memberPerms = ['cases.assign.member', 'cases.assign'];
-        $teamPerms = ['cases.assign.team', 'cases.assign'];
-
-        $hasMemberPerm = false;
-        foreach ($memberPerms as $perm) {
-            if ($user->hasPermission($perm)) {
-                $hasMemberPerm = true;
-                break;
-            }
+        if (!$user->hasPermission('cases.assign')) {
+            throw new HttpResponseException(
+                redirect()->route('cases.index')
+                    ->with('error', 'You are not allowed to access case assignment.')
+            );
         }
 
-        $hasTeamPerm = false;
-        foreach ($teamPerms as $perm) {
-            if ($user->hasPermission($perm)) {
-                $hasTeamPerm = true;
-                break;
-            }
-        }
-
-        if ($hasMemberPerm) {
+        $leaderTeam = null;
+        if ($user->hasPermission('cases.assign.member')) {
             $leaderTeam = Team::with(['users' => fn ($q) => $q->where('status', 'active')->orderBy('name')])
                 ->where('team_leader_id', $user->id)
                 ->first();
@@ -268,7 +268,12 @@ class CaseController extends Controller
             }
         }
 
-        abort_if(!$hasTeamPerm, 403, 'Insufficient permission to assign cases to team leaders.');
+        if (!$user->hasPermission('cases.assign.team')) {
+            throw new HttpResponseException(
+                redirect()->route('cases.index')
+            ->with('error', 'Assigning to team leaders requires the cases.assign.team permission.')
+            );
+        }
 
         $teams = Team::with(['leader' => fn ($q) => $q->where('status', 'active')])
             ->whereNotNull('team_leader_id')
@@ -877,6 +882,32 @@ class CaseController extends Controller
         if (!userHasPermission('cases.view')) {
             abort(403, 'You do not have permission: cases.view');
         }
+    }
+
+    private function teamLeaderAssignmentIds(?\App\Models\User $user): array
+    {
+        if (!$user) {
+            return [];
+        }
+
+        $isLeader = $user->hasPermission('cases.assign.member');
+        $hasAdminAssign = $user->hasPermission('cases.assign.team');
+
+        if (!$isLeader || $hasAdminAssign) {
+            return [];
+        }
+
+        $leaderTeam = Team::with(['users' => fn ($q) => $q->where('status', 'active')->orderBy('name')])
+            ->where('team_leader_id', $user->id)
+            ->first();
+
+        $ids = collect([$user->id]);
+
+        if ($leaderTeam) {
+            $ids = $ids->merge($leaderTeam->users->pluck('id'));
+        }
+
+        return $ids->filter()->unique()->values()->all();
     }
 
     /**

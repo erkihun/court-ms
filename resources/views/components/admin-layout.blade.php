@@ -29,6 +29,24 @@
         .icon-green {
             color: #059669 !important;
         }
+<<<<<<< ours
+=======
+
+        @media print {
+            body {
+                background-color: #fff !important;
+            }
+
+            main {
+                padding: 0 !important;
+                background: #fff !important;
+            }
+
+            .flex-1 {
+                flex: none !important;
+            }
+        }
+>>>>>>> theirs
     </style>
     @vite(['resources/css/app.css','resources/js/app.js'])
     @stack('styles')

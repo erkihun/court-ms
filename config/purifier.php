@@ -22,7 +22,7 @@ return [
             // Generous allowlist (includes <img>, tables, etc.)
             'HTML.Allowed' => implode(',', [
                 // inline & text
-                'p',
+                'p[style|class|dir]',
                 'br',
                 'span[style|class|dir]',
                 'mark[style|class]',
@@ -129,7 +129,6 @@ return [
             'HTML.DefinitionID'  => 'cases-def',
             'HTML.DefinitionRev' => 5, // bump when you change this profile
             'HTML.Doctype'       => 'HTML 4.01 Transitional',
-
             // Tight allowlist (no images/tables; minimal attributes)
             'HTML.Allowed' => implode(',', [
                 // blocks
@@ -138,6 +137,7 @@ return [
                 'div[style|dir]',
                 'blockquote',
                 'ul',
+                'ol[style|class]',
                 'ol',
                 'li',
                 'hr',
