@@ -1,21 +1,21 @@
 {{-- resources/views/admin/applicants/index.blade.php --}}
-<x-admin-layout title="Applicants">
-    @section('page_header', 'Applicants')
+<x-admin-layout title="{{ __('applicants.title') }}">
+    @section('page_header', __('applicants.page_header'))
 
     <form method="GET" class="mb-4 flex flex-col gap-3 md:flex-row md:items-center">
-        <input name="q" value="{{ $q ?? '' }}" placeholder="Search by name, email, or phone..."
+        <input name="q" value="{{ $q ?? '' }}" placeholder="{{ __('applicants.search_placeholder') }}"
             class="w-full md:w-72 px-3 py-2 rounded bg-white text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
         <select name="status"
             class="w-full md:w-40 px-3 py-2 rounded bg-white text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-            <option value="">All statuses</option>
+            <option value="">{{ __('applicants.filters.all_statuses') }}</option>
             <option value="active" @selected(($status ?? '') === 'active')>{{ __('app.Active') }}</option>
             <option value="inactive" @selected(($status ?? '') === 'inactive')>{{ __('app.Inactive') }}</option>
         </select>
 
         <div class="flex items-center gap-2">
-            <button type="submit" class="px-3 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white">Filter</button>
+            <button type="submit" class="px-3 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white">{{ __('applicants.filters.filter') }}</button>
             @if(($q ?? '') !== '' || ($status ?? '') !== '')
-            <a href="{{ route('applicants.index') }}" class="px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-700">Reset</a>
+            <a href="{{ route('applicants.index') }}" class="px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-700">{{ __('applicants.filters.reset') }}</a>
             @endif
         </div>
     </form>
@@ -24,14 +24,14 @@
         <table class="min-w-full text-sm">
             <thead class="bg-gray-50 text-gray-700 border-b border-gray-200">
                 <tr>
-                    <th class="p-3 text-left font-medium">Applicant</th>
-                    <th class="p-3 text-left font-medium">Email</th>
-                    <th class="p-3 text-left font-medium">Phone</th>
-                    <th class="p-3 text-left font-medium">Organization</th>
-                    <th class="p-3 text-left font-medium">Status</th>
-                    <th class="p-3 text-left font-medium">Verified</th>
-                    <th class="p-3 text-left font-medium">Created</th>
-                    <th class="p-3 text-left font-medium">Actions</th>
+                    <th class="p-3 text-left font-medium">{{ __('applicants.table.applicant') }}</th>
+                    <th class="p-3 text-left font-medium">{{ __('applicants.table.email') }}</th>
+                    <th class="p-3 text-left font-medium">{{ __('applicants.table.phone') }}</th>
+                    <th class="p-3 text-left font-medium">{{ __('applicants.table.organization') }}</th>
+                    <th class="p-3 text-left font-medium">{{ __('applicants.table.status') }}</th>
+                    <th class="p-3 text-left font-medium">{{ __('applicants.table.verified') }}</th>
+                    <th class="p-3 text-left font-medium">{{ __('applicants.table.created') }}</th>
+                    <th class="p-3 text-left font-medium">{{ __('applicants.table.actions') }}</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
@@ -44,8 +44,8 @@
                     <td class="p-3">{{ $applicant->email }}</td>
                     <td class="p-3">{{ $applicant->phone }}</td>
                     <td class="p-3">
-                        <div>{{ $applicant->position ?? '—' }}</div>
-                        <div class="text-xs text-gray-500">{{ $applicant->organization_name ?? '—' }}</div>
+                        <div>{{ $applicant->position ?? __('applicants.meta.unknown') }}</div>
+                        <div class="text-xs text-gray-500">{{ $applicant->organization_name ?? __('applicants.meta.unknown') }}</div>
                     </td>
                     <td class="p-3">
                         <span
@@ -58,7 +58,7 @@
                             {{ $applicant->hasVerifiedEmail()
                                 ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
                                 : 'bg-yellow-100 text-yellow-700 border border-yellow-200' }}">
-                            {{ $applicant->hasVerifiedEmail() ? 'Verified' : 'Unverified' }}
+                            {{ $applicant->hasVerifiedEmail() ? __('applicants.verified.verified') : __('applicants.verified.unverified') }}
                         </span>
                     </td>
                     <td class="p-3 text-gray-600">{{ optional($applicant->created_at)->format('M d, Y') }}</td>
@@ -87,13 +87,13 @@
                             </form>
                         </div>
                         @else
-                        <span class="text-xs text-gray-600">—</span>
+                        <span class="text-xs text-gray-600">{{ __('applicants.meta.unknown') }}</span>
                         @endif
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="8" class="p-6 text-center text-gray-500">No applicants found.</td>
+                    <td colspan="8" class="p-6 text-center text-gray-500">{{ __('applicants.empty') }}</td>
                 </tr>
                 @endforelse
             </tbody>

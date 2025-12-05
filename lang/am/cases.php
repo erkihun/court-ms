@@ -204,6 +204,26 @@ return [
         'relief_requested' => 'የተጠየቀ ዳኝነት',
     ],
 
+   'assign' => [
+        'assign_case' => 'ፋይል ይመድቡ',
+        'summary_title' => 'ፋይል',
+        'case_number' => 'ፋይል ቁጥር:',
+        'title' => 'ርዕስ:',
+        'status' => 'ደረጃ:',
+        'current_assignee' => 'አሁን የተመደበለት:',
+        'assigned_at' => 'የተመደበበት ቀን:',
+        'unassigned' => 'አልተመደበም',
+        'back' => 'ተመለስ',
+        'permission_warning' => "የ`cases.assign.team` ፍቃድ የሎትም፣ ስለዚህ ምደባዎች በንቁ የቡድን አባላትዎ ብቻ የተገደቡ ናቸው።",
+        'leader_context' => 'የ:team መሪ ሆነው እየመደቡ ነው፤ ፋይሎችን ለቡድን አባላትዎ ብቻ ማስተላለፍ ይችላሉ።',
+        'admin_context' => 'አድሚኖች ፋይሎችን ለተዘረዘሩት የቡድን መሪዎች ይመድባሉ፤ የቡድን መሪ ደግሞ ለቡድን አባላቱ እንደገና መመደብ ይችላል።',
+        'assign_to' => 'ለዚህ ይመድቡ',
+        'select_user' => 'ተጠቃሚ ይምረጡ',
+        'team_members' => 'የቡድን አባላት',
+        'team_leader_label' => ':team / መሪ',
+        'unassign' => 'ይህን ፋይል ምደባ አንሳ',
+    ],
+
     'hearings' => [
         'title' => 'ችሎት የሚሰማበት ቀኖች',
         'total' => 'ጠቅላላ',

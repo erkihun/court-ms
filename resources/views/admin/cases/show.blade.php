@@ -10,23 +10,23 @@
 
     $canAssign = function_exists('userHasPermission')
     ? (
-        userHasPermission('cases.assign.team')
-        || userHasPermission('cases.assign.member')
-        || userHasPermission('cases.assign')
+    userHasPermission('cases.assign.team')
+    || userHasPermission('cases.assign.member')
+    || userHasPermission('cases.assign')
     )
     : (
-        (auth()->user()?->hasPermission('cases.assign.team') ?? false)
-        || (auth()->user()?->hasPermission('cases.assign.member') ?? false)
-        || (auth()->user()?->hasPermission('cases.assign') ?? false)
+    (auth()->user()?->hasPermission('cases.assign.team') ?? false)
+    || (auth()->user()?->hasPermission('cases.assign.member') ?? false)
+    || (auth()->user()?->hasPermission('cases.assign') ?? false)
     );
 
     $currentStatus = $case->status ?? 'pending';
-    $reviewStatus  = $case->review_status ?? 'accepted';
-    $reviewNote    = $case->review_note ?? null;
+    $reviewStatus = $case->review_status ?? 'accepted';
+    $reviewNote = $case->review_note ?? null;
 
     $canReview = function_exists('userHasPermission')
-        ? userHasPermission('cases.review')
-        : (auth()->user()?->can('cases.review') ?? false);
+    ? userHasPermission('cases.review')
+    : (auth()->user()?->can('cases.review') ?? false);
 
     $statuses = [
     'pending' => __('cases.status.pending'),
@@ -46,16 +46,16 @@
     };
 
     $reviewChip = fn (string $s) => match ($s) {
-        'awaiting_review' => 'bg-amber-100 text-amber-800 border border-amber-300',
-        'returned'        => 'bg-yellow-100 text-yellow-800 border border-yellow-300',
-        'rejected'        => 'bg-rose-100 text-rose-800 border border-rose-300',
-        default           => 'bg-emerald-100 text-emerald-800 border border-emerald-300',
+    'awaiting_review' => 'bg-amber-100 text-amber-800 border border-amber-300',
+    'returned' => 'bg-yellow-100 text-yellow-800 border border-yellow-300',
+    'rejected' => 'bg-rose-100 text-rose-800 border border-rose-300',
+    default => 'bg-emerald-100 text-emerald-800 border border-emerald-300',
     };
     $reviewLabel = fn (string $s) => match ($s) {
-        'awaiting_review' => 'Awaiting approval',
-        'returned'        => 'Needs correction',
-        'rejected'        => 'Rejected',
-        default           => 'Approved',
+    'awaiting_review' => 'Awaiting approval',
+    'returned' => 'Needs correction',
+    'rejected' => 'Rejected',
+    default => 'Approved',
     };
     @endphp
 
@@ -127,7 +127,29 @@
             border: 1px solid #E5E7EB;
             padding: .35rem .5rem;
         }
+
+        /* Datepicker trigger */
+        .dp-trigger {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #d1d5db;
+            background: #fff;
+            color: #111827;
+            border-radius: 0.5rem;
+            padding: 0.3rem 0.55rem;
+            margin-left: 0.35rem;
+            cursor: pointer;
+        }
+
+        /* Ensure picker popup appears above modals */
+        .calendars-popup,
+        .datepick-popup {
+            z-index: 9999 !important;
+        }
     </style>
+    {{-- Ethiopian calendar picker styling --}}
+    <link rel="stylesheet" href="{{ asset('vendor/etcalander/picker/css/jquery.datepick.css') }}">
 
     @endpush
 
@@ -549,11 +571,11 @@
                                 <td class="p-2 text-gray-900 font-medium">{{ str_replace('_',' ', ucfirst($a->action)) }}</td>
                                 <td class="p-2 text-gray-700 text-xs">
                                     @if(!empty($a->actor_name))
-                                        {{ $a->actor_name }} @if($a->actor_id)(#{{ $a->actor_id }})@endif
+                                    {{ $a->actor_name }} @if($a->actor_id)(#{{ $a->actor_id }})@endif
                                     @elseif(!empty($a->actor_id))
-                                        {{ $a->actor_type ?? 'system' }} (#{{ $a->actor_id }})
+                                    {{ $a->actor_type ?? 'system' }} (#{{ $a->actor_id }})
                                     @else
-                                        {{ $a->actor_type ?? 'system' }}
+                                    {{ $a->actor_type ?? 'system' }}
                                     @endif
                                 </td>
                                 <td class="p-2 text-gray-700 text-xs">
@@ -655,6 +677,7 @@
                                             <input type="datetime-local" name="hearing_at"
                                                 value="{{ \Illuminate\Support\Carbon::parse($h->hearing_at)->format('Y-m-d\TH:i') }}"
                                                 class="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+
                                             <input name="type" value="{{ $h->type }}" placeholder="{{ __('cases.hearings.type_placeholder') }}"
                                                 class="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                                             <input name="location" value="{{ $h->location }}" placeholder="{{ __('cases.hearings.location_placeholder') }}"
@@ -669,7 +692,7 @@
                                 </details>
 
                                 <form method="POST" action="{{ route('cases.hearings.delete',$h->id) }}"
-                                onsubmit="return confirm(@json(__('cases.hearings.remove_confirm')))">
+                                    onsubmit="return confirm(@json(__('cases.hearings.remove_confirm')))">
                                     @csrf @method('DELETE')
                                     <button class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors duration-150 flex items-center gap-1">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -695,10 +718,20 @@
                 <div class="pt-4 border-t border-gray-200">
                     <h4 class="text-sm font-medium text-gray-700 mb-3">{{ __('cases.hearings.add_new_hearing') }}</h4>
                     <form method="POST" action="{{ route('cases.hearings.store', $case->id) }}"
-                        class="grid md:grid-cols-5 gap-3">
+                        class="grid md:grid-cols-5 gap-3" data-hearing-create-form>
                         @csrf
-                        <input type="datetime-local" name="hearing_at"
-                            class="px-3 py-2.5 rounded-lg bg-white border border-gray-300 text-gray-900 md:col-span-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-150" required>
+                        <div class="space-y-2 md:col-span-2">
+                            <div class="flex items-start gap-2">
+                                <input id="hearing_date_new" type="text" data-ethiopian-date data-gregorian-target="hearing_at_greg_new"
+                                    class="flex-1 px-3 py-2.5 rounded-lg bg-white border border-gray-300 text-gray-900 w-full focus:ring-2 focus:ring-emerald-500 focus-border-emerald-500 transition-colors duration-150"
+                                    placeholder="{{ __('cases.hearings.add_new_hearing') }}" required autocomplete="off">
+
+                            </div>
+                            <input type="time" id="hearing_time_new"
+                                class="px-3 py-2.5 rounded-lg bg-white border border-gray-300 text-gray-900 w-full focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-150">
+                            <input type="hidden" id="hearing_at_greg_new">
+                            <input type="hidden" name="hearing_at" id="hearing_at_new">
+                        </div>
                         <input name="type" placeholder="{{ __('cases.hearings.type_placeholder') }}"
                             class="px-3 py-2.5 rounded-lg bg-white border border-gray-300 text-gray-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-150">
                         <input name="location" placeholder="{{ __('cases.hearings.location_placeholder') }}"
@@ -743,10 +776,10 @@
                 <ul class="divide-y divide-gray-200">
                     @foreach($docs as $d)
                     @php
-                        $filePath = $d->file_path ?? $d->path ?? null;
-                        $docTitle = $d->title ?? ($d->label ?? ($filePath ? basename($filePath) : __('cases.documents.document')));
-                        $fileTime = !empty($d->created_at) ? \Illuminate\Support\Carbon::parse($d->created_at)->format('M d, Y H:i') : null;
-                        $fileSize = isset($d->size) ? number_format(max(0, (int) $d->size) / 1024, 1) : null;
+                    $filePath = $d->file_path ?? $d->path ?? null;
+                    $docTitle = $d->title ?? ($d->label ?? ($filePath ? basename($filePath) : __('cases.documents.document')));
+                    $fileTime = !empty($d->created_at) ? \Illuminate\Support\Carbon::parse($d->created_at)->format('M d, Y H:i') : null;
+                    $fileSize = isset($d->size) ? number_format(max(0, (int) $d->size) / 1024, 1) : null;
                     @endphp
                     <li class="py-3 px-3 hover:bg-gray-50 rounded-lg transition-colors duration-150">
                         <div class="flex items-start justify-between gap-2">
@@ -956,8 +989,8 @@
                     $fromAdmin = !is_null($m->sender_user_id);
                     $fromApplicant = !is_null($m->sender_applicant_id);
                     $who = $fromAdmin
-                        ? ($m->admin_name ?: __('cases.messages.court_staff'))
-                        : ($fromApplicant ? trim(($m->first_name ?? '').' '.($m->last_name ?? '')) : __('cases.messages_section.system'));
+                    ? ($m->admin_name ?: __('cases.messages.court_staff'))
+                    : ($fromApplicant ? trim(($m->first_name ?? '').' '.($m->last_name ?? '')) : __('cases.messages_section.system'));
                     @endphp
                     <div class="flex {{ $fromAdmin ? 'justify-end' : 'justify-start' }}">
                         <div class="relative w-full max-w-[78%] rounded-2xl border px-4 py-3 shadow-sm transition hover:shadow-lg
@@ -1103,11 +1136,13 @@
         modal.classList.add('flex');
         document.getElementById('review-note').focus();
     }
+
     function closeReviewModal() {
         const modal = document.getElementById('review-modal');
         modal.classList.add('hidden');
         modal.classList.remove('flex');
     }
+
     function submitReviewDecision(decision) {
         if (decision === 'accept') {
             document.getElementById('review-quick-decision').value = decision;
@@ -1116,4 +1151,112 @@
         }
         openReviewModal(decision);
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.querySelector('[data-hearing-create-form]');
+        if (!form) return;
+        const dateFieldNative = document.getElementById('hearing_date_new');
+        const dateHidden = document.getElementById('hearing_at_greg_new');
+        if (dateFieldNative && dateHidden) {
+            dateFieldNative.addEventListener('change', () => {
+                dateHidden.value = dateFieldNative.value;
+            });
+        }
+        form.addEventListener('submit', (e) => {
+            const dateField = document.getElementById('hearing_at_greg_new');
+            const timeField = document.getElementById('hearing_time_new');
+            const target = document.getElementById('hearing_at_new');
+            const dateVal = dateField?.value || dateFieldNative?.value;
+            if (!dateVal) {
+                e.preventDefault();
+                alert('Please select a hearing date.');
+                return;
+            }
+            const timeVal = (timeField?.value || '00:00');
+            target.value = `${dateVal}T${timeVal}:00`;
+        });
+    });
 </script>
+
+@push('scripts')
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-5sv4cQfM9H7H8z9EjoTx6FKmSQt1zG1MRd2m7y0wtGA=" crossorigin="anonymous"></script>
+<script src="{{ asset('vendor/etcalander/js/jquery.plugin.min.js') }}"></script>
+<script src="{{ asset('vendor/etcalander/picker/js/jquery.datepick.js') }}"></script>
+<script src="{{ asset('vendor/etcalander/js/jquery.calendars.min.js') }}"></script>
+<script src="{{ asset('vendor/etcalander/js/jquery.calendars.ethiopian.min.js') }}"></script>
+<script src="{{ asset('vendor/etcalander/cal/js/jquery.calendars.ethiopian-am.js') }}"></script>
+<script src="{{ asset('vendor/etcalander/js/jquery.calendars.picker.min.js') }}"></script>
+<script src="{{ asset('vendor/etcalander/js/jquery.calendars.picker-am.js') }}"></script>
+<script>
+    $(function() {
+        const etCal = $.calendars.instance('ethiopian', 'am');
+        const initPopupDatepick = () => {
+            if (!$.fn.datepick) return false;
+            const $hearing = $('#hearing_date_new');
+            if (!$hearing.length) return false;
+            $hearing.datepick({
+                dateFormat: 'yyyy-mm-dd',
+                showOtherMonths: true,
+                firstDay: 1,
+                minDate: new Date(),
+                onSelect: function(dates) {
+                    const selected = Array.isArray(dates) ? dates[0] : dates;
+                    if (!selected) return;
+                    const gStr = $.datepick.formatDate('yyyy-mm-dd', selected);
+                    $('#hearing_at_greg_new').val(gStr);
+                }
+            });
+            return true;
+        };
+        const hasPopupDatepick = initPopupDatepick();
+        $('[data-ethiopian-date]').each(function() {
+            const $input = $(this);
+            if (hasPopupDatepick && $input.attr('id') === 'hearing_date_new') return;
+            if ($input.data('et-init')) return;
+
+            const targetId = $input.data('gregorian-target');
+            let $hidden = null;
+            if (targetId) {
+                const existing = document.getElementById(targetId);
+                $hidden = existing ? $(existing) : $('<input>', {
+                    type: 'hidden',
+                    id: targetId,
+                    name: targetId
+                }).insertAfter($input);
+            }
+
+            const pad = (n) => String(n).padStart(2, '0');
+
+            $input.calendarsPicker({
+                calendar: etCal,
+                dateFormat: 'yyyy-mm-dd',
+                showOnFocus: true,
+                showOtherMonths: true,
+                firstDay: 1,
+                minDate: etCal.newDate(2012, 12, 25),
+                showTrigger: '<button type="button" class="dp-trigger px-2">📅</button>',
+                popupContainer: 'body',
+                onSelect: function(dates) {
+                    if (!dates.length) return;
+                    const g = dates[0].toGregorian();
+                    const gStr = `${g.getFullYear()}-${pad(g.getMonth() + 1)}-${pad(g.getDate())}`;
+                    if ($hidden) $hidden.val(gStr);
+                }
+            });
+
+            // bind manual trigger
+            const triggerId = $input.attr('id');
+            if (triggerId) {
+                $(`[data-date-trigger="${triggerId}"]`).on('click', function(ev) {
+                    ev.preventDefault();
+                    try {
+                        $input.calendarsPicker('show');
+                    } catch (e) {}
+                });
+            }
+
+            $input.data('et-init', true);
+        });
+    });
+</script>
+@endpush

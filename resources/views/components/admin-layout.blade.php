@@ -11,7 +11,7 @@
     // Localized title via group-only keys
     $t = __('app.' . $title);
     @endphp
-    <title>{{ $t }} | {{ $systemSettings->app_name ?? config('app.name','Laravel') }}</title>
+    <title>{{ $t }} | {{ $systemSettings->app_name ?? config('app.name','CMS') }}</title>
     <style>
         [x-cloak] {
             display: none !important
@@ -29,26 +29,11 @@
         .icon-green {
             color: #059669 !important;
         }
-<<<<<<< ours
-=======
-
-        @media print {
-            body {
-                background-color: #fff !important;
-            }
-
-            main {
-                padding: 0 !important;
-                background: #fff !important;
-            }
-
-            .flex-1 {
-                flex: none !important;
-            }
-        }
->>>>>>> theirs
     </style>
     @vite(['resources/css/app.css','resources/js/app.js'])
+    @if(app()->getLocale() === 'am')
+    <link rel="stylesheet" href="{{ asset('vendor/etcalander/css/jquery.calendars.picker.css') }}">
+    @endif
     @stack('styles')
 </head>
 
@@ -123,7 +108,7 @@
                         x-transition:leave="transition ease-in duration-150"
                         x-transition:leave-start="opacity-100 translate-x-0"
                         x-transition:leave-end="opacity-0 -translate-x-1">
-                        {{ $systemSettings->app_name ?? config('app.name','Laravel') }}
+                        {{ $systemSettings->app_name ?? config('app.name','CMS') }}
                     </span>
 
                     {{-- Short name (shown when compact) --}}
@@ -559,10 +544,11 @@
             use Illuminate\Support\Str;
             use Illuminate\Support\Carbon;
 
-            $uid = auth()->id();
+    $uid = auth()->id();
 
-            // stable timestamps for queries
-            $now = Carbon::now();
+    // stable timestamps for queries
+    $now = Carbon::now();
+    $todayDisplay = $now->locale(app()->getLocale())->translatedFormat('l, F j, Y');
             $cut14 = (clone $now)->subDays(14);
             $in14 = (clone $now)->addDays(14);
 
@@ -617,16 +603,16 @@
             ->orderBy('h.hearing_at')
             ->limit(5)
             ->get();
-            
-$adminRespondentViews = \DB::table('respondent_case_views as v')
+
+            $adminRespondentViews = \DB::table('respondent_case_views as v')
             ->join('court_cases as c', 'c.id', '=', 'v.case_id')
             ->join('respondents as r', 'r.id', '=', 'v.respondent_id')
             ->select(
-                'v.id',
-                'v.viewed_at',
-                'v.case_id',
-                'c.case_number',
-                \DB::raw("TRIM(CONCAT_WS(' ', r.first_name, r.middle_name, r.last_name)) as respondent_name")
+            'v.id',
+            'v.viewed_at',
+            'v.case_id',
+            'c.case_number',
+            \DB::raw("TRIM(CONCAT_WS(' ', r.first_name, r.middle_name, r.last_name)) as respondent_name")
             )
             ->where(function($q) use ($uid) {
             $q->where('c.assigned_user_id', $uid)
@@ -648,7 +634,11 @@ $adminRespondentViews = \DB::table('respondent_case_views as v')
             $u = auth()->user();
             @endphp
 
-            <div class="flex items-center gap-3">
+            <div class="hidden md:flex flex-1 justify-center">
+                <span id="top-date-display" class="text-sm font-semibold text-gray-600">{{ $todayDisplay }}</span>
+            </div>
+
+            <div class="flex items-center gap-3 flex-shrink-0">
                 {{-- Language switcher --}}
                 @auth
                 @if($hasLangSwitch)
@@ -706,7 +696,7 @@ $adminRespondentViews = \DB::table('respondent_case_views as v')
                         x-transition:leave="transition ease-in duration-100"
                         x-transition:leave-start="opacity-100 translate-y-0"
                         x-transition:leave-end="opacity-0 -translate-y-1"
-                    class="absolute right-0 mt-2 w-[32rem] max-w-[90vw] rounded-md border border-gray-200 bg-white shadow-xl z-50">
+                        class="absolute right-0 mt-2 w-[32rem] max-w-[90vw] rounded-md border border-gray-200 bg-white shadow-xl z-50">
                         <div class="p-3">
                             <div class="mb-2 flex items-center justify-between">
                                 <div class="text-sm font-semibold text-gray-800">{{ __('app.Notifications') }}</div>
@@ -952,6 +942,57 @@ $adminRespondentViews = \DB::table('respondent_case_views as v')
             }
         }
     </script>
+    @if(app()->getLocale() === 'am')
+    {{-- Ethiopian calendar (jQuery calendars) --}}
+    <script>
+        (function () {
+            const applyTopbarDate = () => {
+                const el = document.getElementById('top-date-display');
+                if (!el) return false;
+
+                // Manual conversion from Gregorian to Ethiopian
+                const g = new Date();
+                const gY = g.getFullYear();
+                const gM = g.getMonth() + 1; // 1-12
+                const gD = g.getDate();
+
+                // Gregorian to Julian Day Number
+                const g2j = (y, m, d) => {
+                    const a = Math.floor((14 - m) / 12);
+                    const y2 = y + 4800 - a;
+                    const m2 = m + 12 * a - 3;
+                    return d + Math.floor((153 * m2 + 2) / 5) + 365 * y2 + Math.floor(y2 / 4) - Math.floor(y2 / 100) + Math.floor(y2 / 400) - 32045;
+                };
+                // Julian Day Number to Ethiopian
+                const j2e = (j) => {
+                    const r = (j - 1723856) % 1461;
+                    const n = (r % 365) + 365 * Math.floor(r / 1460);
+                    const year = 4 * Math.floor((j - 1723856) / 1461) + Math.floor(r / 365) - Math.floor(r / 1460);
+                    const month = Math.floor(n / 30) + 1;
+                    const day = (n % 30) + 1;
+                    return { year, month, day };
+                };
+
+                const jdn = g2j(gY, gM, gD);
+                const et = j2e(jdn);
+
+                const days = ['እሑድ', 'ሰኞ', 'ማክሰኞ', 'ረቡዕ', 'ሐሙስ', 'ዓርብ', 'ቅዳሜ'];
+                const months = ['መስከረም', 'ጥቅምት', 'ኅዳር', 'ታህሳስ', 'ጥር', 'የካቲት', 'መጋቢት', 'ሚያዚያ', 'ግንቦት', 'ሰኔ', 'ሐምሌ', 'ነሐሴ', 'ጳጉሜ'];
+                const dayName = days[g.getDay()];
+                const monthName = months[et.month - 1] || '';
+                el.textContent = `${dayName}, ${monthName} ${et.day}, ${et.year} ዓ.ም`;
+                return true;
+            };
+
+            // Run once DOM is ready (no dependencies)
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', applyTopbarDate);
+            } else {
+                applyTopbarDate();
+            }
+        })();
+    </script>
+    @endif
     @stack('scripts')
 </body>
 

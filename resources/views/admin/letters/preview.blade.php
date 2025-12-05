@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Letter Preview</title>
+    <title>{{ __('letters.titles.preview') }}</title>
     <style>
     :root {
         font-family: 'Times New Roman', serif;
@@ -142,10 +142,10 @@
     <div class="preview-toolbar">
         <button type="button"
             class="px-3 py-1.5 rounded-md border border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-50"
-            onclick="printLetter()">Print</button>
+            onclick="printLetter()">{{ __('letters.actions.print') }}</button>
         <button type="button"
             class="px-3 py-1.5 rounded-md border border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-50"
-            onclick="saveLetterPdf()">Save as PDF</button>
+            onclick="saveLetterPdf()">{{ __('letters.actions.save_pdf') }}</button>
     </div>
 
     <div class="preview-wrapper">
@@ -168,8 +168,8 @@
             <img src="{{ asset('storage/' . $template->header_image_path) }}" alt="Letter Header">
             @endif
             <div class="flex justify-between mt-3 text-xs text-gray-600">
-                <span class="text-left flex-1">Ref No: <strong class="text-gray-900">{{ $letter->reference_number ?? '—' }}</strong></span>
-                <span class="text-right flex-1">Date: <strong class="text-gray-900">{{ $letterDate }}</strong></span>
+                <span class="text-left flex-1">{{ __('letters.preview.ref_no') }} <strong class="text-gray-900">{{ $letter->reference_number ?? __('letters.cards.missing') }}</strong></span>
+                <span class="text-right flex-1">{{ __('letters.preview.date') }} <strong class="text-gray-900">{{ $letterDate }}</strong></span>
             </div>
         </div>
     </template>
@@ -201,19 +201,19 @@
         </div>
         @endif
         <div class="subject-line">
-            Subject: {{ $letter->subject ?: $template->title }}
+            {{ __('letters.preview.subject') }} {{ $letter->subject ?: $template->title }}
         </div>
         <div class="body-block">
             {!! nl2br(e($letter->body)) !!}
         </div>
         <div class="closing-block" style="text-align:right;">
             <div class="signature-space"></div>
-            <p>Sincerely,</p>
+            <p>{{ __('letters.preview.closing') }}</p>
             <p>{{ $authorName }}<br>{{ $authorTitle }}</p>
         </div>
         @if($ccRecipients)
         <div class="meta-line">
-            <strong>CC recipients:</strong>
+            <strong>{{ __('letters.preview.cc_recipients') }}</strong>
             <ul class="list-disc pl-6 mt-1 text-xs text-gray-600">
                 @foreach($ccRecipients as $ccRecipient)
                 <li>{{ $ccRecipient }}</li>

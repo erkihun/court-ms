@@ -2,6 +2,7 @@
 
 return [
     'title' => 'Dashboard',
+    'Dashboard' => 'Dashboard',
     'my_dashboard' => 'My Dashboard',
 
     'total_cases' => 'Total Cases',

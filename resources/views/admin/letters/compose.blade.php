@@ -1,18 +1,18 @@
 {{-- resources/views/letters/compose.blade.php --}}
 @php use Illuminate\Support\Str; @endphp
-<x-admin-layout title="Compose Letter">
-    @section('page_header','Compose Letter')
+<x-admin-layout title="{{ __('letters.titles.compose') }}">
+    @section('page_header', __('letters.titles.compose'))
 
     <div class="max-w-5xl mx-auto space-y-6">
         <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-1">Select Template</h2>
-            <p class="text-sm text-gray-500 mb-4">Choose a template to auto-fill the body. You can edit the letter before generating the final copy.</p>
+            <h2 class="text-lg font-semibold text-gray-900 mb-1">{{ __('letters.form.select_template') }}</h2>
+            <p class="text-sm text-gray-500 mb-4">{{ __('letters.description.compose') }}</p>
 
             <form method="GET" action="{{ route('letters.compose') }}" class="flex flex-col md:flex-row gap-3">
                 <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-700">Template</label>
+                    <label class="block text-sm font-medium text-gray-700">{{ __('letters.form.template_label') }}</label>
                     <select name="template_id" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2" onchange="this.form.submit()">
-                        <option value="">-- Select --</option>
+                        <option value="">{{ __('letters.form.select_placeholder') }}</option>
                         @foreach($templates as $template)
                         <option value="{{ $template->id }}" @selected(optional($selectedTemplate)->id === $template->id)>
                             {{ $template->title }}
@@ -21,7 +21,7 @@
                     </select>
                 </div>
                 <div class="flex items-end">
-                    <button type="submit" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">Load</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">{{ __('letters.actions.load') }}</button>
                 </div>
             </form>
         </div>
@@ -33,19 +33,19 @@
 
                 @if(!$selectedTemplate)
                 <div class="rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
-                    Select a template above to enable the letter fields.
+                    {{ __('letters.form.template_notice') }}
                 </div>
                 @endif
 
                 @if($errors->any())
                 <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                    Please fix the highlighted fields before saving.
+                    {{ __('letters.form.validation_notice') }}
                 </div>
                 @endif
 
                 <div class="grid md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Recipient Name<span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-medium text-gray-700">{{ __('letters.form.recipient_name') }}<span class="text-red-500">*</span></label>
                         <input type="text" name="recipient_name" value="{{ $recipientName }}"
                             class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2" required>
                         @error('recipient_name')
@@ -53,7 +53,7 @@
                         @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Recipient Title</label>
+                        <label class="block text-sm font-medium text-gray-700">{{ __('letters.form.recipient_title') }}</label>
                         <input type="text" name="recipient_title" value="{{ $recipientTitle }}"
                             class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2">
                         @error('recipient_title')
@@ -64,21 +64,21 @@
 
                 <div class="grid md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Recipient Company</label>
+                    <label class="block text-sm font-medium text-gray-700">{{ __('letters.form.recipient_company') }}</label>
                     <input type="text" name="recipient_company" value="{{ $recipientCompany }}"
                         class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2">
-                    <p class="text-xs text-gray-500 mt-1">Separate multiple companies with commas; each will appear as its own bullet on the preview.</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ __('letters.form.recipient_company_hint') }}</p>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">CC</label>
+                    <label class="block text-sm font-medium text-gray-700">{{ __('letters.form.cc') }}</label>
                     <input type="text" name="cc" value="{{ $cc }}"
-                        class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="e.g. Jane Smith">
-                    <p class="text-xs text-gray-500 mt-1">You can add multiple CC recipients by comma-separating their names or emails.</p>
+                        class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="{{ __('letters.form.cc_placeholder') }}">
+                    <p class="text-xs text-gray-500 mt-1">{{ __('letters.form.cc_hint') }}</p>
                 </div>
             </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Subject</label>
+                    <label class="block text-sm font-medium text-gray-700">{{ __('letters.form.subject') }}</label>
                     <input type="text" name="subject" value="{{ $subject ?? '' }}"
                         class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2">
                     @error('subject')
@@ -88,26 +88,26 @@
 
                 @if($selectedTemplate && $selectedTemplate->placeholders)
                 <div class="rounded-lg border border-dashed border-blue-300 bg-blue-50 px-4 py-3 text-xs text-blue-800">
-                    <p class="font-semibold mb-1">Placeholders</p>
-                    <p>Use the following keys inside your letter body:</p>
+                    <p class="font-semibold mb-1">{{ __('letters.form.placeholders_title') }}</p>
+                    <p>{{ __('letters.form.placeholders_help') }}</p>
                     <p class="mt-1">{{ implode(', ', $selectedTemplate->placeholders) }}</p>
                 </div>
                 @endif
 
                 @if($selectedTemplate)
                 <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
-                    <p class="text-xs uppercase tracking-wide text-gray-500">Selected template</p>
+                    <p class="text-xs uppercase tracking-wide text-gray-500">{{ __('letters.form.selected_template') }}</p>
                     <p class="font-semibold text-gray-900">{{ $selectedTemplate->title }}</p>
-                    <p class="text-xs">{{ $selectedTemplate->category ?? 'General' }}</p>
-                    <p class="mt-1 text-xs text-gray-500">{{ Str::limit($selectedTemplate->body, 100, '…') }}</p>
+                    <p class="text-xs">{{ $selectedTemplate->category ?? __('letters.form.category_fallback') }}</p>
+                    <p class="mt-1 text-xs text-gray-500">{{ Str::limit($selectedTemplate->body, 100, '...') }}</p>
                 </div>
                 @endif
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Body<span class="text-red-500">*</span></label>
+                    <label class="block text-sm font-medium text-gray-700">{{ __('letters.form.body') }}<span class="text-red-500">*</span></label>
                     <textarea id="letter-body-editor" name="body" rows="12"
                         class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm" required>{{ old('body', $body) }}</textarea>
-                    <p class="text-xs text-gray-500 mt-1">The preview page will render this on A4 paper with the template header/footer.</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ __('letters.form.body_hint') }}</p>
                     @error('body')
                         <p class="text-xs text-red-600 mt-1" role="alert">{{ $message }}</p>
                     @enderror
@@ -116,7 +116,7 @@
                 <div class="flex items-center justify-end">
                     <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
                         @if(!$selectedTemplate) disabled @endif>
-                        Save Letter
+                        {{ __('letters.actions.save_letter') }}
                     </button>
                 </div>
             </form>

@@ -204,6 +204,26 @@ return [
         'relief_requested' => 'Relief requested',
     ],
 
+    'assign' => [
+        'assign_case' => 'Assign Case',
+        'summary_title' => 'Case',
+        'case_number' => 'Case #:',
+        'title' => 'Title:',
+        'status' => 'Status:',
+        'current_assignee' => 'Current Assignee:',
+        'assigned_at' => 'Assigned at:',
+        'unassigned' => 'Unassigned',
+        'back' => 'Back',
+        'permission_warning' => "You don't have the `cases.assign.team` permission, so assignments are limited to your active team members.",
+        'leader_context' => 'Assigning as leader of :team; you can route cases to your team members only.',
+        'admin_context' => 'Admins assign cases to the listed team leaders; a team leader can then reassign to their members.',
+        'assign_to' => 'Assign to',
+        'select_user' => 'Select a user',
+        'team_members' => 'Team members',
+        'team_leader_label' => ':team / Leader',
+        'unassign' => 'Unassign this case',
+    ],
+
     'hearings' => [
         'title' => 'Hearings',
         'total' => 'total',
