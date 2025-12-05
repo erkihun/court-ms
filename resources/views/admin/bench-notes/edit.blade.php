@@ -1,5 +1,5 @@
-<x-admin-layout title="Bench Notes">
-    @section('page_header', 'Edit bench note')
+<x-admin-layout title="{{ __('bench.title') }}">
+    @section('page_header', __('bench.page_header.edit'))
 
     @push('styles')
     <style>
@@ -311,9 +311,8 @@
         <div class="mb-6">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Edit Bench Note</h1>
-                    <p class="text-sm text-gray-600 mt-1">Update the note content. All changes are sanitized via HTML
-                        Purifier.</p>
+                    <h1 class="text-2xl font-bold text-gray-900">{{ __('bench.headings.edit') }}</h1>
+                    <p class="text-sm text-gray-600 mt-1">{{ __('bench.descriptions.edit') }}</p>
                 </div>
                 <div class="flex gap-2">
                     <a href="{{ route('bench-notes.index', ['case_id' => $benchNote->case_id]) }}"
@@ -323,7 +322,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
-                        Back to list
+                        {{ __('bench.buttons.back_list') }}
                     </a>
                 </div>
             </div>
@@ -331,8 +330,8 @@
 
         <div class="form-card">
             <div class="card-header">
-                <h2 class="text-lg font-semibold text-gray-900">Edit Note: {{ $benchNote->title }}</h2>
-                <p class="text-sm text-gray-600 mt-1">Make changes to the bench note below.</p>
+                <h2 class="text-lg font-semibold text-gray-900">{{ __('bench.headings.edit_note', ['title' => $benchNote->title]) }}</h2>
+                <p class="text-sm text-gray-600 mt-1">{{ __('bench.headings.edit_intro') }}</p>
             </div>
 
             <form method="POST" action="{{ route('bench-notes.update', $benchNote->id) }}">
@@ -351,8 +350,8 @@
                                     </svg>
                                 </div>
                                 <div class="meta-content">
-                                    <div class="meta-label">Author</div>
-                                    <div class="meta-value">{{ $benchNote->user?->name ?? 'Unknown' }}</div>
+                                    <div class="meta-label">{{ __('bench.labels.author') }}</div>
+                                    <div class="meta-value">{{ $benchNote->user?->name ?? __('bench.meta.unknown') }}</div>
                                 </div>
                             </div>
 
@@ -365,7 +364,7 @@
                                     </svg>
                                 </div>
                                 <div class="meta-content">
-                                    <div class="meta-label">Created</div>
+                                    <div class="meta-label">{{ __('bench.labels.created') }}</div>
                                     <div class="meta-value">{{ $benchNote->created_at->format('M d, Y H:i') }}</div>
                                 </div>
                             </div>
@@ -380,7 +379,7 @@
                                     </svg>
                                 </div>
                                 <div class="meta-content">
-                                    <div class="meta-label">Last Updated</div>
+                                    <div class="meta-label">{{ __('bench.labels.last_updated') }}</div>
                                     <div class="meta-value">{{ $benchNote->updated_at->format('M d, Y H:i') }}</div>
                                 </div>
                             </div>
@@ -389,12 +388,12 @@
                     </div>
 
                     <div class="form-section">
-                        <h3 class="section-title">Basic Information</h3>
+                        <h3 class="section-title">{{ __('bench.sections.basic_info') }}</h3>
                         <div class="form-grid">
                             <div class="form-group">
-                                <label class="form-label form-label-required">Case</label>
+                                <label class="form-label form-label-required">{{ __('bench.labels.case') }}</label>
                                 <select name="case_id" class="form-select" required>
-                                    <option value="">Select a case</option>
+                                    <option value="">{{ __('bench.placeholders.select_case') }}</option>
                                     @foreach($cases as $case)
                                     <option value="{{ $case->id }}" @selected(old('case_id', $benchNote->
                                         case_id)===$case->id)>
@@ -405,26 +404,26 @@
                                 @error('case_id')
                                 <p class="form-error">{{ $message }}</p>
                                 @enderror
-                                <p class="form-helper">Select the case this note belongs to</p>
+                                <p class="form-helper">{{ __('bench.helpers.select_case') }}</p>
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label form-label-required">Title</label>
+                                <label class="form-label form-label-required">{{ __('bench.labels.title') }}</label>
                                 <input type="text" name="title" value="{{ old('title', $benchNote->title) }}"
-                                    class="form-input" required maxlength="255" placeholder="Enter a descriptive title">
+                                    class="form-input" required maxlength="255" placeholder="{{ __('bench.placeholders.title') }}">
                                 @error('title')
                                 <p class="form-error">{{ $message }}</p>
                                 @enderror
-                                <p class="form-helper">Brief title for the note (max 255 characters)</p>
+                                <p class="form-helper">{{ __('bench.helpers.title') }}</p>
                             </div>
                         </div>
                     </div>
 
                     <div class="form-section">
-                        <h3 class="section-title">Note Content</h3>
+                        <h3 class="section-title">{{ __('bench.sections.note_content') }}</h3>
                         <div class="form-group">
                             <div class="editor-header">
-                                <h3>Note Editor</h3>
+                                <h3>{{ __('bench.labels.note_editor') }}</h3>
                             </div>
                             <div class="editor-container">
                                 <textarea id="bench-note-editor" name="note"
@@ -434,7 +433,7 @@
                             <p class="form-error">{{ $message }}</p>
                             @enderror
                             <p class="form-helper mt-3">
-                                Rich text editor powered by TinyMCE. All HTML is purified before saving.
+                                {{ __('bench.helpers.note_editor') }}
                             </p>
                         </div>
                     </div>
@@ -449,7 +448,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M6 18L18 6M6 6l12 12" />
                                 </svg>
-                                Cancel
+                                {{ __('bench.buttons.cancel') }}
                             </button>
                         </div>
 
@@ -460,7 +459,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                 </svg>
-                                Update Note
+                                {{ __('bench.buttons.update') }}
                             </button>
                         </div>
                     </div>
@@ -477,12 +476,10 @@
                         d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div>
-                    <h4 class="text-sm font-medium text-amber-900">Editing Note</h4>
+                    <h4 class="text-sm font-medium text-amber-900">{{ __('bench.headings.editing_note') }}</h4>
                     <p class="text-sm text-amber-700 mt-1">
-                        You are editing an existing bench note. All changes will be saved immediately when you click
-                        "Update Note".
-                        The note was originally created by {{ $benchNote->user?->name ?? 'Unknown' }} on
-                        {{ $benchNote->created_at->format('F d, Y') }}.
+                        {{ __('bench.descriptions.editing_notice') }}
+                        {{ __('bench.descriptions.created_meta', ['author' => $benchNote->user?->name ?? __('bench.meta.unknown'), 'date' => $benchNote->created_at->format('F d, Y')]) }}
                     </p>
                 </div>
             </div>

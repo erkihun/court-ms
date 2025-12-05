@@ -60,47 +60,47 @@
     {{-- KPI cards --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
         {{-- Total cases --}}
-        <div class="p-4 rounded-xl bg-gradient-to-br from-blue-700 via-blue-600 to-blue-500 shadow ring-1 ring-white/10">
+        <div class="p-4 rounded-xl bg-blue-700 shadow ring-1 ring-blue-800/40">
             <div class="flex items-center justify-between">
-                <h2 class="text-[11px] uppercase tracking-wider/3 text-blue-50/90">{{ __('dashboard.total_cases') }}</h2>
-                <svg class="h-5 w-5 text-blue-50/90" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <h2 class="text-[11px] uppercase tracking-wider/3 text-orange-200">{{ __('dashboard.total_cases') }}</h2>
+                <svg class="h-5 w-5 text-orange-200" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M3 7h18M3 12h18M3 17h18" />
                 </svg>
             </div>
-            <p id="kpi-total-cases" class="text-3xl font-bold text-blue-50 mt-2">{{ number_format($totalCases) }}</p>
+            <p id="kpi-total-cases" class="text-3xl font-bold text-orange-100 mt-2">{{ number_format($totalCases) }}</p>
         </div>
 
         {{-- Pending --}}
-        <div class="p-4 rounded-xl bg-gradient-to-br from-orange-600 via-orange-500 to-amber-500 shadow ring-1 ring-white/10">
+        <div class="p-4 rounded-xl bg-blue-700 shadow ring-1 ring-blue-800/40">
             <div class="flex items-center justify-between">
-                <h2 class="text-[11px] uppercase tracking-wider/3 text-white/90">{{ __('dashboard.pending') }}</h2>
-                <svg class="h-5 w-5 text-white/90" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <h2 class="text-[11px] uppercase tracking-wider/3 text-orange-200">{{ __('dashboard.pending') }}</h2>
+                <svg class="h-5 w-5 text-orange-200" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2" />
                 </svg>
             </div>
-            <p id="kpi-pending-cases" class="text-3xl font-bold mt-2 text-white">{{ number_format($pendingCases) }}</p>
+            <p id="kpi-pending-cases" class="text-3xl font-bold mt-2 text-orange-100">{{ number_format($pendingCases) }}</p>
         </div>
 
         {{-- Resolved --}}
-        <div class="p-4 rounded-xl bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-500 shadow ring-1 ring-white/10">
+        <div class="p-4 rounded-xl bg-blue-700 shadow ring-1 ring-blue-800/40">
             <div class="flex items-center justify-between">
-                <h2 class="text-[11px] uppercase tracking-wider/3 text-white/90">{{ __('dashboard.resolved') }}</h2>
-                <svg class="h-5 w-5 text-white/90" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <h2 class="text-[11px] uppercase tracking-wider/3 text-orange-200">{{ __('dashboard.resolved') }}</h2>
+                <svg class="h-5 w-5 text-orange-200" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
             </div>
-            <p id="kpi-resolved-cases" class="text-3xl font-bold mt-2 text-white">{{ number_format($resolvedCases) }}</p>
+            <p id="kpi-resolved-cases" class="text-3xl font-bold mt-2 text-orange-100">{{ number_format($resolvedCases) }}</p>
         </div>
 
         {{-- Active users --}}
-        <div class="p-4 rounded-xl bg-gradient-to-br from-slate-700 via-slate-600 to-slate-500 shadow ring-1 ring-white/10">
+        <div class="p-4 rounded-xl bg-blue-700 shadow ring-1 ring-blue-800/40">
             <div class="flex items-center justify-between">
-                <h2 class="text-[11px] uppercase tracking-wider/3 text-white/90">{{ __('dashboard.active_users') }}</h2>
-                <svg class="h-5 w-5 text-white/90" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <h2 class="text-[11px] uppercase tracking-wider/3 text-orange-200">{{ __('dashboard.active_users') }}</h2>
+                <svg class="h-5 w-5 text-orange-200" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM6 21a6 6 0 1112 0H6z" />
                 </svg>
             </div>
-            <p id="kpi-active-users" class="text-3xl font-bold mt-2 text-white">{{ number_format($activeUsers) }}</p>
+            <p id="kpi-active-users" class="text-3xl font-bold mt-2 text-orange-100">{{ number_format($activeUsers) }}</p>
         </div>
     </div>
 
@@ -113,7 +113,7 @@
         </div>
 
         <ul class="divide-y divide-gray-200">
-            @forelse($recent as $case)
+            @forelse($recent->take(3) as $case)
             @php $status = (string)($case->status ?? ''); @endphp
             <li class="py-3 flex items-center justify-between">
                 <div class="min-w-0">
@@ -297,6 +297,9 @@
                 const labels = parseJSON(casesEl, 'labels', []);
                 const values = parseJSON(casesEl, 'values', []);
                 const datasetLabel = casesEl.dataset.datasetLabel || '';
+                const lineColor = 'rgba(37, 99, 235, 1)'; // blue
+                const fillColor = 'rgba(249, 115, 22, 0.16)'; // orange tint
+                const pointColor = 'rgba(249, 115, 22, 0.9)'; // orange
 
                 if (labels.length && values.length) {
                     const chart = new Chart(casesEl.getContext('2d'), {
@@ -308,8 +311,12 @@
                                 data: values,
                                 tension: 0.3,
                                 fill: true,
-                                borderColor: 'rgb(37, 99, 235)', // blue-600
-                                backgroundColor: 'rgba(37, 99, 235, 0.12)', // blue-600/12
+                                borderColor: lineColor,
+                                backgroundColor: fillColor,
+                                pointBackgroundColor: pointColor,
+                                pointBorderColor: pointColor,
+                                pointHoverBackgroundColor: pointColor,
+                                pointHoverBorderColor: pointColor,
                                 pointRadius: 2,
                                 pointHoverRadius: 4
                             }]
@@ -361,6 +368,10 @@
             if (genderEl) {
                 const gLabels = parseJSON(genderEl, 'labels', []);
                 const gValues = parseJSON(genderEl, 'values', []);
+                const genderPalette = [
+                    'rgba(37,99,235,0.85)', // blue
+                    'rgba(249,115,22,0.85)'  // orange
+                ];
 
                 if (gLabels.length && gValues.length) {
                     const chart = new Chart(genderEl.getContext('2d'), {
@@ -369,12 +380,7 @@
                             labels: gLabels,
                             datasets: [{
                                 data: gValues,
-                                backgroundColor: [
-                                    'rgba(37,99,235,0.85)', // blue-600
-                                    'rgba(16,185,129,0.85)', // emerald-500
-                                    'rgba(249,115,22,0.85)', // orange-500
-                                    'rgba(107,114,128,0.85)' // gray-500
-                                ],
+                                backgroundColor: gLabels.map((_, idx) => genderPalette[idx % genderPalette.length]),
                                 borderWidth: 0
                             }]
                         },
@@ -409,8 +415,8 @@
                             datasets: [{
                                 label: '{{ __("dashboard.cases_by_type") }}',
                                 data: cValues,
-                                backgroundColor: 'rgba(99,102,241,0.65)', // indigo-500
-                                borderColor: 'rgba(79,70,229,1)', // indigo-600
+                                backgroundColor: 'rgba(249, 115, 22, 0.65)', // orange
+                                borderColor: 'rgba(37, 99, 235, 1)', // blue
                                 borderWidth: 1,
                                 borderRadius: 6,
                                 maxBarThickness: 36

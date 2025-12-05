@@ -1,7 +1,8 @@
 <?php
 return [
     // Core
-    'Dashboard' => 'ዳሽቦርድ',
+
+
     'Language' => 'አማርኛ',
     'English' => 'እንግሊዝኛ',
     'Amharic' => 'አማርኛ',
@@ -15,15 +16,17 @@ return [
     'Toggle sidebar width' => 'የጎን ማውጫ ስፋት ቀይር',
 
     // Modules / Nav
+    'Dashboard' => 'ዳሽቦርድ',
     'Appeals' => 'አቤቱታዎች',
+    'Applicant' => 'አመልካቾች',
     'Cases' => 'መዝገቦች',
-    'Applicant' => 'Applicant',
+
     'Case Types' => 'የክስ አይነቶች',
     'Notifications' => 'ማስታወቂያዎች',
     'Users' => 'ተጠቃሚዎች',
     'Permissions' => 'ፈቃዶች',
     'Roles' => 'ሚናዎች',
-    'Teams' => 'Teams',
+    'Teams' => 'ቡድኖች',
     'Letter Templates' => 'የደብዳቤ ቴምፕሌቶች',
     'Compose Letter' => 'ደብዳቤ ይጻፉ',
     'Letters' => 'ደብዳቤዎች',

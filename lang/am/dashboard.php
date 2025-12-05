@@ -2,7 +2,7 @@
 
 return [
     'title'                 => 'ዳሽቦርድ',
-
+    'Dashboard' => 'ዳሽቦርድ',
     'total_cases'           => 'ጠቅላላ መዝገቦች',
     'pending'               => 'በመጠባበቅ ላይ',
     'resolved'              => 'ምላሽ ያገኙ',
