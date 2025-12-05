@@ -725,7 +725,8 @@
                                 <input id="hearing_date_new" type="text" data-ethiopian-date data-gregorian-target="hearing_at_greg_new"
                                     class="flex-1 px-3 py-2.5 rounded-lg bg-white border border-gray-300 text-gray-900 w-full focus:ring-2 focus:ring-emerald-500 focus-border-emerald-500 transition-colors duration-150"
                                     placeholder="{{ __('cases.hearings.add_new_hearing') }}" required autocomplete="off">
-
+                                </script>
+                                <p>A popup datepicker <input type="text" id="popupDatepicker"></p>
                             </div>
                             <input type="time" id="hearing_time_new"
                                 class="px-3 py-2.5 rounded-lg bg-white border border-gray-300 text-gray-900 w-full focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-150">
@@ -1179,15 +1180,32 @@
 </script>
 
 @push('scripts')
+
+
+
+
 <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-5sv4cQfM9H7H8z9EjoTx6FKmSQt1zG1MRd2m7y0wtGA=" crossorigin="anonymous"></script>
-<script src="{{ asset('vendor/etcalander/js/jquery.plugin.min.js') }}"></script>
+<script src="{{ asset('vendor/etcalander/picker/js/jquery.plugin.min.js') }}"></script>
 <script src="{{ asset('vendor/etcalander/picker/js/jquery.datepick.js') }}"></script>
+
 <script src="{{ asset('vendor/etcalander/js/jquery.calendars.min.js') }}"></script>
 <script src="{{ asset('vendor/etcalander/js/jquery.calendars.ethiopian.min.js') }}"></script>
 <script src="{{ asset('vendor/etcalander/cal/js/jquery.calendars.ethiopian-am.js') }}"></script>
 <script src="{{ asset('vendor/etcalander/js/jquery.calendars.picker.min.js') }}"></script>
 <script src="{{ asset('vendor/etcalander/js/jquery.calendars.picker-am.js') }}"></script>
 <script>
+    $(function() {
+        $('#popupDatepicker').datepick();
+        $('#inlineDatepicker').datepick({
+            onSelect: showDate
+        });
+    });
+
+    function showDate(date) {
+        alert('The date chosen is ' + date);
+    }
+
+
     $(function() {
         const etCal = $.calendars.instance('ethiopian', 'am');
         const initPopupDatepick = () => {
