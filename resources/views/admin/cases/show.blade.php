@@ -148,8 +148,9 @@
             z-index: 9999 !important;
         }
     </style>
-    {{-- Ethiopian calendar picker styling --}}
+    {{-- Datepicker styling --}}
     <link rel="stylesheet" href="{{ asset('vendor/etcalander/picker/css/jquery.datepick.css') }}">
+    <link rel="stylesheet" href="{{ asset('vendor/etcalander/etcalander/picker/css/ui-south-street.datepick.css') }}">
 
     @endpush
 
@@ -721,13 +722,9 @@
                         class="grid md:grid-cols-5 gap-3" data-hearing-create-form>
                         @csrf
                         <div class="space-y-2 md:col-span-2">
-                            <div class="flex items-start gap-2">
-                                <input id="hearing_date_new" type="text" data-ethiopian-date data-gregorian-target="hearing_at_greg_new"
-                                    class="flex-1 px-3 py-2.5 rounded-lg bg-white border border-gray-300 text-gray-900 w-full focus:ring-2 focus:ring-emerald-500 focus-border-emerald-500 transition-colors duration-150"
-                                    placeholder="{{ __('cases.hearings.add_new_hearing') }}" required autocomplete="off">
-                                </script>
-                                <p>A popup datepicker <input type="text" id="popupDatepicker"></p>
-                            </div>
+                            <input id="hearing_date_new" type="text"
+                                class="flex-1 px-3 py-2.5 rounded-lg bg-white border border-gray-300 text-gray-900 w-full focus:ring-2 focus:ring-emerald-500 focus-border-emerald-500 transition-colors duration-150"
+                                placeholder="{{ __('cases.hearings.add_new_hearing') }}" required autocomplete="off">
                             <input type="time" id="hearing_time_new"
                                 class="px-3 py-2.5 rounded-lg bg-white border border-gray-300 text-gray-900 w-full focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-150">
                             <input type="hidden" id="hearing_at_greg_new">
@@ -1180,101 +1177,36 @@
 </script>
 
 @push('scripts')
-
-
-
-
 <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-5sv4cQfM9H7H8z9EjoTx6FKmSQt1zG1MRd2m7y0wtGA=" crossorigin="anonymous"></script>
 <script src="{{ asset('vendor/etcalander/picker/js/jquery.plugin.min.js') }}"></script>
 <script src="{{ asset('vendor/etcalander/picker/js/jquery.datepick.js') }}"></script>
-
-<script src="{{ asset('vendor/etcalander/js/jquery.calendars.min.js') }}"></script>
-<script src="{{ asset('vendor/etcalander/js/jquery.calendars.ethiopian.min.js') }}"></script>
-<script src="{{ asset('vendor/etcalander/cal/js/jquery.calendars.ethiopian-am.js') }}"></script>
-<script src="{{ asset('vendor/etcalander/js/jquery.calendars.picker.min.js') }}"></script>
-<script src="{{ asset('vendor/etcalander/js/jquery.calendars.picker-am.js') }}"></script>
 <script>
-    $(function() {
-        $('#popupDatepicker').datepick();
-        $('#inlineDatepicker').datepick({
-            onSelect: showDate
-        });
-    });
+    $(function () {
+        const $dateInput = $('#hearing_date_new');
+        const $gregHidden = $('#hearing_at_greg_new');
 
-    function showDate(date) {
-        alert('The date chosen is ' + date);
-    }
-
-
-    $(function() {
-        const etCal = $.calendars.instance('ethiopian', 'am');
-        const initPopupDatepick = () => {
-            if (!$.fn.datepick) return false;
-            const $hearing = $('#hearing_date_new');
-            if (!$hearing.length) return false;
-            $hearing.datepick({
+        if ($dateInput.length && $.fn.datepick) {
+            $dateInput.datepick({
                 dateFormat: 'yyyy-mm-dd',
                 showOtherMonths: true,
                 firstDay: 1,
                 minDate: new Date(),
-                onSelect: function(dates) {
+                showTrigger: '<button type="button" class="dp-trigger">Pick</button>',
+                onSelect: function (dates) {
                     const selected = Array.isArray(dates) ? dates[0] : dates;
                     if (!selected) return;
-                    const gStr = $.datepick.formatDate('yyyy-mm-dd', selected);
-                    $('#hearing_at_greg_new').val(gStr);
+                    const formatted = $.datepick.formatDate('yyyy-mm-dd', selected);
+                    if ($gregHidden.length) $gregHidden.val(formatted);
                 }
             });
-            return true;
-        };
-        const hasPopupDatepick = initPopupDatepick();
-        $('[data-ethiopian-date]').each(function() {
-            const $input = $(this);
-            if (hasPopupDatepick && $input.attr('id') === 'hearing_date_new') return;
-            if ($input.data('et-init')) return;
+        }
 
-            const targetId = $input.data('gregorian-target');
-            let $hidden = null;
-            if (targetId) {
-                const existing = document.getElementById(targetId);
-                $hidden = existing ? $(existing) : $('<input>', {
-                    type: 'hidden',
-                    id: targetId,
-                    name: targetId
-                }).insertAfter($input);
-            }
-
-            const pad = (n) => String(n).padStart(2, '0');
-
-            $input.calendarsPicker({
-                calendar: etCal,
-                dateFormat: 'yyyy-mm-dd',
-                showOnFocus: true,
-                showOtherMonths: true,
-                firstDay: 1,
-                minDate: etCal.newDate(2012, 12, 25),
-                showTrigger: '<button type="button" class="dp-trigger px-2">📅</button>',
-                popupContainer: 'body',
-                onSelect: function(dates) {
-                    if (!dates.length) return;
-                    const g = dates[0].toGregorian();
-                    const gStr = `${g.getFullYear()}-${pad(g.getMonth() + 1)}-${pad(g.getDate())}`;
-                    if ($hidden) $hidden.val(gStr);
-                }
+        if ($dateInput.length && $gregHidden.length) {
+            $dateInput.on('change', function () {
+                if (!$dateInput.val()) return;
+                $gregHidden.val($dateInput.val());
             });
-
-            // bind manual trigger
-            const triggerId = $input.attr('id');
-            if (triggerId) {
-                $(`[data-date-trigger="${triggerId}"]`).on('click', function(ev) {
-                    ev.preventDefault();
-                    try {
-                        $input.calendarsPicker('show');
-                    } catch (e) {}
-                });
-            }
-
-            $input.data('et-init', true);
-        });
+        }
     });
 </script>
 @endpush

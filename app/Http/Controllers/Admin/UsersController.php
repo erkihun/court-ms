@@ -61,7 +61,9 @@ class UsersController extends Controller
         $request->merge(['national_id' => $normalizedNationalId ?: null]);
 
         $data = $request->validate([
-            'name'                  => ['required', 'string', 'max:255'],
+            'first_name'            => ['required', 'string', 'max:255'],
+            'middle_name'           => ['nullable', 'string', 'max:255'],
+            'last_name'             => ['required', 'string', 'max:255'],
             'email'                 => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
             'status'                => ['required', Rule::in(['active', 'inactive'])],
             'gender'                => ['nullable', Rule::in(['male','female','other'])],
@@ -75,6 +77,7 @@ class UsersController extends Controller
 
             'avatar'                => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'signature'             => ['nullable', 'image', 'mimes:png,webp,jpg,jpeg', 'max:2048'],
+            'stamp'                 => ['nullable', 'image', 'mimes:png,webp,jpg,jpeg', 'max:2048'],
         ]);
 
         // Always assign the configured default password; user will be forced to change on first login.
@@ -88,8 +91,18 @@ class UsersController extends Controller
             ? $request->file('signature')->store('signatures', 'public')
             : null;
 
+        $stampPath = $request->hasFile('stamp')
+            ? $request->file('stamp')->store('stamps', 'public')
+            : null;
+
+        $fullName = trim(implode(' ', array_filter([
+            $data['first_name'] ?? null,
+            $data['middle_name'] ?? null,
+            $data['last_name'] ?? null,
+        ])));
+
         $user = User::create([
-            'name'           => $data['name'],
+            'name'           => $fullName,
             'email'          => $data['email'],
             'password'       => Hash::make($rawPassword),
             'must_change_password' => true,
@@ -102,6 +115,7 @@ class UsersController extends Controller
             'address'        => $data['address'] ?? null,
             'avatar_path'    => $avatarPath,
             'signature_path' => $signaturePath,
+            'stamp_path'     => $stampPath,
         ]);
 
         if (!empty($data['roles'])) {
@@ -132,7 +146,9 @@ class UsersController extends Controller
         $request->merge(['national_id' => $normalizedNationalId ?: null]);
 
         $data = $request->validate([
-            'name'                  => ['required', 'string', 'max:255'],
+            'first_name'            => ['required', 'string', 'max:255'],
+            'middle_name'           => ['nullable', 'string', 'max:255'],
+            'last_name'             => ['required', 'string', 'max:255'],
             'email'                 => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'status'                => ['required', Rule::in(['active', 'inactive'])],
 
@@ -149,9 +165,11 @@ class UsersController extends Controller
 
             'avatar'                => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'signature'             => ['nullable', 'image', 'mimes:png,webp,jpg,jpeg', 'max:2048'],
+            'stamp'                 => ['nullable', 'image', 'mimes:png,webp,jpg,jpeg', 'max:2048'],
 
             'remove_avatar'         => ['nullable', 'boolean'],
             'remove_signature'      => ['nullable', 'boolean'],
+            'remove_stamp'          => ['nullable', 'boolean'],
         ]);
 
         // Update password if provided
@@ -178,9 +196,24 @@ class UsersController extends Controller
             $data['signature_path'] = $request->file('signature')->store('signatures', 'public');
         }
 
+        // Stamp remove / replace
+        if ($request->boolean('remove_stamp')) {
+            if ($user->stamp_path) Storage::disk('public')->delete($user->stamp_path);
+            $data['stamp_path'] = null;
+        } elseif ($request->hasFile('stamp')) {
+            if ($user->stamp_path) Storage::disk('public')->delete($user->stamp_path);
+            $data['stamp_path'] = $request->file('stamp')->store('stamps', 'public');
+        }
+
+        $fullName = trim(implode(' ', array_filter([
+            $data['first_name'] ?? null,
+            $data['middle_name'] ?? null,
+            $data['last_name'] ?? null,
+        ])));
+
         // Fill basic fields
         $user->fill([
-            'name'           => $data['name'],
+            'name'           => $fullName,
             'email'          => $data['email'],
             'status'         => $data['status'],
             'gender'         => $data['gender'] ?? null,
@@ -191,6 +224,7 @@ class UsersController extends Controller
             'address'        => $data['address'] ?? null,
             'avatar_path'    => $data['avatar_path']    ?? $user->avatar_path,
             'signature_path' => $data['signature_path'] ?? $user->signature_path,
+            'stamp_path'     => $data['stamp_path']     ?? $user->stamp_path,
         ])->save();
 
         // Sync roles if provided
@@ -209,6 +243,7 @@ class UsersController extends Controller
         // Clean up files
         if ($user->avatar_path)    Storage::disk('public')->delete($user->avatar_path);
         if ($user->signature_path) Storage::disk('public')->delete($user->signature_path);
+        if ($user->stamp_path)     Storage::disk('public')->delete($user->stamp_path);
 
         $user->delete();
 

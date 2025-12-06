@@ -64,6 +64,7 @@
     $hasLetterTemplates = Route::has('letter-templates.index');
     $hasLetterComposer = Route::has('letters.compose');
     $hasLetters = Route::has('letters.index');
+    $hasAudit = Route::has('admin.audit');
     $canManageTemplates = $hasLetterTemplates && auth()->user()?->hasPermission('templates.manage');
     $canViewLetters = $hasLetters && auth()->user()?->hasPermission('cases.edit');
     $canComposeLetters = $hasLetterComposer && auth()->user()?->hasPermission('cases.edit');
@@ -138,7 +139,7 @@
         </div>
 
         {{-- Nav --}}
-        <nav class="flex-1 p-3 space-y-2 overflow-y-auto">
+        <nav id="admin-nav" data-spa-nav="true" class="flex-1 p-3 space-y-2 overflow-y-auto">
             {{-- Dashboard --}}
             @if($hasDashboard)
             <a href="{{ route('dashboard') }}"
@@ -160,6 +161,30 @@
                     x-transition:leave-start="opacity-100 translate-x-0"
                     x-transition:leave-end="opacity-0 -translate-x-1">
                     {{ __('app.Dashboard') }}
+                </span>
+            </a>
+            @endif
+
+            {{-- System Audit --}}
+            @if($hasAudit)
+            <a href="{{ route('admin.audit') }}"
+                class="flex items-center gap-3 px-3 py-2 rounded-md {{ request()->routeIs('admin.audit') ? 'bg-orange-600 text-white' : 'hover:bg-orange-800 text-blue-100 hover:text-white' }}">
+                <div class="grid place-items-center w-6" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 5h6m-6 4h6m-6 4h6m-9 4h12a2 2 0 002-2V7a2 2 0 00-2-2h-3l-1-2H9L8 5H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <span class="truncate origin-left"
+                    x-show="!compact"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 -translate-x-1"
+                    x-transition:enter-end="opacity-100 translate-x-0"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100 translate-x-0"
+                    x-transition:leave-end="opacity-0 -translate-x-1">
+                    System Audit
                 </span>
             </a>
             @endif
@@ -503,7 +528,7 @@
         x-transition:leave-end="opacity-0"></div>
 
     {{-- Main --}}
-    <div class="flex-1 flex flex-col md:[transition-property:padding] md:duration-300 md:ease-in-out transition-padding">
+    <div id="admin-panel" class="flex-1 flex flex-col md:[transition-property:padding] md:duration-300 md:ease-in-out transition-padding">
 
         {{-- Topbar --}}
         <header class="relative z-50 flex items-center justify-between bg-white backdrop-blur px-3 md:px-4 py-3 border-b border-gray-200 shadow-sm">
@@ -941,6 +966,125 @@
                 }
             }
         }
+    </script>
+    <script>
+        (() => {
+            const nav = document.querySelector('[data-spa-nav]');
+            const panelSelector = '#admin-panel';
+            if (!nav || !window.history?.pushState) return;
+
+            const sameOrigin = (url) => {
+                try {
+                    return new URL(url, window.location.href).origin === window.location.origin;
+                } catch (_) {
+                    return false;
+                }
+            };
+
+            const shouldIgnoreClick = (event, link) => (
+                event.defaultPrevented ||
+                event.metaKey || event.ctrlKey || event.shiftKey || event.altKey ||
+                event.button !== 0 ||
+                !link.href ||
+                !sameOrigin(link.href) ||
+                (link.getAttribute('target') && link.getAttribute('target') !== '_self') ||
+                link.hasAttribute('download') ||
+                link.getAttribute('href').startsWith('#') ||
+                link.href.startsWith('mailto:') ||
+                link.href.startsWith('tel:')
+            );
+
+            const executeInlineScripts = (container) => {
+                if (!container) return;
+                container.querySelectorAll('script').forEach((oldScript) => {
+                    if (oldScript.src) return; // external scripts already on the page
+                    const script = document.createElement('script');
+                    [...oldScript.attributes].forEach((attr) => script.setAttribute(attr.name, attr.value));
+                    script.textContent = oldScript.textContent;
+                    oldScript.replaceWith(script);
+                });
+            };
+
+            const swapPanel = (doc) => {
+                const current = document.querySelector(panelSelector);
+                const incoming = doc.querySelector(panelSelector);
+                if (!current || !incoming) return false;
+                current.replaceWith(incoming);
+                executeInlineScripts(document.querySelector(panelSelector));
+                return true;
+            };
+
+            const swapNav = (doc) => {
+                const incomingNav = doc.querySelector('[data-spa-nav]');
+                if (!incomingNav || !nav) return;
+                nav.innerHTML = incomingNav.innerHTML;
+            };
+
+            const navigate = async (url, push = true) => {
+                const panel = document.querySelector(panelSelector);
+                panel?.setAttribute('aria-busy', 'true');
+
+                try {
+                    const response = await fetch(url, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'text/html'
+                        },
+                        credentials: 'include'
+                    });
+
+                    if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
+
+                    const html = await response.text();
+                    const doc = new DOMParser().parseFromString(html, 'text/html');
+
+                    const swapped = swapPanel(doc);
+                    if (!swapped) {
+                        window.location.href = url;
+                        return;
+                    }
+
+                    swapNav(doc);
+
+                    const title = doc.querySelector('title')?.textContent;
+                    if (title) document.title = title;
+
+                    if (push) {
+                        history.pushState({ url }, '', url);
+                    }
+
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } catch (error) {
+                    console.error('Falling back to full reload due to navigation error', error);
+                    window.location.href = url;
+                } finally {
+                    document.querySelector(panelSelector)?.removeAttribute('aria-busy');
+                }
+            };
+
+            nav.addEventListener('click', (event) => {
+                const link = event.target.closest('a[href]');
+                if (!link || !nav.contains(link)) return;
+                if (link.dataset.noSpa === 'true') return;
+                if (shouldIgnoreClick(event, link)) return;
+
+                event.preventDefault();
+                navigate(link.href);
+
+                // Close sidebar on mobile after navigation
+                if (document.body.__x?.$data?.sidebar !== undefined) {
+                    document.body.__x.$data.sidebar = false;
+                }
+            });
+
+            window.addEventListener('popstate', (event) => {
+                if (event.state?.url) {
+                    navigate(event.state.url, false);
+                }
+            });
+
+            history.replaceState({ url: window.location.href }, '', window.location.href);
+        })();
     </script>
     @if(app()->getLocale() === 'am')
     {{-- Ethiopian calendar (jQuery calendars) --}}

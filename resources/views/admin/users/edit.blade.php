@@ -7,11 +7,40 @@
 
         {{-- Left: Basics --}}
         <div class="p-6 rounded-xl border border-gray-200 bg-white shadow-sm space-y-4">
-            <div>
-                <label class="block text-sm text-gray-700">Name</label>
-                <input name="name" value="{{ old('name',$user->name) }}"
-                    class="mt-1 w-full px-3 py-2 rounded bg-white text-gray-900 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
-                @error('name') <p class="text-red-500 text-sm">{{ $message }}</p> @enderror
+            @php
+            $nameParts = preg_split('/\s+/', trim($user->name ?? ''), 3) ?: [];
+            $firstName = $nameParts[0] ?? '';
+            if (count($nameParts) >= 3) {
+                $middleName = $nameParts[1] ?? '';
+                $lastName = $nameParts[2] ?? '';
+            } elseif (count($nameParts) === 2) {
+                $middleName = '';
+                $lastName = $nameParts[1] ?? '';
+            } else {
+                $middleName = '';
+                $lastName = '';
+            }
+            @endphp
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm text-gray-700">First Name</label>
+                    <input name="first_name" value="{{ old('first_name', $firstName) }}"
+                        class="mt-1 w-full px-3 py-2 rounded bg-white text-gray-900 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                    @error('first_name') <p class="text-red-500 text-sm">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-700">Middle Name</label>
+                    <input name="middle_name" value="{{ old('middle_name', $middleName) }}"
+                        class="mt-1 w-full px-3 py-2 rounded bg-white text-gray-900 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                    @error('middle_name') <p class="text-red-500 text-sm">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-700">Last Name</label>
+                    <input name="last_name" value="{{ old('last_name', $lastName) }}"
+                        class="mt-1 w-full px-3 py-2 rounded bg-white text-gray-900 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                    @error('last_name') <p class="text-red-500 text-sm">{{ $message }}</p> @enderror
+                </div>
             </div>
             <div>
                 <label class="block text-sm text-gray-700">Email</label>
@@ -136,21 +165,40 @@
                 @error('avatar') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
             </div>
 
-            {{-- Signature --}}
-            <div class="p-4 rounded-xl border border-gray-200 bg-gray-50" x-data="{preview:null}">
-                <label class="block text-sm text-gray-700 mb-2">Signature (PNG/WebP preferred, ≤ 2MB)</label>
-                <div class="space-y-2">
-                    @if($user->signature_url)
-                    <img x-show="!preview" src="{{ $user->signature_url }}" class="max-h-20 border border-gray-200" alt="Signature">
-                    @else
-                    <div x-show="!preview" class="text-xs text-gray-500">No signature uploaded.</div>
-                    @endif
-                    <img x-show="preview" :src="preview" class="max-h-20 border border-gray-200" alt="Signature preview">
-                    <input type="file" name="signature" accept="image/png,image/webp,image/jpeg"
-                        @change="preview = $event.target.files[0] ? URL.createObjectURL($event.target.files[0]) : null"
-                        class="text-sm file:mr-3 file:px-3 file:py-1.5 file:rounded file:bg-white file:border file:border-gray-300 file:text-gray-700 hover:file:bg-gray-50">
+            <div class="grid gap-4 md:grid-cols-2">
+                {{-- Signature --}}
+                <div class="p-4 rounded-xl border border-gray-200 bg-gray-50" x-data="{preview:null}">
+                    <label class="block text-sm text-gray-700 mb-2">Signature (PNG/WebP preferred, ≤ 2MB)</label>
+                    <div class="space-y-2">
+                        @if($user->signature_url)
+                        <img x-show="!preview" src="{{ $user->signature_url }}" class="max-h-20 border border-gray-200" alt="Signature">
+                        @else
+                        <div x-show="!preview" class="text-xs text-gray-500">No signature uploaded.</div>
+                        @endif
+                        <img x-show="preview" :src="preview" class="max-h-20 border border-gray-200" alt="Signature preview">
+                        <input type="file" name="signature" accept="image/png,image/webp,image/jpeg"
+                            @change="preview = $event.target.files[0] ? URL.createObjectURL($event.target.files[0]) : null"
+                            class="text-sm file:mr-3 file:px-3 file:py-1.5 file:rounded file:bg-white file:border file:border-gray-300 file:text-gray-700 hover:file:bg-gray-50">
+                    </div>
+                    @error('signature') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
                 </div>
-                @error('signature') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
+
+                {{-- Stamp --}}
+                <div class="p-4 rounded-xl border border-gray-200 bg-gray-50" x-data="{previewStamp:null}">
+                    <label class="block text-sm text-gray-700 mb-2">Stamp (PNG/WebP preferred, ≤ 2MB)</label>
+                    <div class="space-y-2">
+                        @if($user->stamp_url ?? false)
+                        <img x-show="!previewStamp" src="{{ $user->stamp_url }}" class="max-h-20 border border-gray-200" alt="Stamp">
+                        @else
+                        <div x-show="!previewStamp" class="text-xs text-gray-500">No stamp uploaded.</div>
+                        @endif
+                        <img x-show="previewStamp" :src="previewStamp" class="max-h-20 border border-gray-200" alt="Stamp preview">
+                        <input type="file" name="stamp" accept="image/png,image/webp,image/jpeg"
+                            @change="previewStamp = $event.target.files[0] ? URL.createObjectURL($event.target.files[0]) : null"
+                            class="text-sm file:mr-3 file:px-3 file:py-1.5 file:rounded file:bg-white file:border file:border-gray-300 file:text-gray-700 hover:file:bg-gray-50">
+                    </div>
+                    @error('stamp') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
+                </div>
             </div>
 
             <div>

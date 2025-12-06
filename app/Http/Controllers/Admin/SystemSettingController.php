@@ -34,6 +34,7 @@ class SystemSettingController extends Controller
             'maintenance_mode' => ['nullable', 'boolean'],
             'logo'           => ['nullable', 'image', 'mimes:png,jpg,jpeg,svg,webp', 'max:2048'],
             'favicon'        => ['nullable', 'image', 'mimes:png,ico', 'max:512'],
+            'seal'           => ['nullable', 'image', 'mimes:png', 'max:1024'],
             'banner'         => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:3072'],
         ]);
 
@@ -62,6 +63,12 @@ class SystemSettingController extends Controller
         if ($request->hasFile('favicon')) {
             $path = $request->file('favicon')->store('favicons', 'public');
             $settings->favicon_path = $path;
+        }
+
+        // Official seal upload -> seal_path
+        if ($request->hasFile('seal')) {
+            $path = $request->file('seal')->store('seals', 'public');
+            $settings->seal_path = $path;
         }
 
         $settings->save();

@@ -57,6 +57,7 @@ class Kernel extends HttpKernel
         // Custom
         'perm'               => \App\Http\Middleware\RequirePermission::class,
         'role'               => \App\Http\Middleware\RequireRole::class,
+        'audit'              => \App\Http\Middleware\SystemAuditMiddleware::class,
     ];
 
     /**
@@ -77,5 +78,17 @@ class Kernel extends HttpKernel
         // Custom
         'perm'               => \App\Http\Middleware\RequirePermission::class,
         'role'               => \App\Http\Middleware\RequireRole::class,
+        'audit'              => \App\Http\Middleware\SystemAuditMiddleware::class,
+    ];
+
+    /**
+     * Ensure audit runs after authentication.
+     */
+    protected $middlewarePriority = [
+        \Illuminate\Session\Middleware\StartSession::class,
+        \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+        \App\Http\Middleware\Authenticate::class,
+        \App\Http\Middleware\SystemAuditMiddleware::class,
+        \Illuminate\Routing\Middleware\SubstituteBindings::class,
     ];
 }

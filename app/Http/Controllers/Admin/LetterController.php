@@ -15,7 +15,7 @@ class LetterController extends Controller
     {
         $letters = Letter::with(['template','author'])
             ->latest()
-            ->paginate(15)
+            ->paginate(5)
             ->withQueryString();
 
         return view('admin.letters.index', compact('letters'));
@@ -31,6 +31,8 @@ class LetterController extends Controller
             'subject'           => ['nullable', 'string', 'max:255'],
             'body'              => ['required', 'string'],
             'cc'                => ['nullable', 'string', 'max:255'],
+            'approved_by_name'  => ['nullable', 'string', 'max:255'],
+            'approved_by_title' => ['nullable', 'string', 'max:255'],
         ]);
 
         $letter          = null;
@@ -59,6 +61,8 @@ class LetterController extends Controller
                 'reference_number'   => $referenceNumber,
                 'body'               => $data['body'],
                 'cc'                 => $data['cc'] ?? null,
+                'approved_by_name'   => $data['approved_by_name'] ?? null,
+                'approved_by_title'  => $data['approved_by_title'] ?? null,
             ]);
         });
 
@@ -74,6 +78,10 @@ class LetterController extends Controller
 
     public function update(Request $request, Letter $letter)
     {
+        if ($letter->approval_status === 'approved') {
+            return back()->with('error', 'Approved letters cannot be updated.');
+        }
+
         $data = $request->validate([
             'recipient_name'    => ['required', 'string', 'max:255'],
             'recipient_title'   => ['nullable', 'string', 'max:255'],
@@ -81,6 +89,8 @@ class LetterController extends Controller
             'subject'           => ['nullable', 'string', 'max:255'],
             'body'              => ['required', 'string'],
             'cc'                => ['nullable', 'string', 'max:255'],
+            'approved_by_name'  => ['nullable', 'string', 'max:255'],
+            'approved_by_title' => ['nullable', 'string', 'max:255'],
         ]);
 
         $letter->load('template');
@@ -95,6 +105,8 @@ class LetterController extends Controller
             'subject'           => $subjectValue,
             'body'              => $data['body'],
             'cc'                => $data['cc'] ?? null,
+            'approved_by_name'   => $data['approved_by_name'] ?? null,
+            'approved_by_title'  => $data['approved_by_title'] ?? null,
         ]);
 
         return redirect()->route('letters.show', $letter)->with('success', 'Letter updated.');
@@ -102,6 +114,10 @@ class LetterController extends Controller
 
     public function destroy(Letter $letter)
     {
+        if ($letter->approval_status === 'approved') {
+            return back()->with('error', 'Approved letters cannot be deleted.');
+        }
+
         $letter->delete();
 
         return redirect()->route('letters.index')->with('success', 'Letter deleted.');
@@ -115,5 +131,22 @@ class LetterController extends Controller
             'letter'   => $letter,
             'template' => $letter->template,
         ]);
+    }
+
+    public function approve(Request $request, Letter $letter)
+    {
+        $user = $request->user();
+
+        $data = $request->validate([
+            'status' => 'required|in:approved,returned,rejected',
+        ]);
+
+        $letter->update([
+            'approved_by_name'  => $user?->name,
+            'approved_by_title' => $user?->position,
+            'approval_status'   => $data['status'],
+        ]);
+
+        return redirect()->route('letters.index')->with('success', "Letter {$data['status']}.");
     }
 }

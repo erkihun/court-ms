@@ -9,10 +9,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
 use Illuminate\Auth\MustVerifyEmail;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable;
 
-class User extends Authenticatable implements MustVerifyEmailContract
+class User extends Authenticatable implements MustVerifyEmailContract, AuditableContract
 {
-    use HasFactory, Notifiable, MustVerifyEmail;
+    use HasFactory, Notifiable, MustVerifyEmail, Auditable;
 
     /**
      * Mass assignable attributes.
@@ -31,6 +33,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
         'address',
         'avatar_path',
         'signature_path',
+        'stamp_path',
     ];
 
     /**
@@ -112,6 +115,11 @@ class User extends Authenticatable implements MustVerifyEmailContract
     public function getSignatureUrlAttribute(): ?string
     {
         return $this->signature_path ? Storage::url($this->signature_path) : null;
+    }
+
+    public function getStampUrlAttribute(): ?string
+    {
+        return $this->stamp_path ? Storage::url($this->stamp_path) : null;
     }
 
     /**

@@ -1,111 +1,162 @@
 <x-admin-layout title="User Profile">
     @section('page_header','User Profile')
 
+    @php
+    $nameParts = preg_split('/\s+/', trim($user->name ?? ''), 3) ?: [];
+    $firstName = $nameParts[0] ?? '';
+    if (count($nameParts) >= 3) {
+        $middleName = $nameParts[1] ?? '';
+        $lastName = $nameParts[2] ?? '';
+    } elseif (count($nameParts) === 2) {
+        $middleName = '';
+        $lastName = $nameParts[1] ?? '';
+    } else {
+        $middleName = '';
+        $lastName = '';
+    }
+    @endphp
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {{-- Left: Avatar & Signature --}}
+        {{-- Left Column --}}
         <div class="space-y-6">
-            <div class="p-6 rounded-xl border border-gray-200 bg-white shadow-sm text-center">
-                <div class="mx-auto w-28 h-28 rounded-full overflow-hidden bg-gray-100 border border-gray-300">
-                    @if($user->avatar_url)
-                    <img src="{{ $user->avatar_url }}" class="w-full h-full object-cover" alt="Avatar">
-                    @else
-                    <div class="w-full h-full grid place-items-center text-3xl font-semibold bg-blue-100 text-blue-700">
-                        {{ strtoupper(substr($user->name ?? 'U',0,1)) }}
+            {{-- Profile Card --}}
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+                <div class="p-6 text-center">
+                    <div class="relative inline-block">
+                        <div class="w-28 h-28 rounded-full overflow-hidden mx-auto bg-gray-100 border-4 border-white shadow">
+                            @if($user->avatar_url)
+                            <img src="{{ $user->avatar_url }}" class="w-full h-full object-cover" alt="Avatar">
+                            @else
+                            <div class="w-full h-full flex items-center justify-center bg-blue-50 text-blue-600 text-4xl font-bold">
+                                {{ strtoupper(substr($user->name ?? 'U',0,1)) }}
+                            </div>
+                            @endif
+                        </div>
+                        <div class="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold
+                                {{ $user->status === 'active'
+                                    ? 'bg-green-100 text-green-700 border border-green-200'
+                                    : 'bg-gray-100 text-gray-600 border border-gray-200' }}">
+                                {{ ucfirst($user->status) }}
+                            </span>
+                        </div>
                     </div>
-                    @endif
-                </div>
-                <div class="mt-3 font-medium text-lg text-gray-900">{{ $user->name }}</div>
-                <div class="text-sm text-gray-600">{{ $user->email }}</div>
 
-                <div class="mt-3">
-                    <span class="px-2 py-0.5 rounded text-xs font-medium
-                        {{ $user->status==='active'
-                            ? 'bg-green-100 text-green-700 border border-green-200'
-                            : 'bg-gray-100 text-gray-600 border border-gray-200' }}">
-                        {{ ucfirst($user->status) }}
-                    </span>
+                    <div class="mt-8">
+                        <h2 class="text-xl font-bold text-gray-900">{{ $user->name }}</h2>
+                        <p class="text-gray-600 mt-1">{{ $user->email }}</p>
+                    </div>
                 </div>
 
-                <div class="mt-4 flex justify-center gap-2">
-                    <a href="{{ route('users.edit',$user) }}"
-                        class="px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm">Edit</a>
-                    <a href="{{ route('users.index') }}"
-                        class="px-3 py-1.5 rounded bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm">Back</a>
+                <div class="border-t border-gray-100 p-4">
+                    <div class="flex space-x-2">
+                        <a href="{{ route('users.edit',$user) }}"
+                            class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 text-center">
+                            Edit Profile
+                        </a>
+                        <a href="{{ route('users.index') }}"
+                            class="px-4 py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors duration-200">
+                            Back
+                        </a>
+                    </div>
                 </div>
-            </div>
-
-            <div class="p-6 rounded-xl border border-gray-200 bg-white shadow-sm">
-                <h3 class="text-sm text-gray-700 mb-3 font-medium">Signature</h3>
-                @if($user->signature_url)
-                <img src="{{ $user->signature_url }}" class="max-h-24 border border-gray-200" alt="Signature">
-                <div class="mt-2">
-                    <a href="{{ $user->signature_url }}" target="_blank"
-                        class="text-xs text-blue-600 underline hover:text-blue-700">Open image</a>
-                </div>
-                @else
-                <div class="text-gray-500 text-sm">No signature uploaded.</div>
-                @endif
             </div>
         </div>
 
-        {{-- Right: Details --}}
-        <div class="lg:col-span-2 space-y-6">
-            <div class="p-6 rounded-xl border border-gray-200 bg-white shadow-sm">
-                <h3 class="text-sm text-gray-700 mb-3 font-medium">Details</h3>
-                <div class="grid md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                        <div class="text-gray-500">Name</div>
-                        <div class="text-gray-900 font-medium">{{ $user->name }}</div>
-                    </div>
-                    <div>
-                        <div class="text-gray-500">Email</div>
-                        <div class="text-gray-900 font-medium">{{ $user->email }}</div>
-                    </div>
-                    <div>
-                        <div class="text-gray-500">Created</div>
-                        <div class="text-gray-900">{{ optional($user->created_at)->format('M d, Y h:i A') }}</div>
-                    </div>
-                    <div>
-                        <div class="text-gray-500">Updated</div>
-                        <div class="text-gray-900">{{ optional($user->updated_at)->format('M d, Y h:i A') }}</div>
-                    </div>
-                    <div class="md:col-span-2">
-                        <div class="text-gray-500">Roles</div>
-                        <div class="text-gray-900">
-                            @php $roles = $user->roles?->pluck('name')->all() ?? []; @endphp
-                            {{ empty($roles) ? '—' : implode(', ', $roles) }}
-                        </div>
-                    </div>
-                </div>
-            </div>
+        {{-- Right Column --}}
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6 pb-3 border-b">User Details</h3>
 
-            {{-- (Optional) Print-friendly card --}}
-            <div class="p-6 rounded-xl border border-gray-200 bg-white shadow-sm print:bg-white print:text-black">
-                <h3 class="text-sm text-gray-700 mb-3 font-medium">Printable Card</h3>
-                <div class="flex items-center gap-4">
-                    <div class="w-16 h-16 rounded-full overflow-hidden bg-gray-100 border border-gray-300">
-                        @if($user->avatar_url)
-                        <img src="{{ $user->avatar_url }}" class="w-full h-full object-cover" alt="Avatar">
-                        @endif
-                    </div>
-                    <div>
-                        <div class="font-semibold text-gray-900">{{ $user->name }}</div>
-                        <div class="text-gray-600 text-sm">{{ $user->email }}</div>
-                        <div class="text-gray-500 text-xs">
-                            Roles: {{ empty($roles) ? '—' : implode(', ', $roles) }}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-5">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">First Name</label>
+                                <div class="text-gray-900 font-medium">{{ $firstName }}</div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Middle Name</label>
+                                <div class="text-gray-900 font-medium">{{ $middleName ?: '—' }}</div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Last Name</label>
+                                <div class="text-gray-900 font-medium">{{ $lastName }}</div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Full Name</label>
+                                <div class="text-gray-900 font-medium">{{ $user->name }}</div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Email Address</label>
+                                <div class="text-gray-900 font-medium">{{ $user->email }}</div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Signature</label>
+                                    @if($user->signature_url)
+                                    <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                                        <img src="{{ $user->signature_url }}"
+                                            class="max-h-20 mx-auto object-contain"
+                                            alt="Signature">
+                                    </div>
+                                    <a href="{{ $user->signature_url }}" target="_blank"
+                                        class="inline-block mt-2 text-sm text-blue-600 hover:text-blue-800 hover:underline">
+                                        View full size
+                                    </a>
+                                    @else
+                                    <div class="text-gray-400 text-sm italic py-3">No signature uploaded</div>
+                                    @endif
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Stamp</label>
+                                    @if($user->stamp_url)
+                                    <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                                        <img src="{{ $user->stamp_url }}"
+                                            class="max-h-20 mx-auto object-contain"
+                                            alt="Stamp">
+                                    </div>
+                                    <a href="{{ $user->stamp_url }}" target="_blank"
+                                        class="inline-block mt-2 text-sm text-blue-600 hover:text-blue-800 hover:underline">
+                                        View full size
+                                    </a>
+                                    @else
+                                    <div class="text-gray-400 text-sm italic py-3">No stamp uploaded</div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-5">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Created At</label>
+                                <div class="text-gray-700">{{ optional($user->created_at)->format('M d, Y h:i A') }}</div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Updated At</label>
+                                <div class="text-gray-700">{{ optional($user->updated_at)->format('M d, Y h:i A') }}</div>
+                            </div>
+                        </div>
+
+                        <div class="md:col-span-2 pt-4 border-top border-gray-100">
+                            <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Assigned Roles</label>
+                            <div class="flex flex-wrap gap-2">
+                                @php
+                                $roles = $user->roles?->pluck('name')->all() ?? [];
+                                @endphp
+
+                                @if(!empty($roles))
+                                @foreach($roles as $role)
+                                <span class="px-3 py-1 bg-blue-50 text-blue-700 text-sm font-medium rounded-full border border-blue-100">
+                                    {{ $role }}
+                                </span>
+                                @endforeach
+                                @else
+                                <span class="text-gray-400 text-sm">No roles assigned</span>
+                                @endif
+                            </div>
                         </div>
                     </div>
-                </div>
-                @if($user->signature_url)
-                <div class="mt-4">
-                    <div class="text-gray-500 text-xs mb-1">Signature</div>
-                    <img src="{{ $user->signature_url }}" class="h-12 border border-gray-200" alt="Signature">
-                </div>
-                @endif
-                <div class="mt-4">
-                    <button onclick="window.print()" class="px-3 py-1.5 rounded bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm">
-                        Print
-                    </button>
                 </div>
             </div>
         </div>
