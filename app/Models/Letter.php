@@ -5,10 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable;
 
-class Letter extends Model
+class Letter extends Model implements AuditableContract
 {
-    use HasFactory;
+    use HasFactory, Auditable;
 
     protected $fillable = [
         'letter_template_id',
@@ -20,6 +22,9 @@ class Letter extends Model
         'reference_number',
         'body',
         'cc',
+        'approved_by_name',
+        'approved_by_title',
+        'approval_status',
     ];
 
     public function template(): BelongsTo

@@ -70,7 +70,7 @@ return [
         'recipient' => 'Recipient',
         'template' => 'Template',
         'cc' => 'CC',
-        'created' => 'Created',
+        'created' => 'Status',
         'actions' => 'Actions',
     ],
 
@@ -80,6 +80,7 @@ return [
         'subject' => 'Subject:',
         'closing' => 'Sincerely,',
         'cc_recipients' => 'CC recipients:',
+        'author_signature' => 'Signature',
     ],
 
     'confirm' => [

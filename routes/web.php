@@ -213,7 +213,7 @@ Route::middleware(SetLocale::class)->group(function () {
     | Admin area (auth:web)
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['auth', 'force.password.change', 'verified'])->group(function () {
+    Route::middleware(['auth', 'force.password.change', 'verified', \App\Http\Middleware\SystemAuditMiddleware::class])->group(function () {
         // Admin dashboard
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -240,6 +240,10 @@ Route::middleware(SetLocale::class)->group(function () {
 
             Route::post('/settings/system', [SystemSettingController::class, 'update'])
                 ->name('settings.system.update');
+
+            // System audit (read-only view)
+            Route::get('/audit', [\App\Http\Controllers\Admin\AuditController::class, 'index'])
+                ->name('admin.audit');
 
             /*
              * Cases (admin)
@@ -387,6 +391,9 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::get('/letters/{letter}/edit', [LetterController::class, 'edit'])
                 ->middleware('perm:cases.edit')
                 ->name('letters.edit');
+            Route::post('/letters/{letter}/approve', [LetterController::class, 'approve'])
+                ->middleware('perm:cases.edit')
+                ->name('letters.approve');
             Route::patch('/letters/{letter}', [LetterController::class, 'update'])
                 ->middleware('perm:cases.edit')
                 ->name('letters.update');

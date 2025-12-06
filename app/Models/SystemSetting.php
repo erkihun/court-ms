@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable;
 
-class SystemSetting extends Model
+class SystemSetting extends Model implements AuditableContract
 {
+    use Auditable;
+
     protected $table = 'system_settings';
 
     protected $fillable = [
@@ -14,6 +18,7 @@ class SystemSetting extends Model
         'logo_path',
         'banner_path',
         'favicon_path',
+        'seal_path',
         'contact_email',
         'contact_phone',
         'about',

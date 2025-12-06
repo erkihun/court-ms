@@ -236,43 +236,58 @@
                     </div>
                 </div>
 
-                {{-- Favicon --}}
-                <div class="grid md:grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)] gap-4 md:gap-6 items-center">
-                    <div class="space-y-1.5">
+                {{-- Favicon & Seal --}}
+                <div class="grid md:grid-cols-2 gap-4 md:gap-6 items-start">
+                    <div class="space-y-2 rounded-xl border border-gray-200 bg-gray-50/60 px-3 py-3">
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Favicon
                         </label>
-                        <div
-                            class="border border-gray-200 rounded-xl px-3 py-2.5 bg-gray-50/60 flex flex-col gap-2">
-                            <input type="file" name="favicon"
-                                class="block w-full text-xs md:text-sm text-gray-700
-                                          file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0
-                                          file:text-xs md:file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700
-                                          hover:file:bg-indigo-100">
-                            <p class="text-xs text-gray-500">
-                                PNG or ICO up to <span class="font-medium">512KB</span>.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="flex justify-end">
-                        @if($settings->favicon_path)
-                        <div class="text-center space-y-2">
-                            <div class="text-[11px] uppercase tracking-wide text-gray-500">
-                                Current Favicon
-                            </div>
-                            <div
-                                class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-3 py-3 shadow-xs">
+                        <input type="file" name="favicon"
+                            class="block w-full text-xs md:text-sm text-gray-700
+                                      file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0
+                                      file:text-xs md:file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700
+                                      hover:file:bg-indigo-100">
+                        <p class="text-xs text-gray-500">
+                            PNG or ICO up to <span class="font-medium">512KB</span>.
+                        </p>
+                        <div class="pt-2">
+                            @if($settings->favicon_path)
+                            <div class="text-[11px] uppercase tracking-wide text-gray-500 mb-1">Current</div>
+                            <div class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-3 py-3 shadow-xs">
                                 <img src="{{ asset('storage/'.$settings->favicon_path) }}"
                                     alt="Favicon"
                                     class="h-8 w-8 object-contain">
                             </div>
+                            @else
+                            <div class="text-xs text-gray-500 italic">No favicon uploaded yet.</div>
+                            @endif
                         </div>
-                        @else
-                        <div class="text-xs text-gray-500 italic">
-                            No favicon uploaded yet.
+                    </div>
+
+                    <div class="space-y-2 rounded-xl border border-gray-200 bg-gray-50/60 px-3 py-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Official Seal
+                        </label>
+                        <input type="file" name="seal"
+                            class="block w-full text-xs md:text-sm text-gray-700
+                                      file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0
+                                      file:text-xs md:file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700
+                                      hover:file:bg-indigo-100">
+                        <p class="text-xs text-gray-500">
+                            Square PNG with transparent background, up to <span class="font-medium">1MB</span>.
+                        </p>
+                        <div class="pt-2">
+                            @if($settings->seal_path ?? false)
+                            <div class="text-[11px] uppercase tracking-wide text-gray-500 mb-1">Current</div>
+                            <div class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-3 py-3 shadow-xs">
+                                <img src="{{ asset('storage/'.$settings->seal_path) }}"
+                                    alt="Seal"
+                                    class="h-14 w-14 object-contain">
+                            </div>
+                            @else
+                            <div class="text-xs text-gray-500 italic">No seal uploaded yet.</div>
+                            @endif
                         </div>
-                        @endif
                     </div>
                 </div>
             </section>
