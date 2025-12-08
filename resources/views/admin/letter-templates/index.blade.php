@@ -1,5 +1,19 @@
 {{-- resources/views/letter-templates/index.blade.php --}}
 @php use Illuminate\Support\Str; @endphp
+@php
+$canCreateTemplate = function_exists('userHasPermission')
+    ? userHasPermission('letters.templet.create')
+    : (auth()->user()?->hasPermission('letters.templet.create') ?? false);
+$canUpdateTemplate = function_exists('userHasPermission')
+    ? userHasPermission('letters.templet.update')
+    : (auth()->user()?->hasPermission('letters.templet.update') ?? false);
+$canDeleteTemplate = function_exists('userHasPermission')
+    ? userHasPermission('letters.templet.delete')
+    : (auth()->user()?->hasPermission('letters.templet.delete') ?? false);
+$canCreateLetter = function_exists('userHasPermission')
+    ? userHasPermission('letters.create')
+    : (auth()->user()?->hasPermission('letters.create') ?? false);
+@endphp
 
 <x-admin-layout title="{{ __('letters.templates.title') }}">
     @section('page_header', __('letters.templates.title'))
@@ -11,6 +25,7 @@
                 <p class="text-sm text-gray-500">{{ __('letters.templates.description') }}</p>
             </div>
             <div class="flex flex-wrap gap-2">
+                @if($canCreateTemplate)
                 <a href="{{ route('letter-templates.create') }}"
                     class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700">
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -18,6 +33,8 @@
                     </svg>
                     {{ __('letters.templates.actions.new_template') }}
                 </a>
+                @endif
+                @if($canCreateLetter)
                 <a href="{{ route('letters.compose') }}"
                     class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700">
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -25,6 +42,7 @@
                     </svg>
                     {{ __('letters.templates.actions.compose_letter') }}
                 </a>
+                @endif
             </div>
         </div>
 
@@ -63,10 +81,13 @@
                             <td class="px-4 py-3 text-gray-500">{{ optional($template->updated_at)->diffForHumans() }}</td>
                             <td class="px-4 py-3">
                                 <div class="flex justify-end gap-2">
+                                    @if($canUpdateTemplate)
                                     <a href="{{ route('letter-templates.edit', $template) }}"
                                         class="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100">
                                         {{ __('letters.actions.edit') }}
                                     </a>
+                                    @endif
+                                    @if($canDeleteTemplate)
                                     <form method="POST" action="{{ route('letter-templates.destroy', $template) }}">
                                         @csrf
                                         @method('DELETE')
@@ -75,6 +96,7 @@
                                             {{ __('letters.actions.delete') }}
                                         </button>
                                     </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

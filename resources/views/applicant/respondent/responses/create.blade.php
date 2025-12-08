@@ -1,11 +1,11 @@
-<x-applicant-layout title="{{ __('respondent.create_response') }}">
+<x-applicant-layout title="{{ __('respondent.create_response') }}" :as-respondent-nav="true">
     <div class="max-w-4xl mx-auto bg-white rounded-2xl border border-slate-200 shadow p-6">
         <div class="mb-4">
             <h1 class="text-xl font-semibold text-slate-900">{{ __('respondent.create_response') }}</h1>
             <p class="text-sm text-slate-600">{{ __('respondent.response_intro') }}</p>
         </div>
 
-        <form method="POST" action="{{ route('applicant.respondent.responses.store') }}" enctype="multipart/form-data" class="space-y-4">
+        <form method="POST" action="{{ route('respondent.responses.store') }}" enctype="multipart/form-data" class="space-y-4">
             @csrf
             <div>
                 <label class="block text-sm font-medium text-slate-700">{{ __('respondent.response_title_label') }}</label>
@@ -45,4 +45,4 @@
             </div>
         </form>
     </div>
-</x-respondant-layout>
+</x-applicant-layout>

@@ -82,6 +82,16 @@ class ApplicantCaseController extends Controller
         return sprintf('C-%d-%04d', $year, $next);
     }
 
+    private function generateCaseCode(): string
+    {
+        do {
+            $code = str_pad((string) random_int(0, 99999), 5, '0', STR_PAD_LEFT);
+            $exists = DB::table('court_cases')->where('code', $code)->exists();
+        } while ($exists);
+
+        return $code;
+    }
+
     /**
      * Store new case (supports evidence PDFs & witness names/details)
      * NOTE: Sanitizes TinyMCE HTML fields on save.
@@ -169,6 +179,7 @@ class ApplicantCaseController extends Controller
                 'respondent_name'    => isset($data['respondent_name']) ? strip_tags($data['respondent_name']) : null,
                 'respondent_address' => isset($data['respondent_address']) ? strip_tags($data['respondent_address']) : null,
                 'case_number'        => $tempNumber,
+                'code'               => $this->generateCaseCode(),
                 'title'              => trim($data['title']),
                 'description'        => $descHtml,      // sanitized HTML
                 'case_type_id'       => $data['case_type_id'],
@@ -1170,4 +1181,3 @@ class ApplicantCaseController extends Controller
         }
     }
 }
-

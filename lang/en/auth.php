@@ -34,6 +34,11 @@ return [
     'forgot_password' => 'Forgot password?',
     'sign_in' => 'Sign in',
     'no_account' => "Don't have an account?",
+    'sign_in_as' => 'Sign in as',
+    'role_applicant' => 'Applicant',
+    'role_respondent' => 'Respondent',
+    'applicant_panel_label' => 'Applicant Login Panel',
+    'respondent_panel_label' => 'Respondent Login Panel',
 
     // Password Reset
     'forgot_password_title' => 'Forgot your password?',

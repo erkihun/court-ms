@@ -4,8 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Models\User;
+
+use App\Models\Applicant;
 use App\Models\CaseType;
+use App\Models\User;
 
 class CourtCase extends Model
 {
@@ -16,6 +18,7 @@ class CourtCase extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'first_hearing_date' => 'date',
+        'filing_date' => 'date',
     ];
 
     public function judge(): BelongsTo
@@ -26,5 +29,10 @@ class CourtCase extends Model
     public function caseType(): BelongsTo
     {
         return $this->belongsTo(CaseType::class, 'case_type_id');
+    }
+
+    public function applicant(): BelongsTo
+    {
+        return $this->belongsTo(Applicant::class, 'applicant_id');
     }
 }

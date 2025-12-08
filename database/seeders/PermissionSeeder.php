@@ -34,6 +34,10 @@ class PermissionSeeder extends Seeder
             ['name' => 'appeals.create', 'label' => 'Create appeal',  'description' => null],
             ['name' => 'appeals.edit',   'label' => 'Edit appeal',    'description' => null],
             ['name' => 'appeals.decide', 'label' => 'Record decision', 'description' => null],
+            ['name' => 'decision.view',   'label' => 'View decisions',   'description' => null],
+            ['name' => 'decision.create', 'label' => 'Create decision', 'description' => null],
+            ['name' => 'decision.update', 'label' => 'Update decision', 'description' => null],
+            ['name' => 'decision.delete', 'label' => 'Delete decision', 'description' => null],
 
             // Users & roles
             ['name' => 'users.view',     'label' => 'View users',       'description' => null],

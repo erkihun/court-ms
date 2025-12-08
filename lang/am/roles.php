@@ -1,0 +1,52 @@
+<?php
+
+return [
+    'index' => [
+        'title' => 'ኃላፊነቶች',
+        'showing' => 'እያሳየ ያለ',
+        'total_roles' => 'ኃላፊነቶች',
+        'search_placeholder' => 'ኃላፊነቶችን ይፈልጉ…',
+        'actions' => 'ድርጊቶች',
+        'edit' => 'አርትዕ',
+        'delete' => 'አጥፋ',
+        'delete_title' => 'ኃላፊነትን አጥፋ',
+        'delete_confirm' => 'ለማጥፋት እርግጠኛ ነዎት',
+        'cancel' => 'ሰርዝ',
+        'empty' => 'ምንም ኃላፊነቶች አልተገኙም።',
+        'more' => 'ተጨማሪ',
+        'roles_count' => 'ኃላፊነት(ዎች)',
+
+    ],
+    'fields' => [
+        'name' => 'ስም',
+        'name_unique' => 'ስም (ልዩ)',
+        'description' => 'መግለጫ',
+        'permissions' => 'ፈቃዶች',
+        'users' => 'ተጠቃሚዎች',
+    ],
+    'create' => [
+        'title' => 'አዲስ ኃላፊነት',
+        'subtitle' => 'አዲስ ኃላፊነት ለመፍጠር ከታች ያሉትን ዝርዝሮች ይሙሉ::',
+        'name_hint' => 'ለኃላፊነቱ ልዩ መለያ (ለምሳሌ፣ አስተዳዳሪ፣ አርታኢ)።',
+        'description_hint' => 'ይህ ኃላፊነት ምን እንደሚሰራ አጭር ማብራሪያ።',
+        'permissions_hint' => 'ይህ ኃላፊነት የሚሰጣቸውን ፈቃዶች ይምረጡ።',
+        'select_all' => 'ሁሉንም ምረጥ',
+        'deselect_all' => 'ሁሉንም ምረጥ-አት-ምረጥ',
+        'summary_permissions' => 'የፈቃዶች ማጠቃለያ',
+        'summary_granted' => 'ተፈቅዷል',
+        'summary_revoked' => 'ተሽሯል',
+        'summary_roles_total' => 'ጠቅላላ ኃላፊነቶች',
+        'summary_title' => 'የኃላፊነቶች ማጠቃለያ',
+        'submit' => 'ኃላፊነት ፍጠር',
+        'back' => 'ወደ ኃላፊነቶች ተመለስ',
+        'cancel' => 'ሰርዝ',
+    ],
+    'edit' => [
+        'title' => 'ኃላፊነትን አርትዕ',
+        'save' => 'አስቀምጥ',
+        'cancel' => 'ሰርዝ',
+        'back' => 'ወደ ኃላፊነቶች ተመለስ',
+        'select_all' => 'ሁሉንም ምረጥ',
+        'deselect_all' => 'ሁሉንም አትምረጥ',
+    ],
+];

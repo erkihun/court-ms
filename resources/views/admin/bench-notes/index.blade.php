@@ -1,3 +1,19 @@
+@php
+$canCreateBench = function_exists('userHasPermission')
+    ? userHasPermission('bench-notes.create')
+    : (auth()->user()?->hasPermission('bench-notes.create') ?? false);
+$canUpdateBench = function_exists('userHasPermission')
+    ? userHasPermission('bench-notes.update')
+    : (auth()->user()?->hasPermission('bench-notes.update') ?? false);
+$canDeleteBench = function_exists('userHasPermission')
+    ? userHasPermission('bench-notes.delete')
+    : (auth()->user()?->hasPermission('bench-notes.delete') ?? false);
+$canViewBench = function_exists('userHasPermission')
+    ? userHasPermission('bench-notes.view')
+    : (auth()->user()?->hasPermission('bench-notes.view') ?? true);
+@endphp
+
+@if($canViewBench)
 <x-admin-layout title="{{ __('bench.title') }}">
     @section('page_header', __('bench.page_header.index'))
 
@@ -244,6 +260,7 @@
             <p class="text-sm text-gray-600">{{ __('bench.descriptions.index') }}</p>
         </div>
         <div class="flex gap-2">
+            @if($canCreateBench)
             <a href="{{ route('bench-notes.create', ['case_id' => $caseId]) }}"
                 class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
@@ -252,6 +269,7 @@
                 </svg>
                 {{ __('bench.buttons.new_note') }}
             </a>
+            @endif
             <a href="{{ route('cases.index') }}"
                 class="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50">
                 {{ __('bench.labels.cases') }}
@@ -396,6 +414,7 @@
 
             <div class="card-footer">
                 <div class="action-buttons">
+                    @if($canUpdateBench)
                     <a href="{{ route('bench-notes.edit', $note->id) }}" class="btn btn-edit">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
@@ -404,6 +423,8 @@
                         </svg>
                         {{ __('bench.buttons.edit') }}
                     </a>
+                    @endif
+                    @if($canDeleteBench)
                     <form method="POST" action="{{ route('bench-notes.destroy', $note->id) }}"
                         onsubmit="return confirm('{{ __('bench.confirmations.delete') }}')"
                         class="inline">
@@ -418,6 +439,7 @@
                             {{ __('bench.buttons.delete') }}
                         </button>
                     </form>
+                    @endif
                 </div>
             </div>
         </div>
@@ -442,6 +464,7 @@
             {{ __('bench.empty.description_general') }}
             @endif
         </p>
+        @if($canCreateBench)
         <a href="{{ route('bench-notes.create', ['case_id' => $caseId]) }}"
             class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 shadow-sm">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
@@ -450,6 +473,8 @@
             </svg>
             {{ __('bench.buttons.create_new') }}
         </a>
+        @endif
     </div>
     @endif
 </x-admin-layout>
+@endif

@@ -417,6 +417,8 @@ class CaseController extends Controller
             }
         }
 
+        $letterTemplates = DB::table('letter_templates')->orderBy('title')->get();
+
         return view('admin.cases.show', [
             'case'       => $case,
             'timeline'   => $timeline,
@@ -426,6 +428,7 @@ class CaseController extends Controller
             'docs'       => $docs,        // empty collection; Blade stays compatible
             'witnesses'  => $witnesses,
             'audits'     => $audits,
+            'letterTemplates' => $letterTemplates,
         ]);
     }
 

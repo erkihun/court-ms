@@ -58,6 +58,7 @@ class Kernel extends HttpKernel
         'perm'               => \App\Http\Middleware\RequirePermission::class,
         'role'               => \App\Http\Middleware\RequireRole::class,
         'audit'              => \App\Http\Middleware\SystemAuditMiddleware::class,
+        'act.respondent'     => \App\Http\Middleware\ActAsRespondent::class,
     ];
 
     /**
@@ -79,6 +80,7 @@ class Kernel extends HttpKernel
         'perm'               => \App\Http\Middleware\RequirePermission::class,
         'role'               => \App\Http\Middleware\RequireRole::class,
         'audit'              => \App\Http\Middleware\SystemAuditMiddleware::class,
+        'act.respondent'     => \App\Http\Middleware\ActAsRespondent::class,
     ];
 
     /**

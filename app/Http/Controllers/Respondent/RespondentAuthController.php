@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Respondent;
 
 use App\Http\Controllers\Controller;
 use App\Models\Respondent;
+use App\Models\Applicant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -13,7 +14,7 @@ class RespondentAuthController extends Controller
 {
     public function showRegister()
     {
-        return view('respondant.auth.register');
+        return view('applicant.auth.register', ['asRespondentNav' => true]);
     }
 
     public function register(Request $request)
@@ -56,34 +57,38 @@ class RespondentAuthController extends Controller
 
     public function showLogin()
     {
-        return view('respondant.auth.login');
+        return view('applicant.auth.login', ['asRespondentNav' => true]);
     }
 
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'email'    => ['required', 'email'],
-            'password' => ['required'],
-        ]);
-
-        $remember = $request->boolean('remember');
-
-        if (Auth::guard('respondent')->attempt($credentials, $remember)) {
-            $request->session()->regenerate();
-
-            return redirect()->intended(route('respondent.dashboard'))
-                ->with('success', __('respondent.login_success'));
-        }
-
-        return back()->withErrors(['email' => __('respondent.invalid_credentials')])->onlyInput('email');
+        // Deprecated: respondent login now handled by applicant login form/guard
+        return redirect()->route('applicant.login', ['login_as' => 'respondent']);
     }
 
     public function logout(Request $request)
     {
+        // Unified auth now uses the applicant guard; clear both to be safe.
         Auth::guard('respondent')->logout();
+        Auth::guard('applicant')->logout();
+        $request->session()->forget('acting_as_respondent');
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('respondent.login')->with('success', __('respondent.logout_success'));
+        return redirect()->route('applicant.login');
+    }
+
+    /**
+     * Switch from respondent to applicant by logging into the applicant guard.
+     */
+    public function switchToApplicant(Request $request)
+    {
+        // Clear respondent guard, unset acting flag, and send to applicant login
+        Auth::guard('respondent')->logout();
+        $request->session()->forget('acting_as_respondent');
+        $request->session()->regenerateToken();
+
+        return redirect()->route('applicant.login', ['login_as' => 'applicant'])
+            ->with('success', __('app.switch_to_applicant_success'));
     }
 }

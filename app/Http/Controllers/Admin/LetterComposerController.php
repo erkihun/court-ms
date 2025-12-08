@@ -19,6 +19,7 @@ class LetterComposerController extends Controller
         $recipientTitle = old('recipient_title', '');
         $recipientCompany = old('recipient_company', '');
         $cc = old('cc', '');
+        $caseNumber = null;
 
         if ($request->filled('template_id')) {
             $selectedTemplate = $templates->firstWhere('id', (int) $request->input('template_id'));
@@ -29,6 +30,11 @@ class LetterComposerController extends Controller
 
         $body = $body ?? '';
 
+        // Preload case number if coming from case view
+        if ($request->filled('case_id')) {
+            $caseNumber = \DB::table('court_cases')->where('id', (int) $request->input('case_id'))->value('case_number');
+        }
+
         return view('admin.letters.compose', compact(
             'templates',
             'selectedTemplate',
@@ -37,7 +43,8 @@ class LetterComposerController extends Controller
             'recipientName',
             'recipientTitle',
             'recipientCompany',
-            'cc'
+            'cc',
+            'caseNumber'
         ));
     }
 }

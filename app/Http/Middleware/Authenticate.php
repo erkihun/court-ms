@@ -23,7 +23,7 @@ class Authenticate extends Middleware
 
         // Respondent area (/respondent prefix or respondent.* named routes)
         if ($request->is('respondent/*') || $request->routeIs('respondent.*')) {
-            return route('respondent.login');
+            return route('applicant.login', ['login_as' => 'respondent']);
         }
 
         // Default back-office login

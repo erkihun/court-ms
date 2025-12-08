@@ -46,9 +46,11 @@
     // Guard route usage to avoid "Route [...] not defined" exceptions
     $hasDashboard = Route::has('dashboard');
     $hasAppeals = Route::has('appeals.index');
+
     $hasCases = Route::has('cases.index');
     $hasApplicants = Route::has('applicants.index');
     $hasCaseTypes = Route::has('case-types.index');
+    $hasDecisions = Route::has('decisions.index');
     $hasUsers = Route::has('users.index');
     $hasPermissions = Route::has('permissions.index');
     $hasRoles = Route::has('roles.index');
@@ -143,6 +145,7 @@
             {{-- Dashboard --}}
             @if($hasDashboard)
             <a href="{{ route('dashboard') }}"
+                data-no-spa="true"
                 class="flex items-center gap-3 px-3 py-2 rounded-md transition
                       {{ request()->routeIs('dashboard') ? 'bg-orange-600 text-white' : 'hover:bg-orange-600 text-blue-100 hover:text-white' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
@@ -213,6 +216,32 @@
             </a>
             @endif
 
+
+            {{-- Decisions --}}
+
+            @if($hasDecisions && auth()->user()?->hasPermission('decision.view'))
+            <a href="{{ route('decisions.index') }}"
+                class="flex items-center gap-3 px-3 py-2 rounded-md {{ request()->routeIs('decisions.*') ? 'bg-orange-600 text-white' : 'hover:bg-orange-800 text-blue-100 hover:text-white' }}">
+                <div class="grid place-items-center w-6" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 17h6M9 13h6M9 9h6M6 5h12a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2z" />
+                    </svg>
+                </div>
+                <span class="truncate origin-left"
+                    x-show="!compact"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 -translate-x-1"
+                    x-transition:enter-end="opacity-100 translate-x-0"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100 translate-x-0"
+                    x-transition:leave-end="opacity-0 -translate-x-1">
+                    {{ __('app.Decisions') }}
+                </span>
+            </a>
+            @endif
+
             {{-- Cases --}}
             @if($hasCases && auth()->user()?->hasPermission('cases.view'))
             <a href="{{ route('cases.index') }}"
@@ -236,6 +265,7 @@
                 </span>
             </a>
             @endif
+
 
             {{-- Applicants --}}
             @if($hasApplicants && auth()->user()?->hasPermission('applicants.view'))
@@ -569,11 +599,11 @@
             use Illuminate\Support\Str;
             use Illuminate\Support\Carbon;
 
-    $uid = auth()->id();
+            $uid = auth()->id();
 
-    // stable timestamps for queries
-    $now = Carbon::now();
-    $todayDisplay = $now->locale(app()->getLocale())->translatedFormat('l, F j, Y');
+            // stable timestamps for queries
+            $now = Carbon::now();
+            $todayDisplay = $now->locale(app()->getLocale())->translatedFormat('l, F j, Y');
             $cut14 = (clone $now)->subDays(14);
             $in14 = (clone $now)->addDays(14);
 
@@ -1050,10 +1080,15 @@
                     if (title) document.title = title;
 
                     if (push) {
-                        history.pushState({ url }, '', url);
+                        history.pushState({
+                            url
+                        }, '', url);
                     }
 
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
                 } catch (error) {
                     console.error('Falling back to full reload due to navigation error', error);
                     window.location.href = url;
@@ -1083,13 +1118,15 @@
                 }
             });
 
-            history.replaceState({ url: window.location.href }, '', window.location.href);
+            history.replaceState({
+                url: window.location.href
+            }, '', window.location.href);
         })();
     </script>
     @if(app()->getLocale() === 'am')
     {{-- Ethiopian calendar (jQuery calendars) --}}
     <script>
-        (function () {
+        (function() {
             const applyTopbarDate = () => {
                 const el = document.getElementById('top-date-display');
                 if (!el) return false;
@@ -1114,7 +1151,11 @@
                     const year = 4 * Math.floor((j - 1723856) / 1461) + Math.floor(r / 365) - Math.floor(r / 1460);
                     const month = Math.floor(n / 30) + 1;
                     const day = (n % 30) + 1;
-                    return { year, month, day };
+                    return {
+                        year,
+                        month,
+                        day
+                    };
                 };
 
                 const jdn = g2j(gY, gM, gD);

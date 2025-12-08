@@ -1,13 +1,13 @@
 @php use Illuminate\Support\Str; @endphp
 
-<x-applicant-layout title="{{ __('respondent.responses') }}">
+<x-applicant-layout title="{{ __('respondent.responses') }}" :as-respondent-nav="true">
     <div class="max-w-5xl mx-auto space-y-6">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <p class="text-sm uppercase tracking-wide text-slate-500">{{ __('respondent.responses') }}</p>
                 <h1 class="text-2xl font-semibold text-slate-900">{{ __('respondent.responses') }}</h1>
             </div>
-            <a href="{{ route('applicant.respondent.responses.create') }}"
+            <a href="{{ route('respondent.responses.create') }}"
                 class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-700 text-white text-sm font-semibold hover:bg-blue-800">
                 {{ __('respondent.create_response') }}
             </a>
@@ -31,9 +31,9 @@
                         <p class="text-sm text-slate-600 mt-2">{{ Str::limit($response->description, 120) }}</p>
                     </div>
                     <div class="flex flex-col items-end gap-2">
-                        <a href="{{ route('applicant.respondent.responses.show', $response) }}"
+                        <a href="{{ route('respondent.responses.show', $response) }}"
                             class="text-sm text-blue-700 hover:underline">{{ __('respondent.view_details') }}</a>
-                        <a href="{{ route('applicant.respondent.responses.edit', $response) }}"
+                        <a href="{{ route('respondent.responses.edit', $response) }}"
                             class="text-sm text-blue-700 hover:underline">{{ __('respondent.edit_response') }}</a>
                     </div>
                 </div>
@@ -42,7 +42,7 @@
                     @if($response->pdf_path)
                     <span>{{ __('respondent.pdf_submitted') }}</span>
                     @endif
-                    <form method="POST" action="{{ route('applicant.respondent.responses.destroy', $response) }}" class="inline">
+                    <form method="POST" action="{{ route('respondent.responses.destroy', $response) }}" class="inline">
                         @csrf
                         @method('DELETE')
                         <button type="submit"
@@ -57,4 +57,4 @@
         </div>
         @endif
     </div>
-</x-respondant-layout>
+</x-applicant-layout>
