@@ -75,7 +75,7 @@ return [
     ],
 
     'preview' => [
-        'ref_no' => 'መ/ቁ፡',
+        'ref_no' => 'ቁጥር፡',
         'date' => 'ቀን፡',
         'subject' => 'ጉዳዩ፡',
         'closing' => 'በአክብሮት',
