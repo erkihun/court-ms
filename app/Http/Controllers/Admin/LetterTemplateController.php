@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\LetterTemplate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -23,8 +22,9 @@ class LetterTemplateController extends Controller
     public function create()
     {
         $template = new LetterTemplate();
+        $caseTypes = \App\Models\CaseType::select('name', 'prifix')->orderBy('name')->get();
 
-        return view('admin.letter-templates.create', compact('template'));
+        return view('admin.letter-templates.create', compact('template', 'caseTypes'));
     }
 
     public function store(Request $request)
@@ -39,7 +39,12 @@ class LetterTemplateController extends Controller
 
     public function edit(LetterTemplate $letterTemplate)
     {
-        return view('admin.letter-templates.edit', ['template' => $letterTemplate]);
+        $caseTypes = \App\Models\CaseType::select('name', 'prifix')->orderBy('name')->get();
+
+        return view('admin.letter-templates.edit', [
+            'template' => $letterTemplate,
+            'caseTypes' => $caseTypes
+        ]);
     }
 
     public function update(Request $request, LetterTemplate $letterTemplate)

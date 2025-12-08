@@ -23,8 +23,8 @@ class CaseTypeController extends Controller
         $types = DB::table('case_types as ct')
             ->when($q !== '', fn($w) => $w->where('ct.name', 'like', "%{$q}%"))
             ->leftJoin('court_cases as c', 'c.case_type_id', '=', 'ct.id')
-            ->groupBy('ct.id', 'ct.name')
-            ->select('ct.id', 'ct.name', DB::raw('COUNT(c.id) as cases_count'))
+            ->groupBy('ct.id', 'ct.name', 'ct.prifix')
+            ->select('ct.id', 'ct.name', 'ct.prifix', DB::raw('COUNT(c.id) as cases_count'))
             ->orderBy('ct.name')
             ->paginate(12)
             ->withQueryString();
@@ -50,9 +50,15 @@ class CaseTypeController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100', Rule::unique('case_types', 'name')],
+            'prifix' => ['required', 'string', 'max:100', Rule::unique('case_types', 'prifix')],
         ]);
 
-        $row = ['name' => $data['name']];
+        // FIX: Combine both fields into a single array before checking timestamps.
+        $row = [
+            'name' => $data['name'],
+            'prifix' => $data['prifix'],
+        ];
+
         if (Schema::hasColumn('case_types', 'created_at')) $row['created_at'] = now();
         if (Schema::hasColumn('case_types', 'updated_at')) $row['updated_at'] = now();
 
@@ -91,9 +97,20 @@ class CaseTypeController extends Controller
                 'max:100',
                 Rule::unique('case_types', 'name')->ignore($id),
             ],
+            // ADDED: Include prefix validation for update
+            'prifix' => [
+                'required',
+                'string',
+                'max:100',
+                Rule::unique('case_types', 'prifix')->ignore($id),
+            ],
         ]);
 
-        $row = ['name' => $data['name']];
+        // UPDATED: Include prefix in the update array
+        $row = [
+            'name' => $data['name'],
+            'prifix' => $data['prifix'],
+        ];
         if (Schema::hasColumn('case_types', 'updated_at')) $row['updated_at'] = now();
 
         DB::table('case_types')->where('id', $id)->update($row);

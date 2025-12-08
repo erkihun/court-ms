@@ -64,23 +64,41 @@ class ApplicantCaseController extends Controller
         return view('applicant.cases.create', compact('types', 'activeTerms'));
     }
 
-    private function generateCaseNumber(): string
+    private function generateCaseNumber($caseTypeId)
     {
-        $year = now()->year;
+        // Fetch prefix from case_types table
+        $caseType = \App\Models\CaseType::findOrFail($caseTypeId);
+        $prifix = $caseType->prifix;
 
-        $last = DB::table('court_cases')
-            ->selectRaw("
-                MAX(
-                    CAST(SUBSTRING_INDEX(case_number, '-', -1) AS UNSIGNED)
-                ) as max_seq
-            ")
-            ->where('case_number', 'LIKE', 'C-' . $year . '-%')
-            ->value('max_seq');
+        $year = now()->format('y'); // YY format
 
-        $next = (int) $last + 1;
+        // Pattern: PRF/00001/25
+        $prefixPattern = "{$prifix}/_____/{$year}";
 
-        return sprintf('C-%d-%04d', $year, $next);
+        // Query last case_number that matches this prefix + year
+        $latest = DB::table('court_cases')
+            ->where('case_number', 'LIKE', "{$prifix}/%/{$year}")
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if ($latest) {
+            // Extract the 5 digits using regex
+            if (preg_match("/^{$prifix}\/(\d{5})\/{$year}$/", $latest->case_number, $m)) {
+                $lastNumber = intval($m[1]);
+                $nextNumber = $lastNumber + 1;
+            } else {
+                $nextNumber = 1;
+            }
+        } else {
+            $nextNumber = 1;
+        }
+
+        $sequence = str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+
+        return "{$prifix}/{$sequence}/{$year}";
     }
+
+
 
     private function generateCaseCode(): string
     {
@@ -172,13 +190,13 @@ class ApplicantCaseController extends Controller
 
         try {
             // 1) Insert with temporary unique case number
-            $tempNumber = 'TMP-' . Str::uuid();
+            $finalNumber = $this->generateCaseNumber($data['case_type_id']);
 
             $caseId = DB::table('court_cases')->insertGetId([
                 'applicant_id'       => $aid,
                 'respondent_name'    => isset($data['respondent_name']) ? strip_tags($data['respondent_name']) : null,
                 'respondent_address' => isset($data['respondent_address']) ? strip_tags($data['respondent_address']) : null,
-                'case_number'        => $tempNumber,
+                'case_number'        => $finalNumber,
                 'code'               => $this->generateCaseCode(),
                 'title'              => trim($data['title']),
                 'description'        => $descHtml,      // sanitized HTML
@@ -197,7 +215,7 @@ class ApplicantCaseController extends Controller
             ]);
 
             // 2) Final readable case number
-            $finalNumber = 'C-' . now()->format('Y') . '-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT);
+            $finalNumber = $this->generateCaseNumber($data['case_type_id']);
 
             DB::table('court_cases')->where('id', $caseId)->update([
                 'case_number' => $finalNumber,
@@ -616,9 +634,17 @@ class ApplicantCaseController extends Controller
 
         try {
             // update core fields
+
+            $newCaseNumber = $case->case_number;
+
+            if ($case->case_type_id != $data['case_type_id']) {
+                // Generate a NEW case number based on selected case type
+                $newCaseNumber = $this->generateCaseNumber($data['case_type_id']);
+            }
             DB::table('court_cases')->where('id', $id)->update([
                 'title'              => trim($data['title']),
                 'description'        => $descHtml,           // sanitized HTML
+                'case_number'        => $newCaseNumber,
                 'relief_requested'   => $reliefHtml ?: null, // sanitized HTML
                 'respondent_name'    => isset($data['respondent_name']) ? strip_tags($data['respondent_name']) : null,
                 'respondent_address' => isset($data['respondent_address']) ? strip_tags($data['respondent_address']) : null,
@@ -626,7 +652,7 @@ class ApplicantCaseController extends Controller
 
                 'filing_date'        => $data['filing_date'],
                 'review_status'      => 'awaiting_review',
-                'reviewed_by_user_id'=> null,
+                'reviewed_by_user_id' => null,
                 'reviewed_at'        => null,
                 'updated_at'         => now(),
             ]);

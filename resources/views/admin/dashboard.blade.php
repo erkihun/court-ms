@@ -57,54 +57,67 @@
     </style>
     @endpush
 
-    {{-- KPI cards --}}
+    {{-- KPI cards (UPDATED: Clean, easy-to-read style) --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
-        {{-- Total cases --}}
-        <div class="p-4 rounded-xl bg-blue-700 shadow ring-1 ring-blue-800/40">
-            <div class="flex items-center justify-between">
-                <h2 class="text-[11px] uppercase tracking-wider/3 text-orange-200">{{ __('dashboard.total_cases') }}</h2>
-                <svg class="h-5 w-5 text-orange-200" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M3 7h18M3 12h18M3 17h18" />
-                </svg>
+
+        {{-- Total cases (Primary Blue) --}}
+        {{-- Design: Light blue background, strong blue icon, dark text --}}
+        <div class="p-5 rounded-xl bg-white border border-blue-100 shadow-md transition hover:shadow-lg">
+            <div class="flex items-start justify-between">
+                <div class="p-3 rounded-full bg-blue-100/70 text-blue-600 shadow-sm">
+                    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M3 7h18M3 12h18M3 17h18" />
+                    </svg>
+                </div>
             </div>
-            <p id="kpi-total-cases" class="text-3xl font-bold text-orange-100 mt-2">{{ number_format($totalCases) }}</p>
+            <p id="kpi-total-cases" class="text-4xl font-extrabold text-blue-700 mt-4">{{ number_format($totalCases) }}</p>
+            <h2 class="text-sm uppercase tracking-wider font-semibold text-gray-500 mt-1">{{ __('dashboard.total_cases') }}</h2>
         </div>
 
-        {{-- Pending --}}
-        <div class="p-4 rounded-xl bg-blue-700 shadow ring-1 ring-blue-800/40">
-            <div class="flex items-center justify-between">
-                <h2 class="text-[11px] uppercase tracking-wider/3 text-orange-200">{{ __('dashboard.pending') }}</h2>
-                <svg class="h-5 w-5 text-orange-200" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2" />
-                </svg>
+        {{-- Pending (Brand Orange - High Attention) --}}
+        {{-- Design: Light orange background, strong orange icon, dark text --}}
+        <div class="p-5 rounded-xl bg-white border border-orange-100 shadow-md transition hover:shadow-lg">
+            <div class="flex items-start justify-between">
+                <div class="p-3 rounded-full bg-orange-100/70 text-orange-600 shadow-sm">
+                    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2" />
+                    </svg>
+                </div>
             </div>
-            <p id="kpi-pending-cases" class="text-3xl font-bold mt-2 text-orange-100">{{ number_format($pendingCases) }}</p>
+            <p id="kpi-pending-cases" class="text-4xl font-extrabold mt-4 text-orange-700">{{ number_format($pendingCases) }}</p>
+            <h2 class="text-sm uppercase tracking-wider font-semibold text-gray-500 mt-1">{{ __('dashboard.pending') }}</h2>
         </div>
 
-        {{-- Resolved --}}
-        <div class="p-4 rounded-xl bg-blue-700 shadow ring-1 ring-blue-800/40">
-            <div class="flex items-center justify-between">
-                <h2 class="text-[11px] uppercase tracking-wider/3 text-orange-200">{{ __('dashboard.resolved') }}</h2>
-                <svg class="h-5 w-5 text-orange-200" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
+        {{-- Resolved (Emerald Green - Success) --}}
+        {{-- Design: Light green background, strong green icon, dark text --}}
+        <div class="p-5 rounded-xl bg-white border border-emerald-100 shadow-md transition hover:shadow-lg">
+            <div class="flex items-start justify-between">
+                <div class="p-3 rounded-full bg-emerald-100/70 text-emerald-600 shadow-sm">
+                    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
             </div>
-            <p id="kpi-resolved-cases" class="text-3xl font-bold mt-2 text-orange-100">{{ number_format($resolvedCases) }}</p>
+            <p id="kpi-resolved-cases" class="text-4xl font-extrabold mt-4 text-emerald-700">{{ number_format($resolvedCases) }}</p>
+            <h2 class="text-sm uppercase tracking-wider font-semibold text-gray-500 mt-1">{{ __('dashboard.resolved') }}</h2>
         </div>
 
-        {{-- Active users --}}
-        <div class="p-4 rounded-xl bg-blue-700 shadow ring-1 ring-blue-800/40">
-            <div class="flex items-center justify-between">
-                <h2 class="text-[11px] uppercase tracking-wider/3 text-orange-200">{{ __('dashboard.active_users') }}</h2>
-                <svg class="h-5 w-5 text-orange-200" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM6 21a6 6 0 1112 0H6z" />
-                </svg>
+        {{-- Active users (Indigo/Teal - Secondary Professional) --}}
+        {{-- Design: Light indigo background, strong indigo icon, dark text --}}
+        <div class="p-5 rounded-xl bg-white border border-indigo-100 shadow-md transition hover:shadow-lg">
+            <div class="flex items-start justify-between">
+                <div class="p-3 rounded-full bg-indigo-100/70 text-indigo-600 shadow-sm">
+                    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM6 21a6 6 0 1112 0H6z" />
+                    </svg>
+                </div>
             </div>
-            <p id="kpi-active-users" class="text-3xl font-bold mt-2 text-orange-100">{{ number_format($activeUsers) }}</p>
+            <p id="kpi-active-users" class="text-4xl font-extrabold mt-4 text-indigo-700">{{ number_format($activeUsers) }}</p>
+            <h2 class="text-sm uppercase tracking-wider font-semibold text-gray-500 mt-1">{{ __('dashboard.active_users') }}</h2>
         </div>
     </div>
 
-    {{-- Recent cases --}}
+    {{-- Recent cases (Rest of the dashboard remains the same as previous update) --}}
     <div class="p-4 rounded-xl border border-gray-200 bg-white">
         <div class="flex items-center justify-between mb-2">
             <h3 class="text-sm font-semibold text-gray-900">{{ __('dashboard.recent_cases') }}</h3>
@@ -262,9 +275,9 @@
                     </div>
                 </div>
                 @php
-                    $statusBadge = $status === 'active'
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                        : 'bg-gray-50 text-gray-700 border border-gray-200';
+                $statusBadge = $status === 'active'
+                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                : 'bg-gray-50 text-gray-700 border border-gray-200';
                 @endphp
                 <span class="text-[11px] px-2 py-0.5 rounded-full {{ $statusBadge }}">
                     {{ ucfirst($status) }}
@@ -370,7 +383,7 @@
                 const gValues = parseJSON(genderEl, 'values', []);
                 const genderPalette = [
                     'rgba(37,99,235,0.85)', // blue
-                    'rgba(249,115,22,0.85)'  // orange
+                    'rgba(249,115,22,0.85)' // orange
                 ];
 
                 if (gLabels.length && gValues.length) {

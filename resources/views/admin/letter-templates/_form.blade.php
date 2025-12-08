@@ -1,10 +1,10 @@
 {{-- resources/views/letter-templates/_form.blade.php --}}
 @php
-    $placeholders = $template->placeholders ?? [];
-    if (is_array($placeholders)) {
-        $placeholders = implode(', ', $placeholders);
-    }
-    $placeholderValue = old('placeholders', $placeholders);
+$placeholders = $template->placeholders ?? [];
+if (is_array($placeholders)) {
+$placeholders = implode(', ', $placeholders);
+}
+$placeholderValue = old('placeholders', $placeholders);
 @endphp
 
 <div class="space-y-4">
@@ -13,26 +13,35 @@
         <input type="text" name="title" value="{{ old('title', $template->title) }}"
             class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-600 focus:border-blue-600" required>
         @error('title')
-            <p class="text-xs text-red-600 mt-1" role="alert">{{ $message }}</p>
+        <p class="text-xs text-red-600 mt-1" role="alert">{{ $message }}</p>
         @enderror
     </div>
-    <div>
-        <label class="block text-sm font-medium text-gray-700">{{ __('letters.templates.form.category') }}</label>
-        <input type="text" name="category" value="{{ old('category', $template->category) }}"
-            class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
-            placeholder="{{ __('letters.templates.form.category_placeholder') }}">
-        @error('category')
-            <p class="text-xs text-red-600 mt-1" role="alert">{{ $message }}</p>
-        @enderror
-    </div>
+    <select id="category-select" name="category"
+        class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+
+        <option value="">Select Category</option>
+
+        @foreach($caseTypes as $type)
+        <option
+            value="{{ $type->name }}"
+            data-prifix="{{ $type->prifix }}" {{-- IMPORTANT --}}
+            {{ old('category', $template->category) === $type->name ? 'selected' : '' }}>
+            {{ $type->name }}
+        </option>
+        @endforeach
+    </select>
+
+
+
     <div>
         <label class="block text-sm font-medium text-gray-700">{{ __('letters.templates.form.subject_prefix') }}</label>
-        <input type="text" name="subject_prefix" value="{{ old('subject_prefix', $template->subject_prefix) }}"
-            class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
-            placeholder="{{ __('letters.templates.form.subject_prefix_placeholder') }}">
+        <input type="text" name="subject_prefix"
+            value="{{ old('subject_prefix', $template->subject_prefix) }}"
+            class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2">
+
         <p class="text-xs text-gray-500 mt-1">{{ __('letters.templates.form.subject_prefix_help') }}</p>
         @error('subject_prefix')
-            <p class="text-xs text-red-600 mt-1" role="alert">{{ $message }}</p>
+        <p class="text-xs text-red-600 mt-1" role="alert">{{ $message }}</p>
         @enderror
     </div>
     <div>
@@ -45,7 +54,7 @@
             {!! __('letters.templates.form.placeholders_help') !!}
         </p>
         @error('placeholders')
-            <p class="text-xs text-red-600 mt-1" role="alert">{{ $message }}</p>
+        <p class="text-xs text-red-600 mt-1" role="alert">{{ $message }}</p>
         @enderror
     </div>
     <div class="grid md:grid-cols-2 gap-4">
@@ -66,7 +75,7 @@
             </div>
             @endif
             @error('header_image')
-                <p class="text-xs text-red-600 mt-1" role="alert">{{ $message }}</p>
+            <p class="text-xs text-red-600 mt-1" role="alert">{{ $message }}</p>
             @enderror
         </div>
         <div>
@@ -86,7 +95,7 @@
             </div>
             @endif
             @error('footer_image')
-                <p class="text-xs text-red-600 mt-1" role="alert">{{ $message }}</p>
+            <p class="text-xs text-red-600 mt-1" role="alert">{{ $message }}</p>
             @enderror
         </div>
     </div>
@@ -99,7 +108,19 @@
             {{ __('letters.templates.form.body_help') }}
         </p>
         @error('body')
-            <p class="text-xs text-red-600 mt-1" role="alert">{{ $message }}</p>
+        <p class="text-xs text-red-600 mt-1" role="alert">{{ $message }}</p>
         @enderror
     </div>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const categorySelect = document.getElementById('category-select');
+        const prefixInput = document.querySelector('input[name="subject_prefix"]');
+
+        categorySelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const prifix = selectedOption.getAttribute('data-prifix') || "";
+            prefixInput.value = prifix; // Set prefix field
+        });
+    });
+</script>

@@ -73,7 +73,7 @@
                         <label class="block text-sm font-medium text-gray-700">{{ __('letters.form.case_number') }}</label>
                         <input type="text" name="case_number" value="{{ old('case_number', $caseNumber) }}"
                             class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 bg-gray-100 text-gray-700"
-                            placeholder="{{ __('letters.form.case_number_placeholder') }}" readonly>
+                            placeholder="{{ __('letters.form.case_number_placeholder') }}">
                         <p class="text-xs text-gray-500 mt-1">{{ __('letters.form.case_number_help') }}</p>
                         @error('case_number')
                         <p class="text-xs text-red-600 mt-1" role="alert">{{ $message }}</p>
@@ -98,23 +98,36 @@
                     @enderror
                 </div>
 
-                @if($selectedTemplate)
+                @if($caseNumber)
                 @php
-                $nextSeq = ($selectedTemplate->reference_sequence ?? 0) + 1;
-                $nextReference = implode('/', array_filter([
-                    $selectedTemplate->subject_prefix,
-                    str_pad($nextSeq, 4, '0', STR_PAD_LEFT),
-                ]));
+                // Find last reference with the same case number
+                $last = \Illuminate\Support\Facades\DB::table('letters')
+                ->where('case_number', $caseNumber)
+                ->orderBy('id', 'desc')
+                ->first();
+
+                if ($last && preg_match('/\/(\d{2})$/', $last->reference_number, $m)) {
+                $nextSeq = intval($m[1]) + 1;
+                } else {
+                $nextSeq = 1;
+                }
+
+                $seq = str_pad($nextSeq, 2, '0', STR_PAD_LEFT);
+
+                $nextReference = "{$caseNumber}/{$seq}";
                 @endphp
+
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Reference Number (auto)</label>
                     <input type="text" value="{{ $nextReference }}" readonly
                         class="mt-1 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
+
                     <p class="text-xs text-gray-500 mt-1">
-                        Based on template prefix and next sequence; final value is assigned on save.
+                        Auto-generated from case number. Final value assigned on save.
                     </p>
                 </div>
                 @endif
+
 
                 @if($selectedTemplate && $selectedTemplate->placeholders)
                 <div class="rounded-lg border border-dashed border-blue-300 bg-blue-50 px-4 py-3 text-xs text-blue-800">

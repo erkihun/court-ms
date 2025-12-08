@@ -9,7 +9,7 @@
 
             <form method="POST" action="{{ route('letter-templates.update', $template) }}" class="space-y-6" enctype="multipart/form-data">
                 @csrf
-                @method('PUT')
+                @method('PATCH')
                 @include('admin.letter-templates._form', ['template' => $template])
                 <div class="flex items-center justify-between">
                     <a href="{{ route('letter-templates.index') }}"
