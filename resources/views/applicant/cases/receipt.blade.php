@@ -1,7 +1,14 @@
 @props(['title' => 'Filing Receipt'])
+@php
+    use Illuminate\Support\Carbon;
+
+    $filingDate = Carbon::parse($case->filing_date ?? $case->created_at);
+    $statusLabel = __('cases.status.' . $case->status);
+    $statusLabel = $statusLabel === 'cases.status.' . $case->status ? ucfirst($case->status) : $statusLabel;
+@endphp
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_','-',app()->getLocale()) }}">
 
 <head>
     <meta charset="utf-8">
@@ -31,7 +38,7 @@
         <div class="no-print mb-4 flex items-center justify-between">
             <a href="{{ route('applicant.cases.show', $case->id) }}"
                 class="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50">
-                ← Back to case
+                Back to case
             </a>
             <button onclick="window.print()"
                 class="rounded-md bg-slate-800 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700">
@@ -39,24 +46,42 @@
             </button>
         </div>
 
-        <div class="card rounded-xl border border-slate-200 bg-white p-6">
+        <div class="card rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             <div class="flex items-start justify-between">
                 <div>
-                    <h1 class="text-xl font-semibold">Filing Receipt</h1>
+                    <h1 class="text-xl font-semibold tracking-tight">Filing Receipt</h1>
                     <div class="mt-1 text-sm text-slate-500">{{ config('app.name','Court-MS') }}</div>
                 </div>
                 <div class="text-right">
                     <div class="text-xs text-slate-500">Case #</div>
                     <div class="text-lg font-semibold tracking-tight">{{ $case->case_number }}</div>
-                    <div class="mt-1">
-                        <span class="px-2 py-0.5 rounded text-xs capitalize
-                            @if($case->status==='pending') bg-amber-100 text-amber-800 border border-amber-200
-                            @elseif($case->status==='active') bg-blue-100 text-blue-800 border border-blue-200
-                            @elseif(in_array($case->status,['closed','dismissed'])) bg-emerald-100 text-emerald-800 border border-emerald-200
-                            @else bg-slate-100 text-slate-800 border border-slate-200 @endif">
-                            {{ $case->status }}
-                        </span>
+                    <div class="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs capitalize
+                        @if($case->status==='pending') bg-amber-100 text-amber-800 border border-amber-200
+                        @elseif($case->status==='active') bg-blue-100 text-blue-800 border border-blue-200
+                        @elseif(in_array($case->status,['closed','dismissed'])) bg-emerald-100 text-emerald-800 border border-emerald-200
+                        @else bg-slate-100 text-slate-800 border border-slate-200 @endif">
+                        <span class="h-1.5 w-1.5 rounded-full bg-current opacity-70"></span>
+                        {{ $statusLabel }}
                     </div>
+                </div>
+            </div>
+
+            <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-slate-600">
+                <div class="rounded-lg bg-slate-50 border border-slate-100 px-3 py-2">
+                    <div class="uppercase tracking-wide font-semibold text-[11px] text-slate-500">Filed on</div>
+                    <div class="text-sm font-semibold text-slate-800">{{ $filingDate->format('M d, Y') }}</div>
+                </div>
+                <div class="rounded-lg bg-slate-50 border border-slate-100 px-3 py-2">
+                    <div class="uppercase tracking-wide font-semibold text-[11px] text-slate-500">Documents</div>
+                    <div class="text-sm font-semibold text-slate-800">{{ $evidenceDocs->count() }}</div>
+                </div>
+                <div class="rounded-lg bg-slate-50 border border-slate-100 px-3 py-2">
+                    <div class="uppercase tracking-wide font-semibold text-[11px] text-slate-500">Witnesses</div>
+                    <div class="text-sm font-semibold text-slate-800">{{ $witnesses->count() }}</div>
+                </div>
+                <div class="rounded-lg bg-slate-50 border border-slate-100 px-3 py-2">
+                    <div class="uppercase tracking-wide font-semibold text-[11px] text-slate-500">Hearings</div>
+                    <div class="text-sm font-semibold text-slate-800">{{ $hearings->count() }}</div>
                 </div>
             </div>
 
@@ -67,13 +92,13 @@
                         {{ trim(($case->first_name.' '.($case->middle_name ?? '').' '.$case->last_name)) }}
                     </div>
                     <div class="text-slate-500">
-                        {{ $case->email }} @if($case->phone) · {{ $case->phone }} @endif
+                        {{ $case->email }} @if($case->phone) | {{ $case->phone }} @endif
                     </div>
                 </div>
                 <div>
                     <div class="text-slate-500">Filed</div>
                     <div class="font-medium">
-                        {{ \Illuminate\Support\Carbon::parse($case->filing_date ?? $case->created_at)->format('M d, Y') }}
+                        {{ $filingDate->format('M d, Y') }}
                     </div>
                 </div>
                 <div>
@@ -83,16 +108,16 @@
                 <div>
                     <div class="text-slate-500">Court / Type</div>
                     <div class="font-medium">
-                        {{ $case->court_name ?? '—' }} @if($case->case_type) · {{ $case->case_type }} @endif
+                        {{ $case->court_name ?? 'Not provided' }} @if($case->case_type) | {{ $case->case_type }} @endif
                     </div>
                 </div>
                 @if($case->respondent_name || $case->respondent_address)
                 <div class="md:col-span-2">
                     <div class="text-slate-500">Respondent</div>
                     <div class="font-medium">
-                        {{ $case->respondent_name ?: '—' }}
+                        {{ $case->respondent_name ?: 'Not provided' }}
                         @if($case->respondent_address)
-                        <span class="text-slate-500"> · {{ $case->respondent_address }}</span>
+                        <span class="text-slate-500"> | {{ $case->respondent_address }}</span>
                         @endif
                     </div>
                 </div>
@@ -119,9 +144,17 @@
                     @if($witnesses->isEmpty())
                     <div class="text-sm text-slate-500">None provided.</div>
                     @else
-                    <ul class="list-disc pl-5 text-sm">
+                    <ul class="space-y-2 text-sm">
                         @foreach($witnesses as $w)
-                        <li>{{ $w->full_name }}</li>
+                        <li class="rounded-md border border-slate-200 p-2">
+                            <div class="font-medium text-slate-900">{{ $w->full_name }}</div>
+                            <div class="text-xs text-slate-500">
+                                {{ $w->phone ?: 'No phone' }}
+                                @if($w->email)
+                                | {{ $w->email }}
+                                @endif
+                            </div>
+                        </li>
                         @endforeach
                     </ul>
                     @endif
@@ -133,9 +166,21 @@
                     @if($evidenceDocs->isEmpty())
                     <div class="text-sm text-slate-500">None uploaded.</div>
                     @else
-                    <ul class="list-disc pl-5 text-sm">
+                    <ul class="space-y-2 text-sm">
                         @foreach($evidenceDocs as $d)
-                        <li>{{ $d->title ?? basename($d->file_path) }}</li>
+                        @php
+                            $docTitle = $d->title ?? basename($d->file_path);
+                            $docUrl = $d->file_path ? asset('storage/'.$d->file_path) : null;
+                        @endphp
+                        <li class="flex items-center justify-between rounded-md border border-slate-200 p-2">
+                            <span class="font-medium text-slate-900">{{ $docTitle }}</span>
+                            @if($docUrl)
+                            <a href="{{ $docUrl }}" target="_blank" rel="noopener"
+                                class="no-print text-xs text-blue-700 hover:underline">
+                                View
+                            </a>
+                            @endif
+                        </li>
                         @endforeach
                     </ul>
                     @endif
@@ -152,7 +197,7 @@
                         <div>
                             <div class="font-medium">{{ $f->label ?? basename($f->path) }}</div>
                             <div class="text-xs text-slate-500">
-                                {{ \Illuminate\Support\Carbon::parse($f->created_at)->format('M d, Y H:i') }}
+                                {{ Carbon::parse($f->created_at)->format('M d, Y H:i') }}
                             </div>
                         </div>
                         <div class="text-xs text-slate-500">{{ strtoupper(pathinfo($f->path, PATHINFO_EXTENSION)) }}</div>
@@ -171,10 +216,10 @@
                     <li class="flex items-center justify-between rounded-md border border-slate-200 p-2">
                         <div>
                             <div class="font-medium">
-                                {{ \Illuminate\Support\Carbon::parse($h->hearing_at)->format('M d, Y H:i') }}
-                                @if($h->type) · {{ $h->type }} @endif
+                                {{ Carbon::parse($h->hearing_at)->format('M d, Y H:i') }}
+                                @if($h->type) | {{ $h->type }} @endif
                             </div>
-                            <div class="text-xs text-slate-500">{{ $h->location ?: '—' }}</div>
+                            <div class="text-xs text-slate-500">{{ $h->location ?: 'Not provided' }}</div>
                         </div>
                         <a href="{{ route('applicant.cases.hearings.ics', [$case->id, $h->id]) }}"
                             class="no-print inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs hover:bg-slate-50">

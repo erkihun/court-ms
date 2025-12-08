@@ -9,6 +9,10 @@ $categoryCounts = $letters->map(function ($letter) {
     return optional(optional($letter)->template)->category;
 })->filter()->countBy()->sortDesc();
 $topCategory = $categoryCounts->keys()->first();
+$canCreateLetter = function_exists('userHasPermission') ? userHasPermission('letters.create') : (auth()->user()?->hasPermission('letters.create') ?? false);
+$canUpdateLetter = function_exists('userHasPermission') ? userHasPermission('letters.update') : (auth()->user()?->hasPermission('letters.update') ?? false);
+$canDeleteLetter = function_exists('userHasPermission') ? userHasPermission('letters.delete') : (auth()->user()?->hasPermission('letters.delete') ?? false);
+$canApproveLetter = function_exists('userHasPermission') ? userHasPermission('letters.approve') : (auth()->user()?->hasPermission('letters.approve') ?? false);
 @endphp
 
 <x-admin-layout title="{{ __('letters.titles.index') }}">
@@ -32,6 +36,7 @@ $topCategory = $categoryCounts->keys()->first();
                     </div>
                 </div>
             </div>
+            @if($canCreateLetter)
             <a href="{{ route('letters.compose') }}"
                 class="group inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-orange-500 text-white font-semibold shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-orange-600 transition-all duration-300 transform hover:-translate-y-0.5 focus:outline-none focus:ring-3 focus:ring-blue-500/30 focus:ring-offset-2">
                 <svg class="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,6 +44,7 @@ $topCategory = $categoryCounts->keys()->first();
                 </svg>
                 {{ __('letters.actions.new_letter') }}
             </a>
+            @endif
         </div>
 
         <!-- Stats Cards -->
@@ -314,7 +320,8 @@ $topCategory = $categoryCounts->keys()->first();
                                     </button>
 
                                     <!-- Approval Dropdown -->
-                                    @if(!$isApproved)
+                                    @if(!$isApproved && $canApproveLetter)
+                                    @if($canApproveLetter)
                                     <div x-data="{ open: false }" class="relative">
                                         <button type="button"
                                             @click="open = !open"
@@ -363,8 +370,10 @@ $topCategory = $categoryCounts->keys()->first();
                                         </div>
                                     </div>
                                     @endif
+                                    @endif
 
                                     <!-- Delete Button -->
+                                    @if($canDeleteLetter)
                                     <form method="POST" action="{{ route('letters.destroy', $letter) }}"
                                         onsubmit="return confirm('{{ __('letters.confirm.delete_letter') }}');">
                                         @csrf
@@ -381,6 +390,7 @@ $topCategory = $categoryCounts->keys()->first();
                                             </div>
                                         </button>
                                     </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

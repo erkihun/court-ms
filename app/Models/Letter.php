@@ -20,6 +20,7 @@ class Letter extends Model implements AuditableContract
         'recipient_company',
         'subject',
         'reference_number',
+        'case_number',
         'body',
         'cc',
         'approved_by_name',

@@ -1,6 +1,6 @@
 {{-- resources/views/permissions/index.blade.php --}}
-<x-admin-layout title="Permissions">
-    @section('page_header','Permissions')
+<x-admin-layout title="{{ __('permissions.index.title') }}">
+    @section('page_header', __('permissions.index.title'))
     <style>
     [x-cloak] {
         display: none !important;
@@ -12,16 +12,16 @@
         {{-- Toolbar --}}
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div class="flex items-center gap-2">
-                <span class="text-sm text-gray-600">Showing</span>
+                <span class="text-sm text-gray-600">{{ __('permissions.index.showing') }}</span>
                 <span class="px-2 py-1 rounded-lg text-sm bg-gray-100 text-gray-800 border border-gray-200">
-                    {{ number_format($permissions->total()) }} permissions
+                    {{ number_format($permissions->total()) }} {{ __('permissions.index.total_permissions') }}
                 </span>
             </div>
 
             <div class="flex flex-col sm:flex-row gap-2 sm:items-center">
                 <form method="GET" class="flex items-center gap-2">
                     <div class="relative">
-                        <input type="text" name="q" value="{{ request('q') }}" placeholder="Search permissions…"
+                        <input type="text" name="q" value="{{ request('q') }}" placeholder="{{ __('permissions.index.search_placeholder') }}"
                             class="w-64 pl-9 pr-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                         <svg class="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
@@ -38,7 +38,7 @@
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
-                    New Permission
+                    {{ __('permissions.index.new_permission') }}
                 </a>
             </div>
         </div>
@@ -53,12 +53,12 @@
                 <table class="min-w-full text-sm">
                     <thead class="bg-gray-50 text-gray-700 border-b border-gray-200 sticky top-0 z-10">
                         <tr>
-                            <th class="p-3 text-left font-medium">Name</th>
-                            <th class="p-3 text-left font-medium">Label</th>
-                            <th class="p-3 text-left font-medium">Description</th>
-                            <th class="p-3 text-left font-medium">Roles</th>
-                            <th class="p-3 text-left font-medium">Users</th>
-                            <th class="p-3 text-left w-40 font-medium">Actions</th>
+                            <th class="p-3 text-left font-medium">{{ __('permissions.fields.name') }}</th>
+                            <th class="p-3 text-left font-medium">{{ __('permissions.fields.label') }}</th>
+                            <th class="p-3 text-left font-medium">{{ __('permissions.fields.description') }}</th>
+                            <th class="p-3 text-left font-medium">{{ __('permissions.index.roles') }}</th>
+                            <th class="p-3 text-left font-medium">{{ __('permissions.index.users') }}</th>
+                            <th class="p-3 text-left w-40 font-medium">{{ __('permissions.index.actions') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
@@ -115,7 +115,7 @@
                                     @endif
                                 </div>
                                 <div class="text-xs text-gray-500 mt-1">
-                                    {{ $perm->roles_count }} role(s)
+                                    {{ $perm->roles_count }} {{ __('permissions.index.roles_count') }}
                                 </div>
                             </td>
 
@@ -136,7 +136,7 @@
                                 <div class="flex items-center gap-2">
                                     <a href="{{ route('permissions.edit',$perm) }}"
                                         class="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs">
-                                        Edit
+                                        {{ __('permissions.index.edit') }}
                                     </a>
 
                                     <form id="delForm-{{ $perm->id }}" action="{{ route('permissions.destroy',$perm) }}"
@@ -145,7 +145,7 @@
                                     </form>
                                     <button @click.prevent="openDelete({ id: {{ $perm->id }}, name: @js($perm->name) })"
                                         class="px-2.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs">
-                                        Delete
+                                        {{ __('permissions.index.delete') }}
                                     </button>
                                 </div>
                             </td>
@@ -159,7 +159,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M9 17v-6a2 2 0 012-2h6" />
                                     </svg>
-                                    No permissions found.
+                                    {{ __('permissions.index.empty') }}
                                 </div>
                             </td>
                         </tr>
@@ -171,9 +171,11 @@
             {{-- Footer / Pagination --}}
             <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
                 <div class="text-xs text-gray-600">
-                    Showing <span class="font-medium">{{ $permissions->firstItem() ?? 0 }}</span> to
-                    <span class="font-medium">{{ $permissions->lastItem() ?? 0 }}</span> of
-                    <span class="font-medium">{{ $permissions->total() }}</span> results
+                    {{ __('Showing :from to :to of :total results', [
+                        'from' => $permissions->firstItem() ?? 0,
+                        'to' => $permissions->lastItem() ?? 0,
+                        'total' => $permissions->total()
+                    ]) }}
                 </div>
                 <div>{{ $permissions->withQueryString()->links() }}</div>
             </div>
@@ -185,19 +187,19 @@
             <div x-cloak x-show="modal.open" x-transition
                 class="w-full max-w-md rounded-xl bg-white shadow-xl border border-gray-200">
                 <div class="px-5 py-4 border-b border-gray-200">
-                    <h3 class="text-base font-semibold text-gray-900">Delete permission</h3>
+                    <h3 class="text-base font-semibold text-gray-900">{{ __('permissions.index.delete_title') }}</h3>
                 </div>
                 <div class="px-5 py-4 text-sm text-gray-700">
-                    Are you sure you want to delete
-                    <span class="font-semibold text-gray-900" x-text="modal.name"></span>? This action cannot be undone.
+                    {{ __('permissions.index.delete_confirm') }}
+                    <span class="font-semibold text-gray-900" x-text="modal.name"></span>.
                 </div>
                 <div class="px-5 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-end gap-2">
                     <button @click="modal.open=false"
                         class="px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50">
-                        Cancel
+                        {{ __('permissions.index.cancel') }}
                     </button>
                     <button @click="submitDelete()" class="px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">
-                        Delete
+                        {{ __('permissions.index.delete') }}
                     </button>
                 </div>
             </div>

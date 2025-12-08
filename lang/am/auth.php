@@ -62,4 +62,12 @@ return [
     'confirm_new_password' => 'አዲስ የይለፍ ቃል ደግመው ያስገቡ',
     'save_changes' => 'ለውጦችን መዝግብ',
     'back' => 'ተመለስ',
+
+    // Added localization for role selection on login
+    'sign_in_as' => 'እንደ ',
+    'role_applicant' => 'አመልካች',
+    'role_respondent' => 'መልስ ሰጪ',
+    'applicant_panel_label' => 'የአመልካች መግቢያ',
+    'respondent_panel_label' => 'የመልስ ሰጪ መግቢያ',
+
 ];

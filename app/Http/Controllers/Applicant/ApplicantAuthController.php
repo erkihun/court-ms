@@ -74,7 +74,10 @@ class ApplicantAuthController extends Controller
 
     public function showLogin()
     {
-        return view('applicant.auth.login');
+        // Always reset acting-as flag on login screen
+        session()->forget('acting_as_respondent');
+        $asRespondentNav = request('login_as') === 'respondent';
+        return view('applicant.auth.login', compact('asRespondentNav'));
     }
 
     public function login(Request $request)
@@ -92,7 +95,9 @@ class ApplicantAuthController extends Controller
                 ], 422);
             }
 
-            return back()->withErrors(['email' => 'This account has been deactivated.'])->onlyInput('email');
+            return back()
+                ->withErrors(['email' => 'This account has been deactivated.'])
+                ->withInput($request->only('email', 'login_as'));
         }
 
         $remember = $request->boolean('remember');
@@ -107,50 +112,56 @@ class ApplicantAuthController extends Controller
                 ], 429);
             }
 
-            return back()->withErrors(['email' => $message])->onlyInput('email');
+            return back()
+                ->withErrors(['email' => $message])
+                ->withInput($request->only('email', 'login_as'));
         }
 
         $credentials['is_active'] = true;
 
-        if (Auth::guard('applicant')->attempt($credentials, $remember)) {
-            $request->session()->regenerate();
+        $isRespondentMode = $request->input('login_as') === 'respondent';
 
-            /** @var Applicant|null $user */
-            $user = Auth::guard('applicant')->user();
-
-            if ($user && !$user->hasVerifiedEmail()) {
-                try {
-                    $user->sendEmailVerificationNotification();
-                } catch (\Throwable $e) {
-                    Log::error('[VerifyEmail] resend on login failed: ' . $e->getMessage());
-                }
-
-                $redirectResponse = redirect()->route('applicant.verification.notice')
-                    ->with('success', 'Verification link sent.');
-
-                if ($request->expectsJson()) {
-                    return response()->json([
-                        'redirect' => $redirectResponse->getTargetUrl(),
-                        'message'  => 'Verification link sent.',
-                    ]);
-                }
-
-                return $redirectResponse;
-            }
-
-            $successResponse = redirect()->intended(route('applicant.dashboard'))
-                ->with('success', 'Signed in.');
-
-            RateLimiter::clear($throttleKey);
-
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'redirect' => $successResponse->getTargetUrl(),
-                    'message'  => 'Signed in.',
+        // 1) If logging in as respondent, ensure an applicant record exists and log in
+        if ($isRespondentMode) {
+            $applicant = Applicant::where('email', $credentials['email'])->first();
+            if (!$applicant) {
+                $applicant = Applicant::create([
+                    'first_name' => $existing?->first_name ?? '',
+                    'middle_name' => $existing?->middle_name ?? '',
+                    'last_name' => $existing?->last_name ?? '',
+                    'gender' => $existing?->gender ?? null,
+                    'position' => $existing?->position ?? '',
+                    'organization_name' => $existing?->organization_name ?? '',
+                    'phone' => $existing?->phone ?? ('resp_' . uniqid()),
+                    'email' => $credentials['email'],
+                    'address' => $existing?->address ?? '',
+                    'national_id_number' => $existing?->national_id_number ?? '',
+                    'password' => Hash::make($credentials['password']),
+                    'is_active' => true,
                 ]);
             }
 
-            return $successResponse;
+            if (Hash::check($credentials['password'], $applicant->password) || Auth::guard('applicant')->attempt($credentials, $remember)) {
+                Auth::guard('applicant')->login($applicant, $remember);
+                $request->session()->regenerate();
+                $request->session()->put('acting_as_respondent', true);
+                RateLimiter::clear($throttleKey);
+                $target = route('respondent.dashboard');
+                return $request->expectsJson()
+                    ? response()->json(['redirect' => $target, 'message' => 'Signed in.'])
+                    : redirect($target)->with('success', 'Signed in.');
+            }
+        }
+
+        // 2) Normal applicant login
+        if (Auth::guard('applicant')->attempt($credentials, $remember)) {
+            $request->session()->regenerate();
+            $request->session()->forget('acting_as_respondent');
+            RateLimiter::clear($throttleKey);
+            $target = route('applicant.dashboard');
+            return $request->expectsJson()
+                ? response()->json(['redirect' => $target, 'message' => 'Signed in.'])
+                : redirect($target)->with('success', 'Signed in.');
         }
 
         RateLimiter::hit($throttleKey, 300);
@@ -161,7 +172,9 @@ class ApplicantAuthController extends Controller
             ], 422);
         }
 
-        return back()->withErrors(['email' => 'Invalid credentials.'])->onlyInput('email');
+        return back()
+            ->withErrors(['email' => 'Invalid credentials.'])
+            ->withInput($request->only('email', 'login_as'));
     }
 
     public function logout(Request $request)
@@ -170,6 +183,6 @@ class ApplicantAuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('applicant.login')->with('success', 'You have been logged out.');
+        return redirect()->route('applicant.login');
     }
 }

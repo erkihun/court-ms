@@ -8,7 +8,7 @@ $settings = null;
 $bannerPath = $settings?->banner_path ?? null;
 @endphp
 
-<x-applicant-layout title="{{ __('auth.registration_title') }}">
+<x-applicant-layout title="{{ __('auth.registration_title') }}" :hide-footer="true" :as-respondent-nav="($asRespondentNav ?? false)">
     @if($bannerPath)
     @push('head')
     <style>

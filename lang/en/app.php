@@ -20,6 +20,7 @@ return [
     'Case Types' => 'Case Types',
     'Notifications' => 'Notifications',
     'Users' => 'Users',
+    'Decisions' => 'Decisions',
     'Permissions' => 'Permissions',
     'Roles' => 'Roles',
     'Teams' => 'Teams',
@@ -80,6 +81,10 @@ return [
     'login' => 'Login',
     'menu' => 'Menu',
     'language' => 'Language',
+    'switch_to_respondent' => 'Switch to Accused',
+    'switch_to_respondent_success' => 'You are now signed in as an accused. This window now shows the accused dashboard.',
+    'switch_to_applicant' => 'Switch to Plaintiff',
+    'switch_to_applicant_success' => 'You are now signed in as a plaintiff.',
     'all_rights_reserved' => 'All rights reserved',
     'Language updated' => 'Language updated successfully.',
     // Dynamic status labels

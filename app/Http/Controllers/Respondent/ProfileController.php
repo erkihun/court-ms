@@ -11,8 +11,8 @@ class ProfileController extends Controller
 {
     public function edit()
     {
-        $respondent = Auth::guard('respondent')->user();
-        return view('respondant.profile.edit', compact('respondent'));
+        $respondent = Auth::guard('applicant')->user();
+        return view('applicant.respondent.profile.edit', compact('respondent'));
     }
 
     public function update(Request $request)

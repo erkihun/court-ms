@@ -77,7 +77,7 @@ return [
     'preview' => [
         'ref_no' => 'መ/ቁ፡',
         'date' => 'ቀን፡',
-        'subject' => 'ጉዳይ፡',
+        'subject' => 'ጉዳዩ፡',
         'closing' => 'በአክብሮት',
         'cc_recipients' => 'ግልባጭ፡',
         'author_signature' => 'ፊርማ',

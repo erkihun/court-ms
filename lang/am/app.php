@@ -24,6 +24,7 @@ return [
     'Case Types' => 'የክስ አይነቶች',
     'Notifications' => 'ማስታወቂያዎች',
     'Users' => 'ተጠቃሚዎች',
+    'Decisions' => 'ውሳኔዎች',
     'Permissions' => 'ፈቃዶች',
     'Roles' => 'ሚናዎች',
     'Teams' => 'ቡድኖች',
@@ -83,6 +84,10 @@ return [
     'login' => 'ይግቡ',
     'menu' => 'ማውጫ',
     'language' => 'ቋንቋ',
+    'switch_to_respondent' => 'እንደ መልስ ሰጪ ቀይር',
+    'switch_to_respondent_success' => 'ወደ መልስ ሰጪ ተግባር ተቀይሯል።',
+    'switch_to_applicant' => 'እንደ አመልካች ቀይር',
+    'switch_to_applicant_success' => 'ወደ አመልካች ተግባር ተቀይሯል።',
     'all_rights_reserved' => 'ሁሉም መብቶች የተጠበቁ ናቸው',
     'Language updated' => 'ቋንቋ ተቀይሯል።',
     'status' => [

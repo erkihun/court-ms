@@ -5,14 +5,21 @@ $settings = \App\Models\SystemSetting::query()->first();
 } catch (\Throwable $e) {
 $settings = null;
 }
+
 $brandName = $settings?->app_name ?? config('app.name', 'Court MS');
 $logoPath = $settings?->logo_path ?? null;
 $faviconPath = $settings?->favicon_path ?? null;
 $bannerPath = $settings?->banner_path ?? null;
+
+$loginAs = old('login_as', request('login_as', 'applicant'));
+$isRespondent = $loginAs === 'respondent';
+$applicantPanelLabel = __('auth.applicant_panel_label');
+$respondentPanelLabel = __('auth.respondent_panel_label');
+$panelLabel = $isRespondent ? $respondentPanelLabel : $applicantPanelLabel;
 @endphp
 
-<x-applicant-layout title="{{ __('auth.login_title') }}" :hide-footer="true">
-
+@php session()->forget('acting_as_respondent'); @endphp
+<x-applicant-layout title="{{ __('auth.login_title') }}" :hide-footer="true" :as-respondent-nav="false">
 
     {{-- Favicon --}}
     @if($faviconPath)
@@ -20,36 +27,31 @@ $bannerPath = $settings?->banner_path ?? null;
     <link rel="icon" href="{{ asset('storage/'.$faviconPath) }}">
     @endpush
     @endif
+
     @if($bannerPath)
     @push('head')
     <style>
         body {
             background: url("{{ asset('storage/'.$bannerPath) }}") center / cover no-repeat,
             #e5e7eb;
-
             backdrop-filter: blur(8px);
-
-
         }
 
         .guest-container {
             background: transparent;
-
         }
-
 
         .applicant-login-card {
             backdrop-filter: blur(4px);
-            opacity: 0.8;
-            background-color: rgba(255, 255, 255, 0.92);
+            opacity: 0.9;
+            background-color: rgba(255, 255, 255, 0.94);
         }
     </style>
     @endpush
     @endif
 
     <div class="max-w-md mx-auto w-full space-y-8 flex items-center justify-center min-h-[70vh]">
-
-        <div class="applicant-login-card  w-full max-w-md bg-white rounded-xl border border-slate-200 shadow-lg px-7 py-8">
+        <div class="applicant-login-card w-full max-w-md bg-white rounded-xl border border-slate-200 shadow-lg px-7 py-8">
 
             {{-- HEADER --}}
             <div class="flex items-center justify-center gap-3">
@@ -65,30 +67,60 @@ $bannerPath = $settings?->banner_path ?? null;
 
                 <div class="text-left">
                     <h1 class="text-2xl font-bold text-gray-900">{{ $brandName }}</h1>
-                    <p class="text-xs font-semibold uppercase tracking-wider text-indigo-600">Applicant Login Panel</p>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-indigo-600" data-panel-label>{{ $panelLabel }}</p>
                 </div>
             </div>
 
-            {{-- ERROR MESSAGE --}}
-            <div
-                data-login-errors
-                @class([
-                    'mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-sm',
-                    'hidden' => !$errors->any(),
-                ])
-                aria-live="assertive">
+            {{-- FLASH --}}
+            @if (session('success'))
+            <div class="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                {{ session('success') }}
+            </div>
+            @endif
+
+            {{-- ERRORS --}}
+            @if ($errors->any())
+            <div class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 <ul class="list-disc pl-5 space-y-1">
                     @foreach ($errors->all() as $e)
                     <li>{{ $e }}</li>
                     @endforeach
                 </ul>
             </div>
+            @endif
 
             {{-- FORM --}}
-            <form method="POST" action="{{ route('applicant.login.submit') }}" class="space-y-6" data-ajax-login>
+            <form method="POST" action="{{ route('applicant.login.submit') }}" class="space-y-6 mt-6">
                 @csrf
 
-                {{-- EMAIL --}}
+                {{-- Role selection --}}
+                <div class="space-y-1">
+                    <label for="login_as" class="block text-sm font-semibold text-slate-800">
+                        {{ __('auth.sign_in_as') }}
+                    </label>
+
+                    <div class="relative">
+                        <select id="login_as" name="login_as"
+                            class="mt-1 w-full appearance-none px-3 py-2.5 rounded-lg border border-slate-300 bg-white text-sm
+                   font-medium text-slate-700 cursor-pointer
+                   focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
+                   hover:border-slate-400 transition">
+
+                            <option value="applicant" {{ $loginAs === 'applicant' ? 'selected' : '' }}>{{ __('auth.role_applicant') }}</option>
+                            <option value="respondent" {{ $loginAs === 'respondent' ? 'selected' : '' }}>{{ __('auth.role_respondent') }}</option>
+                        </select>
+
+                        {{-- Dropdown icon --}}
+                        <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6" />
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+
+
                 <div>
                     <label class="block text-sm font-medium text-slate-800" for="email">
                         {{ __('auth.email') }}
@@ -103,7 +135,6 @@ $bannerPath = $settings?->banner_path ?? null;
                                focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                 </div>
 
-                {{-- PASSWORD --}}
                 <div>
                     <label class="block text-sm font-medium text-slate-800" for="password">
                         {{ __('auth.password') }}
@@ -125,7 +156,6 @@ $bannerPath = $settings?->banner_path ?? null;
                             aria-label="{{ __('auth.show_password') }}"
                             aria-pressed="false">
 
-                            {{-- Eye Icon --}}
                             <svg xmlns="http://www.w3.org/2000/svg"
                                 class="h-5 w-5"
                                 viewBox="0 0 24 24"
@@ -134,12 +164,10 @@ $bannerPath = $settings?->banner_path ?? null;
                                     d="M2.5 12.5S5.5 6 12 6s9.5 6.5 9.5 6.5S18.5 19 12 19 2.5 12.5 2.5 12.5z" />
                                 <circle cx="12" cy="12.5" r="2.5" />
                             </svg>
-
                         </button>
                     </div>
                 </div>
 
-                {{-- REMEMBER + REGISTER --}}
                 <div class="flex items-center justify-between text-sm">
                     <label class="inline-flex items-center gap-2 text-slate-700">
                         <input type="checkbox" name="remember"
@@ -153,7 +181,6 @@ $bannerPath = $settings?->banner_path ?? null;
                     </a>
                 </div>
 
-                {{-- FORGOT PASSWORD --}}
                 <div class="text-right text-sm">
                     <a href="{{ route('applicant.password.request') }}"
                         class="text-slate-600 hover:text-slate-800 underline underline-offset-2">
@@ -161,7 +188,6 @@ $bannerPath = $settings?->banner_path ?? null;
                     </a>
                 </div>
 
-                {{-- SUBMIT BUTTON --}}
                 <button
                     class="mt-2 w-full rounded-lg px-4 py-2.5 bg-orange-500 text-white text-sm font-semibold shadow-sm
                            hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-1">
@@ -171,7 +197,6 @@ $bannerPath = $settings?->banner_path ?? null;
         </div>
     </div>
 
-    {{-- SCRIPTS --}}
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('[data-toggle-password]').forEach(btn => {
@@ -185,83 +210,17 @@ $bannerPath = $settings?->banner_path ?? null;
                 });
             });
 
-            const loginForm = document.querySelector('form[data-ajax-login]');
-            const errorContainer = document.querySelector('[data-login-errors]');
-            const errorList = errorContainer?.querySelector('ul');
-
-            const renderErrors = (errors) => {
-                if (!errorContainer || !errorList) return;
-                const messages = [];
-                if (errors && typeof errors === 'object') {
-                    Object.values(errors).forEach(value => {
-                        if (Array.isArray(value)) {
-                            value.forEach(item => {
-                                if (item) messages.push(String(item));
-                            });
-                        } else if (value) {
-                            messages.push(String(value));
-                        }
-                    });
-                }
-                if (!messages.length) {
-                    errorList.innerHTML = '';
-                    errorContainer.classList.add('hidden');
-                    return;
-                }
-                errorList.innerHTML = '';
-                messages.forEach(message => {
-                    const li = document.createElement('li');
-                    li.textContent = message;
-                    errorList.appendChild(li);
-                });
-                errorContainer.classList.remove('hidden');
-            };
-
-            if (!loginForm) return;
-
-            loginForm.addEventListener('submit', async (event) => {
-                event.preventDefault();
-                const submitButton = loginForm.querySelector('button[type="submit"]');
-                const formData = new FormData(loginForm);
-
-                errorList?.innerHTML = '';
-                errorContainer?.classList.add('hidden');
-
-                if (submitButton) {
-                    submitButton.setAttribute('disabled', 'true');
-                }
-
-                try {
-                    const response = await fetch(loginForm.action, {
-                        method: loginForm.method,
-                        body: formData,
-                        headers: {
-                            'Accept': 'application/json',
-                        },
-                        credentials: 'same-origin',
-                    });
-
-                    const payload = await response.json().catch(() => null);
-
-                    if (response.ok) {
-                        const redirectUrl = payload?.redirect;
-                        if (redirectUrl) {
-                            window.location.href = redirectUrl;
-                            return;
-                        }
-                        window.location.reload();
-                        return;
-                    }
-
-                    const fallbackMessage = payload?.message || 'Login failed. Please check your credentials.';
-                    renderErrors(payload?.errors ?? { general: [fallbackMessage] });
-                } catch (error) {
-                    console.error(error);
-                    renderErrors({ general: ['Unable to complete login. Please try again.'] });
-                } finally {
-                    submitButton?.removeAttribute('disabled');
-                }
-            });
+            const roleSelect = document.getElementById('login_as');
+            const panelLabel = document.querySelector('[data-panel-label]');
+            if (roleSelect && panelLabel) {
+                const updateLabel = () => {
+                    panelLabel.textContent = roleSelect.value === 'respondent' ?
+                        @json($respondentPanelLabel) :
+                        @json($applicantPanelLabel);
+                };
+                roleSelect.addEventListener('change', updateLabel);
+                updateLabel();
+            }
         });
     </script>
 

@@ -75,6 +75,11 @@
                     <x-nav-link :href="route('cases.index')" :active="request()->routeIs('cases.*')">
                         {{ __('Cases') }}
                     </x-nav-link>
+                    @if(function_exists('userHasPermission') ? userHasPermission('decision.view') : (auth()->user()?->hasPermission('decision.view') ?? false))
+                    <x-nav-link :href="route('decisions.index')" :active="request()->routeIs('decisions.*')">
+                        {{ __('decisions.index.title') }}
+                    </x-nav-link>
+                    @endif
                 </div>
             </div>
 

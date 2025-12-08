@@ -221,7 +221,7 @@
                         <label class="flex items-start gap-2 text-sm text-slate-700 mt-3">
                             <input type="checkbox" name="certify_appeal" value="1"
                                 class="mt-1 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
-                                {{ old('certify_appeal') ? 'checked' : '' }}
+                                {{ old('certify_appeal', true) ? 'checked' : '' }}
                                 :disabled="!canEdit" {{ $editable ? '' : 'disabled' }} required>
                             <span>I certify the validity of my appeal in accordance with F/S/S/No. 92.</span>
                         </label>
@@ -347,7 +347,7 @@
                 <label class="mt-4 flex items-start gap-2 text-sm text-slate-700">
                     <input type="checkbox" name="certify_evidence" value="1"
                         class="mt-1 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
-                        {{ old('certify_evidence') ? 'checked' : '' }}
+                        {{ old('certify_evidence', true) ? 'checked' : '' }}
                         :disabled="!canEdit" {{ $editable ? '' : 'disabled' }} required>
                     <span>I certify that the evidence I have presented is true in accordance with F.S./S.H./No. 92.</span>
                 </label>

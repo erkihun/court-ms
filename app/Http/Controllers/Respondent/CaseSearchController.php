@@ -4,25 +4,50 @@ namespace App\Http\Controllers\Respondent;
 
 use App\Http\Controllers\Controller;
 use App\Mail\RespondentViewedCaseMail;
+use App\Models\Respondent;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Session;
 
 class CaseSearchController extends Controller
 {
     public function index(Request $request)
     {
+        Session::put('acting_as_respondent', true);
         $caseNumber = trim((string) $request->get('case_number', ''));
         $case = null;
 
         if ($caseNumber !== '') {
-            $case = DB::table('court_cases')->where('case_number', $caseNumber)->first();
+            $case = DB::table('court_cases')
+                ->select('id', 'case_number', 'title', 'status', 'created_at', 'applicant_id')
+                ->where('case_number', $caseNumber)
+                ->first();
+
+            // Prevent applicants from viewing/searching their own cases while in respondent mode.
+            $applicantId = Auth::guard('applicant')->id();
+            if ($case && $applicantId && (int) $case->applicant_id === (int) $applicantId) {
+                $case = null;
+            }
 
             if ($case) {
                 $history = collect(session('respondent_viewed_cases', []));
                 $history = $history->prepend($caseNumber)->unique()->take(12);
                 session(['respondent_viewed_cases' => $history->values()->all()]);
+
+                // If the respondent is signed in, immediately record the view so it appears in "My Cases".
+                if (auth('applicant')->check()) {
+                    $respondent = $this->resolveActingRespondent();
+                    if ($respondent) {
+                        $this->recordRespondentCaseView(
+                            $case->id,
+                            $respondent->id,
+                            $case->case_number ?? null
+                        );
+                    }
+                }
             }
         }
 
@@ -34,12 +59,14 @@ class CaseSearchController extends Controller
 
     public function show(string $caseNumber)
     {
+        Session::put('acting_as_respondent', true);
         $case = DB::table('court_cases as c')
             ->leftJoin('case_types as ct', 'ct.id', '=', 'c.case_type_id')
             ->leftJoin('applicants as a', 'a.id', '=', 'c.applicant_id')
             ->select(
                 'c.*',
                 'ct.name as case_type',
+                'c.applicant_id',
                 'a.first_name as applicant_first_name',
                 'a.middle_name as applicant_middle_name',
                 'a.last_name as applicant_last_name',
@@ -51,7 +78,13 @@ class CaseSearchController extends Controller
 
         abort_if(!$case, 404);
 
-        if (auth('respondent')->check()) {
+        // Prevent applicants from viewing/searching their own cases while in respondent mode.
+        $applicantId = Auth::guard('applicant')->id();
+        if ($applicantId && (int) $case->applicant_id === (int) $applicantId) {
+            abort(404);
+        }
+
+        if (auth('applicant')->check()) {
             $this->handleRespondentCaseView($case);
         }
 
@@ -110,7 +143,7 @@ class CaseSearchController extends Controller
 
     private function handleRespondentCaseView(object $case): void
     {
-        $respondent = auth('respondent')->user();
+        $respondent = $this->resolveActingRespondent();
         if (!$respondent) {
             return;
         }
@@ -217,15 +250,16 @@ class CaseSearchController extends Controller
 
     public function myCases()
     {
-        $respondentId = auth('respondent')->id();
+        Session::put('acting_as_respondent', true);
+        $respondent = $this->resolveActingRespondent();
         $cases = collect();
 
-        if ($respondentId) {
+        if ($respondent) {
             $cases = DB::table('respondent_case_views as r')
                 ->join('court_cases as c', 'c.id', '=', 'r.case_id')
                 ->leftJoin('case_types as ct', 'ct.id', '=', 'c.case_type_id')
                 ->select('c.*', 'ct.name as case_type', 'r.viewed_at')
-                ->where('r.respondent_id', $respondentId)
+                ->where('r.respondent_id', $respondent->id)
                 ->orderByDesc('r.viewed_at')
                 ->get();
         }
@@ -233,5 +267,57 @@ class CaseSearchController extends Controller
         return view('applicant.respondent.cases.my', [
             'cases' => $cases,
         ]);
+    }
+
+    private function resolveActingRespondent(): ?Respondent
+    {
+        $applicant = Auth::guard('applicant')->user();
+        if (!$applicant) {
+            return null;
+        }
+
+        $respondent = Respondent::where('email', $applicant->email)->first();
+        if (!$respondent) {
+            $phone = $applicant->phone ?? 'resp_' . substr(md5((string) microtime(true)), 0, 12);
+            if (Respondent::where('phone', $phone)->where('email', '!=', $applicant->email)->exists()) {
+                $phone = 'resp_' . substr(md5(uniqid('', true)), 0, 12);
+            }
+
+            $respondent = Respondent::create([
+                'first_name'        => $applicant->first_name ?? '',
+                'middle_name'       => $applicant->middle_name ?? '',
+                'last_name'         => $applicant->last_name ?? '',
+                'gender'            => $applicant->gender ?? null,
+                'position'          => $applicant->position ?? '',
+                'organization_name' => $applicant->organization_name ?? '',
+                'address'           => $applicant->address ?? '',
+                'national_id'       => $this->applicantNationalId($applicant),
+                'phone'             => $phone,
+                'email'             => $applicant->email,
+                'password'          => $applicant->password,
+            ]);
+        } else {
+            $dirty = false;
+            $maybeNationalId = $this->applicantNationalId($applicant);
+            if (!$respondent->national_id && $maybeNationalId) {
+                $respondent->national_id = $maybeNationalId;
+                $dirty = true;
+            }
+            if ($dirty) {
+                $respondent->save();
+            }
+        }
+
+        return $respondent;
+    }
+
+    private function applicantNationalId($applicant): ?string
+    {
+        // Normalize to digits-only and trim to 16 characters to respect DB column length.
+        $digits = preg_replace('/\D/', '', (string) ($applicant->getRawOriginal('national_id_number') ?? $applicant->national_id_number ?? ''));
+        if ($digits === '') {
+            return null;
+        }
+        return substr($digits, 0, 16);
     }
 }

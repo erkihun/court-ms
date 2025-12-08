@@ -8,6 +8,7 @@ use App\Http\Controllers\Applicant\ApplicantAuthController;
 use App\Http\Controllers\Applicant\ApplicantCaseController;
 use App\Http\Controllers\Applicant\ApplicantDashboardController;
 use App\Http\Controllers\Applicant\ApplicantProfileController;
+use App\Http\Controllers\Applicant\ApplicantRoleSwitchController;
 use App\Http\Controllers\Applicant\ApplicantNotificationController;
 use App\Http\Controllers\Applicant\ApplicantPasswordController;
 use App\Http\Controllers\Applicant\ApplicantVerificationController;
@@ -31,6 +32,7 @@ use App\Http\Controllers\Admin\AdminNotificationController;
 use App\Http\Controllers\Admin\AppealController;
 use App\Http\Controllers\Admin\LanguageController;
 use App\Http\Controllers\Admin\CaseTypeController;
+use App\Http\Controllers\Admin\DecisionController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\SystemSettingController;
 use App\Http\Controllers\Admin\LetterTemplateController;
@@ -70,13 +72,13 @@ Route::middleware(SetLocale::class)->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::middleware('guest:respondent')->group(function () {
-        Route::get('/respondent/register', [RespondentAuthController::class, 'showRegister'])->name('respondent.register');
-        Route::post('/respondent/register', [RespondentAuthController::class, 'register'])->name('respondent.register.submit');
-        Route::get('/respondent/login', [RespondentAuthController::class, 'showLogin'])->name('respondent.login');
-        Route::post('/respondent/login', [RespondentAuthController::class, 'login'])->name('respondent.login.submit');
+        Route::get('/respondent/register', fn () => redirect()->route('applicant.login', ['login_as' => 'respondent']))->name('respondent.register');
+        Route::post('/respondent/register', fn () => redirect()->route('applicant.login', ['login_as' => 'respondent']))->name('respondent.register.submit');
+        Route::get('/respondent/login', fn () => redirect()->route('applicant.login', ['login_as' => 'respondent']))->name('respondent.login');
+        Route::post('/respondent/login', fn () => redirect()->route('applicant.login', ['login_as' => 'respondent']))->name('respondent.login.submit');
     });
 
-    Route::middleware('auth:respondent')->group(function () {
+    Route::middleware(['auth:applicant'])->group(function () {
         Route::post('/respondent/logout', [RespondentAuthController::class, 'logout'])->name('respondent.logout');
         Route::get('/respondent/dashboard', [RespondentDashboardController::class, 'index'])->name('respondent.dashboard');
         Route::get('/respondent/case-search/results', [CaseSearchController::class, 'myCases'])->name('respondent.cases.my');
@@ -92,6 +94,7 @@ Route::middleware(SetLocale::class)->group(function () {
         Route::patch('/respondent/profile/password', [ProfileController::class, 'updatePassword'])->name('respondent.profile.password');
         Route::post('/respondent/notifications/mark-one', [RespondentNotificationController::class, 'markOne'])->name('respondent.notifications.markOne');
         Route::post('/respondent/notifications/mark-all', [RespondentNotificationController::class, 'markAll'])->name('respondent.notifications.markAll');
+        Route::post('/respondent/switch-to-applicant', [RespondentAuthController::class, 'switchToApplicant'])->name('respondent.switchToApplicant');
     });
 
     Route::get('/respondent/case-search', [CaseSearchController::class, 'index'])->name('respondent.case.search');
@@ -146,6 +149,8 @@ Route::middleware(SetLocale::class)->group(function () {
         // Profile
         Route::get('/applicant/profile',  [ApplicantProfileController::class, 'edit'])->name('applicant.profile.edit');
         Route::patch('/applicant/profile', [ApplicantProfileController::class, 'update'])->name('applicant.profile.update');
+        Route::post('/applicant/switch-to-respondent', ApplicantRoleSwitchController::class)
+            ->name('applicant.switchToRespondent');
 
         // Cases (only applicant's own)
         Route::get('/applicant/cases',            [ApplicantCaseController::class, 'index'])->name('applicant.cases.index');
@@ -348,6 +353,28 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::post('/appeals/{appeal}/submit', [AppealController::class, 'submit'])->middleware('perm:appeals.edit')->name('appeals.submit');
             Route::post('/appeals/{appeal}/decide', [AppealController::class, 'decide'])->middleware('perm:appeals.decide')->name('appeals.decide');
 
+            /*
+             * Decisions (admin)
+             */
+            Route::get('/decisions', [DecisionController::class, 'index'])
+                ->middleware('perm:decision.view')
+                ->name('decisions.index');
+            Route::get('/decisions/create', [DecisionController::class, 'create'])
+                ->middleware('perm:decision.create')
+                ->name('decisions.create');
+            Route::post('/decisions', [DecisionController::class, 'store'])
+                ->middleware('perm:decision.create')
+                ->name('decisions.store');
+            Route::get('/decisions/{decision}/edit', [DecisionController::class, 'edit'])
+                ->middleware('perm:decision.update')
+                ->name('decisions.edit');
+            Route::patch('/decisions/{decision}', [DecisionController::class, 'update'])
+                ->middleware('perm:decision.update')
+                ->name('decisions.update');
+            Route::delete('/decisions/{decision}', [DecisionController::class, 'destroy'])
+                ->middleware('perm:decision.delete')
+                ->name('decisions.destroy');
+
             // Appeal documents
             Route::post('/appeals/{appeal}/documents',         [AppealController::class, 'uploadDoc'])->middleware('perm:appeals.edit')->name('appeals.docs.upload');
             Route::delete('/appeals/{appeal}/documents/{doc}', [AppealController::class, 'deleteDoc'])->middleware('perm:appeals.edit')->name('appeals.docs.delete');
@@ -366,39 +393,55 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::delete('/case-types/{id}',   [CaseTypeController::class, 'destroy'])->name('case-types.delete');
 
             // Letter templates
-            Route::resource('letter-templates', LetterTemplateController::class)
-                ->except('show')
-                ->middleware('perm:templates.manage')
-                ->names('letter-templates');
+            // Letter templates with granular permissions
+            Route::get('/letter-templates', [LetterTemplateController::class, 'index'])
+                ->middleware('perm:letters.templet.view')
+                ->name('letter-templates.index');
+            Route::get('/letter-templates/create', [LetterTemplateController::class, 'create'])
+                ->middleware('perm:letters.templet.create')
+                ->name('letter-templates.create');
+            Route::post('/letter-templates', [LetterTemplateController::class, 'store'])
+                ->middleware('perm:letters.templet.create')
+                ->name('letter-templates.store');
+            Route::get('/letter-templates/{letter_template}/edit', [LetterTemplateController::class, 'edit'])
+                ->middleware('perm:letters.templet.update')
+                ->name('letter-templates.edit');
+            Route::patch('/letter-templates/{letter_template}', [LetterTemplateController::class, 'update'])
+                ->middleware('perm:letters.templet.update')
+                ->name('letter-templates.update');
+            Route::delete('/letter-templates/{letter_template}', [LetterTemplateController::class, 'destroy'])
+                ->middleware('perm:letters.templet.delete')
+                ->name('letter-templates.destroy');
 
             Route::resource('terms', TermsAndConditionsController::class)
                 ->except(['show'])
                 ->middleware('perm:settings.manage')
                 ->names('terms');
 
+            // Letters with granular permissions
             Route::get('/letters/compose', [LetterComposerController::class, 'create'])
-                ->middleware('perm:cases.edit')
+                ->middleware('perm:letters.create')
                 ->name('letters.compose');
             Route::get('/letters', [LetterController::class, 'index'])
-                ->middleware('perm:cases.edit')
+                ->middleware('perm:letters.view')
                 ->name('letters.index');
             Route::post('/letters', [LetterController::class, 'store'])
-                ->middleware('perm:cases.edit')
+                ->middleware('perm:letters.create')
                 ->name('letters.store');
             Route::get('/letters/{letter}', [LetterController::class, 'show'])
-                ->middleware('perm:cases.edit')
+                ->middleware('perm:letters.view')
                 ->name('letters.show');
             Route::get('/letters/{letter}/edit', [LetterController::class, 'edit'])
-                ->middleware('perm:cases.edit')
+                ->middleware('perm:letters.update')
                 ->name('letters.edit');
             Route::post('/letters/{letter}/approve', [LetterController::class, 'approve'])
-                ->middleware('perm:cases.edit')
+                ->middleware('perm:letters.approve')
                 ->name('letters.approve');
             Route::patch('/letters/{letter}', [LetterController::class, 'update'])
-                ->middleware('perm:cases.edit')
+                ->middleware('perm:letters.update')
                 ->name('letters.update');
             Route::delete('/letters/{letter}', [LetterController::class, 'destroy'])
-                ->middleware('perm:cases.edit')
+                ->middleware('perm:letters.delete')
                 ->name('letters.destroy');
         });
 

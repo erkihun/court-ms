@@ -1,12 +1,12 @@
-<x-applicant-layout title="{{ __('respondent.my_cases') }}">
+<x-applicant-layout title="{{ __('respondent.my_cases') }}" :as-respondent-nav="true">
     <div class="max-w-5xl mx-auto space-y-6">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <p class="text-sm uppercase tracking-wide text-slate-500">{{ __('cases.navigation.title') }}</p>
                 <h1 class="text-2xl font-semibold text-slate-900">{{ __('respondent.my_cases') }}</h1>
             </div>
-            @if(Route::has('applicant.respondent.cases.search'))
-            <a href="{{ route('applicant.respondent.cases.search') }}"
+            @if(Route::has('respondent.case.search'))
+            <a href="{{ route('respondent.case.search') }}"
                 class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-700 text-white text-sm font-semibold hover:bg-blue-800">
                 {{ __('respondent.find_case') }}
             </a>
@@ -40,7 +40,7 @@
                             </span>
                         </div>
                     </div>
-                    <a href="{{ route('applicant.respondent.cases.show', $case->case_number) }}"
+                    <a href="{{ route('respondent.cases.show', $case->case_number) }}"
                         class="text-sm font-semibold text-blue-700 hover:underline">{{ __('respondent.view_case_details') }}</a>
                 </div>
                 <p class="text-sm text-slate-700">{{ $case->title }}</p>
@@ -53,4 +53,4 @@
         </div>
         @endif
     </div>
-</x-respondant-layout>
+</x-applicant-layout>

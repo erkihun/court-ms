@@ -1,6 +1,6 @@
 {{-- resources/views/roles/index.blade.php --}}
-<x-admin-layout title="Roles">
-    @section('page_header','Roles')
+<x-admin-layout title="{{ __('roles.index.title') }}">
+    @section('page_header', __('roles.index.title'))
     <style>[x-cloak]{display:none !important;}</style>
 
     <div x-data="rolesPage()" class="space-y-4">
@@ -8,9 +8,9 @@
         {{-- Toolbar --}}
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div class="flex items-center gap-2">
-                <span class="text-sm text-gray-600">Showing</span>
+                <span class="text-sm text-gray-600">{{ __('roles.index.showing') }}</span>
                 <span class="px-2 py-1 rounded-lg text-sm bg-gray-100 text-gray-800 border border-gray-200">
-                    {{ number_format($roles->total()) }} roles
+                    {{ number_format($roles->total()) }} {{ __('roles.index.total_roles') }}
                 </span>
             </div>
 
@@ -22,7 +22,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M12 4v16m8-8H4" />
                 </svg>
-                New Role
+                {{ __('roles.index.new_role') }}
             </a>
         </div>
     </div>
@@ -37,11 +37,11 @@
             <table class="min-w-full text-sm">
                 <thead class="bg-gray-50 text-gray-700 border-b border-gray-200 sticky top-0 z-10">
                     <tr>
-                        <th class="p-3 text-left font-medium">Name</th>
-                        <th class="p-3 text-left font-medium">Description</th>
-                        <th class="p-3 text-left font-medium">Permissions</th>
-                        <th class="p-3 text-left font-medium">Users</th>
-                        <th class="p-3 text-left w-40 font-medium">Actions</th>
+                        <th class="p-3 text-left font-medium">{{ __('roles.fields.name') }}</th>
+                        <th class="p-3 text-left font-medium">{{ __('roles.fields.description') }}</th>
+                        <th class="p-3 text-left font-medium">{{ __('roles.fields.permissions') }}</th>
+                        <th class="p-3 text-left font-medium">{{ __('roles.fields.users') }}</th>
+                        <th class="p-3 text-left w-40 font-medium">{{ __('roles.index.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -55,7 +55,7 @@
 
                         {{-- Description --}}
                         <td class="p-3 text-gray-600">
-                            <span class="line-clamp-2">{{ $r->description }}</span>
+                            <span class="line-clamp-2">{{ $r->description ?? '—' }}</span>
                         </td>
 
                         {{-- Permissions with "+N more" expander --}}
@@ -78,7 +78,7 @@
                                     @if($extra > 0)
                                     <button type="button" @click="open = !open"
                                         class="px-2 py-0.5 rounded-full text-xs border border-gray-300 text-gray-700 hover:bg-gray-50">
-                                        +{{ $extra }} more
+                                    +{{ $extra }} {{ __('roles.index.more') }}
                                     </button>
                                     @endif
                                 </div>
@@ -121,7 +121,7 @@
                                 <button
                                     @click.prevent="openDelete({ id: {{ $r->id }}, name: @js($r->name) })"
                                     class="px-2.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs">
-                                    Delete
+                                    {{ __('roles.index.delete') }}
                                 </button>
                             </div>
                         </td>
@@ -164,26 +164,25 @@
         <div x-cloak x-show="modal.open" x-transition
             class="w-full max-w-md rounded-xl bg-white shadow-xl border border-gray-200">
             <div class="px-5 py-4 border-b border-gray-200">
-                <h3 class="text-base font-semibold text-gray-900">Delete role</h3>
+                <h3 class="text-base font-semibold text-gray-900">{{ __('roles.index.delete_title') }}</h3>
             </div>
-            <div class="px-5 py-4 text-sm text-gray-700">
-                Are you sure you want to delete
-                <span class="font-semibold text-gray-900" x-text="modal.name"></span>? This action cannot be undone.
-            </div>
+                <div class="px-5 py-4 text-sm text-gray-700">
+                    {{ __('roles.index.delete_confirm') }}
+                    <span class="font-semibold text-gray-900" x-text="modal.name"></span>.
+                </div>
             <div class="px-5 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-end gap-2">
                 <button @click="modal.open=false"
                     class="px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50">
-                    Cancel
+                    {{ __('roles.index.cancel') }}
                 </button>
                 <button
                     @click="submitDelete()"
                     class="px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">
-                    Delete
+                    {{ __('roles.index.delete') }}
                 </button>
             </div>
         </div>
     </div>
-
     </div>
 
     {{-- Alpine helpers --}}

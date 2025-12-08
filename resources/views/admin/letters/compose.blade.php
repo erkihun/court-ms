@@ -70,6 +70,18 @@
                         <p class="text-xs text-gray-500 mt-1">{{ __('letters.form.recipient_company_hint') }}</p>
                     </div>
                     <div>
+                        <label class="block text-sm font-medium text-gray-700">{{ __('letters.form.case_number') }}</label>
+                        <input type="text" name="case_number" value="{{ old('case_number', $caseNumber) }}"
+                            class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 bg-gray-100 text-gray-700"
+                            placeholder="{{ __('letters.form.case_number_placeholder') }}" readonly>
+                        <p class="text-xs text-gray-500 mt-1">{{ __('letters.form.case_number_help') }}</p>
+                        @error('case_number')
+                        <p class="text-xs text-red-600 mt-1" role="alert">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
                         <label class="block text-sm font-medium text-gray-700">{{ __('letters.form.cc') }}</label>
                         <input type="text" name="cc" value="{{ $cc }}"
                             class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="{{ __('letters.form.cc_placeholder') }}">
