@@ -60,64 +60,58 @@
 
     $letterPanelOpen = $errors->has('template_id') || $errors->has('recipient_name') || $errors->has('body');
     $canWriteLetter = function_exists('userHasPermission')
-        ? userHasPermission('letters.create')
-        : (auth()->user()?->hasPermission('letters.create') ?? false);
+    ? userHasPermission('letters.create')
+    : (auth()->user()?->hasPermission('letters.create') ?? false);
     $canManageBench = function_exists('userHasPermission')
-        ? userHasPermission('bench-notes.manage')
-        : (auth()->user()?->hasPermission('bench-notes.manage') ?? false);
+    ? userHasPermission('bench-notes.manage')
+    : (auth()->user()?->hasPermission('bench-notes.manage') ?? false);
     $canViewHearings = function_exists('userHasPermission')
-        ? userHasPermission('hearing.view')
-        : (auth()->user()?->hasPermission('hearing.view') ?? true);
+    ? userHasPermission('hearing.view')
+    : (auth()->user()?->hasPermission('hearing.view') ?? true);
     $canCreateHearings = function_exists('userHasPermission')
-        ? userHasPermission('hearing.create')
-        : (auth()->user()?->hasPermission('hearing.create') ?? false);
+    ? userHasPermission('hearing.create')
+    : (auth()->user()?->hasPermission('hearing.create') ?? false);
     $canUpdateHearings = function_exists('userHasPermission')
-        ? userHasPermission('hearing.update')
-        : (auth()->user()?->hasPermission('hearing.update') ?? false);
+    ? userHasPermission('hearing.update')
+    : (auth()->user()?->hasPermission('hearing.update') ?? false);
     $canDeleteHearings = function_exists('userHasPermission')
-        ? userHasPermission('hearing.delete')
-        : (auth()->user()?->hasPermission('hearing.delete') ?? false);
+    ? userHasPermission('hearing.delete')
+    : (auth()->user()?->hasPermission('hearing.delete') ?? false);
     $canViewFiles = function_exists('userHasPermission')
-        ? userHasPermission('file.view')
-        : (auth()->user()?->hasPermission('file.view') ?? true);
+    ? userHasPermission('file.view')
+    : (auth()->user()?->hasPermission('file.view') ?? true);
     $canCreateFiles = function_exists('userHasPermission')
-        ? userHasPermission('file.create')
-        : (auth()->user()?->hasPermission('file.create') ?? false);
+    ? userHasPermission('file.create')
+    : (auth()->user()?->hasPermission('file.create') ?? false);
     $canUpdateFiles = function_exists('userHasPermission')
-        ? userHasPermission('file.update')
-        : (auth()->user()?->hasPermission('file.update') ?? false);
+    ? userHasPermission('file.update')
+    : (auth()->user()?->hasPermission('file.update') ?? false);
     $canDeleteFiles = function_exists('userHasPermission')
-        ? userHasPermission('file.delete')
-        : (auth()->user()?->hasPermission('file.delete') ?? false);
+    ? userHasPermission('file.delete')
+    : (auth()->user()?->hasPermission('file.delete') ?? false);
     $canCreateMessage = function_exists('userHasPermission')
-        ? userHasPermission('message.create')
-        : (auth()->user()?->hasPermission('message.create') ?? false);
+    ? userHasPermission('message.create')
+    : (auth()->user()?->hasPermission('message.create') ?? false);
     $selectedInlineTemplate = null;
     if(old('template_id')) {
     $selectedInlineTemplate = $letterTemplates->firstWhere('id', old('template_id'));
     }
-    $nextInlineReference = null;
-    if($selectedInlineTemplate && !is_null($selectedInlineTemplate->reference_sequence)) {
-    $nextInlineReference = implode('/', array_filter([
-    $selectedInlineTemplate->subject_prefix,
-    str_pad(($selectedInlineTemplate->reference_sequence ?? 0) + 1, 4, '0', STR_PAD_LEFT),
-    ]));
-    }
+
     $letterFieldsDisabled = false;
-        $inlineTemplatesData = $letterTemplates->mapWithKeys(function($tpl) {
-            $placeholders = $tpl->placeholders ?? [];
-            if (is_string($placeholders)) {
-                $decoded = json_decode($placeholders, true);
-                $placeholders = $decoded ?: [];
-            }
-            return [
-                $tpl->id => [
-                    'id' => $tpl->id,
-                    'title' => $tpl->title,
-                    'body' => $tpl->body,
-                    'subject' => $tpl->title,
-                    'subject_prefix' => $tpl->subject_prefix,
-                    'reference_sequence' => $tpl->reference_sequence,
+    $inlineTemplatesData = $letterTemplates->mapWithKeys(function($tpl) {
+    $placeholders = $tpl->placeholders ?? [];
+    if (is_string($placeholders)) {
+    $decoded = json_decode($placeholders, true);
+    $placeholders = $decoded ?: [];
+    }
+    return [
+    $tpl->id => [
+    'id' => $tpl->id,
+    'title' => $tpl->title,
+    'body' => $tpl->body,
+    'subject' => $tpl->title,
+    'subject_prefix' => $tpl->subject_prefix,
+
     'placeholders' => $placeholders,
     'category' => $tpl->category,
     ],
@@ -217,113 +211,116 @@
     <link rel="stylesheet" href="{{ asset('vendor/etcalander/picker/css/jquery.datepick.css') }}">
     <link rel="stylesheet" href="{{ asset('vendor/etcalander/etcalander/picker/css/ui-south-street.datepick.css') }}">
 
-@endpush
+    @endpush
 
-@push('scripts')
-<script>
-    (function() {
-        const templates = @json($inlineTemplatesData ?? []);
-        const selectEl = document.getElementById('inline-template-select');
-        const loadBtn = document.getElementById('inline-template-load');
-        const hiddenTemplate = document.getElementById('inline-template-hidden');
-        const subjectInput = document.querySelector('#write-letter-panel input[name="subject"]');
-        const refBlock = document.getElementById('inline-reference-block');
-        const refValue = document.getElementById('inline-reference-value');
-        const placeholderBlock = document.getElementById('inline-placeholders');
-        const placeholderText = document.getElementById('inline-placeholders-text');
-        const summaryBlock = document.getElementById('inline-template-summary');
-        const summaryTitle = document.getElementById('inline-template-title');
-        const summaryCategory = document.getElementById('inline-template-category');
-        const summaryExcerpt = document.getElementById('inline-template-excerpt');
-        const categoryFallback = @json(__('letters.form.category_fallback'));
+    @push('scripts')
+    <script>
+        (function() {
+            const templates = @json($inlineTemplatesData ?? []);
+            const selectEl = document.getElementById('inline-template-select');
+            const loadBtn = document.getElementById('inline-template-load');
+            const hiddenTemplate = document.getElementById('inline-template-hidden');
+            const subjectInput = document.querySelector('#write-letter-panel input[name="subject"]');
+            const refBlock = document.getElementById('inline-reference-block');
+            const refValue = document.getElementById('inline-reference-value');
+            const placeholderBlock = document.getElementById('inline-placeholders');
+            const placeholderText = document.getElementById('inline-placeholders-text');
+            const summaryBlock = document.getElementById('inline-template-summary');
+            const summaryTitle = document.getElementById('inline-template-title');
+            const summaryCategory = document.getElementById('inline-template-category');
+            const summaryExcerpt = document.getElementById('inline-template-excerpt');
+            const categoryFallback = @json(__('letters.form.category_fallback'));
 
-        const getTpl = (id) => templates[id] || templates[String(id)] || templates[Number(id)];
+            const getTpl = (id) => templates[id] || templates[String(id)] || templates[Number(id)];
 
-        const stripHtml = (html) => {
-            const div = document.createElement('div');
-            div.innerHTML = html || '';
-            return div.textContent || div.innerText || '';
-        };
+            const stripHtml = (html) => {
+                const div = document.createElement('div');
+                div.innerHTML = html || '';
+                return div.textContent || div.innerText || '';
+            };
 
-        const buildReference = (tpl) => {
-            if (!tpl || tpl.reference_sequence === null || tpl.reference_sequence === undefined) return null;
-            const next = (parseInt(tpl.reference_sequence, 10) || 0) + 1;
-            const seq = String(next).padStart(4, '0');
-            return [tpl.subject_prefix || '', seq].filter(Boolean).join('/');
-        };
+            const buildReference = (tpl) => {
+                if (!tpl || tpl.reference_sequence === null || tpl.reference_sequence === undefined) return null;
+                const next = (parseInt(tpl.reference_sequence, 10) || 0) + 1;
+                const seq = String(next).padStart(4, '0');
+                return [tpl.subject_prefix || '', seq].filter(Boolean).join('/');
+            };
 
-        const renderMeta = (tpl) => {
-            if (!tpl) {
-                placeholderBlock?.classList.add('hidden');
-                summaryBlock?.classList.add('hidden');
-                refBlock?.classList.add('hidden');
-                return;
-            }
-            const placeholders = Array.isArray(tpl.placeholders) ? tpl.placeholders : [];
-            if (placeholderBlock) {
-                if (placeholders.length) {
-                    placeholderText.textContent = placeholders.join(', ');
-                    placeholderBlock.classList.remove('hidden');
+            const renderMeta = (tpl) => {
+                if (!tpl) {
+                    placeholderBlock?.classList.add('hidden');
+                    summaryBlock?.classList.add('hidden');
+                    refBlock?.classList.add('hidden');
+                    return;
+                }
+                const placeholders = Array.isArray(tpl.placeholders) ? tpl.placeholders : [];
+                if (placeholderBlock) {
+                    if (placeholders.length) {
+                        placeholderText.textContent = placeholders.join(', ');
+                        placeholderBlock.classList.remove('hidden');
+                    } else {
+                        placeholderBlock.classList.add('hidden');
+                    }
+                }
+                if (summaryBlock) {
+                    summaryBlock.classList.remove('hidden');
+                    if (summaryTitle) summaryTitle.textContent = tpl.title || '';
+                    if (summaryCategory) summaryCategory.textContent = tpl.category || categoryFallback;
+                    if (summaryExcerpt) {
+                        const text = stripHtml(tpl.body || '');
+                        summaryExcerpt.textContent = text.length > 120 ? text.slice(0, 120) + '...' : text;
+                    }
+                }
+                if (refBlock && refValue) {
+                    const ref = buildReference(tpl);
+                    if (ref) {
+                        refValue.value = ref;
+                        refBlock.classList.remove('hidden');
+                    } else {
+                        refBlock.classList.add('hidden');
+                    }
+                }
+            };
+
+            const applyTemplate = (tpl) => {
+                if (!tpl) return;
+                if (subjectInput) subjectInput.value = tpl.subject || tpl.title || '';
+                if (hiddenTemplate) hiddenTemplate.value = tpl.id || '';
+
+                const body = tpl.body || '';
+                const editor = tinymce.get('letter-body-editor');
+                if (editor) {
+                    editor.setContent(body);
+                    editor.focus();
                 } else {
-                    placeholderBlock.classList.add('hidden');
+                    const textarea = document.getElementById('letter-body-editor');
+                    if (textarea) textarea.value = body;
                 }
-            }
-            if (summaryBlock) {
-                summaryBlock.classList.remove('hidden');
-                if (summaryTitle) summaryTitle.textContent = tpl.title || '';
-                if (summaryCategory) summaryCategory.textContent = tpl.category || categoryFallback;
-                if (summaryExcerpt) {
-                    const text = stripHtml(tpl.body || '');
-                    summaryExcerpt.textContent = text.length > 120 ? text.slice(0, 120) + '...' : text;
+                renderMeta(tpl);
+            };
+
+            const handleLoad = () => {
+                const id = selectEl?.value;
+                if (!id) {
+                    alert(@json(__('letters.form.select_placeholder')));
+                    return;
                 }
+                const tpl = getTpl(id);
+                applyTemplate(tpl);
+            };
+
+            selectEl?.addEventListener('change', handleLoad);
+            loadBtn?.addEventListener('click', (e) => {
+                e.preventDefault();
+                handleLoad();
+            });
+
+            if (selectEl?.value) {
+                applyTemplate(getTpl(selectEl.value));
             }
-            if (refBlock && refValue) {
-                const ref = buildReference(tpl);
-                if (ref) {
-                    refValue.value = ref;
-                    refBlock.classList.remove('hidden');
-                } else {
-                    refBlock.classList.add('hidden');
-                }
-            }
-        };
-
-        const applyTemplate = (tpl) => {
-            if (!tpl) return;
-            if (subjectInput) subjectInput.value = tpl.subject || tpl.title || '';
-            if (hiddenTemplate) hiddenTemplate.value = tpl.id || '';
-
-            const body = tpl.body || '';
-            const editor = tinymce.get('letter-body-editor');
-            if (editor) {
-                editor.setContent(body);
-                editor.focus();
-            } else {
-                const textarea = document.getElementById('letter-body-editor');
-                if (textarea) textarea.value = body;
-            }
-            renderMeta(tpl);
-        };
-
-        const handleLoad = () => {
-            const id = selectEl?.value;
-            if (!id) {
-                alert(@json(__('letters.form.select_placeholder')));
-                return;
-            }
-            const tpl = getTpl(id);
-            applyTemplate(tpl);
-        };
-
-        selectEl?.addEventListener('change', handleLoad);
-        loadBtn?.addEventListener('click', (e) => { e.preventDefault(); handleLoad(); });
-
-        if (selectEl?.value) {
-            applyTemplate(getTpl(selectEl.value));
-        }
-    })();
-</script>
-@endpush
+        })();
+    </script>
+    @endpush
 
     <div x-data="{ letterPanel: {{ $letterPanelOpen ? 'true' : 'false' }} }">
         <div class="mb-4 p-2 rounded-xl border border-gray-200 bg-white shadow-sm">
@@ -617,17 +614,36 @@
                             @enderror
                         </div>
 
-                        <div id="inline-reference-block" class="{{ $selectedTemplate ? '' : 'hidden' }}">
+                        @if($caseNumber)
+                        @php
+                        // Find last reference with the same case number
+                        $last = \Illuminate\Support\Facades\DB::table('letters')
+                        ->where('case_number', $caseNumber)
+                        ->orderBy('id', 'desc')
+                        ->first();
+
+                        if ($last && preg_match('/\/(\d{2})$/', $last->reference_number, $m)) {
+                        $nextSeq = intval($m[1]) + 1;
+                        } else {
+                        $nextSeq = 1;
+                        }
+
+                        $seq = str_pad($nextSeq, 2, '0', STR_PAD_LEFT);
+
+                        $nextReference = "{$caseNumber}/{$seq}";
+                        @endphp
+
+                        <div>
                             <label class="block text-sm font-medium text-gray-700">Reference Number (auto)</label>
-                            <input id="inline-reference-value" type="text" value="{{ $selectedTemplate ? implode('/', array_filter([
-                                $selectedTemplate->subject_prefix,
-                                str_pad(($selectedTemplate->reference_sequence ?? 0) + 1, 4, '0', STR_PAD_LEFT),
-                            ])) : '' }}" readonly
+                            <input type="text" value="{{ $nextReference }}" readonly
                                 class="mt-1 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
+
                             <p class="text-xs text-gray-500 mt-1">
-                                Based on template prefix and next sequence; final value is assigned on save.
+                                Auto-generated from case number. Final value assigned on save.
                             </p>
                         </div>
+                        @endif
+
 
                         <div id="inline-placeholders" class="{{ $selectedTemplate && $selectedTemplate->placeholders ? '' : 'hidden' }} rounded-lg border border-dashed border-blue-300 bg-blue-50 px-4 py-3 text-xs text-blue-800">
                             <p class="font-semibold mb-1">{{ __('letters.form.placeholders_title') }}</p>
@@ -1699,92 +1715,92 @@
             </div>
         </div>
 
-<script>
-    function openReviewModal(decision) {
-        const modal = document.getElementById('review-modal');
-        document.getElementById('review-decision').value = decision;
-        document.getElementById('review-note').value = '';
-        const title = decision === 'return' ? 'Return for correction' : 'Reject case';
-        document.getElementById('review-modal-title').textContent = title;
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        document.getElementById('review-note').focus();
-    }
-
-    function closeReviewModal() {
-        const modal = document.getElementById('review-modal');
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    }
-
-    function submitReviewDecision(decision) {
-        if (decision === 'accept') {
-            document.getElementById('review-quick-decision').value = decision;
-            document.getElementById('review-quick-form').submit();
-            return;
-        }
-        openReviewModal(decision);
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        const form = document.querySelector('[data-hearing-create-form]');
-        if (!form) return;
-        const dateFieldNative = document.getElementById('hearing_date_new');
-        const dateHidden = document.getElementById('hearing_at_greg_new');
-        if (dateFieldNative && dateHidden) {
-            dateFieldNative.addEventListener('change', () => {
-                dateHidden.value = dateFieldNative.value;
-            });
-        }
-        form.addEventListener('submit', (e) => {
-            const dateField = document.getElementById('hearing_at_greg_new');
-            const timeField = document.getElementById('hearing_time_new');
-            const target = document.getElementById('hearing_at_new');
-            const dateVal = dateField?.value || dateFieldNative?.value;
-            if (!dateVal) {
-                e.preventDefault();
-                alert('Please select a hearing date.');
-                return;
+        <script>
+            function openReviewModal(decision) {
+                const modal = document.getElementById('review-modal');
+                document.getElementById('review-decision').value = decision;
+                document.getElementById('review-note').value = '';
+                const title = decision === 'return' ? 'Return for correction' : 'Reject case';
+                document.getElementById('review-modal-title').textContent = title;
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                document.getElementById('review-note').focus();
             }
-            const timeVal = (timeField?.value || '00:00');
-            target.value = `${dateVal}T${timeVal}:00`;
-        });
-    });
-</script>
 
-@push('scripts')
-<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-5sv4cQfM9H7H8z9EjoTx6FKmSQt1zG1MRd2m7y0wtGA=" crossorigin="anonymous"></script>
-<script src="{{ asset('vendor/etcalander/picker/js/jquery.plugin.min.js') }}"></script>
-<script src="{{ asset('vendor/etcalander/picker/js/jquery.datepick.js') }}"></script>
-<script>
-    $(function() {
-        const $dateInput = $('#hearing_date_new');
-        const $gregHidden = $('#hearing_at_greg_new');
+            function closeReviewModal() {
+                const modal = document.getElementById('review-modal');
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
 
-        if ($dateInput.length && $.fn.datepick) {
-            $dateInput.datepick({
-                dateFormat: 'yyyy-mm-dd',
-                showOtherMonths: true,
-                firstDay: 1,
-                minDate: new Date(),
-                showTrigger: '<button type="button" class="dp-trigger">Pick</button>',
-                onSelect: function(dates) {
-                    const selected = Array.isArray(dates) ? dates[0] : dates;
-                    if (!selected) return;
-                    const formatted = $.datepick.formatDate('yyyy-mm-dd', selected);
-                    if ($gregHidden.length) $gregHidden.val(formatted);
+            function submitReviewDecision(decision) {
+                if (decision === 'accept') {
+                    document.getElementById('review-quick-decision').value = decision;
+                    document.getElementById('review-quick-form').submit();
+                    return;
+                }
+                openReviewModal(decision);
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const form = document.querySelector('[data-hearing-create-form]');
+                if (!form) return;
+                const dateFieldNative = document.getElementById('hearing_date_new');
+                const dateHidden = document.getElementById('hearing_at_greg_new');
+                if (dateFieldNative && dateHidden) {
+                    dateFieldNative.addEventListener('change', () => {
+                        dateHidden.value = dateFieldNative.value;
+                    });
+                }
+                form.addEventListener('submit', (e) => {
+                    const dateField = document.getElementById('hearing_at_greg_new');
+                    const timeField = document.getElementById('hearing_time_new');
+                    const target = document.getElementById('hearing_at_new');
+                    const dateVal = dateField?.value || dateFieldNative?.value;
+                    if (!dateVal) {
+                        e.preventDefault();
+                        alert('Please select a hearing date.');
+                        return;
+                    }
+                    const timeVal = (timeField?.value || '00:00');
+                    target.value = `${dateVal}T${timeVal}:00`;
+                });
+            });
+        </script>
+
+        @push('scripts')
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-5sv4cQfM9H7H8z9EjoTx6FKmSQt1zG1MRd2m7y0wtGA=" crossorigin="anonymous"></script>
+        <script src="{{ asset('vendor/etcalander/picker/js/jquery.plugin.min.js') }}"></script>
+        <script src="{{ asset('vendor/etcalander/picker/js/jquery.datepick.js') }}"></script>
+        <script>
+            $(function() {
+                const $dateInput = $('#hearing_date_new');
+                const $gregHidden = $('#hearing_at_greg_new');
+
+                if ($dateInput.length && $.fn.datepick) {
+                    $dateInput.datepick({
+                        dateFormat: 'yyyy-mm-dd',
+                        showOtherMonths: true,
+                        firstDay: 1,
+                        minDate: new Date(),
+                        showTrigger: '<button type="button" class="dp-trigger">Pick</button>',
+                        onSelect: function(dates) {
+                            const selected = Array.isArray(dates) ? dates[0] : dates;
+                            if (!selected) return;
+                            const formatted = $.datepick.formatDate('yyyy-mm-dd', selected);
+                            if ($gregHidden.length) $gregHidden.val(formatted);
+                        }
+                    });
+                }
+
+                if ($dateInput.length && $gregHidden.length) {
+                    $dateInput.on('change', function() {
+                        if (!$dateInput.val()) return;
+                        $gregHidden.val($dateInput.val());
+                    });
                 }
             });
-        }
-
-        if ($dateInput.length && $gregHidden.length) {
-            $dateInput.on('change', function() {
-                if (!$dateInput.val()) return;
-                $gregHidden.val($dateInput.val());
-            });
-        }
-    });
-</script>
-@endpush
+        </script>
+        @endpush
 
 </x-admin-layout>

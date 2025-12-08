@@ -26,8 +26,22 @@
             transition: padding-left .3s ease-in-out
         }
 
-        .icon-green {
-            color: #059669 !important;
+        /* NEW: Icons are light blue/white in the dark sidebar for contrast */
+        .sidebar-icon {
+            color: #dbeafe !important;
+            /* Blue-100 for dark sidebar */
+        }
+
+        /* NEW: Focus ring now uses Primary Brand Blue for authority and professionalism */
+        .focus-ring {
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+        }
+
+        .focus-ring:focus-visible {
+            outline: 2px solid #2563eb;
+            /* Blue-600 */
+            outline-offset: 2px;
         }
     </style>
     @vite(['resources/css/app.css','resources/js/app.js'])
@@ -37,7 +51,9 @@
     @stack('styles')
 </head>
 
-<body x-data="layoutState()" x-init="init()" class="min-h-screen flex bg-gray-50 text-gray-900">
+{{-- Tribunal systems use clear, high-contrast typography --}}
+
+<body x-data="layoutState()" x-init="init()" class="min-h-screen flex bg-gray-50 text-gray-800 font-sans">
 
     {{-- Sidebar (mobile slide-in + desktop collapsible) --}}
     @php
@@ -73,6 +89,7 @@
     $canManageUsers = $hasUsers && auth()->user()?->hasPermission('users.manage');
     $canManagePermissions = $hasPermissions && auth()->user()?->hasPermission('permissions.manage');
     $canManageRoles = $hasRoles && auth()->user()?->hasPermission('roles.manage');
+    $canManageTeams = $hasTeams && auth()->user()?->hasPermission('teams.manage');
     $letterTemplatesActive = request()->routeIs('letter-templates.*');
     $lettersActive = request()->routeIs('letters.index') || request()->routeIs('letters.show');
     $composeActive = request()->routeIs('letters.compose');
@@ -82,14 +99,15 @@
     $permissionsActive = request()->routeIs('permissions.*');
     $rolesActive = request()->routeIs('roles.*');
     $teamsActive = request()->routeIs('teams.*');
-    $userControlOpen = $usersActive || $permissionsActive || $rolesActive;
+    $userControlOpen = $usersActive || $permissionsActive || $rolesActive || $teamsActive;
     @endphp
 
     <aside
+        {{-- UPDATED: Deep Blue/Navy Sidebar BG (Primary Brand Color for Authority) --}}
         class="fixed md:static z-40 inset-y-0 left-0
                transform transition-transform duration-300 ease-out
                -translate-x-full md:translate-x-0
-               flex flex-col bg-blue-900 dark:bg-gray-800 border-r border-blue-800
+               flex flex-col bg-blue-950 border-r border-blue-800
                w-72 md:[transition-property:width] md:duration-300 md:ease-in-out transition-size"
         :class="{
             'translate-x-0': sidebar,
@@ -99,11 +117,13 @@
         aria-label="{{ __('app.Sidebar') }}">
 
         {{-- Brand / collapse toggle row --}}
-        <div class="flex items-center justify-between gap-2 px-4 py-4 border-b border-blue-800">
+        {{-- UPDATED: Border uses darker blue --}}
+        <div class="flex items-center justify-between gap-2 px-4 py-5 border-b border-blue-800">
             <div class="flex items-center gap-2">
-                <a href="{{ $hasDashboard ? route('dashboard') : url('/') }}" aria-label="{{ __('app.Dashboard') }}">
+                {{-- Text color is white/light blue --}}
+                <a href="{{ $hasDashboard ? route('dashboard') : url('/') }}" aria-label="{{ __('app.Dashboard') }}" class="focus-ring rounded">
                     {{-- Full name (shown when NOT compact) --}}
-                    <span class="text-white text-xl font-bold truncate origin-left"
+                    <span class="text-white text-xl font-extrabold truncate origin-left"
                         x-show="!compact"
                         x-transition:enter="transition ease-out duration-200"
                         x-transition:enter-start="opacity-0 -translate-x-1"
@@ -115,7 +135,7 @@
                     </span>
 
                     {{-- Short name (shown when compact) --}}
-                    <span class="text-white text-xl font-bold truncate origin-left"
+                    <span class="text-white text-xl font-extrabold truncate origin-left"
                         x-show="compact"
                         x-transition:enter="transition ease-out duration-200"
                         x-transition:enter-start="opacity-0 -translate-x-1"
@@ -129,11 +149,12 @@
             </div>
 
             {{-- Close on mobile --}}
+            {{-- UPDATED: Hover uses darker blue --}}
             <button type="button"
-                class="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-md text-blue-100 hover:bg-orange-800"
+                class="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-md text-blue-300 hover:bg-blue-800 focus-ring"
                 @click="sidebar=false"
                 aria-label="{{ __('app.Close sidebar') }}">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -141,15 +162,16 @@
         </div>
 
         {{-- Nav --}}
-        <nav id="admin-nav" data-spa-nav="true" class="flex-1 p-3 space-y-2 overflow-y-auto">
+        <nav id="admin-nav" data-spa-nav="true" class="flex-1 p-3 space-y-1 overflow-y-auto">
             {{-- Dashboard --}}
             @if($hasDashboard)
+            {{-- UPDATED: Active state uses Primary Blue (Blue-700). Hover uses a lighter Blue-600/30 mix. --}}
             <a href="{{ route('dashboard') }}"
                 data-no-spa="true"
-                class="flex items-center gap-3 px-3 py-2 rounded-md transition
-                      {{ request()->routeIs('dashboard') ? 'bg-orange-600 text-white' : 'hover:bg-orange-600 text-blue-100 hover:text-white' }}">
+                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
+                      {{ request()->routeIs('dashboard') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" fill="none"
+                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -171,9 +193,10 @@
             {{-- System Audit --}}
             @if($hasAudit)
             <a href="{{ route('admin.audit') }}"
-                class="flex items-center gap-3 px-3 py-2 rounded-md {{ request()->routeIs('admin.audit') ? 'bg-orange-600 text-white' : 'hover:bg-orange-800 text-blue-100 hover:text-white' }}">
+                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
+                {{ request()->routeIs('admin.audit') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" fill="none"
+                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 5h6m-6 4h6m-6 4h6m-9 4h12a2 2 0 002-2V7a2 2 0 00-2-2h-3l-1-2H9L8 5H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -195,9 +218,10 @@
             {{-- Appeals --}}
             @if($hasAppeals && auth()->user()?->hasPermission('appeals.view'))
             <a href="{{ route('appeals.index') }}"
-                class="flex items-center gap-3 px-3 py-2 rounded-md {{ request()->routeIs('appeals.*') ? 'bg-orange-600 text-white' : 'hover:bg-orange-800 text-blue-100 hover:text-white' }}">
+                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
+                {{ request()->routeIs('appeals.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" fill="none"
+                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -221,9 +245,10 @@
 
             @if($hasDecisions && auth()->user()?->hasPermission('decision.view'))
             <a href="{{ route('decisions.index') }}"
-                class="flex items-center gap-3 px-3 py-2 rounded-md {{ request()->routeIs('decisions.*') ? 'bg-orange-600 text-white' : 'hover:bg-orange-800 text-blue-100 hover:text-white' }}">
+                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
+                {{ request()->routeIs('decisions.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" fill="none"
+                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 17h6M9 13h6M9 9h6M6 5h12a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2z" />
@@ -245,9 +270,10 @@
             {{-- Cases --}}
             @if($hasCases && auth()->user()?->hasPermission('cases.view'))
             <a href="{{ route('cases.index') }}"
-                class="flex items-center gap-3 px-3 py-2 rounded-md {{ request()->routeIs('cases.*') ? 'bg-orange-600 text-white' : 'hover:bg-orange-800 text-blue-100 hover:text-white' }}">
+                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
+                {{ request()->routeIs('cases.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" fill="none"
+                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -270,9 +296,10 @@
             {{-- Applicants --}}
             @if($hasApplicants && auth()->user()?->hasPermission('applicants.view'))
             <a href="{{ route('applicants.index') }}"
-                class="flex items-center gap-3 px-3 py-2 rounded-md {{ $applicantsActive ? 'bg-orange-600 text-white' : 'hover:bg-orange-800 text-blue-100 hover:text-white' }}">
+                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
+                {{ $applicantsActive ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                             d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
@@ -294,10 +321,11 @@
             {{-- Case Types --}}
             @if($hasCaseTypes && auth()->user()?->hasPermission('cases.types'))
             <a href="{{ route('case-types.index') }}"
-                class="flex items-center gap-3 px-3 py-2 rounded-md {{ request()->routeIs('case-types.*') ? 'bg-orange-600 text-white' : 'hover:bg-orange-800 text-blue-100 hover:text-white' }}">
+                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
+                {{ request()->routeIs('case-types.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
                     {{-- tags icon --}}
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" fill="none"
+                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M7 7h.01M3 10l7.586-7.586a2 2 0 012.828 0L21 9.999a2 2 0 010 2.828L13.828 20a2 2 0 01-2.828 0L3 12.999V10z" />
@@ -319,14 +347,16 @@
             {{-- Letters dropdown --}}
             @if($canManageTemplates || $canViewLetters || $canComposeLetters)
             <div x-data="{ open: {{ $letterMenuOpen ? 'true' : 'false' }} }" class="space-y-1">
+                {{-- UPDATED: Main button active uses Primary Blue --}}
                 <button type="button"
-                    class="w-full flex items-center justify-between px-3 py-2 rounded-md {{ $letterMenuOpen ? 'bg-orange-600 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-800' }}"
+                    class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition focus-ring
+                    {{ $letterMenuOpen ? 'bg-blue-700 text-white shadow-md' : 'text-blue-100 hover:text-white hover:bg-blue-600/30' }}"
                     @click="open=!open"
                     aria-haspopup="true"
                     :aria-expanded="open.toString()">
                     <span class="flex items-center gap-3">
                         <div class="grid place-items-center w-6" aria-hidden="true">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M3 5h18M4 7l8 5 8-5M4 19h16a1 1 0 001-1V6M3 19a1 1 0 01-1-1V6" />
                             </svg>
@@ -342,7 +372,7 @@
                             {{ __('app.Letters') }}
                         </span>
                     </span>
-                    <svg x-show="!compact" xmlns="http://www.w3.org/2000/svg" class="icon-green h-4 w-4 transition-transform duration-200"
+                    <svg x-show="!compact" xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4 transition-transform duration-200"
                         :class="{ 'rotate-90': open }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
@@ -357,9 +387,11 @@
                     x-transition:leave-end="opacity-0 -translate-y-1"
                     class="pl-11 space-y-1">
                     @if($canManageTemplates)
+                    {{-- UPDATED: Sub-menu active/hover uses Secondary Brand Orange for accent --}}
                     <a href="{{ route('letter-templates.index') }}"
-                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-md {{ $letterTemplatesActive ? 'bg-white/10 text-white' : 'text-blue-100 hover:text-white hover:bg-white/10' }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
+                        {{ $letterTemplatesActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M8 4h10a2 2 0 012 2v11a2 2 0 01-2 2H8l-4 3V6a2 2 0 012-2h2z" />
                         </svg>
@@ -369,8 +401,9 @@
 
                     @if($canViewLetters)
                     <a href="{{ route('letters.index') }}"
-                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-md {{ $lettersActive ? 'bg-white/10 text-white' : 'text-blue-100 hover:text-white hover:bg-white/10' }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
+                        {{ $lettersActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M3 5h18M4 7l8 5 8-5M4 19h16a1 1 0 001-1V6M3 19a1 1 0 01-1-1V6" />
                         </svg>
@@ -380,8 +413,9 @@
 
                     @if($canComposeLetters)
                     <a href="{{ route('letters.compose') }}"
-                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-md {{ $composeActive ? 'bg-white/10 text-white' : 'text-blue-100 hover:text-white hover:bg-white/10' }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
+                        {{ $composeActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M8 16h8M8 12h8m-5-8h5l3 3v11a2 2 0 01-2 2H8a2 2 0 01-2-2V5a2 2 0 012-2h3z" />
                         </svg>
@@ -395,9 +429,10 @@
             {{-- Notifications --}}
             @if($hasNotifIndex)
             <a href="{{ route('admin.notifications.index') }}"
-                class="flex items-center gap-3 px-3 py-2 rounded-md {{ request()->routeIs('admin.notifications.*') ? 'bg-orange-600 text-white' : 'hover:bg-orange-800 text-blue-100 hover:text-white' }}">
+                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
+                {{ request()->routeIs('admin.notifications.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" fill="none"
+                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 1 1-6 0h6z" />
@@ -419,14 +454,16 @@
             {{-- User Control --}}
             @if($canManageUsers || $canManagePermissions || $canManageRoles)
             <div x-data="{ open: {{ $userControlOpen ? 'true' : 'false' }} }" class="space-y-1">
+                {{-- UPDATED: Main button active uses Primary Blue --}}
                 <button type="button"
-                    class="w-full flex items-center justify-between px-3 py-2 rounded-md {{ $userControlOpen ? 'bg-orange-600 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-800' }}"
+                    class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition focus-ring
+                    {{ $userControlOpen ? 'bg-blue-700 text-white shadow-md' : 'text-blue-100 hover:text-white hover:bg-blue-600/30' }}"
                     @click="open=!open"
                     aria-haspopup="true"
                     :aria-expanded="open.toString()">
                     <span class="flex items-center gap-3">
                         <div class="grid place-items-center w-6" aria-hidden="true">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                             </svg>
@@ -442,7 +479,7 @@
                             {{ __('app.User Control') }}
                         </span>
                     </span>
-                    <svg x-show="!compact" xmlns="http://www.w3.org/2000/svg" class="icon-green h-4 w-4 transition-transform duration-200"
+                    <svg x-show="!compact" xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4 transition-transform duration-200"
                         :class="{ 'rotate-90': open }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
@@ -457,9 +494,11 @@
                     x-transition:leave-end="opacity-0 -translate-y-1"
                     class="pl-11 space-y-1">
                     @if($canManageUsers)
+                    {{-- UPDATED: Sub-menu active/hover uses Secondary Brand Orange for accent --}}
                     <a href="{{ route('users.index') }}"
-                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-md {{ $usersActive ? 'bg-white/10 text-white' : 'text-blue-100 hover:text-white hover:bg-white/10' }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
+                        {{ $usersActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
@@ -469,8 +508,9 @@
 
                     @if($canManagePermissions)
                     <a href="{{ route('permissions.index') }}"
-                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-md {{ $permissionsActive ? 'bg-white/10 text-white' : 'text-blue-100 hover:text-white hover:bg-white/10' }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
+                        {{ $permissionsActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M7 7h.01M3 10l7.586-7.586a2 2 0 012.828 0L21 10a2 2 0 010 2.828L13.828 20a2 2 0 01-2.828 0L3 13v-3z" />
                         </svg>
@@ -478,10 +518,12 @@
                     </a>
                     @endif
 
-                    @if($hasTeams && auth()->user()?->hasPermission('teams.manage'))
+
+                    @if($canManageTeams)
                     <a href="{{ route('teams.index') }}"
-                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-md {{ $teamsActive ? 'bg-white/10 text-white' : 'text-blue-100 hover:text-white hover:bg-white/10' }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
+                        {{ $teamsActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M6 7h12M6 11h12M6 15h12M6 5h12a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2z" />
                         </svg>
@@ -491,12 +533,12 @@
 
                     @if($canManageRoles)
                     <a href="{{ route('roles.index') }}"
-                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-md {{ $rolesActive ? 'bg-white/10 text-white' : 'text-blue-100 hover:text-white hover:bg-white/10' }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
+                        {{ $rolesActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+
                         </svg>
                         <span>{{ __('app.Roles') }}</span>
                     </a>
@@ -508,9 +550,10 @@
             {{-- System Settings --}}
             @if($hasSystemSettings && auth()->user()?->hasPermission('settings.manage'))
             <a href="{{ route('settings.system.edit') }}"
-                class="flex items-center gap-3 px-3 py-2 rounded-md {{ request()->routeIs('settings.system.*') ? 'bg-orange-600 text-white' : 'hover:bg-orange-800 text-blue-100 hover:text-white' }}">
+                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
+                {{ request()->routeIs('settings.system.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" fill="none"
+                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M10.325 4.317L9.6 2.4m4.075 1.917l.725-1.917M4.318 10.325L2.4 9.6m1.918 4.075L2.4 14.4M19.682 10.325l1.918-.725m-1.918 4.075l1.918.725M12 8a4 4 0 100 8 4 4 0 000-8z" />
@@ -525,9 +568,10 @@
             {{-- Terms & Conditions --}}
             @if($hasTerms && auth()->user()?->hasPermission('settings.manage'))
             <a href="{{ route('terms.index') }}"
-                class="flex items-center gap-3 px-3 py-2 rounded-md {{ request()->routeIs('terms.*') ? 'bg-orange-600 text-white' : 'hover:bg-orange-800 text-blue-100 hover:text-white' }}">
+                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
+                {{ request()->routeIs('terms.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" fill="none"
+                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 6l-2-2H6a2 2 0 00-2 2v13a1 1 0 001 1h14a1 1 0 001-1V6H12z" />
@@ -542,7 +586,8 @@
             @endif
         </nav>
 
-        <footer class="p-4 border-t border-blue-800 text-xs text-blue-200">
+        {{-- UPDATED: Footer border and text uses dark blue/light blue --}}
+        <footer class="p-4 border-t border-blue-800 text-sm text-blue-400">
             © {{ date('Y') }} {{ $systemSettings->app_name ?? config('app.name') }}
         </footer>
     </aside>
@@ -561,14 +606,15 @@
     <div id="admin-panel" class="flex-1 flex flex-col md:[transition-property:padding] md:duration-300 md:ease-in-out transition-padding">
 
         {{-- Topbar --}}
-        <header class="relative z-50 flex items-center justify-between bg-white backdrop-blur px-3 md:px-4 py-3 border-b border-gray-200 shadow-sm">
+        <header class="relative z-50 flex items-center justify-between bg-white backdrop-blur px-3 md:px-6 py-3 border-b border-gray-200 shadow-lg">
             <div class="flex items-center gap-2">
                 {{-- Mobile: open sidebar --}}
                 <button type="button"
-                    class="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
+                    {{-- UPDATED: Icon uses Primary Brand Blue --}}
+                    class="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-blue-600 focus-ring"
                     @click="sidebar=true"
                     aria-label="{{ __('app.Open sidebar') }}">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5"
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
                         viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 6h16M4 12h16M4 18h16" />
@@ -577,22 +623,23 @@
 
                 {{-- Desktop: collapse / expand --}}
                 <button type="button"
-                    class="hidden md:inline-flex items-center justify-center w-9 h-9 rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 transition"
+                    {{-- UPDATED: Icon uses Primary Brand Blue --}}
+                    class="hidden md:inline-flex items-center justify-center w-9 h-9 rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-blue-600 transition focus-ring"
                     @click="toggleCompact()" :aria-pressed="compact.toString()"
                     aria-label="{{ __('app.Toggle sidebar width') }}">
-                    <svg x-show="!compact" xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" x-cloak
+                    <svg x-show="!compact" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" x-cloak
                         viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M20 12H4m6 6l-6-6 6-6" />
                     </svg>
-                    <svg x-show="compact" xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5" x-cloak
+                    <svg x-show="compact" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" x-cloak
                         viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 12h16m-6-6l6 6-6 6" />
                     </svg>
                 </button>
 
-                <h1 class="ml-1 md:ml-2 text-lg font-semibold text-gray-800">@yield('page_header', $t)</h1>
+                <h1 class="ml-1 md:ml-2 text-xl font-bold text-gray-900">@yield('page_header', $t)</h1>
             </div>
 
             @php
@@ -690,7 +737,8 @@
             @endphp
 
             <div class="hidden md:flex flex-1 justify-center">
-                <span id="top-date-display" class="text-sm font-semibold text-gray-600">{{ $todayDisplay }}</span>
+                {{-- UPDATED: Date display uses Primary Brand Blue (Authority) --}}
+                <span id="top-date-display" class="text-base font-semibold text-blue-700">{{ $todayDisplay }}</span>
             </div>
 
             <div class="flex items-center gap-3 flex-shrink-0">
@@ -699,9 +747,10 @@
                 @if($hasLangSwitch)
                 <div x-data="{ open:false }" class="relative">
                     <button @click="open=!open"
-                        class="flex items-center gap-1 px-3 py-1.5 rounded-md border border-gray-300 hover:bg-gray-50 text-sm">
+                        class="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-100 text-sm font-medium focus-ring">
                         <span class="fi fi-{{ app()->getLocale() == 'am' ? 'et' : 'us' }}"></span>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                        {{-- UPDATED: Icon uses Primary Brand Blue --}}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M4 5h16M4 10h16M10 15h10M4 20h10" />
                         </svg>
@@ -709,15 +758,18 @@
                     </button>
 
                     <div x-cloak x-show="open" @click.outside="open=false"
-                        class="absolute right-0 mt-2 w-32 rounded-md border bg-white shadow-lg z-50">
-                        <div class="p-2 space-y-1">
+                        class="absolute right-0 mt-2 w-32 rounded-lg border bg-white shadow-xl z-50">
+                        <div class="p-1 space-y-1">
+                            {{-- UPDATED: Active state uses Secondary Brand Orange --}}
                             <a href="{{ route('language.switch', ['locale' => 'en', 'return' => url()->current()]) }}"
-                                class="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-gray-100 rounded {{ app()->getLocale() == 'en' ? 'bg-blue-50 text-blue-700' : '' }}">
+                                class="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-gray-100 rounded-md transition
+                                {{ app()->getLocale() == 'en' ? 'bg-orange-50 text-orange-700 font-semibold' : 'text-gray-700' }}">
                                 <span class="fi fi-us"></span>
                                 {{ __('app.English') }}
                             </a>
                             <a href="{{ route('language.switch', ['locale' => 'am', 'return' => url()->current()]) }}"
-                                class="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-gray-100 rounded {{ app()->getLocale() == 'am' ? 'bg-blue-50 text-blue-700' : '' }}">
+                                class="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-gray-100 rounded-md transition
+                                {{ app()->getLocale() == 'am' ? 'bg-orange-50 text-orange-700 font-semibold' : 'text-gray-700' }}">
                                 <span class="fi fi-et"></span>
                                 {{ __('app.Amharic') }}
                             </a>
@@ -730,14 +782,16 @@
                 @if($hasNotifIndex)
                 <div class="relative" x-data="{ bell:false }">
                     <button @click="bell=!bell" type="button"
-                        class="relative inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-2.5 py-1.5 hover:bg-gray-50 shadow-sm"
+                        class="relative inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 hover:bg-gray-50 shadow-sm focus-ring"
                         aria-label="{{ __('app.Notifications') }}" :aria-expanded="bell.toString()">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-5 w-5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                        {{-- UPDATED: Icon uses Primary Brand Blue --}}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"
                                 d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 1 1-6 0h6z" />
                         </svg>
                         @if($__adminNotifCount > 0)
-                        <span class="absolute -top-1 -right-1 grid h-5 min-w-[20px] place-items-center rounded-full bg-red-600 px-1 text-[11px] font-semibold text-white">
+                        {{-- Kept Red for alerts (standard practice for notifications) --}}
+                        <span class="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 grid h-5 min-w-[20px] place-items-center rounded-full bg-red-600 px-1 text-[11px] font-bold text-white shadow-md">
                             {{ $__adminNotifCount > 99 ? '99+' : $__adminNotifCount }}
                         </span>
                         @endif
@@ -751,14 +805,14 @@
                         x-transition:leave="transition ease-in duration-100"
                         x-transition:leave-start="opacity-100 translate-y-0"
                         x-transition:leave-end="opacity-0 -translate-y-1"
-                        class="absolute right-0 mt-2 w-[32rem] max-w-[90vw] rounded-md border border-gray-200 bg-white shadow-xl z-50">
+                        class="absolute right-0 mt-2 w-[32rem] max-w-[90vw] rounded-lg border border-gray-200 bg-white shadow-xl z-50">
                         <div class="p-3">
-                            <div class="mb-2 flex items-center justify-between">
-                                <div class="text-sm font-semibold text-gray-800">{{ __('app.Notifications') }}</div>
+                            <div class="mb-2 flex items-center justify-between border-b pb-2">
+                                <div class="text-base font-bold text-gray-800">{{ __('app.Notifications') }} ({{ $__adminNotifCount }})</div>
                                 @if($__adminNotifCount > 0 && $hasNotifMarkAll)
                                 <form method="POST" action="{{ route('admin.notifications.markAll') }}">
                                     @csrf
-                                    <button class="text-xs px-2 py-1 rounded border border-gray-300 bg-white hover:bg-gray-50 text-gray-700">
+                                    <button type="submit" class="text-xs px-2 py-1 rounded-md border border-gray-300 bg-white hover:bg-gray-100 text-gray-600 focus-ring">
                                         {{ __('app.Mark all as seen') }}
                                     </button>
                                 </form>
@@ -766,17 +820,18 @@
                             </div>
 
                             @if($__adminNotifCount === 0)
-                            <div class="text-sm text-gray-500">{{ __('app.youre_all_caught_up') }}</div>
+                            <div class="text-sm text-gray-500 py-4 text-center">{{ __('app.youre_all_caught_up') }} 🎉</div>
                             @else
                             {{-- Applicant messages --}}
                             @if($adminUnseenMsgs->isNotEmpty())
                             <div class="mt-3">
-                                <div class="text-xs font-medium text-gray-600 mb-1">{{ __('app.Applicant messages') }}</div>
-                                <ul class="divide-y divide-gray-200">
+                                {{-- UPDATED: Notification headers use Primary Brand Blue --}}
+                                <div class="text-sm font-bold text-blue-700 mb-1">{{ __('app.Applicant messages') }}</div>
+                                <ul class="divide-y divide-gray-100">
                                     @foreach($adminUnseenMsgs as $m)
-                                    <li class="py-2 flex items-center justify-between">
-                                        <a href="{{ $hasCases ? route('cases.show', $m->case_id) : '#' }}" class="text-sm">
-                                            <div class="font-medium text-gray-900">{{ $m->case_number }}</div>
+                                    <li class="py-2 flex items-center justify-between hover:bg-gray-50 rounded-md px-1">
+                                        <a href="{{ $hasCases ? route('cases.show', $m->case_id) : '#' }}" class="text-sm flex-1 mr-4">
+                                            <div class="font-medium text-gray-900 truncate">{{ $m->case_number }}</div>
                                             <div class="text-xs text-gray-600">
                                                 {{ Str::limit($m->body, 80) }}
                                                 · {{ \Illuminate\Support\Carbon::parse($m->created_at)->diffForHumans() }}
@@ -787,7 +842,7 @@
                                             @csrf
                                             <input type="hidden" name="type" value="message">
                                             <input type="hidden" name="sourceId" value="{{ $m->id }}">
-                                            <button class="text-xs px-2 py-1 rounded border border-gray-300 bg-white hover:bg-gray-50 text-gray-700">{{ __('app.Seen') }}</button>
+                                            <button type="submit" class="flex-shrink-0 text-xs px-2 py-1 rounded-md border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 focus-ring">{{ __('app.Seen') }}</button>
                                         </form>
                                         @endif
                                     </li>
@@ -799,12 +854,13 @@
                             {{-- New cases --}}
                             @if($adminUnseenCases->isNotEmpty())
                             <div class="mt-3">
-                                <div class="text-xs font-medium text-gray-600 mb-1">{{ __('app.New cases') }}</div>
-                                <ul class="divide-y divide-gray-200">
+                                {{-- UPDATED: Notification headers use Primary Brand Blue --}}
+                                <div class="text-sm font-bold text-blue-700 mb-1">{{ __('app.New cases') }}</div>
+                                <ul class="divide-y divide-gray-100">
                                     @foreach($adminUnseenCases as $c)
-                                    <li class="py-2 flex items-center justify-between">
-                                        <a href="{{ $hasCases ? route('cases.show', $c->id) : '#' }}" class="text-sm">
-                                            <div class="font-medium text-gray-900">{{ $c->case_number }}</div>
+                                    <li class="py-2 flex items-center justify-between hover:bg-gray-50 rounded-md px-1">
+                                        <a href="{{ $hasCases ? route('cases.show', $c->id) : '#' }}" class="text-sm flex-1 mr-4">
+                                            <div class="font-medium text-gray-900 truncate">{{ $c->case_number }}</div>
                                             <div class="text-xs text-gray-600">
                                                 {{ Str::limit($c->title, 80) }}
                                                 · {{ \Illuminate\Support\Carbon::parse($c->created_at)->diffForHumans() }}
@@ -815,7 +871,7 @@
                                             @csrf
                                             <input type="hidden" name="type" value="case">
                                             <input type="hidden" name="sourceId" value="{{ $c->id }}">
-                                            <button class="text-xs px-2 py-1 rounded border border-gray-300 bg-white hover:bg-gray-50 text-gray-700">{{ __('app.Seen') }}</button>
+                                            <button type="submit" class="flex-shrink-0 text-xs px-2 py-1 rounded-md border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 focus-ring">{{ __('app.Seen') }}</button>
                                         </form>
                                         @endif
                                     </li>
@@ -827,17 +883,18 @@
                             {{-- Upcoming hearings --}}
                             @if($adminUpcomingHearings->isNotEmpty())
                             <div class="mt-3">
-                                <div class="text-xs font-medium text-gray-600 mb-1">{{ __('app.Upcoming hearings') }}</div>
-                                <ul class="divide-y divide-gray-200">
+                                {{-- UPDATED: Notification headers use Primary Brand Blue --}}
+                                <div class="text-sm font-bold text-blue-700 mb-1">{{ __('app.Upcoming hearings') }}</div>
+                                <ul class="divide-y divide-gray-100">
                                     @foreach($adminUpcomingHearings as $h)
-                                    <li class="py-2 flex items-center justify-between">
-                                        <a href="{{ $hasCases ? route('cases.show', $h->case_id) : '#' }}" class="text-sm">
-                                            <div class="font-medium text-gray-900">
+                                    <li class="py-2 flex items-center justify-between hover:bg-gray-50 rounded-md px-1">
+                                        <a href="{{ $hasCases ? route('cases.show', $h->case_id) : '#' }}" class="text-sm flex-1 mr-4">
+                                            <div class="font-medium text-gray-900 truncate">
                                                 {{ $h->case_number }} —
                                                 {{ \Illuminate\Support\Carbon::parse($h->hearing_at)->format('M d, Y H:i') }}
                                             </div>
                                             <div class="text-xs text-gray-600">
-                                                {{ $h->type ?: __('app.Hearing') }} · {{ $h->location ?: '—' }}
+                                                {{ $h->type ?: 'Hearing' }} · {{ $h->location ?: '—' }}
                                             </div>
                                         </a>
                                         @if($hasNotifMarkOne)
@@ -845,7 +902,7 @@
                                             @csrf
                                             <input type="hidden" name="type" value="hearing">
                                             <input type="hidden" name="sourceId" value="{{ $h->id }}">
-                                            <button class="text-xs px-2 py-1 rounded border border-gray-300 bg-white hover:bg-gray-50 text-gray-700">
+                                            <button type="submit" class="flex-shrink-0 text-xs px-2 py-1 rounded-md border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 focus-ring">
                                                 {{ __('app.Seen') }}
                                             </button>
                                         </form>
@@ -860,12 +917,13 @@
                             {{-- Respondent views --}}
                             @if($adminRespondentViews->isNotEmpty())
                             <div class="mt-3">
-                                <div class="text-xs font-medium text-gray-600 mb-1">Respondent views</div>
-                                <ul class="divide-y divide-gray-200">
+                                {{-- UPDATED: Notification headers use Primary Brand Blue --}}
+                                <div class="text-xs font-bold text-blue-700 mb-1">Respondent views</div>
+                                <ul class="divide-y divide-gray-100">
                                     @foreach($adminRespondentViews as $v)
-                                    <li class="py-2 flex items-center justify-between">
-                                        <a href="{{ $hasCases ? route('cases.show', $v->case_id) : '#' }}" class="text-sm">
-                                            <div class="font-medium text-gray-900">{{ $v->case_number }}</div>
+                                    <li class="py-2 flex items-center justify-between hover:bg-gray-50 rounded-md px-1">
+                                        <a href="{{ $hasCases ? route('cases.show', $v->case_id) : '#' }}" class="text-sm flex-1 mr-4">
+                                            <div class="font-medium text-gray-900 truncate">{{ $v->case_number }}</div>
                                             <div class="text-xs text-gray-600">
                                                 {{ $v->respondent_name ?: 'Respondent' }} viewed this case
                                                 A· {{ \Illuminate\Support\Carbon::parse($v->viewed_at)->diffForHumans() }}
@@ -876,7 +934,7 @@
                                             @csrf
                                             <input type="hidden" name="type" value="respondent_view">
                                             <input type="hidden" name="sourceId" value="{{ $v->id }}">
-                                            <button class="text-xs px-2 py-1 rounded border border-gray-300 bg-white hover:bg-gray-50 text-gray-700">{{ __('app.Seen') }}</button>
+                                            <button type="submit" class="flex-shrink-0 text-xs px-2 py-1 rounded-md border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 focus-ring">{{ __('app.Seen') }}</button>
                                         </form>
                                         @endif
                                     </li>
@@ -885,9 +943,9 @@
                             </div>
                             @endif
 
-                            <div class="mt-3 flex items-center justify-end">
+                            <div class="mt-3 flex items-center justify-end border-t pt-2">
                                 <a href="{{ route('admin.notifications.index') }}"
-                                    class="text-xs px-2 py-1 rounded border border-gray-300 bg-white hover:bg-gray-50 text-gray-700">
+                                    class="text-sm px-3 py-1.5 rounded-md border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 font-medium focus-ring">
                                     {{ __('app.View all') }}
                                 </a>
                             </div>
@@ -901,14 +959,15 @@
                 {{-- Profile / Logout --}}
                 @php $u = auth()->user(); @endphp
                 <div x-data="{ open:false }" class="relative">
-                    <button @click="open=!open" class="flex items-center gap-3 rounded-full px-3 py-1.5 hover:bg-gray-100"
+                    <button @click="open=!open" class="flex items-center gap-3 rounded-full px-3 py-1.5 hover:bg-gray-100 focus-ring"
                         aria-haspopup="menu" :aria-expanded="open.toString()">
-                        <span class="text-sm text-gray-700 hidden sm:inline">{{ __('app.hi_name', ['name' => $u->name ?? 'Admin']) }}</span>
+                        <span class="text-sm text-gray-700 hidden sm:inline font-medium">{{ __('app.hi_name', ['name' => $u->name ?? 'Admin']) }}</span>
 
                         @if($u?->avatar_url)
                         <img src="{{ $u->avatar_url }}" class="w-8 h-8 rounded-full object-cover" alt="{{ __('app.Avatar') }}">
                         @else
-                        <div class="w-8 h-8 rounded-full bg-blue-600 grid place-items-center font-semibold text-white" aria-hidden="true">
+                        {{-- UPDATED: Avatar fallback uses Secondary Brand Orange --}}
+                        <div class="w-8 h-8 rounded-full bg-orange-600 grid place-items-center font-bold text-white text-sm" aria-hidden="true">
                             {{ strtoupper(substr($u->name ?? 'A',0,1)) }}
                         </div>
                         @endif
@@ -921,15 +980,16 @@
                         x-transition:leave="transition ease-in duration-100"
                         x-transition:leave-start="opacity-100 translate-y-0"
                         x-transition:leave-end="opacity-0 -translate-y-1"
-                        class="absolute right-0 mt-2 w-56 rounded-md border border-gray-200 bg-white shadow-lg overflow-hidden">
-                        <div class="px-4 py-2 text-xs text-gray-500 border-b border-gray-200">
-                            {{ __('app.Signed in as') }} <span class="text-gray-800">{{ $u?->email }}</span>
+                        class="absolute right-0 mt-2 w-56 rounded-lg border border-gray-200 bg-white shadow-xl overflow-hidden">
+                        <div class="px-4 py-2 text-xs text-gray-500 border-b border-gray-100">
+                            {{ __('app.Signed in as') }} <span class="text-gray-800 font-medium">{{ $u?->email }}</span>
                         </div>
 
                         @if($hasProfileEdit)
                         <a href="{{ route('profile.edit') }}"
-                            class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-4 w-4" fill="none"
+                            class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition focus-ring focus:bg-gray-100">
+                            {{-- UPDATED: Icon uses Primary Brand Blue --}}
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600" fill="none"
                                 viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -942,8 +1002,9 @@
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <button type="submit"
-                                class="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="icon-green h-4 w-4" fill="none"
+                                class="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition border-t border-gray-100 focus-ring focus:bg-gray-100">
+                                {{-- UPDATED: Icon uses Primary Brand Blue --}}
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600" fill="none"
                                     viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -958,14 +1019,14 @@
         </header>
 
         {{-- Page content --}}
-        <main class="flex-1 p-4 md:p-6 bg-gray-50">
+        <main class="flex-1 p-4 md:p-8 bg-gray-50">
             @if(session('success'))
-            <div class="mb-4 rounded-md bg-green-100 border border-green-300 text-green-800 px-3 py-2">
+            <div class="mb-6 rounded-lg bg-green-50 border border-green-400 text-green-800 px-4 py-3 font-medium shadow-sm">
                 {{ session('success') }}
             </div>
             @endif
             @if(session('error'))
-            <div class="mb-4 rounded-md bg-red-100 border border-red-300 text-red-800 px-3 py-2">
+            <div class="mb-6 rounded-lg bg-red-50 border border-red-400 text-red-800 px-4 py-3 font-medium shadow-sm">
                 {{ session('error') }}
             </div>
             @endif
@@ -974,7 +1035,7 @@
         </main>
     </div>
 
-    {{-- Alpine helpers --}}
+    {{-- Alpine helpers (no changes needed) --}}
     <script>
         function layoutState() {
             return {

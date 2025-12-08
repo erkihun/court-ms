@@ -13,7 +13,7 @@ class LetterController extends Controller
 {
     public function index()
     {
-        $letters = Letter::with(['template','author'])
+        $letters = Letter::with(['template', 'author'])
             ->latest()
             ->paginate(5)
             ->withQueryString();
@@ -46,11 +46,30 @@ class LetterController extends Controller
             $baseSubject = trim($data['subject'] ?? $lockedTemplate->title);
             $subjectValue = $baseSubject === '' ? null : $baseSubject;
 
-            $referenceParts = array_filter([
-                $lockedTemplate->subject_prefix,
-                str_pad($lockedTemplate->reference_sequence, 4, '0', STR_PAD_LEFT),
-            ]);
-            $referenceNumber = implode('/', $referenceParts);
+            $baseSubject = trim($data['subject'] ?? $lockedTemplate->title);
+            $subjectValue = $baseSubject === '' ? null : $baseSubject;
+
+            // CASE NUMBER–BASED REFERENCE
+            $caseNumber = $data['case_number'] ?? null;
+
+            if ($caseNumber) {
+                $last = DB::table('letters')
+                    ->where('case_number', $caseNumber)
+                    ->orderBy('id', 'desc')
+                    ->first();
+
+                if ($last && preg_match('/\/(\d{2})$/', $last->reference_number, $m)) {
+                    $nextSeq = intval($m[1]) + 1;
+                } else {
+                    $nextSeq = 1;
+                }
+
+                $seq = str_pad($nextSeq, 2, '0', STR_PAD_LEFT);
+
+                $referenceNumber = "{$caseNumber}/{$seq}";
+            } else {
+                $referenceNumber = null;
+            }
 
             $letter = Letter::create([
                 'letter_template_id' => $lockedTemplate->id,
@@ -98,8 +117,8 @@ class LetterController extends Controller
 
         $letter->load('template');
 
-            $baseSubject = trim($data['subject'] ?? $letter->template->title);
-            $subjectValue = $baseSubject === '' ? null : $baseSubject;
+        $baseSubject = trim($data['subject'] ?? $letter->template->title);
+        $subjectValue = $baseSubject === '' ? null : $baseSubject;
 
         $letter->update([
             'recipient_name'    => $data['recipient_name'],
@@ -129,7 +148,7 @@ class LetterController extends Controller
 
     public function show(Letter $letter)
     {
-        $letter->load(['template','author']);
+        $letter->load(['template', 'author']);
 
         return view('admin.letters.preview', [
             'letter'   => $letter,
