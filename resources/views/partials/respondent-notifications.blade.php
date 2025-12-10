@@ -1,7 +1,11 @@
 @php
 use Illuminate\Support\Facades\DB;
+use App\Models\Respondent;
 
 $respondentId = auth('respondent')->id();
+if (!$respondentId && auth('applicant')->check()) {
+    $respondentId = optional(Respondent::where('email', auth('applicant')->user()->email)->first())->id;
+}
 $notifCount = 0;
 $respondentMessages = collect();
 
@@ -53,21 +57,20 @@ $respondentMessages = (clone $base)->limit(6)->get();
     <div x-cloak x-show="open" @click.outside="open=false"
         class="absolute right-0 mt-2 w-80 rounded-md border border-white/20 bg-white/90 text-slate-800 shadow-lg backdrop-blur">
         <div class="p-3 border-b border-white/30 text-sm font-semibold uppercase tracking-wide text-slate-600 flex items-center justify-between gap-3">
-            <span>{{ __('respondent.recent_replies') }}</span>
-            <a href="{{ route('respondent.responses.index') }}" class="text-xs font-semibold text-blue-600 hover:underline">
-                {{ __('respondent.view_all') }}
-            </a>
-        </div>
-        <div class="px-3 pb-2 flex items-center justify-between gap-2 text-xs uppercase text-slate-500">
             <span>{{ __('respondent.notifications') }}</span>
-            @if($notifCount > 0)
-            <form method="POST" action="{{ route('respondent.notifications.markAll') }}">
-                @csrf
-                <button type="submit" class="text-blue-600 hover:underline text-[11px]">
-                    {{ __('respondent.mark_all_seen') }}
-                </button>
-            </form>
-            @endif
+            <div class="flex items-center gap-3">
+                <a href="{{ route('respondent.responses.index') }}" class="text-xs font-semibold text-blue-600 hover:underline">
+                    {{ __('respondent.view_all') }}
+                </a>
+                @if($notifCount > 0)
+                <form method="POST" action="{{ route('respondent.notifications.markAll') }}">
+                    @csrf
+                    <button type="submit" class="text-blue-600 hover:underline text-[11px]">
+                        {{ __('respondent.mark_all_seen') }}
+                    </button>
+                </form>
+                @endif
+            </div>
         </div>
         @if($respondentMessages->isEmpty())
         <div class="p-3 text-sm text-slate-500">{{ __('respondent.no_notifications') }}</div>

@@ -143,15 +143,25 @@ $items = $msgs->unionAll($hrs)->unionAll($sts)->unionAll($views)->orderBy('creat
             @foreach($items as $n)
             @php
             $url = route('applicant.cases.show', $n->case_id);
-            if ($n->type === 'hearing') $url .= '#hearings';
-            elseif ($n->type === 'message') $url .= '#messages';
-            else $url .= '#timeline';
+            if ($n->type === 'respondent_view') {
+                $url = null;
+            } elseif ($n->type === 'hearing') {
+                $url .= '#hearings';
+            } elseif ($n->type === 'message') {
+                $url .= '#messages';
+            } else {
+                $url .= '#timeline';
+            }
             @endphp
             <li>
+                @if($url)
                 <a href="{{ $url }}" class="block px-3 py-2 hover:bg-slate-50">
+                @else
+                <div class="block px-3 py-2">
+                @endif
                     <div class="text-xs text-slate-500">
                         {{ \Illuminate\Support\Carbon::parse($n->created_at)->diffForHumans() }}
-                        · <span class="uppercase">{{ $n->type }}</span>
+                        → <span class="uppercase">{{ $n->type }}</span>
                     </div>
                     <div class="text-sm text-slate-800">
                         @if($n->type === 'message')
@@ -165,7 +175,7 @@ $items = $msgs->unionAll($hrs)->unionAll($sts)->unionAll($views)->orderBy('creat
                         Status changed: {{ ucfirst($n->meta1 ?? '-') }} &rarr; {{ ucfirst($n->meta2 ?? '-') }}
                         @endif
                     </div>
-                </a>
+                @if($url)</a>@else</div>@endif
             </li>
             @endforeach
         </ul>

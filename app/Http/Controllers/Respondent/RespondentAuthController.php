@@ -83,12 +83,11 @@ class RespondentAuthController extends Controller
      */
     public function switchToApplicant(Request $request)
     {
-        // Clear respondent guard, unset acting flag, and send to applicant login
-        Auth::guard('respondent')->logout();
+        // Stop acting as respondent but keep the applicant session alive
         $request->session()->forget('acting_as_respondent');
-        $request->session()->regenerateToken();
 
-        return redirect()->route('applicant.login', ['login_as' => 'applicant'])
+        return redirect()
+            ->route('applicant.dashboard')
             ->with('success', __('app.switch_to_applicant_success'));
     }
 }
