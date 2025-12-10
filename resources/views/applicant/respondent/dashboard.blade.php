@@ -127,7 +127,12 @@
                             {{ \Illuminate\Support\Carbon::parse($letter->created_at)->format('M d, Y H:i') }}
                         </div>
                     </div>
-                    <a href="{{ route('letters.case-preview', $letter->id) }}"
+                    @php
+                        $letterPreviewUrl = \Illuminate\Support\Facades\Route::has('letters.case-preview')
+                            ? route('letters.case-preview', $letter->id)
+                            : url('/case-letters/' . $letter->id);
+                    @endphp
+                    <a href="{{ $letterPreviewUrl }}"
                         class="text-sm font-semibold text-blue-700 hover:underline">
                         View
                     </a>
