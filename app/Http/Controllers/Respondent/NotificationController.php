@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Respondent;
 
 use App\Http\Controllers\Controller;
+use App\Models\Respondent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -11,7 +12,7 @@ class NotificationController extends Controller
     public function markOne(Request $request)
     {
         session(['acting_as_respondent' => true]);
-        $respondentId = auth('applicant')->id();
+        $respondentId = $this->resolveRespondentId();
         abort_if(!$respondentId, 403);
 
         $data = $request->validate([
@@ -38,7 +39,7 @@ class NotificationController extends Controller
     public function markAll()
     {
         session(['acting_as_respondent' => true]);
-        $respondentId = auth('applicant')->id();
+        $respondentId = $this->resolveRespondentId();
         abort_if(!$respondentId, 403);
 
         $now = now();
@@ -111,5 +112,20 @@ class NotificationController extends Controller
         }
 
         return back()->with('success', 'All marked as seen.');
+    }
+
+    private function resolveRespondentId(): ?int
+    {
+        if (auth('respondent')->check()) {
+            return auth('respondent')->id();
+        }
+
+        $applicant = auth('applicant')->user();
+        if (!$applicant) {
+            return null;
+        }
+
+        $resp = Respondent::where('email', $applicant->email)->first();
+        return $resp?->id;
     }
 }
