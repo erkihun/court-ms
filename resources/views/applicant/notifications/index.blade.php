@@ -1,4 +1,4 @@
-{{-- resources/views/apply/notifications/index.blade.php --}}
+{{-- resources/views/applicant/notifications/index.blade.php --}}
 <x-applicant-layout title="Notifications">
     <div class="mb-4 flex items-center justify-between">
         <h1 class="text-lg font-semibold">Notifications</h1>
@@ -25,7 +25,12 @@
                     <div class="font-medium text-slate-800">
                         {{ $h->case_number }} — {{ \Illuminate\Support\Carbon::parse($h->hearing_at)->format('M d, Y H:i') }}
                     </div>
-                    <div class="text-xs text-slate-500">{{ $h->type ?: 'Hearing' }} · {{ $h->location ?: '—' }}</div>
+                    <div class="text-xs text-slate-500">
+                        {{ $h->type ?: 'Hearing' }}
+                        @if($h->location)
+                        <span class="text-slate-400">·</span> {{ $h->location }}
+                        @endif
+                    </div>
                 </a>
                 <form method="POST" action="{{ route('applicant.notifications.markOne') }}">
                     @csrf
@@ -54,12 +59,23 @@
         @if($unseenMsgs->count())
         <ul class="divide-y">
             @foreach($unseenMsgs as $m)
+            @php
+            $msgBody = trim($m->body);
+            $isUrl = filter_var($msgBody, FILTER_VALIDATE_URL);
+            @endphp
             <li class="py-2 flex items-center justify-between">
                 <a href="{{ route('applicant.cases.show', $m->case_id) }}" class="text-sm">
                     <div class="font-medium text-slate-800">{{ $m->case_number }}</div>
                     <div class="text-xs text-slate-500">
+                        @if($isUrl)
+                        <a href="{{ $msgBody }}" class="text-blue-600 hover:underline" target="_blank" rel="noreferrer">
+                            View letter preview
+                        </a>
+                        @else
                         {{ \Illuminate\Support\Str::limit($m->body, 80) }}
-                        · {{ \Illuminate\Support\Carbon::parse($m->created_at)->diffForHumans() }}
+                        @endif
+                        <span class="text-slate-400 mx-1">·</span>
+                        {{ \Illuminate\Support\Carbon::parse($m->created_at)->diffForHumans() }}
                     </div>
                 </a>
                 <form method="POST" action="{{ route('applicant.notifications.markOne') }}">
@@ -95,9 +111,9 @@
                         {{ $v->case_number }}
                     </div>
                     <div class="text-xs text-slate-500">
-                        {{ $v->respondent_name ?: 'Respondent' }}
-                        viewed this case
-                        A� {{ \Illuminate\Support\Carbon::parse($v->viewed_at)->diffForHumans() }}
+                        {{ $v->respondent_name ?: 'Respondent' }} viewed this case
+                        <span class="text-slate-400 mx-1">·</span>
+                        {{ \Illuminate\Support\Carbon::parse($v->viewed_at)->diffForHumans() }}
                     </div>
                 </a>
                 <form method="POST" action="{{ route('applicant.notifications.markOne') }}">
@@ -132,7 +148,8 @@
                     <div class="font-medium text-slate-800">{{ $s->case_number }}</div>
                     <div class="text-xs text-slate-500">
                         {{ ucfirst($s->from_status) }} → <strong>{{ ucfirst($s->to_status) }}</strong>
-                        · {{ \Illuminate\Support\Carbon::parse($s->created_at)->diffForHumans() }}
+                        <span class="text-slate-400 mx-1">·</span>
+                        {{ \Illuminate\Support\Carbon::parse($s->created_at)->diffForHumans() }}
                     </div>
                 </a>
                 <form method="POST" action="{{ route('applicant.notifications.markOne') }}">

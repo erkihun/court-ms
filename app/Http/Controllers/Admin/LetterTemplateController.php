@@ -69,7 +69,6 @@ class LetterTemplateController extends Controller
         $data = $request->validate([
             'title'               => ['required', 'string', 'max:255'],
             'category'            => ['nullable', 'string', 'max:120'],
-            'subject_prefix'      => ['nullable', 'string', 'max:80'],
             'placeholders'        => ['nullable', 'string', 'max:2000'],
             'body'                => ['required', 'string'],
             'header_image'        => ['nullable', 'image', 'max:3072'],
@@ -78,21 +77,10 @@ class LetterTemplateController extends Controller
             'remove_footer_image' => ['nullable', 'boolean'],
         ]);
 
+        // Clean placeholders into array format
         $data['placeholders'] = $this->normalizePlaceholders($data['placeholders'] ?? null);
-        $data['subject_prefix'] = $this->normalizePrefix($data['subject_prefix'] ?? null);
 
         return $data;
-    }
-
-    private function normalizePrefix(?string $value): ?string
-    {
-        if ($value === null) {
-            return null;
-        }
-
-        $value = trim($value);
-
-        return $value === '' ? null : $value;
     }
 
     private function normalizePlaceholders(?string $raw): ?array
@@ -109,31 +97,43 @@ class LetterTemplateController extends Controller
 
     private function handleUploads(Request $request, LetterTemplate $template, array $data): array
     {
+        // Remove HEADER
         if ($request->boolean('remove_header_image') && $template->header_image_path) {
             Storage::disk('public')->delete($template->header_image_path);
             $data['header_image_path'] = null;
         }
 
+        // Remove FOOTER
         if ($request->boolean('remove_footer_image') && $template->footer_image_path) {
             Storage::disk('public')->delete($template->footer_image_path);
             $data['footer_image_path'] = null;
         }
 
+        // Upload HEADER
         if ($request->hasFile('header_image')) {
             if ($template->header_image_path) {
                 Storage::disk('public')->delete($template->header_image_path);
             }
-            $data['header_image_path'] = $request->file('header_image')->store('letter-templates/headers', 'public');
+            $data['header_image_path'] = $request->file('header_image')
+                ->store('letter-templates/headers', 'public');
         }
 
+        // Upload FOOTER
         if ($request->hasFile('footer_image')) {
             if ($template->footer_image_path) {
                 Storage::disk('public')->delete($template->footer_image_path);
             }
-            $data['footer_image_path'] = $request->file('footer_image')->store('letter-templates/footers', 'public');
+            $data['footer_image_path'] = $request->file('footer_image')
+                ->store('letter-templates/footers', 'public');
         }
 
-        unset($data['header_image'], $data['footer_image'], $data['remove_header_image'], $data['remove_footer_image']);
+        // Cleanup unused fields
+        unset(
+            $data['header_image'],
+            $data['footer_image'],
+            $data['remove_header_image'],
+            $data['remove_footer_image']
+        );
 
         return $data;
     }
