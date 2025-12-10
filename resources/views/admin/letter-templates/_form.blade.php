@@ -24,7 +24,6 @@ $placeholderValue = old('placeholders', $placeholders);
         @foreach($caseTypes as $type)
         <option
             value="{{ $type->name }}"
-            data-prifix="{{ $type->prifix }}" {{-- IMPORTANT --}}
             {{ old('category', $template->category) === $type->name ? 'selected' : '' }}>
             {{ $type->name }}
         </option>
@@ -33,17 +32,7 @@ $placeholderValue = old('placeholders', $placeholders);
 
 
 
-    <div>
-        <label class="block text-sm font-medium text-gray-700">{{ __('letters.templates.form.subject_prefix') }}</label>
-        <input type="text" name="subject_prefix"
-            value="{{ old('subject_prefix', $template->subject_prefix) }}"
-            class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2">
 
-        <p class="text-xs text-gray-500 mt-1">{{ __('letters.templates.form.subject_prefix_help') }}</p>
-        @error('subject_prefix')
-        <p class="text-xs text-red-600 mt-1" role="alert">{{ $message }}</p>
-        @enderror
-    </div>
     <div>
         <label class="block text-sm font-medium text-gray-700">{{ __('letters.templates.form.placeholders') }}</label>
         <textarea name="placeholders" rows="2"

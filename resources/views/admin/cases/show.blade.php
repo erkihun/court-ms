@@ -110,8 +110,6 @@
     'title' => $tpl->title,
     'body' => $tpl->body,
     'subject' => $tpl->title,
-    'subject_prefix' => $tpl->subject_prefix,
-
     'placeholders' => $placeholders,
     'category' => $tpl->category,
     ],

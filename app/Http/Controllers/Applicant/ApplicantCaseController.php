@@ -72,26 +72,14 @@ class ApplicantCaseController extends Controller
 
         $year = now()->format('y'); // YY format
 
-        // Pattern: PRF/00001/25
-        $prefixPattern = "{$prifix}/_____/{$year}";
-
-        // Query last case_number that matches this prefix + year
-        $latest = DB::table('court_cases')
+        // Lock rows for this prefix/year while computing the next sequence to avoid duplicates on concurrent requests.
+        $maxSeq = DB::table('court_cases')
             ->where('case_number', 'LIKE', "{$prifix}/%/{$year}")
-            ->orderBy('id', 'desc')
-            ->first();
+            ->lockForUpdate()
+            ->selectRaw("MAX(CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(case_number, '/', 2), '/', -1) AS UNSIGNED)) as max_seq")
+            ->value('max_seq');
 
-        if ($latest) {
-            // Extract the 5 digits using regex
-            if (preg_match("/^{$prifix}\/(\d{5})\/{$year}$/", $latest->case_number, $m)) {
-                $lastNumber = intval($m[1]);
-                $nextNumber = $lastNumber + 1;
-            } else {
-                $nextNumber = 1;
-            }
-        } else {
-            $nextNumber = 1;
-        }
+        $nextNumber = ((int) $maxSeq) + 1;
 
         $sequence = str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
 
@@ -189,7 +177,7 @@ class ApplicantCaseController extends Controller
         DB::beginTransaction();
 
         try {
-            // 1) Insert with temporary unique case number
+            // 1) Generate locked case number inside the transaction to avoid duplicates
             $finalNumber = $this->generateCaseNumber($data['case_type_id']);
 
             $caseId = DB::table('court_cases')->insertGetId([
@@ -214,15 +202,7 @@ class ApplicantCaseController extends Controller
                 'updated_at'         => now(),
             ]);
 
-            // 2) Final readable case number
-            $finalNumber = $this->generateCaseNumber($data['case_type_id']);
-
-            DB::table('court_cases')->where('id', $caseId)->update([
-                'case_number' => $finalNumber,
-                'updated_at'  => now(),
-            ]);
-
-            // 3) Initial status log
+            // 2) Initial status log
             DB::table('case_status_logs')->insert([
                 'case_id'            => $caseId,
                 'from_status'        => null,

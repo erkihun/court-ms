@@ -67,9 +67,9 @@ Route::middleware(SetLocale::class)->group(function () {
     Route::get('/respondent', fn() => redirect()->route('respondent.login'))->name('respondent.login.shortcut');
 
     /*
-    |--------------------------------------------------------------------------
+    |-------------------------------------------------------------------------- 
     | Respondent Public Routes (guest:respondent)
-    |--------------------------------------------------------------------------
+    |-------------------------------------------------------------------------- 
     */
     Route::middleware('guest:respondent')->group(function () {
         Route::get('/respondent/register', fn () => redirect()->route('applicant.login', ['login_as' => 'respondent']))->name('respondent.register');
@@ -99,6 +99,10 @@ Route::middleware(SetLocale::class)->group(function () {
 
     Route::get('/respondent/case-search', [CaseSearchController::class, 'index'])->name('respondent.case.search');
     Route::get('/respondent/cases/{caseNumber}', [CaseSearchController::class, 'show'])->name('respondent.cases.show');
+
+    // Public-facing preview for applicants/respondents (authorization handled in controller)
+    Route::get('/case-letters/{letter}', [LetterController::class, 'publicPreview'])
+        ->name('letters.case-preview');
 
     // Legacy "/apply" prefix for email verification links emitted on production domains.
     Route::get('/apply/email/verify', function () {
