@@ -178,7 +178,7 @@ class LetterController extends Controller
         $respondentId = auth('respondent')->id();
         $isAdmin = auth()->check();
 
-        $authorized = false;
+        $authorized = URL::hasValidSignature($request);
 
         // Admin/staff (already signed in via default guard)
         if ($isAdmin) {
@@ -292,7 +292,7 @@ class LetterController extends Controller
         $uniqueRecipients = $recipients->unique('email');
 
         foreach ($uniqueRecipients as $recipient) {
-            Mail::to($recipient['email'])->queue(
+            Mail::to($recipient['email'])->send(
                 new LetterApprovedMail($letter, $case, $recipient['name'])
             );
         }
@@ -315,9 +315,12 @@ class LetterController extends Controller
             return;
         }
 
-        $body = Route::has('letters.case-preview')
-            ? route('letters.case-preview', $letter)
+        $previewUrl = Route::has('letters.case-preview')
+            ? URL::signedRoute('letters.case-preview', ['letter' => $letter->getKey()])
             : URL::to('/case-letters/' . $letter->getKey());
+
+        $subject = $letter->subject ?: optional($letter->template)->title ?: 'Letter';
+        $body = "Approved letter subject: {$subject}\nPreview: {$previewUrl}";
 
         DB::table('case_messages')->insert([
             'case_id'            => $caseId,

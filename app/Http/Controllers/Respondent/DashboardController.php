@@ -33,9 +33,31 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
+        $letters = DB::table('respondent_case_views as v')
+            ->join('court_cases as c', 'c.id', '=', 'v.case_id')
+            ->join('letters as l', 'l.case_number', '=', 'c.case_number')
+            ->leftJoin('letter_templates as lt', 'lt.id', '=', 'l.letter_template_id')
+            ->leftJoin('users as u', 'u.id', '=', 'l.user_id')
+            ->where('v.respondent_id', $respondent->id)
+            ->where('l.approval_status', 'approved')
+            ->orderByDesc('l.created_at')
+            ->limit(5)
+            ->select(
+                'l.id',
+                'l.subject',
+                'l.reference_number',
+                'l.created_at',
+                'c.case_number',
+                'c.title as case_title',
+                'lt.title as template_title',
+                'u.name as author_name'
+            )
+            ->get();
+
         return view('applicant.respondent.dashboard', [
             'stats' => $stats,
             'recentCases' => $recentCases,
+            'letters' => $letters,
         ]);
     }
 
