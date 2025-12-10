@@ -142,9 +142,11 @@ $hasAny = $unseenHearings->isNotEmpty() || $unseenMsgs->isNotEmpty() || $unseenS
             $isUrl = filter_var($msgBody, FILTER_VALIDATE_URL);
             @endphp
             <li class="py-2 flex items-center justify-between gap-3">
-                <a href="{{ route('applicant.cases.show', $m->case_id) }}" class="text-sm flex-1">
-                    <div class="font-medium text-slate-800">{{ $m->case_number }}</div>
-                    <div class="text-xs text-slate-500">
+                <div class="text-sm flex-1">
+                    <a href="{{ route('applicant.cases.show', $m->case_id) }}" class="font-medium text-slate-800 hover:underline">
+                        {{ $m->case_number }}
+                    </a>
+                    <div class="text-xs text-slate-500 mt-0.5">
                         @if($isUrl)
                         <a href="{{ $msgBody }}" class="text-blue-600 hover:underline" target="_blank" rel="noreferrer">
                             View letter preview
@@ -155,7 +157,7 @@ $hasAny = $unseenHearings->isNotEmpty() || $unseenMsgs->isNotEmpty() || $unseenS
                         <span class="text-slate-400">·</span>
                         {{ \Illuminate\Support\Carbon::parse($m->created_at)->diffForHumans() }}
                     </div>
-                </a>
+                </div>
                 <form method="POST" action="{{ route('applicant.notifications.markOne', ['type'=>'message','sourceId'=>$m->id]) }}">
                     @csrf
                     <button class="text-xs text-slate-700 px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">

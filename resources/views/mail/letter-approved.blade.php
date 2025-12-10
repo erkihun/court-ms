@@ -13,20 +13,32 @@ $displayName = $recipientName ?: 'Recipient';
         <div style="padding: 24px;">
             <p style="margin: 0 0 12px;">Hello {{ $displayName }},</p>
             <p style="margin: 0 0 16px; color: #475569;">
-                A letter tied to case <strong>{{ $caseNumber ?: 'N/A' }}</strong> has been approved. The content is included below for your records.
+                A letter tied to case <strong>{{ $caseNumber ?: 'N/A' }}</strong> has been approved. The content and a PDF are included for your records.
             </p>
 
-            <div style="margin: 20px 0; padding: 16px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc;">
+            <div style="margin: 20px 0; padding: 16px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; line-height: 1.4;">
                 <div style="font-size: 14px; font-weight: 700; color: #0f172a;">Subject: {{ $letter->subject ?? 'Letter' }}</div>
-                @if($letter->reference_number)
-                <div style="margin-top: 4px; font-size: 12px; color: #475569;">Reference: {{ $letter->reference_number }}</div>
-                @endif
-                @if($case?->title)
-                <div style="margin-top: 4px; font-size: 12px; color: #475569;">Case Title: {{ $case->title }}</div>
-                @endif
-                @if($letter->cc)
-                <div style="margin-top: 4px; font-size: 12px; color: #475569;">CC: {{ $letter->cc }}</div>
-                @endif
+                <div style="margin-top: 4px; font-size: 12px; color: #475569;">
+                    Reference: {{ $letter->reference_number ?: '—' }}
+                </div>
+                <div style="margin-top: 4px; font-size: 12px; color: #475569;">
+                    Case Title: {{ $case->title ?? '—' }}
+                </div>
+                <div style="margin-top: 4px; font-size: 12px; color: #475569;">
+                    CC: {{ $letter->cc ?: '—' }}
+                </div>
+            </div>
+
+            @php
+            $previewUrl = \Illuminate\Support\Facades\Route::has('letters.case-preview')
+                ? route('letters.case-preview', $letter)
+                : url('/case-letters/' . $letter->getKey());
+            @endphp
+            <div style="margin: 0 0 16px;">
+                <a href="{{ $previewUrl }}" style="display: inline-block; padding: 10px 14px; background: #2563eb; color: #fff; text-decoration: none; border-radius: 8px; font-size: 13px; font-weight: 600;" target="_blank" rel="noreferrer">
+                    View letter preview
+                </a>
+                <span style="margin-left: 8px; font-size: 12px; color: #475569;">(PDF attached)</span>
             </div>
 
             <div style="padding: 16px; border: 1px solid #e2e8f0; border-radius: 10px;">
