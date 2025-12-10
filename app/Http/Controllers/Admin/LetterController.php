@@ -11,6 +11,8 @@ use App\Mail\LetterApprovedMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 
 class LetterController extends Controller
@@ -313,7 +315,9 @@ class LetterController extends Controller
             return;
         }
 
-        $body = route('letters.case-preview', $letter);
+        $body = Route::has('letters.case-preview')
+            ? route('letters.case-preview', $letter)
+            : URL::to('/case-letters/' . $letter->getKey());
 
         DB::table('case_messages')->insert([
             'case_id'            => $caseId,
