@@ -91,5 +91,54 @@
                 @endif
             </div>
         </div>
+
+        {{-- Recent letters --}}
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <div class="text-xs uppercase tracking-wide text-slate-500">Letters</div>
+                    <h2 class="text-lg font-semibold text-slate-900">Recent approved letters</h2>
+                </div>
+                <a href="{{ route('respondent.cases.my') }}" class="text-sm font-semibold text-blue-700 hover:underline">
+                    View my cases
+                </a>
+            </div>
+
+            @if(!empty($letters) && count($letters))
+            <div class="divide-y divide-slate-100">
+                @foreach($letters as $letter)
+                <div class="py-3 flex items-start justify-between gap-3">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <div class="text-sm font-semibold text-slate-900">
+                                {{ $letter->subject ?? ($letter->template_title ?? 'Letter') }}
+                            </div>
+                            <span class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                Approved
+                            </span>
+                        </div>
+                        <div class="text-xs text-slate-600 flex flex-wrap gap-3">
+                            <span>Case: {{ $letter->case_number ?? '-' }}</span>
+                            <span>Ref: {{ $letter->reference_number ?? '-' }}</span>
+                            <span>Template: {{ $letter->template_title ?? '-' }}</span>
+                            <span>Author: {{ $letter->author_name ?? '-' }}</span>
+                        </div>
+                        <div class="text-[11px] text-slate-500">
+                            {{ \Illuminate\Support\Carbon::parse($letter->created_at)->format('M d, Y H:i') }}
+                        </div>
+                    </div>
+                    <a href="{{ route('letters.case-preview', $letter->id) }}"
+                        class="text-sm font-semibold text-blue-700 hover:underline">
+                        View
+                    </a>
+                </div>
+                @endforeach
+            </div>
+            @else
+            <div class="rounded-lg border border-dashed border-slate-200 p-6 text-sm text-slate-500">
+                No letters available yet.
+            </div>
+            @endif
+        </div>
     </div>
 </x-applicant-layout>

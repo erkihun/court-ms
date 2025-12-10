@@ -334,6 +334,22 @@ class CaseController extends Controller
             ->orderBy('created_at')
             ->get();
 
+        $letters = DB::table('letters as l')
+            ->leftJoin('letter_templates as lt', 'lt.id', '=', 'l.letter_template_id')
+            ->leftJoin('users as u', 'u.id', '=', 'l.user_id')
+            ->select(
+                'l.id',
+                'l.subject',
+                'l.reference_number',
+                'l.approval_status',
+                'l.created_at',
+                'lt.title as template_title',
+                'u.name as author_name'
+            )
+            ->where('l.case_number', $case->case_number)
+            ->orderByDesc('l.created_at')
+            ->get();
+
         // Uploaded Files (admin + applicant)
         $files = DB::table('case_files as f')
             ->leftJoin('applicants as a', 'a.id', '=', 'f.uploaded_by_applicant_id')
@@ -428,6 +444,7 @@ class CaseController extends Controller
             'docs'       => $docs,        // empty collection; Blade stays compatible
             'witnesses'  => $witnesses,
             'audits'     => $audits,
+            'letters'    => $letters,
             'letterTemplates' => $letterTemplates,
         ]);
     }

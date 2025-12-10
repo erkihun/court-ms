@@ -983,13 +983,13 @@
                         </button>
                         @endif
 
-                        <button @click="switchSection('timeline')"
-                            :class="activeSection === 'timeline' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'"
+                        <button @click="switchSection('letters')"
+                            :class="activeSection === 'letters' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'"
                             class="flex items-center gap-3 px-3 py-2 rounded-lg border border-transparent transition-all duration-200 group w-full text-left">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" :class="activeSection === 'timeline' ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-600'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" :class="activeSection === 'letters' ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-600'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 4H8a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V6a2 2 0 00-2-2zM8 4l4 4 4-4" />
                             </svg>
-                            <span class="font-medium">{{ __('cases.navigation.timeline') }}</span>
+                            <span class="font-medium">Letters</span>
                         </button>
 
                         <button @click="switchSection('messages')"
@@ -1502,8 +1502,8 @@
                 </section>
 
 
-                {{-- Timeline --}}
-                <section x-show="activeSection === 'timeline'"
+                {{-- Letters --}}
+                <section x-show="activeSection === 'letters'"
                     x-transition:enter="transition ease-out duration-300"
                     x-transition:enter-start="opacity-0 transform translate-y-4"
                     x-transition:enter-end="opacity-100 transform translate-y-0"
@@ -1511,47 +1511,63 @@
                     <div class="flex items-center justify-between border-b border-gray-200 pb-3">
                         <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 4H8a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V6a2 2 0 00-2-2zM8 4l4 4 4-4" />
                             </svg>
-                            {{ __('cases.timeline_section.title') }}
+                            Letters
                         </h3>
-                        <span class="text-xs font-medium text-gray-600 bg-gray-100 rounded-full px-2.5 py-1">{{ ($timeline ?? collect())->count() }} {{ __('cases.timeline_section.events') }}</span>
+                        <span class="text-xs font-medium text-gray-600 bg-gray-100 rounded-full px-2.5 py-1">{{ ($letters ?? collect())->count() }} total</span>
                     </div>
 
-                    @if(($timeline ?? collect())->isEmpty())
+                    @if(($letters ?? collect())->isEmpty())
                     <div class="text-gray-500 text-sm border border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 4H8a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V6a2 2 0 00-2-2z" />
                         </svg>
-                        {{ __('cases.timeline_section.no_history') }}
+                        No letters linked to this case yet.
                     </div>
                     @else
-                    <ol class="space-y-4 text-sm relative before:absolute before:top-0 before:bottom-0 before:left-4 before:w-0.5 before:bg-gray-300">
-                        @foreach($timeline as $t)
+                    <div class="space-y-3">
+                        @foreach($letters as $letter)
                         @php
-                        $dot = match(($t->to_status ?? '')) {
-                        'active' => 'bg-blue-500 ring-blue-500/20',
-                        'closed', 'dismissed' => 'bg-emerald-500 ring-emerald-500/20',
-                        'pending' => 'bg-amber-500 ring-amber-500/20',
-                        default => 'bg-gray-400 ring-gray-400/20',
+                        $statusClass = match($letter->approval_status) {
+                            'approved' => 'bg-emerald-100 text-emerald-800 border border-emerald-200',
+                            'returned' => 'bg-amber-100 text-amber-800 border border-amber-200',
+                            'rejected' => 'bg-rose-100 text-rose-800 border border-rose-200',
+                            default => 'bg-gray-100 text-gray-800 border border-gray-200',
                         };
                         @endphp
-                        <li class="relative pl-10">
-                            <div class="absolute left-0 top-1.5 h-3 w-3 rounded-full {{ $dot }} ring-4 z-10"></div>
-                            <div class="text-gray-800 bg-gray-50 rounded-lg p-3 border border-gray-200">
-                                {{ $t->from_status ? ucfirst($t->from_status).' → ' : '' }}
-                                <strong>{{ ucfirst($t->to_status) }}</strong>
-                                @if(!empty($t->note)) — <span class="text-gray-600">{{ $t->note }}</span>@endif
-                                <div class="text-gray-600 text-xs mt-2">
-                                    {{ \Illuminate\Support\Carbon::parse($t->created_at)->format('M d, Y H:i') }}
+                        <div class="flex items-start justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 gap-3">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2">
+                                    <h4 class="text-base font-semibold text-gray-900">
+                                        {{ $letter->subject ?? ($letter->template_title ?? 'Letter') }}
+                                    </h4>
+                                    <span class="text-[11px] px-2 py-0.5 rounded-full {{ $statusClass }}">
+                                        {{ ucfirst($letter->approval_status ?? 'draft') }}
+                                    </span>
+                                </div>
+                                <div class="text-xs text-gray-600 flex flex-wrap gap-3">
+                                    <span>Ref: {{ $letter->reference_number ?: '--' }}</span>
+                                    <span>Template: {{ $letter->template_title ?: '--' }}</span>
+                                    <span>Author: {{ $letter->author_name ?: '--' }}</span>
+                                    <span>Created: {{ \Illuminate\Support\Carbon::parse($letter->created_at)->format('M d, Y H:i') }}</span>
                                 </div>
                             </div>
-                        </li>
+                            <div class="flex items-center gap-2">
+                                <a href="{{ route('letters.show', $letter->id) }}"
+                                    class="px-3 py-1.5 rounded-lg bg-white hover:bg-gray-100 text-sm font-medium text-gray-700 border border-gray-300 transition-colors duration-150"
+                                    target="_blank" rel="noopener">
+                                    Preview
+                                </a>
+                            </div>
+                        </div>
                         @endforeach
-                    </ol>
+                    </div>
                     @endif
                 </section>
 
+                {{-- Messages --}}
+                {{-- Messages --}}
                 {{-- Messages --}}
                 <section x-show="activeSection === 'messages'"
                     x-transition:enter="transition ease-out duration-300"

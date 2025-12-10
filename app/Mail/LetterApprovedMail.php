@@ -5,14 +5,12 @@ namespace App\Mail;
 use App\Models\CourtCase;
 use App\Models\Letter;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Str;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\URL;
 
-class LetterApprovedMail extends Mailable implements ShouldQueue
+class LetterApprovedMail extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -27,16 +25,10 @@ class LetterApprovedMail extends Mailable implements ShouldQueue
     {
         $caseNumber = $this->letter->case_number ?? $this->case?->case_number ?? '';
         $subject = trim('Approved Letter - ' . ($caseNumber ?: ($this->letter->subject ?? '')));
-        $fileName = Str::of($caseNumber ?: 'case')
-            ->slug('-')
-            ->append('-letter-', $this->letter->id, '.pdf')
-            ->value();
 
-        // PDF attachment using the existing admin preview template
-        $pdf = Pdf::loadView('admin.letters.preview', [
-            'letter' => $this->letter,
-            'template' => $this->letter->template,
-        ])->setPaper('a4');
+        $previewUrl = Route::has('letters.case-preview')
+            ? URL::signedRoute('letters.case-preview', ['letter' => $this->letter->getKey()])
+            : URL::to('/case-letters/' . $this->letter->getKey());
 
         return $this->subject($subject)
             ->view('mail.letter-approved')
@@ -45,9 +37,7 @@ class LetterApprovedMail extends Mailable implements ShouldQueue
                 'case'          => $this->case,
                 'caseNumber'    => $caseNumber,
                 'recipientName' => $this->recipientName,
-            ])
-            ->attachData($pdf->output(), $fileName, [
-                'mime' => 'application/pdf',
+                'previewUrl'    => $previewUrl,
             ]);
     }
 }
