@@ -81,8 +81,18 @@ $respondentMessages = (clone $base)->limit(6)->get();
                 <div class="text-slate-900 font-medium">
                     {{ $msg->admin_name ?: __('respondent.court_staff') }}
                 </div>
+                @php
+                $msgBody = trim($msg->body);
+                $isUrl = filter_var($msgBody, FILTER_VALIDATE_URL);
+                @endphp
                 <div class="text-slate-700 truncate">
+                    @if($isUrl)
+                    <a href="{{ $msgBody }}" class="text-blue-600 hover:underline" target="_blank" rel="noreferrer">
+                        View letter preview
+                    </a>
+                    @else
                     {{ \Illuminate\Support\Str::limit($msg->body, 120) }}
+                    @endif
                 </div>
                 <div class="mt-1 flex items-center justify-between text-[11px] text-slate-500">
                     <span>{{ $msg->admin_name ?: __('respondent.court_staff') }}</span>

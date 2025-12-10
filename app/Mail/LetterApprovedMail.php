@@ -10,6 +10,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\View;
 
 class LetterApprovedMail extends Mailable implements ShouldQueue
 {
@@ -25,17 +26,16 @@ class LetterApprovedMail extends Mailable implements ShouldQueue
     public function build(): static
     {
         $caseNumber = $this->letter->case_number ?? $this->case?->case_number ?? '';
-        $subjectLine = $this->letter->subject ?: 'Approved Letter';
-        $subject = trim("{$subjectLine} — {$caseNumber}") ?: 'Approved Letter';
+        $subject = trim('Approved Letter - ' . ($caseNumber ?: ($this->letter->subject ?? '')));
         $fileName = Str::of($caseNumber ?: 'case')
             ->slug('-')
             ->append('-letter-', $this->letter->id, '.pdf')
             ->value();
 
-        $pdf = Pdf::loadView('pdf.letter-approved', [
-            'letter'     => $this->letter,
-            'case'       => $this->case,
-            'caseNumber' => $caseNumber,
+        // PDF attachment using the existing admin preview template
+        $pdf = Pdf::loadView('admin.letters.preview', [
+            'letter' => $this->letter,
+            'template' => $this->letter->template,
         ])->setPaper('a4');
 
         return $this->subject($subject)

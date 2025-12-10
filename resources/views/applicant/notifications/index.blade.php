@@ -63,10 +63,12 @@
             $msgBody = trim($m->body);
             $isUrl = filter_var($msgBody, FILTER_VALIDATE_URL);
             @endphp
-            <li class="py-2 flex items-center justify-between">
-                <a href="{{ route('applicant.cases.show', $m->case_id) }}" class="text-sm">
-                    <div class="font-medium text-slate-800">{{ $m->case_number }}</div>
-                    <div class="text-xs text-slate-500">
+            <li class="py-2 flex items-center justify-between gap-3">
+                <div class="text-sm flex-1">
+                    <a href="{{ route('applicant.cases.show', $m->case_id) }}" class="font-medium text-slate-800 hover:underline">
+                        {{ $m->case_number }}
+                    </a>
+                    <div class="text-xs text-slate-500 mt-0.5">
                         @if($isUrl)
                         <a href="{{ $msgBody }}" class="text-blue-600 hover:underline" target="_blank" rel="noreferrer">
                             View letter preview
@@ -77,7 +79,7 @@
                         <span class="text-slate-400 mx-1">·</span>
                         {{ \Illuminate\Support\Carbon::parse($m->created_at)->diffForHumans() }}
                     </div>
-                </a>
+                </div>
                 <form method="POST" action="{{ route('applicant.notifications.markOne') }}">
                     @csrf
                     <input type="hidden" name="type" value="message">
