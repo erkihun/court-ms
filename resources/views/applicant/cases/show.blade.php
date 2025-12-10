@@ -477,9 +477,7 @@
                                 </div>
                             </div>
                             @php
-                                $letterPreviewUrl = \Illuminate\Support\Facades\Route::has('letters.case-preview')
-                                    ? \Illuminate\Support\Facades\URL::signedRoute('letters.case-preview', ['letter' => $letter->id])
-                                    : url('/case-letters/' . $letter->id);
+                                $letterPreviewUrl = \Illuminate\Support\Facades\URL::signedRoute('letters.case-preview', ['letter' => $letter->id]);
                             @endphp
                             <a href="{{ $letterPreviewUrl }}"
                                 class="text-xs font-semibold text-blue-600 hover:text-blue-800 underline">
