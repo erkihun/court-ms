@@ -123,17 +123,22 @@
                             <span>Template: {{ $letter->template_title ?? '-' }}</span>
                             <span>Author: {{ $letter->author_name ?? '-' }}</span>
                         </div>
-                        <div class="text-[11px] text-slate-500">
-                            {{ \Illuminate\Support\Carbon::parse($letter->created_at)->format('M d, Y H:i') }}
-                        </div>
+                    <div class="text-[11px] text-slate-500">
+                        {{ \Illuminate\Support\Carbon::parse($letter->created_at)->format('M d, Y H:i') }}
                     </div>
-                    <a href="{{ route('letters.case-preview', $letter->id) }}"
-                        class="text-sm font-semibold text-blue-700 hover:underline">
-                        View
-                    </a>
                 </div>
-                @endforeach
+                @php
+                    $letterPreviewUrl = \Illuminate\Support\Facades\Route::has('letters.case-preview')
+                        ? route('letters.case-preview', $letter->id)
+                        : url('/case-letters/' . $letter->id);
+                @endphp
+                <a href="{{ $letterPreviewUrl }}"
+                    class="text-sm font-semibold text-blue-700 hover:underline">
+                    View
+                </a>
             </div>
+            @endforeach
+        </div>
             @else
             <div class="rounded-lg border border-dashed border-slate-200 p-6 text-sm text-slate-500">
                 No letters available yet.
