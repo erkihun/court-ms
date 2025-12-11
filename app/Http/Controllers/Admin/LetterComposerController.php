@@ -19,6 +19,8 @@ class LetterComposerController extends Controller
         $recipientTitle = old('recipient_title', '');
         $recipientCompany = old('recipient_company', '');
         $cc = old('cc', '');
+        $sendToApplicant = filter_var(old('send_to_applicant', '1'), FILTER_VALIDATE_BOOLEAN);
+        $sendToRespondent = filter_var(old('send_to_respondent', '1'), FILTER_VALIDATE_BOOLEAN);
         $caseNumber = null;
 
         if ($request->filled('template_id')) {
@@ -44,6 +46,8 @@ class LetterComposerController extends Controller
             'recipientTitle',
             'recipientCompany',
             'cc',
+            'sendToApplicant',
+            'sendToRespondent',
             'caseNumber'
         ));
     }

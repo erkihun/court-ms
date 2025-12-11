@@ -31,23 +31,20 @@
 
         .page-seal-bottom {
             position: absolute;
-            bottom: 25mm;
-            /* Position above the footer area (assuming footer is ~20mm high) */
-            left: 75%;
-            transform: translateX(-50%);
+            bottom: 30mm;
+            right: 32mm;
             z-index: 5;
-            /* Ensure it is above the body content and footer */
-            /* Adjustments for the seal size */
-            max-height: 150px;
-            max-width: 150px;
+            max-height: 110px;
+            max-width: 110px;
             display: flex;
             justify-content: center;
             align-items: center;
+            pointer-events: none;
         }
 
         .page-seal-bottom img {
-            max-height: 150px;
-            max-width: 150px;
+            max-height: 120px;
+            max-width: 120px;
             object-fit: contain;
             display: block;
             opacity: 0.8;
@@ -126,7 +123,7 @@
             height: var(--a4-height);
             background: #fff;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            padding-top: 3mm;
+            padding-top: 2mm;
             position: relative;
             overflow: hidden;
             /* Strict A4 */
@@ -147,21 +144,44 @@
         .letter-header img,
         .letter-footer img {
             width: 100%;
-            height: auto;
-            max-height: 35mm;
-            /* Limit header height visually */
+            height: 32mm;
+            max-height: 32mm;
             object-fit: contain;
             display: block;
         }
 
+        .letter-footer {
+            position: relative;
+            height: 34mm;
+            flex-shrink: 0;
+            margin: 0;
+            padding-right: 32mm;
+            overflow: hidden;
+        }
+
         .letter-body-container {
             flex-grow: 1;
-            /* Takes available space */
-            padding: 0 20mm;
-            /* Standard Letter Margins (Left/Right) */
+            padding: 0 20mm 0 20mm;
             overflow: hidden;
             display: flex;
             flex-direction: column;
+        }
+
+        .qr-block {
+            position: absolute;
+            right: 4mm;
+            bottom: 3mm;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 25mm;
+            height: 25mm;
+        }
+
+        .qr-block svg {
+            width: 25mm;
+            height: 25mm;
+            display: block;
         }
 
         .content-slot {
@@ -285,6 +305,19 @@
 
     // Ensure the body allows basic formatting tags but strips malicious scripts
     $safeBody = \Mews\Purifier\Facades\Purifier::clean($letter->body ?? '', 'default');
+
+    // QR payload
+    $qrPayload = implode('|', [
+    'REF:' . \Illuminate\Support\Str::limit($letter->reference_number ?? 'NA', 20, ''),
+    'CASE:' . \Illuminate\Support\Str::limit($letter->case_number ?? 'NA', 20, ''),
+    'STATUS:' . ($letter->approval_status ?? 'pending'),
+    'DATE:' . ($letter->created_at?->format('Y-m-d') ?? now()->format('Y-m-d')),
+    ]);
+    $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
+    ->encoding('UTF-8')
+    ->size(120)
+    ->errorCorrection('L')
+    ->generate($qrPayload);
     @endphp
 
     <div class="preview-toolbar">
@@ -339,21 +372,21 @@
         <div class="content-block" data-type="closing">
             <div class="closing-block">
                 @if($isApproved)
-                    <div class="signature-space">
-                        <div class="inline-flex items-end gap-6">
-                            @if($authorSignature)
-                            <div class="flex flex-col items-center gap-1">
-                                <img src="{{ $authorSignature }}" alt="{{ __('letters.preview.author_signature') }}" style="max-height:50px; max-width:160px; object-fit:contain;">
-
-                            </div>
-                            @endif
+                <div class="signature-space">
+                    <div class="inline-flex items-end gap-6">
+                        @if($authorSignature)
+                        <div class="flex flex-col items-center gap-1">
+                            <img src="{{ $authorSignature }}" alt="{{ __('letters.preview.author_signature') }}" style="max-height:50px; max-width:160px; object-fit:contain;">
 
                         </div>
+                        @endif
+
                     </div>
-                    <p style="margin-top: 0.5rem; ">
-                        <strong style="justify-content: center;">{{ $displayName }}<br>
-                            {{ $displayTitle }}</strong>
-                    </p>
+                </div>
+                <p style="margin-top: 0.5rem; ">
+                    <strong style="justify-content: center;">{{ $displayName }}<br>
+                        {{ $displayTitle }}</strong>
+                </p>
                 @endif
             </div>
         </div>
@@ -384,18 +417,21 @@
             <div class="letter-body-container">
                 <div class="content-slot"></div>
             </div>
-            {{-- NEW SEAL PLACEMENT: Fixed position above the footer --}}
+            {{-- Official seal (approved letters only) --}}
             @if($isApproved && optional($systemSettings)->seal_path)
             <div class="page-seal-bottom">
                 <img src="{{ asset('storage/'.$systemSettings->seal_path) }}"
                     crossorigin="anonymous"
-                    alt="Official Seal Bottom">
+                    alt="Official Seal">
             </div>
             @endif
             <div class="letter-footer">
                 @if($template->footer_image_path)
                 <img src="{{ asset('storage/' . $template->footer_image_path) }}" crossorigin="anonymous" alt="Footer">
                 @endif
+                <div class="qr-block">
+                    {!! $qrSvg !!}
+                </div>
             </div>
         </div>
     </template>
@@ -483,20 +519,7 @@
                 };
             }
 
-            // 3. Pre-load images
-            const tempSheet = createNewPage();
-            const images = Array.from(tempSheet.sheet.querySelectorAll('img'));
-
-            await Promise.all(images.map(img => {
-                if (img.complete) return Promise.resolve();
-                return new Promise(resolve => {
-                    img.onload = resolve;
-                    img.onerror = resolve;
-                });
-            }));
-            tempSheet.sheet.remove();
-
-            // 4. Pagination Logic
+            // 3. Pagination Logic
             let currentPage = createNewPage();
             let pageIndex = 1;
 

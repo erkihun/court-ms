@@ -38,9 +38,23 @@ class LetterController extends Controller
             'case_number'       => ['nullable', 'string', 'max:60'],
             'body'              => ['required', 'string'],
             'cc'                => ['nullable', 'string', 'max:255'],
+            'send_to_applicant' => ['nullable', 'boolean'],
+            'send_to_respondent'=> ['nullable', 'boolean'],
             'approved_by_name'  => ['nullable', 'string', 'max:255'],
             'approved_by_title' => ['nullable', 'string', 'max:255'],
         ]);
+
+        $sendToApplicant = array_key_exists('send_to_applicant', $data) ? (bool) $data['send_to_applicant'] : true;
+        $sendToRespondent = array_key_exists('send_to_respondent', $data) ? (bool) $data['send_to_respondent'] : true;
+
+        if (!$sendToApplicant && !$sendToRespondent) {
+            return back()
+                ->withErrors(['send_to_applicant' => __('letters.form.delivery_required')])
+                ->withInput();
+        }
+
+        $data['send_to_applicant'] = $sendToApplicant;
+        $data['send_to_respondent'] = $sendToRespondent;
 
         $letter          = null;
         $template        = LetterTemplate::findOrFail($data['template_id']);
@@ -88,6 +102,8 @@ class LetterController extends Controller
                 'case_number'        => $data['case_number'] ?? null,
                 'body'               => $data['body'],
                 'cc'                 => $data['cc'] ?? null,
+                'send_to_applicant'  => $data['send_to_applicant'],
+                'send_to_respondent' => $data['send_to_respondent'],
                 'approved_by_name'   => $data['approved_by_name'] ?? null,
                 'approved_by_title'  => $data['approved_by_title'] ?? null,
             ]);
@@ -117,9 +133,24 @@ class LetterController extends Controller
             'case_number'       => ['nullable', 'string', 'max:60'],
             'body'              => ['required', 'string'],
             'cc'                => ['nullable', 'string', 'max:255'],
+            'send_to_applicant' => ['nullable', 'boolean'],
+            'send_to_respondent'=> ['nullable', 'boolean'],
             'approved_by_name'  => ['nullable', 'string', 'max:255'],
             'approved_by_title' => ['nullable', 'string', 'max:255'],
         ]);
+
+        $sendToApplicant = array_key_exists('send_to_applicant', $data)
+            ? (bool) $data['send_to_applicant']
+            : ($letter->send_to_applicant ?? true);
+        $sendToRespondent = array_key_exists('send_to_respondent', $data)
+            ? (bool) $data['send_to_respondent']
+            : ($letter->send_to_respondent ?? true);
+
+        if (!$sendToApplicant && !$sendToRespondent) {
+            return back()
+                ->withErrors(['send_to_applicant' => __('letters.form.delivery_required')])
+                ->withInput();
+        }
 
         $letter->load('template');
 
@@ -134,6 +165,8 @@ class LetterController extends Controller
             'case_number'       => $data['case_number'] ?? null,
             'body'              => $data['body'],
             'cc'                => $data['cc'] ?? null,
+            'send_to_applicant'  => $sendToApplicant,
+            'send_to_respondent' => $sendToRespondent,
             'approved_by_name'   => $data['approved_by_name'] ?? null,
             'approved_by_title'  => $data['approved_by_title'] ?? null,
         ]);
@@ -169,6 +202,8 @@ class LetterController extends Controller
     {
         $letter->load(['template', 'author']);
 
+        $sendToApplicant = $letter->send_to_applicant ?? true;
+        $sendToRespondent = $letter->send_to_respondent ?? true;
         $case = null;
         if ($letter->case_number) {
             $case = CourtCase::where('case_number', $letter->case_number)->first();
@@ -186,12 +221,18 @@ class LetterController extends Controller
         }
 
         // Applicant owns the case
-        if (!$authorized && $case && $applicantId && (int) $case->applicant_id === (int) $applicantId) {
+        if (
+            !$authorized
+            && $sendToApplicant
+            && $case
+            && $applicantId
+            && (int) $case->applicant_id === (int) $applicantId
+        ) {
             $authorized = true;
         }
 
         // Respondent has viewed this case (association via respondent_case_views)
-        if (!$authorized && $case && $respondentId) {
+        if (!$authorized && $sendToRespondent && $case && $respondentId) {
             $hasAccess = DB::table('respondent_case_views')
                 ->where('respondent_id', $respondentId)
                 ->where('case_id', $case->id)
@@ -240,11 +281,13 @@ class LetterController extends Controller
             return;
         }
 
+        $sendToApplicant = $letter->send_to_applicant ?? true;
+        $sendToRespondent = $letter->send_to_respondent ?? true;
         $case = CourtCase::with('applicant')->where('case_number', $letter->case_number)->first();
 
         $recipients = collect();
 
-        if ($case?->applicant?->email) {
+        if ($sendToApplicant && $case?->applicant?->email) {
             $recipients->push([
                 'email' => $case->applicant->email,
                 'name'  => $case->applicant->full_name ?? $case->applicant->email,
@@ -252,7 +295,7 @@ class LetterController extends Controller
         }
 
         // Respondents who have viewed the case
-        if ($case) {
+        if ($sendToRespondent && $case) {
             $respondents = DB::table('respondent_case_views as v')
                 ->join('respondents as r', 'r.id', '=', 'v.respondent_id')
                 ->where('v.case_id', $case->id)
@@ -272,21 +315,23 @@ class LetterController extends Controller
         }
 
         // Fallback: respondents who submitted responses with this case number
-        $responses = DB::table('respondent_responses as rr')
-            ->join('respondents as r', 'r.id', '=', 'rr.respondent_id')
-            ->where('rr.case_number', $letter->case_number)
-            ->select('r.email', 'r.first_name', 'r.middle_name', 'r.last_name')
-            ->distinct()
-            ->get();
+        if ($sendToRespondent) {
+            $responses = DB::table('respondent_responses as rr')
+                ->join('respondents as r', 'r.id', '=', 'rr.respondent_id')
+                ->where('rr.case_number', $letter->case_number)
+                ->select('r.email', 'r.first_name', 'r.middle_name', 'r.last_name')
+                ->distinct()
+                ->get();
 
-        foreach ($responses as $resp) {
-            if (!$resp->email) {
-                continue;
+            foreach ($responses as $resp) {
+                if (!$resp->email) {
+                    continue;
+                }
+                $recipients->push([
+                    'email' => $resp->email,
+                    'name'  => trim("{$resp->first_name} {$resp->middle_name} {$resp->last_name}") ?: $resp->email,
+                ]);
             }
-            $recipients->push([
-                'email' => $resp->email,
-                'name'  => trim("{$resp->first_name} {$resp->middle_name} {$resp->last_name}") ?: $resp->email,
-            ]);
         }
 
         $uniqueRecipients = $recipients->unique('email');
