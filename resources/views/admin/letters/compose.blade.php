@@ -87,6 +87,27 @@
                             class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="{{ __('letters.form.cc_placeholder') }}">
                         <p class="text-xs text-gray-500 mt-1">{{ __('letters.form.cc_hint') }}</p>
                     </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">{{ __('letters.form.delivery_label') }}</label>
+                        <div class="mt-2 flex flex-wrap items-center gap-4">
+                            <input type="hidden" name="send_to_applicant" value="0">
+                            <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                                <input type="checkbox" name="send_to_applicant" value="1" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                    @checked($sendToApplicant)>
+                                <span>{{ __('letters.form.deliver_applicant') }}</span>
+                            </label>
+                            <input type="hidden" name="send_to_respondent" value="0">
+                            <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                                <input type="checkbox" name="send_to_respondent" value="1" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                    @checked($sendToRespondent)>
+                                <span>{{ __('letters.form.deliver_respondent') }}</span>
+                            </label>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">{{ __('letters.form.delivery_hint') }}</p>
+                        @error('send_to_applicant')
+                        <p class="text-xs text-red-600 mt-1" role="alert">{{ $message }}</p>
+                        @enderror
+                    </div>
                 </div>
 
                 <div>

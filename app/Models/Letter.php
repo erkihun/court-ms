@@ -23,9 +23,16 @@ class Letter extends Model implements AuditableContract
         'case_number',
         'body',
         'cc',
+        'send_to_applicant',
+        'send_to_respondent',
         'approved_by_name',
         'approved_by_title',
         'approval_status',
+    ];
+
+    protected $casts = [
+        'send_to_applicant'  => 'boolean',
+        'send_to_respondent' => 'boolean',
     ];
 
     public function template(): BelongsTo
