@@ -66,9 +66,7 @@
                         <tr>
                             <th class="p-3 text-left font-medium">{{ __('decisions.fields.name') }}</th>
                             <th class="p-3 text-left font-medium">Case &amp; Parties</th>
-                            <th class="p-3 text-left font-medium">Decision</th>
                             <th class="p-3 text-left font-medium">Decision Date</th>
-                            <th class="p-3 text-left font-medium">Reviewer</th>
                             <th class="p-3 text-left font-medium">{{ __('app.Status') }}</th>
                             <th class="p-3 text-left font-medium">Updated</th>
                             <th class="p-3 text-left font-medium w-36">{{ __('decisions.index.actions') }}</th>
@@ -109,33 +107,8 @@
                                 </div>
                                 @endif
                             </td>
-                            <td class="p-3 align-top text-xs text-gray-700">
-                                {{ \Illuminate\Support\Str::limit($decision->decision_content ?? '', 120) ?: '—' }}
-                            </td>
                             <td class="p-3 align-top text-gray-700">
                                 {{ optional($decision->decision_date)->format('M d, Y') ?: '—' }}
-                            </td>
-                            <td class="p-3 align-top text-gray-700">
-                                @php
-                                $reviewers = $decision->reviewing_admin_user_names ?? [];
-                                $display = array_slice($reviewers, 0, 2);
-                                $extra = max(0, count($reviewers) - count($display));
-                                @endphp
-                                <div class="flex flex-wrap gap-1">
-                                    @foreach($display as $name)
-                                    <span class="px-2 py-0.5 rounded-full bg-gray-100 text-[11px] font-medium text-gray-800 border border-gray-200 block">
-                                        {{ $name }}
-                                    </span>
-                                    @endforeach
-                                    @if($extra > 0)
-                                    <span class="px-2 py-0.5 rounded-full bg-orange-100 text-[11px] font-semibold text-orange-800 border border-orange-200 block">
-                                        +{{ $extra }} more
-                                    </span>
-                                    @endif
-                                </div>
-                                <div class="text-[11px] text-gray-500 mt-1">
-                                    {{ $decision->reviewing_admin_user_name ?: $decision->reviewer?->name ?? '—' }}
-                                </div>
                             </td>
                             <td class="p-3 align-top">
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide
@@ -146,15 +119,23 @@
                             <td class="p-3 align-top text-xs text-gray-500">
                                 {{ $decision->updated_at ? $decision->updated_at->diffForHumans() : '—' }}
                             </td>
+                            @php
+                            $middleJudgeId = $decision->panel_judges[1]['admin_user_id'] ?? null;
+                            $isMiddleJudge = $middleJudgeId && auth()->id() === $middleJudgeId;
+                            @endphp
                             <td class="p-3 align-top">
                                 <div class="flex items-center gap-2">
-                                    @if($canEditDecision)
+                                    <a href="{{ route('decisions.show', $decision) }}"
+                                        class="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs border border-gray-200">
+                                        View
+                                    </a>
+                                    @if($canEditDecision && $isMiddleJudge)
                                     <a href="{{ route('decisions.edit', $decision) }}"
                                         class="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs">
                                         {{ __('decisions.index.edit') }}
                                     </a>
                                     @endif
-                                    @if($canDeleteDecision)
+                                    @if($canDeleteDecision && $isMiddleJudge)
                                     <form id="delForm-{{ $decision->id }}" action="{{ route('decisions.destroy', $decision) }}" method="POST" class="hidden">
                                         @csrf @method('DELETE')
                                     </form>
@@ -168,7 +149,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="8" class="p-8 text-center text-gray-500">
+                            <td colspan="6" class="p-8 text-center text-gray-500">
                                 <svg class="h-10 w-10 mx-auto mb-2 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h6" />
                                 </svg>

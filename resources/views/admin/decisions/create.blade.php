@@ -23,20 +23,19 @@
 
         <!-- FORM -->
         <form method="POST" action="{{ route('decisions.store') }}"
-            class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 space-y-4">
+            class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 space-y-4 overflow-visible">
             @csrf
 
-            <div class="grid gap-4">
+            <div class="grid gap-6">
 
-                <!-- Case + Date -->
-                <div class="grid md:grid-cols-2 gap-4">
-                    <!-- Case Field -->
-                    <div>
+                <!-- Case Details -->
+                <div class="grid md:grid-cols-3 gap-4">
+                    <div class="md:col-span-2">
                         <label for="decision-case-select" class="block text-sm font-semibold text-gray-800">
                             {{ __('decisions.fields.case') }}
                         </label>
 
-                        <div class="relative mt-1">
+                        <div class="relative mt-1 z-30">
                             <select name="case_id" id="decision-case-select"
                                 class="w-full appearance-none px-3 py-2.5 rounded-lg bg-white text-gray-900 text-sm 
                                     border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 
@@ -46,10 +45,11 @@
 
                                 @foreach($cases as $case)
                                 <option value="{{ $case->id }}"
+                                    data-case-number="{{ $case->case_number }}"
                                     data-applicant="{{ $case->applicant?->full_name ?? '' }}"
                                     data-respondent="{{ $case->respondent_name ?? '' }}"
-                                    @selected(old('case_id')==$case->id)>
-                                    {{ $case->case_number }} — {{ \Illuminate\Support\Str::limit($case->title, 60) }}
+                                    @selected(old('case_id', request('case_id'))==$case->id)>
+                                    {{ $case->case_number }} - {{ \Illuminate\Support\Str::limit($case->title, 60) }}
                                 </option>
                                 @endforeach
                             </select>
@@ -66,8 +66,17 @@
                         @enderror
                     </div>
 
-                    <!-- Decision Date -->
                     <div>
+                        <label class="block text-sm font-semibold text-gray-800">
+                            Case File Number (መዝገብ ቁጥር)
+                        </label>
+                        <input id="case-file-number" type="text" name="case_file_number"
+                            value="{{ old('case_file_number', '') }}"
+                            class="mt-1 w-full px-3 py-2 rounded-lg bg-gray-50 text-gray-900 border border-gray-200"
+                            placeholder="Auto-fills after selecting a case">
+                    </div>
+
+                    <div class="md:col-span-1">
                         <label class="block text-sm font-medium text-gray-700">
                             {{ __('decisions.fields.decision_date') }}
                         </label>
@@ -81,12 +90,11 @@
                     </div>
                 </div>
 
-                <!-- Applicant / Respondent -->
+                <!-- Parties -->
                 <div class="grid md:grid-cols-2 gap-4">
-                    <!-- Applicant -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700">
-                            {{ __('decisions.fields.applicant_name') }}
+                            Name of Applicant/Appellant (አመልካች)
                         </label>
                         <input id="applicant-name-display" type="text" readonly
                             value="{{ old('applicant_full_name', '') }}"
@@ -95,10 +103,9 @@
                             value="{{ old('applicant_full_name', '') }}">
                     </div>
 
-                    <!-- Respondent -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700">
-                            {{ __('decisions.fields.respondent_name') }}
+                            Name of Respondent (መልስ ሰጭ)
                         </label>
                         <input id="respondent-name-display" type="text" readonly
                             value="{{ old('respondent_full_name', '') }}"
@@ -108,45 +115,44 @@
                     </div>
                 </div>
 
-                <!-- Reviewer -->
-                <div class="grid md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">
-                            {{ __('decisions.fields.reviewer') }}
-                        </label>
-
-                        <div class="relative mt-1">
-                            <select name="reviewing_admin_user_id"
-                                class="w-full appearance-none px-3 py-2.5 rounded-lg bg-white text-gray-900 text-sm
-                                    border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200
-                                    cursor-pointer transition hover:border-gray-400">
-
-                                <option value="">{{ __('decisions.fields.select_reviewer') }}</option>
-
-                                @foreach($adminUsers as $admin)
-                                <option value="{{ $admin->id }}" @selected(old('reviewing_admin_user_id')==$admin->id)>
-                                    {{ $admin->name }}
-                                </option>
+                <!-- Judges -->
+                <div class="border border-gray-200 rounded-lg p-4 space-y-3">
+                    <div class="flex items-center justify-between gap-3">
+                        <h2 class="text-base font-semibold text-gray-900">Judges (in order)</h2>
+                        <span class="text-xs uppercase tracking-wide text-gray-500">1st · 2nd · 3rd</span>
+                    </div>
+                    <div class="grid md:grid-cols-3 gap-3">
+                        @for ($i = 0; $i < 3; $i++)
+                        @php
+                        $defaultJudgeId = $i === 1 ? auth()->id() : null;
+                        $selectedJudge = old("judges.$i.admin_user_id", $defaultJudgeId);
+                        $isMiddle = $i === 1;
+                        @endphp
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Judge {{ $i + 1 }}</label>
+                            @if($isMiddle)
+                            <input type="text" readonly
+                                value="{{ auth()->user()?->name ?? 'Current User' }}"
+                                class="mt-1 w-full px-3 py-2 rounded-lg bg-gray-100 text-gray-900 border border-gray-200">
+                            <input type="hidden" name="judges[{{ $i }}][admin_user_id]" value="{{ $selectedJudge }}">
+                            @else
+                            <select name="judges[{{ $i }}][admin_user_id]"
+                                class="mt-1 w-full px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 relative z-20">
+                                <option value="">Select judge</option>
+                                @foreach($judgeUsers as $admin)
+                                <option value="{{ $admin->id }}" @selected($selectedJudge==$admin->id)>{{ $admin->name }}</option>
                                 @endforeach
                             </select>
-
-                            <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6" />
-                                </svg>
-                            </span>
+                            @endif
                         </div>
-
-                        @error('reviewing_admin_user_id')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
+                        @endfor
                     </div>
                 </div>
 
                 <!-- Decision Content -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700">
-                        {{ __('decisions.fields.decision_content') }}
+                        Final Decision / ውሳኔ
                     </label>
 
                     <textarea id="decision-content-editor" name="decision_content" rows="12"
@@ -250,21 +256,26 @@
                 }
             });
 
-            // Autofill applicant/respondent on case selection
+            // Autofill applicant/respondent/case number on case selection
             const caseSelect = document.getElementById('decision-case-select');
             const applicantDisplay = document.getElementById('applicant-name-display');
             const respondentDisplay = document.getElementById('respondent-name-display');
             const applicantHidden = document.getElementById('applicant-name-hidden');
             const respondentHidden = document.getElementById('respondent-name-hidden');
+            const caseFileNumber = document.getElementById('case-file-number');
 
             const updatePartyFields = () => {
                 const selected = caseSelect?.selectedOptions[0];
                 const applicant = selected?.dataset.applicant ?? '';
                 const respondent = selected?.dataset.respondent ?? '';
+                const caseNumber = selected?.dataset.caseNumber ?? '';
                 applicantDisplay.value = applicant;
                 respondentDisplay.value = respondent;
                 applicantHidden.value = applicant;
                 respondentHidden.value = respondent;
+                if (caseFileNumber) {
+                    caseFileNumber.value = caseNumber;
+                }
             };
 
             updatePartyFields();
