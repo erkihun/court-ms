@@ -369,6 +369,21 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::post('/decisions', [DecisionController::class, 'store'])
                 ->middleware('perm:decision.create')
                 ->name('decisions.store');
+            Route::get('/decisions/{decision}', [DecisionController::class, 'show'])
+                ->middleware('perm:decision.view')
+                ->name('decisions.show');
+            Route::post('/decisions/{decision}/reviews', [DecisionController::class, 'storeReview'])
+                ->middleware('perm:decision.update')
+                ->name('decisions.reviews.store');
+            Route::get('/decisions/{decision}/reviews/{review}/edit', [DecisionController::class, 'editReview'])
+                ->middleware('perm:decision.update')
+                ->name('decisions.reviews.edit');
+            Route::patch('/decisions/{decision}/reviews/{review}', [DecisionController::class, 'updateReview'])
+                ->middleware('perm:decision.update')
+                ->name('decisions.reviews.update');
+            Route::delete('/decisions/{decision}/reviews/{review}', [DecisionController::class, 'destroyReview'])
+                ->middleware('perm:decision.update')
+                ->name('decisions.reviews.destroy');
             Route::get('/decisions/{decision}/edit', [DecisionController::class, 'edit'])
                 ->middleware('perm:decision.update')
                 ->name('decisions.edit');

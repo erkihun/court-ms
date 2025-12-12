@@ -18,10 +18,14 @@ class Decision extends Model
     protected $fillable = [
         'court_case_id',
         'case_number',
+        'case_file_number',
         'applicant_full_name',
         'respondent_full_name',
         'case_filed_date',
         'decision_date',
+        'panel_judges',
+        'panel_decision',
+        'judges_comments',
         'reviewing_admin_user_id',
         'reviewing_admin_user_name',
         'reviewing_admin_user_names',
@@ -37,6 +41,7 @@ class Decision extends Model
     protected $casts = [
         'case_filed_date' => 'date',
         'decision_date' => 'date',
+        'panel_judges' => 'array',
         'reviewing_admin_user_names' => 'array',
     ];
 
@@ -48,5 +53,10 @@ class Decision extends Model
     public function reviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewing_admin_user_id');
+    }
+
+    public function reviews()
+    {
+        return $this->hasMany(DecisionReview::class);
     }
 }

@@ -53,6 +53,16 @@ class LetterController extends Controller
                 ->withInput();
         }
 
+        // Block letters for closed cases
+        if (!empty($data['case_number'])) {
+            $case = CourtCase::where('case_number', $data['case_number'])->first();
+            if ($case && ($case->status === 'closed')) {
+                return back()
+                    ->withErrors(['case_number' => 'This case is closed; you cannot write a letter for it.'])
+                    ->withInput();
+            }
+        }
+
         $data['send_to_applicant'] = $sendToApplicant;
         $data['send_to_respondent'] = $sendToRespondent;
 

@@ -6,8 +6,8 @@
     // ---- Safe defaults to avoid "Undefined variable" ----
     $totalCases = $totalCases ?? 0;
     $pendingCases = $pendingCases ?? 0;
-    $resolvedCases = $resolvedCases ?? 0;
-    $activeUsers = $activeUsers ?? 0;
+    $resolvedCases = $resolvedCases ?? 0; // will be overwritten with active decisions below
+    $activeCases = $activeCases ?? 0;
 
     $recent = collect($recent ?? []);
     $recentUsers = collect($recentUsers ?? []);
@@ -26,6 +26,24 @@
     default => 'bg-gray-50 text-gray-700 border border-gray-200',
     };
     };
+    @endphp
+
+    @php
+    // Override resolvedCases to count cases that have an active decision.
+    try {
+        $resolvedCases = \App\Models\Decision::where('status', 'active')->distinct('court_case_id')->count('court_case_id');
+    } catch (\Throwable $e) {
+        // Fallback gracefully if DB not reachable in view context.
+    }
+
+    // Compute active cases (status = active) if not already provided.
+    if (empty($activeCases)) {
+        try {
+            $activeCases = \App\Models\CourtCase::where('status', 'active')->count();
+        } catch (\Throwable $e) {
+            $activeCases = $activeCases ?? 0;
+        }
+    }
     @endphp
 
     @push('styles')
@@ -88,6 +106,19 @@
             <h2 class="text-sm uppercase tracking-wider font-semibold text-gray-500 mt-1">{{ __('dashboard.pending') }}</h2>
         </div>
 
+        {{-- Active cases (Teal) --}}
+        <div class="p-5 rounded-xl bg-white border border-cyan-100 shadow-md transition hover:shadow-lg">
+            <div class="flex items-start justify-between">
+                <div class="p-3 rounded-full bg-cyan-100/70 text-cyan-600 shadow-sm">
+                    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+            </div>
+            <p id="kpi-active-cases" class="text-4xl font-extrabold mt-4 text-cyan-700">{{ number_format($activeCases) }}</p>
+            <h2 class="text-sm uppercase tracking-wider font-semibold text-gray-500 mt-1">Active cases</h2>
+        </div>
+
         {{-- Resolved (Emerald Green - Success) --}}
         {{-- Design: Light green background, strong green icon, dark text --}}
         <div class="p-5 rounded-xl bg-white border border-emerald-100 shadow-md transition hover:shadow-lg">
@@ -102,19 +133,6 @@
             <h2 class="text-sm uppercase tracking-wider font-semibold text-gray-500 mt-1">{{ __('dashboard.resolved') }}</h2>
         </div>
 
-        {{-- Active users (Indigo/Teal - Secondary Professional) --}}
-        {{-- Design: Light indigo background, strong indigo icon, dark text --}}
-        <div class="p-5 rounded-xl bg-white border border-indigo-100 shadow-md transition hover:shadow-lg">
-            <div class="flex items-start justify-between">
-                <div class="p-3 rounded-full bg-indigo-100/70 text-indigo-600 shadow-sm">
-                    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM6 21a6 6 0 1112 0H6z" />
-                    </svg>
-                </div>
-            </div>
-            <p id="kpi-active-users" class="text-4xl font-extrabold mt-4 text-indigo-700">{{ number_format($activeUsers) }}</p>
-            <h2 class="text-sm uppercase tracking-wider font-semibold text-gray-500 mt-1">{{ __('dashboard.active_users') }}</h2>
-        </div>
     </div>
 
     {{-- Recent cases (Rest of the dashboard remains the same as previous update) --}}

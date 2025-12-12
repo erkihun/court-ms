@@ -44,6 +44,18 @@ class ResponseController extends Controller
             'pdf' => ['required', 'file', 'mimes:pdf', 'max:5120'],
         ]);
 
+        if (!empty($data['case_number'])) {
+            $case = DB::table('court_cases')
+                ->select('status')
+                ->where('case_number', $data['case_number'])
+                ->first();
+            if ($case && $case->status === 'closed') {
+                return back()
+                    ->withErrors(['case_number' => 'This case is closed; responses are not allowed.'])
+                    ->withInput();
+            }
+        }
+
         $this->assertNotOwnCase($data['case_number'] ?? null, (int) $applicant->id);
 
         $path = $request->file('pdf')->store('respondent/responses', 'public');

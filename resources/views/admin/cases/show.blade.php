@@ -115,6 +115,24 @@
     ],
     ];
     });
+
+    // Lock actions if case is closed AND has an active decision
+    $hasActiveDecision = false;
+    try {
+        $hasActiveDecision = \App\Models\Decision::where('court_case_id', $case->id)->where('status', 'active')->exists();
+    } catch (\Throwable $e) {
+        $hasActiveDecision = false;
+    }
+    $caseLocked = (($case->status ?? '') === 'closed') && $hasActiveDecision;
+
+    // Lock actions if case is closed AND has an active decision
+    $hasActiveDecision = false;
+    try {
+        $hasActiveDecision = \App\Models\Decision::where('court_case_id', $case->id)->where('status', 'active')->exists();
+    } catch (\Throwable $e) {
+        $hasActiveDecision = false;
+    }
+    $caseLocked = (($case->status ?? '') === 'closed') && $hasActiveDecision;
     @endphp
     @push('styles')
     <style>
@@ -364,7 +382,7 @@
                             onclick="openReviewModal('reject')">Reject</button>
                     </div>
                     @endif
-                    @if($canAssign)
+                    @if(!$caseLocked && $canAssign)
                     <a href="{{ route('cases.assign.form', $case->id) }}"
                         class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-sm font-medium text-white transition-colors duration-150 flex items-center gap-1">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -373,7 +391,7 @@
                         {{ __('cases.assign_change') }}
                     </a>
                     @endif
-                    @if($canManageBench)
+                    @if(!$caseLocked && $canManageBench)
                     <a href="{{ route('bench-notes.index', ['case_id' => $case->id]) }}"
                         class="px-4 py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-sm font-medium text-white transition-colors duration-150 flex items-center gap-1">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -382,7 +400,7 @@
                         Bench note
                     </a>
                     @endif
-                    @if($canWriteLetter)
+                    @if(!$caseLocked && $canWriteLetter)
                     <a href="#write-letter-panel"
                         data-letter-open
                         @click.prevent="letterPanel = true; $nextTick(() => document.getElementById('write-letter-panel')?.scrollIntoView({behavior:'smooth'}));"
@@ -391,6 +409,15 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20h9M12 4h9m-9 8h9M5 6h.01M5 12h.01M5 18h.01" />
                         </svg>
                         Write letter
+                    </a>
+                    @endif
+                    @if(!$caseLocked && ($case->status ?? '') === 'closed')
+                    <a href="{{ route('decisions.create', ['case_id' => $case->id]) }}"
+                        class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-sm font-medium text-white transition-colors duration-150 flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Give decision
                     </a>
                     @endif
                     <a href="{{ route('cases.index') }}"
@@ -409,6 +436,14 @@
                     </button>
 
                 </div>
+                @if($caseLocked)
+                <div class="mt-3 px-3 py-2 rounded-lg bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-2 text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 19a7 7 0 110-14 7 7 0 010 14z" />
+                    </svg>
+                    Actions are locked because this case is closed and has an active decision.
+                </div>
+                @endif
             </div>
         </div>
         {{-- Review status + note --}}
@@ -1270,7 +1305,7 @@
 
                                 <div class="flex items-center gap-2">
                                     {{-- Inline edit --}}
-                                    @if($canUpdateHearings)
+                                    @if(!$caseLocked && $canUpdateHearings)
                                     <details class="relative">
                                         <summary class="px-3 py-1.5 rounded-lg bg-white text-xs cursor-pointer text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 flex items-center gap-1">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1299,7 +1334,7 @@
                                     </details>
                                     @endif
 
-                                    @if($canDeleteHearings)
+                                    @if(!$caseLocked && $canDeleteHearings)
                                     <form method="POST" action="{{ route('cases.hearings.delete',$h->id) }}"
                                         onsubmit="return confirm(@json(__('cases.hearings.remove_confirm')))">
                                         @csrf @method('DELETE')
@@ -1324,7 +1359,7 @@
                     @endif
 
                     {{-- Create --}}
-                    @if($canCreateHearings)
+                    @if(!$caseLocked && $canCreateHearings)
                     <div class="pt-4 border-t border-gray-200">
                         <h4 class="text-sm font-medium text-gray-700 mb-3">{{ __('cases.hearings.add_new_hearing') }}</h4>
                         <form method="POST" action="{{ route('cases.hearings.store', $case->id) }}"
@@ -1638,7 +1673,7 @@
                         @endforelse
                     </div>
 
-                    @if($canCreateMessage)
+                    @if($canCreateMessage && !$caseLocked)
                     <form method="POST" action="{{ route('cases.messages.post', $case->id) }}" class="pt-4 border-t border-gray-200 space-y-3">
                         @csrf
                         <label class="block text-sm font-medium text-gray-700">{{ __('cases.messages_section.reply_to_applicant') }}</label>
@@ -1654,6 +1689,10 @@
                             {{ __('cases.messages_section.send_message') }}
                         </button>
                     </form>
+                    @elseif($caseLocked)
+                    <div class="mt-3 px-3 py-2 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 text-sm">
+                        Messaging locked because this case is closed and has an active decision.
+                    </div>
                     @endif
                 </section>
 
