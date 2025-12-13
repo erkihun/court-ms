@@ -43,7 +43,7 @@ $q->from('admin_notification_reads as r')
 
 $hearings = \DB::table('case_hearings as h')
 ->join('court_cases as c','c.id','=','h.case_id')
-->select('h.id','h.hearing_at','h.location','h.type','c.id as case_id','c.case_number')
+->select('h.id','h.hearing_at','c.id as case_id','c.case_number')
 ->where('c.assigned_user_id',$uid)
 ->whereBetween('h.hearing_at',[now()->subDay(), now()->addDays(60)])
 ->whereNotExists(function($q) use ($uid){

@@ -371,7 +371,7 @@ class CaseController extends Controller
         // Hearings
         $hearings = DB::table('case_hearings')
             ->where('case_id', $id)
-            ->orderBy('hearing_at')
+            ->orderByDesc('hearing_at')
             ->get();
 
         // Submitted documents – tolerate partial schemas by selecting only existing columns.
@@ -641,17 +641,27 @@ class CaseController extends Controller
         abort_if(!$c, 404);
 
         $data = $request->validate([
-            'hearing_at' => ['required', 'date'],             // e.g., "2025-10-20 10:30"
+            'hearing_at' => ['required', 'date'], // expect normalized datetime string (Y-m-d H:i:s)
+            'type'       => ['nullable', 'string', 'max:255'],
             'location'   => ['nullable', 'string', 'max:255'],
-            'type'       => ['nullable', 'string', 'max:100'],
-            'notes'      => ['nullable', 'string', 'max:2000'],
+            'notes'      => ['nullable', 'string'],
         ]);
+        $hearingDate = Carbon::parse($data['hearing_at'])->toDateString();
+        $alreadyExists = DB::table('case_hearings')
+            ->where('case_id', $case)
+            ->whereDate('hearing_at', $hearingDate)
+            ->exists();
+        if ($alreadyExists) {
+            return back()
+                ->withErrors(['hearing_at' => 'This case already has a hearing scheduled on that date.'])
+                ->withInput();
+        }
 
         $hearingId = DB::table('case_hearings')->insertGetId([
             'case_id'            => $case,
             'hearing_at'         => $data['hearing_at'],
-            'location'           => $data['location'] ?? null,
             'type'               => $data['type'] ?? null,
+            'location'           => $data['location'] ?? null,
             'notes'              => $data['notes'] ?? null,
             'created_by_user_id' => Auth::id(),
             'created_at'         => now(),
@@ -661,8 +671,6 @@ class CaseController extends Controller
         $this->logCaseAudit($case, 'hearing_created', [
             'hearing_id' => $hearingId,
             'when'       => $data['hearing_at'],
-            'location'   => $data['location'] ?? null,
-            'type'       => $data['type'] ?? null,
         ]);
 
         // Email applicant (best-effort)
@@ -698,15 +706,26 @@ class CaseController extends Controller
 
         $data = $request->validate([
             'hearing_at' => ['required', 'date'],
+            'type'       => ['nullable', 'string', 'max:255'],
             'location'   => ['nullable', 'string', 'max:255'],
-            'type'       => ['nullable', 'string', 'max:100'],
-            'notes'      => ['nullable', 'string', 'max:2000'],
+            'notes'      => ['nullable', 'string'],
         ]);
+        $hearingDate = Carbon::parse($data['hearing_at'])->toDateString();
+        $alreadyExists = DB::table('case_hearings')
+            ->where('case_id', $h->case_id)
+            ->whereDate('hearing_at', $hearingDate)
+            ->where('id', '!=', $hearing)
+            ->exists();
+        if ($alreadyExists) {
+            return back()
+                ->withErrors(['hearing_at' => 'This case already has a hearing scheduled on that date.'])
+                ->withInput();
+        }
 
         DB::table('case_hearings')->where('id', $hearing)->update([
             'hearing_at' => $data['hearing_at'],
-            'location'   => $data['location'] ?? null,
             'type'       => $data['type'] ?? null,
+            'location'   => $data['location'] ?? null,
             'notes'      => $data['notes'] ?? null,
             'updated_at' => now(),
         ]);

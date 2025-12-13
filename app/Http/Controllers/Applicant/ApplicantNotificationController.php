@@ -21,7 +21,7 @@ class ApplicantNotificationController extends Controller
         // Unseen hearings (next 60d + last 1d)
         $unseenHearings = DB::table('case_hearings as h')
             ->join('court_cases as c', 'c.id', '=', 'h.case_id')
-            ->select('h.id', 'h.hearing_at', 'h.location', 'h.type', 'c.id as case_id', 'c.case_number')
+            ->select('h.id', 'h.hearing_at', 'c.id as case_id', 'c.case_number')
             ->where('c.applicant_id', $aid)
             ->whereBetween('h.hearing_at', [now()->subDay(), now()->addDays(60)])
             ->whereNotExists(function ($q) use ($aid) {
@@ -33,7 +33,7 @@ class ApplicantNotificationController extends Controller
             ->orderBy('h.hearing_at')
             ->paginate(
                 perPage: 10,
-                columns: ['h.id', 'h.hearing_at', 'h.location', 'h.type', 'c.id as case_id', 'c.case_number'],
+                columns: ['h.id', 'h.hearing_at', 'c.id as case_id', 'c.case_number'],
                 pageName: 'hearings_page'
             );
 

@@ -1,6 +1,6 @@
-{{-- resources/views/admin/decisions/show.blade.php --}}
-<x-admin-layout title="{{ $decision->name ?? __('decisions.show.title') }}">
-    @section('page_header', $decision->name ?? __('decisions.show.title'))
+{{-- resources/views/admin/decisions/show.blade.php --}} 
+<x-admin-layout title="{{ $decision->name ?? __('decisions.show.title') }}"> 
+    @section('page_header', $decision->name ?? __('decisions.show.title')) 
 
     <div class="max-w-6xl mx-auto space-y-6">
         <!-- Header -->
@@ -281,4 +281,5 @@
 
     </div>
     </div>
+
 </x-admin-layout>

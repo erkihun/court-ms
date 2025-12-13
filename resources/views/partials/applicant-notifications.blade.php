@@ -8,7 +8,7 @@ if (!$aid) {
 
 $unseenHearings = \DB::table('case_hearings as h')
     ->join('court_cases as c', 'c.id', '=', 'h.case_id')
-    ->select('h.id','h.hearing_at','h.location','h.type','c.id as case_id','c.case_number')
+    ->select('h.id','h.hearing_at','c.id as case_id','c.case_number')
     ->where('c.applicant_id', $aid)
     ->whereBetween('h.hearing_at', [now()->subDay(), now()->addDays(60)])
     ->whereNotExists(function($q) use ($aid){
@@ -108,10 +108,7 @@ $hasAny = $unseenHearings->isNotEmpty() || $unseenMsgs->isNotEmpty() || $unseenS
                         {{ \Illuminate\Support\Carbon::parse($h->hearing_at)->format('M d, Y H:i') }}
                     </div>
                     <div class="text-xs text-slate-500">
-                        {{ $h->type ?: 'Hearing' }}
-                        @if($h->location)
-                        <span class="text-slate-400">·</span> {{ $h->location }}
-                        @endif
+                    <div class="text-xs text-slate-500">Hearing</div>
                     </div>
                 </a>
                 <form method="POST" action="{{ route('applicant.notifications.markOne', ['type'=>'hearing','sourceId'=>$h->id]) }}">
