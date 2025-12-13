@@ -79,7 +79,7 @@ $q->from('notification_reads as nr')
 ->where('nr.type','hearing')
 ->where('nr.applicant_id',$me);
 })
-->selectRaw("'hearing' as type, h.id as source_id, h.case_id, h.created_at, h.location as meta1, h.type as meta2, h.hearing_at as meta3");
+->selectRaw("'hearing' as type, h.id as source_id, h.case_id, h.created_at, NULL as meta1, NULL as meta2, h.hearing_at as meta3");
 
 $sts = \DB::table('case_status_logs as s')
 ->join('court_cases as c','c.id','=','s.case_id')

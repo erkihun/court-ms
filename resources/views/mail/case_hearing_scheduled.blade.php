@@ -25,9 +25,6 @@
                 @if(!empty($hearing->type))
                 <p style="margin:0 0 8px;"><strong>Type:</strong> {{ $hearing->type }}</p>
                 @endif
-                @if(!empty($hearing->location))
-                <p style="margin:0;"><strong>Location:</strong> {{ $hearing->location }}</p>
-                @endif
             </td>
         </tr>
     </table>
