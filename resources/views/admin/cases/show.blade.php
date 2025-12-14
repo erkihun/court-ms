@@ -225,7 +225,7 @@
             z-index: 9999 !important;
         }
 
-        /* Hide default title and “Select a date” footer from modern calendar */
+        /* Hide default title and "Select a date" footer from modern calendar */
         .modern-calendar .calendar-header .calendar-title,
         .modern-calendar .selected-date-display {
             display: none !important;
@@ -253,6 +253,56 @@
             width: 100%;
             max-width: 420px;
             margin: 0 auto;
+        }
+
+        /* Improved section transitions */
+        [x-cloak] {
+            display: none !important;
+        }
+
+        /* Enhanced quick access */
+        .quick-access-btn {
+            transition: all 0.2s ease;
+            border-width: 1.5px;
+        }
+
+        .quick-access-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Sidebar navigation improvements */
+        .nav-btn {
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .nav-btn.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 60%;
+            background: #2563eb;
+            border-radius: 0 2px 2px 0;
+        }
+
+        /* Main content area improvements */
+        .main-content-section {
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
     {{-- Modern Ethiopian calendar assets --}}
@@ -396,16 +446,18 @@
         }"
         x-on:open-section.window="openSection($event.detail.section)"
         x-init="init()">
-        <div class="mb-4 p-2 rounded-xl border border-gray-200 bg-white shadow-sm">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+
+        {{-- Header Card --}}
+        <div class="mb-6 p-4 rounded-2xl border border-gray-200 bg-white shadow-sm">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div class="flex items-center gap-4">
                     <div>
                         <div class="text-xs text-gray-600 font-medium uppercase tracking-wide">{{ __('cases.case_number') }}</div>
                         <div class="flex items-center gap-2 mt-1">
-                            <div class="font-mono text-lg font-bold text-gray-900" id="case-no">{{ $case->case_number }}</div>
+                            <div class="font-mono text-xl font-bold text-gray-900" id="case-no">{{ $case->case_number }}</div>
                             <button
                                 type="button"
-                                class="px-2 py-1 text-xs rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 transition-colors duration-150"
+                                class="px-2.5 py-1 text-xs rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 transition-all duration-200 hover:scale-105"
                                 x-data
                                 x-on:click="
                                 navigator.clipboard.writeText(document.querySelector('#case-no').textContent);
@@ -415,140 +467,165 @@
                         </div>
                     </div>
 
-                    <span class="px-3 py-1.5 rounded-full text-xs font-medium capitalize {{ $statusChip($currentStatus) }}">
+                    <span class="px-3 py-1.5 rounded-full text-xs font-semibold capitalize {{ $statusChip($currentStatus) }}">
                         {{ $currentStatus }}
                     </span>
 
-                    <span class="px-3 py-1.5 rounded-full text-xs font-medium capitalize {{ $reviewChip($reviewStatus) }}">
+                    <span class="px-3 py-1.5 rounded-full text-xs font-semibold capitalize {{ $reviewChip($reviewStatus) }}">
                         {{ $reviewLabel($reviewStatus) }}
                     </span>
-
-
-
                 </div>
-
 
                 <div class="flex flex-wrap items-center gap-2">
                     @if(in_array($reviewStatus, ['awaiting_review','returned']) && $canReview)
                     <div class="flex flex-wrap gap-2">
-                        <button type="button" class="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-sm font-medium text-white"
+                        <button type="button" class="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-sm font-medium text-white shadow-sm hover:shadow transition-all duration-200"
                             onclick="submitReviewDecision('accept')">Accept</button>
-                        <button type="button" class="px-4 py-2 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-sm font-medium text-white"
+                        <button type="button" class="px-4 py-2 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-sm font-medium text-white shadow-sm hover:shadow transition-all duration-200"
                             onclick="openReviewModal('return')">Return</button>
-                        <button type="button" class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-sm font-medium text-white"
+                        <button type="button" class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-sm font-medium text-white shadow-sm hover:shadow transition-all duration-200"
                             onclick="openReviewModal('reject')">Reject</button>
                     </div>
                     @endif
+
                     @if(!$caseLocked && $canAssign)
                     <a href="{{ route('cases.assign.form', $case->id) }}"
-                        class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-sm font-medium text-white transition-colors duration-150 flex items-center gap-1">
+                        class="px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-sm font-medium text-white transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
                         {{ __('cases.assign_change') }}
                     </a>
                     @endif
+
                     @if(!$caseLocked && $canManageBench)
                     <a href="{{ route('bench-notes.index', ['case_id' => $case->id]) }}"
-                        class="px-4 py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-sm font-medium text-white transition-colors duration-150 flex items-center gap-1">
+                        class="px-4 py-2.5 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-sm font-medium text-white transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4M7 16h8M11 4h2a2 2 0 012 2v14h-4V6a2 2 0 012-2h2" />
                         </svg>
                         Bench note
                     </a>
                     @endif
+
                     @if(!$caseLocked && $canWriteLetter)
                     <a href="#letters-compose"
                         @click.prevent="openSection('letters-compose')"
-                        class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-sm font-medium text-white transition-colors duration-150 flex items-center gap-1">
+                        class="px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-sm font-medium text-white transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20h9M12 4h9m-9 8h9M5 6h.01M5 12h.01M5 18h.01" />
                         </svg>
                         Write letter
                     </a>
                     @endif
+
                     @if(!$caseLocked && ($case->status ?? '') === 'closed')
                     <a href="{{ route('decisions.create', ['case_id' => $case->id]) }}"
-                        class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-sm font-medium text-white transition-colors duration-150 flex items-center gap-1">
+                        class="px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-sm font-medium text-white transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
                         Give decision
                     </a>
                     @endif
+
                     <a href="{{ route('cases.index') }}"
-                        class="px-4 py-2 rounded-lg bg-white hover:bg-gray-50 text-sm font-medium text-gray-700 border border-gray-300 transition-colors duration-150 flex items-center gap-1">
+                        class="px-4 py-2.5 rounded-lg bg-white hover:bg-gray-50 text-sm font-medium text-gray-700 border border-gray-300 transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
                         {{ __('cases.back') }}
                     </a>
+
                     <button onclick="window.print()"
-                        class="px-4 py-2 rounded-lg bg-white hover:bg-gray-50 text-sm font-medium text-gray-700 border border-gray-300 transition-colors duration-150 flex items-center gap-1">
+                        class="px-4 py-2.5 rounded-lg bg-white hover:bg-gray-50 text-sm font-medium text-gray-700 border border-gray-300 transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                         </svg>
                         {{ __('cases.print') }}
                     </button>
+                </div>
+            </div>
 
-                </div>
-                @if($caseLocked)
-                <div class="mt-3 px-3 py-2 rounded-lg bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-2 text-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 19a7 7 0 110-14 7 7 0 010 14z" />
-                    </svg>
-                    Actions are locked because this case is closed and has an active decision.
-                </div>
-                @endif
+            @if($caseLocked)
+            <div class="mt-4 px-4 py-3 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-2 text-sm shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 19a7 7 0 110-14 7 7 0 010 14z" />
+                </svg>
+                <span>Actions are locked because this case is closed and has an active decision.</span>
             </div>
+            @endif
         </div>
-        {{-- Quick section shortcuts --}}
-        <div class="p-3 rounded-xl border border-gray-200 bg-white shadow-sm mb-3">
-            <div class="flex flex-wrap items-center gap-2 mb-2">
-                <span class="text-sm font-semibold text-gray-900">Quick access</span>
-                <span class="text-xs text-gray-500">Jump directly to frequently used sections.</span>
+
+        {{-- Quick Access Section --}}
+        <div class="p-4 rounded-2xl border border-gray-200 bg-white shadow-sm mb-6">
+            <div class="flex flex-wrap items-center gap-2 mb-4">
+                <div class="flex items-center gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    <span class="text-sm font-semibold text-gray-900">Quick Access</span>
+                </div>
+                <span class="text-xs text-gray-500">Jump directly to frequently used sections</span>
             </div>
+
             <div class="flex flex-wrap gap-3">
                 @if($canViewFiles || $canCreateFiles || $canUpdateFiles || $canDeleteFiles)
-                <a href="#uploaded-files"
-                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-blue-200 text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors duration-150">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <button @click="openSection('uploaded-files')"
+                    class="quick-access-btn inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-blue-200 text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 hover:border-blue-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                     {{ __('cases.navigation.uploaded_files') }}
-                </a>
+                </button>
                 @endif
 
                 @if($canViewHearings || $canCreateHearings || $canUpdateHearings || $canDeleteHearings)
-                <a href="#hearings"
-                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-purple-200 text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 transition-colors duration-150">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <button @click="openSection('hearings')"
+                    class="quick-access-btn inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-purple-200 text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 hover:border-purple-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     {{ __('cases.navigation.hearings') }}
-                </a>
+                </button>
                 @endif
 
-                <a href="#messages"
-                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-green-200 text-sm font-medium text-green-700 bg-green-50 hover:bg-green-100 transition-colors duration-150">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <button @click="openSection('messages')"
+                    class="quick-access-btn inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-green-200 text-sm font-medium text-green-700 bg-green-50 hover:bg-green-100 hover:border-green-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                     </svg>
                     {{ __('cases.navigation.messages') }}
-                </a>
+                </button>
+
+                <button @click="openSection('case-details')"
+                    class="quick-access-btn inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-amber-200 text-sm font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 hover:border-amber-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {{ __('cases.navigation.case_details') }}
+                </button>
+
+                <button @click="openSection('letters')"
+                    class="quick-access-btn inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-indigo-200 text-sm font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 hover:border-indigo-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 4H8a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V6a2 2 0 00-2-2zM8 4l4 4 4-4" />
+                    </svg>
+                    Letters
+                </button>
             </div>
         </div>
 
         {{-- Modal for return/reject note --}}
         <div id="review-modal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-30">
-            <div class="bg-white rounded-xl shadow-xl max-w-lg w-full p-5 border border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-900 mb-2" id="review-modal-title">Review decision</h3>
-                <form method="POST" action="{{ route('cases.review.update', $case->id) }}" id="review-form" class="space-y-3">
+            <div class="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 border border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3" id="review-modal-title">Review decision</h3>
+                <form method="POST" action="{{ route('cases.review.update', $case->id) }}" id="review-form" class="space-y-4">
                     @csrf
                     @method('PATCH')
                     <input type="hidden" name="decision" id="review-decision" value="">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Reason / note</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Reason / note</label>
                         <textarea name="note" id="review-note" rows="3" required
                             class="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-900 focus:ring-2 focus:ring-blue-600 focus:border-blue-600"></textarea>
                     </div>
@@ -559,6 +636,7 @@
                 </form>
             </div>
         </div>
+
         <form id="review-quick-form" method="POST" action="{{ route('cases.review.update', $case->id) }}" class="hidden">
             @csrf
             @method('PATCH')
@@ -568,7 +646,7 @@
 
         {{-- Status change (admins) --}}
         @if($canEditStatus)
-        <div class="p-2 rounded-xl border border-gray-200 bg-white shadow-sm mb-3">
+        <div class="p-4 rounded-2xl border border-gray-200 bg-white shadow-sm mb-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -579,7 +657,7 @@
                 @csrf @method('PATCH')
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('cases.status.new_status') }}</label>
-                    <select name="status" class="w-full px-4 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-150">
+                    <select name="status" class="w-full px-4 py-2.5 rounded-lg bg-white text-gray-900 border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-150">
                         @foreach($statuses as $value => $label)
                         <option value="{{ $value }}" @selected($currentStatus===$value)>{{ $label }}</option>
                         @endforeach
@@ -589,11 +667,11 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('cases.status.note_to_timeline') }}</label>
                     <input name="note" placeholder="{{ __('cases.status.add_note_placeholder') }}"
-                        class="w-full px-4 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-150">
+                        class="w-full px-4 py-2.5 rounded-lg bg-white text-gray-900 border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-150">
                     @error('note') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
                 </div>
                 <div>
-                    <button class="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors duration-150 flex items-center gap-2">
+                    <button class="px-5 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                         </svg>
@@ -603,67 +681,101 @@
             </form>
         </div>
         @endif
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {{-- Sidebar Navigation --}}
-            <div class="lg:col-span-1">
-                <div class="p-4 rounded-xl border border-gray-200 bg-white shadow-sm sticky top-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {{-- Sidebar Navigation --}}
+        <div class="lg:col-span-3">
+            <div class="p-4 rounded-2xl border border-blue-800 bg-blue-900 text-white shadow-sm sticky top-6">
+                <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
+                    </svg>
+                    {{ __('cases.navigation.title') }}
+                </h3>
+                <nav class="space-y-1">
+                    <button @click="openSection('case-summary')"
+                        :class="activeSection === 'case-summary' ? 'nav-btn active bg-blue-800 text-white border-blue-700' : 'nav-btn text-blue-100 hover:bg-blue-800 hover:text-white'"
+                        class="flex items-center gap-3 px-4 py-3 rounded-lg border border-transparent transition-all duration-200 group w-full text-left">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" :class="activeSection === 'case-summary' ? 'text-white' : 'text-blue-300 group-hover:text-white'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                        {{ __('cases.navigation.title') }}
-                    </h3>
-                    <nav class="space-y-2">
-                        <button @click="openSection('case-summary')"
-                            :class="activeSection === 'case-summary' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'"
-                            class="flex items-center gap-3 px-3 py-2 rounded-lg border border-transparent transition-all duration-200 group w-full text-left">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" :class="activeSection === 'case-summary' ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-600'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            <span class="font-medium">{{ __('cases.navigation.case_summary') }}</span>
-                        </button>
+                        <span class="font-medium">{{ __('cases.navigation.case_summary') }}</span>
+                    </button>
 
-                        <button @click="openSection('case-details')"
-                            :class="activeSection === 'case-details' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'"
-                            class="flex items-center gap-3 px-3 py-2 rounded-lg border border-transparent transition-all duration-200 group w-full text-left">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" :class="activeSection === 'case-details' ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-600'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span class="font-medium">{{ __('cases.navigation.case_details') }}</span>
-                        </button>
+                    <button @click="openSection('case-details')"
+                        :class="activeSection === 'case-details' ? 'nav-btn active bg-blue-800 text-white border-blue-700' : 'nav-btn text-blue-100 hover:bg-blue-800 hover:text-white'"
+                        class="flex items-center gap-3 px-4 py-3 rounded-lg border border-transparent transition-all duration-200 group w-full text-left">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" :class="activeSection === 'case-details' ? 'text-white' : 'text-blue-300 group-hover:text-white'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span class="font-medium">{{ __('cases.navigation.case_details') }}</span>
+                    </button>
 
-                        {{-- submitted documents & witnesses merged into case details --}}
+                    <button @click="openSection('letters')"
+                        :class="activeSection === 'letters' ? 'nav-btn active bg-blue-800 text-white border-blue-700' : 'nav-btn text-blue-100 hover:bg-blue-800 hover:text-white'"
+                        class="flex items-center gap-3 px-4 py-3 rounded-lg border border-transparent transition-all duration-200 group w-full text-left">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" :class="activeSection === 'letters' ? 'text-white' : 'text-blue-300 group-hover:text-white'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 4H8a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V6a2 2 0 00-2-2zM8 4l4 4 4-4" />
+                        </svg>
+                        <span class="font-medium">Letters</span>
+                    </button>
 
-                        <button @click="openSection('letters')"
-                            :class="activeSection === 'letters' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'"
-                            class="flex items-center gap-3 px-3 py-2 rounded-lg border border-transparent transition-all duration-200 group w-full text-left">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" :class="activeSection === 'letters' ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-600'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 4H8a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V6a2 2 0 00-2-2zM8 4l4 4 4-4" />
-                            </svg>
-                            <span class="font-medium">Letters</span>
-                        </button>
+                    <button @click="openSection('audits')"
+                        :class="activeSection === 'audits' ? 'nav-btn active bg-blue-800 text-white border-blue-700' : 'nav-btn text-blue-100 hover:bg-blue-800 hover:text-white'"
+                        class="flex items-center gap-3 px-4 py-3 rounded-lg border border-transparent transition-all duration-200 group w-full text-left">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" :class="activeSection === 'audits' ? 'text-white' : 'text-blue-300 group-hover:text-white'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h8" />
+                        </svg>
+                        <span class="font-medium">Case Audits</span>
+                    </button>
 
-                        <button @click="openSection('audits')"
-                            :class="activeSection === 'audits' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'"
-                            class="flex items-center gap-3 px-3 py-2 rounded-lg border border-transparent transition-all duration-200 group w-full text-left">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" :class="activeSection === 'audits' ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-600'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h8" />
-                            </svg>
-                            <span class="font-medium">Case Audits</span>
-                        </button>
-                    </nav>
-                </div>
+                    {{-- Quick Access Sections in Sidebar --}}
+                    <div class="pt-4 mt-4 border-t border-blue-700">
+                        <h4 class="text-xs font-semibold text-blue-300 uppercase tracking-wider mb-3">Quick Sections</h4>
+                        <div class="space-y-1">
+                            @if($canViewFiles || $canCreateFiles || $canUpdateFiles || $canDeleteFiles)
+                            <button @click="openSection('uploaded-files')"
+                                :class="activeSection === 'uploaded-files' ? 'nav-btn active bg-blue-800 text-white border-blue-700' : 'nav-btn text-blue-100 hover:bg-blue-800 hover:text-white'"
+                                class="flex items-center gap-3 px-4 py-2.5 rounded-lg border border-transparent transition-all duration-200 group w-full text-left text-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                {{ __('cases.navigation.uploaded_files') }}
+                            </button>
+                            @endif
+
+                            @if($canViewHearings || $canCreateHearings || $canUpdateHearings || $canDeleteHearings)
+                            <button @click="openSection('hearings')"
+                                :class="activeSection === 'hearings' ? 'nav-btn active bg-blue-800 text-white border-blue-700' : 'nav-btn text-blue-100 hover:bg-blue-800 hover:text-white'"
+                                class="flex items-center gap-3 px-4 py-2.5 rounded-lg border border-transparent transition-all duration-200 group w-full text-left text-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                {{ __('cases.navigation.hearings') }}
+                            </button>
+                            @endif
+
+                            <button @click="openSection('messages')"
+                                :class="activeSection === 'messages' ? 'nav-btn active bg-blue-800 text-white border-blue-700' : 'nav-btn text-blue-100 hover:bg-blue-800 hover:text-white'"
+                                class="flex items-center gap-3 px-4 py-2.5 rounded-lg border border-transparent transition-all duration-200 group w-full text-left text-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                                </svg>
+                                {{ __('cases.navigation.messages') }}
+                            </button>
+                        </div>
+                    </div>
+                </nav>
             </div>
-
+        </div>
             {{-- Main Content --}}
-            <div class="lg:col-span-3 space-y-4">
-
+            <div class="lg:col-span-9 space-y-6">
                 {{-- Case Summary --}}
                 <section id="case-summary" x-show="activeSection === 'case-summary'"
                     x-transition:enter="transition ease-out duration-300"
                     x-transition:enter-start="opacity-0 transform translate-y-4"
                     x-transition:enter-end="opacity-100 transform translate-y-0"
-                    class="p-6 rounded-xl border border-gray-200 bg-white shadow-sm space-y-6">
+                    class="main-content-section p-6 rounded-2xl border border-gray-200 bg-white shadow-sm space-y-6">
                     <h3 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-3 flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -726,7 +838,6 @@
                             — {{ __('cases.summary.unassigned') }} —
                         </div>
                         @endif
-
                     </div>
 
                     <div class="pt-2 border-t border-gray-200">
@@ -753,7 +864,6 @@
                             @endif
                         </div>
                     </div>
-
                 </section>
 
                 {{-- Case Audits --}}
@@ -761,7 +871,7 @@
                     x-transition:enter="transition ease-out duration-300"
                     x-transition:enter-start="opacity-0 transform translate-y-4"
                     x-transition:enter-end="opacity-100 transform translate-y-0"
-                    class="p-6 rounded-xl border border-gray-200 bg-white shadow-sm space-y-3">
+                    class="main-content-section p-6 rounded-2xl border border-gray-200 bg-white shadow-sm space-y-3">
                     <div class="flex items-center justify-between border-b border-gray-200 pb-3">
                         <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -776,24 +886,24 @@
                         No audit records yet.
                     </div>
                     @else
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto rounded-lg border border-gray-200">
                         <table class="min-w-full text-sm">
                             <thead class="bg-gray-50 text-gray-700">
                                 <tr>
-                                    <th class="p-2 text-left">When</th>
-                                    <th class="p-2 text-left">Action</th>
-                                    <th class="p-2 text-left">Actor</th>
-                                    <th class="p-2 text-left">Details</th>
+                                    <th class="p-3 text-left font-medium border-b border-gray-200">When</th>
+                                    <th class="p-3 text-left font-medium border-b border-gray-200">Action</th>
+                                    <th class="p-3 text-left font-medium border-b border-gray-200">Actor</th>
+                                    <th class="p-3 text-left font-medium border-b border-gray-200">Details</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100">
                                 @foreach($audits as $a)
                                 <tr class="hover:bg-gray-50">
-                                    <td class="p-2 text-gray-700 whitespace-nowrap">
+                                    <td class="p-3 text-gray-700 whitespace-nowrap">
                                         {{ \Illuminate\Support\Carbon::parse($a->created_at)->format('M d, Y H:i') }}
                                     </td>
-                                    <td class="p-2 text-gray-900 font-medium">{{ str_replace('_',' ', ucfirst($a->action)) }}</td>
-                                    <td class="p-2 text-gray-700 text-xs">
+                                    <td class="p-3 text-gray-900 font-medium">{{ str_replace('_',' ', ucfirst($a->action)) }}</td>
+                                    <td class="p-3 text-gray-700 text-xs">
                                         @if(!empty($a->actor_name))
                                         {{ $a->actor_name }} @if($a->actor_id)(#{{ $a->actor_id }})@endif
                                         @elseif(!empty($a->actor_id))
@@ -802,7 +912,7 @@
                                         {{ $a->actor_type ?? 'system' }}
                                         @endif
                                     </td>
-                                    <td class="p-2 text-gray-700 text-xs">
+                                    <td class="p-3 text-gray-700 text-xs">
                                         @php $meta = $a->meta ? json_decode($a->meta, true) : []; @endphp
                                         @if($meta)
                                         <pre class="bg-gray-100 border border-gray-200 rounded px-2 py-1 whitespace-pre-wrap text-[11px]">{{ json_encode($meta, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES) }}</pre>
@@ -831,7 +941,7 @@
                     x-transition:enter="transition ease-out duration-300"
                     x-transition:enter-start="opacity-0 transform translate-y-4"
                     x-transition:enter-end="opacity-100 transform translate-y-0"
-                    class="rounded-xl border border-gray-200 bg-white shadow-sm p-6 space-y-6">
+                    class="main-content-section rounded-2xl border border-gray-200 bg-white shadow-sm p-6 space-y-6">
                     <h3 class="text-xl font-semibold text-gray-900">Case Details Overview</h3>
 
                     <div class="grid md:grid-cols-2 gap-4 border border-gray-100 rounded-xl p-4 bg-gray-50">
@@ -996,7 +1106,8 @@
                         @endif
                     </div>
                 </section>
-                {{-- Write Letter (inline) --}}
+
+                {{-- Letters Section --}}
                 @php
                 $templates = $letterTemplates ?? collect();
                 $selectedTemplate = $selectedInlineTemplate ?? null;
@@ -1025,8 +1136,8 @@
                     x-transition:enter="transition ease-out duration-300"
                     x-transition:enter-start="opacity-0 transform translate-y-4"
                     x-transition:enter-end="opacity-100 transform translate-y-0"
-                    class="rounded-2xl border border-gray-200 bg-white shadow-sm p-6">
-                    <div class="space-y-6">
+                    class="main-content-section rounded-2xl border border-gray-200 bg-white shadow-sm">
+                    <div class="p-6 space-y-6">
                         <div class="space-y-3">
                             <div class="flex items-center justify-between border-b border-gray-200 pb-3">
                                 <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
@@ -1096,16 +1207,18 @@
                             </div>
                             @endif
                         </div>
-                        </section>
+                    </div>
+                </section>
 
+                {{-- Write Letter (Compose) Section --}}
                 <section id="letters-compose"
                     x-cloak
                     x-show="activeSection === 'letters-compose'"
                     x-transition:enter="transition ease-out duration-300"
                     x-transition:enter-start="opacity-0 transform translate-y-4"
                     x-transition:enter-end="opacity-100 transform translate-y-0"
-                    class="rounded-2xl border border-gray-200 bg-white shadow-sm p-6">
-                    <div class="space-y-6">
+                    class="main-content-section rounded-2xl border border-gray-200 bg-white shadow-sm">
+                    <div class="p-6 space-y-6">
                         <div class="flex items-center justify-between border-b border-gray-200 pb-3">
                             <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1309,247 +1422,19 @@
                             </div>
                         </div>
                     </div>
-                
-                    </div>
                 </section>
 
-
-                @push('scripts')
-                {{-- Load LOCAL TinyMCE --}}
-                <script src="{{ asset('vendor/tinymce/tinymce.min.js') }}"></script>
-                <script>
-                    (function() {
-                        const TINY_BASE = "{{ asset('vendor/tinymce') }}";
-                        const categoryFallback = @json(__('letters.form.category_fallback'));
-                        const inlineTemplates = @json($inlineTemplatesData) || {};
-                        let pendingBody = '';
-
-                        const common = {
-                            base_url: TINY_BASE,
-                            suffix: '.min',
-                            license_key: 'gpl',
-                            branding: false,
-                            promotion: false,
-                            menubar: true,
-                            toolbar_mode: 'wrap',
-                            toolbar_sticky: true,
-                            plugins: 'lists link table code image advlist charmap fullscreen wordcount',
-                            toolbar: [
-                                'undo redo |  fontfamily fontsize | bold italic underline strikethrough removeformat',
-                                '| forecolor backcolor | alignleft aligncenter alignright alignjustify',
-                                '| numlist bullist outdent indent  | fullscreen code'
-                            ].join(' '),
-                            forced_root_block: 'p',
-                            forced_root_block_attrs: {
-                                style: 'text-align: justify;'
-                            },
-                            content_style: `
-               body, p, div, li, td, th, blockquote { text-align: justify; text-justify: inter-word; }
-              table{width:100%;border-collapse:collapse}
-              td,th{border:1px solid #ddd;padding:4px}
-              body{font-size:14px;line-height:1.5}
-        `,
-                            paste_postprocess(plugin, args) {
-                                const blocks = args.node.querySelectorAll('p,div,li,td,th,blockquote');
-                                blocks.forEach(el => el.style.textAlign = 'justify');
-                            },
-                            resize: false,
-                            statusbar: true,
-                            setup(editor) {
-                                editor.on('init', () => editor.execCommand('JustifyFull'));
-                            }
-                        };
-
-                        tinymce.init({
-                            ...common,
-                            selector: '#letter-body-editor',
-                            height: 800,
-                            min_height: 800,
-                            max_height: 800,
-                            setup(editor) {
-                                common.setup(editor);
-                                editor.on('init', () => {
-                                    if (pendingBody) {
-                                        editor.setContent(pendingBody);
-                                        pendingBody = '';
-                                    }
-                                });
-                            }
-                        });
-
-                        const initTemplateLoader = () => {
-                            const templateSelect = document.getElementById('inline-template-select');
-                            const loadButton = document.getElementById('inline-template-load');
-                            const inlineForm = document.querySelector('#write-letter-panel form[action*="letters.store"]');
-                            const hiddenTemplate = document.getElementById('inline-template-hidden');
-                            const subjectInput = inlineForm?.querySelector('input[name=\"subject\"]');
-                            const refBlock = document.getElementById('inline-reference-block');
-                            const refValue = document.getElementById('inline-reference-value');
-                            const placeholderBlock = document.getElementById('inline-placeholders');
-                            const placeholderText = document.getElementById('inline-placeholders-text');
-                            const summaryBlock = document.getElementById('inline-template-summary');
-                            const summaryTitle = document.getElementById('inline-template-title');
-                            const summaryCategory = document.getElementById('inline-template-category');
-                            const summaryExcerpt = document.getElementById('inline-template-excerpt');
-
-                            const stripHtml = (html) => {
-                                const div = document.createElement('div');
-                                div.innerHTML = html || '';
-                                return div.textContent || div.innerText || '';
-                            };
-
-                            const buildReference = (tpl) => {
-                                if (!tpl || tpl.reference_sequence === null || tpl.reference_sequence === undefined) return null;
-                                const next = (parseInt(tpl.reference_sequence, 10) || 0) + 1;
-                                const seq = String(next).padStart(4, '0');
-                                return [tpl.subject_prefix || '', seq].filter(Boolean).join('/');
-                            };
-
-                            const renderMeta = (tpl) => {
-                                const placeholders = Array.isArray(tpl?.placeholders) ? tpl.placeholders : [];
-                                if (placeholderBlock) {
-                                    if (placeholders.length) {
-                                        placeholderText.textContent = placeholders.join(', ');
-                                        placeholderBlock.classList.remove('hidden');
-                                    } else {
-                                        placeholderText.textContent = '';
-                                        placeholderBlock.classList.add('hidden');
-                                    }
-                                }
-
-                                if (summaryBlock) {
-                                    if (tpl) {
-                                        summaryBlock.classList.remove('hidden');
-                                        if (summaryTitle) summaryTitle.textContent = tpl.title || '';
-                                        if (summaryCategory) summaryCategory.textContent = tpl.category || categoryFallback;
-                                        if (summaryExcerpt) {
-                                            const text = stripHtml(tpl.body || '');
-                                            summaryExcerpt.textContent = text.length > 120 ? text.slice(0, 120) + '...' : text;
-                                        }
-                                    } else {
-                                        summaryBlock.classList.add('hidden');
-                                    }
-                                }
-
-                                if (refBlock && refValue) {
-                                    const ref = buildReference(tpl);
-                                    if (ref) {
-                                        refValue.value = ref;
-                                        refBlock.classList.remove('hidden');
-                                    } else {
-                                        refValue.value = '';
-                                        refBlock.classList.add('hidden');
-                                    }
-                                }
-                            };
-
-                            const toggleFields = (enabled) => {
-                                document.querySelectorAll('[data-letter-field]').forEach(el => {
-                                    el.removeAttribute('disabled');
-                                });
-                            };
-
-                            const clearTemplate = () => {
-                                if (subjectInput) subjectInput.value = '';
-                                if (hiddenTemplate) hiddenTemplate.value = '';
-                                const editor = tinymce.get('letter-body-editor');
-                                if (editor) {
-                                    editor.setContent('');
-                                } else {
-                                    const textarea = document.getElementById('letter-body-editor');
-                                    if (textarea) textarea.value = '';
-                                }
-                                renderMeta(null);
-                            };
-
-                            const fillFromTemplate = (id) => {
-                                const tpl = inlineTemplates?.[id] ?? inlineTemplates?.[String(id)] ?? inlineTemplates?.[Number(id)];
-                                if (!tpl) {
-                                    clearTemplate();
-                                    return;
-                                }
-
-                                if (subjectInput) {
-                                    subjectInput.value = tpl.subject || '';
-                                }
-
-                                if (hiddenTemplate) hiddenTemplate.value = id;
-
-                                const editor = tinymce.get('letter-body-editor');
-                                if (editor) {
-                                    editor.setContent(tpl.body || '');
-                                    editor.focus();
-                                } else {
-                                    const textarea = document.getElementById('letter-body-editor');
-                                    const bodyText = tpl.body || '';
-                                    if (textarea) textarea.value = bodyText;
-                                }
-
-                                renderMeta(tpl);
-                            };
-
-                            templateSelect?.addEventListener('change', (e) => {
-                                if (e.target.value) {
-                                    fillFromTemplate(e.target.value);
-                                    toggleFields(true);
-                                } else {
-                                    clearTemplate();
-                                    toggleFields(false);
-                                }
-                            });
-
-                            loadButton?.addEventListener('click', (e) => {
-                                e.preventDefault();
-                                const id = templateSelect?.value;
-                                if (!id) {
-                                    alert(@json(__('letters.form.select_placeholder')));
-                                    return;
-                                }
-                                fillFromTemplate(id);
-                                toggleFields(true);
-                            });
-
-                            const ensureEditable = () => {
-                                const editor = tinymce.get('letter-body-editor');
-                                if (!editor) {
-                                    setTimeout(ensureEditable, 120);
-                                }
-                            };
-                            ensureEditable();
-
-                            const bodyTextarea = document.getElementById('letter-body-editor');
-                            const hasBody = bodyTextarea?.value?.trim().length > 0;
-                            const initialTpl = templateSelect?.value;
-                            if (initialTpl) {
-                                fillFromTemplate(initialTpl);
-                                toggleFields(true);
-                                if (hiddenTemplate) hiddenTemplate.value = initialTpl;
-                            } else {
-                                toggleFields(hasBody);
-                            }
-                        };
-
-                        if (document.readyState === 'loading') {
-                            document.addEventListener('DOMContentLoaded', initTemplateLoader);
-                        } else {
-                            initTemplateLoader();
-                        }
-                    })();
-                </script>
-
-
-                @endpush
-                {{-- Hearings --}}
+                {{-- Hearings Section --}}
                 @if($canViewHearings || $canCreateHearings || $canUpdateHearings || $canDeleteHearings)
                 <section id="hearings" x-show="activeSection === 'hearings'"
                     x-transition:enter="transition ease-out duration-300"
                     x-transition:enter-start="opacity-0 transform translate-y-4"
                     x-transition:enter-end="opacity-100 transform translate-y-0"
-                    class="p-6 rounded-xl border border-gray-200 bg-white shadow-sm space-y-2">
+                    class="main-content-section p-6 rounded-2xl border border-gray-200 bg-white shadow-sm space-y-4">
                     <div class="flex items-center justify-between border-b border-gray-200 pb-3">
                         <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 01-2 2z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                             {{ __('cases.hearings.title') }}
                         </h3>
@@ -1561,8 +1446,8 @@
                         @if(!$caseLocked && $canCreateHearings)
                         <div class="pt-1">
                             <h4 class="text-sm font-medium text-gray-700 mb-3">{{ __('cases.hearings.add_new_hearing') }}</h4>
-                            <div class="mb-4 bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
-                                <div class="flex items-center justify-between mb-2">
+                            <div class="mb-4 bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                                <div class="flex items-center justify-between mb-3">
                                     <h5 class="text-sm font-semibold text-gray-900">Hearing calendar</h5>
                                     <span class="text-xs text-gray-500">Click a date/event to fill the form below.</span>
                                 </div>
@@ -1595,786 +1480,1007 @@
                                 {{ __('cases.hearings.add_hearing') }}
                             </button>
                         </form>
+                        @endif
+
+                        {{-- Saved hearings table --}}
+                        @php
+                        $orderedHearings = ($hearings ?? collect())
+                        ->sortByDesc(function($h) {
+                        try {
+                        return \Illuminate\Support\Carbon::parse($h->hearing_at)->timestamp;
+                        } catch (\Throwable $e) {
+                        return 0;
+                        }
+                        })
+                        ->values();
+                        @endphp
+                        @if($orderedHearings->isEmpty())
+                        <div class="text-gray-500 text-sm border border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            {{ __('cases.hearings.no_hearings') }}
+                        </div>
+                        @else
+                        <div class="overflow-x-auto rounded-lg border border-gray-100">
+                            <table class="min-w-full text-sm">
+                                <thead class="bg-gray-50 text-gray-600">
+                                    <tr>
+                                        <th class="px-3 py-2 text-left font-medium border-b border-gray-200 w-12">#</th>
+                                        <th class="px-3 py-2 text-left font-medium border-b border-gray-200">When</th>
+                                        <th class="px-3 py-2 text-left font-medium border-b border-gray-200">{{ __('cases.hearings.type_placeholder') }}</th>
+                                        <th class="px-3 py-2 text-left font-medium border-b border-gray-200">{{ __('cases.hearings.location_placeholder') }}</th>
+                                        <th class="px-3 py-2 text-left font-medium border-b border-gray-200">{{ __('cases.hearings.notes_placeholder') }}</th>
+                                        <th class="px-3 py-2 text-left font-medium border-b border-gray-200">{{ __('cases.labels.actions') ?? 'Actions' }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    @foreach($orderedHearings as $index => $h)
+                                    <tr class="hover:bg-gray-50 align-top">
+                                        <td class="px-3 py-2 text-gray-500">{{ $index + 1 }}</td>
+                                        <td class="px-3 py-2">
+                                            @php
+                                            try {
+                                            $hearingDisplay = \Illuminate\Support\Carbon::parse($h->hearing_at)->format('M d, Y H:i');
+                                            } catch (\Throwable $e) {
+                                            $hearingDisplay = $h->hearing_at ?? '';
+                                            }
+                                            @endphp
+                                            <span class="font-medium" data-hearing-at="{{ $h->hearing_at }}" data-hearing-display>
+                                                {{ $hearingDisplay }}
+                                            </span>
+                                        </td>
+                                        <td class="px-3 py-2 text-gray-700">{{ $h->type ?: '-' }}</td>
+                                        <td class="px-3 py-2 text-gray-700">{{ $h->location ?: '-' }}</td>
+                                        <td class="px-3 py-2 text-gray-600">{{ $h->notes ?: '-' }}</td>
+                                        <td class="px-3 py-2">
+                                            <div class="flex flex-wrap gap-2">
+                                                @if(!$caseLocked && $canUpdateHearings)
+                                                <details class="relative">
+                                                    <summary class="px-3 py-1.5 rounded-lg bg-white text-xs cursor-pointer text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 flex items-center gap-1">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                        </svg>
+                                                        {{ __('cases.general.edit') }}
+                                                    </summary>
+                                                    <div class="absolute right-0 z-10 mt-2 w-80 p-4 rounded-lg border border-gray-200 bg-white shadow-xl">
+                                                        <form method="POST" action="{{ route('cases.hearings.update',$h->id) }}" class="space-y-3" data-hearing-edit-form>
+                                                            @csrf @method('PATCH')
+                                                            <div class="space-y-2">
+                                                                <input id="hearing_date_edit_{{ $h->id }}" type="text" data-hearing-date
+                                                                    value="{{ \Illuminate\Support\Carbon::parse($h->hearing_at)->format('Y-m-d') }}"
+                                                                    placeholder="{{ __('cases.hearings.add_new_hearing') }}"
+                                                                    class="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                                    autocomplete="off">
+                                                                <input type="time" id="hearing_time_edit_{{ $h->id }}" data-hearing-time min="00:00" max="11:59"
+                                                                    value=""
+                                                                    class="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                                    placeholder="HH:MM (AM)" required>
+                                                                <input name="type" value="{{ $h->type ?? '' }}" placeholder="{{ __('cases.hearings.type_placeholder') }}"
+                                                                    class="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                                                                <input name="location" value="{{ $h->location ?? '' }}" placeholder="{{ __('cases.hearings.location_placeholder') }}"
+                                                                    class="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                                                <input type="hidden" name="hearing_at" id="hearing_at_edit_{{ $h->id }}" data-hearing-target
+                                                                    value="{{ $h->hearing_at }}">
+                                                            </div>
+                                                            <textarea name="notes" rows="2" placeholder="{{ __('cases.hearings.notes_placeholder') }}"
+                                                                class="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>{{ $h->notes ?? '' }}</textarea>
+                                                            <div class="flex justify-end gap-2 pt-1">
+                                                                <button class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-xs text-white font-medium transition-colors duration-150">{{ __('cases.general.save') }}</button>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </details>
+                                                @endif
+
+                                                @if(!$caseLocked && $canDeleteHearings)
+                                                <form method="POST" action="{{ route('cases.hearings.delete',$h->id) }}"
+                                                    onsubmit="return confirm(@json(__('cases.hearings.remove_confirm')))">
+                                                    @csrf @method('DELETE')
+                                                    <button class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors duration-150 flex items-center gap-1">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                        {{ __('cases.general.delete') }}
+                                                    </button>
+                                                </form>
+                                                @endif
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                        @endif
                     </div>
-                    @endif
+                </section>
+                @endif
 
-                    {{-- Saved hearings table --}}
-                    @php
-                    $orderedHearings = ($hearings ?? collect())
-                    ->sortByDesc(function($h) {
-                    try {
-                    return \Illuminate\Support\Carbon::parse($h->hearing_at)->timestamp;
-                    } catch (\Throwable $e) {
-                    return 0;
-                    }
-                    })
-                    ->values();
-                    @endphp
-                    @if($orderedHearings->isEmpty())
-                    <div class="text-gray-500 text-sm border border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        {{ __('cases.hearings.no_hearings') }}
+                {{-- Messages Section --}}
+                <section id="messages" x-show="activeSection === 'messages'"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 transform translate-y-4"
+                    x-transition:enter-end="opacity-100 transform translate-y-0"
+                    class="main-content-section p-6 rounded-2xl border border-gray-200 bg-white shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-gray-200 pb-3">
+                        <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                            </svg>
+                            {{ __('cases.messages_section.title') }}
+                        </h3>
+                        <span class="text-xs font-medium text-gray-600 bg-gray-100 rounded-full px-2.5 py-1">{{ ($messages ?? collect())->count() }} {{ __('cases.messages.total') }}</span>
                     </div>
-                    @else
-                    <div class="overflow-x-auto rounded-lg border border-gray-100">
-                        <table class="min-w-full text-sm">
-                            <thead class="bg-gray-50 text-gray-600">
-                                <tr>
-                                    <th class="px-3 py-2 text-left font-medium border-b border-gray-200 w-12">#</th>
-                                    <th class="px-3 py-2 text-left font-medium border-b border-gray-200">When</th>
-                                    <th class="px-3 py-2 text-left font-medium border-b border-gray-200">{{ __('cases.hearings.type_placeholder') }}</th>
-                                    <th class="px-3 py-2 text-left font-medium border-b border-gray-200">{{ __('cases.hearings.location_placeholder') }}</th>
-                                    <th class="px-3 py-2 text-left font-medium border-b border-gray-200">{{ __('cases.hearings.notes_placeholder') }}</th>
-                                    <th class="px-3 py-2 text-left font-medium border-b border-gray-200">{{ __('cases.labels.actions') ?? 'Actions' }}</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                @foreach($orderedHearings as $index => $h)
-                                <tr class="hover:bg-gray-50 align-top">
-                                    <td class="px-3 py-2 text-gray-500">{{ $index + 1 }}</td>
-                                    <td class="px-3 py-2">
-                                        @php
-                                        try {
-                                        $hearingDisplay = \Illuminate\Support\Carbon::parse($h->hearing_at)->format('M d, Y H:i');
-                                        } catch (\Throwable $e) {
-                                        $hearingDisplay = $h->hearing_at ?? '';
-                                        }
-                                        @endphp
-                                        <span class="font-medium" data-hearing-at="{{ $h->hearing_at }}" data-hearing-display>
-                                            {{ $hearingDisplay }}
-                                        </span>
-                                    </td>
-                                    <td class="px-3 py-2 text-gray-700">{{ $h->type ?: '-' }}</td>
-                                    <td class="px-3 py-2 text-gray-700">{{ $h->location ?: '-' }}</td>
-                                    <td class="px-3 py-2 text-gray-600">{{ $h->notes ?: '-' }}</td>
-                                    <td class="px-3 py-2">
-                                        <div class="flex flex-wrap gap-2">
-                                            @if(!$caseLocked && $canUpdateHearings)
-                                            <details class="relative">
-                                                <summary class="px-3 py-1.5 rounded-lg bg-white text-xs cursor-pointer text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 flex items-center gap-1">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                    </svg>
-                                                    {{ __('cases.general.edit') }}
-                                                </summary>
-                                                <div class="absolute right-0 z-10 mt-2 w-80 p-4 rounded-lg border border-gray-200 bg-white shadow-xl">
-                                                    <form method="POST" action="{{ route('cases.hearings.update',$h->id) }}" class="space-y-3" data-hearing-edit-form>
-                                                        @csrf @method('PATCH')
-                                                        <div class="space-y-2">
-                                                            <input id="hearing_date_edit_{{ $h->id }}" type="text" data-hearing-date
-                                                                value="{{ \Illuminate\Support\Carbon::parse($h->hearing_at)->format('Y-m-d') }}"
-                                                                placeholder="{{ __('cases.hearings.add_new_hearing') }}"
-                                                                class="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                                autocomplete="off">
-                                                            <input type="time" id="hearing_time_edit_{{ $h->id }}" data-hearing-time min="00:00" max="11:59"
-                                                                value=""
-                                                                class="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                                placeholder="HH:MM (AM)" required>
-                                                            <input name="type" value="{{ $h->type ?? '' }}" placeholder="{{ __('cases.hearings.type_placeholder') }}"
-                                                                class="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
-                                                            <input name="location" value="{{ $h->location ?? '' }}" placeholder="{{ __('cases.hearings.location_placeholder') }}"
-                                                                class="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                                            <input type="hidden" name="hearing_at" id="hearing_at_edit_{{ $h->id }}" data-hearing-target
-                                                                value="{{ $h->hearing_at }}">
-                                                        </div>
-                                                        <textarea name="notes" rows="2" placeholder="{{ __('cases.hearings.notes_placeholder') }}"
-                                                            class="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>{{ $h->notes ?? '' }}</textarea>
-                                                        <div class="flex justify-end gap-2 pt-1">
-                                                            <button class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-xs text-white font-medium transition-colors duration-150">{{ __('cases.general.save') }}</button>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                            </details>
-                                            @endif
 
-                                            @if(!$caseLocked && $canDeleteHearings)
-                                            <form method="POST" action="{{ route('cases.hearings.delete',$h->id) }}"
-                                                onsubmit="return confirm(@json(__('cases.hearings.remove_confirm')))">
-                                                @csrf @method('DELETE')
-                                                <button class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors duration-150 flex items-center gap-1">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                    </svg>
-                                                    {{ __('cases.general.delete') }}
-                                                </button>
-                                            </form>
-                                            @endif
-                                        </div>
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                    @endif
-            </div>
-            </section>
-            @endif
-
-            {{-- Messages --}}
-            {{-- Messages --}}
-            {{-- Messages --}}
-            <section id="messages" x-show="activeSection === 'messages'"
-                x-transition:enter="transition ease-out duration-300"
-                x-transition:enter-start="opacity-0 transform translate-y-4"
-                x-transition:enter-end="opacity-100 transform translate-y-0"
-                class="p-6 rounded-xl border border-gray-200 bg-white shadow-sm space-y-4">
-                <div class="flex items-center justify-between border-b border-gray-200 pb-3">
-                    <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                        </svg>
-                        {{ __('cases.messages_section.title') }}
-                    </h3>
-                    <span class="text-xs font-medium text-gray-600 bg-gray-100 rounded-full px-2.5 py-1">{{ ($messages ?? collect())->count() }} {{ __('cases.messages.total') }}</span>
-                </div>
-
-                <div class="space-y-4 max-h-96 overflow-auto pr-2">
-                    @forelse($messages as $m)
-                    @php
-                    $fromAdmin = !is_null($m->sender_user_id);
-                    $fromApplicant = !is_null($m->sender_applicant_id);
-                    $who = $fromAdmin
-                    ? ($m->admin_name ?: __('cases.messages.court_staff'))
-                    : ($fromApplicant ? trim(($m->first_name ?? '').' '.($m->last_name ?? '')) : __('cases.messages_section.system'));
-                    @endphp
-                    <div class="flex {{ $fromAdmin ? 'justify-end' : 'justify-start' }}">
-                        <div class="relative w-full max-w-[78%] rounded-2xl border px-4 py-3 shadow-sm transition hover:shadow-lg
-                            {{ $fromAdmin ? 'bg-blue-50 border-blue-200 text-right' : 'bg-white border-gray-200' }}">
-                            <div class="flex items-center justify-between text-xs text-gray-600 mb-2 gap-2">
-                                <span class="font-medium text-gray-900">{{ $who }}</span>
-                                <span>{{ \Illuminate\Support\Carbon::parse($m->created_at)->format('M d, Y H:i') }}</span>
-                            </div>
-                            <div class="whitespace-pre-wrap text-gray-800 text-sm">
-                                {{ $m->body }}
+                    <div class="space-y-4 max-h-96 overflow-auto pr-2">
+                        @forelse($messages as $m)
+                        @php
+                        $fromAdmin = !is_null($m->sender_user_id);
+                        $fromApplicant = !is_null($m->sender_applicant_id);
+                        $who = $fromAdmin
+                        ? ($m->admin_name ?: __('cases.messages.court_staff'))
+                        : ($fromApplicant ? trim(($m->first_name ?? '').' '.($m->last_name ?? '')) : __('cases.messages_section.system'));
+                        @endphp
+                        <div class="flex {{ $fromAdmin ? 'justify-end' : 'justify-start' }}">
+                            <div class="relative w-full max-w-[78%] rounded-2xl border px-4 py-3 shadow-sm transition hover:shadow-lg
+                                {{ $fromAdmin ? 'bg-blue-50 border-blue-200 text-right' : 'bg-white border-gray-200' }}">
+                                <div class="flex items-center justify-between text-xs text-gray-600 mb-2 gap-2">
+                                    <span class="font-medium text-gray-900">{{ $who }}</span>
+                                    <span>{{ \Illuminate\Support\Carbon::parse($m->created_at)->format('M d, Y H:i') }}</span>
+                                </div>
+                                <div class="whitespace-pre-wrap text-gray-800 text-sm">
+                                    {{ $m->body }}
+                                </div>
                             </div>
                         </div>
+                        @empty
+                        <div class="text-gray-500 text-sm border border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                            </svg>
+                            {{ __('cases.messages_section.no_messages') }}
+                        </div>
+                        @endforelse
                     </div>
-                    @empty
+
+                    @if($canCreateMessage && !$caseLocked)
+                    <form method="POST" action="{{ route('cases.messages.post', $case->id) }}" class="pt-4 border-t border-gray-200 space-y-3">
+                        @csrf
+                        <label class="block text-sm font-medium text-gray-700">{{ __('cases.messages_section.reply_to_applicant') }}</label>
+                        <textarea name="body" rows="3"
+                            class="w-full px-4 py-3 rounded-lg bg-white text-gray-900 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-150"
+                            placeholder="{{ __('cases.messages_section.write_message_placeholder') }}">{{ old('body') }}</textarea>
+                        @error('body') <p class="text-red-600 text-sm p-2 bg-red-50 rounded-lg border border-red-200">{{ $message }}</p> @enderror
+
+                        <button class="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors duration-150 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                            </svg>
+                            {{ __('cases.messages_section.send_message') }}
+                        </button>
+                    </form>
+                    @elseif($caseLocked)
+                    <div class="mt-3 px-3 py-2 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 text-sm">
+                        Messaging locked because this case is closed and has an active decision.
+                    </div>
+                    @endif
+                </section>
+
+                {{-- Uploaded Files Section --}}
+                @if($canViewFiles || $canCreateFiles || $canUpdateFiles || $canDeleteFiles)
+                <section id="uploaded-files" x-show="activeSection === 'uploaded-files'"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 transform translate-y-4"
+                    x-transition:enter-end="opacity-100 transform translate-y-0"
+                    class="main-content-section p-6 rounded-2xl border border-gray-200 bg-white shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-gray-200 pb-3">
+                        <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            {{ __('cases.files.title') }}
+                        </h3>
+                        <span class="text-xs font-medium text-gray-600 bg-gray-100 rounded-full px-2.5 py-1">{{ ($files ?? collect())->count() }} {{ __('cases.files.total') }}</span>
+                    </div>
+
+                    @if($canCreateFiles)
+                    <form method="POST" action="{{ route('cases.files.upload', $case->id) }}"
+                        enctype="multipart/form-data"
+                        class="mb-2 grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        @csrf
+                        <input name="label" placeholder="{{ __('cases.files.label_placeholder') }}"
+                            class="px-3 py-2.5 rounded-lg bg-white border border-gray-300 text-gray-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-150">
+                        <input type="file" name="file" required
+                            class="text-sm text-gray-700 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 transition-colors duration-150">
+                        <button class="px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium transition-colors duration-150 flex items-center justify-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            {{ __('cases.files.upload') }}
+                        </button>
+                    </form>
+                    @error('file') <div class="text-red-600 text-sm mb-2 p-2 bg-red-50 rounded-lg border border-red-200">{{ $message }}</div> @enderror
+                    @endif
+
+                    @if(($files ?? collect())->isEmpty())
                     <div class="text-gray-500 text-sm border border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                        </svg>
-                        {{ __('cases.messages_section.no_messages') }}
-                    </div>
-                    @endforelse
-                </div>
-
-                @if($canCreateMessage && !$caseLocked)
-                <form method="POST" action="{{ route('cases.messages.post', $case->id) }}" class="pt-4 border-t border-gray-200 space-y-3">
-                    @csrf
-                    <label class="block text-sm font-medium text-gray-700">{{ __('cases.messages_section.reply_to_applicant') }}</label>
-                    <textarea name="body" rows="3"
-                        class="w-full px-4 py-3 rounded-lg bg-white text-gray-900 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-150"
-                        placeholder="{{ __('cases.messages_section.write_message_placeholder') }}">{{ old('body') }}</textarea>
-                    @error('body') <p class="text-red-600 text-sm p-2 bg-red-50 rounded-lg border border-red-200">{{ $message }}</p> @enderror
-
-                    <button class="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors duration-150 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                        </svg>
-                        {{ __('cases.messages_section.send_message') }}
-                    </button>
-                </form>
-                @elseif($caseLocked)
-                <div class="mt-3 px-3 py-2 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 text-sm">
-                    Messaging locked because this case is closed and has an active decision.
-                </div>
-                @endif
-            </section>
-
-            {{-- Uploaded Files --}}
-            @if($canViewFiles || $canCreateFiles || $canUpdateFiles || $canDeleteFiles)
-            <section id="uploaded-files" x-show="activeSection === 'uploaded-files'"
-                x-transition:enter="transition ease-out duration-300"
-                x-transition:enter-start="opacity-0 transform translate-y-4"
-                x-transition:enter-end="opacity-100 transform translate-y-0"
-                class="p-6 rounded-xl border border-gray-200 bg-white shadow-sm space-y-4">
-                <div class="flex items-center justify-between border-b border-gray-200 pb-3">
-                    <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                        {{ __('cases.files.title') }}
-                    </h3>
-                    <span class="text-xs font-medium text-gray-600 bg-gray-100 rounded-full px-2.5 py-1">{{ ($files ?? collect())->count() }} {{ __('cases.files.total') }}</span>
-                </div>
-
-                @if($canCreateFiles)
-                <form method="POST" action="{{ route('cases.files.upload', $case->id) }}"
-                    enctype="multipart/form-data"
-                    class="mb-2 grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    @csrf
-                    <input name="label" placeholder="{{ __('cases.files.label_placeholder') }}"
-                        class="px-3 py-2.5 rounded-lg bg-white border border-gray-300 text-gray-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-150">
-                    <input type="file" name="file" required
-                        class="text-sm text-gray-700 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 transition-colors duration-150">
-                    <button class="px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium transition-colors duration-150 flex items-center justify-center gap-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                        </svg>
-                        {{ __('cases.files.upload') }}
-                    </button>
-                </form>
-                @error('file') <div class="text-red-600 text-sm mb-2 p-2 bg-red-50 rounded-lg border border-red-200">{{ $message }}</div> @enderror
-                @endif
-
-                @if(($files ?? collect())->isEmpty())
-                <div class="text-gray-500 text-sm border border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    {{ __('cases.files.no_files') }}
-                </div>
-                @else
-                <ul class="divide-y divide-gray-200">
-                    @foreach($files as $f)
-                    <li class="py-3 flex items-center justify-between hover:bg-gray-50 px-3 rounded-lg transition-colors duration-150">
-                        <div class="text-sm">
-                            <div class="font-medium text-gray-900 flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                {{ $f->label ?? basename($f->path) }}
-                            </div>
-                            <div class="text-xs text-gray-600 mt-1 flex items-center gap-3 flex-wrap">
-                                <span>{{ $f->mime ?? 'file' }}</span>
-                                <span>• {{ number_format(($f->size ?? 0)/1024,1) }} KB</span>
-                                <span>• {{ \Illuminate\Support\Carbon::parse($f->created_at)->format('M d, Y H:i') }}</span>
-                                @php $by = $f->uploader_name ?? trim(($f->first_name ?? '').' '.($f->last_name ?? '')); @endphp
-                                @if($by) <span>• {{ __('cases.files.uploaded_by') }} {{ $by }}</span> @endif
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            @if($canViewFiles)
-                            <a href="{{ asset('storage/'.$f->path) }}" target="_blank"
-                                class="px-3 py-1.5 rounded-lg bg-white hover:bg-gray-50 text-xs text-gray-700 border border-gray-300 transition-colors duration-150 flex items-center gap-1">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                                {{ __('cases.documents.view') }}
-                            </a>
-                            @endif
-                            @if($canDeleteFiles)
-                            <form method="POST" action="{{ route('cases.files.delete', [$case->id, $f->id]) }}"
-                                onsubmit="return confirm(@json(__('cases.files.remove_confirm')))">
-                                @csrf @method('DELETE')
-                                <button class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors duration-150 flex items-center gap-1">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        {{ __('cases.files.no_files') }}
+                    </div>
+                    @else
+                    <ul class="divide-y divide-gray-200">
+                        @foreach($files as $f)
+                        <li class="py-3 flex items-center justify-between hover:bg-gray-50 px-3 rounded-lg transition-colors duration-150">
+                            <div class="text-sm">
+                                <div class="font-medium text-gray-900 flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
-                                    {{ __('cases.general.delete') }}
-                                </button>
-                            </form>
-                            @endif
-                        </div>
-                    </li>
-                    @endforeach
-                </ul>
+                                    {{ $f->label ?? basename($f->path) }}
+                                </div>
+                                <div class="text-xs text-gray-600 mt-1 flex items-center gap-3 flex-wrap">
+                                    <span>{{ $f->mime ?? 'file' }}</span>
+                                    <span>• {{ number_format(($f->size ?? 0)/1024,1) }} KB</span>
+                                    <span>• {{ \Illuminate\Support\Carbon::parse($f->created_at)->format('M d, Y H:i') }}</span>
+                                    @php $by = $f->uploader_name ?? trim(($f->first_name ?? '').' '.($f->last_name ?? '')); @endphp
+                                    @if($by) <span>• {{ __('cases.files.uploaded_by') }} {{ $by }}</span> @endif
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                @if($canViewFiles)
+                                <a href="{{ asset('storage/'.$f->path) }}" target="_blank"
+                                    class="px-3 py-1.5 rounded-lg bg-white hover:bg-gray-50 text-xs text-gray-700 border border-gray-300 transition-colors duration-150 flex items-center gap-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                    {{ __('cases.documents.view') }}
+                                </a>
+                                @endif
+                                @if($canDeleteFiles)
+                                <form method="POST" action="{{ route('cases.files.delete', [$case->id, $f->id]) }}"
+                                    onsubmit="return confirm(@json(__('cases.files.remove_confirm')))">
+                                    @csrf @method('DELETE')
+                                    <button class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors duration-150 flex items-center gap-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                        {{ __('cases.general.delete') }}
+                                    </button>
+                                </form>
+                                @endif
+                            </div>
+                        </li>
+                        @endforeach
+                    </ul>
+                    @endif
+                </section>
                 @endif
-            </section>
-            @endif
+            </div>
         </div>
-    </div>
 
-    <script>
-        function openReviewModal(decision) {
-            const modal = document.getElementById('review-modal');
-            document.getElementById('review-decision').value = decision;
-            document.getElementById('review-note').value = '';
-            const title = decision === 'return' ? 'Return for correction' : 'Reject case';
-            document.getElementById('review-modal-title').textContent = title;
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            document.getElementById('review-note').focus();
-        }
-
-        function closeReviewModal() {
-            const modal = document.getElementById('review-modal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
-        function submitReviewDecision(decision) {
-            if (decision === 'accept') {
-                document.getElementById('review-quick-decision').value = decision;
-                document.getElementById('review-quick-form').submit();
-                return;
+        <script>
+            function openReviewModal(decision) {
+                const modal = document.getElementById('review-modal');
+                document.getElementById('review-decision').value = decision;
+                document.getElementById('review-note').value = '';
+                const title = decision === 'return' ? 'Return for correction' : 'Reject case';
+                document.getElementById('review-modal-title').textContent = title;
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                document.getElementById('review-note').focus();
             }
-            openReviewModal(decision);
-        }
 
-        window.getHearingTimeHelpers = window.getHearingTimeHelpers || function() {
-            if (window.hearingTimeHelpers && typeof window.hearingTimeHelpers.normalizeToAm === 'function') {
-                return window.hearingTimeHelpers;
+            function closeReviewModal() {
+                const modal = document.getElementById('review-modal');
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
             }
-            const defaultTime = '04:00';
-            const normalizeToAm = (timeStr) => {
-                if (!timeStr) return defaultTime;
-                const parts = String(timeStr).split(':').map((p) => parseInt(p, 10));
-                let [h, m] = parts;
-                if (Number.isNaN(h)) return defaultTime;
-                if (Number.isNaN(m)) m = 0;
-                if (h >= 12) h = h - 12;
-                if (h < 0) h = 0;
-                const pad = (n) => String(n).padStart(2, '0');
-                return `${pad(h)}:${pad(m)}`;
-            };
-            window.hearingTimeHelpers = {
-                defaultTime,
-                normalizeToAm
-            };
-            return window.hearingTimeHelpers;
-        };
-        window.caseHearingDateSet = new Set(@json($hearingDateKeys));
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const form = document.querySelector('[data-hearing-create-form]');
-            const dateField = document.getElementById('hearing_date_new');
-            const gregHidden = document.getElementById('hearing_at_greg_new');
-            const {
-                defaultTime,
-                normalizeToAm
-            } = window.getHearingTimeHelpers();
-            const existingHearingDates = window.caseHearingDateSet || new Set();
-            const duplicateDateMessage = 'A hearing already exists for this case on the selected date. Please choose another day.';
-            const convertToGregorian = (value) => {
-                if (typeof window.hearingConvertToGregorian === 'function') {
-                    return window.hearingConvertToGregorian(value);
+            function submitReviewDecision(decision) {
+                if (decision === 'accept') {
+                    document.getElementById('review-quick-decision').value = decision;
+                    document.getElementById('review-quick-form').submit();
+                    return;
                 }
-                return value;
-            };
-            const isDateUnavailable = (value) => {
-                if (!value) return false;
-                const normalized = value.split('T')[0];
-                return existingHearingDates.has(normalized);
-            };
-            const formatGregDate = (d) => {
-                if (!(d instanceof Date)) return '';
-                const yyyy = d.getFullYear();
-                const mm = String(d.getMonth() + 1).padStart(2, '0');
-                const dd = String(d.getDate()).padStart(2, '0');
-                return `${yyyy}-${mm}-${dd}`;
-            };
-
-            window.hearingDateState = window.hearingDateState || {
-                lastPickedDate: null,
-                setFromDate(date) {
-                    this.lastPickedDate = date instanceof Date ? date : null;
-                    if (gregHidden) {
-                        gregHidden.value = date ? formatGregDate(date) : '';
-                    }
-                },
-                getFormatted() {
-                    if (gregHidden?.value) return gregHidden.value;
-                    if (this.lastPickedDate) return formatGregDate(this.lastPickedDate);
-                    return '';
-                }
-            };
-
-            if (form && dateField && gregHidden) {
-                dateField.addEventListener('input', () => {
-                    if (!dateField.value && window.hearingDateState?.setFromDate) {
-                        window.hearingDateState.setFromDate(null);
-                    }
-                });
-
-                form.addEventListener('submit', (e) => {
-                    const timeField = document.getElementById('hearing_time_new');
-                    const target = document.getElementById('hearing_at_new');
-                    let dateVal = window.hearingDateState.getFormatted();
-                    if (!dateVal && dateField?.value) {
-                        dateVal = convertToGregorian(dateField.value) || '';
-                    }
-                    if (!dateVal) {
-                        e.preventDefault();
-                        alert('Please select a hearing date.');
-                        return;
-                    }
-                    if (isDateUnavailable(dateVal)) {
-                        e.preventDefault();
-                        alert(duplicateDateMessage);
-                        return;
-                    }
-                    const timeVal = normalizeToAm(timeField?.value || defaultTime);
-                    if (timeField && !timeField.value) {
-                        timeField.value = timeVal;
-                    }
-                    target.value = `${dateVal}T${timeVal}:00`;
-                });
+                openReviewModal(decision);
             }
 
-            // Existing hearing inline edit forms
-            const editForms = document.querySelectorAll('[data-hearing-edit-form]');
-            const buildDateValue = (dateString, timeString) => {
-                if (!dateString) return '';
-                const t = timeString || '00:00';
-                const toGreg = (typeof window.hearingConvertToGregorian === 'function') ?
-                    window.hearingConvertToGregorian :
-                    (v) => v;
-                const gregDate = toGreg(dateString) || dateString;
-                return `${gregDate}T${t}:00`;
-            };
-
-            editForms.forEach((editForm) => {
-                const editDate = editForm.querySelector('[data-hearing-date]');
-                const editTime = editForm.querySelector('[data-hearing-time]');
-                const editTarget = editForm.querySelector('[data-hearing-target]');
-                if (!editDate || !editTarget) return;
-
-                const syncHidden = () => {
-                    editTarget.value = buildDateValue(editDate.value, editTime?.value);
+            window.getHearingTimeHelpers = window.getHearingTimeHelpers || function() {
+                if (window.hearingTimeHelpers && typeof window.hearingTimeHelpers.normalizeToAm === 'function') {
+                    return window.hearingTimeHelpers;
+                }
+                const defaultTime = '04:00';
+                const normalizeToAm = (timeStr) => {
+                    if (!timeStr) return defaultTime;
+                    const parts = String(timeStr).split(':').map((p) => parseInt(p, 10));
+                    let [h, m] = parts;
+                    if (Number.isNaN(h)) return defaultTime;
+                    if (Number.isNaN(m)) m = 0;
+                    if (h >= 12) h = h - 12;
+                    if (h < 0) h = 0;
+                    const pad = (n) => String(n).padStart(2, '0');
+                    return `${pad(h)}:${pad(m)}`;
                 };
-
-                editDate.addEventListener('input', syncHidden);
-                editTime?.addEventListener('input', syncHidden);
-                syncHidden();
-
-                editForm.addEventListener('submit', (e) => {
-                    if (!editDate.value) {
-                        e.preventDefault();
-                        alert('Please select a hearing date.');
-                        return;
-                    }
-                    syncHidden();
-                });
-            });
-        });
-    </script>
-
-    @push('scripts')
-    <script src="{{ asset('vendor/modern-ethiopian-calendar/js/modern-calendar.js') }}"></script>
-    <script src="{{ asset('vendor/modern-ethiopian-calendar/js/datepicker.js') }}"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const hasModernPicker = (typeof ModernDatePicker !== 'undefined');
-            const ethHelper = (() => {
-                try {
-                    return new ModernCalendar(document.createElement('div'), {
-                        calendar: 'ethiopian',
-                        language: 'am'
-                    });
-                } catch (e) {
-                    return null;
-                }
-            })();
-            const {
-                defaultTime,
-                normalizeToAm
-            } = window.getHearingTimeHelpers();
-            const existingHearingDates = window.caseHearingDateSet || new Set();
-            const toEthiopianDateString = (input) => {
-                if (!ethHelper || !input) return input || '';
-                const d = (input instanceof Date) ? input : new Date(input);
-                if (Number.isNaN(d.getTime())) return input || '';
-                const eth = ethHelper.gregorianToEthiopian(d);
-                return `${eth.year}-${String(eth.month).padStart(2, '0')}-${String(eth.day).padStart(2, '0')}`;
+                window.hearingTimeHelpers = {
+                    defaultTime,
+                    normalizeToAm
+                };
+                return window.hearingTimeHelpers;
             };
-            const toGregorianDate = (ethString) => {
-                if (!ethHelper || !ethString) return null;
-                const parts = ethString.split('-').map((p) => parseInt(p, 10));
-                if (parts.length !== 3 || parts.some((p) => Number.isNaN(p))) return null;
-                const [y, m, d] = parts;
-                try {
-                    const jd = ethHelper.ethiopianToJD(y, m, d);
-                    const g = ethHelper.jdToGregorian(jd);
-                    return new Date(g.year, g.month - 1, g.day);
-                } catch (e) {
-                    return null;
-                }
-            };
-            const toGregorianString = (ethString) => {
-                const g = toGregorianDate(ethString);
-                if (!g || Number.isNaN(g.getTime())) return '';
-                const yyyy = g.getFullYear();
-                const mm = String(g.getMonth() + 1).padStart(2, '0');
-                const dd = String(g.getDate()).padStart(2, '0');
-                return `${yyyy}-${mm}-${dd}`;
-            };
-            window.hearingConvertToGregorian = toGregorianString;
-            const formatTime = (d) => {
-                if (!(d instanceof Date)) return '';
-                const hh = String(d.getHours()).padStart(2, '0');
-                const mi = String(d.getMinutes()).padStart(2, '0');
-                return `${hh}:${mi}`;
-            };
-            const toDateKey = (input) => {
-                if (!input) return '';
-                const d = (input instanceof Date) ? input : new Date(input);
-                if (Number.isNaN(d.getTime())) return '';
-                const yyyy = d.getFullYear();
-                const mm = String(d.getMonth() + 1).padStart(2, '0');
-                const dd = String(d.getDate()).padStart(2, '0');
-                return `${yyyy}-${mm}-${dd}`;
-            };
-            const toTimeKey = (input) => {
-                if (!input) return '';
-                const d = (input instanceof Date) ? input : new Date(input);
-                if (Number.isNaN(d.getTime())) return '';
-                return formatTime(d);
-            };
+            window.caseHearingDateSet = new Set(@json($hearingDateKeys));
 
-            const minDate = new Date();
-            minDate.setHours(0, 0, 0, 0);
-            const formatDate = (d) => {
-                if (!(d instanceof Date)) return '';
-                const yyyy = d.getFullYear();
-                const mm = String(d.getMonth() + 1).padStart(2, '0');
-                const dd = String(d.getDate()).padStart(2, '0');
-                return `${yyyy}-${mm}-${dd}`;
-            };
-
-            const attachPicker = (input, onValidPick) => {
-                if (!input || !hasModernPicker) return null;
-                return new ModernDatePicker(input, {
-                    calendar: 'ethiopian',
-                    language: 'am',
-                    theme: 'modern',
-                    format: 'yyyy-mm-dd',
-                    closeOnSelect: false,
-                    onSelect: (date, formatted) => {
-                        const picked = new Date(date);
-                        picked.setHours(0, 0, 0, 0);
-                        if (picked < minDate) {
-                            alert('Please select today or a future date.');
-                            input.value = '';
-                            onValidPick?.(null, '');
-                            return;
-                        }
-                        const value = formatted || formatDate(picked);
-                        input.value = value;
-                        onValidPick?.(picked, value);
-                        if (input && input.blur) input.blur();
-                    }
-                });
-            };
-
-            const dateInput = document.getElementById('hearing_date_new');
-            const timeInput = document.getElementById('hearing_time_new');
-            if (dateInput) {
-                attachPicker(dateInput, (picked, value) => {
-                    if (!picked || !value) {
-                        window.hearingDateState?.setFromDate?.(null);
-                        return;
-                    }
-                    const dateSet = window.caseHearingDateSet || new Set();
-                    const gregorianValue = (typeof window.hearingConvertToGregorian === 'function') ?
-                        window.hearingConvertToGregorian(value) :
-                        value;
-                    const normalized = (gregorianValue || '').split('T')[0];
-                    if (normalized && dateSet.has(normalized)) {
-                        alert('A hearing already exists for this case on the selected date. Please choose another day.');
-                        window.hearingDateState?.setFromDate?.(null);
-                        dateInput.value = '';
-                        return;
-                    }
-                    if (window.hearingDateState?.setFromDate) {
-                        window.hearingDateState.setFromDate(picked);
-                    }
-                });
-            }
-            if (timeInput && !timeInput.value) {
-                timeInput.value = defaultTime;
-            }
-
-            // Inline edit pickers
-            if (hasModernPicker) {
-                document.querySelectorAll('[data-hearing-edit-form]').forEach((form) => {
-                    const dateEl = form.querySelector('[data-hearing-date]');
-                    const timeEl = form.querySelector('[data-hearing-time]');
-                    const target = form.querySelector('[data-hearing-target]');
-                    if (target && dateEl) {
-                        const existing = target.value || dateEl.value;
-                        const ethVal = toEthiopianDateString(existing);
-                        if (ethVal) dateEl.value = ethVal;
-                    }
-                    if (timeEl) {
-                        const baseTime = target?.value ? normalizeToAm(toTimeKey(target.value)) : defaultTime;
-                        if (!timeEl.value) timeEl.value = baseTime;
-                    }
-                    attachPicker(dateEl, (picked, value) => {
-                        if (!target) return;
-                        if (!picked || !value) {
-                            target.value = '';
-                            return;
-                        }
-                        const timeVal = normalizeToAm(timeEl?.value || defaultTime);
-                        const gregDateStr = convertToGregorian(value) || value;
-                        target.value = `${gregDateStr}T${timeVal}:00`;
-                        if (timeEl && !timeEl.value) {
-                            timeEl.value = timeVal;
-                        }
-                    });
-                });
-            }
-
-            // Hearing calendar using Ethiopian calendar
-            const calendarEl = document.getElementById('hearings-calendar');
-            if (calendarEl && typeof ModernCalendar !== 'undefined') {
-                @php
-                $fcEvents = ($hearings ?? collect())
-                    ->map(function ($h) {
-                        $start = null;
-                        try {
-                            $start = \Illuminate\Support\Carbon::parse($h->hearing_at)->toIso8601String();
-                        } catch (\Throwable $e) {
-                            if (is_string($h->hearing_at)) {
-                                $clean = trim($h->hearing_at);
-                                foreach (['d-m-Y H:i:s', 'd-m-Y H:i'] as $fmt) {
-                                    try {
-                                        $start = \Illuminate\Support\Carbon::createFromFormat($fmt, $clean)->toIso8601String();
-                                        break;
-                                    } catch (\Throwable $e2) {
-                                        $start = null;
-                                    }
-                                }
-                            }
-                        }
-                        if (!$start) return null;
-                        return [
-                            'title' => trim(($h->type ?? '') . ' ' . ($h->location ?? '')),
-                            'start' => $start,
-                            'allDay' => false,
-                            'extendedProps' => [
-                                'location' => $h->location ?? null,
-                                'notes'    => $h->notes ?? null,
-                            ],
-                        ];
-                    })
-                    ->filter()
-                    ->values()
-                    ->toArray();
-                @endphp
-                const fcEvents = @json($fcEvents);
-                const eventMetaByDate = {};
-                const eventDateSet = new Set(
-                    (fcEvents || [])
-                    .map((ev) => {
-                        const key = toDateKey(ev.start);
-                        if (key && !eventMetaByDate[key]) {
-                            eventMetaByDate[key] = {
-                                location: ev.extendedProps?.location || null,
-                                notes: ev.extendedProps?.notes || null,
-                                time: normalizeToAm(toTimeKey(ev.start)) || null,
-                            };
-                        }
-                        return key;
-                    })
-                    .filter(Boolean)
-                );
-
+            document.addEventListener('DOMContentLoaded', () => {
+                const form = document.querySelector('[data-hearing-create-form]');
                 const dateField = document.getElementById('hearing_date_new');
-                const timeField = document.getElementById('hearing_time_new');
-                const setFormFromDate = (d, opts = {}) => {
-                    if (!(d instanceof Date)) return;
+                const gregHidden = document.getElementById('hearing_at_greg_new');
+                const {
+                    defaultTime,
+                    normalizeToAm
+                } = window.getHearingTimeHelpers();
+                const existingHearingDates = window.caseHearingDateSet || new Set();
+                const duplicateDateMessage = 'A hearing already exists for this case on the selected date. Please choose another day.';
+                const convertToGregorian = (value) => {
+                    if (typeof window.hearingConvertToGregorian === 'function') {
+                        return window.hearingConvertToGregorian(value);
+                    }
+                    return value;
+                };
+                const isDateUnavailable = (value) => {
+                    if (!value) return false;
+                    const normalized = value.split('T')[0];
+                    return existingHearingDates.has(normalized);
+                };
+                const formatGregDate = (d) => {
+                    if (!(d instanceof Date)) return '';
                     const yyyy = d.getFullYear();
                     const mm = String(d.getMonth() + 1).padStart(2, '0');
                     const dd = String(d.getDate()).padStart(2, '0');
-                    const dateStr = `${yyyy}-${mm}-${dd}`;
-                    if (existingHearingDates.has(dateStr)) {
-                        alert('A hearing already exists for this case on the selected date. Please choose another day.');
-                        if (dateField) {
-                            dateField.value = '';
+                    return `${yyyy}-${mm}-${dd}`;
+                };
+
+                window.hearingDateState = window.hearingDateState || {
+                    lastPickedDate: null,
+                    setFromDate(date) {
+                        this.lastPickedDate = date instanceof Date ? date : null;
+                        if (gregHidden) {
+                            gregHidden.value = date ? formatGregDate(date) : '';
                         }
-                        if (window.hearingDateState?.setFromDate) {
+                    },
+                    getFormatted() {
+                        if (gregHidden?.value) return gregHidden.value;
+                        if (this.lastPickedDate) return formatGregDate(this.lastPickedDate);
+                        return '';
+                    }
+                };
+
+                if (form && dateField && gregHidden) {
+                    dateField.addEventListener('input', () => {
+                        if (!dateField.value && window.hearingDateState?.setFromDate) {
                             window.hearingDateState.setFromDate(null);
                         }
-                        return;
-                    }
-                    if (dateField) {
-                        const displayVal = toEthiopianDateString(d) || dateStr;
-                        dateField.value = displayVal;
-                    }
-                    if (timeField && opts.setTime) {
-                        timeField.value = normalizeToAm(opts.setTime);
-                    } else if (timeField && !timeField.value) {
-                        timeField.value = defaultTime;
-                    }
-                    if (window.hearingDateState?.setFromDate) {
-                        window.hearingDateState.setFromDate(new Date(d));
-                    }
-                };
-
-                const highlightEventDays = () => {
-                    calendarEl.querySelectorAll('.day.has-event').forEach((el) => {
-                        el.classList.remove('has-event');
-                        el.querySelector('.event-dot')?.remove();
                     });
-                    calendarEl.querySelectorAll('.day[data-date]').forEach((el) => {
-                        const dateStr = el.getAttribute('data-date');
-                        if (eventDateSet.has(dateStr)) {
-                            el.classList.add('has-event');
-                            const dot = document.createElement('span');
-                            dot.className = 'event-dot';
-                            el.appendChild(dot);
+
+                    form.addEventListener('submit', (e) => {
+                        const timeField = document.getElementById('hearing_time_new');
+                        const target = document.getElementById('hearing_at_new');
+                        let dateVal = window.hearingDateState.getFormatted();
+                        if (!dateVal && dateField?.value) {
+                            dateVal = convertToGregorian(dateField.value) || '';
                         }
+                        if (!dateVal) {
+                            e.preventDefault();
+                            alert('Please select a hearing date.');
+                            return;
+                        }
+                        if (isDateUnavailable(dateVal)) {
+                            e.preventDefault();
+                            alert(duplicateDateMessage);
+                            return;
+                        }
+                        const timeVal = normalizeToAm(timeField?.value || defaultTime);
+                        if (timeField && !timeField.value) {
+                            timeField.value = timeVal;
+                        }
+                        target.value = `${dateVal}T${timeVal}:00`;
                     });
+                }
+
+                // Existing hearing inline edit forms
+                const editForms = document.querySelectorAll('[data-hearing-edit-form]');
+                const buildDateValue = (dateString, timeString) => {
+                    if (!dateString) return '';
+                    const t = timeString || '00:00';
+                    const toGreg = (typeof window.hearingConvertToGregorian === 'function') ?
+                        window.hearingConvertToGregorian :
+                        (v) => v;
+                    const gregDate = toGreg(dateString) || dateString;
+                    return `${gregDate}T${t}:00`;
                 };
 
-                const calendar = new ModernCalendar(calendarEl, {
-                    calendar: 'ethiopian',
-                    language: 'am',
-                    theme: 'modern',
-                    firstDayOfWeek: 0,
-                    onDateSelect: (date) => {
-                        if (date instanceof Date) {
-                            const dateKey = toDateKey(date);
-                            const meta = eventMetaByDate[dateKey];
-                            setFormFromDate(date, {
-                                setTime: meta?.time || defaultTime
-                            });
-                            timeField?.focus();
+                editForms.forEach((editForm) => {
+                    const editDate = editForm.querySelector('[data-hearing-date]');
+                    const editTime = editForm.querySelector('[data-hearing-time]');
+                    const editTarget = editForm.querySelector('[data-hearing-target]');
+                    if (!editDate || !editTarget) return;
 
-                            if (meta) {
-                                const locationInput = document.querySelector('[name="location"]');
-                                if (locationInput && !locationInput.value && meta.location) {
-                                    locationInput.value = meta.location;
-                                }
-                                const notesInput = document.querySelector('[name="notes"]');
-                                if (notesInput && !notesInput.value && meta.notes) {
-                                    notesInput.value = meta.notes;
-                                }
+                    const syncHidden = () => {
+                        editTarget.value = buildDateValue(editDate.value, editTime?.value);
+                    };
+
+                    editDate.addEventListener('input', syncHidden);
+                    editTime?.addEventListener('input', syncHidden);
+                    syncHidden();
+
+                    editForm.addEventListener('submit', (e) => {
+                        if (!editDate.value) {
+                            e.preventDefault();
+                            alert('Please select a hearing date.');
+                            return;
+                        }
+                        syncHidden();
+                    });
+                });
+            });
+        </script>
+
+        @push('scripts')
+        <script src="{{ asset('vendor/tinymce/tinymce.min.js') }}"></script>
+        <script>
+            (function() {
+                const TINY_BASE = "{{ asset('vendor/tinymce') }}";
+                const categoryFallback = @json(__('letters.form.category_fallback'));
+                const inlineTemplates = @json($inlineTemplatesData) || {};
+                let pendingBody = '';
+
+                const common = {
+                    base_url: TINY_BASE,
+                    suffix: '.min',
+                    license_key: 'gpl',
+                    branding: false,
+                    promotion: false,
+                    menubar: true,
+                    toolbar_mode: 'wrap',
+                    toolbar_sticky: true,
+                    plugins: 'lists link table code image advlist charmap fullscreen wordcount',
+                    toolbar: [
+                        'undo redo |  fontfamily fontsize | bold italic underline strikethrough removeformat',
+                        '| forecolor backcolor | alignleft aligncenter alignright alignjustify',
+                        '| numlist bullist outdent indent  | fullscreen code'
+                    ].join(' '),
+                    forced_root_block: 'p',
+                    forced_root_block_attrs: {
+                        style: 'text-align: justify;'
+                    },
+                    content_style: `
+           body, p, div, li, td, th, blockquote { text-align: justify; text-justify: inter-word; }
+          table{width:100%;border-collapse:collapse}
+          td,th{border:1px solid #ddd;padding:4px}
+          body{font-size:14px;line-height:1.5}
+        `,
+                    paste_postprocess(plugin, args) {
+                        const blocks = args.node.querySelectorAll('p,div,li,td,th,blockquote');
+                        blocks.forEach(el => el.style.textAlign = 'justify');
+                    },
+                    resize: false,
+                    statusbar: true,
+                    setup(editor) {
+                        editor.on('init', () => editor.execCommand('JustifyFull'));
+                    }
+                };
+
+                tinymce.init({
+                    ...common,
+                    selector: '#letter-body-editor',
+                    height: 800,
+                    min_height: 800,
+                    max_height: 800,
+                    setup(editor) {
+                        common.setup(editor);
+                        editor.on('init', () => {
+                            if (pendingBody) {
+                                editor.setContent(pendingBody);
+                                pendingBody = '';
+                            }
+                        });
+                    }
+                });
+
+                const initTemplateLoader = () => {
+                    const templateSelect = document.getElementById('inline-template-select');
+                    const loadButton = document.getElementById('inline-template-load');
+                    const inlineForm = document.querySelector('#write-letter-panel form[action*="letters.store"]');
+                    const hiddenTemplate = document.getElementById('inline-template-hidden');
+                    const subjectInput = inlineForm?.querySelector('input[name=\"subject\"]');
+                    const refBlock = document.getElementById('inline-reference-block');
+                    const refValue = document.getElementById('inline-reference-value');
+                    const placeholderBlock = document.getElementById('inline-placeholders');
+                    const placeholderText = document.getElementById('inline-placeholders-text');
+                    const summaryBlock = document.getElementById('inline-template-summary');
+                    const summaryTitle = document.getElementById('inline-template-title');
+                    const summaryCategory = document.getElementById('inline-template-category');
+                    const summaryExcerpt = document.getElementById('inline-template-excerpt');
+
+                    const stripHtml = (html) => {
+                        const div = document.createElement('div');
+                        div.innerHTML = html || '';
+                        return div.textContent || div.innerText || '';
+                    };
+
+                    const buildReference = (tpl) => {
+                        if (!tpl || tpl.reference_sequence === null || tpl.reference_sequence === undefined) return null;
+                        const next = (parseInt(tpl.reference_sequence, 10) || 0) + 1;
+                        const seq = String(next).padStart(4, '0');
+                        return [tpl.subject_prefix || '', seq].filter(Boolean).join('/');
+                    };
+
+                    const renderMeta = (tpl) => {
+                        const placeholders = Array.isArray(tpl?.placeholders) ? tpl.placeholders : [];
+                        if (placeholderBlock) {
+                            if (placeholders.length) {
+                                placeholderText.textContent = placeholders.join(', ');
+                                placeholderBlock.classList.remove('hidden');
+                            } else {
+                                placeholderText.textContent = '';
+                                placeholderBlock.classList.add('hidden');
                             }
                         }
-                        requestAnimationFrame(highlightEventDays);
-                    },
-                    onMonthChange: () => {
-                        requestAnimationFrame(highlightEventDays);
+
+                        if (summaryBlock) {
+                            if (tpl) {
+                                summaryBlock.classList.remove('hidden');
+                                if (summaryTitle) summaryTitle.textContent = tpl.title || '';
+                                if (summaryCategory) summaryCategory.textContent = tpl.category || categoryFallback;
+                                if (summaryExcerpt) {
+                                    const text = stripHtml(tpl.body || '');
+                                    summaryExcerpt.textContent = text.length > 120 ? text.slice(0, 120) + '...' : text;
+                                }
+                            } else {
+                                summaryBlock.classList.add('hidden');
+                            }
+                        }
+
+                        if (refBlock && refValue) {
+                            const ref = buildReference(tpl);
+                            if (ref) {
+                                refValue.value = ref;
+                                refBlock.classList.remove('hidden');
+                            } else {
+                                refValue.value = '';
+                                refBlock.classList.add('hidden');
+                            }
+                        }
+                    };
+
+                    const toggleFields = (enabled) => {
+                        document.querySelectorAll('[data-letter-field]').forEach(el => {
+                            el.removeAttribute('disabled');
+                        });
+                    };
+
+                    const clearTemplate = () => {
+                        if (subjectInput) subjectInput.value = '';
+                        if (hiddenTemplate) hiddenTemplate.value = '';
+                        const editor = tinymce.get('letter-body-editor');
+                        if (editor) {
+                            editor.setContent('');
+                        } else {
+                            const textarea = document.getElementById('letter-body-editor');
+                            if (textarea) textarea.value = '';
+                        }
+                        renderMeta(null);
+                    };
+
+                    const fillFromTemplate = (id) => {
+                        const tpl = inlineTemplates?.[id] ?? inlineTemplates?.[String(id)] ?? inlineTemplates?.[Number(id)];
+                        if (!tpl) {
+                            clearTemplate();
+                            return;
+                        }
+
+                        if (subjectInput) {
+                            subjectInput.value = tpl.subject || '';
+                        }
+
+                        if (hiddenTemplate) hiddenTemplate.value = id;
+
+                        const editor = tinymce.get('letter-body-editor');
+                        if (editor) {
+                            editor.setContent(tpl.body || '');
+                            editor.focus();
+                        } else {
+                            const textarea = document.getElementById('letter-body-editor');
+                            const bodyText = tpl.body || '';
+                            if (textarea) textarea.value = bodyText;
+                        }
+
+                        renderMeta(tpl);
+                    };
+
+                    templateSelect?.addEventListener('change', (e) => {
+                        if (e.target.value) {
+                            fillFromTemplate(e.target.value);
+                            toggleFields(true);
+                        } else {
+                            clearTemplate();
+                            toggleFields(false);
+                        }
+                    });
+
+                    loadButton?.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const id = templateSelect?.value;
+                        if (!id) {
+                            alert(@json(__('letters.form.select_placeholder')));
+                            return;
+                        }
+                        fillFromTemplate(id);
+                        toggleFields(true);
+                    });
+
+                    const ensureEditable = () => {
+                        const editor = tinymce.get('letter-body-editor');
+                        if (!editor) {
+                            setTimeout(ensureEditable, 120);
+                        }
+                    };
+                    ensureEditable();
+
+                    const bodyTextarea = document.getElementById('letter-body-editor');
+                    const hasBody = bodyTextarea?.value?.trim().length > 0;
+                    const initialTpl = templateSelect?.value;
+                    if (initialTpl) {
+                        fillFromTemplate(initialTpl);
+                        toggleFields(true);
+                        if (hiddenTemplate) hiddenTemplate.value = initialTpl;
+                    } else {
+                        toggleFields(hasBody);
                     }
-                });
-
-                // Highlight existing hearings after initial render
-                requestAnimationFrame(highlightEventDays);
-            } else if (calendarEl) {
-                calendarEl.innerHTML = '<div class="text-sm text-red-600">Calendar library failed to load.</div>';
-            }
-
-            // Convert displayed hearing dates to Ethiopian calendar (UI only)
-            (() => {
-                if (!ethHelper) return;
-                const fmt = (val) => {
-                    const d = val ? new Date(val) : null;
-                    if (!d || Number.isNaN(d.getTime())) return val;
-                    const eth = ethHelper.gregorianToEthiopian(d);
-                    const pad = (n) => String(n).padStart(2, '0');
-                    const monthNames = ethHelper.getMonthNames?.() || [];
-                    const monthName = monthNames[eth.month - 1] || pad(eth.month);
-                    const rawHour = d.getHours();
-                    const hour = rawHour % 12 === 0 ? 12 : rawHour % 12;
-                    const time = `${hour}፡${pad(d.getMinutes())}`;
-                    return `${monthName}-${pad(eth.day)}-${eth.year} ዓ.ም ${time} ሰዓት`;
                 };
-                document.querySelectorAll('[data-hearing-display]').forEach((el) => {
-                    const val = el.getAttribute('data-hearing-at');
-                    const out = fmt(val);
-                    if (out) el.textContent = out;
-                });
-            })();
-        });
-    </script>
-    @endpush
 
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', initTemplateLoader);
+                } else {
+                    initTemplateLoader();
+                }
+            })();
+        </script>
+        @endpush
+
+        @push('scripts')
+        <script src="{{ asset('vendor/modern-ethiopian-calendar/js/modern-calendar.js') }}"></script>
+        <script src="{{ asset('vendor/modern-ethiopian-calendar/js/datepicker.js') }}"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const hasModernPicker = (typeof ModernDatePicker !== 'undefined');
+                const ethHelper = (() => {
+                    try {
+                        return new ModernCalendar(document.createElement('div'), {
+                            calendar: 'ethiopian',
+                            language: 'am'
+                        });
+                    } catch (e) {
+                        return null;
+                    }
+                })();
+                const {
+                    defaultTime,
+                    normalizeToAm
+                } = window.getHearingTimeHelpers();
+                const existingHearingDates = window.caseHearingDateSet || new Set();
+                const toEthiopianDateString = (input) => {
+                    if (!ethHelper || !input) return input || '';
+                    const d = (input instanceof Date) ? input : new Date(input);
+                    if (Number.isNaN(d.getTime())) return input || '';
+                    const eth = ethHelper.gregorianToEthiopian(d);
+                    return `${eth.year}-${String(eth.month).padStart(2, '0')}-${String(eth.day).padStart(2, '0')}`;
+                };
+                const toGregorianDate = (ethString) => {
+                    if (!ethHelper || !ethString) return null;
+                    const parts = ethString.split('-').map((p) => parseInt(p, 10));
+                    if (parts.length !== 3 || parts.some((p) => Number.isNaN(p))) return null;
+                    const [y, m, d] = parts;
+                    try {
+                        const jd = ethHelper.ethiopianToJD(y, m, d);
+                        const g = ethHelper.jdToGregorian(jd);
+                        return new Date(g.year, g.month - 1, g.day);
+                    } catch (e) {
+                        return null;
+                    }
+                };
+                const toGregorianString = (ethString) => {
+                    const g = toGregorianDate(ethString);
+                    if (!g || Number.isNaN(g.getTime())) return '';
+                    const yyyy = g.getFullYear();
+                    const mm = String(g.getMonth() + 1).padStart(2, '0');
+                    const dd = String(g.getDate()).padStart(2, '0');
+                    return `${yyyy}-${mm}-${dd}`;
+                };
+                window.hearingConvertToGregorian = toGregorianString;
+                const formatTime = (d) => {
+                    if (!(d instanceof Date)) return '';
+                    const hh = String(d.getHours()).padStart(2, '0');
+                    const mi = String(d.getMinutes()).padStart(2, '0');
+                    return `${hh}:${mi}`;
+                };
+                const toDateKey = (input) => {
+                    if (!input) return '';
+                    const d = (input instanceof Date) ? input : new Date(input);
+                    if (Number.isNaN(d.getTime())) return '';
+                    const yyyy = d.getFullYear();
+                    const mm = String(d.getMonth() + 1).padStart(2, '0');
+                    const dd = String(d.getDate()).padStart(2, '0');
+                    return `${yyyy}-${mm}-${dd}`;
+                };
+                const toTimeKey = (input) => {
+                    if (!input) return '';
+                    const d = (input instanceof Date) ? input : new Date(input);
+                    if (Number.isNaN(d.getTime())) return '';
+                    return formatTime(d);
+                };
+
+                const minDate = new Date();
+                minDate.setHours(0, 0, 0, 0);
+                const formatDate = (d) => {
+                    if (!(d instanceof Date)) return '';
+                    const yyyy = d.getFullYear();
+                    const mm = String(d.getMonth() + 1).padStart(2, '0');
+                    const dd = String(d.getDate()).padStart(2, '0');
+                    return `${yyyy}-${mm}-${dd}`;
+                };
+
+                const attachPicker = (input, onValidPick) => {
+                    if (!input || !hasModernPicker) return null;
+                    return new ModernDatePicker(input, {
+                        calendar: 'ethiopian',
+                        language: 'am',
+                        theme: 'modern',
+                        format: 'yyyy-mm-dd',
+                        closeOnSelect: false,
+                        onSelect: (date, formatted) => {
+                            const picked = new Date(date);
+                            picked.setHours(0, 0, 0, 0);
+                            if (picked < minDate) {
+                                alert('Please select today or a future date.');
+                                input.value = '';
+                                onValidPick?.(null, '');
+                                return;
+                            }
+                            const value = formatted || formatDate(picked);
+                            input.value = value;
+                            onValidPick?.(picked, value);
+                            if (input && input.blur) input.blur();
+                        }
+                    });
+                };
+
+                const dateInput = document.getElementById('hearing_date_new');
+                const timeInput = document.getElementById('hearing_time_new');
+                if (dateInput) {
+                    attachPicker(dateInput, (picked, value) => {
+                        if (!picked || !value) {
+                            window.hearingDateState?.setFromDate?.(null);
+                            return;
+                        }
+                        const dateSet = window.caseHearingDateSet || new Set();
+                        const gregorianValue = (typeof window.hearingConvertToGregorian === 'function') ?
+                            window.hearingConvertToGregorian(value) :
+                            value;
+                        const normalized = (gregorianValue || '').split('T')[0];
+                        if (normalized && dateSet.has(normalized)) {
+                            alert('A hearing already exists for this case on the selected date. Please choose another day.');
+                            window.hearingDateState?.setFromDate?.(null);
+                            dateInput.value = '';
+                            return;
+                        }
+                        if (window.hearingDateState?.setFromDate) {
+                            window.hearingDateState.setFromDate(picked);
+                        }
+                    });
+                }
+                if (timeInput && !timeInput.value) {
+                    timeInput.value = defaultTime;
+                }
+
+                // Inline edit pickers
+                if (hasModernPicker) {
+                    document.querySelectorAll('[data-hearing-edit-form]').forEach((form) => {
+                        const dateEl = form.querySelector('[data-hearing-date]');
+                        const timeEl = form.querySelector('[data-hearing-time]');
+                        const target = form.querySelector('[data-hearing-target]');
+                        if (target && dateEl) {
+                            const existing = target.value || dateEl.value;
+                            const ethVal = toEthiopianDateString(existing);
+                            if (ethVal) dateEl.value = ethVal;
+                        }
+                        if (timeEl) {
+                            const baseTime = target?.value ? normalizeToAm(toTimeKey(target.value)) : defaultTime;
+                            if (!timeEl.value) timeEl.value = baseTime;
+                        }
+                        attachPicker(dateEl, (picked, value) => {
+                            if (!target) return;
+                            if (!picked || !value) {
+                                target.value = '';
+                                return;
+                            }
+                            const timeVal = normalizeToAm(timeEl?.value || defaultTime);
+                            const gregDateStr = convertToGregorian(value) || value;
+                            target.value = `${gregDateStr}T${timeVal}:00`;
+                            if (timeEl && !timeEl.value) {
+                                timeEl.value = timeVal;
+                            }
+                        });
+                    });
+                }
+
+                // Hearing calendar using Ethiopian calendar
+                const calendarEl = document.getElementById('hearings-calendar');
+                if (calendarEl && typeof ModernCalendar !== 'undefined') {
+                    @php
+                    $fcEvents = ($hearings ?? collect())
+                        ->map(function ($h) {
+                            $start = null;
+                            try {
+                                $start = \Illuminate\Support\Carbon::parse($h->hearing_at)->toIso8601String();
+                            } catch (\Throwable $e) {
+                                if (is_string($h->hearing_at)) {
+                                    $clean = trim($h->hearing_at);
+                                    foreach (['d-m-Y H:i:s', 'd-m-Y H:i'] as $fmt) {
+                                        try {
+                                            $start = \Illuminate\Support\Carbon::createFromFormat($fmt, $clean)->toIso8601String();
+                                            break;
+                                        } catch (\Throwable $e2) {
+                                            $start = null;
+                                        }
+                                    }
+                                }
+                            }
+                            if (!$start) return null;
+                            return [
+                                'title' => trim(($h->type ?? '') . ' ' . ($h->location ?? '')),
+                                'start' => $start,
+                                'allDay' => false,
+                                'extendedProps' => [
+                                    'location' => $h->location ?? null,
+                                    'notes'    => $h->notes ?? null,
+                                ],
+                            ];
+                        })
+                        ->filter()
+                        ->values()
+                        ->toArray();
+                    @endphp
+                    const fcEvents = @json($fcEvents);
+                    const eventMetaByDate = {};
+                    const eventDateSet = new Set(
+                        (fcEvents || [])
+                        .map((ev) => {
+                            const key = toDateKey(ev.start);
+                            if (key && !eventMetaByDate[key]) {
+                                eventMetaByDate[key] = {
+                                    location: ev.extendedProps?.location || null,
+                                    notes: ev.extendedProps?.notes || null,
+                                    time: normalizeToAm(toTimeKey(ev.start)) || null,
+                                };
+                            }
+                            return key;
+                        })
+                        .filter(Boolean)
+                    );
+
+                    const dateField = document.getElementById('hearing_date_new');
+                    const timeField = document.getElementById('hearing_time_new');
+                    const setFormFromDate = (d, opts = {}) => {
+                        if (!(d instanceof Date)) return;
+                        const yyyy = d.getFullYear();
+                        const mm = String(d.getMonth() + 1).padStart(2, '0');
+                        const dd = String(d.getDate()).padStart(2, '0');
+                        const dateStr = `${yyyy}-${mm}-${dd}`;
+                        if (existingHearingDates.has(dateStr)) {
+                            alert('A hearing already exists for this case on the selected date. Please choose another day.');
+                            if (dateField) {
+                                dateField.value = '';
+                            }
+                            if (window.hearingDateState?.setFromDate) {
+                                window.hearingDateState.setFromDate(null);
+                            }
+                            return;
+                        }
+                        if (dateField) {
+                            const displayVal = toEthiopianDateString(d) || dateStr;
+                            dateField.value = displayVal;
+                        }
+                        if (timeField && opts.setTime) {
+                            timeField.value = normalizeToAm(opts.setTime);
+                        } else if (timeField && !timeField.value) {
+                            timeField.value = defaultTime;
+                        }
+                        if (window.hearingDateState?.setFromDate) {
+                            window.hearingDateState.setFromDate(new Date(d));
+                        }
+                    };
+
+                    const highlightEventDays = () => {
+                        calendarEl.querySelectorAll('.day.has-event').forEach((el) => {
+                            el.classList.remove('has-event');
+                            el.querySelector('.event-dot')?.remove();
+                        });
+                        calendarEl.querySelectorAll('.day[data-date]').forEach((el) => {
+                            const dateStr = el.getAttribute('data-date');
+                            if (eventDateSet.has(dateStr)) {
+                                el.classList.add('has-event');
+                                const dot = document.createElement('span');
+                                dot.className = 'event-dot';
+                                el.appendChild(dot);
+                            }
+                        });
+                    };
+
+                    const calendar = new ModernCalendar(calendarEl, {
+                        calendar: 'ethiopian',
+                        language: 'am',
+                        theme: 'modern',
+                        firstDayOfWeek: 0,
+                        onDateSelect: (date) => {
+                            if (date instanceof Date) {
+                                const dateKey = toDateKey(date);
+                                const meta = eventMetaByDate[dateKey];
+                                setFormFromDate(date, {
+                                    setTime: meta?.time || defaultTime
+                                });
+                                timeField?.focus();
+
+                                if (meta) {
+                                    const locationInput = document.querySelector('[name="location"]');
+                                    if (locationInput && !locationInput.value && meta.location) {
+                                        locationInput.value = meta.location;
+                                    }
+                                    const notesInput = document.querySelector('[name="notes"]');
+                                    if (notesInput && !notesInput.value && meta.notes) {
+                                        notesInput.value = meta.notes;
+                                    }
+                                }
+                            }
+                            requestAnimationFrame(highlightEventDays);
+                        },
+                        onMonthChange: () => {
+                            requestAnimationFrame(highlightEventDays);
+                        }
+                    });
+
+                    // Highlight existing hearings after initial render
+                    requestAnimationFrame(highlightEventDays);
+                } else if (calendarEl) {
+                    calendarEl.innerHTML = '<div class="text-sm text-red-600">Calendar library failed to load.</div>';
+                }
+
+                // Convert displayed hearing dates to Ethiopian calendar (UI only)
+                (() => {
+                    if (!ethHelper) return;
+                    const fmt = (val) => {
+                        const d = val ? new Date(val) : null;
+                        if (!d || Number.isNaN(d.getTime())) return val;
+                        const eth = ethHelper.gregorianToEthiopian(d);
+                        const pad = (n) => String(n).padStart(2, '0');
+                        const monthNames = ethHelper.getMonthNames?.() || [];
+                        const monthName = monthNames[eth.month - 1] || pad(eth.month);
+                        const rawHour = d.getHours();
+                        const hour = rawHour % 12 === 0 ? 12 : rawHour % 12;
+                        const time = `${hour}፡${pad(d.getMinutes())}`;
+                        return `${monthName}-${pad(eth.day)}-${eth.year} ዓ.ም ${time} ሰዓት`;
+                    };
+                    document.querySelectorAll('[data-hearing-display]').forEach((el) => {
+                        const val = el.getAttribute('data-hearing-at');
+                        const out = fmt(val);
+                        if (out) el.textContent = out;
+                    });
+                })();
+            });
+        </script>
+        @endpush
+
+    </div>
 </x-admin-layout>
