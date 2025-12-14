@@ -1096,6 +1096,34 @@
                             </div>
                             @endif
                         </div>
+                        </section>
+
+                <section id="letters-compose"
+                    x-cloak
+                    x-show="activeSection === 'letters-compose'"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 transform translate-y-4"
+                    x-transition:enter-end="opacity-100 transform translate-y-0"
+                    class="rounded-2xl border border-gray-200 bg-white shadow-sm p-6">
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between border-b border-gray-200 pb-3">
+                            <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4h10M11 8h10M4 16h16M4 12h16M4 8h4M4 4h4" />
+                                </svg>
+                                Write letter
+                            </h3>
+
+                            <button type="button"
+                                @click="openSection('letters')"
+                                class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                </svg>
+                                Back to list
+                            </button>
+                        </div>
+
                         <div id="write-letter-panel" class="max-w-5xl mx-auto space-y-6">
                             <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
                                 <h2 class="text-lg font-semibold text-gray-900 mb-1">{{ __('letters.form.select_template') }}</h2>
@@ -1281,7 +1309,11 @@
                             </div>
                         </div>
                     </div>
+                
+                    </div>
                 </section>
+
+
                 @push('scripts')
                 {{-- Load LOCAL TinyMCE --}}
                 <script src="{{ asset('vendor/tinymce/tinymce.min.js') }}"></script>
@@ -1312,10 +1344,10 @@
                                 style: 'text-align: justify;'
                             },
                             content_style: `
-            body, p, div, li, td, th, blockquote { text-align: justify; text-justify: inter-word; }
-            table{width:100%;border-collapse:collapse}
-            td,th{border:1px solid #ddd;padding:4px}
-            body{font-size:14px;line-height:1.5}
+               body, p, div, li, td, th, blockquote { text-align: justify; text-justify: inter-word; }
+              table{width:100%;border-collapse:collapse}
+              td,th{border:1px solid #ddd;padding:4px}
+              body{font-size:14px;line-height:1.5}
         `,
                             paste_postprocess(plugin, args) {
                                 const blocks = args.node.querySelectorAll('p,div,li,td,th,blockquote');
