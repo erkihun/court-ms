@@ -314,6 +314,8 @@
     'DATE:' . ($letter->created_at?->format('Y-m-d') ?? now()->format('Y-m-d')),
     ]);
     $qrSvg = null;
+    $qrError = null;
+
     if (class_exists(\SimpleSoftwareIO\QrCode\Facades\QrCode::class)) {
     try {
     $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
@@ -322,8 +324,29 @@
     ->errorCorrection('L')
     ->generate($qrPayload);
     } catch (\Throwable $e) {
-    $qrSvg = null;
+    $qrError = $e->getMessage();
     }
+    }
+
+    // Fallback to pure BaconQrCode if the Laravel facade fails (e.g., missing GD on host)
+    if (!$qrSvg && class_exists(\BaconQrCode\Writer::class)) {
+    try {
+    $renderer = new \BaconQrCode\Renderer\ImageRenderer(
+    new \BaconQrCode\Renderer\RendererStyle\RendererStyle(120),
+    new \BaconQrCode\Renderer\Image\SvgImageBackEnd()
+    );
+    $writer = new \BaconQrCode\Writer($renderer);
+    $qrSvg = $writer->writeString($qrPayload);
+    } catch (\Throwable $e) {
+    $qrError = $qrError ?: $e->getMessage();
+    }
+    }
+
+    if (!$qrSvg && $qrError) {
+    \Illuminate\Support\Facades\Log::warning('QR code generation failed for letter preview', [
+    'reference' => $letter->reference_number,
+    'error' => $qrError,
+    ]);
     }
     @endphp
 
