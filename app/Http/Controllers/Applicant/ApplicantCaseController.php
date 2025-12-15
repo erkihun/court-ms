@@ -66,9 +66,10 @@ class ApplicantCaseController extends Controller
 
     private function generateCaseNumber($caseTypeId)
     {
-        // Fetch prefix from case_types table
+        // Build a short prefix from the case type name (no separate column required)
         $caseType = \App\Models\CaseType::findOrFail($caseTypeId);
-        $prifix = $caseType->prifix;
+        $prefixBase = $caseType->name ?? 'CASE';
+        $prifix = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $prefixBase), 0, 4)) ?: 'CASE';
 
         $year = now()->format('y'); // YY format
 

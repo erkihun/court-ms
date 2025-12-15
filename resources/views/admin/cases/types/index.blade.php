@@ -46,7 +46,6 @@
             <thead class="bg-gray-50">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Name') }}</th>
-                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Prifix') }}</th>
                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Cases Using') }}</th>
                     <th class="px-6 py-3"></th> {{-- Actions column header --}}
                 </tr>
@@ -56,7 +55,6 @@
                 {{-- Added hover effect for rows --}}
                 <tr class="hover:bg-gray-50 transition duration-100">
                     <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{{ $t->name }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-gray-700">{{ $t->prifix }}</td>
                     {{-- Cases Using count as a chip for clarity --}}
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-blue-50 text-blue-800">
@@ -84,8 +82,8 @@
                 </tr>
                 @empty
                 <tr>
-                    {{-- Updated colspan for 4 columns and better no results state --}}
-                    <td colspan="4" class="px-6 py-12 text-center text-gray-500 text-base">
+                    {{-- Updated colspan for columns and better no results state --}}
+                    <td colspan="3" class="px-6 py-12 text-center text-gray-500 text-base">
                         <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9.25 10m.5 7h4.5M12 21a9 9 0 100-18 9 9 0 000 18z" />
                         </svg>

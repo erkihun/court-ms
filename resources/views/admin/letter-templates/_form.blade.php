@@ -101,15 +101,3 @@ $placeholderValue = old('placeholders', $placeholders);
         @enderror
     </div>
 </div>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const categorySelect = document.getElementById('category-select');
-        const prefixInput = document.querySelector('input[name="subject_prefix"]');
-
-        categorySelect.addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            const prifix = selectedOption.getAttribute('data-prifix') || "";
-            prefixInput.value = prifix; // Set prefix field
-        });
-    });
-</script>

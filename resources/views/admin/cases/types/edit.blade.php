@@ -15,15 +15,6 @@
                 @error('name') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
             </div>
 
-            {{-- Prifix Field (Restored/Added to match controller requirements) --}}
-            <div>
-                <label for="prifix" class="block text-sm font-medium text-gray-700">{{ __('Prifix') }} <span class="text-rose-600">*</span></label>
-                {{-- NOTE: Using ?? '' for safety, though the object should have it after DB retrieval --}}
-                <input id="prifix" name="prifix" value="{{ old('prifix', $type->prifix ?? '') }}" required
-                    class="mt-1 w-full px-4 py-2 rounded-lg bg-gray-50 border border-gray-300 shadow-sm text-gray-900 focus:ring-indigo-500 focus:border-indigo-500 transition">
-                @error('prifix') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-            </div>
-
             {{-- Action Buttons --}}
             <div class="pt-2 flex gap-3">
                 {{-- Cancel Button (Secondary style) --}}
