@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ __('letters.titles.preview') }}</title>
 
-    {{-- 1. Include html2pdf library for direct PDF download --}}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    {{-- 1. Include html2pdf library for direct PDF download (self-hosted to avoid tracking blocks) --}}
+    <script src="{{ asset('vendor/html2pdf/html2pdf.bundle.min.js') }}"></script>
 
     <style>
     :root {
