@@ -313,11 +313,18 @@
     'STATUS:' . ($letter->approval_status ?? 'pending'),
     'DATE:' . ($letter->created_at?->format('Y-m-d') ?? now()->format('Y-m-d')),
     ]);
+    $qrSvg = null;
+    if (class_exists(\SimpleSoftwareIO\QrCode\Facades\QrCode::class)) {
+    try {
     $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
     ->encoding('UTF-8')
     ->size(120)
     ->errorCorrection('L')
     ->generate($qrPayload);
+    } catch (\Throwable $e) {
+    $qrSvg = null;
+    }
+    }
     @endphp
 
     <div class="preview-toolbar">
@@ -431,9 +438,11 @@
                 @if($template->footer_image_path)
                 <img src="{{ asset('storage/' . $template->footer_image_path) }}" crossorigin="anonymous" alt="Footer">
                 @endif
+                @if($qrSvg)
                 <div class="qr-block">
                     {!! $qrSvg !!}
                 </div>
+                @endif
             </div>
         </div>
     </template>
