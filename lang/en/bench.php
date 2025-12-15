@@ -32,6 +32,7 @@ return [
     'sections' => [
         'basic_info' => 'Basic Information',
         'note_content' => 'Note Content',
+        'judges' => 'Judges (in order)',
     ],
 
     'labels' => [
@@ -41,6 +42,8 @@ return [
         'filter_by_case' => 'Filter by case',
         'title' => 'Title',
         'note_editor' => 'Note Editor',
+        'panel_judges' => 'Panel judges',
+        'panel_judge_format' => 'Judge :position - :name',
         'author' => 'Author',
         'created' => 'Created',
         'created_date' => 'Created Date',
@@ -55,12 +58,14 @@ return [
     'placeholders' => [
         'select_case' => 'Select a case',
         'title' => 'Enter a descriptive title',
+        'select_judge' => 'Select a judge',
     ],
 
     'helpers' => [
         'select_case' => 'Select the case this note belongs to',
         'title' => 'Brief title for the note (max 255 characters)',
         'note_editor' => 'Rich text editor powered by TinyMCE. All HTML is purified before saving.',
+        'no_teammates' => 'No teammates are assigned to your current team.',
         'empty_content' => 'No content provided.',
     ],
 

@@ -92,7 +92,7 @@
                             {{ $h->case_number }} — {{ \Illuminate\Support\Carbon::parse($h->hearing_at)->format('M d, Y H:i') }}
                         </div>
                         <div class="text-xs text-gray-600">
-                            {{ $h->type ?: 'Hearing' }} · {{ $h->location ?: '—' }}
+                            {{ optional($h)->type ?: 'Hearing' }} · {{ optional($h)->location ?: '—' }}
                         </div>
                     </a>
                     <form method="POST" action="{{ route('admin.notifications.markOne') }}">

@@ -123,6 +123,7 @@ return [
     ],
 
     'table' => [
+        'number' => '#',
         'case_number' => 'Case #',
         'title' => 'Title',
         'type' => 'Type',
@@ -183,6 +184,8 @@ return [
         'hearings' => 'Hearings',
         'timeline' => 'Timeline',
         'messages' => 'Messages',
+        'letters' => 'Letters',
+        'case_audits' => 'Case Audits',
     ],
 
     'summary' => [

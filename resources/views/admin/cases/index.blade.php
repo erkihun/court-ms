@@ -93,7 +93,7 @@
                 </a>
                 @endif
 
-                <a href="{{ route('cases.export', request()->query()) }}"
+                <a href="{{ route('cases.export', request()->except('page')) }}"
                     class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition shadow-md">
                     {{ __('cases.export_csv') }}
                 </a>
@@ -124,6 +124,7 @@
             {{-- Table Header (Updated styling) --}}
             <thead class="bg-gray-50">
                 <tr>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('cases.table.number') }}</th>
                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('cases.table.case_number') }}</th>
                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('cases.table.title') }}</th>
                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('cases.table.type') }}</th>
@@ -138,6 +139,9 @@
                 @forelse ($cases as $c)
                 {{-- Added hover effect --}}
                 <tr class="hover:bg-gray-50 transition duration-100">
+                    <td class="px-6 py-4 text-sm text-gray-700 whitespace-nowrap">
+                        {{ ($cases->firstItem() ?: 0) + $loop->index }}
+                    </td>
                     <td class="px-6 py-4 font-medium text-blue-600 whitespace-nowrap">
                         <a href="{{ route('cases.show', $c->id) }}" class="hover:underline">{{ $c->case_number }}</a>
                     </td>
@@ -209,7 +213,7 @@
                 @empty
                 <tr>
                     {{-- Updated colspan for 8 columns --}}
-                    <td colspan="8" class="px-6 py-12 text-center text-gray-500 text-base">
+                    <td colspan="9" class="px-6 py-12 text-center text-gray-500 text-base">
                         <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9.25 10m.5 7h4.5M12 21a9 9 0 100-18 9 9 0 000 18z" />
                         </svg>

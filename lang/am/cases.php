@@ -145,6 +145,7 @@ return [
     ],
 
     'table' => [
+        'number' => '#',
         'case_number' => 'መዝገብ ቁጥር #',
         'title' => 'ርዕስ',
         'type' => 'ዓይነት',

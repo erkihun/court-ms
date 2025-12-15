@@ -27,9 +27,11 @@ return [
     'Letter Templates' => 'Letter Templates',
     'Compose Letter' => 'Compose Letter',
     'Letters' => 'Letters',
+    'Reports' => 'Reports',
     'User Control' => 'User Control',
     'Terms' => 'Terms & Conditions',
     'System_Settings' => 'System Settings',
+    'Settings' => 'Settings',
 
     // Notifications dropdown
     'Mark all as seen' => 'Mark all as seen',

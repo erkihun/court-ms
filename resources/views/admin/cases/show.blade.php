@@ -271,24 +271,6 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
-        /* Sidebar navigation improvements */
-        .nav-btn {
-            transition: all 0.2s ease;
-            position: relative;
-        }
-
-        .nav-btn.active::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 3px;
-            height: 60%;
-            background: #2563eb;
-            border-radius: 0 2px 2px 0;
-        }
-
         /* Main content area improvements */
         .main-content-section {
             animation: fadeInUp 0.3s ease-out;
@@ -686,68 +668,88 @@
         {{-- Sidebar Navigation --}}
         <div class="lg:col-span-3">
             <div class="p-4 rounded-2xl border border-blue-800 bg-blue-900 text-white shadow-sm sticky top-6">
-                <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
-                    </svg>
-                    {{ __('cases.navigation.title') }}
-                </h3>
-                <nav class="space-y-1">
-                    <button @click="openSection('case-summary')"
-                        :class="activeSection === 'case-summary' ? 'nav-btn active bg-blue-800 text-white border-blue-700' : 'nav-btn text-blue-100 hover:bg-blue-800 hover:text-white'"
-                        class="flex items-center gap-3 px-4 py-3 rounded-lg border border-transparent transition-all duration-200 group w-full text-left">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" :class="activeSection === 'case-summary' ? 'text-white' : 'text-blue-300 group-hover:text-white'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <span class="font-medium">{{ __('cases.navigation.case_summary') }}</span>
-                    </button>
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="text-lg font-semibold">{{ __('cases.navigation.title') }}</span>
+                </div>
 
-                    <button @click="openSection('case-details')"
-                        :class="activeSection === 'case-details' ? 'nav-btn active bg-blue-800 text-white border-blue-700' : 'nav-btn text-blue-100 hover:bg-blue-800 hover:text-white'"
-                        class="flex items-center gap-3 px-4 py-3 rounded-lg border border-transparent transition-all duration-200 group w-full text-left">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" :class="activeSection === 'case-details' ? 'text-white' : 'text-blue-300 group-hover:text-white'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span class="font-medium">{{ __('cases.navigation.case_details') }}</span>
-                    </button>
+                <nav class="space-y-3">
+                    <ul class="space-y-1">
+                        <li>
+                            <button type="button" @click="openSection('case-summary')"
+                                :class="activeSection === 'case-summary'
+                                    ? 'bg-white/10 text-white shadow-sm'
+                                    : 'text-blue-100 hover:bg-white/5 hover:text-white'"
+                                class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold leading-5 transition-all duration-150 text-left">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                                <span>{{ __('cases.navigation.case_summary') }}</span>
+                            </button>
+                        </li>
 
-                    <button @click="openSection('letters')"
-                        :class="activeSection === 'letters' ? 'nav-btn active bg-blue-800 text-white border-blue-700' : 'nav-btn text-blue-100 hover:bg-blue-800 hover:text-white'"
-                        class="flex items-center gap-3 px-4 py-3 rounded-lg border border-transparent transition-all duration-200 group w-full text-left">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" :class="activeSection === 'letters' ? 'text-white' : 'text-blue-300 group-hover:text-white'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 4H8a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V6a2 2 0 00-2-2zM8 4l4 4 4-4" />
-                        </svg>
-                        <span class="font-medium">Letters</span>
-                    </button>
+                        <li>
+                            <button type="button" @click="openSection('case-details')"
+                                :class="activeSection === 'case-details'
+                                    ? 'bg-white/10 text-white shadow-sm'
+                                    : 'text-blue-100 hover:bg-white/5 hover:text-white'"
+                                class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold leading-5 transition-all duration-150 text-left">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M7 8h10M5 5h14v14H5z" />
+                                </svg>
+                                <span>{{ __('cases.navigation.case_details') }}</span>
+                            </button>
+                        </li>
 
-                    <button @click="openSection('audits')"
-                        :class="activeSection === 'audits' ? 'nav-btn active bg-blue-800 text-white border-blue-700' : 'nav-btn text-blue-100 hover:bg-blue-800 hover:text-white'"
-                        class="flex items-center gap-3 px-4 py-3 rounded-lg border border-transparent transition-all duration-200 group w-full text-left">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" :class="activeSection === 'audits' ? 'text-white' : 'text-blue-300 group-hover:text-white'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h8" />
-                        </svg>
-                        <span class="font-medium">Case Audits</span>
-                    </button>
+                        <li>
+                            <button type="button" @click="openSection('letters')"
+                                :class="activeSection === 'letters'
+                                    ? 'bg-white/10 text-white shadow-sm'
+                                    : 'text-blue-100 hover:bg-white/5 hover:text-white'"
+                                class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold leading-5 transition-all duration-150 text-left">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7l9 6 9-6M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
+                                </svg>
+                                <span>Letters</span>
+                            </button>
+                        </li>
+
+                        <li>
+                            <button type="button" @click="openSection('audits')"
+                                :class="activeSection === 'audits'
+                                    ? 'bg-white/10 text-white shadow-sm'
+                                    : 'text-blue-100 hover:bg-white/5 hover:text-white'"
+                                class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold leading-5 transition-all duration-150 text-left">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m0 0V9m0 6h6m-6-4h6m2 8H7a2 2 0 01-2-2V7a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2z" />
+                                </svg>
+                                <span>Case Audits</span>
+                            </button>
+                        </li>
+                    </ul>
 
                     {{-- Quick Access Sections in Sidebar --}}
-                    <div class="pt-4 mt-4 border-t border-blue-700">
-                        <h4 class="text-xs font-semibold text-blue-300 uppercase tracking-wider mb-3">Quick Sections</h4>
+                    <div class="pt-4 mt-2 border-t border-blue-700/60">
+                        <p class="text-[11px] font-semibold text-blue-200 uppercase tracking-[0.08em] mb-2">Quick sections</p>
                         <div class="space-y-1">
                             @if($canViewFiles || $canCreateFiles || $canUpdateFiles || $canDeleteFiles)
-                            <button @click="openSection('uploaded-files')"
-                                :class="activeSection === 'uploaded-files' ? 'nav-btn active bg-blue-800 text-white border-blue-700' : 'nav-btn text-blue-100 hover:bg-blue-800 hover:text-white'"
-                                class="flex items-center gap-3 px-4 py-2.5 rounded-lg border border-transparent transition-all duration-200 group w-full text-left text-sm">
+                            <button type="button" @click="openSection('uploaded-files')"
+                                :class="activeSection === 'uploaded-files'
+                                    ? 'bg-white/10 text-white shadow-sm'
+                                    : 'text-blue-100 hover:bg-white/5 hover:text-white'"
+                                class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium leading-5 transition-all duration-150 text-left">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h10M7 11h10M7 15h6M5 5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-.586-1.414l-3-3A2 2 0 0015.586 4H5z" />
                                 </svg>
                                 {{ __('cases.navigation.uploaded_files') }}
                             </button>
                             @endif
 
                             @if($canViewHearings || $canCreateHearings || $canUpdateHearings || $canDeleteHearings)
-                            <button @click="openSection('hearings')"
-                                :class="activeSection === 'hearings' ? 'nav-btn active bg-blue-800 text-white border-blue-700' : 'nav-btn text-blue-100 hover:bg-blue-800 hover:text-white'"
-                                class="flex items-center gap-3 px-4 py-2.5 rounded-lg border border-transparent transition-all duration-200 group w-full text-left text-sm">
+                            <button type="button" @click="openSection('hearings')"
+                                :class="activeSection === 'hearings'
+                                    ? 'bg-white/10 text-white shadow-sm'
+                                    : 'text-blue-100 hover:bg-white/5 hover:text-white'"
+                                class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium leading-5 transition-all duration-150 text-left">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
@@ -755,11 +757,13 @@
                             </button>
                             @endif
 
-                            <button @click="openSection('messages')"
-                                :class="activeSection === 'messages' ? 'nav-btn active bg-blue-800 text-white border-blue-700' : 'nav-btn text-blue-100 hover:bg-blue-800 hover:text-white'"
-                                class="flex items-center gap-3 px-4 py-2.5 rounded-lg border border-transparent transition-all duration-200 group w-full text-left text-sm">
+                            <button type="button" @click="openSection('messages')"
+                                :class="activeSection === 'messages'
+                                    ? 'bg-white/10 text-white shadow-sm'
+                                    : 'text-blue-100 hover:bg-white/5 hover:text-white'"
+                                class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium leading-5 transition-all duration-150 text-left">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h6m5 8H6a2 2 0 01-2-2V6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2z" />
                                 </svg>
                                 {{ __('cases.navigation.messages') }}
                             </button>

@@ -338,6 +338,19 @@
                 @csrf
                 @method('PATCH')
 
+                @php
+                $judgeUsersCollection = collect($judgeUsers ?? []);
+                $currentTeamId = auth()->user()?->team_id ?? null;
+                $teamJudgeUsers = $currentTeamId
+                    ? $judgeUsersCollection->filter(fn($admin) => ($admin->team_id ?? null) === $currentTeamId)
+                    : $judgeUsersCollection;
+                $storedJudges = [
+                    $benchNote->judge_one_id,
+                    $benchNote->judge_two_id,
+                    $benchNote->judge_three_id,
+                ];
+                @endphp
+
                 <div class="card-body">
                     <div class="note-meta">
                         <div class="meta-grid">
@@ -415,7 +428,50 @@
                                 <p class="form-error">{{ $message }}</p>
                                 @enderror
                                 <p class="form-helper">{{ __('bench.helpers.title') }}</p>
+                         </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="section-title">{{ __('bench.sections.judges') }}</h3>
+                        <div class="grid md:grid-cols-3 gap-4">
+                            @for ($i = 0; $i < 3; $i++)
+                            @php
+                            $defaultJudgeId = $i === 1 ? auth()->id() : null;
+                            $selectedJudge = old("judges.$i.admin_user_id", $storedJudges[$i] ?? $defaultJudgeId);
+                            $isMiddle = $i === 1;
+                            $isThird = $i === 2;
+                            $availableJudges = $isThird
+                                ? ($teamJudgeUsers->isNotEmpty() ? $teamJudgeUsers : $judgeUsersCollection)
+                                : $judgeUsersCollection;
+                            $displayName = optional($judgeUsersCollection->firstWhere('id', $selectedJudge))->name
+                                ?? ($isMiddle ? ($benchNote->judgeTwo?->name ?? auth()->user()?->name ?? 'Current Judge') : null);
+                            @endphp
+                            <div>
+                                <label class="form-label">Judge {{ $i + 1 }}</label>
+                                @if($isMiddle)
+                                <input type="text" readonly
+                                    value="{{ $displayName }}"
+                                    class="form-input bg-gray-100">
+                                <input type="hidden" name="judges[{{ $i }}][admin_user_id]" value="{{ $selectedJudge }}">
+                                @else
+                                <select name="judges[{{ $i }}][admin_user_id]" class="form-select">
+                                    <option value="">{{ __('bench.placeholders.select_judge') }}</option>
+                                    @foreach($availableJudges as $admin)
+                                    <option value="{{ $admin->id }}" @selected((string) $selectedJudge === (string) $admin->id)>
+                                        {{ $admin->name }}
+                                    </option>
+                                    @endforeach
+                                    @if($isThird && $teamJudgeUsers->isEmpty())
+                                    <option value="" disabled>{{ __('bench.helpers.no_teammates') }}</option>
+                                    @endif
+                                </select>
+                                @endif
+                                @error("judges.$i.admin_user_id")
+                                <p class="form-error">{{ $message }}</p>
+                                @enderror
                             </div>
+                            @endfor
                         </div>
                     </div>
 

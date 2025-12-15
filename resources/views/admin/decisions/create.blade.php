@@ -116,7 +116,14 @@
                 </div>
 
                 <!-- Judges -->
-                <div class="border border-gray-200 rounded-lg p-4 space-y-3">
+                    @php
+                    $judgeUsersCollection = collect($judgeUsers);
+                    $currentTeamId = auth()->user()?->team_id ?? null;
+                    $teamJudgeUsers = $currentTeamId
+                        ? $judgeUsersCollection->filter(fn($admin) => ($admin->team_id ?? null) === $currentTeamId)
+                        : $judgeUsersCollection;
+                    @endphp
+                    <div class="border border-gray-200 rounded-lg p-4 space-y-3">
                     <div class="flex items-center justify-between gap-3">
                         <h2 class="text-base font-semibold text-gray-900">Judges (in order)</h2>
                         <span class="text-xs uppercase tracking-wide text-gray-500">1st · 2nd · 3rd</span>
@@ -127,6 +134,10 @@
                         $defaultJudgeId = $i === 1 ? auth()->id() : null;
                         $selectedJudge = old("judges.$i.admin_user_id", $defaultJudgeId);
                         $isMiddle = $i === 1;
+                        $isThird = $i === 2;
+                        $availableJudges = $isThird
+                            ? ($teamJudgeUsers->isNotEmpty() ? $teamJudgeUsers : $judgeUsersCollection)
+                            : $judgeUsersCollection;
                         @endphp
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Judge {{ $i + 1 }}</label>
@@ -139,9 +150,12 @@
                             <select name="judges[{{ $i }}][admin_user_id]"
                                 class="mt-1 w-full px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 relative z-20">
                                 <option value="">Select judge</option>
-                                @foreach($judgeUsers as $admin)
+                                @foreach($availableJudges as $admin)
                                 <option value="{{ $admin->id }}" @selected($selectedJudge==$admin->id)>{{ $admin->name }}</option>
                                 @endforeach
+                                @if($isThird && $teamJudgeUsers->isEmpty())
+                                <option value="" disabled>No teammates in your team</option>
+                                @endif
                             </select>
                             @endif
                         </div>

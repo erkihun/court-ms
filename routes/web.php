@@ -22,6 +22,7 @@ use App\Http\Controllers\Respondent\NotificationController as RespondentNotifica
 // Admin-facing controllers
 use App\Http\Controllers\Admin\ApplicantController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\TeamController;
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Admin\UsersController;
@@ -236,12 +237,16 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::get('/', fn() => redirect()->route('admin.dashboard'))
                 ->name('admin.home');
 
-            Route::get('/dashboard', [DashboardController::class, 'index'])
-                ->name('admin.dashboard');
+              Route::get('/dashboard', [DashboardController::class, 'index'])
+                  ->name('admin.dashboard');
 
-            // Dashboard stats (AJAX)
-            Route::get('/dashboard/stats', [DashboardController::class, 'stats'])
-                ->name('admin.dashboard.stats');
+              Route::get('/reports', [ReportController::class, 'index'])
+                  ->middleware('perm:reports.view')
+                  ->name('reports.index');
+
+              // Dashboard stats (AJAX)
+              Route::get('/dashboard/stats', [DashboardController::class, 'stats'])
+                  ->name('admin.dashboard.stats');
 
             // System settings
             Route::get('/settings/system', [SystemSettingController::class, 'edit'])

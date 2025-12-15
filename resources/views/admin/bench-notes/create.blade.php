@@ -279,6 +279,55 @@
                         </div>
                     </div>
 
+                    @php
+                    $judgeUsersCollection = collect($judgeUsers ?? []);
+                    $currentTeamId = auth()->user()?->team_id ?? null;
+                    $teamJudgeUsers = $currentTeamId
+                        ? $judgeUsersCollection->filter(fn($admin) => ($admin->team_id ?? null) === $currentTeamId)
+                        : $judgeUsersCollection;
+                    @endphp
+
+                    <div class="form-section">
+                        <h3 class="section-title">{{ __('bench.sections.judges') }}</h3>
+                        <div class="grid md:grid-cols-3 gap-4">
+                            @for ($i = 0; $i < 3; $i++)
+                            @php
+                            $defaultJudgeId = $i === 1 ? auth()->id() : null;
+                            $selectedJudge = old("judges.$i.admin_user_id", $defaultJudgeId);
+                            $isMiddle = $i === 1;
+                            $isThird = $i === 2;
+                            $availableJudges = $isThird
+                                ? ($teamJudgeUsers->isNotEmpty() ? $teamJudgeUsers : $judgeUsersCollection)
+                                : $judgeUsersCollection;
+                            @endphp
+                            <div>
+                                <label class="form-label">Judge {{ $i + 1 }}</label>
+                                @if($isMiddle)
+                                <input type="text" readonly
+                                    value="{{ auth()->user()?->name ?? 'Current Judge' }}"
+                                    class="form-input bg-gray-100">
+                                <input type="hidden" name="judges[{{ $i }}][admin_user_id]" value="{{ $selectedJudge }}">
+                                @else
+                                <select name="judges[{{ $i }}][admin_user_id]" class="form-select">
+                                    <option value="">{{ __('bench.placeholders.select_judge') }}</option>
+                                    @foreach($availableJudges as $admin)
+                                    <option value="{{ $admin->id }}" @selected($selectedJudge==$admin->id)>
+                                        {{ $admin->name }}
+                                    </option>
+                                    @endforeach
+                                    @if($isThird && $teamJudgeUsers->isEmpty())
+                                    <option value="" disabled>{{ __('bench.helpers.no_teammates') }}</option>
+                                    @endif
+                                </select>
+                                @error("judges.$i.admin_user_id")
+                                <p class="form-error">{{ $message }}</p>
+                                @enderror
+                                @endif
+                            </div>
+                            @endfor
+                        </div>
+                    </div>
+
                     <div class="form-section">
                         <h3 class="section-title">{{ __('bench.sections.note_content') }}</h3>
                         <div class="form-group">

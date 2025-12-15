@@ -32,6 +32,7 @@ return [
     'sections' => [
         'basic_info' => 'መሰረታዊ መረጃ',
         'note_content' => 'የማስታወሻ ይዘት',
+        'judges' => 'ዳኛዎች (በቅድሚያ)',
     ],
 
     'labels' => [
@@ -41,6 +42,8 @@ return [
         'filter_by_case' => 'በፋይል ያጣሩ',
         'title' => 'ርዕስ',
         'note_editor' => 'ማስታወሻ አርታኢ',
+        'panel_judges' => 'ፍርድ አቅራቢዎች',
+        'panel_judge_format' => 'ፍርድ አቅራቢ :position — :name',
         'author' => 'ጸሐፊ',
         'created' => 'የተፈጠረበት',
         'created_date' => 'የተፈጠረበት ቀን',

@@ -409,6 +409,33 @@ $canViewBench = function_exists('userHasPermission')
                         </div>
                     </div>
                     @endif
+
+                    @php
+                    $panelJudgeNames = collect([
+                        $note->judgeOne?->name,
+                        $note->judgeTwo?->name,
+                        $note->judgeThree?->name,
+                    ])->filter()->values();
+                    @endphp
+                    @if($panelJudgeNames->isNotEmpty())
+                    <div class="meta-item">
+                        <div class="meta-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M5 7h14M5 12h14M5 17h14" />
+                            </svg>
+                        </div>
+                        <div class="meta-content">
+                            <div class="meta-label">{{ __('bench.sections.judges') }}</div>
+                            <div class="meta-value text-sm space-y-1">
+                                @foreach($panelJudgeNames as $index => $judgeName)
+                                <div>{{ __('bench.labels.panel_judge_format', ['position' => $index + 1, 'name' => $judgeName]) }}</div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                    @endif
                 </div>
             </div>
 

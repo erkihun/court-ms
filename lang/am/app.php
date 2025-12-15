@@ -8,6 +8,7 @@ return [
     'Amharic' => 'አማርኛ',
     'Language updated.' => 'ቋንቋ ዘምኗል።',
     'System_Settings' => 'የሲስተም ማስተካከያ',
+    'Settings' => 'ማስተካከያ',
 
     // Layout / UI
     'Sidebar' => 'የጎን ማውጫ',
@@ -31,6 +32,7 @@ return [
     'Letter Templates' => 'የደብዳቤ ቴምፕሌቶች',
     'Compose Letter' => 'ደብዳቤ ይጻፉ',
     'Letters' => 'ደብዳቤዎች',
+    'Reports' => 'Reports',
 
     'User Control' => 'የተጠቃሚ መቆጣጠሪያ',
     'Terms' => 'ውሎች እና ቅድመ ሁኔታዎች',

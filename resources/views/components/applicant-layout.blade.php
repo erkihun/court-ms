@@ -51,7 +51,7 @@ $now = now();
 
 $hearingBase = \DB::table('case_hearings as h')
 ->join('court_cases as c', 'c.id', '=', 'h.case_id')
-->select('h.id', 'h.hearing_at', 'c.id as case_id', 'c.case_number')
+        ->select('h.id', 'h.hearing_at', 'h.type', 'h.location', 'c.id as case_id', 'c.case_number')
 ->where('c.applicant_id', $aid)
 ->whereBetween('h.hearing_at', [$now->copy()->subDay(), $now->copy()->addDays(60)])
 ->whereNotExists(function ($q) use ($aid) {

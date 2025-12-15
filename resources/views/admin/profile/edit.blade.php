@@ -67,4 +67,8 @@
             </div>
         </div>
     </form>
+
+    <div class="mt-8 p-4 rounded-xl border border-gray-200 bg-white shadow-sm">
+        @include('admin.profile.partials.update-password-form')
+    </div>
 </x-admin-layout>

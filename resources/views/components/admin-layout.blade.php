@@ -83,6 +83,7 @@
     $hasLetterComposer = Route::has('letters.compose');
     $hasLetters = Route::has('letters.index');
     $hasAudit = Route::has('admin.audit');
+    $hasReports = Route::has('reports.index');
     $canManageTemplates = $hasLetterTemplates && auth()->user()?->hasPermission('templates.manage');
     $canViewLetters = $hasLetters && auth()->user()?->hasPermission('cases.edit');
     $canComposeLetters = $hasLetterComposer && auth()->user()?->hasPermission('cases.edit');
@@ -100,6 +101,8 @@
     $rolesActive = request()->routeIs('roles.*');
     $teamsActive = request()->routeIs('teams.*');
     $userControlOpen = $usersActive || $permissionsActive || $rolesActive || $teamsActive;
+    $settingsMenuOpen = request()->routeIs('settings.system.*') || request()->routeIs('terms.*') || request()->routeIs('admin.audit');
+    $canViewReports = $hasReports && auth()->user()?->hasPermission('reports.view');
     @endphp
 
     <aside
@@ -190,30 +193,12 @@
             </a>
             @endif
 
-            {{-- System Audit --}}
-            @if($hasAudit)
-            <a href="{{ route('admin.audit') }}"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
-                {{ request()->routeIs('admin.audit') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
-                <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 5h6m-6 4h6m-6 4h6m-9 4h12a2 2 0 002-2V7a2 2 0 00-2-2h-3l-1-2H9L8 5H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                </div>
-                <span class="truncate origin-left"
-                    x-show="!compact"
-                    x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 -translate-x-1"
-                    x-transition:enter-end="opacity-100 translate-x-0"
-                    x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100 translate-x-0"
-                    x-transition:leave-end="opacity-0 -translate-x-1">
-                    System Audit
-                </span>
-            </a>
-            @endif
+            @php
+            $settingsDropdownVisible = ($hasSystemSettings && auth()->user()?->hasPermission('settings.manage'))
+                || ($hasTerms && auth()->user()?->hasPermission('settings.manage'))
+                || $hasAudit;
+            @endphp
+
 
             {{-- Appeals --}}
             @if($hasAppeals && auth()->user()?->hasPermission('appeals.view'))
@@ -292,6 +277,29 @@
             </a>
             @endif
 
+            @if($canViewReports)
+            <a href="{{ route('reports.index') }}"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
+                {{ request()->routeIs('reports.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
+                <div class="grid place-items-center w-6" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 12h2v8H4zm6-6h2v14h-2zm6 4h2v10h-2z" />
+                    </svg>
+                </div>
+                <span class="truncate origin-left"
+                    x-show="!compact"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 -translate-x-1"
+                    x-transition:enter-end="opacity-100 translate-x-0"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100 translate-x-0"
+                    x-transition:leave-end="opacity-0 -translate-x-1">
+                    {{ __('app.Reports') }}
+                </span>
+            </a>
+            @endif
 
             {{-- Applicants --}}
             @if($hasApplicants && auth()->user()?->hasPermission('applicants.view'))
@@ -531,59 +539,108 @@
                     </a>
                     @endif
 
-                    @if($canManageRoles)
-                    <a href="{{ route('roles.index') }}"
-                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
-                        {{ $rolesActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            @if($canManageRoles)
+            <a href="{{ route('roles.index') }}"
+                class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
+                {{ $rolesActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
 
-                        </svg>
-                        <span>{{ __('app.Roles') }}</span>
-                    </a>
-                    @endif
-                </div>
+                    </svg>
+                    <span>{{ __('app.Roles') }}</span>
+                </a>
+                @endif
             </div>
-            @endif
+        </div>
+        @endif
 
-            {{-- System Settings --}}
-            @if($hasSystemSettings && auth()->user()?->hasPermission('settings.manage'))
-            <a href="{{ route('settings.system.edit') }}"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
-                {{ request()->routeIs('settings.system.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
-                <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none"
+        {{-- Settings --}}
+        @if($settingsDropdownVisible)
+        <div x-data="{ open: {{ json_encode($settingsMenuOpen) }} }" class="space-y-1">
+            <button type="button"
+                class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition focus-ring
+                {{ $settingsMenuOpen ? 'bg-blue-700 text-white shadow-md' : 'text-blue-100 hover:text-white hover:bg-blue-600/30' }}"
+                @click="open = !open"
+                aria-haspopup="true"
+                :aria-expanded="open.toString()">
+                <span class="flex items-center gap-3">
+                    <div class="grid place-items-center w-6" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                        </svg>
+                    </div>
+                    <span class="truncate origin-left"
+                        x-show="!compact"
+                        x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 -translate-x-1"
+                        x-transition:enter-end="opacity-100 translate-x-0"
+                        x-transition:leave="transition ease-in duration-150"
+                        x-transition:leave-start="opacity-100 translate-x-0"
+                        x-transition:leave-end="opacity-0 -translate-x-1">
+                        {{ __('app.Settings') }}
+                    </span>
+                </span>
+                <svg x-show="!compact" xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4 transition-transform duration-200"
+                    :class="open ? 'rotate-90' : 'rotate-0'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+            </button>
+
+            <div x-show="open && !compact"
+                x-transition:enter="transition ease-out duration-150"
+                x-transition:enter-start="opacity-0 -translate-y-1"
+                x-transition:enter-end="opacity-100 translate-y-0"
+                x-transition:leave="transition ease-in duration-100"
+                x-transition:leave-start="opacity-100 translate-y-0"
+                x-transition:leave-end="opacity-0 -translate-y-1"
+                class="pl-11 space-y-1">
+                @if($hasSystemSettings && auth()->user()?->hasPermission('settings.manage'))
+                <a href="{{ route('settings.system.edit') }}"
+                    class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
+                    {{ request()->routeIs('settings.system.*') ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M10.325 4.317L9.6 2.4m4.075 1.917l.725-1.917M4.318 10.325L2.4 9.6m1.918 4.075L2.4 14.4M19.682 10.325l1.918-.725m-1.918 4.075l1.918.725M12 8a4 4 0 100 8 4 4 0 000-8z" />
                     </svg>
-                </div>
-                <span class="truncate origin-left" x-show="!compact">
-                    {{ __('app.System_Settings') }}
-                </span>
-            </a>
-            @endif
+                    <span>{{ __('app.System_Settings') }}</span>
+                </a>
+                @endif
 
-            {{-- Terms & Conditions --}}
-            @if($hasTerms && auth()->user()?->hasPermission('settings.manage'))
-            <a href="{{ route('terms.index') }}"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
-                {{ request()->routeIs('terms.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
-                <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none"
+                @if($hasTerms && auth()->user()?->hasPermission('settings.manage'))
+                <a href="{{ route('terms.index') }}"
+                    class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
+                    {{ request()->routeIs('terms.*') ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 6l-2-2H6a2 2 0 00-2 2v13a1 1 0 001 1h14a1 1 0 001-1V6H12z" />
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 6l2-2h4a2 2 0 012 2v13a1 1 0 01-1 1H7a1 1 0 01-1-1V6h6z" />
                     </svg>
-                </div>
-                <span class="truncate origin-left" x-show="!compact">
-                    {{ __('app.Terms') }}
-                </span>
-            </a>
-            @endif
+                    <span>{{ __('app.Terms') }}</span>
+                </a>
+                @endif
+
+                @if($hasAudit)
+                <a href="{{ route('admin.audit') }}"
+                    class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
+                    {{ request()->routeIs('admin.audit') ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 5h6m-6 4h6m-6 4h6m-9 4h12a2 2 0 002-2V7a2 2 0 00-2-2h-3l-1-2H9L8 5H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <span>{{ __('app.System_Audit') }}</span>
+                </a>
+                @endif
+            </div>
+        </div>
+        @endif
+
         </nav>
 
         {{-- UPDATED: Footer border and text uses dark blue/light blue --}}
@@ -894,7 +951,7 @@
                                                 {{ \Illuminate\Support\Carbon::parse($h->hearing_at)->format('M d, Y H:i') }}
                                             </div>
                                             <div class="text-xs text-gray-600">
-                                                {{ $h->type ?: 'Hearing' }} · {{ $h->location ?: '—' }}
+                                                {{ optional($h)->type ?: 'Hearing' }} · {{ optional($h)->location ?: '—' }}
                                             </div>
                                         </a>
                                         @if($hasNotifMarkOne)
