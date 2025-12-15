@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3c2924a2e5f86499511838d1c4b0ba01",
+    "content-hash": "e9bfacb03431b39ea63403f1a349738d",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -844,50 +844,6 @@
                 }
             ],
             "time": "2025-03-06T22:45:56+00:00"
-        },
-        {
-            "name": "eliasdebelo/ethiopian-calendar",
-            "version": "v1.2.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/eliasdebelo/ethiopian-calendar.git",
-                "reference": "204f9c13349c65cc610628044411639d86784b75"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/eliasdebelo/ethiopian-calendar/zipball/204f9c13349c65cc610628044411639d86784b75",
-                "reference": "204f9c13349c65cc610628044411639d86784b75",
-                "shasum": ""
-            },
-            "require": {
-                "ext-calendar": "*",
-                "php": ">=8.0"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "^12.4"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "EliasDebelo\\EthiopianCalendar\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Elias Debelo",
-                    "email": "eliascs2012@gmail.com"
-                }
-            ],
-            "description": "Ethiopian ↔ Gregorian calendar conversion",
-            "support": {
-                "issues": "https://github.com/eliasdebelo/ethiopian-calendar/issues",
-                "source": "https://github.com/eliasdebelo/ethiopian-calendar/tree/v1.2.0"
-            },
-            "time": "2025-11-13T06:46:53+00:00"
         },
         {
             "name": "ezyang/htmlpurifier",
