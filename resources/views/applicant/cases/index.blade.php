@@ -108,7 +108,7 @@
                         </div>
                     </td>
                     <td class="p-3 text-slate-700 whitespace-nowrap">
-                        {{ \Illuminate\Support\Carbon::parse($c->filing_date)->format('M d, Y') }}
+                        {{ \App\Support\EthiopianDate::format($c->filing_date) }}
                     </td>
                     <td class="p-3">
                         <div class="flex items-center gap-2">

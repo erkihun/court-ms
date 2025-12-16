@@ -89,7 +89,7 @@
                 <div class="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors duration-150">
                     <a class="text-sm" href="{{ route('cases.show', $h->case_id) }}">
                         <div class="font-medium text-gray-900">
-                            {{ $h->case_number }} — {{ \Illuminate\Support\Carbon::parse($h->hearing_at)->format('M d, Y H:i') }}
+                            {{ $h->case_number }} — {{ \App\Support\EthiopianDate::format($h->hearing_at, withTime: true) }}
                         </div>
                         <div class="text-xs text-gray-600">
                             {{ optional($h)->type ?: 'Hearing' }} · {{ optional($h)->location ?: '—' }}

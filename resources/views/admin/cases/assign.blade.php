@@ -23,7 +23,7 @@
                 @if($case->assigned_at)
                 <div><span class="text-gray-600">{{ __('cases.assign.assigned_at') }}</span>
                     <span
-                        class="text-gray-900">{{ \Illuminate\Support\Carbon::parse($case->assigned_at)->format('M d, Y h:i A') }}</span>
+                        class="text-gray-900">{{ \App\Support\EthiopianDate::format($case->assigned_at, withTime: true, timeFormat: 'h:i A') }}</span>
                 </div>
                 @endif
             </div>

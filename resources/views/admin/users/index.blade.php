@@ -72,7 +72,7 @@
                             {{ $u->hasVerifiedEmail() ? 'Verified' : 'Unverified' }}
                         </span>
                     </td>
-                    <td class="p-3 text-gray-600">{{ optional($u->created_at)->format('M d, Y') }}</td>
+                    <td class="p-3 text-gray-600">{{ \App\Support\EthiopianDate::format($u->created_at) }}</td>
                     <td class="p-3">
                         <div class="flex gap-2">
                             <a href="{{ route('users.show',$u) }}"

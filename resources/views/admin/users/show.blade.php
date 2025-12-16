@@ -130,11 +130,11 @@
                         <div class="space-y-5">
                             <div>
                                 <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Created At</label>
-                                <div class="text-gray-700">{{ optional($user->created_at)->format('M d, Y h:i A') }}</div>
+                                <div class="text-gray-700">{{ \App\Support\EthiopianDate::format($user->created_at, withTime: true, timeFormat: 'h:i A') }}</div>
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Updated At</label>
-                                <div class="text-gray-700">{{ optional($user->updated_at)->format('M d, Y h:i A') }}</div>
+                                <div class="text-gray-700">{{ \App\Support\EthiopianDate::format($user->updated_at, withTime: true, timeFormat: 'h:i A') }}</div>
                             </div>
                         </div>
 

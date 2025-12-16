@@ -31,7 +31,7 @@
                     <td class="p-3">{{ $c->case_type }}</td>
                     <td class="p-3">{{ $c->court_name }}</td>
                     <td class="p-3 capitalize">{{ $c->status }}</td>
-                    <td class="p-3">{{ \Illuminate\Support\Carbon::parse($c->filing_date)->format('M d, Y') }}</td>
+                    <td class="p-3">{{ \App\Support\EthiopianDate::format($c->filing_date) }}</td>
                     <td class="p-3">
                         <a href="{{ route('public.cases.show', $c->case_number) }}"
                             class="px-2 py-1 rounded bg-slate-800 text-white hover:bg-slate-700 text-xs">View</a>

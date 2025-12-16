@@ -14,7 +14,7 @@
                 <ul class="space-y-1">
                     @foreach($systemAuditsRecent as $entry)
                     <li class="flex items-start gap-2">
-                        <span class="text-[11px] text-blue-700">{{ \Carbon\Carbon::parse($entry->created_at)->format('Y-m-d H:i') }}</span>
+                        <span class="text-[11px] text-blue-700">{{ \App\Support\EthiopianDate::format($entry->created_at, withTime: true) }}</span>
                         <span class="font-semibold">{{ $entry->method }}</span>
                         <span class="text-gray-800">{{ $entry->route ?? '—' }}</span>
                         <span class="text-gray-600">{{ $entry->actor_name ?? ($entry->user_id ? 'User #'.$entry->user_id : '—') }}</span>
@@ -39,7 +39,7 @@
                         @foreach($combinedAudits as $entry)
                         <tr class="hover:bg-gray-50">
                             <td class="px-4 py-3 text-sm text-gray-700">
-                                {{ \Carbon\Carbon::parse($entry->created_at)->format('Y-m-d H:i') }}
+                                {{ \App\Support\EthiopianDate::format($entry->created_at, withTime: true) }}
                             </td>
                             <td class="px-4 py-3 text-sm text-gray-700">
                                 {{ $entry->target ?? '—' }}

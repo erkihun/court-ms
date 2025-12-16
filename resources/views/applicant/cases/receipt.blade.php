@@ -69,7 +69,7 @@
             <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-slate-600">
                 <div class="rounded-lg bg-slate-50 border border-slate-100 px-3 py-2">
                     <div class="uppercase tracking-wide font-semibold text-[11px] text-slate-500">Filed on</div>
-                    <div class="text-sm font-semibold text-slate-800">{{ $filingDate->format('M d, Y') }}</div>
+                    <div class="text-sm font-semibold text-slate-800">{{ \App\Support\EthiopianDate::format($filingDate) }}</div>
                 </div>
                 <div class="rounded-lg bg-slate-50 border border-slate-100 px-3 py-2">
                     <div class="uppercase tracking-wide font-semibold text-[11px] text-slate-500">Documents</div>
@@ -98,7 +98,7 @@
                 <div>
                     <div class="text-slate-500">Filed</div>
                     <div class="font-medium">
-                        {{ $filingDate->format('M d, Y') }}
+                        {{ \App\Support\EthiopianDate::format($filingDate) }}
                     </div>
                 </div>
                 <div>
@@ -197,7 +197,7 @@
                         <div>
                             <div class="font-medium">{{ $f->label ?? basename($f->path) }}</div>
                             <div class="text-xs text-slate-500">
-                                {{ Carbon::parse($f->created_at)->format('M d, Y H:i') }}
+                                {{ \App\Support\EthiopianDate::format($f->created_at, withTime: true) }}
                             </div>
                         </div>
                         <div class="text-xs text-slate-500">{{ strtoupper(pathinfo($f->path, PATHINFO_EXTENSION)) }}</div>
@@ -216,7 +216,7 @@
                     <li class="flex items-center justify-between rounded-md border border-slate-200 p-2">
                         <div>
                             <div class="font-medium">
-                                {{ Carbon::parse($h->hearing_at)->format('M d, Y H:i') }}
+                                {{ \App\Support\EthiopianDate::format($h->hearing_at, withTime: true) }}
                                 @if($h->type) | {{ $h->type }} @endif
                             </div>
                             <div class="text-xs text-slate-500">{{ $h->location ?: 'Not provided' }}</div>
@@ -232,7 +232,7 @@
             @endif
 
             <div class="mt-8 text-xs text-slate-500">
-                Generated on {{ now()->format('M d, Y H:i') }}.
+                Generated on {{ \App\Support\EthiopianDate::format(now(), withTime: true) }}.
             </div>
         </div>
     </div>

@@ -279,7 +279,7 @@
 
 <body>
     @php
-    $letterDate = optional($letter->created_at)->format('F j, Y') ?? now()->format('F j, Y');
+    $letterDate = \App\Support\EthiopianDate::format($letter->created_at ?? now());
     $isApproved = ($letter->approval_status === 'approved');
     $authorName = (function () use ($letter) {
     $full = optional($letter->author)->name;
@@ -311,7 +311,7 @@
     'REF:' . \Illuminate\Support\Str::limit($letter->reference_number ?? 'NA', 20, ''),
     'CASE:' . \Illuminate\Support\Str::limit($letter->case_number ?? 'NA', 20, ''),
     'STATUS:' . ($letter->approval_status ?? 'pending'),
-    'DATE:' . ($letter->created_at?->format('Y-m-d') ?? now()->format('Y-m-d')),
+    'DATE:' . \App\Support\EthiopianDate::format($letter->created_at ?? now()),
     ]);
     $qrSvg = null;
     $qrError = null;

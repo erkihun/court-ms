@@ -80,7 +80,7 @@
                     <div class="text-sm text-gray-900">
                         {{ $d->label ?? basename($d->path) }}
                         <div class="text-xs text-gray-600">
-                            {{ \Illuminate\Support\Carbon::parse($d->created_at)->format('M d, Y H:i') }}
+                            {{ \App\Support\EthiopianDate::format($d->created_at, withTime: true) }}
                         </div>
                     </div>
                     <div class="flex gap-3">

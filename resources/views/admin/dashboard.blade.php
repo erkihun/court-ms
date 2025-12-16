@@ -230,7 +230,7 @@
                     <path stroke-width="1.8" d="M5 13l4 4L19 7" />
                 </svg>
             </div>
-            <p class="text-[12px] text-gray-500 mb-2">{{ __('dashboard.last_restart') }}: {{ now()->subHours(5)->format('M d, H:i') }}</p>
+            <p class="text-[12px] text-gray-500 mb-2">{{ __('dashboard.last_restart') }}: {{ \App\Support\EthiopianDate::format(now()->subHours(5), withTime: true) }}</p>
             <p class="text-2xl font-bold text-emerald-600">99.9%</p>
         </div>
 

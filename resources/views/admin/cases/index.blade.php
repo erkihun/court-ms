@@ -163,7 +163,7 @@
                     </td>
 
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {{ \Illuminate\Support\Carbon::parse($c->filing_date)->format('M d, Y') }}
+                        {{ \App\Support\EthiopianDate::format($c->filing_date) }}
                     </td>
 
                     {{-- Review cell (Updated styling to full rounded pill) --}}

@@ -103,12 +103,12 @@
                                 </div>
                                 @if($decision->case_filed_date)
                                 <div class="text-[10px] text-gray-500 mt-1">
-                                    Filed {{ $decision->case_filed_date->format('M d, Y') }}
+                                    Filed {{ \App\Support\EthiopianDate::format($decision->case_filed_date) }}
                                 </div>
                                 @endif
                             </td>
                             <td class="p-3 align-top text-gray-700">
-                                {{ optional($decision->decision_date)->format('M d, Y') ?: '—' }}
+                                {{ \App\Support\EthiopianDate::format($decision->decision_date, fallback: '—') }}
                             </td>
                             <td class="p-3 align-top">
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide

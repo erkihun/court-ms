@@ -378,7 +378,7 @@
                                 </div>
                                 <div class="meta-content">
                                     <div class="meta-label">{{ __('bench.labels.created') }}</div>
-                                    <div class="meta-value">{{ $benchNote->created_at->format('M d, Y H:i') }}</div>
+                                    <div class="meta-value">{{ \App\Support\EthiopianDate::format($benchNote->created_at, withTime: true) }}</div>
                                 </div>
                             </div>
 
@@ -393,7 +393,7 @@
                                 </div>
                                 <div class="meta-content">
                                     <div class="meta-label">{{ __('bench.labels.last_updated') }}</div>
-                                    <div class="meta-value">{{ $benchNote->updated_at->format('M d, Y H:i') }}</div>
+                                    <div class="meta-value">{{ \App\Support\EthiopianDate::format($benchNote->updated_at, withTime: true) }}</div>
                                 </div>
                             </div>
                             @endif
@@ -535,7 +535,7 @@
                     <h4 class="text-sm font-medium text-amber-900">{{ __('bench.headings.editing_note') }}</h4>
                     <p class="text-sm text-amber-700 mt-1">
                         {{ __('bench.descriptions.editing_notice') }}
-                        {{ __('bench.descriptions.created_meta', ['author' => $benchNote->user?->name ?? __('bench.meta.unknown'), 'date' => $benchNote->created_at->format('F d, Y')]) }}
+                        {{ __('bench.descriptions.created_meta', ['author' => $benchNote->user?->name ?? __('bench.meta.unknown'), 'date' => \App\Support\EthiopianDate::format($benchNote->created_at)]) }}
                     </p>
                 </div>
             </div>

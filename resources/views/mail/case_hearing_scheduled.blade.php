@@ -20,7 +20,7 @@
             <td style="padding:12px 14px;">
                 <p style="margin:0 0 8px;">
                     <strong>Date &amp; Time:</strong>
-                    {{ \Illuminate\Support\Carbon::parse($hearing->hearing_at)->timezone(config('app.timezone'))->format('M d, Y H:i') }}
+                    {{ \App\Support\EthiopianDate::format($hearing->hearing_at, withTime: true) }}
                 </p>
                 @if(!empty($hearing->type))
                 <p style="margin:0 0 8px;"><strong>Type:</strong> {{ $hearing->type }}</p>

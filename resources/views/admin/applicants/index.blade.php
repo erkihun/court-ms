@@ -61,7 +61,7 @@
                             {{ $applicant->hasVerifiedEmail() ? __('applicants.verified.verified') : __('applicants.verified.unverified') }}
                         </span>
                     </td>
-                    <td class="p-3 text-gray-600">{{ optional($applicant->created_at)->format('M d, Y') }}</td>
+                    <td class="p-3 text-gray-600">{{ \App\Support\EthiopianDate::format($applicant->created_at) }}</td>
                     <td class="p-3">
                         @if(auth()->user()?->hasPermission('applicants.manage'))
                         <div class="flex flex-wrap gap-2">

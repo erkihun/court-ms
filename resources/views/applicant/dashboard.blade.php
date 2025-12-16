@@ -186,7 +186,7 @@
                                 </span>
                             </td>
                             <td class="p-3 text-slate-700 whitespace-nowrap">
-                                {{ \Illuminate\Support\Carbon::parse($c->created_at)->format('M d, Y') }}
+                                {{ \App\Support\EthiopianDate::format($c->created_at) }}
                             </td>
                             <td class="p-3">
                                 <a href="{{ route('applicant.cases.show', $c->id) }}"

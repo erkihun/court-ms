@@ -112,7 +112,7 @@
                                     {{ __('terms.status_published') }}
                                 </div>
                                 <div class="text-xs text-gray-500 mt-1">
-                                    {{ optional($term->published_at)->format('M d, Y H:i') }}
+                                    {{ \App\Support\EthiopianDate::format($term->published_at, withTime: true) }}
                                 </div>
                                 @else
                                 <div class="inline-flex items-center gap-2 rounded-full border border-gray-300 bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
@@ -125,8 +125,8 @@
                                 @endif
                             </td>
                             <td class="px-5 py-4 align-top text-gray-700">
-                                <div class="text-sm font-medium text-gray-900">{{ $term->updated_at->format('M d, Y') }}</div>
-                                <div class="text-xs text-gray-500">{{ $term->updated_at->format('H:i') }}</div>
+                                <div class="text-sm font-medium text-gray-900">{{ \App\Support\EthiopianDate::format($term->updated_at) }}</div>
+                                <div class="text-xs text-gray-500">{{ \App\Support\EthiopianDate::formatTime($term->updated_at, timeFormat: 'H:i') }}</div>
                             </td>
                             <td class="px-5 py-4 align-top">
                                 <div class="flex justify-end gap-2">

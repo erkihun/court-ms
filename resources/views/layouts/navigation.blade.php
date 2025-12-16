@@ -178,7 +178,7 @@
                                     <li class="py-2 flex items-center justify-between">
                                         <a href="{{ route('cases.show', $h->case_id) }}" class="text-sm">
                                             <div class="font-medium text-slate-800">
-                                                {{ $h->case_number }} — {{ \Illuminate\Support\Carbon::parse($h->hearing_at)->format('M d, Y H:i') }}
+                                                {{ $h->case_number }} — {{ \App\Support\EthiopianDate::format($h->hearing_at, withTime: true) }}
                                             </div>
                                             <div class="text-xs text-slate-500">
                                                 {{ $h->type ?: 'Hearing' }} · {{ $h->location ?: '—' }}

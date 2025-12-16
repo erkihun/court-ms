@@ -124,7 +124,7 @@
                             <span>Author: {{ $letter->author_name ?? '-' }}</span>
                         </div>
                     <div class="text-[11px] text-slate-500">
-                        {{ \Illuminate\Support\Carbon::parse($letter->created_at)->format('M d, Y H:i') }}
+                        {{ \App\Support\EthiopianDate::format($letter->created_at, withTime: true) }}
                     </div>
                 </div>
                 @php

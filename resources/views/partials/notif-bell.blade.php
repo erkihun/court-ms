@@ -168,7 +168,7 @@ $items = $msgs->unionAll($hrs)->unionAll($sts)->unionAll($views)->orderBy('creat
                         New message from {{ $n->meta1 ?? 'Court Staff' }}
                         @elseif($n->type === 'hearing')
                         Hearing {{ $n->meta2 ? "($n->meta2) " : '' }}on
-                        {{ \Illuminate\Support\Carbon::parse($n->meta3)->format('M d, Y H:i') }}
+                        {{ \App\Support\EthiopianDate::format($n->meta3, withTime: true) }}
                         @elseif($n->type === 'respondent_view')
                         Respondent {{ $n->meta1 ?? 'Viewed the case' }} viewed this case
                         @else

@@ -707,7 +707,7 @@
 
             // stable timestamps for queries
             $now = Carbon::now();
-            $todayDisplay = $now->locale(app()->getLocale())->translatedFormat('l, F j, Y');
+            $todayDisplay = $now->translatedFormat('l') . ', ' . \App\Support\EthiopianDate::format($now);
             $cut14 = (clone $now)->subDays(14);
             $in14 = (clone $now)->addDays(14);
 
@@ -948,7 +948,7 @@
                                         <a href="{{ $hasCases ? route('cases.show', $h->case_id) : '#' }}" class="text-sm flex-1 mr-4">
                                             <div class="font-medium text-gray-900 truncate">
                                                 {{ $h->case_number }} —
-                                                {{ \Illuminate\Support\Carbon::parse($h->hearing_at)->format('M d, Y H:i') }}
+                                                {{ \App\Support\EthiopianDate::format($h->hearing_at, withTime: true) }}
                                             </div>
                                             <div class="text-xs text-gray-600">
                                                 {{ optional($h)->type ?: 'Hearing' }} · {{ optional($h)->location ?: '—' }}

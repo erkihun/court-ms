@@ -90,7 +90,7 @@ use Illuminate\Support\Carbon;
 <body>
     <div class="header">
         <div class="brand">{{ config('app.name','Court-MS') }}</div>
-        <div class="muted">Generated: {{ now()->format('Y-m-d H:i') }}</div>
+        <div class="muted">Generated: {{ \App\Support\EthiopianDate::format(now(), withTime: true) }}</div>
     </div>
 
     <h1>Filing Receipt</h1>
@@ -112,7 +112,7 @@ use Illuminate\Support\Carbon;
             </div>
             <div class="col">
                 <div class="muted">Filed</div>
-                <div>{{ Carbon::parse($case->filing_date ?? $case->created_at)->format('M d, Y') }}</div>
+                <div>{{ \App\Support\EthiopianDate::format($case->filing_date ?? $case->created_at) }}</div>
             </div>
         </div>
         <div class="row" style="margin-top:10px;">
@@ -163,7 +163,7 @@ use Illuminate\Support\Carbon;
                 <td>{{ $i+1 }}</td>
                 <td>{{ $doc->title ?? '—' }}</td>
                 <td>{{ $doc->path ? basename($doc->path) : '—' }}</td>
-                <td>{{ $doc->created_at ? Carbon::parse($doc->created_at)->format('Y-m-d H:i') : '—' }}</td>
+                <td>{{ \App\Support\EthiopianDate::format($doc->created_at, withTime: true, fallback: '—') }}</td>
             </tr>
             @endforeach
         </tbody>
@@ -203,7 +203,7 @@ use Illuminate\Support\Carbon;
         <tbody>
             @foreach($hearings as $h)
             <tr>
-                <td>{{ Carbon::parse($h->hearing_at)->format('Y-m-d H:i') }}</td>
+                <td>{{ \App\Support\EthiopianDate::format($h->hearing_at, withTime: true) }}</td>
                 <td>{{ $h->type ?: '—' }}</td>
                 <td>{{ $h->location ?: '—' }}</td>
             </tr>

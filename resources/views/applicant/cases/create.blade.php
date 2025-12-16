@@ -341,7 +341,7 @@
                         </button>
                         <h2 class="text-xl font-semibold text-slate-900 mb-2">{{ $activeTerms->title }}</h2>
                         <p class="text-xs text-slate-500 mb-4">
-                            {{ optional($activeTerms->published_at)->format('M d, Y H:i') }}
+                            {{ \App\Support\EthiopianDate::format($activeTerms->published_at, withTime: true) }}
                         </p>
                         <div class="text-sm text-slate-800 whitespace-pre-line leading-relaxed tiny-content">
                             {!! clean(nl2br(e($activeTerms->body)), 'cases') !!}
@@ -464,7 +464,6 @@
         })();
     </script>
 </x-applicant-layout>
-
 
 
 

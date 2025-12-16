@@ -5,7 +5,7 @@
         <div class="flex flex-col gap-1">
             <p class="text-xs uppercase tracking-wide text-slate-500">{{ __('respondent.response_title_label') }}</p>
             <h1 class="text-2xl font-semibold text-slate-900">{{ $response->title }}</h1>
-            <p class="text-sm text-slate-500">{{ optional($response->created_at)->format('M d, Y H:i') }}</p>
+            <p class="text-sm text-slate-500">{{ \App\Support\EthiopianDate::format($response->created_at, withTime: true) }}</p>
             @if(!empty($response->case_number))
             <p class="text-xs text-slate-500">{{ __('respondent.case_number_label') }}: {{ $response->case_number }}</p>
             @endif

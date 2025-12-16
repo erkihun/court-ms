@@ -23,7 +23,7 @@
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10m-12 8h14a2 2 0 002-2v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7a2 2 0 002 2z" />
                         </svg>
-                        {{ optional($decision->decision_date)->format('M d, Y') ?: '—' }}
+                        {{ \App\Support\EthiopianDate::format($decision->decision_date, fallback: '—') }}
                     </span>
                 </p>
             </div>
@@ -79,7 +79,7 @@
                         </svg>
                         {{ __('decisions.fields.decision_date') }}
                     </p>
-                    <p class="font-semibold text-gray-900">{{ optional($decision->decision_date)->format('M d, Y') ?: '—' }}</p>
+                    <p class="font-semibold text-gray-900">{{ \App\Support\EthiopianDate::format($decision->decision_date, fallback: '—') }}</p>
                 </div>
             </div>
 

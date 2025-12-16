@@ -157,7 +157,7 @@ default => 'Approved',
                     <div>
                         <dt class="text-slate-500">{{ __('cases.filed') }}</dt>
                         <dd class="font-medium text-slate-900">
-                            {{ \Illuminate\Support\Carbon::parse($case->filing_date ?? $case->created_at)->format('M d, Y') }}
+                            {{ \App\Support\EthiopianDate::format($case->filing_date ?? $case->created_at) }}
                         </dd>
                     </div>
                     <div>
@@ -229,7 +229,7 @@ default => 'Approved',
                                 @if(!empty($d->mime)) {{ $d->mime }} @else {{ __('cases.file') }} @endif
                                 @if(isset($d->size)) · {{ number_format(max(0,(int)$d->size)/1024, 1) }} KB @endif
                                 @if(!empty($d->created_at)) ·
-                                {{ \Illuminate\Support\Carbon::parse($d->created_at)->format('M d, Y H:i') }} @endif
+                                {{ \App\Support\EthiopianDate::format($d->created_at, withTime: true) }} @endif
                             </div>
                             @if(!empty($d->description))
                             <div class="mt-1 text-xs text-slate-600 tiny-content">{!! clean($d->description, 'cases')
@@ -322,7 +322,7 @@ default => 'Approved',
                             <div>
                                 <div class="flex flex-wrap items-center gap-2">
                                     <div class="font-medium text-slate-900">
-                                        {{ \Illuminate\Support\Carbon::parse($h->hearing_at)->format('M d, Y H:i') }}
+                                        {{ \App\Support\EthiopianDate::format($h->hearing_at, withTime: true) }}
                                     </div>
                                     @if($h->type)
                                     <span
@@ -380,7 +380,7 @@ default => 'Approved',
                             <strong>{{ __('cases.status.' . $t->to_status) }}</strong>
                         </div>
                         <div class="text-slate-500 text-xs">
-                            {{ \Illuminate\Support\Carbon::parse($t->created_at)->format('M d, Y H:i') }}
+                            {{ \App\Support\EthiopianDate::format($t->created_at, withTime: true) }}
                         </div>
                     </li>
                     @endforeach
@@ -405,7 +405,7 @@ default => 'Approved',
                     @php $meta = $a->meta ? json_decode($a->meta, true) : []; @endphp
                     <div class="p-3 rounded-lg border border-slate-200 bg-slate-50">
                         <div class="text-xs text-slate-500 flex items-center gap-2">
-                            <span>{{ \Illuminate\Support\Carbon::parse($a->created_at)->format('M d, Y H:i') }}</span>
+                            <span>{{ \App\Support\EthiopianDate::format($a->created_at, withTime: true) }}</span>
                             <span
                                 class="px-2 py-0.5 rounded-full border bg-white text-slate-700">{{ ucfirst(str_replace('_', ' ', $a->action)) }}</span>
                         </div>

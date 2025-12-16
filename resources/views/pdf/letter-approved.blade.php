@@ -45,7 +45,7 @@ $ref = $letter->reference_number;
     </div>
 
     <div class="footer">
-        Generated from court management system &mdash; {{ now()->format('M d, Y H:i') }}
+        Generated from court management system &mdash; {{ \App\Support\EthiopianDate::format(now(), withTime: true) }}
     </div>
 </body>
 </html>

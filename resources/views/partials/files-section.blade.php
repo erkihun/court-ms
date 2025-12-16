@@ -79,7 +79,7 @@ $canEditStatus = function_exists('userHasPermission')
                 <div class="text-xs text-gray-600 mt-1 flex items-center gap-3 flex-wrap">
                     <span>{{ $f->mime ?? 'file' }}</span>
                     <span>• {{ number_format(($f->size ?? 0)/1024,1) }} KB</span>
-                    <span>• {{ \Illuminate\Support\Carbon::parse($f->created_at)->format('M d, Y H:i') }}</span>
+                    <span>• {{ \App\Support\EthiopianDate::format($f->created_at, withTime: true) }}</span>
                     @php
                     $by = $f->uploader_name ?? trim(($f->first_name ?? '').' '.($f->last_name ?? ''));
                     @endphp

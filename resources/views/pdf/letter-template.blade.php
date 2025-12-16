@@ -36,7 +36,7 @@ $subject = $letter->subject ?? ($letter->template->subject_prefix ?? 'Letter');
     <div class="meta">
         <div class="meta-row">
             <div><strong>Case:</strong> {{ $caseNumber ?: '—' }}</div>
-            <div><strong>Date:</strong> {{ optional($letter->created_at)->format('F d, Y') }}</div>
+            <div><strong>Date:</strong> {{ \App\Support\EthiopianDate::format($letter->created_at) }}</div>
         </div>
         <div class="meta-row">
             <div><strong>Case Title:</strong> {{ $caseTitle ?: '—' }}</div>
@@ -68,7 +68,7 @@ $subject = $letter->subject ?? ($letter->template->subject_prefix ?? 'Letter');
     </div>
     @else
     <div class="footer">
-        Generated from court management system — {{ now()->format('M d, Y H:i') }}
+        Generated from court management system — {{ \App\Support\EthiopianDate::format(now(), withTime: true) }}
     </div>
     @endif
 </body>

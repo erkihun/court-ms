@@ -333,7 +333,7 @@ $canViewBench = function_exists('userHasPermission')
 
                     <div class="flex items-center gap-2">
                         <span class="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                            {{ optional($note->created_at)->format('M d, Y') }}
+                            {{ \App\Support\EthiopianDate::format($note->created_at) }}
                         </span>
                     </div>
                 </div>
@@ -376,7 +376,7 @@ $canViewBench = function_exists('userHasPermission')
                         </div>
                         <div class="meta-content">
                             <div class="meta-label">{{ __('bench.labels.created_date') }}</div>
-                            <div class="meta-value">{{ optional($note->created_at)->format('F d, Y') }}</div>
+                            <div class="meta-value">{{ \App\Support\EthiopianDate::format($note->created_at) }}</div>
                         </div>
                     </div>
 
@@ -390,7 +390,7 @@ $canViewBench = function_exists('userHasPermission')
                         </div>
                         <div class="meta-content">
                             <div class="meta-label">{{ __('bench.labels.created_time') }}</div>
-                            <div class="meta-value">{{ optional($note->created_at)->format('g:i A') }}</div>
+                            <div class="meta-value">{{ \App\Support\EthiopianDate::formatTime($note->created_at, timeFormat: 'g:i A') }}</div>
                         </div>
                     </div>
 
@@ -405,7 +405,7 @@ $canViewBench = function_exists('userHasPermission')
                         </div>
                         <div class="meta-content">
                             <div class="meta-label">{{ __('bench.labels.last_updated') }}</div>
-                            <div class="meta-value">{{ optional($note->updated_at)->format('M d, Y H:i') }}</div>
+                            <div class="meta-value">{{ \App\Support\EthiopianDate::format($note->updated_at, withTime: true) }}</div>
                         </div>
                     </div>
                     @endif

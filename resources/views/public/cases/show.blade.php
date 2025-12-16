@@ -24,7 +24,7 @@
             </div>
             <div>
                 <div class="text-slate-500">Filing Date</div>
-                <div class="font-medium">{{ \Illuminate\Support\Carbon::parse($case->filing_date)->format('M d, Y') }}</div>
+                <div class="font-medium">{{ \App\Support\EthiopianDate::format($case->filing_date) }}</div>
             </div>
         </div>
 

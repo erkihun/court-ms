@@ -44,6 +44,7 @@ use App\Http\Controllers\Admin\TermsAndConditionsController;
 // Localization middleware
 use App\Http\Middleware\SetLocale;
 use App\Http\Controllers\TermsDisplayController;
+use App\Http\Controllers\PublicSignageController;
 
 /*
 |--------------------------------------------------------------------------
@@ -64,6 +65,7 @@ Route::middleware(SetLocale::class)->group(function () {
     Route::get('/debug-locale', fn() => 'locale=' . app()->getLocale());
     Route::get('/', fn() => redirect()->route('applicant.login'))->name('root');
     Route::get('/terms', [TermsDisplayController::class, 'show'])->name('public.terms');
+    Route::get('/signage', [PublicSignageController::class, 'show'])->name('public.signage');
     Route::get('/applicant', fn() => redirect()->route('applicant.login'))->name('applicant.login.shortcut');
     Route::get('/respondent', fn() => redirect()->route('respondent.login'))->name('respondent.login.shortcut');
 

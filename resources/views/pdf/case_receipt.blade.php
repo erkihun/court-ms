@@ -96,7 +96,7 @@
             <div class="muted small">Case Receipt (Applicant Copy)</div>
         </div>
         <div class="small muted">
-            Generated: {{ $generated->format('M d, Y H:i') }}<br>
+            Generated: {{ \App\Support\EthiopianDate::format($generated, withTime: true) }}<br>
             Ref: {{ $case->case_number ?? ('#'.$case->id) }}
         </div>
     </div>
@@ -109,7 +109,7 @@
                 <div class="kv"><b>Title:</b> {{ $case->title }}</div>
                 <div class="kv"><b>Type:</b> {{ $case->case_type ?? '—' }}</div>
                 <div class="kv"><b>Court:</b> {{ $case->court_name ?? '—' }}</div>
-                <div class="kv"><b>Filed on:</b> {{ \Illuminate\Support\Carbon::parse($case->filing_date)->format('M d, Y') }}</div>
+                <div class="kv"><b>Filed on:</b> {{ \App\Support\EthiopianDate::format($case->filing_date) }}</div>
                 <div class="kv"><b>Status:</b> <span class="badge">{{ ucfirst($case->status) }}</span></div>
             </div>
             <div class="col">
@@ -164,7 +164,7 @@
                     <td>{{ $i+1 }}</td>
                     <td>{{ $ev->title }}</td>
                     <td>{{ $ev->file_path ? basename($ev->file_path) : '—' }}</td>
-                    <td>{{ \Illuminate\Support\Carbon::parse($ev->created_at)->format('M d, Y H:i') }}</td>
+                    <td>{{ \App\Support\EthiopianDate::format($ev->created_at, withTime: true) }}</td>
                 </tr>
                 @endforeach
             </tbody>

@@ -34,7 +34,7 @@
                     </div>
                     <div>
                         <span class="text-xs uppercase tracking-wide text-slate-500">{{ __('respondent.filed') }}</span>
-                        <div class="text-sm font-medium text-slate-900">{{ optional($case->created_at)->format('M d, Y') }}</div>
+                        <div class="text-sm font-medium text-slate-900">{{ \App\Support\EthiopianDate::format($case->created_at) }}</div>
                     </div>
                 </div>
             </div>

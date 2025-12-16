@@ -802,7 +802,7 @@
                             <div>
                                 <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">{{ __('cases.summary.filing_date') }}</div>
                                 <div class="text-gray-900 font-medium">
-                                    {{ $case->filing_date ? \Illuminate\Support\Carbon::parse($case->filing_date)->format('M d, Y') : '—' }}
+                                    {{ $case->filing_date ? \App\Support\EthiopianDate::format($case->filing_date) : '—' }}
                                 </div>
                             </div>
                         </div>
@@ -810,7 +810,7 @@
                             <div>
                                 <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">{{ __('cases.summary.first_hearing') }}</div>
                                 <div class="text-gray-900 font-medium">
-                                    {{ $case->first_hearing_date ? \Illuminate\Support\Carbon::parse($case->first_hearing_date)->format('M d, Y') : '—' }}
+                                    {{ $case->first_hearing_date ? \App\Support\EthiopianDate::format($case->first_hearing_date) : '—' }}
                                 </div>
                             </div>
                             <div>
@@ -849,20 +849,20 @@
                             <div>
                                 <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">{{ __('cases.summary.created') }}</div>
                                 <div class="text-gray-900 font-medium">
-                                    {{ $case->created_at ? \Illuminate\Support\Carbon::parse($case->created_at)->format('M d, Y h:i A') : '—' }}
+                                    {{ $case->created_at ? \App\Support\EthiopianDate::format($case->created_at, withTime: true, timeFormat: 'h:i A') : '—' }}
                                 </div>
                             </div>
                             <div>
                                 <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">{{ __('cases.summary.updated') }}</div>
                                 <div class="text-gray-900 font-medium">
-                                    {{ $case->updated_at ? \Illuminate\Support\Carbon::parse($case->updated_at)->format('M d, Y h:i A') : '—' }}
+                                    {{ $case->updated_at ? \App\Support\EthiopianDate::format($case->updated_at, withTime: true, timeFormat: 'h:i A') : '—' }}
                                 </div>
                             </div>
                             @if($case->assigned_at)
                             <div class="sm:col-span-2">
                                 <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">{{ __('cases.summary.assigned_at') }}</div>
                                 <div class="text-gray-900 font-medium">
-                                    {{ \Illuminate\Support\Carbon::parse($case->assigned_at)->format('M d, Y h:i A') }}
+                                    {{ \App\Support\EthiopianDate::format($case->assigned_at, withTime: true, timeFormat: 'h:i A') }}
                                 </div>
                             </div>
                             @endif
@@ -904,7 +904,7 @@
                                 @foreach($audits as $a)
                                 <tr class="hover:bg-gray-50">
                                     <td class="p-3 text-gray-700 whitespace-nowrap">
-                                        {{ \Illuminate\Support\Carbon::parse($a->created_at)->format('M d, Y H:i') }}
+                                        {{ \App\Support\EthiopianDate::format($a->created_at, withTime: true) }}
                                     </td>
                                     <td class="p-3 text-gray-900 font-medium">{{ str_replace('_',' ', ucfirst($a->action)) }}</td>
                                     <td class="p-3 text-gray-700 text-xs">
@@ -1026,7 +1026,7 @@
                                     @php
                                     $filePath = $d->file_path ?? $d->path ?? null;
                                     $docTitle = $d->title ?? ($d->label ?? ($filePath ? basename($filePath) : __('cases.documents.document')));
-                                    $fileTime = !empty($d->created_at) ? \Illuminate\Support\Carbon::parse($d->created_at)->format('M d, Y H:i') : null;
+                                    $fileTime = !empty($d->created_at) ? \App\Support\EthiopianDate::format($d->created_at, withTime: true) : null;
                                     $fileSize = isset($d->size) ? number_format(max(0, (int) $d->size) / 1024, 1) : null;
                                     @endphp
                                     <tr class="hover:bg-gray-50">
@@ -1178,7 +1178,7 @@
                                         $status = strtolower($letter->approval_status ?? 'pending');
                                         $statusClass = $letterStatusClasses[$status] ?? 'bg-gray-50 text-gray-600 border-gray-200';
                                         try {
-                                        $letterDate = \Illuminate\Support\Carbon::parse($letter->created_at)->format('M d, Y H:i');
+                                        $letterDate = \App\Support\EthiopianDate::format($letter->created_at, withTime: true);
                                         } catch (\Throwable $e) {
                                         $letterDate = $letter->created_at ?? null;
                                         }
@@ -1525,7 +1525,7 @@
                                         <td class="px-3 py-2">
                                             @php
                                             try {
-                                            $hearingDisplay = \Illuminate\Support\Carbon::parse($h->hearing_at)->format('M d, Y H:i');
+                                            $hearingDisplay = \App\Support\EthiopianDate::format($h->hearing_at, withTime: true);
                                             } catch (\Throwable $e) {
                                             $hearingDisplay = $h->hearing_at ?? '';
                                             }
@@ -1631,7 +1631,7 @@
                                 {{ $fromAdmin ? 'bg-blue-50 border-blue-200 text-right' : 'bg-white border-gray-200' }}">
                                 <div class="flex items-center justify-between text-xs text-gray-600 mb-2 gap-2">
                                     <span class="font-medium text-gray-900">{{ $who }}</span>
-                                    <span>{{ \Illuminate\Support\Carbon::parse($m->created_at)->format('M d, Y H:i') }}</span>
+                                    <span>{{ \App\Support\EthiopianDate::format($m->created_at, withTime: true) }}</span>
                                 </div>
                                 <div class="whitespace-pre-wrap text-gray-800 text-sm">
                                     {{ $m->body }}
@@ -1728,7 +1728,7 @@
                                 <div class="text-xs text-gray-600 mt-1 flex items-center gap-3 flex-wrap">
                                     <span>{{ $f->mime ?? 'file' }}</span>
                                     <span>• {{ number_format(($f->size ?? 0)/1024,1) }} KB</span>
-                                    <span>• {{ \Illuminate\Support\Carbon::parse($f->created_at)->format('M d, Y H:i') }}</span>
+                                    <span>• {{ \App\Support\EthiopianDate::format($f->created_at, withTime: true) }}</span>
                                     @php $by = $f->uploader_name ?? trim(($f->first_name ?? '').' '.($f->last_name ?? '')); @endphp
                                     @if($by) <span>• {{ __('cases.files.uploaded_by') }} {{ $by }}</span> @endif
                                 </div>

@@ -59,7 +59,7 @@
                                 {{ $response->case_number ?: '—' }}
                             </td>
                             <td class="px-6 py-4 text-slate-600">
-                                {{ optional($response->created_at)->format('M d, Y') }}
+                                {{ \App\Support\EthiopianDate::format($response->created_at) }}
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center justify-end gap-2">

@@ -23,7 +23,7 @@
         <div class="rounded-lg border border-gray-200 p-4 {{ $fromAdmin ? 'bg-blue-50 ml-8' : 'bg-gray-50 mr-8' }}">
             <div class="text-xs text-gray-600 mb-2 flex items-center justify-between">
                 <span class="font-medium text-gray-900">{{ $who }}</span>
-                <span>{{ \Illuminate\Support\Carbon::parse($m->created_at)->format('M d, Y H:i') }}</span>
+                <span>{{ \App\Support\EthiopianDate::format($m->created_at, withTime: true) }}</span>
             </div>
             <div class="whitespace-pre-wrap text-gray-800 text-sm">{{ $m->body }}</div>
         </div>

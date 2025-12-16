@@ -592,7 +592,7 @@ $respondentNotifList = collect();
                                                     <div class="font-medium text-slate-800">
                                                         {{ $h->case_number }}
                                                         <span class="text-slate-400">·</span>
-                                                        {{ \Illuminate\Support\Carbon::parse($h->hearing_at)->format('M d, Y H:i') }}
+                                                        {{ \App\Support\EthiopianDate::format($h->hearing_at, withTime: true) }}
                                                     </div>
                                                     <div class="text-xs text-slate-500">
                                                         {{ $h->type ?: __('app.Hearing') }}

@@ -201,7 +201,7 @@
                     <div>
                         <dt class="text-slate-500">{{ __('cases.filed') }}</dt>
                         <dd class="font-medium text-slate-900">
-                            {{ \Illuminate\Support\Carbon::parse($case->filing_date ?? $case->created_at)->format('M d, Y') }}
+                            {{ \App\Support\EthiopianDate::format($case->filing_date ?? $case->created_at) }}
                         </dd>
                     </div>
                 </dl>
@@ -278,7 +278,7 @@
                             <div class="text-xs text-slate-500 flex flex-wrap gap-1">
                                 @if(!empty($d->mime)) {{ $d->mime }} @else {{ __('cases.file') }} @endif
                                 @if(isset($d->size)) · {{ number_format(max(0,(int)$d->size)/1024, 1) }} KB @endif
-                                @if(!empty($d->created_at)) · {{ \Illuminate\Support\Carbon::parse($d->created_at)->format('M d, Y H:i') }} @endif
+                                @if(!empty($d->created_at)) · {{ \App\Support\EthiopianDate::format($d->created_at, withTime: true) }} @endif
                             </div>
                             @if(!empty($d->description))
                             <div class="mt-1 text-xs text-slate-600 tiny-content">
@@ -397,7 +397,7 @@
                             <div>
                                 <div class="flex flex-wrap items-center gap-2">
                                     <div class="font-medium text-slate-900">
-                                        {{ \Illuminate\Support\Carbon::parse($h->hearing_at)->format('M d, Y · H:i') }}
+                                        {{ \App\Support\EthiopianDate::format($h->hearing_at, withTime: true, separator: ' · ') }}
                                     </div>
                                     @if($h->type)
                                     <span class="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700">
@@ -473,7 +473,7 @@
                                     <span>Ref: {{ $letter->reference_number ?: '—' }}</span>
                                     <span>Template: {{ $letter->template_title ?: '—' }}</span>
                                     <span>Author: {{ $letter->author_name ?: '—' }}</span>
-                                    <span>Created: {{ \Illuminate\Support\Carbon::parse($letter->created_at)->format('M d, Y H:i') }}</span>
+                                    <span>Created: {{ \App\Support\EthiopianDate::format($letter->created_at, withTime: true) }}</span>
                                 </div>
                             </div>
                             @php
@@ -537,7 +537,7 @@
                                             @endif
                                         </p>
                                         <p class="text-xs font-semibold text-slate-800 leading-tight">
-                                            {{ \Illuminate\Support\Carbon::parse($m->created_at)->format('M d, Y H:i') }}
+                                            {{ \App\Support\EthiopianDate::format($m->created_at, withTime: true) }}
                                         </p>
                                     </div>
                                 </div>
@@ -594,7 +594,7 @@
                     @php $meta = $a->meta ? json_decode($a->meta, true) : []; @endphp
                     <div class="p-3 rounded-lg border border-slate-200 bg-slate-50">
                         <div class="text-xs text-slate-500 flex items-center gap-2">
-                            <span>{{ \Illuminate\Support\Carbon::parse($a->created_at)->format('M d, Y H:i') }}</span>
+                            <span>{{ \App\Support\EthiopianDate::format($a->created_at, withTime: true) }}</span>
                             <span class="px-2 py-0.5 rounded-full border bg-white text-slate-700">{{ ucfirst(str_replace('_',' ', $a->action)) }}</span>
                         </div>
                         <div class="text-[11px] text-slate-600 mt-1">
