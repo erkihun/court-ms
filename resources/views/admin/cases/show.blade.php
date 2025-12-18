@@ -1735,7 +1735,7 @@
                             </div>
                             <div class="flex items-center gap-2">
                                 @if($canViewFiles)
-                                <a href="{{ asset('storage/'.$f->path) }}" target="_blank"
+                                <a href="{{ route('cases.files.download', [$case->id, $f->id]) }}"
                                     class="px-3 py-1.5 rounded-lg bg-white hover:bg-gray-50 text-xs text-gray-700 border border-gray-300 transition-colors duration-150 flex items-center gap-1">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />

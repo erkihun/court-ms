@@ -20,7 +20,7 @@
         <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
             <div class="flex items-center justify-between">
                 <p class="text-sm font-semibold text-slate-900">{{ __('respondent.response_pdf') }}</p>
-                <a href="{{ asset('storage/'.$response->pdf_path) }}" target="_blank"
+                <a href="{{ route('applicant.respondent.responses.download', $response) }}"
                     class="text-sm text-blue-700 hover:underline">{{ __('respondent.download') }}</a>
             </div>
         </div>

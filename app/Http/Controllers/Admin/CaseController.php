@@ -764,7 +764,7 @@ class CaseController extends Controller
             'file'  => ['required', 'file', 'max:10240'], // 10MB
         ]);
 
-        $stored = $request->file('file')->store('case_files', 'public');
+        $stored = $request->file('file')->store('case_files', 'private');
 
         DB::table('case_files')->insert([
             'case_id'                   => $case,
@@ -795,7 +795,7 @@ class CaseController extends Controller
         abort_if(!$row, 404);
 
         if (!empty($row->path)) {
-            Storage::disk('public')->delete($row->path);
+            $this->deleteStoredFile($row->path);
         }
         DB::table('case_files')->where('id', $file)->delete();
 
@@ -824,8 +824,8 @@ class CaseController extends Controller
         $filePath = $doc->file_path ?? $doc->path ?? null;
         abort_if(!$filePath, 404, 'Document file missing.');
 
-        $disk = Storage::disk('public');
-        abort_if(!$disk->exists($filePath), 404, 'Stored file missing.');
+        $disk = $this->resolveFileDisk($filePath);
+        abort_if(!$disk, 404, 'Stored file missing.');
 
         $downloadName = ($doc->title ?? basename($filePath)) ?: basename($filePath);
         $mime = $doc->mime ?? $disk->mimeType($filePath) ?? 'application/octet-stream';
@@ -834,6 +834,29 @@ class CaseController extends Controller
             'Content-Type'        => $mime,
             'Content-Disposition' => 'inline; filename="' . basename($downloadName) . '"',
         ]);
+    }
+
+    private function resolveFileDisk(string $path): ?\Illuminate\Contracts\Filesystem\Filesystem
+    {
+        $private = Storage::disk('private');
+        if ($private->exists($path)) {
+            return $private;
+        }
+
+        $public = Storage::disk('public');
+        if ($public->exists($path)) {
+            return $public;
+        }
+
+        return null;
+    }
+
+    private function deleteStoredFile(string $path): void
+    {
+        $disk = $this->resolveFileDisk($path);
+        if ($disk) {
+            $disk->delete($path);
+        }
     }
 
     /**

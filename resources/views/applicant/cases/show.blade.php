@@ -288,7 +288,7 @@
                         </div>
                         <div class="flex items-center gap-2">
                             @if($docPath)
-                            <a href="{{ asset('storage/'.$docPath) }}" target="_blank"
+                            <a href="{{ route('applicant.cases.evidences.download', ['id' => $case->id, 'evidenceId' => $d->id]) }}"
                                 class="btn btn-muted inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-blue-200 bg-blue-50 text-xs font-medium text-blue-700 hover:bg-blue-100">
                                 {{ __('cases.view') }}
                             </a>

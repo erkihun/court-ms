@@ -118,11 +118,22 @@
                             @enderror
                         </div>
 
-                        <div>
+                        <div x-data="{
+                            prefix: '{{ substr(preg_replace('/[^A-Za-z0-9]/','', $case->caseType->prefix ?? $case->caseType->name ?? ''),0,4) ?: 'CASE' }}'.toUpperCase(),
+                            updatePrefix() {
+                                const sel = $refs.caseTypeSelect;
+                                const opt = sel.options[sel.selectedIndex];
+                                const pref = opt?.dataset?.prefix || '';
+                                const cleaned = (pref.match(/[A-Za-z0-9]+/g) || []).join('');
+                                this.prefix = (cleaned.slice(0,4) || 'CASE').toUpperCase();
+                            }
+                        }">
                             <label class="block text-sm font-medium text-slate-700 mb-1">
                                 {{ __('cases.labels.case_type') }} <span class="text-red-600">*</span>
                             </label>
                             <select
+                                x-ref="caseTypeSelect"
+                                @change="updatePrefix()"
                                 name="case_type_id"
                                 required
                                 class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white
@@ -131,12 +142,17 @@
                                 :disabled="!canEdit" {{ $editable ? '' : 'disabled' }}>
                                 <option value="">{{ __('cases.placeholders.select') }}</option>
                                 @foreach($types as $t)
-                                <option value="{{ $t->id }}" @selected(old('case_type_id', $case->case_type_id) == $t->id)>{{ $t->name }}</option>
+                                <option value="{{ $t->id }}" data-prefix="{{ $t->prefix ?? $t->name }}" @selected(old('case_type_id', $case->case_type_id) == $t->id)>{{ $t->name }}</option>
                                 @endforeach
                             </select>
                             @error('case_type_id')
                             <div class="text-xs text-red-600 mt-1">{{ $message }}</div>
                             @enderror
+                            <p class="text-xs text-slate-500 mt-2">
+                                {{ __('Case number format') }}:
+                                <span class="font-mono text-slate-700" x-text="`${prefix}/00001/{{ now()->format('y') }}`"></span>
+                                (type prefix / 5-digit sequence / last 2 digits of year).
+                            </p>
                         </div>
                     </div>
 
@@ -414,7 +430,7 @@
                             @foreach($docs as $d)
                             @php
                             $docPath = $d->file_path ?? $d->path ?? null;
-                            $docUrl = $docPath ? asset('storage/'.$docPath) : null;
+                                $docUrl = $docPath ? route('applicant.cases.evidences.download', ['id' => $case->id, 'evidenceId' => $d->id]) : null;
                             $docTitle = $d->title ?? ($docPath ? basename($docPath) : __('cases.labels.document'));
                             @endphp
                             <tr class="hover:bg-slate-50">

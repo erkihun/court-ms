@@ -23,8 +23,8 @@ class CaseTypeController extends Controller
         $types = DB::table('case_types as ct')
             ->when($q !== '', fn($w) => $w->where('ct.name', 'like', "%{$q}%"))
             ->leftJoin('court_cases as c', 'c.case_type_id', '=', 'ct.id')
-            ->groupBy('ct.id', 'ct.name')
-            ->select('ct.id', 'ct.name', DB::raw('COUNT(c.id) as cases_count'))
+            ->groupBy('ct.id', 'ct.name', 'ct.prefix')
+            ->select('ct.id', 'ct.name', 'ct.prefix', DB::raw('COUNT(c.id) as cases_count'))
             ->orderBy('ct.name')
             ->paginate(12)
             ->withQueryString();
@@ -50,10 +50,14 @@ class CaseTypeController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100', Rule::unique('case_types', 'name')],
+            'prefix' => ['nullable', 'string', 'max:16'],
         ]);
 
         // Build insert payload
-        $row = ['name' => $data['name']];
+        $row = [
+            'name' => $data['name'],
+            'prefix' => $data['prefix'] ?? null,
+        ];
 
         if (Schema::hasColumn('case_types', 'created_at')) $row['created_at'] = now();
         if (Schema::hasColumn('case_types', 'updated_at')) $row['updated_at'] = now();
@@ -93,10 +97,14 @@ class CaseTypeController extends Controller
                 'max:100',
                 Rule::unique('case_types', 'name')->ignore($id),
             ],
+            'prefix' => ['nullable', 'string', 'max:16'],
         ]);
 
         // Build update payload
-        $row = ['name' => $data['name']];
+        $row = [
+            'name' => $data['name'],
+            'prefix' => $data['prefix'] ?? null,
+        ];
         if (Schema::hasColumn('case_types', 'updated_at')) $row['updated_at'] = now();
 
         DB::table('case_types')->where('id', $id)->update($row);

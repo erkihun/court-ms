@@ -81,7 +81,10 @@ class UsersController extends Controller
         ]);
 
         // Always assign the configured default password; user will be forced to change on first login.
-        $rawPassword = config('auth.default_user_password', 'ChangeMe123!');
+        $rawPassword = config('auth.default_user_password');
+        if (empty($rawPassword)) {
+            throw new \RuntimeException('DEFAULT_USER_PASSWORD is not configured.');
+        }
 
         $avatarPath = $request->hasFile('avatar')
             ? $request->file('avatar')->store('avatars', 'public')

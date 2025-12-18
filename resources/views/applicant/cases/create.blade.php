@@ -107,7 +107,16 @@
         </section>
 
         {{-- Type / Court --}}
-        <section class="space-y-4">
+        <section class="space-y-4" x-data="{
+            prefix: '',
+            updatePrefix() {
+                const sel = $refs.caseTypeSelect;
+                const opt = sel.options[sel.selectedIndex];
+                const pref = opt?.dataset?.prefix || '';
+                const cleaned = (pref.match(/[A-Za-z0-9]+/g) || []).join('');
+                this.prefix = (cleaned.slice(0,4) || 'CASE').toUpperCase();
+            }
+        }" x-init="updatePrefix()">
 
             <div class="grid md:grid-cols-3 gap-4">
                 <div>
@@ -115,17 +124,24 @@
                         {{ __('cases.case_type') }} <span class="text-red-600">*</span>
                     </label>
                     <select
+                        x-ref="caseTypeSelect"
+                        @change="updatePrefix()"
                         name="case_type_id"
                         class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
                                bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                         <option value="">-- {{ __('cases.select_option') }} --</option>
                         @foreach($types as $t)
-                        <option value="{{ $t->id }}" @selected(old('case_type_id')==$t->id)>{{ $t->name }}</option>
+                        <option value="{{ $t->id }}" data-prefix="{{ $t->prefix ?? $t->name }}" @selected(old('case_type_id')==$t->id)>{{ $t->name }}</option>
                         @endforeach
                     </select>
                     @error('case_type_id')
                     <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
                     @enderror
+                    <p class="text-xs text-slate-500 mt-2">
+                        {{ __('Case number will be generated as') }}
+                        <span class="font-mono text-slate-700" x-text="`${prefix}/00001/{{ now()->format('y') }}`"></span>
+                        (type prefix / 5-digit sequence / last 2 digits of year).
+                    </p>
                 </div>
             </div>
         </section>
@@ -464,7 +480,4 @@
         })();
     </script>
 </x-applicant-layout>
-
-
-
 

@@ -58,7 +58,7 @@ class ResponseController extends Controller
 
         $this->assertNotOwnCase($data['case_number'] ?? null, (int) $applicant->id);
 
-        $path = $request->file('pdf')->store('respondent/responses', 'public');
+        $path = $request->file('pdf')->store('respondent/responses', 'private');
 
         $response = RespondentResponse::create([
             'respondent_id' => $respondentId,
@@ -101,8 +101,9 @@ class ResponseController extends Controller
         $this->assertNotOwnCase($data['case_number'] ?? null, (int) $applicant->id);
 
         if ($request->hasFile('pdf')) {
-            Storage::disk('public')->delete($response->pdf_path);
-            $path = $request->file('pdf')->store('respondent/responses', 'public');
+            Storage::disk('private')->delete($response->pdf_path);
+            Storage::disk('public')->delete($response->pdf_path); // legacy cleanup
+            $path = $request->file('pdf')->store('respondent/responses', 'private');
             $response->pdf_path = $path;
         }
 
@@ -119,7 +120,8 @@ class ResponseController extends Controller
     public function destroy(RespondentResponse $response)
     {
         $this->authorizeOwnership($response);
-        Storage::disk('public')->delete($response->pdf_path);
+        Storage::disk('private')->delete($response->pdf_path);
+        Storage::disk('public')->delete($response->pdf_path); // legacy cleanup
         $response->delete();
 
         return redirect()->route('respondent.responses.index');

@@ -58,7 +58,7 @@ class ApplicantCaseController extends Controller
      */
     public function create()
     {
-        $types  = DB::table('case_types')->orderBy('name')->get(['id', 'name']);
+        $types  = DB::table('case_types')->orderBy('name')->get(['id', 'name', 'prefix']);
         $activeTerms = TermsAndCondition::published()->orderByDesc('published_at')->first();
 
         return view('applicant.cases.create', compact('types', 'activeTerms'));
@@ -68,8 +68,10 @@ class ApplicantCaseController extends Controller
     {
         // Build a short prefix from the case type name (no separate column required)
         $caseType = \App\Models\CaseType::findOrFail($caseTypeId);
-        $prefixBase = $caseType->name ?? 'CASE';
-        $prifix = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $prefixBase), 0, 4)) ?: 'CASE';
+        $prefixBase = (string) ($caseType->prifix ?? $caseType->prefix ?? $caseType->name ?? 'CASE');
+        // Keep letters/numbers from any locale, strip spaces/punctuation, take first 4 chars
+        $clean = preg_replace('/[\s\p{P}]+/u', '', $prefixBase);
+        $prifix = mb_strtoupper(mb_substr($clean ?: 'CASE', 0, 4)) ?: 'CASE';
 
         $year = now()->format('y'); // YY format
 
@@ -232,7 +234,7 @@ class ApplicantCaseController extends Controller
                     if (!$file) continue;
 
                     /** @var UploadedFile $file */
-                    $stored = $file->store('evidences', 'public');
+                    $stored = $file->store('evidences', 'private');
 
                     $insert = [
                         'case_id'    => $caseId,
@@ -494,7 +496,7 @@ class ApplicantCaseController extends Controller
                 ->with('error', 'You can only edit pending cases.');
         }
 
-        $types  = DB::table('case_types')->orderBy('name')->get(['id', 'name']);
+        $types  = DB::table('case_types')->orderBy('name')->get(['id', 'name', 'prefix']);
 
 
         $docs = DB::table('case_evidences')
@@ -663,7 +665,7 @@ class ApplicantCaseController extends Controller
                     if (!$file) continue;
 
                     /** @var \Illuminate\Http\UploadedFile $file */
-                    $stored = $file->store('evidences', 'public');
+                    $stored = $file->store('evidences', 'private');
 
                     $insert = [
                         'case_id'    => $id,
@@ -762,7 +764,7 @@ class ApplicantCaseController extends Controller
 
         $filePath = $ev->file_path ?? $ev->path ?? null;
         if (!empty($filePath)) {
-            Storage::disk('public')->delete($filePath);
+            $this->deleteStoredFile($filePath);
         }
 
         DB::table('case_evidences')->where('id', $evidenceId)->delete();
@@ -818,7 +820,7 @@ class ApplicantCaseController extends Controller
 
         /** @var UploadedFile $file */
         $file = $data['file'];
-        $path = $file->store('case_files', 'public');
+        $path = $file->store('case_files', 'private');
 
         DB::table('case_files')->insert([
             'case_id'                   => $id,
@@ -851,7 +853,7 @@ class ApplicantCaseController extends Controller
 
         abort_unless((int) $file->uploaded_by_applicant_id === (int) $applicantId, 403);
 
-        Storage::disk('public')->delete($file->path);
+        $this->deleteStoredFile($file->path);
         DB::table('case_files')->where('id', $fileId)->delete();
 
         $this->logCaseAudit($id, 'file_deleted', [
@@ -1203,6 +1205,20 @@ class ApplicantCaseController extends Controller
             ]);
         } catch (\Throwable $e) {
             Log::warning('Failed to log applicant case audit', ['case_id' => $caseId, 'action' => $action, 'error' => $e->getMessage()]);
+        }
+    }
+
+    private function deleteStoredFile(string $path): void
+    {
+        $private = Storage::disk('private');
+        if ($private->exists($path)) {
+            $private->delete($path);
+            return;
+        }
+
+        $public = Storage::disk('public');
+        if ($public->exists($path)) {
+            $public->delete($path);
         }
     }
 }

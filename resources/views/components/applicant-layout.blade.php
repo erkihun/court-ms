@@ -479,7 +479,7 @@ $respondentNotifList = collect();
                     @endif
 
 
-                    @if(!$actingRespondent)
+                    @if(!$actingRespondent && auth('applicant')->check())
                     {{-- Notifications (desktop) --}}
                     <li x-data="{ open:false, tab:'notifications', messageModal:false }" class="relative">
                         <div class="flex items-center gap-2">
@@ -857,6 +857,16 @@ $respondentNotifList = collect();
                             {{ __('app.login') }}
                         </a>
                     </li>
+                    <li class="flex items-center gap-2">
+                        <a href="{{ route('language.switch', ['locale' => 'en', 'return' => url()->current()]) }}"
+                            class="px-3 py-1 rounded-full border text-xs {{ app()->getLocale() === 'en' ? 'border-blue-200 bg-white text-blue-700' : 'border-white/60 text-white hover:bg-blue-700' }}">
+                            EN
+                        </a>
+                        <a href="{{ route('language.switch', ['locale' => 'am', 'return' => url()->current()]) }}"
+                            class="px-3 py-1 rounded-full border text-xs {{ app()->getLocale() === 'am' ? 'border-blue-200 bg-white text-blue-700' : 'border-white/60 text-white hover:bg-blue-700' }}">
+                            አማ
+                        </a>
+                    </li>
                     @endif
                 </ul>
 
@@ -975,6 +985,7 @@ $respondentNotifList = collect();
                         </li>
 
                         {{-- Mobile: notifications (inline list) --}}
+                        @if(!$actingRespondent && auth('applicant')->check())
                         <li x-data="{ bell:false }" class="relative">
                             <button @click="bell=!bell"
                                 class="flex w-full items-center justify-between px-4 py-2 hover:bg-slate-50">
@@ -999,6 +1010,7 @@ $respondentNotifList = collect();
                                 </div>
                             </div>
                         </li>
+                        @endif
 
                         <li class="border-t border-slate-100 mt-2 pt-2 space-y-1">
                             <div class="px-4 text-[11px] font-semibold uppercase tracking-wide text-slate-500">

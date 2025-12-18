@@ -76,6 +76,6 @@ return [
     | value will be used and the user will be forced to change it at first login.
     |
     */
-    'default_user_password' => env('DEFAULT_USER_PASSWORD', 'ChangeMe123!'),
+    'default_user_password' => env('DEFAULT_USER_PASSWORD'),
 
 ];

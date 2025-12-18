@@ -175,7 +175,7 @@ class AppealController extends Controller
         ]);
 
         $file = $request->file('file');
-        $path = $file->store('appeals', 'public');
+        $path = $file->store('appeals', 'private');
 
         DB::table('appeal_documents')->insert([
             'appeal_id'  => $appealId,
@@ -200,7 +200,8 @@ class AppealController extends Controller
         abort_if(!$doc, 404);
 
         if (!empty($doc->path)) {
-            Storage::disk('public')->delete($doc->path);
+            Storage::disk('private')->delete($doc->path);
+            Storage::disk('public')->delete($doc->path); // legacy cleanup
         }
 
         DB::table('appeal_documents')->where('id', $docId)->delete();

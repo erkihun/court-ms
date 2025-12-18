@@ -17,7 +17,7 @@ class CaseFileController extends Controller
         ]);
 
         // Store file
-        $path = $request->file('file')->store('case-files', 'public');
+        $path = $request->file('file')->store('case-files', 'private');
 
         $case->files()->create([
             'label' => $validated['label'] ?? null,

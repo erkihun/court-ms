@@ -84,7 +84,7 @@
                         </div>
                     </div>
                     <div class="flex gap-3">
-                        <a href="{{ asset('storage/'.$d->path) }}" target="_blank" class="text-blue-600 text-sm hover:text-blue-800">View</a>
+                        <a href="{{ route('appeals.docs.download', [$appeal->id, $d->id]) }}" class="text-blue-600 text-sm hover:text-blue-800">View</a>
                         @perm('appeals.edit')
                         <form method="POST" action="{{ route('appeals.docs.delete', [$appeal->id, $d->id]) }}"
                             onsubmit="return confirm('Delete this document?')">

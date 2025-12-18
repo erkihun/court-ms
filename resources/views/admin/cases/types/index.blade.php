@@ -46,6 +46,7 @@
             <thead class="bg-gray-50">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Name') }}</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Prefix') }}</th>
                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Cases Using') }}</th>
                     <th class="px-6 py-3"></th> {{-- Actions column header --}}
                 </tr>
@@ -55,6 +56,7 @@
                 {{-- Added hover effect for rows --}}
                 <tr class="hover:bg-gray-50 transition duration-100">
                     <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{{ $t->name }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 font-mono">{{ $t->prefix ?? '—' }}</td>
                     {{-- Cases Using count as a chip for clarity --}}
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-blue-50 text-blue-800">

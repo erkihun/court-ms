@@ -170,7 +170,7 @@
                         @foreach($evidenceDocs as $d)
                         @php
                             $docTitle = $d->title ?? basename($d->file_path);
-                            $docUrl = $d->file_path ? asset('storage/'.$d->file_path) : null;
+                            $docUrl = $d->file_path ? route('applicant.cases.evidences.download', ['id' => $case->id, 'evidenceId' => $d->id]) : null;
                         @endphp
                         <li class="flex items-center justify-between rounded-md border border-slate-200 p-2">
                             <span class="font-medium text-slate-900">{{ $docTitle }}</span>

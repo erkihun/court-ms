@@ -74,6 +74,23 @@ $bannerPath = $settings?->banner_path ?? null;
         <form method="POST" action="{{ route('applicant.register.submit') }}" class="space-y-6">
             @csrf
 
+            {{-- Lawyer flag --}}
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="flex items-center gap-4">
+                    <span class="text-sm font-medium text-slate-700">Are you a lawyer?</span>
+                    <label class="inline-flex items-center gap-2 text-sm text-slate-700">
+                        <input type="radio" name="is_lawyer" value="1" class="h-4 w-4 text-blue-600 border-slate-300 focus:ring-blue-500"
+                            @checked(old('is_lawyer') === '1')>
+                        Yes
+                    </label>
+                    <label class="inline-flex items-center gap-2 text-sm text-slate-700">
+                        <input type="radio" name="is_lawyer" value="0" class="h-4 w-4 text-blue-600 border-slate-300 focus:ring-blue-500"
+                            @checked(old('is_lawyer', '0') === '0')>
+                        No
+                    </label>
+                </div>
+            </div>
+
             {{-- Names --}}
             <div class="grid md:grid-cols-3 gap-4">
                 <div>

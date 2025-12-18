@@ -39,6 +39,7 @@ class ApplicantAuthController extends Controller
             'phone'              => ['required', 'string', 'max:30', 'unique:applicants,phone'],
             'email'              => ['required', 'email', 'max:255', 'unique:applicants,email'],
             'address'            => ['required', 'string', 'max:255'],
+            'is_lawyer'          => ['required', 'boolean'],
 
             // normalized (digits-only) National ID
             'national_id_number' => ['required', 'string', 'bail', 'regex:/^\d{16}$/', 'unique:applicants,national_id_number'],
@@ -52,6 +53,7 @@ class ApplicantAuthController extends Controller
             ...$data,
             'password' => Hash::make($data['password']),
             'is_active' => true,
+            'is_lawyer' => (bool) $data['is_lawyer'],
         ]);
 
         Auth::guard('applicant')->login($applicant);
