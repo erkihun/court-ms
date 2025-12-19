@@ -306,6 +306,8 @@ class CaseController extends Controller
             ->leftJoin('case_types as ct', 'ct.id', '=', 'c.case_type_id')
 
             ->leftJoin('users as ass', 'ass.id', '=', 'c.assigned_user_id')
+            ->leftJoin('team_user as tu', 'tu.user_id', '=', 'ass.id')
+            ->leftJoin('teams as ass_team', 'ass_team.id', '=', 'tu.team_id')
             ->leftJoin('applicants as ap', 'ap.id', '=', 'c.applicant_id')
             ->select(
                 'c.*',
@@ -313,6 +315,7 @@ class CaseController extends Controller
 
                 'ass.name as assignee_name',
                 'ass.email as assignee_email',
+                'ass_team.name as assignee_team_name',
                 DB::raw("CONCAT(COALESCE(ap.first_name,''),' ',COALESCE(ap.last_name,'')) as applicant_name"),
                 'ap.email as applicant_email'
             )

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Respondent;
 use App\Models\RespondentResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -47,19 +48,30 @@ class SecureFileController extends Controller
         );
     }
 
-    public function respondentResponse(RespondentResponse $response): StreamedResponse
+    public function respondentResponse(Request $request, RespondentResponse $response): StreamedResponse
     {
+        $inline = $request->boolean('inline');
+
         if ($this->staffCan('cases.view')) {
-            return $this->downloadFile($response->pdf_path, basename((string) $response->pdf_path));
+            return $this->downloadFile($response->pdf_path, basename((string) $response->pdf_path), null, $inline);
         }
 
         $applicant = auth('applicant')->user();
         abort_unless($applicant, 403);
 
+        $ownsCase = DB::table('court_cases')
+            ->where('case_number', $response->case_number)
+            ->where('applicant_id', $applicant->id)
+            ->exists();
+
+        if ($ownsCase) {
+            return $this->downloadFile($response->pdf_path, basename((string) $response->pdf_path), null, $inline);
+        }
+
         $respondentId = Respondent::where('email', $applicant->email)->value('id');
         abort_if(!$respondentId || (int) $response->respondent_id !== (int) $respondentId, 403);
 
-        return $this->downloadFile($response->pdf_path, basename((string) $response->pdf_path));
+        return $this->downloadFile($response->pdf_path, basename((string) $response->pdf_path), null, $inline);
     }
 
     public function appealDocument(int $appealId, int $docId): StreamedResponse
@@ -160,7 +172,7 @@ class SecureFileController extends Controller
         return false;
     }
 
-    private function downloadFile(?string $path, ?string $name = null, ?string $mime = null): StreamedResponse
+    private function downloadFile(?string $path, ?string $name = null, ?string $mime = null, bool $inline = false): StreamedResponse
     {
         abort_if(empty($path), 404, 'File missing.');
 
@@ -175,6 +187,10 @@ class SecureFileController extends Controller
         $headers = [
             'Content-Type' => $mime ?: $disk->mimeType($path) ?: 'application/octet-stream',
         ];
+
+        if ($inline) {
+            return $disk->response($path, $downloadName, $headers);
+        }
 
         return $disk->download($path, $downloadName, $headers);
     }

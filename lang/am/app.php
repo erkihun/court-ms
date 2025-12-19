@@ -21,6 +21,7 @@ return [
     'Appeals' => 'አቤቱታዎች',
     'Applicant' => 'አመልካቾች',
     'Cases' => 'መዝገቦች',
+    'Records' => 'Records',
 
     'Case Types' => 'የክስ አይነቶች',
     'Notifications' => 'ማስታወቂያዎች',
@@ -32,6 +33,7 @@ return [
     'Letter Templates' => 'የደብዳቤ ቴምፕሌቶች',
     'Compose Letter' => 'ደብዳቤ ይጻፉ',
     'Letters' => 'ደብዳቤዎች',
+    'Responses' => 'መልስዎች',
     'Reports' => 'Reports',
 
     'User Control' => 'የተጠቃሚ መቆጣጠሪያ',
@@ -86,9 +88,9 @@ return [
     'login' => 'ይግቡ',
     'menu' => 'ማውጫ',
     'language' => 'ቋንቋ',
-    'switch_to_respondent' => 'እንደ መልስ ሰጪ ቀይር',
+    'switch_to_respondent' => 'እንደ መልስ ሰጪ ግባ',
     'switch_to_respondent_success' => 'ወደ መልስ ሰጪ ተግባር ተቀይሯል።',
-    'switch_to_applicant' => 'እንደ አመልካች ቀይር',
+    'switch_to_applicant' => 'እንደ አመልካች ግባ',
     'switch_to_applicant_success' => 'ወደ አመልካች ተግባር ተቀይሯል።',
     'all_rights_reserved' => 'ሁሉም መብቶች የተጠበቁ ናቸው',
     'Language updated' => 'ቋንቋ ተቀይሯል።',

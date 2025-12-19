@@ -134,7 +134,7 @@ return [
         /**
          * Enable remote file access
          */
-        'enable_remote' => false,
+        'enable_remote' => true,
 
         /**
          * List of allowed remote hosts (if enable_remote = true)

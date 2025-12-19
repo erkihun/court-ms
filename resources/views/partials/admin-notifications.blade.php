@@ -57,7 +57,17 @@ $q->from('admin_notification_reads as r')
 $respondentViews = \DB::table('respondent_case_views as v')
 ->join('court_cases as c','c.id','=','v.case_id')
 ->join('respondents as r','r.id','=','v.respondent_id')
-->select('v.id','v.viewed_at','v.case_id','c.case_number', \DB::raw("TRIM(CONCAT_WS(' ', r.first_name, r.middle_name, r.last_name)) as respondent_name"))
+->select(
+    'v.id',
+    'v.viewed_at',
+    'v.case_id',
+    'c.case_number',
+    \DB::raw(
+        (\DB::getDriverName() === 'sqlite')
+            ? "TRIM(COALESCE(r.first_name,'') || ' ' || COALESCE(r.middle_name,'') || ' ' || COALESCE(r.last_name,'')) as respondent_name"
+            : "TRIM(CONCAT_WS(' ', r.first_name, r.middle_name, r.last_name)) as respondent_name"
+    )
+)
 ->where(function($q) use ($uid){
 $q->where('c.assigned_user_id',$uid)
 ->orWhereNull('c.assigned_user_id');

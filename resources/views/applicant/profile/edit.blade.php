@@ -16,7 +16,7 @@
                     <h1 class="text-xl md:text-2xl font-semibold text-slate-900">
                         {{ __('auth.my_profile') }}
                     </h1>
-                    <p class="text-xs md:text-sm text-slate-500">
+                    <p class="text-xs md: text-slate-500">
                         {{ __('auth.profile_subtitle') ?? __('auth.profile') }}
                     </p>
                 </div>
@@ -30,13 +30,13 @@
 
         {{-- Flash messages --}}
         @if(session('success'))
-        <div class="mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+        <div class="mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3  text-emerald-800">
             {{ session('success') }}
         </div>
         @endif
 
         @if ($errors->any())
-        <div class="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-xs md:text-sm text-red-800">
+        <div class="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-xs md: text-red-800">
             <div class="font-semibold mb-1">{{ __('auth.please_fix_errors') }}</div>
             <ul class="list-disc ml-5 space-y-0.5">
                 @foreach ($errors->all() as $e)
@@ -52,7 +52,7 @@
             {{-- Personal information --}}
             <section>
                 <div class="flex items-center gap-2 mb-3">
-                    <h2 class="text-sm font-semibold text-slate-800">
+                    <h2 class=" font-semibold text-slate-800">
                         {{ __('auth.profile') }}
                     </h2>
                     <span class="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700">
@@ -69,7 +69,7 @@
                             value="{{ old('first_name', $user->first_name) }}"
                             autocomplete="given-name"
                             @error('first_name') aria-invalid="true" @enderror
-                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
+                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
                                       focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                         @error('first_name')
                         <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
@@ -84,7 +84,7 @@
                             value="{{ old('middle_name', $user->middle_name) }}"
                             autocomplete="additional-name"
                             @error('middle_name') aria-invalid="true" @enderror
-                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
+                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
                                       focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                         @error('middle_name')
                         <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
@@ -99,7 +99,7 @@
                             value="{{ old('last_name', $user->last_name) }}"
                             autocomplete="family-name"
                             @error('last_name') aria-invalid="true" @enderror
-                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
+                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
                                       focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                         @error('last_name')
                         <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
@@ -113,7 +113,7 @@
                             {{ __('auth.gender') }}
                         </label>
                         <select id="gender" name="gender"
-                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900 bg-white
+                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900 bg-white
                                        focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                             <option value="">— {{ __('auth.select_option') }} —</option>
                             <option value="male" @selected(old('gender', $user->gender)==='male')>{{ __('auth.male') }}</option>
@@ -132,7 +132,7 @@
                             value="{{ old('phone', $user->phone) }}"
                             autocomplete="tel" inputmode="tel"
                             @error('phone') aria-invalid="true" @enderror
-                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
+                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
                                       focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                         @error('phone')
                         <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
@@ -152,7 +152,7 @@
                             title="{{ __('auth.national_id_format') }}"
                             placeholder="{{ __('auth.national_id_placeholder') }}"
                             @error('national_id_number') aria-invalid="true" @enderror
-                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
+                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
                                       focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                         @error('national_id_number')
                         <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
@@ -172,7 +172,7 @@
                             value="{{ old('email', $user->email) }}"
                             autocomplete="email"
                             @error('email') aria-invalid="true" @enderror
-                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
+                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
                                       focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                         @error('email')
                         <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
@@ -187,7 +187,7 @@
                             value="{{ old('address', $user->address) }}"
                             autocomplete="street-address"
                             @error('address') aria-invalid="true" @enderror
-                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
+                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
                                       focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                         @error('address')
                         <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
@@ -202,7 +202,7 @@
                             value="{{ old('position', $user->position) }}"
                             autocomplete="organization-title"
                             @error('position') aria-invalid="true" @enderror
-                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
+                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
                                       focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                         @error('position')
                         <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
@@ -217,7 +217,7 @@
                             value="{{ old('organization_name', $user->organization_name) }}"
                             autocomplete="organization"
                             @error('organization_name') aria-invalid="true" @enderror
-                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
+                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
                                       focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                         @error('organization_name')
                         <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
@@ -239,7 +239,7 @@
                                     d="M8 11V8a4 4 0 1 1 8 0v3m-9 0h10a1 1 0 0 1 1 1v6a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-6a1 1 0 0 1 1-1z" />
                             </svg>
                         </div>
-                        <h2 class="text-sm font-semibold text-slate-800">
+                        <h2 class=" font-semibold text-slate-800">
                             {{ __('auth.change_password') }}
                         </h2>
                     </div>
@@ -256,7 +256,7 @@
                         <input id="current_password" type="password" name="current_password"
                             autocomplete="current-password"
                             @error('current_password') aria-invalid="true" @enderror
-                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
+                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
                                       focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                         @error('current_password')
                         <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
@@ -270,7 +270,7 @@
                         <input id="password" type="password" name="password"
                             autocomplete="new-password"
                             @error('password') aria-invalid="true" @enderror
-                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
+                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
                                       focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                         @error('password')
                         <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
@@ -283,7 +283,7 @@
                         </label>
                         <input id="password_confirmation" type="password" name="password_confirmation"
                             autocomplete="new-password"
-                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
+                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
                                       focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                     </div>
                 </div>
@@ -292,12 +292,12 @@
             {{-- Actions --}}
             <div class="pt-2 flex flex-wrap items-center gap-2">
                 <button
-                    class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-orange-500 text-white text-sm font-semibold
+                    class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-orange-500 text-white  font-semibold
                            hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-1">
                     {{ __('auth.save_changes') }}
                 </button>
                 <a href="{{ route('applicant.dashboard') }}"
-                    class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-slate-100 text-slate-700 text-sm font-medium
+                    class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-slate-100 text-slate-700  font-medium
                           hover:bg-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-400">
                     {{ __('auth.back') }}
                 </a>

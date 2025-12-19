@@ -16,6 +16,7 @@ return [
     // Modules / Nav
     'Appeals' => 'Appeals',
     'Cases' => 'Cases',
+    'Records' => 'Records',
     'Applicant' => 'Applicant',
     'Case Types' => 'Case Types',
     'Notifications' => 'Notifications',
@@ -27,6 +28,7 @@ return [
     'Letter Templates' => 'Letter Templates',
     'Compose Letter' => 'Compose Letter',
     'Letters' => 'Letters',
+    'Responses' => 'Responses',
     'Reports' => 'Reports',
     'User Control' => 'User Control',
     'Terms' => 'Terms & Conditions',

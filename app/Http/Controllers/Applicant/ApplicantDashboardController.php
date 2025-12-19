@@ -61,10 +61,13 @@ class ApplicantDashboardController extends Controller
                 ->limit(5)
                 ->get();
 
-            $caseResponses = DB::table('respondent_responses')
-                ->select('id', 'title', 'case_number', 'created_at')
-                ->whereIn('case_number', $caseNumbers)
-                ->orderByDesc('created_at')
+            $caseResponses = DB::table('respondent_responses as rr')
+                ->leftJoin('court_cases as cc', function ($join) {
+                    $join->on('cc.case_number', '=', 'rr.case_number');
+                })
+                ->select('rr.id', 'rr.title', 'rr.case_number', 'rr.created_at', 'cc.id as case_id')
+                ->whereIn('rr.case_number', $caseNumbers)
+                ->orderByDesc('rr.created_at')
                 ->limit(5)
                 ->get();
 

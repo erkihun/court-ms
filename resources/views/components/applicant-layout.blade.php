@@ -274,10 +274,10 @@ $respondentNotifList = collect();
                         $applicantDisplayName = $applicantUser?->full_name ?? $applicantUser?->name ?? __('app.profile');
                         }
 
-                        $navBase = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium transition-colors';
+                        $navBase = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md font-medium transition-colors';
                         $navIdle = 'text-blue-50 hover:bg-blue-700 hover:text-white';
-                        $navActive = 'bg-white text-blue-800';
-                        $navDangerActive = 'bg-orange-500 text-white';
+                        $navActive = 'bg-white text-blue-800 rounded-md';
+                        $navDangerActive = 'bg-orange-500 text-white rounded-md';
                         @endphp
 
                         @if($actingRespondent)
@@ -349,13 +349,13 @@ $respondentNotifList = collect();
                     {{-- Notifications (respondent) --}}
                     <li x-data="{ open: false }" class="relative">
                         <button @click="open = !open"
-                            class="relative inline-flex items-center gap-2 px-3 py-2 rounded-full border border-blue-700 bg-blue-700/80 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-800 focus:ring-white">
+                            class="relative inline-flex items-center gap-2 px-3 py-2 rounded-md border border-blue-700 bg-blue-700/80 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-800 focus:ring-white">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
                                     d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 1 1-6 0h6z" />
                             </svg>
                             @if(($respondentNotifCount ?? 0) > 0)
-                            <span class="inline-flex items-center justify-center rounded-full bg-orange-500 px-2 py-0.5 text-[11px] font-semibold text-white">
+                            <span class="inline-flex items-center justify-center rounded-md bg-orange-500 px-2 py-0.5 text-[11px] font-semibold text-white">
                                 {{ $respondentNotifCount }}
                             </span>
                             @endif
@@ -449,7 +449,7 @@ $respondentNotifList = collect();
                     {{-- Language Switcher (applicant) --}}
                     <li x-data="{ open: false }" class="relative">
                         <button @click="open = !open"
-                            class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-blue-600 bg-blue-700  font-medium hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-800 focus:ring-orange-400">
+                            class="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-blue-600 bg-blue-700  font-medium hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-800 focus:ring-orange-400">
                             <span class="fi fi-{{ app()->getLocale() == 'am' ? 'et' : 'us' }}"></span>
                             <span>{{ __('app.Language') }}</span>
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none"
@@ -485,7 +485,7 @@ $respondentNotifList = collect();
                         <div class="flex items-center gap-2">
                             <button type="button"
                                 @click="tab = 'messages'; open = true; if ($messageNotificationCount > 0) { messageModal = true }"
-                                class="relative inline-flex items-center gap-1.5 rounded-full border border-blue-500 px-3 py-1.5 bg-blue-700 text-blue-50 font-medium hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-800 focus:ring-orange-400"
+                                class="relative inline-flex items-center gap-1.5 rounded-md border border-blue-500 px-3 py-1.5 bg-blue-700 text-blue-50 font-medium hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-800 focus:ring-orange-400"
                                 :class="tab === 'messages' ? 'bg-white text-blue-800' : ''"
                                 aria-label="{{ __('cases.messages') }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none"
@@ -502,7 +502,7 @@ $respondentNotifList = collect();
                             </button>
                             <button type="button"
                                 @click="if (tab === 'notifications') { open = !open } else { tab = 'notifications'; open = true }"
-                                class="relative inline-flex items-center gap-1.5 rounded-full border border-blue-500 px-3 py-1.5 bg-blue-700 text-blue-50 font-medium hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-800 focus:ring-orange-400"
+                                    class="relative inline-flex items-center gap-1.5 rounded-md border border-blue-500 px-3 py-1.5 bg-blue-700 text-blue-50 font-medium hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-800 focus:ring-orange-400"
                                 :class="tab === 'notifications' ? 'bg-white text-blue-800' : ''"
                                 aria-label="{{ __('app.Notifications') }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none"

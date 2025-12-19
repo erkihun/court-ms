@@ -8,7 +8,7 @@
         </div>
 
         <a href="{{ route('applicant.cases.create') }}"
-            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md bg-orange-500 text-white text-sm font-medium
+            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md bg-orange-500 text-white  font-medium
                   hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-orange-400 shadow-sm">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
                 viewBox="0 0 24 24" stroke="currentColor">
@@ -20,7 +20,7 @@
     </div>
 
     <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table class="min-w-full text-sm">
+        <table class="min-w-full ">
             <thead class="bg-slate-50">
                 <tr class="border-b border-slate-200">
                     <th class="p-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
@@ -150,7 +150,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" class="p-6 text-center text-slate-500 text-sm">
+                    <td colspan="7" class="p-6 text-center text-slate-500 ">
                         {{ __('cases.table.no_cases_yet') }}
                     </td>
                 </tr>

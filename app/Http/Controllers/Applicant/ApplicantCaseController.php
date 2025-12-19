@@ -344,6 +344,11 @@ class ApplicantCaseController extends Controller
             ->orderByDesc('l.created_at')
             ->get();
 
+        $respondentResponses = DB::table('respondent_responses')
+            ->where('case_number', $case->case_number)
+            ->orderByDesc('created_at')
+            ->get();
+
         $files = DB::table('case_files')
             ->where('case_id', $id)
             ->orderByDesc('created_at')
@@ -468,6 +473,7 @@ class ApplicantCaseController extends Controller
             'case',
             'timeline',
             'letters',
+            'respondentResponses',
             'files',
             'msgs',
             'hearings',
@@ -475,6 +481,62 @@ class ApplicantCaseController extends Controller
             'witnesses',
             'audits'
         ));
+    }
+
+    public function showRespondentResponse(int $caseId, int $responseId)
+    {
+        $aid = auth('applicant')->id();
+
+        $case = $this->findApplicantCaseWithType($caseId, $aid);
+
+        abort_if(!$case, 404);
+
+        $response = DB::table('respondent_responses as rr')
+            ->leftJoin('respondents as r', 'r.id', '=', 'rr.respondent_id')
+            ->select(
+                'rr.*',
+                'r.first_name',
+                'r.middle_name',
+                'r.last_name',
+                'r.email as respondent_email',
+                'r.phone as respondent_phone',
+                'r.organization_name as respondent_org'
+            )
+            ->where('rr.id', $responseId)
+            ->where('rr.case_number', $case->case_number)
+            ->first();
+
+        abort_if(!$response, 404);
+
+        return view('applicant.cases.respondent-response', compact('case', 'response'));
+    }
+
+    public function replyRespondentResponse(int $caseId, int $responseId)
+    {
+        $aid = auth('applicant')->id();
+
+        $case = $this->findApplicantCaseWithType($caseId, $aid);
+
+        abort_if(!$case, 404);
+
+        $response = DB::table('respondent_responses as rr')
+            ->leftJoin('respondents as r', 'r.id', '=', 'rr.respondent_id')
+            ->select(
+                'rr.*',
+                'r.first_name',
+                'r.middle_name',
+                'r.last_name',
+                'r.email as respondent_email',
+                'r.phone as respondent_phone',
+                'r.organization_name as respondent_org'
+            )
+            ->where('rr.id', $responseId)
+            ->where('rr.case_number', $case->case_number)
+            ->first();
+
+        abort_if(!$response, 404);
+
+        return view('applicant.responses.create', compact('case', 'response'));
     }
 
     /**
@@ -1010,7 +1072,8 @@ class ApplicantCaseController extends Controller
             '',
         ]);
 
-        $filename = 'hearing-' . ($case->case_number ?? 'case') . '-' . $hearing->id . '.ics';
+        $safeCaseNumber = $this->sanitizeFilenamePart($case->case_number, 'case');
+        $filename = 'hearing-' . $safeCaseNumber . '-' . $hearing->id . '.ics';
 
         return response($ics, 200, [
             'Content-Type'              => 'text/calendar; charset=utf-8',
@@ -1062,7 +1125,8 @@ class ApplicantCaseController extends Controller
             'hearings'     => $hearings,
         ])->setPaper('a4');
 
-        $filename = 'receipt-' . ($case->case_number ?? 'case') . '.pdf';
+        $safeCaseNumber = $this->sanitizeFilenamePart($case->case_number, 'case');
+        $filename = 'receipt-' . $safeCaseNumber . '.pdf';
         return $pdf->download($filename);
     }
 
@@ -1115,7 +1179,8 @@ class ApplicantCaseController extends Controller
         }
 
         try {
-            $filename = 'receipt-' . ($case->case_number ?? 'case') . '.pdf';
+            $safeCaseNumber = $this->sanitizeFilenamePart($case->case_number, 'case');
+            $filename = 'receipt-' . $safeCaseNumber . '.pdf';
             Mail::to($email)->send(new ApplicantReceiptMail($case, $pdf->output(), $filename));
             Log::info('Applicant receipt PDF sent', ['case_id' => $id, 'to' => $email]);
         } catch (\Throwable $e) {
@@ -1145,6 +1210,18 @@ class ApplicantCaseController extends Controller
             $s = htmlspecialchars_decode($s, ENT_QUOTES);
         }
         return Purifier::clean($s, 'cases');
+    }
+
+    /**
+     * Ensure dynamic filename parts avoid directory separators rejected by Symfony.
+     */
+    private function sanitizeFilenamePart(?string $value, string $fallback = 'file'): string
+    {
+        $clean = trim((string) ($value ?? ''));
+        $clean = str_replace(['/', '\\'], '-', $clean);
+        $clean = trim($clean, "- \t\n\r\0\x0B");
+
+        return $clean !== '' ? $clean : $fallback;
     }
 
     /**
@@ -1187,6 +1264,16 @@ class ApplicantCaseController extends Controller
                 'error'   => $e->getMessage(),
             ]);
         }
+    }
+
+    protected function findApplicantCaseWithType(int $caseId, int $applicantId)
+    {
+        return DB::table('court_cases as cc')
+            ->leftJoin('case_types as ct', 'ct.id', '=', 'cc.case_type_id')
+            ->select('cc.*', 'ct.name as case_type_name')
+            ->where('cc.id', $caseId)
+            ->where('cc.applicant_id', $applicantId)
+            ->first();
     }
 
     /**

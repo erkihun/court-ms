@@ -65,6 +65,7 @@
 
     $hasCases = Route::has('cases.index');
     $hasApplicants = Route::has('applicants.index');
+    $hasRecordes = Route::has('recordes.index');
     $hasCaseTypes = Route::has('case-types.index');
     $hasDecisions = Route::has('decisions.index');
     $hasUsers = Route::has('users.index');
@@ -105,13 +106,13 @@
     $canViewReports = $hasReports && auth()->user()?->hasPermission('reports.view');
     @endphp
 
-    <aside
+        <aside
         {{-- UPDATED: Deep Blue/Navy Sidebar BG (Primary Brand Color for Authority) --}}
-        class="fixed md:static z-40 inset-y-0 left-0
+        class="fixed md:sticky z-40 inset-y-0 left-0
                transform transition-transform duration-300 ease-out
                -translate-x-full md:translate-x-0
                flex flex-col bg-blue-950 border-r border-blue-800
-               w-72 md:[transition-property:width] md:duration-300 md:ease-in-out transition-size"
+               w-72 md:h-screen md:overflow-y-auto md:[transition-property:width] md:duration-300 md:ease-in-out transition-size"
         :class="{
             'translate-x-0': sidebar,
             'md:w-20': compact,
@@ -273,6 +274,31 @@
                     x-transition:leave-start="opacity-100 translate-x-0"
                     x-transition:leave-end="opacity-0 -translate-x-1">
                     {{ __('app.Cases') }}
+                </span>
+            </a>
+            @endif
+
+            {{-- Records --}}
+            @if($hasRecordes && auth()->user()?->hasPermission('cases.view'))
+            <a href="{{ route('recordes.index') }}"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
+                {{ request()->routeIs('recordes.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
+                <div class="grid place-items-center w-6" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 16h8M8 12h8m-7-8h6a2 2 0 012 2v12l-4-2-4 2V6a2 2 0 012-2z" />
+                    </svg>
+                </div>
+                <span class="truncate origin-left"
+                    x-show="!compact"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 -translate-x-1"
+                    x-transition:enter-end="opacity-100 translate-x-0"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100 translate-x-0"
+                    x-transition:leave-end="opacity-0 -translate-x-1">
+                    {{ __('app.Records') }}
                 </span>
             </a>
             @endif
@@ -771,7 +797,11 @@
             'v.viewed_at',
             'v.case_id',
             'c.case_number',
-            \DB::raw("TRIM(CONCAT_WS(' ', r.first_name, r.middle_name, r.last_name)) as respondent_name")
+            \DB::raw(
+                (\DB::getDriverName() === 'sqlite')
+                    ? "TRIM(COALESCE(r.first_name,'') || ' ' || COALESCE(r.middle_name,'') || ' ' || COALESCE(r.last_name,'')) as respondent_name"
+                    : "TRIM(CONCAT_WS(' ', r.first_name, r.middle_name, r.last_name)) as respondent_name"
+            )
             )
             ->where(function($q) use ($uid) {
             $q->where('c.assigned_user_id', $uid)

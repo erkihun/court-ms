@@ -449,6 +449,7 @@
                         </div>
                     </div>
 
+
                     <span class="px-3 py-1.5 rounded-full text-xs font-semibold capitalize {{ $statusChip($currentStatus) }}">
                         {{ $currentStatus }}
                     </span>
@@ -461,18 +462,18 @@
                 <div class="flex flex-wrap items-center gap-2">
                     @if(in_array($reviewStatus, ['awaiting_review','returned']) && $canReview)
                     <div class="flex flex-wrap gap-2">
-                        <button type="button" class="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-sm font-medium text-white shadow-sm hover:shadow transition-all duration-200"
+                        <button type="button" class="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700  font-medium text-white shadow-sm hover:shadow transition-all duration-200"
                             onclick="submitReviewDecision('accept')">Accept</button>
-                        <button type="button" class="px-4 py-2 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-sm font-medium text-white shadow-sm hover:shadow transition-all duration-200"
+                        <button type="button" class="px-4 py-2 rounded-lg bg-yellow-600 hover:bg-yellow-700  font-medium text-white shadow-sm hover:shadow transition-all duration-200"
                             onclick="openReviewModal('return')">Return</button>
-                        <button type="button" class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-sm font-medium text-white shadow-sm hover:shadow transition-all duration-200"
+                        <button type="button" class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700  font-medium text-white shadow-sm hover:shadow transition-all duration-200"
                             onclick="openReviewModal('reject')">Reject</button>
                     </div>
                     @endif
 
                     @if(!$caseLocked && $canAssign)
                     <a href="{{ route('cases.assign.form', $case->id) }}"
-                        class="px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-sm font-medium text-white transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
+                        class="px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700  font-medium text-white transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
@@ -482,7 +483,7 @@
 
                     @if(!$caseLocked && $canManageBench)
                     <a href="{{ route('bench-notes.index', ['case_id' => $case->id]) }}"
-                        class="px-4 py-2.5 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-sm font-medium text-white transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
+                        class="px-4 py-2.5 rounded-lg bg-yellow-500 hover:bg-yellow-600  font-medium text-white transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4M7 16h8M11 4h2a2 2 0 012 2v14h-4V6a2 2 0 012-2h2" />
                         </svg>
@@ -493,7 +494,7 @@
                     @if(!$caseLocked && $canWriteLetter)
                     <a href="#letters-compose"
                         @click.prevent="openSection('letters-compose')"
-                        class="px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-sm font-medium text-white transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
+                        class="px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700  font-medium text-white transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20h9M12 4h9m-9 8h9M5 6h.01M5 12h.01M5 18h.01" />
                         </svg>
@@ -503,7 +504,7 @@
 
                     @if(!$caseLocked && ($case->status ?? '') === 'closed')
                     <a href="{{ route('decisions.create', ['case_id' => $case->id]) }}"
-                        class="px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-sm font-medium text-white transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
+                        class="px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700  font-medium text-white transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
@@ -512,7 +513,7 @@
                     @endif
 
                     <a href="{{ route('cases.index') }}"
-                        class="px-4 py-2.5 rounded-lg bg-white hover:bg-gray-50 text-sm font-medium text-gray-700 border border-gray-300 transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
+                        class="px-4 py-2.5 rounded-lg bg-white hover:bg-gray-50  font-medium text-gray-700 border border-gray-300 transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
@@ -520,7 +521,7 @@
                     </a>
 
                     <button onclick="window.print()"
-                        class="px-4 py-2.5 rounded-lg bg-white hover:bg-gray-50 text-sm font-medium text-gray-700 border border-gray-300 transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
+                        class="px-4 py-2.5 rounded-lg bg-white hover:bg-gray-50  font-medium text-gray-700 border border-gray-300 transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                         </svg>
@@ -530,7 +531,7 @@
             </div>
 
             @if($caseLocked)
-            <div class="mt-4 px-4 py-3 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-2 text-sm shadow-sm">
+            <div class="mt-4 px-4 py-3 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-2  shadow-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 19a7 7 0 110-14 7 7 0 010 14z" />
                 </svg>
@@ -546,7 +547,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
-                    <span class="text-sm font-semibold text-gray-900">Quick Access</span>
+                    <span class=" font-semibold text-gray-900">Quick Access</span>
                 </div>
                 <span class="text-xs text-gray-500">Jump directly to frequently used sections</span>
             </div>
@@ -554,7 +555,7 @@
             <div class="flex flex-wrap gap-3">
                 @if($canViewFiles || $canCreateFiles || $canUpdateFiles || $canDeleteFiles)
                 <button @click="openSection('uploaded-files')"
-                    class="quick-access-btn inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-blue-200 text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 hover:border-blue-300">
+                    class="quick-access-btn inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-blue-200  font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 hover:border-blue-300">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
@@ -564,7 +565,7 @@
 
                 @if($canViewHearings || $canCreateHearings || $canUpdateHearings || $canDeleteHearings)
                 <button @click="openSection('hearings')"
-                    class="quick-access-btn inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-purple-200 text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 hover:border-purple-300">
+                    class="quick-access-btn inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-purple-200  font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 hover:border-purple-300">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
@@ -573,7 +574,7 @@
                 @endif
 
                 <button @click="openSection('messages')"
-                    class="quick-access-btn inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-green-200 text-sm font-medium text-green-700 bg-green-50 hover:bg-green-100 hover:border-green-300">
+                    class="quick-access-btn inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-green-200  font-medium text-green-700 bg-green-50 hover:bg-green-100 hover:border-green-300">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                     </svg>
@@ -581,7 +582,7 @@
                 </button>
 
                 <button @click="openSection('case-details')"
-                    class="quick-access-btn inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-amber-200 text-sm font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 hover:border-amber-300">
+                    class="quick-access-btn inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-amber-200  font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 hover:border-amber-300">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -589,7 +590,7 @@
                 </button>
 
                 <button @click="openSection('letters')"
-                    class="quick-access-btn inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-indigo-200 text-sm font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 hover:border-indigo-300">
+                    class="quick-access-btn inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-indigo-200  font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 hover:border-indigo-300">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 4H8a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V6a2 2 0 00-2-2zM8 4l4 4 4-4" />
                     </svg>
@@ -607,13 +608,13 @@
                     @method('PATCH')
                     <input type="hidden" name="decision" id="review-decision" value="">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Reason / note</label>
+                        <label class="block  font-medium text-gray-700 mb-2">Reason / note</label>
                         <textarea name="note" id="review-note" rows="3" required
-                            class="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-900 focus:ring-2 focus:ring-blue-600 focus:border-blue-600"></textarea>
+                            class="w-full px-3 py-2 rounded-lg border border-gray-300  text-gray-900 focus:ring-2 focus:ring-blue-600 focus:border-blue-600"></textarea>
                     </div>
                     <div class="flex justify-end gap-2">
-                        <button type="button" onclick="closeReviewModal()" class="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-800 border border-gray-300">Cancel</button>
-                        <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-sm font-medium text-white">Submit</button>
+                        <button type="button" onclick="closeReviewModal()" class="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200  font-medium text-gray-800 border border-gray-300">Cancel</button>
+                        <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700  font-medium text-white">Submit</button>
                     </div>
                 </form>
             </div>
@@ -638,19 +639,19 @@
             <form method="POST" action="{{ route('cases.status.update', $case->id) }}" class="grid md:grid-cols-3 gap-8 items-end">
                 @csrf @method('PATCH')
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('cases.status.new_status') }}</label>
+                    <label class="block  font-medium text-gray-700 mb-2">{{ __('cases.status.new_status') }}</label>
                     <select name="status" class="w-full px-4 py-2.5 rounded-lg bg-white text-gray-900 border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-150">
                         @foreach($statuses as $value => $label)
                         <option value="{{ $value }}" @selected($currentStatus===$value)>{{ $label }}</option>
                         @endforeach
                     </select>
-                    @error('status') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+                    @error('status') <p class="text-red-600  mt-1">{{ $message }}</p> @enderror
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('cases.status.note_to_timeline') }}</label>
+                    <label class="block  font-medium text-gray-700 mb-2">{{ __('cases.status.note_to_timeline') }}</label>
                     <input name="note" placeholder="{{ __('cases.status.add_note_placeholder') }}"
                         class="w-full px-4 py-2.5 rounded-lg bg-white text-gray-900 border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-150">
-                    @error('note') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+                    @error('note') <p class="text-red-600  mt-1">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <button class="px-5 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
@@ -679,7 +680,7 @@
                                 :class="activeSection === 'case-summary'
                                     ? 'bg-white/10 text-white shadow-sm'
                                     : 'text-blue-100 hover:bg-white/5 hover:text-white'"
-                                class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold leading-5 transition-all duration-150 text-left">
+                                class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg  font-semibold leading-5 transition-all duration-150 text-left">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                                 </svg>
@@ -692,7 +693,7 @@
                                 :class="activeSection === 'case-details'
                                     ? 'bg-white/10 text-white shadow-sm'
                                     : 'text-blue-100 hover:bg-white/5 hover:text-white'"
-                                class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold leading-5 transition-all duration-150 text-left">
+                                class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg  font-semibold leading-5 transition-all duration-150 text-left">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M7 8h10M5 5h14v14H5z" />
                                 </svg>
@@ -705,7 +706,7 @@
                                 :class="activeSection === 'letters'
                                     ? 'bg-white/10 text-white shadow-sm'
                                     : 'text-blue-100 hover:bg-white/5 hover:text-white'"
-                                class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold leading-5 transition-all duration-150 text-left">
+                                class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg  font-semibold leading-5 transition-all duration-150 text-left">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7l9 6 9-6M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
                                 </svg>
@@ -718,7 +719,7 @@
                                 :class="activeSection === 'audits'
                                     ? 'bg-white/10 text-white shadow-sm'
                                     : 'text-blue-100 hover:bg-white/5 hover:text-white'"
-                                class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold leading-5 transition-all duration-150 text-left">
+                                class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg  font-semibold leading-5 transition-all duration-150 text-left">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m0 0V9m0 6h6m-6-4h6m2 8H7a2 2 0 01-2-2V7a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2z" />
                                 </svg>
@@ -736,7 +737,7 @@
                                 :class="activeSection === 'uploaded-files'
                                     ? 'bg-white/10 text-white shadow-sm'
                                     : 'text-blue-100 hover:bg-white/5 hover:text-white'"
-                                class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium leading-5 transition-all duration-150 text-left">
+                                class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg  font-medium leading-5 transition-all duration-150 text-left">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h10M7 11h10M7 15h6M5 5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-.586-1.414l-3-3A2 2 0 0015.586 4H5z" />
                                 </svg>
@@ -749,7 +750,7 @@
                                 :class="activeSection === 'hearings'
                                     ? 'bg-white/10 text-white shadow-sm'
                                     : 'text-blue-100 hover:bg-white/5 hover:text-white'"
-                                class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium leading-5 transition-all duration-150 text-left">
+                                class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg  font-medium leading-5 transition-all duration-150 text-left">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
@@ -761,11 +762,21 @@
                                 :class="activeSection === 'messages'
                                     ? 'bg-white/10 text-white shadow-sm'
                                     : 'text-blue-100 hover:bg-white/5 hover:text-white'"
-                                class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium leading-5 transition-all duration-150 text-left">
+                                class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg  font-medium leading-5 transition-all duration-150 text-left">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h6m5 8H6a2 2 0 01-2-2V6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2z" />
                                 </svg>
                                 {{ __('cases.navigation.messages') }}
+                            </button>
+                            <button type="button" @click="openSection('respondent-responses')"
+                                :class="activeSection === 'respondent-responses'
+                                    ? 'bg-white/10 text-white shadow-sm'
+                                    : 'text-blue-100 hover:bg-white/5 hover:text-white'"
+                                class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg  font-medium leading-5 transition-all duration-150 text-left">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h14M5 11h10M5 15h14" />
+                                </svg>
+                                {{ __('cases.navigation.respondent_responses') }}
                             </button>
                         </div>
                     </div>
@@ -787,13 +798,11 @@
                         {{ __('cases.navigation.case_summary') }}
                     </h3>
 
-                    <div class="space-y-1">
-                        <div class="text-xs font-medium text-gray-600 uppercase tracking-wide">{{ __('cases.summary.title') }}</div>
-                        <div class="text-gray-900 font-medium text-lg leading-tight">{{ $case->title }}</div>
-                    </div>
+                   
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <div class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                        <div class="space-y-6">
+                     
                             <div>
                                 <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">{{ __('cases.summary.type') }}</div>
                                 <div class="text-gray-900 font-medium">{{ $case->case_type ?? '—' }}</div>
@@ -806,25 +815,50 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="space-y-4">
+                        <div class="space-y-6">
                             <div>
-                                <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">{{ __('cases.summary.first_hearing') }}</div>
-                                <div class="text-gray-900 font-medium">
-                                    {{ $case->first_hearing_date ? \App\Support\EthiopianDate::format($case->first_hearing_date) : '—' }}
+                                <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">{{ __('cases.summary.hearings') }}</div>
+                                @if(!empty($hearings))
+                                <div class="space-y-2  text-gray-800">
+                                    @foreach($hearings as $hearing)
+                                        <div>
+                                            <div class="font-semibold text-gray-900">
+                                                {{ \Illuminate\Support\Carbon::parse($hearing->hearing_at)->format('F j, Y g:i A') ?? '—' }}
+                                            </div>
+                                            <div class="text-xs text-gray-600">
+                                                {{ __('cases.case_number') }} {{ $case->case_number }}
+                                                @if(!empty($hearing->note))
+                                                &middot; {{ \Illuminate\Support\Str::limit(strip_tags($hearing->note), 60) }}
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endforeach
                                 </div>
+                                @else
+                                <div class="text-gray-600">—</div>
+                                @endif
                             </div>
-                            <div>
-                                <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">{{ __('cases.summary.applicant') }}</div>
-                                <div class="text-gray-900 font-medium">{{ $case->applicant_name ?? '—' }}</div>
-                            </div>
-                            <div>
-                                <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">{{ __('cases.summary.applicant_email') }}</div>
-                                <div class="text-gray-900 font-medium">{{ $case->applicant_email ?? '—' }}</div>
-                            </div>
+                          
                         </div>
                     </div>
 
-                    <div class="pt-2 border-t border-gray-200">
+                    <div class="pt-4 border-t border-gray-200">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5  text-gray-800">
+                            <div>
+                                <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">{{ __('cases.summary.applicant') }}</div>
+                                <p class="font-semibold text-gray-900">{{ $case->applicant_name ?? $case->applicant_full_name ?? '—' }}</p>
+                                <p class="text-xs text-gray-500">{{ $case->applicant_address ?? '—' }}</p>
+                            </div>
+                            <div>
+                                <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">{{ __('cases.respondent_defendant') }}</div>
+                                <p class="font-semibold text-gray-900">{{ $case->respondent_name ?? '—' }}</p>
+                                <p class="text-xs text-gray-500">{{ $case->respondent_address ?? '—' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                
+
+                    <div class="pt-4 border-t border-gray-200">
                         <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-2">{{ __('cases.summary.assignee') }}</div>
                         @if($case->assignee_name)
                         <div class="text-gray-900 font-medium flex items-center gap-2">
@@ -832,8 +866,21 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             </svg>
                             {{ $case->assignee_name }}
-                            <span class="text-gray-600 text-xs">({{ $case->assignee_email }})</span>
+                           
                         </div>
+                        @if(!empty($case->assignee_team_name))
+                   <div class="sm:col-span-2">
+                            {{ __('cases.summary.team') }}: {{ $case->assignee_team_name }}
+                        </div>
+                        @endif
+                            @if($case->assigned_at)
+                            <div class="sm:col-span-2">
+                                <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">{{ __('cases.summary.assigned_at') }}</div>
+                                <div class="text-gray-900 font-medium">
+                                    {{ \App\Support\EthiopianDate::format($case->assigned_at, withTime: true, timeFormat: 'h:i A') }}
+                                </div>
+                            </div>
+                            @endif
                         @else
                         <div class="text-gray-500 flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -844,7 +891,7 @@
                         @endif
                     </div>
 
-                    <div class="pt-2 border-t border-gray-200">
+                    <div class="pt-4 border-t border-gray-200">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                             <div>
                                 <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">{{ __('cases.summary.created') }}</div>
@@ -858,14 +905,7 @@
                                     {{ $case->updated_at ? \App\Support\EthiopianDate::format($case->updated_at, withTime: true, timeFormat: 'h:i A') : '—' }}
                                 </div>
                             </div>
-                            @if($case->assigned_at)
-                            <div class="sm:col-span-2">
-                                <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">{{ __('cases.summary.assigned_at') }}</div>
-                                <div class="text-gray-900 font-medium">
-                                    {{ \App\Support\EthiopianDate::format($case->assigned_at, withTime: true, timeFormat: 'h:i A') }}
-                                </div>
-                            </div>
-                            @endif
+                        
                         </div>
                     </div>
                 </section>
@@ -886,12 +926,12 @@
                         <span class="text-xs text-gray-500">{{ ($audits ?? collect())->count() }} entries</span>
                     </div>
                     @if(($audits ?? collect())->isEmpty())
-                    <div class="text-gray-500 text-sm border border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
+                    <div class="text-gray-500  border border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
                         No audit records yet.
                     </div>
                     @else
                     <div class="overflow-x-auto rounded-lg border border-gray-200">
-                        <table class="min-w-full text-sm">
+                        <table class="min-w-full ">
                             <thead class="bg-gray-50 text-gray-700">
                                 <tr>
                                     <th class="p-3 text-left font-medium border-b border-gray-200">When</th>
@@ -951,7 +991,7 @@
                     <div class="grid md:grid-cols-2 gap-4 border border-gray-100 rounded-xl p-4 bg-gray-50">
                         <div>
                             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Applicant</p>
-                            <dl class="text-sm text-gray-700 space-y-1">
+                            <dl class=" text-gray-700 space-y-1">
                                 <div>
                                     <dt class="text-xs text-gray-500">Name</dt>
                                     <dd class="font-semibold text-gray-900">{{ $case->applicant_name ?? '&mdash;' }}</dd>
@@ -968,7 +1008,7 @@
                         </div>
                         <div>
                             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">{{ __('cases.respondent_defendant') }}</p>
-                            <dl class="text-sm text-gray-700 space-y-1">
+                            <dl class=" text-gray-700 space-y-1">
                                 <div>
                                     <dt class="text-xs text-gray-500">Name</dt>
                                     <dd class="font-semibold text-gray-900">{{ $case->respondent_name ?? '&mdash;' }}</dd>
@@ -1007,12 +1047,12 @@
                             <span class="text-xs font-medium text-gray-600 bg-gray-100 rounded-full px-2.5 py-1">{{ ($docs ?? collect())->count() }} {{ __('cases.documents.items') }}</span>
                         </div>
                         @if(($docs ?? collect())->isEmpty())
-                        <div class="text-gray-500 text-sm border border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
+                        <div class="text-gray-500  border border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
                             {{ __('cases.documents.no_documents') }}
                         </div>
                         @else
                         <div class="overflow-x-auto rounded-lg border border-gray-100">
-                            <table class="min-w-full text-sm">
+                            <table class="min-w-full ">
                                 <thead class="bg-gray-50 text-gray-600">
                                     <tr>
                                         <th class="px-3 py-2 text-left font-medium border-b border-gray-200">Document</th>
@@ -1075,12 +1115,12 @@
                             </span>
                         </div>
                         @if(($witnesses ?? collect())->isEmpty())
-                        <div class="text-gray-500 text-sm border border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
+                        <div class="text-gray-500  border border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
                             {{ __('cases.witnesses_section.no_witnesses') }}
                         </div>
                         @else
                         <div class="overflow-x-auto rounded-lg border border-gray-100">
-                            <table class="min-w-full text-sm">
+                            <table class="min-w-full ">
                                 <thead class="bg-gray-50 text-gray-600">
                                     <tr>
                                         <th class="px-3 py-2 text-left font-medium border-b border-gray-200">{{ __('cases.labels.name') }}</th>
@@ -1155,12 +1195,12 @@
                                 </span>
                             </div>
                             @if($letterCollection->isEmpty())
-                            <div class="text-gray-500 text-sm border border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
+                            <div class="text-gray-500  border border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
                                 No letters have been logged yet.
                             </div>
                             @else
                             <div class="overflow-x-auto rounded-lg border border-gray-100">
-                                <table class="min-w-full text-sm">
+                                <table class="min-w-full ">
                                     <thead class="bg-gray-50 text-gray-600">
                                         <tr>
                                             <th class="px-3 py-2 text-left font-medium border-b border-gray-200">Reference</th>
@@ -1233,7 +1273,7 @@
 
                             <button type="button"
                                 @click="openSection('letters')"
-                                class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white  font-medium text-gray-700 hover:bg-gray-50">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                                 </svg>
@@ -1244,11 +1284,11 @@
                         <div id="write-letter-panel" class="max-w-5xl mx-auto space-y-6">
                             <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
                                 <h2 class="text-lg font-semibold text-gray-900 mb-1">{{ __('letters.form.select_template') }}</h2>
-                                <p class="text-sm text-gray-500 mb-4">{{ __('letters.description.compose') }}</p>
+                                <p class=" text-gray-500 mb-4">{{ __('letters.description.compose') }}</p>
 
                                 <div class="flex flex-col md:flex-row gap-3">
                                     <div class="flex-1">
-                                        <label class="block text-sm font-medium text-gray-700">{{ __('letters.form.template_label') }}</label>
+                                        <label class="block  font-medium text-gray-700">{{ __('letters.form.template_label') }}</label>
                                         <select name="template_id" id="inline-template-select" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2">
                                             <option value="">{{ __('letters.form.select_placeholder') }}</option>
                                             @foreach($templates as $template)
@@ -1272,20 +1312,20 @@
                                     <input type="hidden" name="template_id" id="inline-template-hidden" value="{{ optional($selectedTemplate)->id }}">
 
                                     @if(!$selectedTemplate)
-                                    <div class="rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+                                    <div class="rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3  text-yellow-800">
                                         {{ __('letters.form.template_notice') }}
                                     </div>
                                     @endif
 
                                     @if($errors->any())
-                                    <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                                    <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3  text-red-700">
                                         {{ __('letters.form.validation_notice') }}
                                     </div>
                                     @endif
 
                                     <div class="grid md:grid-cols-2 gap-4">
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700">{{ __('letters.form.recipient_name') }}<span class="text-red-500">*</span></label>
+                                            <label class="block  font-medium text-gray-700">{{ __('letters.form.recipient_name') }}<span class="text-red-500">*</span></label>
                                             <input type="text" name="recipient_name" value="{{ $recipientName }}"
                                                 class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2" required>
                                             @error('recipient_name')
@@ -1293,7 +1333,7 @@
                                             @enderror
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700">{{ __('letters.form.recipient_title') }}</label>
+                                            <label class="block  font-medium text-gray-700">{{ __('letters.form.recipient_title') }}</label>
                                             <input type="text" name="recipient_title" value="{{ $recipientTitle }}"
                                                 class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2">
                                             @error('recipient_title')
@@ -1304,13 +1344,13 @@
 
                                     <div class="grid md:grid-cols-2 gap-4">
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700">{{ __('letters.form.recipient_company') }}</label>
+                                            <label class="block  font-medium text-gray-700">{{ __('letters.form.recipient_company') }}</label>
                                             <input type="text" name="recipient_company" value="{{ $recipientCompany }}"
                                                 class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2">
                                             <p class="text-xs text-gray-500 mt-1">{{ __('letters.form.recipient_company_hint') }}</p>
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700">{{ __('letters.form.case_number') }}</label>
+                                            <label class="block  font-medium text-gray-700">{{ __('letters.form.case_number') }}</label>
                                             <input type="text" name="case_number" value="{{ old('case_number', $caseNumber) }}"
                                                 class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 bg-gray-100 text-gray-700"
                                                 placeholder="{{ __('letters.form.case_number_placeholder') }}" readonly>
@@ -1322,22 +1362,22 @@
                                     </div>
                                     <div class="grid md:grid-cols-2 gap-4">
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700">{{ __('letters.form.cc') }}</label>
+                                            <label class="block  font-medium text-gray-700">{{ __('letters.form.cc') }}</label>
                                             <input type="text" name="cc" value="{{ $cc }}"
                                                 class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="{{ __('letters.form.cc_placeholder') }}">
                                             <p class="text-xs text-gray-500 mt-1">{{ __('letters.form.cc_hint') }}</p>
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700">{{ __('letters.form.delivery_label') }}</label>
+                                            <label class="block  font-medium text-gray-700">{{ __('letters.form.delivery_label') }}</label>
                                             <div class="mt-2 flex flex-wrap items-center gap-4">
                                                 <input type="hidden" name="send_to_applicant" value="0">
-                                                <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                                                <label class="inline-flex items-center gap-2  text-gray-700">
                                                     <input type="checkbox" name="send_to_applicant" value="1" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
                                                         @checked($sendToApplicant)>
                                                     <span>{{ __('letters.form.deliver_applicant') }}</span>
                                                 </label>
                                                 <input type="hidden" name="send_to_respondent" value="0">
-                                                <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                                                <label class="inline-flex items-center gap-2  text-gray-700">
                                                     <input type="checkbox" name="send_to_respondent" value="1" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
                                                         @checked($sendToRespondent)>
                                                     <span>{{ __('letters.form.deliver_respondent') }}</span>
@@ -1351,7 +1391,7 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700">{{ __('letters.form.subject') }}</label>
+                                        <label class="block  font-medium text-gray-700">{{ __('letters.form.subject') }}</label>
                                         <input type="text" name="subject" value="{{ $subject ?? '' }}"
                                             class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2">
                                         @error('subject')
@@ -1379,7 +1419,7 @@
                                     @endphp
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700">Reference Number (auto)</label>
+                                        <label class="block  font-medium text-gray-700">Reference Number (auto)</label>
                                         <input type="text" value="{{ $nextReference }}" readonly
                                             class="mt-1 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
 
@@ -1400,7 +1440,7 @@
                                         </p>
                                     </div>
 
-                                    <div id="inline-template-summary" class="{{ $selectedTemplate ? '' : 'hidden' }} rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                                    <div id="inline-template-summary" class="{{ $selectedTemplate ? '' : 'hidden' }} rounded-lg border border-gray-200 bg-gray-50 px-4 py-3  text-gray-600">
                                         <p class="text-xs uppercase tracking-wide text-gray-500">{{ __('letters.form.selected_template') }}</p>
                                         <p id="inline-template-title" class="font-semibold text-gray-900">{{ $selectedTemplate->title ?? '' }}</p>
                                         <p id="inline-template-category" class="text-xs">{{ $selectedTemplate->category ?? ($selectedTemplate ? __('letters.form.category_fallback') : '') }}</p>
@@ -1408,9 +1448,9 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700">{{ __('letters.form.body') }}<span class="text-red-500">*</span></label>
+                                        <label class="block  font-medium text-gray-700">{{ __('letters.form.body') }}<span class="text-red-500">*</span></label>
                                         <textarea id="letter-body-editor" name="body" rows="12"
-                                            class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm">{{ old('body', $body) }}</textarea>
+                                            class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono ">{{ old('body', $body) }}</textarea>
                                         <p class="text-xs text-gray-500 mt-1">{{ __('letters.form.body_hint') }}</p>
                                         @error('body')
                                         <p class="text-xs text-red-600 mt-1" role="alert">{{ $message }}</p>
@@ -1449,10 +1489,10 @@
                         {{-- Create --}}
                         @if(!$caseLocked && $canCreateHearings)
                         <div class="pt-1">
-                            <h4 class="text-sm font-medium text-gray-700 mb-3">{{ __('cases.hearings.add_new_hearing') }}</h4>
+                            <h4 class=" font-medium text-gray-700 mb-3">{{ __('cases.hearings.add_new_hearing') }}</h4>
                             <div class="mb-4 bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                                 <div class="flex items-center justify-between mb-3">
-                                    <h5 class="text-sm font-semibold text-gray-900">Hearing calendar</h5>
+                                    <h5 class=" font-semibold text-gray-900">Hearing calendar</h5>
                                     <span class="text-xs text-gray-500">Click a date/event to fill the form below.</span>
                                 </div>
                                 <div id="hearings-calendar" style="min-height: 360px;"></div>
@@ -1499,7 +1539,7 @@
                         ->values();
                         @endphp
                         @if($orderedHearings->isEmpty())
-                        <div class="text-gray-500 text-sm border border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
+                        <div class="text-gray-500  border border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
@@ -1507,7 +1547,7 @@
                         </div>
                         @else
                         <div class="overflow-x-auto rounded-lg border border-gray-100">
-                            <table class="min-w-full text-sm">
+                            <table class="min-w-full ">
                                 <thead class="bg-gray-50 text-gray-600">
                                     <tr>
                                         <th class="px-3 py-2 text-left font-medium border-b border-gray-200 w-12">#</th>
@@ -1554,21 +1594,21 @@
                                                                 <input id="hearing_date_edit_{{ $h->id }}" type="text" data-hearing-date
                                                                     value="{{ \Illuminate\Support\Carbon::parse($h->hearing_at)->format('Y-m-d') }}"
                                                                     placeholder="{{ __('cases.hearings.add_new_hearing') }}"
-                                                                    class="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                                    class="w-full px-3 py-2 rounded-lg bg-white border border-gray-300  text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                                     autocomplete="off">
                                                                 <input type="time" id="hearing_time_edit_{{ $h->id }}" data-hearing-time min="00:00" max="11:59"
                                                                     value=""
-                                                                    class="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                                    class="w-full px-3 py-2 rounded-lg bg-white border border-gray-300  text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                                     placeholder="HH:MM (AM)" required>
                                                                 <input name="type" value="{{ $h->type ?? '' }}" placeholder="{{ __('cases.hearings.type_placeholder') }}"
-                                                                    class="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                                                                    class="w-full px-3 py-2 rounded-lg bg-white border border-gray-300  text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
                                                                 <input name="location" value="{{ $h->location ?? '' }}" placeholder="{{ __('cases.hearings.location_placeholder') }}"
-                                                                    class="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                                                    class="w-full px-3 py-2 rounded-lg bg-white border border-gray-300  text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                                                                 <input type="hidden" name="hearing_at" id="hearing_at_edit_{{ $h->id }}" data-hearing-target
                                                                     value="{{ $h->hearing_at }}">
                                                             </div>
                                                             <textarea name="notes" rows="2" placeholder="{{ __('cases.hearings.notes_placeholder') }}"
-                                                                class="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>{{ $h->notes ?? '' }}</textarea>
+                                                                class="w-full px-3 py-2 rounded-lg bg-white border border-gray-300  text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>{{ $h->notes ?? '' }}</textarea>
                                                             <div class="flex justify-end gap-2 pt-1">
                                                                 <button class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-xs text-white font-medium transition-colors duration-150">{{ __('cases.general.save') }}</button>
                                                             </div>
@@ -1600,6 +1640,64 @@
                     </div>
                 </section>
                 @endif
+
+                {{-- Respondent Responses Section --}}
+                <section id="respondent-responses" x-show="activeSection === 'respondent-responses'"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 transform translate-y-4"
+                    x-transition:enter-end="opacity-100 transform translate-y-0"
+                    class="main-content-section p-6 rounded-2xl border border-gray-200 bg-white shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-gray-200 pb-3">
+                        <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h10M4 17h16M4 7l2-3h12l2 3M4 7v10a2 2 0 002 2h12a2 2 0 002-2V7" />
+                            </svg>
+                            {{ __('cases.navigation.respondent_responses') }}
+                        </h3>
+                        <span class="text-xs font-medium text-gray-600 bg-gray-100 rounded-full px-2.5 py-1">{{ ($respondentResponses ?? collect())->count() }} {{ __('cases.respondent_responses') }}</span>
+                    </div>
+
+                    <div class="space-y-4 max-h-[520px] overflow-auto pr-2">
+                        @forelse($respondentResponses ?? [] as $resp)
+                        @php
+                            $respBody = clean($resp->description ?? '', 'cases');
+                        @endphp
+                        <div class="rounded-2xl border border-gray-100 bg-gray-50 p-4 shadow-sm space-y-3">
+                            <div class="flex items-center justify-between  text-gray-500">
+                                <span class="font-semibold text-gray-900">{{ $resp->title ?? __('cases.respondent_response') }}</span>
+                                <span>{{ optional($resp->created_at)->toDayDateTimeString() ?? '' }}</span>
+                            </div>
+                            <div class="text-xs text-gray-600">
+                                {{ __('cases.case_number') }}: {{ $resp->case_number ?? $case->case_number }}
+                            </div>
+                            @if(!empty($respBody))
+                                <div class="cms-output  text-gray-800">
+                                    {!! $respBody !!}
+                                </div>
+                            @else
+                                <div class="text-xs text-gray-500 italic">
+                                    {{ __('cases.no_description') }}
+                                </div>
+                            @endif
+                            @if(!empty($resp->pdf_embed['data']))
+                                <div class="rounded-xl border border-gray-200 overflow-hidden bg-white">
+                                    <iframe
+                                        src="data:{{ $resp->pdf_embed['mime'] ?? 'application/pdf' }};base64,{{ $resp->pdf_embed['data'] }}#toolbar=0&navpanes=0&scrollbar=0"
+                                        loading="lazy"
+                                        class="w-full"
+                                        style="min-height: 360px;"
+                                        title="{{ $resp->title ?? __('cases.respondent_response') }}">
+                                    </iframe>
+                                </div>
+                            @endif
+                        </div>
+                        @empty
+                        <div class="rounded-2xl border border-gray-200 bg-white p-4  text-gray-500">
+                            {{ __('recordes.messages.no_responses') }}
+                        </div>
+                        @endforelse
+                    </div>
+                </section>
 
                 {{-- Messages Section --}}
                 <section id="messages" x-show="activeSection === 'messages'"
@@ -1633,13 +1731,13 @@
                                     <span class="font-medium text-gray-900">{{ $who }}</span>
                                     <span>{{ \App\Support\EthiopianDate::format($m->created_at, withTime: true) }}</span>
                                 </div>
-                                <div class="whitespace-pre-wrap text-gray-800 text-sm">
+                                <div class="whitespace-pre-wrap text-gray-800 ">
                                     {{ $m->body }}
                                 </div>
                             </div>
                         </div>
                         @empty
-                        <div class="text-gray-500 text-sm border border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
+                        <div class="text-gray-500  border border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                             </svg>
@@ -1651,11 +1749,11 @@
                     @if($canCreateMessage && !$caseLocked)
                     <form method="POST" action="{{ route('cases.messages.post', $case->id) }}" class="pt-4 border-t border-gray-200 space-y-3">
                         @csrf
-                        <label class="block text-sm font-medium text-gray-700">{{ __('cases.messages_section.reply_to_applicant') }}</label>
+                        <label class="block  font-medium text-gray-700">{{ __('cases.messages_section.reply_to_applicant') }}</label>
                         <textarea name="body" rows="3"
                             class="w-full px-4 py-3 rounded-lg bg-white text-gray-900 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-150"
                             placeholder="{{ __('cases.messages_section.write_message_placeholder') }}">{{ old('body') }}</textarea>
-                        @error('body') <p class="text-red-600 text-sm p-2 bg-red-50 rounded-lg border border-red-200">{{ $message }}</p> @enderror
+                        @error('body') <p class="text-red-600  p-2 bg-red-50 rounded-lg border border-red-200">{{ $message }}</p> @enderror
 
                         <button class="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors duration-150 flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1665,7 +1763,7 @@
                         </button>
                     </form>
                     @elseif($caseLocked)
-                    <div class="mt-3 px-3 py-2 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 text-sm">
+                    <div class="mt-3 px-3 py-2 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 ">
                         Messaging locked because this case is closed and has an active decision.
                     </div>
                     @endif
@@ -1696,7 +1794,7 @@
                         <input name="label" placeholder="{{ __('cases.files.label_placeholder') }}"
                             class="px-3 py-2.5 rounded-lg bg-white border border-gray-300 text-gray-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-150">
                         <input type="file" name="file" required
-                            class="text-sm text-gray-700 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 transition-colors duration-150">
+                            class=" text-gray-700 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file: file:font-medium file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 transition-colors duration-150">
                         <button class="px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium transition-colors duration-150 flex items-center justify-center gap-1">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -1704,11 +1802,11 @@
                             {{ __('cases.files.upload') }}
                         </button>
                     </form>
-                    @error('file') <div class="text-red-600 text-sm mb-2 p-2 bg-red-50 rounded-lg border border-red-200">{{ $message }}</div> @enderror
+                    @error('file') <div class="text-red-600  mb-2 p-2 bg-red-50 rounded-lg border border-red-200">{{ $message }}</div> @enderror
                     @endif
 
                     @if(($files ?? collect())->isEmpty())
-                    <div class="text-gray-500 text-sm border border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
+                    <div class="text-gray-500  border border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
@@ -1718,7 +1816,7 @@
                     <ul class="divide-y divide-gray-200">
                         @foreach($files as $f)
                         <li class="py-3 flex items-center justify-between hover:bg-gray-50 px-3 rounded-lg transition-colors duration-150">
-                            <div class="text-sm">
+                            <div class="">
                                 <div class="font-medium text-gray-900 flex items-center gap-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -2458,7 +2556,7 @@
                     // Highlight existing hearings after initial render
                     requestAnimationFrame(highlightEventDays);
                 } else if (calendarEl) {
-                    calendarEl.innerHTML = '<div class="text-sm text-red-600">Calendar library failed to load.</div>';
+                    calendarEl.innerHTML = '<div class=" text-red-600">Calendar library failed to load.</div>';
                 }
 
                 // Convert displayed hearing dates to Ethiopian calendar (UI only)

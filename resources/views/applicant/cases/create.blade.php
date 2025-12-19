@@ -8,7 +8,7 @@
 
     {{-- Top-level validation errors --}}
     @if ($errors->any())
-    <div class="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+    <div class="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3  text-red-700">
         <div class="font-semibold mb-1 flex items-center gap-2">
             <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none"
                 viewBox="0 0 24 24" stroke="currentColor">
@@ -39,7 +39,7 @@
 
             <div class="grid md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700">
+                    <label class="block  font-medium text-slate-700">
                         {{ __('Applicant Full Name') }} <span class="text-red-600">*</span>
                     </label>
                     <input
@@ -47,14 +47,14 @@
                         value="{{ old('title', $applicantUser->full_name ?? $applicantUser->name ?? '') }}"
                         placeholder="{{ __('Enter applicant full name') }}"
                         readonly
-                        class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
+                        class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
                                bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                     @error('title')
                     <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700">
+                    <label class="block  font-medium text-slate-700">
                         {{ __('Applicant Address') }} <span class="text-red-600">*</span>
                     </label>
                     <input
@@ -62,7 +62,7 @@
                         value="{{ old('applicant_address', $applicantUser->address ?? '') }}"
                         placeholder="{{ __('Enter applicant address') }}"
                         readonly
-                        class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
+                        class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
                                bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                     @error('applicant_address')
                     <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
@@ -76,28 +76,28 @@
 
             <div class="grid md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700">
+                    <label class="block  font-medium text-slate-700">
                         {{ __('cases.respondent_name') }}
                     </label>
                     <input
                         name="respondent_name"
                         value="{{ old('respondent_name') }}"
                         placeholder="{{ __('cases.respondent_name_placeholder') }}"
-                        class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
+                        class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
                                focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                     @error('respondent_name')
                     <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700">
+                    <label class="block  font-medium text-slate-700">
                         {{ __('cases.respondent_address') }}
                     </label>
                     <input
                         name="respondent_address"
                         value="{{ old('respondent_address') }}"
                         placeholder="{{ __('cases.respondent_address_placeholder') }}"
-                        class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
+                        class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
                                focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                     @error('respondent_address')
                     <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
@@ -120,14 +120,14 @@
 
             <div class="grid md:grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700">
+                    <label class="block  font-medium text-slate-700">
                         {{ __('cases.case_type') }} <span class="text-red-600">*</span>
                     </label>
                     <select
                         x-ref="caseTypeSelect"
                         @change="updatePrefix()"
                         name="case_type_id"
-                        class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
+                        class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
                                bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                         <option value="">-- {{ __('cases.select_option') }} --</option>
                         @foreach($types as $t)
@@ -149,7 +149,7 @@
         {{-- Case details (Word-like editor) --}}
         <section class="space-y-2">
             <div class="flex items-center justify-between gap-2">
-                <label class="block text-sm font-medium text-slate-700">
+                <label class="block  font-medium text-slate-700">
                     {{ __('cases.case_details') }} <span class="text-red-600">*</span>
                 </label>
                 <div id="desc-counter" class="text-[11px] text-slate-500">
@@ -160,7 +160,7 @@
                 id="editor-description"
                 name="description"
                 rows="16"
-                class="mt-1 w-full rounded-lg border border-slate-300 text-sm text-slate-900">{{ old('description') }}</textarea>
+                class="mt-1 w-full rounded-lg border border-slate-300  text-slate-900">{{ old('description') }}</textarea>
             @error('description')
             <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
             @enderror
@@ -169,7 +169,7 @@
         {{-- Relief (Word-like editor) --}}
         <section class="space-y-2">
             <div class="flex items-center justify-between gap-2">
-                <label class="block text-sm font-medium text-slate-700">
+                <label class="block  font-medium text-slate-700">
                     {{ __('cases.relief_requested') }}
                 </label>
                 <div id="relief-counter" class="text-[11px] text-slate-500">
@@ -180,12 +180,12 @@
                 id="editor-relief"
                 name="relief_requested"
                 rows="12"
-                class="mt-1 w-full rounded-lg border border-slate-300 text-sm text-slate-900">{{ old('relief_requested') }}</textarea>
+                class="mt-1 w-full rounded-lg border border-slate-300  text-slate-900">{{ old('relief_requested') }}</textarea>
             @error('relief_requested')
             <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
             @enderror
 
-            <label class="flex items-start gap-2 text-sm text-slate-700 mt-3">
+            <label class="flex items-start gap-2  text-slate-700 mt-3">
                 <input type="checkbox" name="certify_appeal" value="1"
                     class="mt-1 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
                     {{ old('certify_appeal') ? 'checked' : '' }} required>
@@ -200,7 +200,7 @@
         <section x-data="{ rows: 1 }" class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 md:p-5 space-y-3">
             <div class="flex items-center justify-between">
                 <div>
-                    <h3 class="text-sm font-semibold text-slate-800">
+                    <h3 class=" font-semibold text-slate-800">
                         {{ __('cases.evidence_documents') }}
                     </h3>
                     <p class="text-xs text-slate-500 mt-0.5">
@@ -224,13 +224,13 @@
                         type="text"
                         name="evidence_titles[]"
                         placeholder="{{ __('cases.document_title_placeholder') }}"
-                        class="px-3 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900
+                        class="px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
                                bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                     <input
                         type="file"
                         name="evidence_files[]"
                         accept="application/pdf"
-                        class="px-3 py-2.5 rounded-lg border border-slate-300 text-sm bg-white text-slate-900
+                        class="px-3 py-2.5 rounded-lg border border-slate-300  bg-white text-slate-900
                                focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
                 </div>
             </template>
@@ -246,7 +246,7 @@
         <section x-data="{ rows: {{ $oldWitnessCount }} }" class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 md:p-5 space-y-3">
             <div class="flex items-center justify-between">
                 <div>
-                    <h3 class="text-sm font-semibold text-slate-800">
+                    <h3 class=" font-semibold text-slate-800">
                         {{ __('cases.witnesses_section.title') }}
                     </h3>
 
@@ -269,14 +269,14 @@
                         required
                         value="{{ old('witnesses.0.full_name') }}"
                         placeholder="{{ __('cases.witnesses_section.full_name_placeholder') }}"
-                        class="px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-sm text-slate-900 md:col-span-2
+                        class="px-3 py-2.5 rounded-lg bg-white border border-slate-300  text-slate-900 md:col-span-2
                                focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
 
                     <input
                         :name="'witnesses['+(i-1)+'][phone]'"
                         value="{{ old('witnesses.0.phone') }}"
                         placeholder="{{ __('cases.witnesses_section.phone_placeholder') }}"
-                        class="px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-sm text-slate-900
+                        class="px-3 py-2.5 rounded-lg bg-white border border-slate-300  text-slate-900
                                focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
 
                     <input
@@ -284,14 +284,14 @@
                         :name="'witnesses['+(i-1)+'][email]'"
                         value="{{ old('witnesses.0.email') }}"
                         placeholder="{{ __('cases.witnesses_section.email_placeholder') }}"
-                        class="px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-sm text-slate-900
+                        class="px-3 py-2.5 rounded-lg bg-white border border-slate-300  text-slate-900
                                focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
 
                     <input
                         :name="'witnesses['+(i-1)+'][address]'"
                         value="{{ old('witnesses.0.address') }}"
                         placeholder="{{ __('cases.witnesses_section.address_placeholder') }}"
-                        class="px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-sm text-slate-900 md:col-span-2
+                        class="px-3 py-2.5 rounded-lg bg-white border border-slate-300  text-slate-900 md:col-span-2
                                focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                 </div>
             </template>
@@ -310,7 +310,7 @@
             @enderror
         </section>
 
-        <label class="flex items-start gap-2 text-sm text-slate-700">
+        <label class="flex items-start gap-2  text-slate-700">
             <input type="checkbox" name="certify_evidence" value="1"
                 class="mt-1 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
                 {{ old('certify_evidence') ? 'checked' : '' }} required>
@@ -323,7 +323,7 @@
         @if(!empty($activeTerms))
         <section x-data="{ showTerms: false }" class="rounded-xl border border-slate-200 bg-slate-50/80 p-4 md:p-5 space-y-3 relative">
             <div>
-                <h3 class="text-sm font-semibold text-slate-800">
+                <h3 class=" font-semibold text-slate-800">
                     {{ __('terms.applicant_card_title') }}
                 </h3>
                 <p class="text-xs text-slate-600 mt-1">
@@ -334,7 +334,7 @@
                     </button>
                 </p>
             </div>
-            <label class="flex items-start gap-2 text-sm text-slate-700">
+            <label class="flex items-start gap-2  text-slate-700">
                 <input type="checkbox" name="accept_terms" value="1"
                     class="mt-1 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
                     {{ old('accept_terms') ? 'checked' : '' }} required>
@@ -359,12 +359,12 @@
                         <p class="text-xs text-slate-500 mb-4">
                             {{ \App\Support\EthiopianDate::format($activeTerms->published_at, withTime: true) }}
                         </p>
-                        <div class="text-sm text-slate-800 whitespace-pre-line leading-relaxed tiny-content">
+                        <div class=" text-slate-800 whitespace-pre-line leading-relaxed tiny-content">
                             {!! clean(nl2br(e($activeTerms->body)), 'cases') !!}
                         </div>
                         <div class="mt-4 text-right">
                             <button type="button" @click="showTerms=false"
-                                class="inline-flex items-center px-4 py-2 rounded-md bg-orange-500 text-white text-sm font-semibold hover:bg-orange-600">
+                                class="inline-flex items-center px-4 py-2 rounded-md bg-orange-500 text-white  font-semibold hover:bg-orange-600">
                                 {{ __('terms.modal_close') }}
                             </button>
                         </div>
@@ -377,12 +377,12 @@
         {{-- Actions --}}
         <div class="pt-2 flex flex-wrap gap-3">
             <button
-                class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-orange-500 text-white text-sm font-semibold
+                class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-orange-500 text-white  font-semibold
                        hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-1">
                 {{ __('cases.submit_case_button') }}
             </button>
             <a href="{{ route('applicant.cases.index') }}"
-                class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-slate-200 text-slate-700 text-sm font-medium
+                class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-slate-200 text-slate-700  font-medium
                       hover:bg-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-400">
                 {{ __('cases.cancel') }}
             </a>

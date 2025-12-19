@@ -1,0 +1,540 @@
+openapi: 3.0.3
+info:
+  title: Court MS API
+  version: "1.0.0"
+  description: |
+    Token-based JSON API for Court MS (Laravel + Sanctum).
+    - Auth via `/api/v1/auth/login` (guards: admin|applicant|respondent).
+    - Bearer token (`Authorization: Bearer <token>`) required for all `/api/v1/*` except login.
+servers:
+  - url: http://localhost:8000
+    description: Local dev
+  - url: https://your-domain.example
+    description: Production
+tags:
+  - name: Health
+  - name: Auth
+  - name: Lookups
+  - name: Cases
+  - name: Case Messages
+  - name: Respondent Responses
+paths:
+  /api/health:
+    get:
+      tags: [Health]
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+                  app:
+                    type: string
+                    example: court-ms
+                  time:
+                    type: string
+                    format: date-time
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: Log in and get token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [guard, email, password]
+              properties:
+                guard:
+                  type: string
+                  enum: [admin, applicant, respondent]
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                device_name:
+                  type: string
+      responses:
+        "200":
+          description: Token issued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /api/v1/me:
+    get:
+      tags: [Auth]
+      summary: Current authenticated user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+                  type:
+                    type: string
+                    example: applicant
+                  user:
+                    type: object
+  /api/v1/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Revoke current token
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+  /api/v1/case-types:
+    get:
+      tags: [Lookups]
+      summary: List case types
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Case types
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CaseType"
+  /api/v1/cases:
+    get:
+      tags: [Cases]
+      summary: List cases scoped to the actor
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: status
+          schema:
+            type: string
+            description: Comma-separated statuses
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: Paginated cases
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedCases"
+    post:
+      tags: [Cases]
+      summary: Create a case (applicant only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/CaseCreateRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Case"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /api/v1/cases/{case}:
+    get:
+      tags: [Cases]
+      summary: Get a case by id
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: case
+          schema:
+            type: integer
+          required: true
+      responses:
+        "200":
+          description: Case
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  data:
+                    $ref: "#/components/schemas/Case"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /api/v1/cases/{case}/messages:
+    get:
+      tags: [Case Messages]
+      summary: List messages for a case
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: case
+          schema:
+            type: integer
+          required: true
+      responses:
+        "200":
+          description: Messages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  messages:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CaseMessage"
+    post:
+      tags: [Case Messages]
+      summary: Post a message to a case
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: case
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body:
+                  type: string
+                  maxLength: 5000
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  message:
+                    $ref: "#/components/schemas/CaseMessage"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /api/v1/responses:
+    get:
+      tags: [Respondent Responses]
+      summary: List respondent responses (respondent only)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Responses
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/RespondentResponse"
+    post:
+      tags: [Respondent Responses]
+      summary: Submit a response with PDF (respondent only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [title, pdf]
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                case_number:
+                  type: string
+                pdf:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  data:
+                    $ref: "#/components/schemas/RespondentResponse"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /api/v1/responses/{response}:
+    get:
+      tags: [Respondent Responses]
+      summary: Get a respondent response (owner only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: response
+          schema:
+            type: integer
+          required: true
+      responses:
+        "200":
+          description: Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  data:
+                    $ref: "#/components/schemas/RespondentResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+  responses:
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              errors:
+                type: object
+  schemas:
+    TokenResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: true
+        token:
+          type: string
+        token_type:
+          type: string
+          example: Bearer
+        abilities:
+          type: array
+          items:
+            type: string
+        type:
+          type: string
+          example: applicant
+        user:
+          type: object
+    CaseType:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        prefix:
+          type: string
+    Case:
+      type: object
+      properties:
+        id:
+          type: integer
+        case_number:
+          type: string
+        title:
+          type: string
+        status:
+          type: string
+        filing_date:
+          type: string
+          format: date
+        first_hearing_date:
+          type: string
+          format: date
+          nullable: true
+        case_type:
+          $ref: "#/components/schemas/CaseType"
+        applicant:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            email:
+              type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    PaginatedCases:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Case"
+        meta:
+          type: object
+          properties:
+            current_page:
+              type: integer
+            last_page:
+              type: integer
+            per_page:
+              type: integer
+            total:
+              type: integer
+    CaseCreateRequest:
+      type: object
+      required:
+        - title
+        - description
+        - case_type_id
+        - filing_date
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        relief_requested:
+          type: string
+        respondent_name:
+          type: string
+        respondent_address:
+          type: string
+        case_type_id:
+          type: integer
+        filing_date:
+          type: string
+          format: date
+        first_hearing_date:
+          type: string
+          format: date
+        evidence_titles[]:
+          type: array
+          items:
+            type: string
+        evidence_files[]:
+          type: array
+          items:
+            type: string
+            format: binary
+        witnesses[0][full_name]:
+          type: string
+          description: Example witness field; repeat with indices.
+    CaseMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+        body:
+          type: string
+        sender_type:
+          type: string
+          enum: [staff, applicant]
+        sender_name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    RespondentResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        case_number:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        message:
+          type: string

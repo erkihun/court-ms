@@ -8,10 +8,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Models\CourtCase;
 use App\Models\RespondentCaseView;
+use Laravel\Sanctum\HasApiTokens;
 
 class Respondent extends Authenticatable
 {
-    use Notifiable;
+    use HasApiTokens, Notifiable;
 
     protected $fillable = [
         'first_name',

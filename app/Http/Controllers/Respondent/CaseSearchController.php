@@ -118,6 +118,23 @@ class CaseSearchController extends Controller
             ->orderBy('id')
             ->get();
 
+        $letters = DB::table('letters as l')
+            ->leftJoin('letter_templates as lt', 'lt.id', '=', 'l.letter_template_id')
+            ->leftJoin('users as u', 'u.id', '=', 'l.user_id')
+            ->select(
+                'l.id',
+                'l.subject',
+                'l.reference_number',
+                'l.approval_status',
+                'l.created_at',
+                'lt.title as template_title',
+                'u.name as author_name'
+            )
+            ->where('l.case_number', $case->case_number)
+            ->where('l.approval_status', 'approved')
+            ->orderByDesc('l.created_at')
+            ->get();
+
         $witnesses = DB::table('case_witnesses')
             ->where('case_id', $caseId)
             ->orderBy('id')
@@ -132,6 +149,7 @@ class CaseSearchController extends Controller
         return view('applicant.respondent.cases.show', compact(
             'case',
             'timeline',
+            'letters',
             'files',
             'msgs',
             'hearings',

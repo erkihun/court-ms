@@ -15,34 +15,34 @@
 
     <div class="space-y-6">
         {{-- Welcome Header --}}
-        <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl p-6 text-white">
+        <div class="rounded-2xl p-6 text-white shadow-xl bg-gradient-to-r from-[#0d3b8f] to-[#1b63c3]">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     @php
                         $applicantUser = auth('applicant')->user();
                         $applicantName = $applicantUser?->full_name ?: $applicantUser?->name ?: $applicantUser?->email ?: __('applicant.user');
                     @endphp
-                    <h1 class="text-2xl md:text-3xl font-bold mb-2">{{ __('dashboard.welcome_back') }}, {{ $applicantName }}</h1>
+                    <h4 class="text-2xl  font-bold mb-2">{{ __('dashboard.welcome_back') }}, {{ $applicantName }}</h4>
                     
                 </div>
-                <div class="text-sm bg-white/20 backdrop-blur-sm rounded-xl p-3 inline-block">
-                    <div class="font-medium">{{ __('dashboard.today') }}</div>
+                <div class=" backdrop-blur-sm ">
+                    <div >{{ __('dashboard.today') }}</div>
                     <div>{{ now()->format('F j, Y') }}</div>
                 </div>
             </div>
         </div>
 
         {{-- Stats Cards --}}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             {{-- Total Cases --}}
-            <div class="group relative p-5 rounded-2xl border border-blue-100 bg-gradient-to-br from-white to-blue-50 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                <div class="absolute top-0 right-0 w-16 h-16 bg-blue-200/10 rounded-full -translate-y-4 translate-x-4"></div>
+            <div class="group relative p-4 rounded-2xl border border-[#0c1b4a] bg-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+                <div class="absolute top-0 right-0 w-16 h-16 bg-[#0c1b4a]/10 rounded-full -translate-y-4 translate-x-4"></div>
                 <div class="relative">
                     <div class="flex items-center justify-between mb-4">
-                        <div class="text-xs font-semibold uppercase tracking-wider text-blue-600">
+                        <div class="text-xs font-semibold uppercase tracking-wider text-[#0c1b4a]">
                             {{ __('dashboard.total_cases') }}
                         </div>
-                        <div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-white shadow-md group-hover:scale-110 transition-transform duration-300">
+                    <div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-white shadow-md transition-transform duration-300">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
                             </svg>
@@ -56,7 +56,7 @@
             </div>
 
             {{-- Pending Cases --}}
-            <div class="group relative p-5 rounded-2xl border border-orange-100 bg-gradient-to-br from-white to-orange-50 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+            <div class="group relative p-4 rounded-2xl border border-orange-100 bg-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
                 <div class="absolute top-0 right-0 w-16 h-16 bg-orange-200/10 rounded-full -translate-y-4 translate-x-4"></div>
                 <div class="relative">
                     <div class="flex items-center justify-between mb-4">
@@ -80,7 +80,7 @@
             </div>
 
             {{-- Active Cases --}}
-            <div class="group relative p-5 rounded-2xl border border-emerald-100 bg-gradient-to-br from-white to-emerald-50 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+            <div class="group relative p-4 rounded-2xl border border-emerald-100 bg-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
                 <div class="absolute top-0 right-0 w-16 h-16 bg-emerald-200/10 rounded-full -translate-y-4 translate-x-4"></div>
                 <div class="relative">
                     <div class="flex items-center justify-between mb-4">
@@ -104,7 +104,7 @@
             </div>
 
             {{-- Closed Cases --}}
-            <div class="group relative p-5 rounded-2xl border border-slate-100 bg-gradient-to-br from-white to-slate-50 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+            <div class="group relative p-4 rounded-2xl border border-slate-100 bg-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
                 <div class="absolute top-0 right-0 w-16 h-16 bg-slate-200/10 rounded-full -translate-y-4 translate-x-4"></div>
                 <div class="relative">
                     <div class="flex items-center justify-between mb-4">
@@ -128,7 +128,7 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-[3fr_9fr] gap-6">
             {{-- Quick Actions --}}
             <div class="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
                 <div class="flex items-center gap-3 mb-6">
@@ -144,8 +144,8 @@
                 
                 <div class="space-y-3">
                     <a href="{{ route('applicant.cases.create') }}"
-                       class="group flex items-center justify-center gap-3 px-4 py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white font-medium
-                              hover:from-orange-600 hover:to-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2
+                       class="group flex items-center justify-start gap-3 px-4 py-3.5 rounded-xl bg-gradient-to-r from-[#0d3b8f] to-[#1b63c3] text-white font-medium
+                              hover:from-[#0b306b] hover:to-[#1550a3] focus:outline-none focus:ring-2 focus:ring-[#0d3b8f] focus:ring-offset-2
                               transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -154,10 +154,9 @@
                     </a>
                     
                     <button type="button" data-panel-target="recent"
-                       class="w-full group flex items-center justify-center gap-3 px-4 py-3.5 rounded-xl bg-slate-50 text-slate-700 font-medium
-                              hover:bg-white hover:shadow-md hover:border-slate-200 border border-transparent
-                              focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2
-                              transition-all duration-200 panel-toggle">
+                       class="w-full group flex items-center justify-start gap-3 px-4 py-3.5 rounded-xl bg-gradient-to-r from-[#0d3b8f] to-[#1b63c3] text-white font-medium active
+                              hover:from-[#0b306b] hover:to-[#1550a3] focus:outline-none focus:ring-2 focus:ring-[#0d3b8f] focus:ring-offset-2
+                              transition-all duration-200 hover:shadow-lg panel-toggle active">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5h6a2 2 0 012 2v2h2a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2h2V7a2 2 0 012-2z"/>
                         </svg>
@@ -165,9 +164,9 @@
                     </button>
                     
                     <button type="button" data-panel-target="letters"
-                       class="w-full group flex items-center gap-3 px-4 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium
-                              hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                              transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 panel-toggle">
+                       class="w-full group flex items-center justify-start gap-3 px-4 py-3.5 rounded-xl bg-gradient-to-r from-[#0d3b8f] to-[#1b63c3] text-white font-medium
+                              hover:from-[#0b306b] hover:to-[#1550a3] focus:outline-none focus:ring-2 focus:ring-[#0d3b8f] focus:ring-offset-2
+                              transition-all duration-200 hover:shadow-lg panel-toggle">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l9 6 9-6m-18 0l9-6 9 6m-18 0v8a2 2 0 002 2h14a2 2 0 002-2V8"/>
                         </svg>
@@ -178,9 +177,9 @@
                     </button>
                     
                     <button type="button" data-panel-target="responses"
-                       class="w-full group flex items-center gap-3 px-4 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-medium
-                              hover:from-emerald-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2
-                              transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 panel-toggle">
+                       class="w-full group flex items-center justify-start gap-3 px-4 py-3.5 rounded-xl bg-gradient-to-r from-[#0d3b8f] to-[#1b63c3] text-white font-medium
+                              hover:from-[#0b306b] hover:to-[#1550a3] focus:outline-none focus:ring-2 focus:ring-[#0d3b8f] focus:ring-offset-2
+                              transition-all duration-200 hover:shadow-lg panel-toggle">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h5m-5 4h4M5 20l2.586-2.586A2 2 0 018.828 17H19a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v13z"/>
                         </svg>
@@ -191,9 +190,9 @@
                     </button>
                     
                     <button type="button" data-panel-target="decisions"
-                       class="w-full group flex items-center gap-3 px-4 py-3.5 rounded-xl bg-gradient-to-r from-slate-600 to-slate-700 text-white font-medium
-                              hover:from-slate-700 hover:to-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2
-                              transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 panel-toggle">
+                       class="w-full group flex items-center justify-start gap-3 px-4 py-3.5 rounded-xl bg-gradient-to-r from-[#0d3b8f] to-[#1b63c3] text-white font-medium
+                              hover:from-[#0b306b] hover:to-[#1550a3] focus:outline-none focus:ring-2 focus:ring-[#0d3b8f] focus:ring-offset-2
+                              transition-all duration-200 hover:shadow-lg panel-toggle">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 7a2 2 0 10-4 0 2 2 0 004 0zm16 0a2 2 0 10-4 0 2 2 0 004 0zM2 7h20M6 7l4 10m-8 0h8m4-10l4 10m-8 0h8M12 4v2"/>
                         </svg>
@@ -206,8 +205,8 @@
                 </div>
             </div>
 
-            {{-- Panel Area --}}
-            <div class="lg:col-span-2 p-6 rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
+        {{-- Panel Area --}}
+            <div class="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
                 {{-- Recent Cases Panel --}}
                 <div data-panel="recent">
                 <div class="flex items-center justify-between mb-6">
@@ -221,13 +220,11 @@
                             <h3 class="text-lg font-semibold text-slate-900">
                                 {{ __('dashboard.recent_cases') }}
                             </h3>
-                            <p class="text-sm text-slate-500 mt-1">
-                                {{ __('dashboard.recent_cases_description') }}
-                            </p>
+                             
                         </div>
                     </div>
                     <a href="{{ route('applicant.cases.index') }}" 
-                       class="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                       class=" font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1">
                         {{ __('dashboard.view_all') }}
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -241,7 +238,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
                         <h4 class="mt-4 text-lg font-medium text-slate-700">{{ __('dashboard.no_cases_yet') }}</h4>
-                        <p class="mt-2 text-sm text-slate-500 max-w-sm mx-auto">{{ __('dashboard.no_cases_description') }}</p>
+                        <p class="mt-2  text-slate-500 max-w-sm mx-auto">{{ __('dashboard.no_cases_description') }}</p>
                         <a href="{{ route('applicant.cases.create') }}" 
                            class="mt-6 inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-medium rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-200">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -277,10 +274,10 @@
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100 bg-white">
-                                    @foreach($recent as $c)
+                                    @foreach($recent->take(3) as $c)
                                     <tr class="hover:bg-slate-50/80 transition-colors duration-150 group">
                                         <td class="px-4 py-4 whitespace-nowrap">
-                                            <div class="font-mono text-sm font-semibold text-blue-700">
+                                            <div class="font-mono  font-semibold text-blue-700">
                                                 {{ $c->case_number }}
                                             </div>
                                         </td>
@@ -320,16 +317,16 @@
                                             </span>
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-slate-600">
+                                            <div class=" text-slate-600">
                                                 {{ \App\Support\EthiopianDate::format($c->created_at) }}
                                             </div>
                                             <div class="text-xs text-slate-400">
                                                 {{ optional($c->created_at)->diffForHumans() }}
                                             </div>
                                         </td>
-                                        <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <td class="px-4 py-4 whitespace-nowrap text-right  font-medium">
                                             <a href="{{ route('applicant.cases.show', $c->id) }}"
-                                               class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 text-blue-700 text-sm font-medium
+                                               class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 text-blue-700  font-medium
                                                       hover:bg-blue-100 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1
                                                       transition-all duration-200 group-hover:scale-105">
                                                 {{ __('dashboard.view') }}
@@ -347,11 +344,11 @@
 
                     {{-- Mobile Cards View --}}
                     <div class="lg:hidden space-y-4">
-                        @foreach($recent as $c)
+                        @foreach($recent->take(3) as $c)
                         <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow duration-300">
                             <div class="flex items-start justify-between mb-3">
                                 <div>
-                                    <span class="font-mono text-sm font-semibold text-blue-700">{{ $c->case_number }}</span>
+                                    <span class="font-mono  font-semibold text-blue-700">{{ $c->case_number }}</span>
                                     <div class="mt-1">
                                         <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium 
                                                     @if($c->status==='pending') bg-orange-50 text-orange-700 
@@ -369,7 +366,7 @@
                                     {{ $c->case_type }}
                                 </span>
                                 <a href="{{ route('applicant.cases.show', $c->id) }}"
-                                   class="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                                   class=" font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1">
                                     {{ __('dashboard.view') }}
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
@@ -393,10 +390,10 @@
                         </div>
                         <div>
                             <h3 class="text-lg font-semibold text-slate-900">{{ __('dashboard.letters') }}</h3>
-                            <p class="text-sm text-slate-500">{{ __('dashboard.letters_description') }}</p>
+                            <p class=" text-slate-500">{{ __('dashboard.letters_description') }}</p>
                         </div>
                     </div>
-                    <button type="button" data-panel-target="recent" class="text-sm font-medium text-blue-600 hover:text-blue-800">
+                    <button type="button" data-panel-target="recent" class=" font-medium text-blue-600 hover:text-blue-800">
                         {{ __('dashboard.recent_cases') }}
                     </button>
                 </div>
@@ -415,7 +412,7 @@
                         </div>
                         <div class="mt-2">
                             <a href="{{ route('letters.case-preview', $letter->id) }}"
-                               class="inline-flex items-center gap-1 text-sm font-semibold text-blue-700 hover:text-blue-900">
+                               class="inline-flex items-center gap-1  font-semibold text-blue-700 hover:text-blue-900">
                                 {{ __('dashboard.view') }}
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7-7 7m7-7H3"/>
@@ -424,7 +421,7 @@
                         </div>
                     </div>
                     @empty
-                    <div class="p-4 text-sm text-slate-500 border border-dashed border-slate-200 rounded-xl">
+                    <div class="p-4  text-slate-500 border border-dashed border-slate-200 rounded-xl">
                         {{ __('dashboard.no_letters') }}
                     </div>
                     @endforelse
@@ -442,10 +439,10 @@
                         </div>
                         <div>
                             <h3 class="text-lg font-semibold text-slate-900">{{ __('dashboard.responses') }}</h3>
-                            <p class="text-sm text-slate-500">{{ __('dashboard.responses_description') }}</p>
+                            <p class=" text-slate-500">{{ __('dashboard.responses_description') }}</p>
                         </div>
                     </div>
-                    <button type="button" data-panel-target="recent" class="text-sm font-medium text-blue-600 hover:text-blue-800">
+                    <button type="button" data-panel-target="recent" class=" font-medium text-blue-600 hover:text-blue-800">
                         {{ __('dashboard.recent_cases') }}
                     </button>
                 </div>
@@ -461,9 +458,30 @@
                         <div class="text-xs text-slate-500 mt-1">
                             {{ __('dashboard.case_number') }}: {{ $response->case_number ?? '--' }}
                         </div>
+                        <div class="mt-3 flex justify-end">
+                            @if(!empty($response->case_id))
+                                <a
+                                    href="{{ route('applicant.cases.respondentResponses.show', [$response->case_id, $response->id]) }}"
+                                    class="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-white px-3 py-1.5  font-medium text-emerald-700 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1 transition"
+                                >
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                    {{ __('dashboard.view') }}
+                                </a>
+                            @else
+                                <button
+                                    type="button"
+                                    class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5  font-medium text-slate-400 cursor-not-allowed"
+                                    disabled
+                                >
+                                    {{ __('dashboard.view') }}
+                                </button>
+                            @endif
+                        </div>
                     </div>
                     @empty
-                    <div class="p-4 text-sm text-slate-500 border border-dashed border-slate-200 rounded-xl">
+                    <div class="p-4  text-slate-500 border border-dashed border-slate-200 rounded-xl">
                         {{ __('dashboard.no_responses') }}
                     </div>
                     @endforelse
@@ -481,10 +499,10 @@
                         </div>
                         <div>
                             <h3 class="text-lg font-semibold text-slate-900">{{ __('dashboard.decisions') }}</h3>
-                            <p class="text-sm text-slate-500">{{ __('dashboard.decisions_description') }}</p>
+                            <p class=" text-slate-500">{{ __('dashboard.decisions_description') }}</p>
                         </div>
                     </div>
-                    <button type="button" data-panel-target="recent" class="text-sm font-medium text-blue-600 hover:text-blue-800">
+                    <button type="button" data-panel-target="recent" class=" font-medium text-blue-600 hover:text-blue-800">
                         {{ __('dashboard.recent_cases') }}
                     </button>
                 </div>
@@ -510,7 +528,7 @@
                         </div>
                     </div>
                     @empty
-                    <div class="p-4 text-sm text-slate-500 border border-dashed border-slate-200 rounded-xl">
+                    <div class="p-4  text-slate-500 border border-dashed border-slate-200 rounded-xl">
                         {{ __('dashboard.no_decisions') }}
                     </div>
                     @endforelse
@@ -518,6 +536,22 @@
             </div>
         </div>
      
+        <style>
+            .panel-toggle.active {
+                background: linear-gradient(135deg, #f97316, #ffb347);
+            }
+        </style>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const toggles = document.querySelectorAll('.panel-toggle');
+                toggles.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        toggles.forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                    });
+                });
+            });
+        </script>
     </div>
    {{-- Quick Tips Section (Optional) --}}
         <div class="p-6 rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50">
@@ -529,16 +563,16 @@
             </div>
             <div class="space-y-4">
                 <div class="bg-white/80 backdrop-blur-sm rounded-xl p-4">
-                    <div class="text-sm font-medium text-slate-900 mb-2">{{ __('dashboard.tip1_title') }}</div>
-                    <p class="text-sm text-slate-600">{{ __('dashboard.tip1_description') }}</p>
+                    <div class=" font-medium text-slate-900 mb-2">{{ __('dashboard.tip1_title') }}</div>
+                    <p class=" text-slate-600">{{ __('dashboard.tip1_description') }}</p>
                 </div>
                 <div class="bg-white/80 backdrop-blur-sm rounded-xl p-4">
-                    <div class="text-sm font-medium text-slate-900 mb-2">{{ __('dashboard.tip2_title') }}</div>
-                    <p class="text-sm text-slate-600">{{ __('dashboard.tip2_description') }}</p>
+                    <div class=" font-medium text-slate-900 mb-2">{{ __('dashboard.tip2_title') }}</div>
+                    <p class=" text-slate-600">{{ __('dashboard.tip2_description') }}</p>
                 </div>
                 <div class="bg-white/80 backdrop-blur-sm rounded-xl p-4">
-                    <div class="text-sm font-medium text-slate-900 mb-2">{{ __('dashboard.tip3_title') }}</div>
-                    <p class="text-sm text-slate-600">{{ __('dashboard.tip3_description') }}</p>
+                    <div class=" font-medium text-slate-900 mb-2">{{ __('dashboard.tip3_title') }}</div>
+                    <p class=" text-slate-600">{{ __('dashboard.tip3_description') }}</p>
                 </div>
             </div>
         </div>

@@ -59,10 +59,15 @@ class ProfileController extends Controller
         //     $validated['password'] = Hash::make($validated['password']);
         // }
 
+        // Reset verification if email changes
+        if (isset($validated['email']) && $validated['email'] !== $user->email) {
+            $user->email_verified_at = null;
+        }
+
         // Persist
         $user->fill($validated)->save();
 
-        return back()->with('success', 'Profile updated.');
+        return redirect()->route('profile.edit')->with('success', 'Profile updated.');
     }
 
     /**
@@ -70,7 +75,7 @@ class ProfileController extends Controller
      */
     public function destroy(Request $request)
     {
-        $request->validate([
+        $request->validateWithBag('userDeletion', [
             'password' => ['required', 'current_password'],
         ]);
 
@@ -94,6 +99,6 @@ class ProfileController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login')->with('success', 'Your account has been deleted.');
+        return redirect('/')->with('success', 'Your account has been deleted.');
     }
 }

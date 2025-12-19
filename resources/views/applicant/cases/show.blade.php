@@ -165,25 +165,25 @@
         <section class="lg:col-span-2 rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-5">
             @php $reviewStatus = $reviewStatus ?? ($case->review_status ?? 'accepted'); @endphp
             @if($reviewStatus === 'returned')
-            <div class="rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-900">
+            <div class="rounded-lg border border-yellow-200 bg-yellow-50 p-3  text-yellow-900">
                 This case needs corrections based on the reviewer note above. Update your filing and resubmit.
             </div>
             @elseif($reviewStatus === 'rejected')
-            <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-900">
+            <div class="rounded-lg border border-red-200 bg-red-50 p-3  text-red-900">
                 This case has been rejected. Please review the reviewer note above for details.
             </div>
             @elseif($reviewStatus === 'awaiting_review')
-            <div class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            <div class="rounded-lg border border-amber-200 bg-amber-50 p-3  text-amber-900">
                 Your submission is awaiting admin approval. We will notify you once a decision is made.
             </div>
             @endif
 
             {{-- CASE INFO --}}
             <div>
-                <h3 class="text-sm font-semibold text-slate-800 mb-3">
+                <h3 class=" font-semibold text-slate-800 mb-3">
                     {{ __('cases.case_information') }}
                 </h3>
-                <dl class="grid md:grid-cols-2 gap-4 text-sm">
+                <dl class="grid md:grid-cols-2 gap-4 ">
                     <div>
                         <dt class="text-slate-500">{{ __('Applicant Full Name') }}</dt>
                         <dd class="font-medium text-slate-900">{{ $case->title ?: ($applicantUser->full_name ?? $applicantUser->name ?? '-') }}</dd>
@@ -210,10 +210,10 @@
             {{-- RESPONDENT (CONDITIONAL) --}}
             @if(!empty($case->respondent_name) || !empty($case->respondent_address))
             <div>
-                <h3 class="text-sm font-semibold text-slate-800 mb-3">
+                <h3 class=" font-semibold text-slate-800 mb-3">
                     {{ __('cases.respondent_defendant') }}
                 </h3>
-                <div class="grid md:grid-cols-2 gap-4 text-sm">
+                <div class="grid md:grid-cols-2 gap-4 ">
                     <div>
                         <div class="text-slate-500">{{ __('cases.name') }}</div>
                         <div class="font-medium text-slate-900">{{ $case->respondent_name ?? '—' }}</div>
@@ -228,10 +228,10 @@
 
             {{-- DESCRIPTION (rich HTML, justified, no typography overrides) --}}
             <div>
-                <h3 class="text-sm font-semibold text-slate-800 mb-2">
+                <h3 class=" font-semibold text-slate-800 mb-2">
                     {{ __('cases.case_details') }}
                 </h3>
-                <div class="tiny-content text-sm text-slate-800">
+                <div class="tiny-content  text-slate-800">
                     {!! clean($case->description ?? '', 'cases') !!}
                 </div>
             </div>
@@ -239,10 +239,10 @@
             {{-- RELIEF (CONDITIONAL, rich HTML, justified) --}}
             @if(!empty($case->relief_requested))
             <div>
-                <h2 class="text-sm font-semibold text-slate-800 mb-2">
+                <h2 class=" font-semibold text-slate-800 mb-2">
                     {{ __('cases.relief_requested') }}
                 </h2>
-                <div class="tiny-content text-sm text-slate-800">
+                <div class="tiny-content  text-slate-800">
                     {!! clean($case->relief_requested ?? '', 'cases') !!}
                 </div>
             </div>
@@ -251,7 +251,7 @@
             {{-- SUBMITTED DOCUMENTS --}}
             <div>
                 <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-sm font-semibold text-slate-800">
+                    <h3 class=" font-semibold text-slate-800">
                         {{ __('cases.submitted_documents') }}
                     </h3>
                     <span class="text-[11px] text-slate-500">
@@ -260,11 +260,11 @@
                 </div>
 
                 @if(($docs ?? collect())->isEmpty())
-                <div class="rounded-lg border border-dashed border-slate-300 py-10 text-center text-slate-500 text-sm">
+                <div class="rounded-lg border border-dashed border-slate-300 py-10 text-center text-slate-500 ">
                     {{ __('cases.no_submitted_documents') }}
                 </div>
                 @else
-                <ul class="divide-y divide-slate-100 text-sm">
+                <ul class="divide-y divide-slate-100 ">
                     @foreach($docs as $d)
                     @php
                     $docPath = $d->file_path ?? $d->path ?? null;
@@ -303,7 +303,7 @@
             {{-- WITNESSES --}}
             <div>
                 <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-sm font-semibold text-slate-800">
+                    <h3 class=" font-semibold text-slate-800">
                         {{ __('cases.witnesses_section.title') }}
                     </h3>
                     <span class="text-[11px] text-slate-500">
@@ -312,12 +312,12 @@
                 </div>
 
                 @if(($witnesses ?? collect())->isEmpty())
-                <div class="rounded-lg border border-dashed border-slate-300 py-10 text-center text-slate-500 text-sm">
+                <div class="rounded-lg border border-dashed border-slate-300 py-10 text-center text-slate-500 ">
                     {{ __('cases.no_witnesses_listed') }}
                 </div>
                 @else
                 <div class="overflow-x-auto -mx-2 md:mx-0">
-                    <table class="min-w-full text-sm border-collapse">
+                    <table class="min-w-full  border-collapse">
                         <thead>
                             <tr class="bg-slate-50 text-slate-600">
                                 <th class="px-3 py-2 text-left font-medium border-b border-slate-200">
@@ -370,7 +370,7 @@
             {{-- HEARINGS --}}
             <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-lg">
                 <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-sm font-semibold text-slate-800">
+                    <h3 class=" font-semibold text-slate-800">
                         {{ __('cases.hearings.title') }}
                     </h3>
                     <span class="text-[11px] text-slate-500">
@@ -379,11 +379,11 @@
                 </div>
 
                 @if(($hearings ?? collect())->isEmpty())
-                <div class="rounded-lg border border-dashed border-slate-300 py-8 text-center text-slate-500 text-sm">
+                <div class="rounded-lg border border-dashed border-slate-300 py-8 text-center text-slate-500 ">
                     {{ __('cases.no_hearings_scheduled') }}
                 </div>
                 @else
-                <ul class="space-y-3 text-sm max-h-64 overflow-y-auto pr-1">
+                <ul class="space-y-3  max-h-64 overflow-y-auto pr-1">
                     @foreach(($hearings ?? collect()) as $h)
                     <li class="group flex items-start justify-between gap-4 rounded-lg border border-slate-200 bg-white p-3 hover:border-blue-300 hover:bg-slate-50 transition-colors">
                         <div class="flex items-start gap-3">
@@ -436,7 +436,7 @@
             {{-- LETTERS --}}
             <aside class="rounded-xl border border-slate-200 bg-white p-5 shadow-lg">
                 <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-sm font-semibold text-slate-800">
+                    <h3 class=" font-semibold text-slate-800">
                         Letters
                     </h3>
                     <span class="text-[11px] text-slate-500">
@@ -444,7 +444,7 @@
                     </span>
                 </div>
                 @if(($letters ?? collect())->isEmpty())
-                <div class="text-slate-500 text-sm border border-dashed border-slate-300 rounded-lg p-6 text-center bg-slate-50">
+                <div class="text-slate-500  border border-dashed border-slate-300 rounded-lg p-6 text-center bg-slate-50">
                     No letters for this case yet.
                 </div>
                 @else
@@ -494,11 +494,65 @@
                 @endif
             </aside>
 
+            {{-- RESPONDENT RESPONSES --}}
+            <aside class="rounded-xl border border-slate-200 bg-white p-5 shadow-lg">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class=" font-semibold text-slate-800">
+                        Respondent Responses
+                    </h3>
+                    <span class="text-[11px] text-slate-500">
+                        {{ ($respondentResponses ?? collect())->count() }}
+                    </span>
+                </div>
+                @if(($respondentResponses ?? collect())->isEmpty())
+                    <div class="text-slate-500  border border-dashed border-slate-300 rounded-lg p-6 text-center bg-slate-50">
+                        No responses for this case yet.
+                    </div>
+                @else
+                    <div class="space-y-3 max-h-64 overflow-y-auto pr-1">
+                        @foreach($respondentResponses as $response)
+                            <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                <div class="flex items-start justify-between gap-2">
+                                    <div class="space-y-1">
+                                        <div class="font-semibold text-slate-900">
+                                            {{ $response->title ?? 'Response' }}
+                                        </div>
+                                        <div class="text-xs text-slate-600">
+                                            Case #: {{ $response->case_number ?? $case->case_number }}
+                                        </div>
+                                    </div>
+                                    <div class="text-xs text-slate-500 text-right">
+                                        {{ \App\Support\EthiopianDate::format($response->created_at, withTime: true) }}
+                                    </div>
+                                </div>
+                                @if(!empty($response->description))
+                                    <p class="mt-2  text-slate-700">
+                                        {{ \Illuminate\Support\Str::limit(strip_tags($response->description), 180) }}
+                                    </p>
+                                @endif
+                                  <div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                                      <a href="{{ route('applicant.cases.respondentResponses.show', [$case->id, $response->id]) }}"
+                                          class="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-blue-200 bg-blue-50 text-blue-700 font-semibold text-[11px] hover:bg-blue-100">
+                                          {{ __('cases.view') }}
+                                      </a>
+                                      @if(!empty($response->pdf_path))
+                                      <a href="{{ route('applicant.respondent.responses.download', $response->id) }}"
+                                          class="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-slate-300 bg-white text-slate-700 font-semibold text-[11px] hover:bg-slate-50">
+                                          {{ __('cases.download_pdf') }}
+                                      </a>
+                                      @endif
+                                  </div>
+                              </div>
+                          @endforeach
+                      </div>
+                @endif
+            </aside>
+
             {{-- MESSAGES --}}
             <aside class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                     <div>
-                        <h3 class="text-sm font-semibold text-slate-800">
+                        <h3 class=" font-semibold text-slate-800">
                             {{ __('cases.messages_section.title') }}
                         </h3>
                         <p class="text-xs text-slate-500">
@@ -510,7 +564,7 @@
                     </span>
                 </div>
 
-                <div class="space-y-3 max-h-80 overflow-auto pr-1.5 text-sm">
+                <div class="space-y-3 max-h-80 overflow-auto pr-1.5 ">
                     @forelse(($msgs ?? collect()) as $m)
                     <div class="flex {{ $m->sender_applicant_id ? 'justify-end' : 'justify-start' }}">
                         <div class="relative w-full max-w-[80%] rounded-2xl border px-4 py-3 shadow-sm transition hover:shadow-lg
@@ -545,13 +599,13 @@
                                     {{ $m->sender_applicant_id ? __('cases.sent') : __('cases.received') }}
                                 </span>
                             </div>
-                            <p class="mt-2 text-sm text-slate-800 whitespace-pre-line">
+                            <p class="mt-2  text-slate-800 whitespace-pre-line">
                                 {{ $m->body }}
                             </p>
                         </div>
                     </div>
                     @empty
-                    <div class="rounded-2xl border border-dashed border-slate-200 py-10 text-center text-slate-500 text-sm">
+                    <div class="rounded-2xl border border-dashed border-slate-200 py-10 text-center text-slate-500 ">
                         {{ __('cases.no_messages_yet') }}
                     </div>
                     @endforelse
@@ -566,13 +620,13 @@
                         name="body"
                         rows="4"
                         placeholder="{{ __('cases.write_message_placeholder') }}"
-                        class="w-full rounded-2xl border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+                        class="w-full rounded-2xl border border-slate-300 px-3 py-2  text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
                         required></textarea>
                     @error('body')
                     <p class="text-xs text-red-600">{{ $message }}</p>
                     @enderror
                     <button
-                        class="w-full rounded-2xl bg-gradient-to-r from-orange-500 to-rose-500 px-3 py-2 text-sm font-semibold text-white shadow-md transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-1">
+                        class="w-full rounded-2xl bg-gradient-to-r from-orange-500 to-rose-500 px-3 py-2  font-semibold text-white shadow-md transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-1">
                         {{ __('cases.send') }}
                     </button>
                 </form>
@@ -581,15 +635,15 @@
             {{-- CASE AUDIT --}}
             <aside class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-sm font-semibold text-slate-800">Case Audit Trail</h3>
+                    <h3 class=" font-semibold text-slate-800">Case Audit Trail</h3>
                     <span class="text-[11px] text-slate-500">{{ ($audits ?? collect())->count() }}</span>
                 </div>
                 @if(($audits ?? collect())->isEmpty())
-                <div class="text-slate-500 text-sm border border-dashed border-slate-300 rounded-lg p-4 text-center bg-slate-50">
+                <div class="text-slate-500  border border-dashed border-slate-300 rounded-lg p-4 text-center bg-slate-50">
                     No audit records yet.
                 </div>
                 @else
-                <div class="max-h-64 overflow-y-auto space-y-3 text-sm">
+                <div class="max-h-64 overflow-y-auto space-y-3 ">
                     @foreach($audits as $a)
                     @php $meta = $a->meta ? json_decode($a->meta, true) : []; @endphp
                     <div class="p-3 rounded-lg border border-slate-200 bg-slate-50">

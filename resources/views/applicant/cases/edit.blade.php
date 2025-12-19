@@ -16,7 +16,7 @@
         <h1 class="text-2xl md:text-3xl font-semibold text-slate-900">
             {{ __('cases.edit_title', ['no' => $case->case_number]) }}
         </h1>
-        <p class="mt-1 text-sm text-slate-500">
+        <p class="mt-1  text-slate-500">
             {{ __('cases.hints.edit_page_subtitle') ?? __('cases.hints.edit_only_pending') }}
         </p>
     </div>
@@ -70,7 +70,7 @@
                     </div>
 
                     @unless($editable)
-                    <div class="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                    <div class="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2  text-amber-800">
                         {{ __('cases.not_pending_readonly') }}
                     </div>
                     @endunless
@@ -78,20 +78,20 @@
 
                 {{-- Case details --}}
                 <div class="mt-6 rounded-xl border border-slate-200 bg-white p-5 space-y-5 shadow-sm">
-                    <h2 class="text-sm font-semibold text-slate-800">
+                    <h2 class=" font-semibold text-slate-800">
                         {{ __('cases.section.case_details') }}
                     </h2>
 
                     <div class="grid md:grid-cols-2 gap-4">
                         <div class="md:col-span-2">
-                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                            <label class="block  font-medium text-slate-700 mb-1">
                                 {{ __('cases.labels.title') }} <span class="text-red-600">*</span>
                             </label>
                             <input
                                 name="title"
                                 value="{{ old('title', $case->title) }}"
                                 required
-                                class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900
+                                class="w-full rounded-lg border border-slate-300 px-3 py-2.5  text-slate-900
                                        focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
                                        disabled:bg-slate-100 disabled:text-slate-500"
                                 :disabled="!canEdit" {{ $editable ? '' : 'disabled' }}>
@@ -101,7 +101,7 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                            <label class="block  font-medium text-slate-700 mb-1">
                                 {{ __('cases.labels.filing_date') }} <span class="text-red-600">*</span>
                             </label>
                             <input
@@ -109,7 +109,7 @@
                                 name="filing_date"
                                 value="{{ old('filing_date', $case->filing_date) }}"
                                 required
-                                class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900
+                                class="w-full rounded-lg border border-slate-300 px-3 py-2.5  text-slate-900
                                        focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
                                        disabled:bg-slate-100 disabled:text-slate-500"
                                 :disabled="!canEdit" {{ $editable ? '' : 'disabled' }}>
@@ -128,7 +128,7 @@
                                 this.prefix = (cleaned.slice(0,4) || 'CASE').toUpperCase();
                             }
                         }">
-                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                            <label class="block  font-medium text-slate-700 mb-1">
                                 {{ __('cases.labels.case_type') }} <span class="text-red-600">*</span>
                             </label>
                             <select
@@ -136,7 +136,7 @@
                                 @change="updatePrefix()"
                                 name="case_type_id"
                                 required
-                                class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white
+                                class="w-full rounded-lg border border-slate-300 px-3 py-2.5  text-slate-900 bg-white
                                        focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
                                        disabled:bg-slate-100 disabled:text-slate-500"
                                 :disabled="!canEdit" {{ $editable ? '' : 'disabled' }}>
@@ -159,13 +159,13 @@
                     {{-- Respondent --}}
                     <div class="grid md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                            <label class="block  font-medium text-slate-700 mb-1">
                                 {{ __('cases.labels.respondent_name') }}
                             </label>
                             <input
                                 name="respondent_name"
                                 value="{{ old('respondent_name', $case->respondent_name) }}"
-                                class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900
+                                class="w-full rounded-lg border border-slate-300 px-3 py-2.5  text-slate-900
                                        focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
                                        disabled:bg-slate-100 disabled:text-slate-500"
                                 :disabled="!canEdit" {{ $editable ? '' : 'disabled' }}>
@@ -174,13 +174,13 @@
                             @enderror
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                            <label class="block  font-medium text-slate-700 mb-1">
                                 {{ __('cases.labels.respondent_address') }}
                             </label>
                             <input
                                 name="respondent_address"
                                 value="{{ old('respondent_address', $case->respondent_address) }}"
-                                class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900
+                                class="w-full rounded-lg border border-slate-300 px-3 py-2.5  text-slate-900
                                        focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
                                        disabled:bg-slate-100 disabled:text-slate-500"
                                 :disabled="!canEdit" {{ $editable ? '' : 'disabled' }}>
@@ -193,7 +193,7 @@
                     {{-- Description --}}
                     <div>
                         <div class="flex items-center justify-between gap-2">
-                            <label class="block text-sm font-medium text-slate-700">
+                            <label class="block  font-medium text-slate-700">
                                 {{ __('cases.labels.description') }} <span class="text-red-600">*</span>
                             </label>
                             <div id="desc-counter" class="text-[11px] text-slate-500 mt-0.5">
@@ -205,7 +205,7 @@
                             name="description"
                             rows="16"
                             required
-                            class="mt-1 w-full rounded-lg border border-slate-300 text-sm text-slate-900
+                            class="mt-1 w-full rounded-lg border border-slate-300  text-slate-900
                                    disabled:bg-slate-100 disabled:text-slate-500"
                             :disabled="!canEdit" {{ $editable ? '' : 'disabled' }}>{{ old('description', $case->description) }}</textarea>
                         @error('description')
@@ -216,7 +216,7 @@
                     {{-- Relief --}}
                     <div>
                         <div class="flex items-center justify-between gap-2">
-                            <label class="block text-sm font-medium text-slate-700">
+                            <label class="block  font-medium text-slate-700">
                                 {{ __('cases.labels.relief_requested') }}
                             </label>
                             <div id="relief-counter" class="text-[11px] text-slate-500 mt-0.5">
@@ -227,14 +227,14 @@
                             id="editor-relief"
                             name="relief_requested"
                             rows="12"
-                            class="mt-1 w-full rounded-lg border border-slate-300 text-sm text-slate-900
+                            class="mt-1 w-full rounded-lg border border-slate-300  text-slate-900
                                    disabled:bg-slate-100 disabled:text-slate-500"
                             :disabled="!canEdit" {{ $editable ? '' : 'disabled' }}>{{ old('relief_requested', $case->relief_requested) }}</textarea>
                         @error('relief_requested')
                         <div class="text-xs text-red-600 mt-1">{{ $message }}</div>
                         @enderror
 
-                        <label class="flex items-start gap-2 text-sm text-slate-700 mt-3">
+                        <label class="flex items-start gap-2  text-slate-700 mt-3">
                             <input type="checkbox" name="certify_appeal" value="1"
                                 class="mt-1 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
                                 {{ old('certify_appeal', true) ? 'checked' : '' }}
@@ -250,7 +250,7 @@
                 {{-- Add NEW documents --}}
                 <div class="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                     <div class="flex items-center justify-between">
-                        <h2 class="text-sm font-semibold text-slate-800">
+                        <h2 class=" font-semibold text-slate-800">
                             {{ __('cases.section.add_documents') }}
                         </h2>
                         <button type="button" @click="docRows++"
@@ -265,7 +265,7 @@
                             <input
                                 name="evidence_titles[]"
                                 :placeholder="`{{ __('cases.placeholders.document_title') }}`"
-                                class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900
+                                class="w-full rounded-lg border border-slate-300 px-3 py-2.5  text-slate-900
                                        focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
                                        disabled:bg-slate-100 disabled:text-slate-500"
                                 :disabled="!canEdit">
@@ -273,7 +273,7 @@
                                 type="file"
                                 name="evidence_files[]"
                                 accept="application/pdf"
-                                class="w-full rounded-lg border border-slate-300 px-2.5 py-2 text-sm text-slate-900 bg-white
+                                class="w-full rounded-lg border border-slate-300 px-2.5 py-2  text-slate-900 bg-white
                                        focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500
                                        disabled:bg-slate-100 disabled:text-slate-500"
                                 :disabled="!canEdit">
@@ -287,7 +287,7 @@
                 {{-- Add NEW witnesses --}}
                 <div class="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                     <div class="flex items-center justify-between mb-3">
-                        <h2 class="text-sm font-semibold text-slate-800">
+                        <h2 class=" font-semibold text-slate-800">
                             {{ __('cases.section.witnesses') }}
                         </h2>
                         <button type="button" @click="witRows++"
@@ -311,7 +311,7 @@
                                 :name="'witnesses['+(i-1)+'][full_name]'"
                                 value="{{ old('witnesses.0.full_name') }}"
                                 :placeholder="`{{ __('cases.placeholders.full_name') }}`"
-                                class="px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-sm text-slate-900 md:col-span-2
+                                class="px-3 py-2.5 rounded-lg bg-white border border-slate-300  text-slate-900 md:col-span-2
                                        focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
                                        disabled:bg-slate-100 disabled:text-slate-500"
                                 :disabled="!canEdit">
@@ -320,7 +320,7 @@
                                 :name="'witnesses['+(i-1)+'][phone]'"
                                 value="{{ old('witnesses.0.phone') }}"
                                 :placeholder="`{{ __('cases.placeholders.phone') }}`"
-                                class="px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-sm text-slate-900
+                                class="px-3 py-2.5 rounded-lg bg-white border border-slate-300  text-slate-900
                                        focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
                                        disabled:bg-slate-100 disabled:text-slate-500"
                                 :disabled="!canEdit">
@@ -330,7 +330,7 @@
                                 :name="'witnesses['+(i-1)+'][email]'"
                                 value="{{ old('witnesses.0.email') }}"
                                 :placeholder="`{{ __('cases.placeholders.email') }}`"
-                                class="px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-sm text-slate-900
+                                class="px-3 py-2.5 rounded-lg bg-white border border-slate-300  text-slate-900
                                        focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
                                        disabled:bg-slate-100 disabled:text-slate-500"
                                 :disabled="!canEdit">
@@ -339,7 +339,7 @@
                                 :name="'witnesses['+(i-1)+'][address]'"
                                 value="{{ old('witnesses.0.address') }}"
                                 :placeholder="`{{ __('cases.placeholders.address') }}`"
-                                class="px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-sm text-slate-900 md:col-span-2
+                                class="px-3 py-2.5 rounded-lg bg-white border border-slate-300  text-slate-900 md:col-span-2
                                        focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
                                        disabled:bg-slate-100 disabled:text-slate-500"
                                 :disabled="!canEdit">
@@ -360,7 +360,7 @@
                     @enderror
                 </div>
 
-                <label class="mt-4 flex items-start gap-2 text-sm text-slate-700">
+                <label class="mt-4 flex items-start gap-2  text-slate-700">
                     <input type="checkbox" name="certify_evidence" value="1"
                         class="mt-1 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
                         {{ old('certify_evidence', true) ? 'checked' : '' }}
@@ -375,7 +375,7 @@
                 <div class="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                     @if($editable)
                     <button
-                        class="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-1">
+                        class="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-orange-500 px-4 py-2.5  font-semibold text-white hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-1">
                         {{ __('cases.buttons.save_changes') }}
                     </button>
                     <p class="mt-2 text-xs text-slate-500">
@@ -383,7 +383,7 @@
                     </p>
                     @else
                     <button
-                        class="w-full rounded-lg bg-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 cursor-not-allowed"
+                        class="w-full rounded-lg bg-slate-300 px-4 py-2.5  font-semibold text-slate-700 cursor-not-allowed"
                         disabled>
                         {{ __('cases.buttons.save_changes') }}
                     </button>
@@ -401,7 +401,7 @@
             {{-- Existing documents --}}
             <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-sm font-semibold text-slate-800">
+                    <h3 class=" font-semibold text-slate-800">
                         {{ __('cases.section.existing_documents') }}
                     </h3>
                     <span class="text-[11px] text-slate-500">
@@ -410,12 +410,12 @@
                 </div>
 
                 @if(($docs ?? collect())->isEmpty())
-                <div class="mt-2 text-sm text-slate-500">
+                <div class="mt-2  text-slate-500">
                     {{ __('cases.empty.no_documents') }}
                 </div>
                 @else
                 <div class="overflow-x-auto -mx-3 md:mx-0">
-                    <table class="min-w-full text-sm border-collapse">
+                    <table class="min-w-full  border-collapse">
                         <thead>
                             <tr class="bg-slate-50 text-slate-600">
                                 <th class="text-left font-medium px-3 py-2 border-b border-slate-200">
@@ -475,7 +475,7 @@
             {{-- Existing witnesses --}}
             <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-sm font-semibold text-slate-800">
+                    <h3 class=" font-semibold text-slate-800">
                         {{ __('cases.section.existing_witnesses') }}
                     </h3>
                     <span class="text-[11px] text-slate-500">
@@ -484,12 +484,12 @@
                 </div>
 
                 @if(($witnesses ?? collect())->isEmpty())
-                <div class="mt-2 text-sm text-slate-500">
+                <div class="mt-2  text-slate-500">
                     {{ __('cases.empty.no_witnesses') }}
                 </div>
                 @else
                 <div class="overflow-x-auto -mx-3 md:mx-0">
-                    <table class="min-w-full text-sm border-collapse">
+                    <table class="min-w-full  border-collapse">
                         <thead>
                             <tr class="bg-slate-50 text-slate-600">
                                 <th class="text-left font-medium px-3 py-2 border-b border-slate-200">

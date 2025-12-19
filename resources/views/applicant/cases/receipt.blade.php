@@ -37,11 +37,11 @@
     <div class="max-w-3xl mx-auto my-8 px-4">
         <div class="no-print mb-4 flex items-center justify-between">
             <a href="{{ route('applicant.cases.show', $case->id) }}"
-                class="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50">
+                class="rounded-md border border-slate-200 bg-white px-3 py-2  hover:bg-slate-50">
                 Back to case
             </a>
             <button onclick="window.print()"
-                class="rounded-md bg-slate-800 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700">
+                class="rounded-md bg-slate-800 px-3 py-2  font-medium text-white hover:bg-slate-700">
                 Print receipt
             </button>
         </div>
@@ -50,7 +50,7 @@
             <div class="flex items-start justify-between">
                 <div>
                     <h1 class="text-xl font-semibold tracking-tight">Filing Receipt</h1>
-                    <div class="mt-1 text-sm text-slate-500">{{ config('app.name','Court-MS') }}</div>
+                    <div class="mt-1  text-slate-500">{{ config('app.name','Court-MS') }}</div>
                 </div>
                 <div class="text-right">
                     <div class="text-xs text-slate-500">Case #</div>
@@ -69,23 +69,23 @@
             <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-slate-600">
                 <div class="rounded-lg bg-slate-50 border border-slate-100 px-3 py-2">
                     <div class="uppercase tracking-wide font-semibold text-[11px] text-slate-500">Filed on</div>
-                    <div class="text-sm font-semibold text-slate-800">{{ \App\Support\EthiopianDate::format($filingDate) }}</div>
+                    <div class=" font-semibold text-slate-800">{{ \App\Support\EthiopianDate::format($filingDate) }}</div>
                 </div>
                 <div class="rounded-lg bg-slate-50 border border-slate-100 px-3 py-2">
                     <div class="uppercase tracking-wide font-semibold text-[11px] text-slate-500">Documents</div>
-                    <div class="text-sm font-semibold text-slate-800">{{ $evidenceDocs->count() }}</div>
+                    <div class=" font-semibold text-slate-800">{{ $evidenceDocs->count() }}</div>
                 </div>
                 <div class="rounded-lg bg-slate-50 border border-slate-100 px-3 py-2">
                     <div class="uppercase tracking-wide font-semibold text-[11px] text-slate-500">Witnesses</div>
-                    <div class="text-sm font-semibold text-slate-800">{{ $witnesses->count() }}</div>
+                    <div class=" font-semibold text-slate-800">{{ $witnesses->count() }}</div>
                 </div>
                 <div class="rounded-lg bg-slate-50 border border-slate-100 px-3 py-2">
                     <div class="uppercase tracking-wide font-semibold text-[11px] text-slate-500">Hearings</div>
-                    <div class="text-sm font-semibold text-slate-800">{{ $hearings->count() }}</div>
+                    <div class=" font-semibold text-slate-800">{{ $hearings->count() }}</div>
                 </div>
             </div>
 
-            <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 ">
                 <div>
                     <div class="text-slate-500">Applicant</div>
                     <div class="font-medium">
@@ -127,12 +127,12 @@
             <hr class="my-6 border-slate-200">
 
             <div>
-                <div class="text-slate-500 text-sm">Case details</div>
-                <p class="mt-1 text-sm leading-relaxed whitespace-pre-line">{{ $case->description }}</p>
+                <div class="text-slate-500 ">Case details</div>
+                <p class="mt-1  leading-relaxed whitespace-pre-line">{{ $case->description }}</p>
                 @if($case->relief_requested)
                 <div class="mt-3">
-                    <div class="text-slate-500 text-sm">Relief requested</div>
-                    <p class="text-sm whitespace-pre-line">{{ $case->relief_requested }}</p>
+                    <div class="text-slate-500 ">Relief requested</div>
+                    <p class=" whitespace-pre-line">{{ $case->relief_requested }}</p>
                 </div>
                 @endif
             </div>
@@ -140,11 +140,11 @@
             <div class="mt-6 grid md:grid-cols-2 gap-6">
                 {{-- Witnesses --}}
                 <div>
-                    <h3 class="text-sm font-semibold text-slate-700 mb-2">Human Evidence / Testimony</h3>
+                    <h3 class=" font-semibold text-slate-700 mb-2">Human Evidence / Testimony</h3>
                     @if($witnesses->isEmpty())
-                    <div class="text-sm text-slate-500">None provided.</div>
+                    <div class=" text-slate-500">None provided.</div>
                     @else
-                    <ul class="space-y-2 text-sm">
+                    <ul class="space-y-2 ">
                         @foreach($witnesses as $w)
                         <li class="rounded-md border border-slate-200 p-2">
                             <div class="font-medium text-slate-900">{{ $w->full_name }}</div>
@@ -162,11 +162,11 @@
 
                 {{-- Document evidences --}}
                 <div>
-                    <h3 class="text-sm font-semibold text-slate-700 mb-2">List of Evidence (Documents)</h3>
+                    <h3 class=" font-semibold text-slate-700 mb-2">List of Evidence (Documents)</h3>
                     @if($evidenceDocs->isEmpty())
-                    <div class="text-sm text-slate-500">None uploaded.</div>
+                    <div class=" text-slate-500">None uploaded.</div>
                     @else
-                    <ul class="space-y-2 text-sm">
+                    <ul class="space-y-2 ">
                         @foreach($evidenceDocs as $d)
                         @php
                             $docTitle = $d->title ?? basename($d->file_path);
@@ -190,10 +190,10 @@
             {{-- Optional: recent uploads --}}
             @if(!$files->isEmpty())
             <div class="mt-6">
-                <h3 class="text-sm font-semibold text-slate-700 mb-2">Additional files</h3>
+                <h3 class=" font-semibold text-slate-700 mb-2">Additional files</h3>
                 <ul class="divide-y border rounded-md">
                     @foreach($files as $f)
-                    <li class="flex items-center justify-between p-2 text-sm">
+                    <li class="flex items-center justify-between p-2 ">
                         <div>
                             <div class="font-medium">{{ $f->label ?? basename($f->path) }}</div>
                             <div class="text-xs text-slate-500">
@@ -210,8 +210,8 @@
             {{-- Upcoming hearing (if any) --}}
             @if(!$hearings->isEmpty())
             <div class="mt-6">
-                <h3 class="text-sm font-semibold text-slate-700 mb-2">Hearings</h3>
-                <ul class="space-y-2 text-sm">
+                <h3 class=" font-semibold text-slate-700 mb-2">Hearings</h3>
+                <ul class="space-y-2 ">
                     @foreach($hearings as $h)
                     <li class="flex items-center justify-between rounded-md border border-slate-200 p-2">
                         <div>

@@ -23,7 +23,7 @@ return [
     'respondent_address_placeholder' => 'ተከሳሽ/መልስ ሰጭ አድራሻ ያስገቡ',
     'case_type' => 'የመዝገብ  ዓይነት',
     'select_option' => 'ምረጥ',
-    'relief_requested' => 'የሚጠይቁት ዳኝነት / ፍርድ',
+    'relief_requested' => 'የተጠየቀ ዳኝነት',
     'word_limit' => ':limit ቃላት ጠቅላላ',
     'evidence_documents' => 'የማስረጃ ዝርዝር (ሰነዶች)',
     'add_document' => 'ሰነድ ጨምር',
@@ -57,6 +57,8 @@ return [
     'respondent_defendant' => 'የተከሰሰ / ተከሳሽ',
     'name' => 'ስም',
     'address' => 'አድራሻ',
+        'summary' => '?????',
+        'not_available' => '???',
     'submitted_documents' => 'የቀረቡ ሰነዶች',
     'items' => 'እቃዎች',
     'no_submitted_documents' => 'ምንም የቀረቡ ሰነዶች የሉም።',
@@ -92,12 +94,20 @@ return [
         'phone' => 'ስልክ',
         'email' => 'ኢሜል',
         'address' => 'አድራሻ',
+        'summary' => '?????',
+        'not_available' => '???',
     ],
 
     'buttons' => [
         'add_row' => 'ሰነድ ጨምር',
         'add_witness' => 'ምስክር ጨምር',
         'save_changes' => 'ለውጦችን መዝግብ',
+        'cancel' => '???',
+        'submit' => '??',
+        'update' => '????',
+    ],
+    'forms' => [
+        'provide_details' => '????? ???? ???',
     ],
 
     'placeholders' => [
@@ -107,6 +117,8 @@ return [
         'phone' => 'ስልክ',
         'email' => 'ኢሜል',
         'address' => 'አድራሻ',
+        'summary' => '?????',
+        'not_available' => '???',
     ],
     'empty' => [
         'no_documents' => 'እስካሁን ሰነዶች የሉም።',
@@ -179,11 +191,12 @@ return [
         'case_summary' => 'የ መዝገብ ማጠቃለያ',
         'case_details' => 'የ መዝገብ ዝርዝር',
         'submitted_documents' => 'የቀረቡ ሰነዶች',
-        'uploaded_files' => 'የተጫኑ ፋይሎች',
+        'uploaded_files' => 'ተጨማሪ የሰነድ ማስረጃዎች',
         'witnesses' => 'ምስክሮች',
         'hearings' => 'ችሎት የሚሰማት ቀኖች',
         'timeline' => 'የመገብ ሂደት',
         'messages' => 'መልዕክቶች',
+        'respondent_responses' => 'የተጠሪ መልሶች',
     ],
 
     'summary' => [
@@ -194,10 +207,12 @@ return [
         'applicant' => 'ይግባኝ ባይ /አመልካች',
         'applicant_email' => 'አመልካች ኢሜይል',
         'assignee' => 'መዝገቡ የተመደበበት ችሎት',
+        'team' => 'ቡድን',
         'unassigned' => 'አልተመደበም',
         'created' => 'ተፈጥሯል',
         'updated' => 'ተሻሽሏል',
         'assigned_at' => 'ተመድቧል በ',
+        'hearings' => 'ችሎት የሚሰማት ቀኖች',
     ],
 
     'details' => [
@@ -302,4 +317,8 @@ return [
     'applicant_full_name' => 'Applicant full name',
     'applicant_email' => 'Applicant email',
     'no_audit_records' => 'No audit records yet.',
+    'respondent_response' => 'የተከሳሹ ምላሽ',
+    'respondent_responses' => 'የተከሳሾች ምላሾች',
+    'attachment' => 'አባሪ ፋይል',
+    'no_description' => 'መግለጫ አልተሰጠም።',
 ];

@@ -23,7 +23,7 @@ return [
     'respondent_address_placeholder' => 'Enter respondent address',
     'case_type' => 'Case Type',
     'select_option' => 'Select',
-    'relief_requested' => 'Relief / Judgment Requested',
+    'relief_requested' => 'Requested Judgment/Justice',
     'word_limit' => ':limit words total',
     'evidence_documents' => 'List of Evidence (Documents)',
     'add_document' => 'Add Document',
@@ -99,11 +99,19 @@ return [
         'phone' => 'Phone',
         'email' => 'Email',
         'address' => 'Address',
+        'summary' => 'Summary',
+        'not_available' => 'Not available',
     ],
     'buttons' => [
         'add_row' => 'Add row',
         'add_witness' => 'Add Witness',
         'save_changes' => 'Save changes',
+        'cancel' => 'Cancel',
+        'submit' => 'Submit Response',
+        'update' => 'Update Response',
+    ],
+    'forms' => [
+        'provide_details' => 'Provide your response details',
     ],
     'placeholders' => [
         'select' => '-- Select --',
@@ -179,13 +187,14 @@ return [
         'case_summary' => 'Case Summary',
         'case_details' => 'Case Details',
         'submitted_documents' => 'Submitted Documents',
-        'uploaded_files' => 'Uploaded Files',
+        'uploaded_files' => 'Additional evidence files',
         'witnesses' => 'Witnesses',
         'hearings' => 'Hearings',
         'timeline' => 'Timeline',
         'messages' => 'Messages',
         'letters' => 'Letters',
         'case_audits' => 'Case Audits',
+        'respondent_responses' => 'Respondent Responses',
     ],
 
     'summary' => [
@@ -196,10 +205,12 @@ return [
         'applicant' => 'Applicant',
         'applicant_email' => 'Applicant Email',
         'assignee' => 'Assignee',
+        'team' => 'Team',
         'unassigned' => 'Unassigned',
         'created' => 'Created',
         'updated' => 'Updated',
         'assigned_at' => 'Assigned At',
+        'hearings' => 'Hearings',
     ],
 
     'details' => [
@@ -304,4 +315,8 @@ return [
     'applicant_full_name' => 'Applicant full name',
     'applicant_email' => 'Applicant email',
     'no_audit_records' => 'No audit records yet.',
+    'respondent_response' => 'Respondent Response',
+    'respondent_responses' => 'Respondent Responses',
+    'attachment' => 'Attachment',
+    'no_description' => 'No description provided.',
 ];

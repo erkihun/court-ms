@@ -11,13 +11,16 @@
     "require": {
         "php": "^8.2",
         "barryvdh/laravel-dompdf": "^3.1",
+        "barryvdh/laravel-snappy": "^1.0",
         "ezyang/htmlpurifier": "^4.19",
         "laravel/framework": "^12.0",
+        "laravel/sanctum": "^4.2",
         "laravel/tinker": "^2.10.1",
         "mews/purifier": "^3.4",
         "owen-it/laravel-auditing": "^14.0",
         "plesk/ext-laravel-integration": "*",
-        "simplesoftwareio/simple-qrcode": "^4.2"
+        "simplesoftwareio/simple-qrcode": "^4.2",
+        "wemersonjanuario/wkhtmltopdf-windows": "^0.12.2"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.16",

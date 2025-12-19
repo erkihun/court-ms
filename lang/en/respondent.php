@@ -81,6 +81,8 @@ return [
     'view_case_details' => 'View',
     'notifications' => 'Notifications',
     'recent_replies' => 'Recent replies',
+    'recent_cases' => 'Recent cases',
+    'letters' => 'Letters',
     'view_all' => 'View all',
     'mark_all_seen' => 'Mark all as seen',
     'no_notifications' => 'No new notifications yet.',

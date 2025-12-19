@@ -1,4 +1,4 @@
-@props(['case','timeline','files','msgs','hearings','docs','witnesses','audits'])
+@props(['case','timeline','letters','files','msgs','hearings','docs','witnesses','audits'])
 
 @php
 $status = $case->status ?? 'pending';
@@ -353,38 +353,54 @@ default => 'Approved',
 
             <aside class="rounded-xl border border-slate-200 bg-white p-5 shadow-lg">
                 <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-sm font-semibold text-slate-800">{{ __('cases.timeline_section.title') }}</h3>
-                    <span class="text-[11px] text-slate-500">{{ ($timeline ?? collect())->count() }}</span>
+                    <h3 class="text-sm font-semibold text-slate-800">Letters</h3>
+                    <span class="text-[11px] text-slate-500">{{ ($letters ?? collect())->count() }}</span>
                 </div>
-                @if(($timeline ?? collect())->isEmpty())
-                <div
-                    class="text-slate-500 text-sm border border-dashed border-slate-300 rounded-lg p-6 text-center bg-slate-50">
-                    {{ __('cases.no_history_yet') }}
+                @if(($letters ?? collect())->isEmpty())
+                <div class="text-slate-500 text-sm border border-dashed border-slate-300 rounded-lg p-6 text-center bg-slate-50">
+                    No letters shared for this case.
                 </div>
                 @else
-                <ol class="space-y-3 text-sm max-h-64 overflow-y-auto pr-1">
-                    @foreach($timeline as $t)
+                <div class="space-y-3 max-h-64 overflow-y-auto pr-1">
+                    @foreach($letters as $letter)
                     @php
-                    $nextStatus = $t->to_status ?? '';
-                    $dotClass = match (true) {
-                    $nextStatus === 'active' => 'bg-blue-500',
-                    in_array($nextStatus, ['closed', 'dismissed']) => 'bg-slate-500',
-                    $nextStatus === 'pending' => 'bg-orange-500',
-                    default => 'bg-slate-400',
-                    };
+                        $statusClass = match($letter->approval_status) {
+                            'approved' => 'bg-emerald-100 text-emerald-800 border border-emerald-200',
+                            'returned' => 'bg-amber-100 text-amber-800 border border-amber-200',
+                            'rejected' => 'bg-rose-100 text-rose-800 border border-rose-200',
+                            default => 'bg-slate-100 text-slate-800 border border-slate-200',
+                        };
+                        try {
+                            $letterPreviewUrl = \Illuminate\Support\Facades\URL::signedRoute('letters.case-preview', ['letter' => $letter->id]);
+                        } catch (\Throwable $e) {
+                            $letterPreviewUrl = url('/case-letters/' . $letter->id);
+                        }
                     @endphp
-                    <li class="relative pl-4">
-                        <div class="absolute left-0 top-1.5 h-2 w-2 rounded-full {{ $dotClass }}"></div>
-                        <div class="text-slate-700">
-                            {{ $t->from_status ? __('cases.status.' . $t->from_status).' -> ' : '' }}
-                            <strong>{{ __('cases.status.' . $t->to_status) }}</strong>
+                    <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2">
+                                    <div class="font-semibold text-slate-900">
+                                        {{ $letter->subject ?? ($letter->template_title ?? 'Letter') }}
+                                    </div>
+                                    <span class="text-[11px] px-2 py-0.5 rounded-full {{ $statusClass }}">
+                                        {{ ucfirst($letter->approval_status ?? 'draft') }}
+                                    </span>
+                                </div>
+                                <div class="text-xs text-slate-600 flex flex-wrap gap-3">
+                                    <span>Ref: {{ $letter->reference_number ?: '—' }}</span>
+                                    <span>Template: {{ $letter->template_title ?: '—' }}</span>
+                                    <span>Author: {{ $letter->author_name ?: '—' }}</span>
+                                    <span>Created: {{ \App\Support\EthiopianDate::format($letter->created_at, withTime: true) }}</span>
+                                </div>
+                            </div>
+                            <a href="{{ $letterPreviewUrl }}" class="text-xs font-semibold text-blue-600 hover:text-blue-800 underline">
+                                View
+                            </a>
                         </div>
-                        <div class="text-slate-500 text-xs">
-                            {{ \App\Support\EthiopianDate::format($t->created_at, withTime: true) }}
-                        </div>
-                    </li>
+                    </div>
                     @endforeach
-                </ol>
+                </div>
                 @endif
             </aside>
 

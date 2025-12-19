@@ -80,6 +80,8 @@ return [
     'view_case_details' => 'ይመልከቱ',
     'notifications' => 'ማስታወቂያዎች',
     'recent_replies' => 'የቅርብ ጊዜ ምላሾች',
+    'recent_cases' => 'Recent cases',
+    'letters' => 'Letters',
     'view_all' => 'ሁሉንም እይ',
     'mark_all_seen' => 'ሁሉንም እንደታዩ አድርግ',
     'no_notifications' => 'ምንም ማስታወቂያ የለም።',

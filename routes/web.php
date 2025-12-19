@@ -40,6 +40,7 @@ use App\Http\Controllers\Admin\LetterTemplateController;
 use App\Http\Controllers\Admin\LetterController;
 use App\Http\Controllers\Admin\LetterComposerController;
 use App\Http\Controllers\Admin\TermsAndConditionsController;
+use App\Http\Controllers\Admin\RecordController;
 
 // Localization middleware
 use App\Http\Middleware\SetLocale;
@@ -108,7 +109,8 @@ Route::middleware(SetLocale::class)->group(function () {
         ->name('respondent.case.search');
     Route::get('/respondent/cases/{caseNumber}', [CaseSearchController::class, 'show'])
         ->middleware(['auth:applicant', 'throttle:30,1'])
-        ->name('respondent.cases.show');
+        ->name('respondent.cases.show')
+        ->where('caseNumber', '.*');
 
     // Public-facing preview for applicants/respondents (authorization handled in controller)
     Route::get('/case-letters/{letter}', [LetterController::class, 'publicPreview'])
@@ -172,6 +174,8 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::get('/applicant/cases/create',     [ApplicantCaseController::class, 'create'])->name('applicant.cases.create');
             Route::post('/applicant/cases',           [ApplicantCaseController::class, 'store'])->name('applicant.cases.store');
             Route::get('/applicant/cases/{id}',       [ApplicantCaseController::class, 'show'])->name('applicant.cases.show');
+            Route::get('/applicant/cases/{case}/respondent-responses/{response}', [ApplicantCaseController::class, 'showRespondentResponse'])->name('applicant.cases.respondentResponses.show');
+            Route::get('/applicant/cases/{case}/respondent-responses/{response}/reply', [ApplicantCaseController::class, 'replyRespondentResponse'])->name('applicant.cases.respondentResponses.reply');
             Route::get('/applicant/cases/{id}/edit',  [ApplicantCaseController::class, 'edit'])->name('applicant.cases.edit');
             Route::patch('/applicant/cases/{id}',     [ApplicantCaseController::class, 'update'])->name('applicant.cases.update');
             Route::delete('/applicant/cases/{id}', [ApplicantCaseController::class, 'destroy'])
@@ -204,7 +208,8 @@ Route::middleware(SetLocale::class)->group(function () {
                 Route::get('/applicant/respondent/case-search', [CaseSearchController::class, 'index'])
                     ->name('applicant.respondent.cases.search');
                 Route::get('/applicant/respondent/cases/{caseNumber}', [CaseSearchController::class, 'show'])
-                    ->name('applicant.respondent.cases.show');
+                    ->name('applicant.respondent.cases.show')
+                    ->where('caseNumber', '.*');
             });
             Route::get('/applicant/respondent/cases/my', [CaseSearchController::class, 'myCases'])
                 ->middleware('throttle:30,1')
@@ -421,6 +426,17 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::delete('/decisions/{decision}', [DecisionController::class, 'destroy'])
                 ->middleware('perm:decision.delete')
                 ->name('decisions.destroy');
+
+            // Case records (consolidated PDF/HTML)
+            Route::get('/recordes', [RecordController::class, 'index'])
+                ->middleware('perm:cases.view')
+                ->name('recordes.index');
+            Route::get('/recordes/{case}', [RecordController::class, 'show'])
+                ->middleware('perm:cases.view')
+                ->name('recordes.show');
+            Route::get('/recordes/{case}/pdf', [RecordController::class, 'pdf'])
+                ->middleware('perm:cases.view')
+                ->name('recordes.pdf');
 
             // Appeal documents
             Route::post('/appeals/{appeal}/documents',         [AppealController::class, 'uploadDoc'])->middleware('perm:appeals.edit')->name('appeals.docs.upload');

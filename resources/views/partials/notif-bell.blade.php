@@ -104,7 +104,11 @@ $q->from('notification_reads as nr')
 ->where('nr.type','respondent_view')
 ->where('nr.applicant_id',$me);
 })
-->selectRaw("'respondent_view' as type, v.id as source_id, v.case_id, v.viewed_at as created_at, TRIM(CONCAT_WS(' ', r.first_name, r.middle_name, r.last_name)) as meta1, NULL as meta2, NULL as meta3");
+->selectRaw(
+    (\DB::getDriverName() === 'sqlite')
+        ? "'respondent_view' as type, v.id as source_id, v.case_id, v.viewed_at as created_at, TRIM(COALESCE(r.first_name,'') || ' ' || COALESCE(r.middle_name,'') || ' ' || COALESCE(r.last_name,'')) as meta1, NULL as meta2, NULL as meta3"
+        : "'respondent_view' as type, v.id as source_id, v.case_id, v.viewed_at as created_at, TRIM(CONCAT_WS(' ', r.first_name, r.middle_name, r.last_name)) as meta1, NULL as meta2, NULL as meta3"
+);
 
 $items = $msgs->unionAll($hrs)->unionAll($sts)->unionAll($views)->orderBy('created_at','desc')->limit(5)->get();
 @endphp

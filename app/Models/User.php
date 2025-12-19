@@ -11,10 +11,11 @@ use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
 use Illuminate\Auth\MustVerifyEmail;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use OwenIt\Auditing\Auditable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements MustVerifyEmailContract, AuditableContract
 {
-    use HasFactory, Notifiable, MustVerifyEmail, Auditable;
+    use HasApiTokens, HasFactory, Notifiable, MustVerifyEmail, Auditable;
 
     /**
      * Mass assignable attributes.
