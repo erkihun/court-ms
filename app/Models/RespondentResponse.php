@@ -15,6 +15,10 @@ class RespondentResponse extends Model
         'title',
         'description',
         'pdf_path',
+        'review_status',
+        'review_note',
+        'reviewed_by_user_id',
+        'reviewed_at',
     ];
 
     public function respondent(): BelongsTo

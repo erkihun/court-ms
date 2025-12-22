@@ -25,7 +25,10 @@
     </div>
     @endif
 
-    @php($applicantUser = auth('applicant')->user())
+    @php
+        $applicantUser = auth('applicant')->user();
+        $isLawyer = (bool) ($applicantUser?->is_lawyer);
+    @endphp
 
     <form id="applicant-case-create-form" method="POST"
         action="{{ route('applicant.cases.store') }}"
@@ -40,30 +43,30 @@
             <div class="grid md:grid-cols-2 gap-4">
                 <div>
                     <label class="block  font-medium text-slate-700">
-                        {{ __('Applicant Full Name') }} <span class="text-red-600">*</span>
+                        {{ __('cases.applicant_name') }} <span class="text-red-600">*</span>
                     </label>
                     <input
                         name="title"
-                        value="{{ old('title', $applicantUser->full_name ?? $applicantUser->name ?? '') }}"
-                        placeholder="{{ __('Enter applicant full name') }}"
-                        readonly
+                        value="{{ $isLawyer ? old('title') : old('title', $applicantUser->full_name ?? $applicantUser->name ?? '') }}"
+                        placeholder="{{ __('cases.applicant_name_placeholder') }}"
+                        @unless($isLawyer) readonly @endunless
                         class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
-                               bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+                               {{ $isLawyer ? 'bg-white' : 'bg-slate-100' }} focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                     @error('title')
                     <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
                 <div>
                     <label class="block  font-medium text-slate-700">
-                        {{ __('Applicant Address') }} <span class="text-red-600">*</span>
+                        {{ __('cases.applicant_address') }} <span class="text-red-600">*</span>
                     </label>
                     <input
                         name="applicant_address"
-                        value="{{ old('applicant_address', $applicantUser->address ?? '') }}"
-                        placeholder="{{ __('Enter applicant address') }}"
-                        readonly
+                        value="{{ $isLawyer ? old('applicant_address') : old('applicant_address', $applicantUser->address ?? '') }}"
+                        placeholder="{{ __('cases.applicant_address_placeholder') }}"
+                        @unless($isLawyer) readonly @endunless
                         class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
-                               bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+                               {{ $isLawyer ? 'bg-white' : 'bg-slate-100' }} focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                     @error('applicant_address')
                     <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
                     @enderror
@@ -77,7 +80,7 @@
             <div class="grid md:grid-cols-2 gap-4">
                 <div>
                     <label class="block  font-medium text-slate-700">
-                        {{ __('cases.respondent_name') }}
+                        {{ __('cases.respondent_name') }} <span class="text-red-600">*</span>
                     </label>
                     <input
                         name="respondent_name"
@@ -91,7 +94,7 @@
                 </div>
                 <div>
                     <label class="block  font-medium text-slate-700">
-                        {{ __('cases.respondent_address') }}
+                        {{ __('cases.respondent_address') }} <span class="text-red-600">*</span>
                     </label>
                     <input
                         name="respondent_address"
@@ -137,11 +140,7 @@
                     @error('case_type_id')
                     <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
                     @enderror
-                    <p class="text-xs text-slate-500 mt-2">
-                        {{ __('Case number will be generated as') }}
-                        <span class="font-mono text-slate-700" x-text="`${prefix}/00001/{{ now()->format('y') }}`"></span>
-                        (type prefix / 5-digit sequence / last 2 digits of year).
-                    </p>
+                  
                 </div>
             </div>
         </section>
@@ -170,7 +169,7 @@
         <section class="space-y-2">
             <div class="flex items-center justify-between gap-2">
                 <label class="block  font-medium text-slate-700">
-                    {{ __('cases.relief_requested') }}
+                    {{ __('cases.relief_requested') }} <span class="text-red-600">*</span>
                 </label>
                 <div id="relief-counter" class="text-[11px] text-slate-500">
                     0 / {{ __('cases.word_limit', ['limit' => 1300]) }}
@@ -201,7 +200,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h3 class=" font-semibold text-slate-800">
-                        {{ __('cases.evidence_documents') }}
+                        {{ __('cases.evidence_documents') }} <span class="text-red-600">*</span>
                     </h3>
                     <p class="text-xs text-slate-500 mt-0.5">
                         {{ __('cases.file_requirements') }}
@@ -247,7 +246,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h3 class=" font-semibold text-slate-800">
-                        {{ __('cases.witnesses_section.title') }}
+                        {{ __('cases.witnesses_section.title') }} <span class="text-red-600">*</span>
                     </h3>
 
                 </div>
@@ -480,4 +479,3 @@
         })();
     </script>
 </x-applicant-layout>
-

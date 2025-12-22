@@ -126,8 +126,8 @@
                                 <span>{{ __('cases.table.view') }}</span>
                             </a>
 
-                            {{-- Delete button (only if status is pending) --}}
-                            @if($c->status === 'pending')
+                            {{-- Delete button (only if status is pending and not reviewer-approved) --}}
+                            @if($c->status === 'pending' && (($c->review_status ?? null) !== 'accepted'))
                             <form method="POST" action="{{ route('applicant.cases.destroy', $c->id) }}"
                                 onsubmit="return confirm('{{ __('cases.table.delete_confirm') ?? __('Are you sure you want to delete this case?') }}');">
                                 @csrf

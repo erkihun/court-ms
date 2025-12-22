@@ -35,6 +35,7 @@
                     <thead class="bg-slate-50 text-slate-600 uppercase tracking-wider text-xs"> {{-- Slightly adjusted text size/tracking --}}
                         <tr>
                             <th class="px-6 py-3 text-left w-1/4 font-medium">{{ __('respondent.responses') }}</th> {{-- Added px-6 for better spacing --}}
+                            <th class="px-6 py-3 text-left w-1/6 font-medium">Review status</th>
                             <th class="px-6 py-3 text-left w-1/5 font-medium">{{ __('respondent.case_number_label') }}</th>
                             <th class="px-6 py-3 text-left w-1/6 font-medium">{{ __('respondent.uploaded') }}</th>
                             <th class="px-6 py-3 text-right font-medium">{{ __('app.Actions') ?? 'Actions' }}</th>
@@ -42,9 +43,33 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100 text-slate-800">
                         @foreach($responses as $response)
+                        @php
+                            $respReviewStatus = $response->review_status ?? 'awaiting_review';
+                            $respReviewNote = $response->review_note ?? null;
+                            $respLocked = in_array($respReviewStatus, ['accepted', 'accept'], true);
+                            $respReviewBase = 'inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium border';
+                            $respReviewClass = match ($respReviewStatus) {
+                                'awaiting_review' => $respReviewBase.' bg-amber-50 text-amber-800 border-amber-200',
+                                'returned' => $respReviewBase.' bg-yellow-50 text-yellow-800 border-yellow-200',
+                                'rejected' => $respReviewBase.' bg-red-50 text-red-800 border-red-200',
+                                default => $respReviewBase.' bg-emerald-50 text-emerald-800 border-emerald-200',
+                            };
+                            $respReviewLabel = match ($respReviewStatus) {
+                                'awaiting_review' => __('cases.review_status.awaiting_review'),
+                                'returned' => __('cases.review_status.returned'),
+                                'rejected' => __('cases.review_status.rejected'),
+                                default => __('cases.review_status.accepted'),
+                            };
+                        @endphp
                         <tr class="hover:bg-blue-50/50 transition duration-100"> {{-- Hover effect changed to blue --}}
                             <td class="px-6 py-4"> {{-- Added px-6 for better spacing and py-4 --}}
                                 <div class="font-semibold text-slate-900">{{ $response->title }}</div>
+                                @if(!empty($respReviewNote) && $respReviewStatus === 'returned')
+                                <div class="mt-1 text-xs text-slate-600">
+                                    <span class="font-semibold text-slate-700">{{ __('cases.reviewer_note') }}</span>
+                                    {{ $respReviewNote }}
+                                </div>
+                                @endif
                                 @if($response->pdf_path)
                                 {{-- Enhanced PDF Submitted Pill with Icon and darker color --}}
                                 <div class="mt-1 inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-800">
@@ -54,6 +79,9 @@
                                     {{ __('respondent.pdf_submitted') }}
                                 </div>
                                 @endif
+                            </td>
+                            <td class="px-6 py-4 text-slate-600">
+                                <span class="{{ $respReviewClass }}">{{ $respReviewLabel }}</span>
                             </td>
                             <td class="px-6 py-4 text-slate-600">
                                 {{ $response->case_number ?: '—' }}
@@ -71,25 +99,27 @@
                                         </svg>
                                         {{ __('respondent.view_details') }}
                                     </a>
-                                    <a href="{{ route('respondent.responses.edit', $response) }}"
-                                        class="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-100">
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                        </svg>
-                                        {{ __('respondent.edit_response') }}
-                                    </a>
-                                    <form method="POST" action="{{ route('respondent.responses.destroy', $response) }}">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                            class="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100"
-                                            onclick="return confirm('{{ __('respondent.delete') }}')">
+                                    @if(!$respLocked)
+                                        <a href="{{ route('respondent.responses.edit', $response) }}"
+                                            class="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-100">
                                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                             </svg>
-                                            {{ __('respondent.delete') }}
-                                        </button>
-                                    </form>
+                                            {{ __('respondent.edit_response') }}
+                                        </a>
+                                        <form method="POST" action="{{ route('respondent.responses.destroy', $response) }}">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit"
+                                                class="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100"
+                                                onclick="return confirm('{{ __('respondent.delete') }}')">
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                </svg>
+                                                {{ __('respondent.delete') }}
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

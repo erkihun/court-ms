@@ -85,7 +85,7 @@
             <!-- Left Column - Main Content -->
             <div class="flex flex-col gap-6">
                 @php
-                    $displayNow = \Carbon\Carbon::now('Africa/Addis_Ababa');
+                    $displayNow = $now;
                 @endphp
 
                 <!-- Header Card -->
@@ -461,7 +461,7 @@
                             </div>
                             <div class="text-right">
                                 <p class="text-xs font-medium text-slate-500">{{ __('signage.updated') }}</p>
-                                <p class="text-sm font-bold text-slate-900">{{ now()->format('H:i:s') }}</p>
+                                <p class="text-sm font-bold text-slate-900">{{ $displayNow->format('H:i:s') }}</p>
                             </div>
                         </div>
                     </div>

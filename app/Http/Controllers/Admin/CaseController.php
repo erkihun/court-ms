@@ -353,6 +353,35 @@ class CaseController extends Controller
             ->orderByDesc('l.created_at')
             ->get();
 
+        $respondentResponses = DB::table('respondent_responses')
+            ->where('case_number', $case->case_number)
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(function ($resp) {
+                $resp->pdf_embed = null;
+                if (empty($resp->pdf_path)) {
+                    return $resp;
+                }
+
+                $content = null;
+                if (Storage::disk('private')->exists($resp->pdf_path)) {
+                    $content = Storage::disk('private')->get($resp->pdf_path);
+                } elseif (Storage::disk('public')->exists($resp->pdf_path)) {
+                    $content = Storage::disk('public')->get($resp->pdf_path);
+                } elseif (file_exists($resp->pdf_path)) {
+                    $content = @file_get_contents($resp->pdf_path);
+                }
+
+                if ($content) {
+                    $resp->pdf_embed = [
+                        'mime' => 'application/pdf',
+                        'data' => base64_encode($content),
+                    ];
+                }
+
+                return $resp;
+            });
+
         // Uploaded Files (admin + applicant)
         $files = DB::table('case_files as f')
             ->leftJoin('applicants as a', 'a.id', '=', 'f.uploaded_by_applicant_id')
@@ -448,6 +477,7 @@ class CaseController extends Controller
             'witnesses'  => $witnesses,
             'audits'     => $audits,
             'letters'    => $letters,
+            'respondentResponses' => $respondentResponses,
             'letterTemplates' => $letterTemplates,
         ]);
     }
@@ -505,6 +535,39 @@ class CaseController extends Controller
         abort_if(!$caseId, 400, 'Case id is required.');
 
         return $this->reviewDecision($request, $caseId);
+    }
+
+    /**
+     * Admin: accept or return a respondent response with an optional reason note.
+     */
+    public function reviewRespondentResponse(Request $request, int $responseId)
+    {
+        $response = DB::table('respondent_responses')->where('id', $responseId)->first();
+        abort_if(!$response, 404, 'Respondent response not found.');
+
+        $data = $request->validate([
+            'decision'    => ['required', 'in:accept,return'],
+            'review_note' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $decision = $data['decision'];
+        $note = trim((string) ($data['review_note'] ?? ''));
+
+        if ($decision === 'return' && $note === '') {
+            return back()->withErrors(['review_note' => 'Please add a note when returning a response.'])->withInput();
+        }
+
+        $newStatus = $decision === 'accept' ? 'accepted' : 'returned';
+
+        DB::table('respondent_responses')->where('id', $responseId)->update([
+            'review_status'       => $newStatus,
+            'review_note'         => $note !== '' ? $note : null,
+            'reviewed_by_user_id' => Auth::id(),
+            'reviewed_at'         => now(),
+            'updated_at'          => now(),
+        ]);
+
+        return back()->with('success', 'Respondent response review updated.');
     }
 
     /**

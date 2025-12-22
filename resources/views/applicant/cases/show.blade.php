@@ -111,10 +111,10 @@
                         default => $reviewBase.' bg-emerald-50 text-emerald-800 border-emerald-200',
                     };
                     $reviewLabel = match ($reviewStatus) {
-                        'awaiting_review' => 'Awaiting approval',
-                        'returned' => 'Needs correction',
-                        'rejected' => 'Rejected',
-                        default => 'Approved',
+                        'awaiting_review' => __('cases.review_status.awaiting_review'),
+                        'returned' => __('cases.review_status.returned'),
+                        'rejected' => __('cases.review_status.rejected'),
+                        default => __('cases.review_status.accepted'),
                     };
                     @endphp
 
@@ -127,24 +127,16 @@
                                 {{ $reviewLabel }}
                             </span>
                         </div>
-                        @if(!empty($case->review_note))
-                        <div class="text-xs text-slate-600 leading-snug max-w-3xl">
-                            <span class="font-semibold text-slate-700">Reviewer note:</span>
-                            {{ $case->review_note }}
-                            @if($reviewStatus === 'returned' && $case->status === 'pending')
-                            <a href="{{ route('applicant.cases.edit', $case->id) }}"
-                                class="text-blue-700 font-semibold hover:underline ml-1">Edit your case</a>
-                            @endif
-                        </div>
-                        @endif
                     </div>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">
+                    @if(($reviewStatus ?? 'accepted') !== 'accepted')
                     <a href="{{ route('applicant.cases.edit', $case->id) }}"
                         class="btn btn-muted inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-blue-200 bg-blue-50 text-xs font-medium text-blue-700 hover:bg-blue-100">
                         {{ __('cases.edit_case') }}
                     </a>
+                    @endif
 
                     <a href="{{ route('applicant.cases.receipt.pdf', $case->id) }}"
                         class="btn btn-outline inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-slate-300 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50">
@@ -159,6 +151,16 @@
                     </form>
                 </div>
             </div>
+            @if(!empty($case->review_note))
+            <div class="border-t border-slate-200 px-5 py-3 text-xs text-slate-600 leading-snug">
+                <span class="font-semibold text-slate-700">{{ __('cases.reviewer_note') }}</span>
+                {{ $case->review_note }}
+                @if($reviewStatus === 'returned' && $case->status === 'pending')
+                <a href="{{ route('applicant.cases.edit', $case->id) }}"
+                    class="text-blue-700 font-semibold hover:underline ml-1">{{ __('cases.edit_your_case') }}</a>
+                @endif
+            </div>
+            @endif
         </section>
 
         {{-- LEFT: CASE INFO + RESPONDENT + DESCRIPTION + RELIEF + DOCS + WITNESSES --}}
@@ -166,15 +168,15 @@
             @php $reviewStatus = $reviewStatus ?? ($case->review_status ?? 'accepted'); @endphp
             @if($reviewStatus === 'returned')
             <div class="rounded-lg border border-yellow-200 bg-yellow-50 p-3  text-yellow-900">
-                This case needs corrections based on the reviewer note above. Update your filing and resubmit.
+                {{ __('cases.review_messages.returned') }}
             </div>
             @elseif($reviewStatus === 'rejected')
             <div class="rounded-lg border border-red-200 bg-red-50 p-3  text-red-900">
-                This case has been rejected. Please review the reviewer note above for details.
+                {{ __('cases.review_messages.rejected') }}
             </div>
             @elseif($reviewStatus === 'awaiting_review')
             <div class="rounded-lg border border-amber-200 bg-amber-50 p-3  text-amber-900">
-                Your submission is awaiting admin approval. We will notify you once a decision is made.
+                {{ __('cases.review_messages.awaiting_review') }}
             </div>
             @endif
 
@@ -185,11 +187,11 @@
                 </h3>
                 <dl class="grid md:grid-cols-2 gap-4 ">
                     <div>
-                        <dt class="text-slate-500">{{ __('Applicant Full Name') }}</dt>
+                        <dt class="text-slate-500">{{ __('cases.applicant_full_name') }}</dt>
                         <dd class="font-medium text-slate-900">{{ $case->title ?: ($applicantUser->full_name ?? $applicantUser->name ?? '-') }}</dd>
                     </div>
                     <div>
-                        <dt class="text-slate-500">{{ __('Applicant Address') }}</dt>
+                        <dt class="text-slate-500">{{ __('cases.applicant_address') }}</dt>
                         <dd class="font-medium text-slate-900">{{ $applicantUser->address ?? '-' }}</dd>
                     </div>
 
@@ -268,7 +270,7 @@
                     @foreach($docs as $d)
                     @php
                     $docPath = $d->file_path ?? $d->path ?? null;
-                    $docTitle = $d->title ?? ($d->label ?? ($docPath ? basename($docPath) : 'Document'));
+                    $docTitle = $d->title ?? ($d->label ?? ($docPath ? basename($docPath) : __('cases.document')));
                     @endphp
                     <li class="py-2 flex items-center justify-between gap-4">
                         <div class="flex-1">
@@ -437,7 +439,7 @@
             <aside class="rounded-xl border border-slate-200 bg-white p-5 shadow-lg">
                 <div class="flex items-center justify-between mb-3">
                     <h3 class=" font-semibold text-slate-800">
-                        Letters
+                        {{ __('cases.letters_section.title') }}
                     </h3>
                     <span class="text-[11px] text-slate-500">
                         {{ ($letters ?? collect())->count() }}
@@ -445,7 +447,7 @@
                 </div>
                 @if(($letters ?? collect())->isEmpty())
                 <div class="text-slate-500  border border-dashed border-slate-300 rounded-lg p-6 text-center bg-slate-50">
-                    No letters for this case yet.
+                    {{ __('cases.letters_section.empty') }}
                 </div>
                 @else
                 <div class="space-y-3 max-h-64 overflow-y-auto pr-1">
@@ -463,17 +465,17 @@
                             <div class="space-y-1">
                                 <div class="flex items-center gap-2">
                                     <div class="font-semibold text-slate-900">
-                                        {{ $letter->subject ?? ($letter->template_title ?? 'Letter') }}
+                                        {{ $letter->subject ?? ($letter->template_title ?? __('cases.letters_section.letter')) }}
                                     </div>
                                     <span class="text-[11px] px-2 py-0.5 rounded-full {{ $statusClass }}">
-                                        {{ ucfirst($letter->approval_status ?? 'draft') }}
+                                        {{ __('cases.letters_section.status.' . ($letter->approval_status ?? 'draft')) }}
                                     </span>
                                 </div>
                                 <div class="text-xs text-slate-600 flex flex-wrap gap-3">
-                                    <span>Ref: {{ $letter->reference_number ?: '—' }}</span>
-                                    <span>Template: {{ $letter->template_title ?: '—' }}</span>
-                                    <span>Author: {{ $letter->author_name ?: '—' }}</span>
-                                    <span>Created: {{ \App\Support\EthiopianDate::format($letter->created_at, withTime: true) }}</span>
+                                    <span>{{ __('cases.letters_section.reference') }}: {{ $letter->reference_number ?: '—' }}</span>
+                                    <span>{{ __('cases.letters_section.template') }}: {{ $letter->template_title ?: '—' }}</span>
+                                    <span>{{ __('cases.letters_section.author') }}: {{ $letter->author_name ?: '—' }}</span>
+                                    <span>{{ __('cases.letters_section.created') }}: {{ \App\Support\EthiopianDate::format($letter->created_at, withTime: true) }}</span>
                                 </div>
                             </div>
                             @php
@@ -485,7 +487,7 @@
                             @endphp
                             <a href="{{ $letterPreviewUrl }}"
                                 class="text-xs font-semibold text-blue-600 hover:text-blue-800 underline">
-                                View
+                                {{ __('cases.view') }}
                             </a>
                         </div>
                     </div>
@@ -498,7 +500,7 @@
             <aside class="rounded-xl border border-slate-200 bg-white p-5 shadow-lg">
                 <div class="flex items-center justify-between mb-3">
                     <h3 class=" font-semibold text-slate-800">
-                        Respondent Responses
+                        {{ __('cases.respondent_responses') }}
                     </h3>
                     <span class="text-[11px] text-slate-500">
                         {{ ($respondentResponses ?? collect())->count() }}
@@ -506,7 +508,7 @@
                 </div>
                 @if(($respondentResponses ?? collect())->isEmpty())
                     <div class="text-slate-500  border border-dashed border-slate-300 rounded-lg p-6 text-center bg-slate-50">
-                        No responses for this case yet.
+                        {{ __('cases.respondent_responses_empty') }}
                     </div>
                 @else
                     <div class="space-y-3 max-h-64 overflow-y-auto pr-1">
@@ -515,10 +517,10 @@
                                 <div class="flex items-start justify-between gap-2">
                                     <div class="space-y-1">
                                         <div class="font-semibold text-slate-900">
-                                            {{ $response->title ?? 'Response' }}
+                                            {{ $response->title ?? __('cases.respondent_response') }}
                                         </div>
                                         <div class="text-xs text-slate-600">
-                                            Case #: {{ $response->case_number ?? $case->case_number }}
+                                            {{ __('cases.case_number') }}: {{ $response->case_number ?? $case->case_number }}
                                         </div>
                                     </div>
                                     <div class="text-xs text-slate-500 text-right">
@@ -635,12 +637,12 @@
             {{-- CASE AUDIT --}}
             <aside class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div class="flex items-center justify-between mb-3">
-                    <h3 class=" font-semibold text-slate-800">Case Audit Trail</h3>
+                    <h3 class=" font-semibold text-slate-800">{{ __('cases.case_audit_trail') }}</h3>
                     <span class="text-[11px] text-slate-500">{{ ($audits ?? collect())->count() }}</span>
                 </div>
                 @if(($audits ?? collect())->isEmpty())
                 <div class="text-slate-500  border border-dashed border-slate-300 rounded-lg p-4 text-center bg-slate-50">
-                    No audit records yet.
+                    {{ __('cases.no_audit_records') }}
                 </div>
                 @else
                 <div class="max-h-64 overflow-y-auto space-y-3 ">
@@ -652,13 +654,13 @@
                             <span class="px-2 py-0.5 rounded-full border bg-white text-slate-700">{{ ucfirst(str_replace('_',' ', $a->action)) }}</span>
                         </div>
                         <div class="text-[11px] text-slate-600 mt-1">
-                            Actor:
+                            {{ __('cases.audit_actor') }}
                             @if(!empty($a->actor_name))
                                 {{ $a->actor_name }} @if($a->actor_id)(#{{ $a->actor_id }})@endif
                             @elseif(!empty($a->actor_id))
-                                {{ $a->actor_type ?? 'system' }} (#{{ $a->actor_id }})
+                                {{ $a->actor_type ?? __('cases.system') }} (#{{ $a->actor_id }})
                             @else
-                                {{ $a->actor_type ?? 'system' }}
+                                {{ $a->actor_type ?? __('cases.system') }}
                             @endif
                         </div>
                         @if($meta)

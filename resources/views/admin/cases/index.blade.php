@@ -126,7 +126,7 @@
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('cases.table.number') }}</th>
                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('cases.table.case_number') }}</th>
-                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('cases.table.title') }}</th>
+                    
                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('cases.table.type') }}</th>
                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('cases.table.assignee') }}</th>
                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('cases.table.status') }}</th>
@@ -146,7 +146,7 @@
                         <a href="{{ route('cases.show', $c->id) }}" class="hover:underline">{{ $c->case_number }}</a>
                     </td>
                     {{-- Increased padding to px-6 py-4 --}}
-                    <td class="px-6 py-4 max-w-xs truncate text-sm text-gray-900" title="{{ $c->title }}">{{ $c->title }}</td>
+                    
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ $c->case_type }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ $c->assignee_name ?? '-' }}</td>
 

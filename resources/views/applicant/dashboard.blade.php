@@ -27,7 +27,7 @@
                 </div>
                 <div class=" backdrop-blur-sm ">
                     <div >{{ __('dashboard.today') }}</div>
-                    <div>{{ now()->format('F j, Y') }}</div>
+                    <div>{{ now()->translatedFormat('F j, Y') }}</div>
                 </div>
             </div>
         </div>
@@ -407,7 +407,7 @@
                         <div class="text-xs text-slate-500 mt-1 flex flex-wrap gap-3">
                             <span>{{ __('dashboard.case_number') }}: {{ $letter->case_number ?? '--' }}</span>
                             @if(!empty($letter->reference_number))
-                            <span>Ref: {{ $letter->reference_number }}</span>
+                            <span>{{ __('dashboard.reference_number') }}: {{ $letter->reference_number }}</span>
                             @endif
                         </div>
                         <div class="mt-2">
@@ -522,7 +522,7 @@
                                 <span>{{ __('dashboard.case_number') }}: {{ $decision->case_number ?? '--' }}</span>
                             @if(!empty($decision->status))
                             <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold border border-slate-200">
-                                {{ ucfirst($decision->status) }}
+                                {{ __('decisions.status.' . $decision->status) }}
                             </span>
                             @endif
                         </div>

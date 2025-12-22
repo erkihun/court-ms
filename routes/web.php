@@ -68,7 +68,7 @@ Route::middleware(SetLocale::class)->group(function () {
     Route::get('/', fn() => redirect()->route('applicant.login'))->name('root');
     Route::get('/terms', [TermsDisplayController::class, 'show'])->name('public.terms');
     Route::get('/signage', [PublicSignageController::class, 'show'])
-        ->middleware(['signed', 'throttle:30,1'])
+        ->middleware(['throttle:30,1'])
         ->name('public.signage');
     Route::get('/applicant', fn() => redirect()->route('applicant.login'))->name('applicant.login.shortcut');
     Route::get('/respondent', fn() => redirect()->route('respondent.login'))->name('respondent.login.shortcut');
@@ -290,6 +290,10 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::patch('/cases/{id}/review', [CaseController::class, 'reviewDecision'])
                 ->middleware('perm:cases.review')
                 ->name('cases.review.update');
+
+            Route::patch('/respondent-responses/{response}/review', [CaseController::class, 'reviewRespondentResponse'])
+                ->middleware('perm:cases.review')
+                ->name('respondent-responses.review');
 
             Route::get('/cases',                   [CaseController::class, 'index'])->middleware('perm:cases.view')->name('cases.index');
             Route::get('/cases/export',            [CaseController::class, 'export'])->middleware('perm:reports.export')->name('cases.export');

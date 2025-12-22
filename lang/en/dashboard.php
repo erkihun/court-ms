@@ -82,4 +82,5 @@ return [
     'no_letters' => 'No letters for your cases yet.',
     'no_responses' => 'No responses for your cases yet.',
     'no_decisions' => 'No decisions for your cases yet.',
+    'reference_number' => 'Ref',
 ];

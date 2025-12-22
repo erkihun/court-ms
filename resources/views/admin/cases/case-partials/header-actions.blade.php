@@ -32,7 +32,7 @@
                 {{ __('cases.back') }}
             </a>
 
-            @if(in_array($reviewStatus, ['awaiting_review','returned']) && $canReview)
+            @if(in_array($reviewStatus, ['awaiting_review','returned','rejected']) && $canReview)
             <div class="flex flex-wrap gap-2">
                 <button type="button" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-sm font-medium text-white shadow-sm hover:shadow transition-all duration-200"
                     onclick="submitReviewDecision('accept')">Accept</button>

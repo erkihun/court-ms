@@ -553,7 +553,7 @@ class ApplicantCaseController extends Controller
 
         abort_if(!$case, 404);
 
-        if ($case->status !== 'pending') {
+        if ($case->status !== 'pending' || ($case->review_status ?? null) === 'accepted') {
             return redirect()->route('applicant.cases.show', $id)
                 ->with('error', 'You can only edit pending cases.');
         }
@@ -581,7 +581,7 @@ class ApplicantCaseController extends Controller
         $case = CourtCase::where('applicant_id', $applicantId)->findOrFail($id);
 
         // Only allow deletion if status is pending
-        if ($case->status !== 'pending') {
+        if ($case->status !== 'pending' || ($case->review_status ?? null) === 'accepted') {
             abort(403, 'Only pending cases can be deleted.');
         }
 
@@ -606,7 +606,7 @@ class ApplicantCaseController extends Controller
 
         abort_if(!$case, 404);
 
-        if ($case->status !== 'pending') {
+        if ($case->status !== 'pending' || ($case->review_status ?? null) === 'accepted') {
             return redirect()->route('applicant.cases.show', $id)
                 ->with('error', 'You can only edit pending cases.');
         }

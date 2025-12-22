@@ -58,7 +58,7 @@ return [
         'witnesses' => 'ምስክሮች',
         'applicant_evidence' => 'የአመልካች ማስረጃ',
         'hearings' => 'ችሎቶች እና የዳኛ ማስታወሻዎች',
-        'hearing_notes' => ' አለ ለር ኦኢ :',
+        'hearing_notes' => 'አጭር መግለጫ :',
         'judge_notes' => ' አንዛይ ናባተ ዝጋኛት:',
         'hearing_unknown' => 'Not scheduled',
         'bench_notes' => 'የችሎት ማስታወሻዎች',

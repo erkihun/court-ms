@@ -1,5 +1,9 @@
 <x-applicant-layout :title="__('cases.edit_title', ['no' => $case->case_number])">
-    @php $editable = ($case->status === 'pending'); @endphp
+    @php
+        $reviewStatus = $case->review_status ?? null;
+        $reviewerApproved = $reviewStatus === 'accepted';
+        $editable = ($case->status === 'pending') && !$reviewerApproved;
+    @endphp
     <style>
         .tiny-content p,
         .tiny-content div,
@@ -71,7 +75,11 @@
 
                     @unless($editable)
                     <div class="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2  text-amber-800">
-                        {{ __('cases.not_pending_readonly') }}
+                        @if($case->status !== 'pending')
+                            {{ __('cases.not_pending_readonly') }}
+                        @else
+                            {{ __('cases.review_notice') }}
+                        @endif
                     </div>
                     @endunless
                 </div>
@@ -388,7 +396,11 @@
                         {{ __('cases.buttons.save_changes') }}
                     </button>
                     <p class="mt-2 text-xs text-slate-500">
-                        {{ __('cases.hints.editing_disabled') }}
+                        @if($case->status !== 'pending')
+                            {{ __('cases.hints.editing_disabled') }}
+                        @else
+                            {{ __('cases.review_notice') }}
+                        @endif
                     </p>
                     @endif
                 </div>
