@@ -39,6 +39,7 @@ return [
     'role_respondent' => 'Respondent',
     'applicant_panel_label' => 'Applicant Login Panel',
     'respondent_panel_label' => 'Respondent Login Panel',
+    'powered_by' => 'Powered by :brand',
 
     // Password Reset
     'forgot_password_title' => 'Forgot your password?',

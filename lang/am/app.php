@@ -8,6 +8,7 @@ return [
     'Amharic' => 'አማርኛ',
     'Language updated.' => 'ቋንቋ ዘምኗል።',
     'System_Settings' => 'የሲስተም ማስተካከያ',
+    'System_Audit' => 'የሲስተም እይታ መዝገብ',
     'Settings' => 'ማስተካከያ',
 
     // Layout / UI

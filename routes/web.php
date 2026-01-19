@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
 // Applicant-facing controllers
@@ -63,6 +64,23 @@ Route::middleware(SetLocale::class)->group(function () {
     */
     // Single canonical language switch route (matches admin layout)
     Route::get('/language/{locale}', [LanguageController::class, 'switch'])->name('language.switch');
+
+    Route::get('/home', function () {
+        $totalCases      = DB::table('court_cases')->count();
+        $pendingCases    = DB::table('court_cases')->where('status', 'pending')->count();
+        $resolvedCases   = DB::table('court_cases')->whereIn('status', ['closed', 'dismissed'])->count();
+        $openCases       = max($totalCases - $resolvedCases, 0);
+        $upcomingHearings = DB::table('case_hearings')
+            ->whereBetween('hearing_at', [now(), now()->addDays(30)])
+            ->count();
+        $recentCases     = DB::table('court_cases')
+            ->select('case_number', 'title', 'status', 'created_at')
+            ->orderByDesc('created_at')
+            ->limit(4)
+            ->get();
+
+        return view('home', compact('totalCases', 'pendingCases', 'resolvedCases', 'openCases', 'upcomingHearings', 'recentCases'));
+    })->name('landing.home');
 
     Route::get('/debug-locale', fn() => 'locale=' . app()->getLocale());
     Route::get('/', fn() => redirect()->route('applicant.login'))->name('root');

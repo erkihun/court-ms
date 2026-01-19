@@ -34,10 +34,10 @@
                                     {{ optional($c->filing_date)->toFormattedDateString() ?? '—' }}
                                 </td>
                                 <td class="py-2 pr-3 text-right space-x-2">
-                                    <a class="text-blue-600 hover:underline" href="{{ route('recordes.show', $c) }}">
+                                    <a class="inline-flex items-center justify-center rounded-md bg-blue-600 px-3 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700" href="{{ route('recordes.show', $c) }}">
                                         {{ __('recordes.buttons.view') }}
                                     </a>
-                                    <a class="text-blue-600 hover:underline" href="{{ route('recordes.pdf', $c) }}">
+                                    <a class="inline-flex items-center justify-center rounded-md bg-blue-600 px-3 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700" href="{{ route('recordes.pdf', $c) }}">
                                         {{ __('recordes.buttons.pdf') }}
                                     </a>
                                 </td>

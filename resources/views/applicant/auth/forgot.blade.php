@@ -1,3 +1,5 @@
+
+
 <x-applicant-layout title="{{ __('auth.forgot_password_title') }}">
     <div class="mx-auto max-w-md">
         <div class="rounded-xl border border-slate-200 bg-white p-6 md:p-7 shadow-sm">

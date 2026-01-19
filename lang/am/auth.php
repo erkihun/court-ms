@@ -70,4 +70,6 @@ return [
     'applicant_panel_label' => 'የአመልካች መግቢያ',
     'respondent_panel_label' => 'የመልስ ሰጪ መግቢያ',
 
+    'powered_by' => ' በ :brand የተመሠረተ',
+
 ];

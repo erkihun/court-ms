@@ -2,14 +2,14 @@
     use Mews\Purifier\Facades\Purifier;
 
     $sections = [
-        'case-summary' => 'Case Summary',
-        'case-details' => 'Case Details',
-        'respondent-responses' => 'Respondent Responses',
-        'letters' => 'Letters',
-        'hearings' => 'Hearings',
-        'bench-notes' => 'Bench Notes',
-        'final-decision' => 'Final Judgment / Decision',
-        'other-documents' => 'Other Documents',
+        'case-summary' => __('recordes.labels.case_summary'),
+        'case-details' => __('recordes.labels.case_details'),
+        'respondent-responses' => __('recordes.labels.respondent_responses'),
+        'letters' => __('recordes.labels.letters_section'),
+        'hearings' => __('recordes.labels.hearings'),
+        'bench-notes' => __('recordes.labels.bench_notes'),
+        'final-decision' => __('recordes.labels.final_judgment'),
+        'other-documents' => __('recordes.labels.other_documents'),
     ];
 
     $submittedDocuments = collect($case->submitted_documents ?? []);
@@ -50,7 +50,7 @@
             </nav>
             <div class="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-800">
                 <p class="font-semibold">{{ $case->case_number ?? 'N/A' }}</p>
-                <p>{{ \Illuminate\Support\Str::limit($case->title ?? 'Untitled case', 60) }}</p>
+                <p>{{ \Illuminate\Support\Str::limit($case->title ?? __('recordes.messages.untitled_case'), 60) }}</p>
                 <p class="mt-1">
                     {{ __('recordes.labels.status_label') }}: <span class="font-semibold">{{ ucfirst($case->status ?? 'n/a') }}</span>
                 </p>
@@ -64,7 +64,7 @@
                     <div>
                         <p class="text-xs uppercase tracking-wide text-slate-500">{{ __('recordes.titles.record') }}</p>
                         <h1 class="text-2xl font-semibold text-slate-900">
-                            {{ $case->case_number ?? 'N/A' }} &mdash; {{ $case->title ?? 'Untitled case' }}
+                            {{ $case->case_number ?? __('recordes.messages.not_available') }} &mdash; {{ $case->title ?? __('recordes.messages.untitled_case') }}
                         </h1>
                         <p class="text-sm text-slate-600 mt-1">
                             {{ __('recordes.labels.filed') }}:
@@ -100,13 +100,13 @@
             {{-- Bench Notes --}}
             <section id="section-bench-notes" class="record-section hidden bg-white shadow rounded-xl border border-slate-200 p-6 space-y-4">
                 <header class="flex items-center justify-between">
-                    <h2 class="text-lg font-semibold text-slate-900">Bench Notes</h2>
+                    <h2 class="text-lg font-semibold text-slate-900">{{ __('recordes.labels.bench_notes') }}</h2>
                     <span class="text-xs text-slate-500">{{ ($benchNotes ?? collect())->count() }} {{ __('recordes.labels.total') }}</span>
                 </header>
                 @forelse($benchNotes ?? [] as $note)
                     <div class="rounded-lg border border-slate-200 p-4 text-sm text-slate-700 space-y-2">
                         <div class="flex items-start justify-between">
-                            <p class="font-semibold">{{ $note->title ?? 'Note' }}</p>
+                            <p class="font-semibold">{{ $note->title ?? __('recordes.labels.note') }}</p>
                             <span class="text-xs text-slate-500">{{ optional($note->created_at)->toDayDateTimeString() }}</span>
                         </div>
                         <div class="prose max-w-none text-sm text-slate-800">
@@ -124,12 +124,12 @@
             {{-- Case Details --}}
             <section id="section-case-details" class="record-section hidden bg-white shadow rounded-xl border border-slate-200 p-6 space-y-6">
                 <header class="flex items-center justify-between">
-                    <h2 class="text-lg font-semibold text-slate-900">Case Details</h2>
+                    <h2 class="text-lg font-semibold text-slate-900">{{ __('recordes.labels.case_details') }}</h2>
                     <span class="text-xs text-slate-500">{{ __('recordes.labels.case_submission') }}</span>
                 </header>
 
                 <div class="space-y-4">
-                    <h3 class="text-sm font-semibold text-slate-800">Case Details Overview</h3>
+                    <h3 class="text-sm font-semibold text-slate-800">{{ __('recordes.labels.case_details_overview') }}</h3>
                     <dl class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-slate-700">
                         <div>
                             <dt class="text-xs uppercase tracking-wide text-slate-500">{{ __('recordes.labels.case_type') }}</dt>
@@ -151,43 +151,45 @@
                 </div>
 
                 <div class="space-y-4">
-                    <h3 class="text-sm font-semibold text-slate-800">Case Details</h3>
-                <div class="prose max-w-none text-sm text-slate-800">
-                    {!! $case->description ? $sanitize($case->description) : '<p>No details provided.</p>' !!}
-                </div>
+                    <h3 class="text-sm font-semibold text-slate-800">{{ __('recordes.labels.case_details') }}</h3>
+                    <div class="prose max-w-none text-sm text-slate-800">
+                        {!! $case->description
+                            ? $sanitize($case->description)
+                            : '<p>' . __('recordes.messages.no_details_provided') . '</p>' !!}
+                    </div>
                 </div>
 
                 @if(!empty($case->relief_requested))
                     <div class="space-y-2">
-                        <h3 class="text-sm font-semibold text-slate-800">Relief Requested</h3>
+                        <h3 class="text-sm font-semibold text-slate-800">{{ __('recordes.labels.relief_requested') }}</h3>
                         <div class="prose max-w-none text-sm text-slate-800">
                             {!! $sanitize($case->relief_requested) !!}
                         </div>
                     </div>
                 @endif
 
-                <div class="space-y-2">
-                    <h3 class="text-sm font-semibold text-slate-800">Submitted Documents</h3>
-                    @forelse($submittedDocuments as $document)
-                        <div class="rounded-lg border border-slate-200 p-3 text-sm text-slate-700 flex justify-between">
-                            <div>
-                                <p class="font-semibold">{{ $document->label ?? $document->title ?? 'Document' }}</p>
-                                <p class="text-xs text-slate-500">{{ optional($document->created_at)->toDayDateTimeString() }}</p>
+                    <div class="space-y-2">
+                        <h3 class="text-sm font-semibold text-slate-800">{{ __('recordes.labels.submitted_documents') }}</h3>
+                        @forelse($submittedDocuments as $document)
+                            <div class="rounded-lg border border-slate-200 p-3 text-sm text-slate-700 flex justify-between">
+                                <div>
+                                    <p class="font-semibold">{{ $document->label ?? $document->title ?? __('recordes.labels.document') }}</p>
+                                    <p class="text-xs text-slate-500">{{ optional($document->created_at)->toDayDateTimeString() }}</p>
+                                </div>
+                                @if(!empty($document->path ?? $document->file_path))
+                                    <span class="text-xs text-slate-500">{{ $document->path ?? $document->file_path }}</span>
+                                @endif
                             </div>
-                            @if(!empty($document->path ?? $document->file_path))
-                                <span class="text-xs text-slate-500">{{ $document->path ?? $document->file_path }}</span>
-                            @endif
-                        </div>
-                    @empty
-                        <p class="text-sm text-slate-500">{{ __('recordes.messages.no_files') }}</p>
-                    @endforelse
-                </div>
+                        @empty
+                            <p class="text-sm text-slate-500">{{ __('recordes.messages.no_files') }}</p>
+                        @endforelse
+                    </div>
 
                 <div class="space-y-2">
                     <h3 class="text-sm font-semibold text-slate-800">{{ __('recordes.labels.witnesses') }}</h3>
                     @forelse(($witnesses ?? collect()) as $wit)
                         <div class="rounded-lg border border-slate-200 p-3 text-sm text-slate-700">
-                            <p class="font-semibold">{{ $wit->full_name ?? 'Witness' }}</p>
+                            <p class="font-semibold">{{ $wit->full_name ?? __('recordes.labels.witness') }}</p>
                             <p class="text-xs text-slate-500">
                                 {{ __('recordes.labels.phone') }} {{ $wit->phone ?? 'N/A' }}
                                 &middot; {{ __('recordes.labels.email') }} {{ $wit->email ?? 'N/A' }}
@@ -203,15 +205,17 @@
             {{-- Respondent Responses --}}
             <section id="section-respondent-responses" class="record-section hidden bg-white shadow rounded-xl border border-slate-200 p-6 space-y-4">
                 <header class="flex items-center justify-between">
-                    <h2 class="text-lg font-semibold text-slate-900">Respondent Responses</h2>
+                    <h2 class="text-lg font-semibold text-slate-900">{{ __('recordes.labels.respondent_responses') }}</h2>
                     <span class="text-xs text-slate-500">{{ __('recordes.labels.respondent_responses') }}</span>
                 </header>
                 @forelse($respondentResponses ?? [] as $resp)
                     <div class="border border-slate-200 rounded-lg p-4 text-sm text-slate-700 space-y-2">
                         <div class="flex items-start justify-between">
                             <div>
-                                <p class="font-semibold">{{ $resp->title ?? 'Response' }}</p>
-                                <p class="text-xs text-slate-500">Case #: {{ $resp->case_number ?? $case->case_number ?? 'N/A' }}</p>
+                                <p class="font-semibold">{{ $resp->title ?? __('recordes.labels.response') }}</p>
+                                <p class="text-xs text-slate-500">
+                                    {{ __('recordes.labels.case_number') }} {{ $resp->case_number ?? $case->case_number ?? __('recordes.messages.not_available') }}
+                                </p>
                             </div>
                             <span class="text-xs text-slate-500">{{ optional($resp->created_at)->toDayDateTimeString() }}</span>
                         </div>
@@ -219,7 +223,9 @@
                             <p>{{ \Illuminate\Support\Str::limit(strip_tags($resp->description), 260) }}</p>
                         @endif
                         @if(!empty($resp->pdf_path))
-                            <p class="text-xs text-slate-500">Attachment: {{ $resp->pdf_path }}</p>
+                            <p class="text-xs text-slate-500">
+                                {{ __('recordes.labels.attachment') }} {{ $resp->pdf_path }}
+                            </p>
                         @endif
                     </div>
                 @empty
@@ -237,9 +243,13 @@
                     <div class="border border-slate-200 rounded-lg p-4 text-sm text-slate-700">
                         <div class="flex items-start justify-between gap-3">
                             <div>
-                                <p class="font-semibold">{{ $letter->subject ?? 'Letter' }}</p>
-                                <p class="text-xs text-slate-500">Ref: {{ $letter->reference_number ?? 'N/A' }} &middot; {{ ucfirst($letter->approval_status ?? 'draft') }}</p>
-                                <p class="text-xs text-slate-500">Author: {{ $letter->author_name ?? '—' }}</p>
+                                <p class="font-semibold">{{ $letter->subject ?? __('recordes.labels.letter') }}</p>
+                                <p class="text-xs text-slate-500">
+                                    {{ __('recordes.labels.reference_number') }} {{ $letter->reference_number ?? 'N/A' }} &middot; {{ ucfirst($letter->approval_status ?? 'draft') }}
+                                </p>
+                                <p class="text-xs text-slate-500">
+                                    {{ __('recordes.labels.author') }} {{ $letter->author_name ?? __('recordes.messages.not_available') }}
+                                </p>
                             </div>
                             <span class="text-xs text-slate-500">{{ optional($letter->created_at)->toDayDateTimeString() }}</span>
                         </div>
@@ -288,7 +298,7 @@
             {{-- Final Judgment --}}
             <section id="section-final-decision" class="record-section hidden bg-white shadow rounded-xl border border-slate-200 p-6 space-y-4">
                 <header class="flex items-center justify-between">
-                    <h2 class="text-lg font-semibold text-slate-900">Final Judgment / Decision</h2>
+                    <h2 class="text-lg font-semibold text-slate-900">{{ __('recordes.labels.final_judgment') }}</h2>
                     <span class="text-xs text-slate-500">{{ $decision ? __('recordes.labels.created') . ' ' . optional($decision->created_at)->toDayDateTimeString() : __('recordes.messages.no_decision') }}</span>
                 </header>
                 @if(!empty($decision))
@@ -306,14 +316,17 @@
             {{-- Other Documents --}}
             <section id="section-other-documents" class="record-section hidden bg-white shadow rounded-xl border border-slate-200 p-6 space-y-4">
                 <header class="flex items-center justify-between">
-                    <h2 class="text-lg font-semibold text-slate-900">Other Documents</h2>
-                    <span class="text-xs text-slate-500">{{ ($files ?? collect())->count() + ($evidences ?? collect())->count() }} items</span>
+                    <h2 class="text-lg font-semibold text-slate-900">{{ __('recordes.labels.other_documents') }}</h2>
+                    <span class="text-xs text-slate-500">
+                        {{ ($files ?? collect())->count() + ($evidences ?? collect())->count() }}
+                        {{ __('recordes.labels.items') }}
+                    </span>
                 </header>
                 <div class="space-y-3">
                     @forelse($otherDocuments as $file)
                         <div class="rounded-lg border border-slate-200 p-4 text-sm text-slate-700 flex justify-between">
                             <div>
-                                <p class="font-semibold">{{ $file->label ?? 'Document' }}</p>
+                                <p class="font-semibold">{{ $file->label ?? __('recordes.labels.document') }}</p>
                                 <p class="text-xs text-slate-500">{{ optional($file->created_at)->toDayDateTimeString() }}</p>
                             </div>
                             @if(!empty($file->path))
@@ -321,7 +334,7 @@
                             @endif
                         </div>
                     @empty
-                        <p class="text-sm text-slate-500">No uploaded files.</p>
+                        <p class="text-sm text-slate-500">{{ __('recordes.messages.no_uploaded_files') }}</p>
                     @endforelse
                 </div>
 
@@ -329,7 +342,7 @@
                     <h3 class="text-sm font-semibold text-slate-900">{{ __('recordes.labels.applicant_evidence') }}</h3>
                     @forelse($evidences ?? [] as $ev)
                         <div class="rounded-lg border border-slate-200 p-4 text-sm text-slate-700">
-                            <p class="font-semibold">{{ $ev->title ?? 'Document' }}</p>
+                            <p class="font-semibold">{{ $ev->title ?? __('recordes.labels.document') }}</p>
                             <p class="text-xs text-slate-500">{{ optional($ev->created_at)->toDayDateTimeString() }}</p>
                             @if(!empty($ev->description))
                                 <p class="mt-1">{{ $ev->description }}</p>

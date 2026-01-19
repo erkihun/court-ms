@@ -1,0 +1,410 @@
+<?php
+
+return [
+    'nav' => [
+        'home' => 'Home',
+        'statistics' => 'Statistics',
+        'process' => 'Process',
+        'services' => 'Services',
+        'cases' => 'Recent Cases',
+        'contact' => 'Contact',
+        'case_process' => 'Case Process',
+        'applicant_portal' => 'Applicant Portal',
+        'respondent_portal' => 'Respondent Portal',
+        'more' => 'More',
+        'announcements' => 'Announcements',
+        'faq' => 'FAQ',
+        'agency_label' => 'Administrative Tribunal',
+    ],
+
+    'language' => [
+        'label' => 'Language',
+        'switch' => 'Change language',
+        'select' => 'Select a language',
+        'english' => 'English',
+        'amharic' => 'Amharic',
+    ],
+
+    'meta' => [
+        'title' => 'Administrative Justice | PSHRDBATC',
+        'description' => 'The Administrative Tribunal\'s digital gateway for filing cases, following hearings, and reviewing tribunal insights.',
+        'keywords' => 'administrative tribunal, case management, justice, hearings, analytics',
+        'og_title' => 'PSHRDBATC Digital Tribunal Platform',
+        'og_description' => 'Track the latest cases, explore services, and access tribunal analytics from a single secure portal.',
+    ],
+
+    'accessibility' => [
+        'skip_to_content' => 'Skip to main content',
+        'menu_toggle' => 'Toggle navigation menu',
+        'scroll_down' => 'Scroll down to the next section',
+        'back_to_top' => 'Back to top',
+        'print_page' => 'Print this page',
+        'toggle_dark_mode' => 'Toggle dark mode',
+    ],
+
+    'announcements' => [
+        'system_maintenance' => 'Scheduled system maintenance is planned this weekend—access may be intermittent.',
+        'new_features' => 'New digital filing and case tracking features are now available on the portal.',
+        'filing_deadline' => 'Reminder: key filing deadlines are approaching; submit documents early to avoid delays.',
+        'view_all' => 'View all announcements',
+    ],
+
+    'hero' => [
+        'badge' => 'Digital Tribunal Platform',
+        'title' => 'Administrative Justice',
+        'accent' => 'Redefined',
+        'description' => 'A comprehensive digital platform for efficient case management, transparent proceedings, and timely justice delivery in administrative matters.',
+        'scroll_indicator' => 'Scroll down to live insights',
+        'stats' => [
+            'cases' => 'Cases tracked by the registry',
+            'resolution_rate' => 'Resolution rate',
+            'applicants' => 'Applicants assisted',
+            'judges' => 'Judges on rotation',
+        ],
+        'primary_cta' => 'File a New Case',
+        'secondary_cta' => 'Track Existing Case',
+        'slides' => [
+            'digital' => [
+                'badge' => 'Digital Tribunal',
+                'title' => 'Modern Administrative Justice System',
+                'description' => 'Experience seamless case management from filing to resolution with our fully digital tribunal platform',
+                'cta_label' => 'File a Case',
+                'secondary_label' => 'View Case Status',
+            ],
+            'hearing' => [
+                'badge' => 'Hearing Management',
+                'title' => 'Streamlined Virtual Hearings',
+                'description' => 'Conduct hearings efficiently with integrated video conferencing, document sharing, and real-time transcription',
+                'cta_label' => 'Schedule Hearing',
+                'secondary_label' => 'Hearing Guidelines',
+            ],
+            'analytics' => [
+                'badge' => 'Case Analytics',
+                'title' => 'Data-Driven Justice Delivery',
+                'description' => 'Monitor tribunal performance, track case timelines, and gain insights for continuous improvement',
+                'cta_label' => 'View Statistics',
+                'secondary_label' => 'Download Reports',
+            ],
+        ],
+    ],
+
+    'metrics' => [
+        'section_title' => 'Tribunal Performance Metrics',
+        'section_badge' => 'Live Insights',
+        'section_description' => 'Real-time insights into case processing and tribunal efficiency',
+        'time_unit' => 'days',
+        'resolution_card' => [
+            'title' => 'Case Resolution Performance',
+            'description' => 'Overall efficiency of the tribunal in resolving administrative matters',
+            'rate_label' => 'Resolution Rate',
+            'target_label' => 'Target Rate',
+            'national_average_label' => 'National Average',
+            'avg_days_label' => 'Average Days to Resolution',
+            'avg_days_subtitle' => 'Faster than the national average of 62 days',
+            'performance_award' => 'Recognized for excellence',
+        ],
+        'insights_title' => 'Additional Operational Insights',
+        'insights' => [
+            'evidence_submitted' => 'Evidence submissions processed this week',
+            'hearing_completion' => 'Hearings completed on schedule',
+            'digital_filings' => 'Cases filed through the digital portal',
+            'public_notifications' => 'Timely public notifications issued',
+            'service_availability' => '24/7 service availability',
+            'user_satisfaction' => 'Average user satisfaction rating',
+        ],
+        'last_updated' => 'Last updated',
+        'view_details' => 'View details',
+        'cards' => [
+            'total_cases' => [
+                'label' => 'Total Cases',
+                'description' => 'All matters filed with the Tribunal Registry',
+            ],
+            'resolved_cases' => [
+                'label' => 'Resolved Cases',
+                'description' => 'Closed or dismissed matters',
+            ],
+            'pending_cases' => [
+                'label' => 'Pending Cases',
+                'description' => 'Awaiting hearings or adjudication',
+            ],
+            'active_caseload' => [
+                'label' => 'Active Caseload',
+                'description' => 'Currently being processed',
+            ],
+            'hearings_this_week' => [
+                'label' => 'Hearings This Week',
+                'description' => 'Scheduled for next 7 days',
+            ],
+            'avg_resolution_time' => [
+                'label' => 'Avg Resolution Time',
+                'description' => 'Median time from filing to closure',
+            ],
+        ],
+    ],
+
+    'timeline' => [
+        'section_badge' => 'Journey map',
+        'section_title' => 'Case Processing Journey',
+        'section_description' => 'Transparent step-by-step process from filing to resolution',
+        'view_details' => 'View details',
+        'go_to_step' => 'Go to step :step',
+        'previous' => 'Previous',
+        'next' => 'Next',
+        'statuses' => [
+            'active' => 'Active',
+            'pending' => 'Pending',
+        ],
+        'steps' => [
+            'case_initiation' => [
+                'title' => 'Case Initiation & Filing',
+                'description' => 'Digital submission of petitions with automated validation and instant case number generation',
+                'meta' => 'Automated intake process',
+                'duration' => '1-3 days',
+            ],
+            'case_assignment' => [
+                'title' => 'Case Assessment & Assignment',
+                'description' => 'Registry review, jurisdiction verification, and assignment to appropriate tribunal bench',
+                'meta' => 'Bench assignment',
+                'duration' => '2-5 days',
+            ],
+            'evidence_submission' => [
+                'title' => 'Evidence Submission & Hearings',
+                'description' => 'Digital evidence upload, witness statements, and scheduled virtual/in-person hearings',
+                'meta' => 'Hearing management',
+                'duration' => '14-30 days',
+            ],
+            'adjudication' => [
+                'title' => 'Adjudication & Decision',
+                'description' => 'Bench deliberation, order drafting, and official judgment publication',
+                'meta' => 'Decision rendering',
+                'duration' => '7-21 days',
+            ],
+            'implementation' => [
+                'title' => 'Implementation & Closure',
+                'description' => 'Order enforcement, compliance verification, and final case archiving',
+                'meta' => 'Case closure',
+                'duration' => '10-30 days',
+            ],
+        ],
+    ],
+
+    'services' => [
+        'section_badge' => 'Core services',
+        'section_title' => 'Tribunal Digital Services',
+        'section_description' => 'Comprehensive tools for efficient case management and justice delivery',
+        'learn_more' => 'Learn more',
+        'stats' => [
+            'uptime' => 'System uptime',
+            'integrations' => 'Connected integrations',
+            'active_users' => 'Active users online',
+        ],
+        'cards' => [
+            'digital_case_filing' => [
+                'title' => 'Digital Case Filing',
+                'description' => 'Submit petitions electronically with built-in validation, auto-generated forms, and instant acknowledgment',
+                'meta' => '24/7 Submission Portal',
+                'features' => [
+                    'auto_validation' => 'Auto-validation rules',
+                    'instant_ack' => 'Instant acknowledgement',
+                    'secure_submission' => 'Secure encrypted uploads',
+                ],
+            ],
+            'hearing_management' => [
+                'title' => 'Hearing Management',
+                'description' => 'Schedule, reschedule, and track hearings with automated notifications and calendar integration',
+                'meta' => 'Smart Calendar System',
+                'features' => [
+                    'smart_scheduling' => 'Smart scheduling assistant',
+                    'auto_reminders' => 'Automated reminders & alerts',
+                    'calendar_sync' => 'Sync with trusted calendars',
+                ],
+            ],
+            'evidence_repository' => [
+                'title' => 'Evidence Repository',
+                'description' => 'Secure digital evidence vault with version control, access logs, and encrypted storage',
+                'meta' => 'Secure Document Management',
+                'features' => [
+                    'secure_storage' => 'Encrypted storage vault',
+                    'version_control' => 'Version control with audit history',
+                    'access_logs' => 'Detailed access logs',
+                ],
+            ],
+            'case_tracking_portal' => [
+                'title' => 'Case Tracking Portal',
+                'description' => 'Real-time case status updates, milestone tracking, and automated progress notifications',
+                'meta' => 'Live Status Updates',
+                'features' => [
+                    'real_time_updates' => 'Real-time status dashboards',
+                    'milestone_tracking' => 'Milestone tracking feeds',
+                    'progress_notifications' => 'Proactive progress alerts',
+                ],
+            ],
+            'decision_database' => [
+                'title' => 'Decision Database',
+                'description' => 'Searchable repository of tribunal decisions, orders, and legal precedents',
+                'meta' => 'Legal Research Tool',
+                'features' => [
+                    'searchable_repository' => 'Searchable legal repository',
+                    'legal_precedents' => 'Precedent tagging and commentary',
+                    'case_laws' => 'Case law summaries',
+                ],
+            ],
+            'online_dispute_resolution' => [
+                'title' => 'Online Dispute Resolution',
+                'description' => 'Virtual mediation and hearing facilities with recording and transcription services',
+                'meta' => 'Virtual Courtrooms',
+                'features' => [
+                    'virtual_medation' => 'Virtual mediation rooms',
+                    'recording_transcription' => 'High-fidelity recording & transcription',
+                    'secure_collaboration' => 'Secure collaboration spaces',
+                ],
+            ],
+        ],
+    ],
+
+    'cases' => [
+        'section_badge' => 'Case filings',
+        'section_title' => 'Recent Tribunal Cases',
+        'section_description' => 'Latest matters filed with the administrative tribunal',
+        'filter' => 'Filter cases',
+        'filters' => [
+            'all' => 'All',
+            'recent' => 'Recent',
+            'resolved' => 'Resolved',
+        ],
+        'filter_applied' => 'Filter applied',
+        'copy_case_number' => 'Copy case number',
+        'file_new_case' => 'File New Case',
+        'details_placeholder' => 'Case details are being processed by tribunal staff.',
+        'anonymous_applicant' => 'Anonymous applicant',
+        'view_details' => 'View Details',
+        'empty' => [
+            'headline' => 'No cases filed yet',
+            'subtext' => 'Be the first to file a case with the tribunal',
+            'cta' => 'File First Case',
+        ],
+        'filed_prefix' => 'Filed',
+        'stats_footer' => [
+            'total_cases' => 'Total Cases Filed',
+            'resolved_cases' => 'Successfully Resolved',
+            'pending_cases' => 'Currently Pending',
+            'resolution_efficiency' => 'Resolution Efficiency',
+        ],
+        'status_labels' => [
+            'filed' => 'Filed',
+            'under_review' => 'Under Review',
+            'hearing_scheduled' => 'Hearing Scheduled',
+            'decision_pending' => 'Decision Pending',
+            'resolved' => 'Resolved',
+            'dismissed' => 'Dismissed',
+            'archived' => 'Archived',
+        ],
+        'stats_title' => 'Tribunal case overview',
+        'share_case' => 'Share case',
+    ],
+
+    'cta' => [
+        'title' => 'Ready to engage with the tribunal?',
+        'description' => 'File a case, track an existing matter, or explore tribunal services within the digital platform.',
+        'primary_button' => 'Submit a Petition',
+        'secondary_button' => 'Track a Case',
+    ],
+
+    'faq' => [
+        'section_badge' => 'Need help?',
+        'section_title' => 'Frequently Asked Questions',
+        'section_description' => 'Clarifications about filing, hearings, and case tracking on the digital platform.',
+        'questions' => [
+            [
+                'question' => 'How do I file a new tribunal case?',
+                'answer' => 'Visit the Applicant Portal, complete the online petition form, upload supporting documents, and submit. You will receive an instant confirmation.',
+            ],
+            [
+                'question' => 'Can I track my case status online?',
+                'answer' => 'Yes. Use the case tracking tool on the homepage or the dashboard to see milestones, hearing schedules, and decisions.',
+            ],
+            [
+                'question' => 'What if I cannot attend a virtual hearing?',
+                'answer' => 'Contact the registry through the support form to request a reschedule or to arrange an alternative participation method.',
+            ],
+            [
+                'question' => 'How secure is my evidence?',
+                'answer' => 'All uploads are encrypted, stored with audit trails, and accessible only to authorized tribunal staff and parties.',
+            ],
+        ],
+    ],
+
+    'modal' => [
+        'close' => 'Close',
+        'case_details' => 'Case details',
+        'case_information' => 'Case information',
+        'case_details_placeholder' => 'Case details are being processed by tribunal staff.',
+        'next_steps' => 'Next steps',
+        'step_1' => 'Automated intake and validation',
+        'step_2' => 'Evidence compilation and hearings',
+        'step_3' => 'Decision preparation',
+        'share_case' => 'Share case',
+        'share_text' => 'Review this case on the tribunal portal',
+        'link_copied' => 'Link copied to clipboard',
+        'copied_to_clipboard' => 'Copied to clipboard',
+        'copy_failed' => 'Could not copy the link',
+        'metric_details_placeholder' => 'Detailed ratios and trends appear here.',
+        'metric_breakdown' => 'Metric breakdown',
+        'current_month' => 'Current month',
+        'previous_month' => 'Previous month',
+        'yearly_average' => 'Yearly average',
+        'key_activities' => 'Key activities',
+        'activity_1' => 'Automated validation',
+        'activity_2' => 'Evidence review',
+        'activity_3' => 'Decision drafting',
+        'key_features' => 'Key features',
+        'benefits' => 'Platform benefits',
+        'benefit_1' => 'Real-time updates',
+        'benefit_2' => 'Secure document vault',
+        'benefit_3' => 'Collaborative workflows',
+        'back_online' => 'You are back online',
+        'offline_mode' => 'You are offline — changes will sync soon',
+    ],
+
+    'loading' => 'Loading...',
+
+    'footer' => [
+        'description' => 'Delivering efficient and transparent administrative justice through digital innovation.',
+        'agency_label' => 'Administrative Tribunal',
+        'quick_links' => 'Quick Links',
+        'links' => [
+            [
+                'text' => 'Home',
+                'url' => '#home',
+                'icon' => 'fas fa-home',
+            ],
+            [
+                'text' => 'Statistics',
+                'url' => '#statistics',
+                'icon' => 'fas fa-chart-line',
+            ],
+            [
+                'text' => 'Process',
+                'url' => '#timeline',
+                'icon' => 'fas fa-stream',
+            ],
+            [
+                'text' => 'Services',
+                'url' => '#services',
+                'icon' => 'fas fa-briefcase',
+            ],
+        ],
+        'portals' => 'Portals',
+        'contact_title' => 'Contact & Support',
+        'contact_email' => 'support@tribunal.gov',
+        'contact_phone' => '+1 (234) 567-890',
+        'contact_address' => '123 Tribunal Avenue, Capital City',
+        'privacy_policy' => 'Privacy Policy',
+        'terms_of_service' => 'Terms of Service',
+        'accessibility' => 'Accessibility',
+        'sitemap' => 'Sitemap',
+        'rights' => 'All rights reserved.',
+        'track_case_status' => 'Track Case Status',
+        'version' => 'Version 1.0.0',
+    ],
+];

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Case Record PDF</title>
+    <title>{{ __('recordes.titles.pdf') }}</title>
 
     <script src="{{ asset('vendor/html2pdf/html2pdf.bundle.min.js') }}"></script>
     <script src="{{ asset('vendor/pdfjs/pdf.min.js') }}"></script>
@@ -66,28 +66,30 @@
         }
 
         .btn {
-            border: 1px solid #cbd5f5;
+            border: 1px solid #93c5fd;
             border-radius: 6px;
             padding: 8px 14px;
             background: #fff;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+            color: #1d4ed8;
         }
 
         .btn:hover {
-            background: #f3f4f6;
+            background: #eff6ff;
+            border-color: #60a5fa;
         }
 
         .btn-primary {
-            background: #0f172a;
+            background: #2563eb;
             color: #fff;
-            border-color: #0f172a;
+            border-color: #2563eb;
         }
 
         .btn-primary:hover {
-            background: #1e293b;
+            background: #1d4ed8;
         }
 
         .page-wrapper {
@@ -559,7 +561,7 @@
     <div class="page-wrapper" id="page-wrapper">
         <div id="record-document" class="record-page">
             <div class="section">
-                <h1>Case Record</h1>
+                <h1>{{ __('recordes.titles.record') }}</h1>
                 <div class="meta">
                     {{ __('recordes.labels.generated') }} 
                     @php
@@ -641,23 +643,23 @@
 
             @if(!empty($case->description))
                 <div class="section">
-                    <h2>Case Details</h2>
+                    <h2>{{ __('recordes.labels.case_details') }}</h2>
                     <div class="content">{!! $case->description !!}</div>
                 </div>
             @endif
 
             @if(!empty($case->relief_requested))
                 <div class="section">
-                    <h2>Relief Requested</h2>
+                <h2>{{ __('recordes.labels.relief_requested') }}</h2>
                     <div class="content">{!! $case->relief_requested !!}</div>
                 </div>
             @endif
 
             <div class="section">
-                <h2>Witnesses</h2>
+                <h2>{{ __('recordes.labels.witnesses') }}</h2>
                 @forelse($witnesses ?? [] as $wit)
                     <div class="card">
-                        <div><strong>{{ $wit->full_name ?? 'Witness' }}</strong></div>
+                        <div><strong>{{ $wit->full_name ?? __('recordes.labels.witness') }}</strong></div>
                         <div class="meta">
                             {{ __('recordes.labels.phone') }} {{ $wit->phone ?? 'N/A' }} |
                             {{ __('recordes.labels.email') }} {{ $wit->email ?? 'N/A' }} |
@@ -670,10 +672,10 @@
             </div>
 
             <div class="section">
-                <h2>Submitted Documents</h2>
+                <h2>{{ __('recordes.labels.submitted_documents') }}</h2>
                 @forelse($files ?? [] as $file)
                     <div class="card">
-                        <div><strong>{{ $file->label ?? 'File' }}</strong></div>
+                        <div><strong>{{ $file->label ?? __('recordes.labels.document') }}</strong></div>
                         <div class="meta">
                             {{ optional($file->created_at)->toDayDateTimeString() }}
                             @if(!empty($file->mime)) | {{ __('recordes.labels.mime') }} {{ $file->mime }} @endif
@@ -689,7 +691,7 @@
                 <div class="section">
                     <h2>{{ __('recordes.labels.applicant_initial_pdf') }}</h2>
                     <div class="card">
-                        <div><strong>{{ $firstEvidence->title ?? 'Document' }}</strong></div>
+                        <div><strong>{{ $firstEvidence->title ?? __('recordes.labels.document') }}</strong></div>
                         <div class="meta">
                             {{ optional($firstEvidence->created_at)->toDayDateTimeString() ?? 'N/A' }}
                             @if(!empty($firstEvidence->mime)) | {{ __('recordes.labels.mime') }} {{ $firstEvidence->mime }} @endif
@@ -707,10 +709,10 @@
             @endif
 
             <div class="section">
-                <h2>Applicant Evidence</h2>
+                <h2>{{ __('recordes.labels.applicant_evidence') }}</h2>
                 @forelse($evidences ?? [] as $ev)
                     <div class="card">
-                        <div><strong>{{ $ev->title ?? 'Document' }}</strong></div>
+                        <div><strong>{{ $ev->title ?? __('recordes.labels.document') }}</strong></div>
                         <div class="meta">{{ optional($ev->created_at)->toDayDateTimeString() }}</div>
                         @if(!empty($ev->description))
                             <div class="content">{{ $ev->description }}</div>
@@ -727,7 +729,7 @@
             </div>
 
             <div class="section">
-                <h2>Letters to Applicant</h2>
+                <h2>{{ __('recordes.labels.letters_section') }}</h2>
                 @php
                     $systemSettings = $systemSettings ?? \App\Models\SystemSetting::query()->first();
                 @endphp
@@ -746,7 +748,7 @@
                 @php $responsePdfEmbeds = []; @endphp
                 @forelse($respondentResponses ?? [] as $resp)
                     <div class="card">
-                        <div><strong>{{ $resp->title ?? 'Response' }}</strong></div>
+                        <div><strong>{{ $resp->title ?? __('recordes.labels.response') }}</strong></div>
                         <div class="meta">{{ optional($resp->created_at)->toDayDateTimeString() }}</div>
                         @if(!empty($resp->description))
                             <div class="content">{{ $resp->description }}</div>
@@ -774,7 +776,7 @@
             </div>
 
             <div class="section">
-                <h2>Hearings &amp; Judge Notes</h2>
+                <h2>{{ __('recordes.labels.hearings') }}</h2>
                 @forelse($hearings ?? [] as $hearing)
                     @php
                         $hearingMoment = !empty($hearing->hearing_at)
@@ -932,7 +934,7 @@
             </div>
 
             <div class="section">
-                <h2>Final Judgment / Decision</h2>
+                <h2>{{ __('recordes.labels.final_judgment') }}</h2>
                 @if(!empty($decision))
                     @php
                         $resolveDecisionSignature = function ($path) {

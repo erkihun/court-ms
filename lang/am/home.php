@@ -1,0 +1,410 @@
+<?php
+
+return [
+    'nav' => [
+        'home' => 'መነሻ',
+        'statistics' => 'ስታቲስቲክስ',
+        'process' => 'ሂደት',
+        'services' => 'አገልግሎቶች',
+        'cases' => 'የቅርብ ጊዜ ጉዳዮች',
+        'contact' => 'ግንኙነት',
+        'case_process' => 'የጉዳይ ሂደት',
+        'applicant_portal' => 'የአመልካች መግቢያ',
+        'respondent_portal' => 'የተከሳሽ መግቢያ',
+        'more' => 'ተጨማሪ',
+        'announcements' => 'ማስታወቂያዎች',
+        'faq' => 'ተደጋጋሚ ጥያቄዎች',
+        'agency_label' => 'የአስተዳደር ችሎት',
+    ],
+
+    'language' => [
+        'label' => 'ቋንቋ',
+        'switch' => 'ቋንቋ ይለውጡ',
+        'select' => 'ቋንቋ ይምረጡ',
+        'english' => 'English (እንግሊዝኛ)',
+        'amharic' => 'አማርኛ',
+    ],
+
+    'meta' => [
+        'title' => 'የአስተዳደር ፍትሕ | PSHRDBATC',
+        'description' => 'ጉዳዮችን ለማቅረብ፣ ችሎቶችን ለመከታተል እና የችሎት መረጃዎችን ለመገምገም የሚያገለግል የአስተዳደር ችሎት ዲጂታል መግቢያ።',
+        'keywords' => 'የአስተዳደር ችሎት፣ የጉዳይ አስተዳደር፣ ፍትሕ፣ ችሎቶች፣ ትንታኔ',
+        'og_title' => 'PSHRDBATC ዲጂታል የችሎት መድረክ',
+        'og_description' => 'የቅርብ ጊዜ ጉዳዮችን ይከታተሉ፣ አገልግሎቶችን ያስሱ እና የችሎት ትንታኔዎችን በአንድ ደህንነቱ የተጠበቀ መድረክ ያግኙ።',
+    ],
+
+    'accessibility' => [
+        'skip_to_content' => 'በቀጥታ ወደ ይዘቱ ይለፉ',
+        'menu_toggle' => 'የማውጫ ቁልፍ',
+        'scroll_down' => 'ወደ ታችኛው ክፍል ይውረዱ',
+        'back_to_top' => 'ወደ ላይ ይመለሱ',
+        'print_page' => 'ይህንን ገጽ ያትሙ',
+        'toggle_dark_mode' => 'ጥቁር ገጽታን ቀይር',
+    ],
+
+    'announcements' => [
+        'system_maintenance' => 'በዚህ ቅዳሜና እሁድ የሥርዓት ጥገና ይደረጋል—አገልግሎቱ አልፎ አልፎ ሊቋረጥ ይችላል።',
+        'new_features' => 'አዲስ የዲጂታል አቤቱታ ማቅረቢያ እና የጉዳይ መከታተያ አገልግሎቶች በመድረኩ ላይ ይገኛሉ።',
+        'filing_deadline' => 'ማሳሰቢያ፡ ዋና ዋና የሰነድ ማቅረቢያ ቀነ-ገደቦች እየደረሱ ነው፤ መዘግየትን ለማስቀረት ሰነዶችን ቀድመው ያስገቡ።',
+        'view_all' => 'ሁሉንም ማስታወቂያዎች ይመልከቱ',
+    ],
+
+    'hero' => [
+        'badge' => 'የዲጂታል ችሎት መድረክ',
+        'title' => 'የአስተዳደር ፍትሕ',
+        'accent' => 'በአዲስ መልክ',
+        'description' => 'ለተቀላጠፈ የጉዳይ አመራር፣ ግልጽ ለሆኑ ሂደቶች እና ወቅታዊ የፍትሕ አሰጣጥ የተዘጋጀ አጠቃላይ የዲጂታል መድረክ።',
+        'scroll_indicator' => 'የቀጥታ መረጃዎችን ለማየት ወደ ታች ይውረዱ',
+        'stats' => [
+            'cases' => 'በመዝገብ ቤት የተመዘገቡ ጉዳዮች',
+            'resolution_rate' => 'የመዝጊያ መጠን',
+            'applicants' => 'እገዛ የተደረገላቸው አመልካቾች',
+            'judges' => 'በተረኛነት ላይ ያሉ ዳኞች',
+        ],
+        'primary_cta' => 'አዲስ ጉዳይ ያስገቡ',
+        'secondary_cta' => 'ያለ ጉዳይ ይከታተሉ',
+        'slides' => [
+            'digital' => [
+                'badge' => 'ዲጂታል ችሎት',
+                'title' => 'ዘመናዊ የአስተዳደር ፍትሕ ሥርዓት',
+                'description' => 'ከጉዳይ አቀራረብ እስከ ውሳኔ ድረስ ያለውን ሂደት በዲጂታል የችሎት መድረካችን ያለምንም እንግልት ያከናውኑ',
+                'cta_label' => 'ጉዳይ ያስገቡ',
+                'secondary_label' => 'የጉዳይ ሁኔታን ይመልከቱ',
+            ],
+            'hearing' => [
+                'badge' => 'የችሎት አመራር',
+                'title' => 'የተቀላጠፈ የቨርቹዋል ችሎት',
+                'description' => 'የቪዲዮ ኮንፈረንስን፣ የሰነድ መጋራትን እና የቀጥታ ቃለ-ጉባኤን በመጠቀም ችሎቶችን በብቃት ይምሩ',
+                'cta_label' => 'ችሎት ይቀጥሩ',
+                'secondary_label' => 'የችሎት መመሪያዎች',
+            ],
+            'analytics' => [
+                'badge' => 'የጉዳይ ትንተና',
+                'title' => 'በመረጃ የተደገፈ የፍትሕ አሰጣጥ',
+                'description' => 'የችሎቱን የሥራ አፈጻጸም ይቆጣጠሩ፣ የጉዳይ ጊዜን ይከታተሉ እና ለተከታታይ መሻሻል ግብዓቶችን ያግኙ',
+                'cta_label' => 'ስታቲስቲክስ ይመልከቱ',
+                'secondary_label' => 'ሪፖርቶችን ያውርዱ',
+            ],
+        ],
+    ],
+
+    'metrics' => [
+        'section_title' => 'የችሎቱ የሥራ አፈጻጸም መለኪያዎች',
+        'section_badge' => 'የቀጥታ መረጃዎች',
+        'section_description' => 'ስለ ጉዳዮች ሂደት እና ስለ ችሎቱ ቅልጥፍና ቅጽበታዊ መረጃዎች',
+        'time_unit' => 'ቀናት',
+        'resolution_card' => [
+            'title' => 'የጉዳይ መዝጊያ አፈጻጸም',
+            'description' => 'የአስተዳደር ጉዳዮችን በመፍታት ረገድ የችሎቱ አጠቃላይ ብቃት',
+            'rate_label' => 'የመዝጊያ መጠን',
+            'target_label' => 'የታለመ መጠን',
+            'national_average_label' => 'የሀገር አቀፍ አማካይ',
+            'avg_days_label' => 'ጉዳይ ለመዝጋት የሚፈጅ አማካይ ቀናት',
+            'avg_days_subtitle' => 'ከሀገር አቀፍ አማካይ (62 ቀናት) በበለጠ ፍጥነት',
+            'performance_award' => 'ለላቀ አፈጻጸም እውቅና ያገኘ',
+        ],
+        'insights_title' => 'ተጨማሪ የሥራ ክንውን መረጃዎች',
+        'insights' => [
+            'evidence_submitted' => 'በዚህ ሳምንት የተስተናገዱ የማስረጃ ማቅረቢያዎች',
+            'hearing_completion' => 'በቀጠሮው መሠረት የተከናወኑ ችሎቶች',
+            'digital_filings' => 'በዲጂታል መድረኩ በኩል የቀረቡ ጉዳዮች',
+            'public_notifications' => 'በወቅቱ የተላለፉ የሕዝብ ማሳወቂያዎች',
+            'service_availability' => 'የ24/7 የአገልግሎት ዝግጁነት',
+            'user_satisfaction' => 'የተጠቃሚዎች አማካይ እርካታ',
+        ],
+        'last_updated' => 'ለመጨረሻ ጊዜ የተሻሻለው',
+        'view_details' => 'ዝርዝሩን ይመልከቱ',
+        'cards' => [
+            'total_cases' => [
+                'label' => 'ጠቅላላ ጉዳዮች',
+                'description' => 'በችሎቱ መዝገብ ቤት የቀረቡ ሁሉም ጉዳዮች',
+            ],
+            'resolved_cases' => [
+                'label' => 'የተዘጉ ጉዳዮች',
+                'description' => 'ውሳኔ ያገኙ ወይም የተሰረዙ ጉዳዮች',
+            ],
+            'pending_cases' => [
+                'label' => 'በጥበቃ ላይ ያሉ',
+                'description' => 'ችሎት ወይም ውሳኔ የሚጠብቁ ጉዳዮች',
+            ],
+            'active_caseload' => [
+                'label' => 'በሂደት ላይ ያሉ',
+                'description' => 'በአሁኑ ጊዜ እየታዩ ያሉ ጉዳዮች',
+            ],
+            'hearings_this_week' => [
+                'label' => 'የዚህ ሳምንት ችሎቶች',
+                'description' => 'ለሚቀጥሉት 7 ቀናት የተቀጠሩ',
+            ],
+            'avg_resolution_time' => [
+                'label' => 'አማካይ የመዝጊያ ጊዜ',
+                'description' => 'ከአቤቱታ እስከ መዝጊያ ያለው አማካይ ጊዜ',
+            ],
+        ],
+    ],
+
+    'timeline' => [
+        'section_badge' => 'የሂደት ካርታ',
+        'section_title' => 'የጉዳይ ሂደት ጉዞ',
+        'section_description' => 'ከአቤቱታ እስከ ፍጻሜ ያለው ግልጽ የደረጃ በደረጃ ሂደት',
+        'view_details' => 'ዝርዝሩን ይመልከቱ',
+        'go_to_step' => 'ወደ ደረጃ :step ይሂዱ',
+        'previous' => 'ቀዳሚ',
+        'next' => 'ቀጣይ',
+        'statuses' => [
+            'active' => 'ንቁ',
+            'pending' => 'በጥበቃ ላይ',
+        ],
+        'steps' => [
+            'case_initiation' => [
+                'title' => 'ጉዳይ መጀመር እና ማስገባት',
+                'description' => 'አቤቱታዎችን በዲጂታል መንገድ ማቅረብ፣ አውቶማቲክ ማረጋገጫ እና ወዲያውኑ የጉዳይ ቁጥር ማመንጨት',
+                'meta' => 'አውቶማቲክ አቀባበል',
+                'duration' => '1-3 ቀናት',
+            ],
+            'case_assignment' => [
+                'title' => 'ጉዳይ መገምገም እና መመደብ',
+                'description' => 'በመዝገብ ቤት መገምገም፣ የሥልጣን ክልልን ማረጋገጥ እና ለሚመለከተው ችሎት መመደብ',
+                'meta' => 'የችሎት ምደባ',
+                'duration' => '2-5 ቀናት',
+            ],
+            'evidence_submission' => [
+                'title' => 'ማስረጃ ማቅረብ እና ችሎቶች',
+                'description' => 'የዲጂታል ማስረጃ ጭነት፣ የምስክር ቃል እና የተቀጠሩ የቨርቹዋል ወይም የፊት ለፊት ችሎቶች',
+                'meta' => 'የችሎት አመራር',
+                'duration' => '14-30 ቀናት',
+            ],
+            'adjudication' => [
+                'title' => 'ዳኝነት እና ውሳኔ',
+                'description' => 'የችሎት ምክክር፣ የትዕዛዝ ዝግጅት እና ይፋዊ የፍርድ ህትመት',
+                'meta' => 'ውሳኔ መስጠት',
+                'duration' => '7-21 ቀናት',
+            ],
+            'implementation' => [
+                'title' => 'አፈጻጸም እና መዝጊያ',
+                'description' => 'የትዕዛዝ ተፈጻሚነት፣ የተገዢነት ማረጋገጫ እና የመጨረሻ መዝገብ ቤት ማስቀመጥ',
+                'meta' => 'ጉዳይ መዝጋት',
+                'duration' => '10-30 ቀናት',
+            ],
+        ],
+    ],
+
+    'services' => [
+        'section_badge' => 'ዋና አገልግሎቶች',
+        'section_title' => 'የችሎቱ የዲጂታል አገልግሎቶች',
+        'section_description' => 'ለተቀላጠፈ የጉዳይ አመራር እና ፍትሕ አሰጣጥ የተዘጋጁ መሣሪያዎች',
+        'learn_more' => 'ተጨማሪ ያንብቡ',
+        'stats' => [
+            'uptime' => 'የሥርዓቱ ዝግጁነት',
+            'integrations' => 'የተገናኙ ሥርዓቶች',
+            'active_users' => 'በመስመር ላይ ያሉ ተጠቃሚዎች',
+        ],
+        'cards' => [
+            'digital_case_filing' => [
+                'title' => 'የዲጂታል ጉዳይ ማቅረቢያ',
+                'description' => 'አቤቱታዎችን በኤሌክትሮኒክ መንገድ ያቅርቡ፤ አውቶማቲክ ቅጾችን እና ፈጣን ደረሰኝ ያግኙ',
+                'meta' => 'የ24/7 ማቅረቢያ መግቢያ',
+                'features' => [
+                    'auto_validation' => 'አውቶማቲክ የማረጋገጫ ደንቦች',
+                    'instant_ack' => 'ፈጣን የማረጋገጫ ደረሰኝ',
+                    'secure_submission' => 'ደህንነቱ የተጠበቀ ምስጥራዊ ሰነድ መላኪያ',
+                ],
+            ],
+            'hearing_management' => [
+                'title' => 'የችሎት አመራር',
+                'description' => 'ችሎቶችን ይቀጥሩ፣ ቀጠሮ ይለውጡ እና በአውቶማቲክ ማሳወቂያዎች ይከታተሉ',
+                'meta' => 'ብልጥ የቀጠሮ ሥርዓት',
+                'features' => [
+                    'smart_scheduling' => 'ብልጥ የቀጠሮ ረዳት',
+                    'auto_reminders' => 'አውቶማቲክ ማሳሰቢያዎች እና ማስጠንቀቂያዎች',
+                    'calendar_sync' => 'ከቀን መቁጠሪያ ጋር ማገናኛ',
+                ],
+            ],
+            'evidence_repository' => [
+                'title' => 'የማስረጃ ግምጃ ቤት',
+                'description' => 'ደህንነቱ የተጠበቀ፣ ምስጠራ ያለው እና የለውጥ ክትትል የሚያደርግ የዲጂታል ማስረጃ ማስቀመጫ',
+                'meta' => 'ደህንነቱ የተጠበቀ የሰነድ አመራር',
+                'features' => [
+                    'secure_storage' => 'ምስጠራ ያለው የማከማቻ ሣጥን',
+                    'version_control' => 'የለውጥ ክትትል እና ኦዲት ታሪክ',
+                    'access_logs' => 'ዝርዝር የፍቃድ ምዝግብ ማስታወሻዎች',
+                ],
+            ],
+            'case_tracking_portal' => [
+                'title' => 'የጉዳይ መከታተያ መግቢያ',
+                'description' => 'ቅጽበታዊ የጉዳይ ሁኔታ መረጃዎች፣ የሂደት ደረጃዎች እና አውቶማቲክ ማሳወቂያዎች',
+                'meta' => 'የቀጥታ ሁኔታ መረጃ',
+                'features' => [
+                    'real_time_updates' => 'ቅጽበታዊ ሁኔታ መከታተያ ሰሌዳ',
+                    'milestone_tracking' => 'የሂደት ደረጃዎች ክትትል',
+                    'progress_notifications' => 'ቅድመ-ማሳወቂያዎች',
+                ],
+            ],
+            'decision_database' => [
+                'title' => 'የውሳኔዎች የመረጃ ቋት',
+                'description' => 'የችሎት ውሳኔዎች፣ ትዕዛዞች እና የሕግ ቅድመ-ሁኔታዎች መፈለጊያ መዝገብ',
+                'meta' => 'የሕግ ምርምር መሣሪያ',
+                'features' => [
+                    'searchable_repository' => 'ሊፈለግ የሚችል የሕግ መዝገብ',
+                    'legal_precedents' => 'የቅድመ-ውሳኔ ምድቦች እና ትንታኔዎች',
+                    'case_laws' => 'የጉዳዮች ሕግ ማጠቃለያ',
+                ],
+            ],
+            'online_dispute_resolution' => [
+                'title' => 'የበይነመረብ ክርክር መፍቻ',
+                'description' => 'የቨርቹዋል እርቅ እና የችሎት አገልግሎቶች ከድምጽ ቀረጻ እና ቃለ-ጉባኤ ጋር',
+                'meta' => 'ቨርቹዋል ችሎቶች',
+                'features' => [
+                    'virtual_medation' => 'የቨርቹዋል እርቅ ክፍሎች',
+                    'recording_transcription' => 'ጥራት ያለው ድምጽ ቀረጻ እና ቃለ-ጉባኤ',
+                    'secure_collaboration' => 'ደህንነቱ የተጠበቀ የጋራ ሥራ ቦታ',
+                ],
+            ],
+        ],
+    ],
+
+    'cases' => [
+        'section_badge' => 'የጉዳይ ምዝገባዎች',
+        'section_title' => 'የቅርብ ጊዜ የችሎት ጉዳዮች',
+        'section_description' => 'በአስተዳደር ችሎቱ የቀረቡ የቅርብ ጊዜ አቤቱታዎች',
+        'filter' => 'ጉዳዮችን ይለዩ',
+        'filters' => [
+            'all' => 'ሁሉም',
+            'recent' => 'የቅርብ ጊዜ',
+            'resolved' => 'የተዘጉ',
+        ],
+        'filter_applied' => 'ማጣሪያ ተተግብሯል',
+        'copy_case_number' => 'የጉዳይ ቁጥር ቅዳ',
+        'file_new_case' => 'አዲስ ጉዳይ ያስገቡ',
+        'details_placeholder' => 'የጉዳዩ ዝርዝር መረጃ በችሎቱ ሠራተኞች እየተመረመረ ነው።',
+        'anonymous_applicant' => 'ስሙ ያልተጠቀሰ አመልካች',
+        'view_details' => 'ዝርዝሩን ይመልከቱ',
+        'empty' => [
+            'headline' => 'እስካሁን የቀረበ ጉዳይ የለም',
+            'subtext' => 'በችሎቱ የመጀመሪያውን ጉዳይ የሚያቀርቡት እርስዎ ይሁኑ',
+            'cta' => 'የመጀመሪያውን ጉዳይ ያስገቡ',
+        ],
+        'filed_prefix' => 'የቀረበበት ቀን',
+        'stats_footer' => [
+            'total_cases' => 'ጠቅላላ የቀረቡ ጉዳዮች',
+            'resolved_cases' => 'በስኬት የተዘጉ',
+            'pending_cases' => 'በሂደት ላይ ያሉ',
+            'resolution_efficiency' => 'የመዝጋት ብቃት',
+        ],
+        'status_labels' => [
+            'filed' => 'የቀረበ',
+            'under_review' => 'በግምገማ ላይ',
+            'hearing_scheduled' => 'ቀጠሮ የተያዘለት',
+            'decision_pending' => 'ውሳኔ የሚጠብቅ',
+            'resolved' => 'የተዘጋ',
+            'dismissed' => 'የተሰረዘ',
+            'archived' => 'የተመዘገበ',
+        ],
+        'stats_title' => 'የችሎት ጉዳዮች አጠቃላይ እይታ',
+        'share_case' => 'ጉዳዩን ያጋሩ',
+    ],
+
+    'cta' => [
+        'title' => 'ከችሎቱ ጋር ለመገናኘት ዝግጁ ነዎት?',
+        'description' => 'በዚህ ዲጂታል መድረክ በኩል ጉዳይ ያስገቡ፣ ያለ ጉዳይን ይከታተሉ ወይም የችሎቱን አገልግሎቶች ያስሱ።',
+        'primary_button' => 'አቤቱታ ያስገቡ',
+        'secondary_button' => 'ጉዳይ ይከታተሉ',
+    ],
+
+    'faq' => [
+        'section_badge' => 'እገዛ ይፈልጋሉ?',
+        'section_title' => 'ተደጋጋሚ ጥያቄዎች',
+        'section_description' => 'በዲጂታል መድረኩ ላይ ስለ አቤቱታ አቀራረብ፣ ስለ ችሎቶች እና ስለ ጉዳይ ክትትል ማብራሪያዎች።',
+        'questions' => [
+            [
+                'question' => 'እንዴት አዲስ ጉዳይ ማስገባት እችላለሁ?',
+                'answer' => 'ወደ አመልካች መግቢያ (Applicant Portal) በመሄድ የበይነመረብ አቤቱታ ቅጹን ይሙሉ፣ ደጋፊ ሰነዶችን ይጫኑ እና ያስገቡ። ወዲያውኑ ማረጋገጫ ይደርስዎታል።',
+            ],
+            [
+                'question' => 'የጉዳዬን ሁኔታ በመስመር ላይ መከታተል እችላለሁ?',
+                'answer' => 'አዎ። በመነሻ ገጹ ወይም በዳሽቦርዱ ላይ ያለውን የጉዳይ መከታተያ መሣሪያ በመጠቀም የሂደት ደረጃዎችን፣ የችሎት ቀጠሮዎችን እና ውሳኔዎችን ማየት ይችላሉ።',
+            ],
+            [
+                'question' => 'በቨርቹዋል ችሎት ላይ መገኘት ባልችልስ?',
+                'answer' => 'ቀጠሮ እንዲቀየርልዎት ወይም ሌላ የመሳተፊያ ዘዴ እንዲመቻችልዎት የድጋፍ ቅጹን በመጠቀም መዝገብ ቤቱን ያነጋግሩ።',
+            ],
+            [
+                'question' => 'የማስረጃዬ ደህንነት ምን ያህል የተጠበቀ ነው?',
+                'answer' => 'የሚጫኑ ሰነዶች በሙሉ በምስጠራ የሚጠበቁ እና የኦዲት ክትትል ያላቸው ሲሆን፣ ሊያዩዋቸው የሚችሉት የተፈቀደላቸው የችሎቱ ሠራተኞች እና ባለጉዳዮች ብቻ ናቸው።',
+            ],
+        ],
+    ],
+
+    'modal' => [
+        'close' => 'ዝጋ',
+        'case_details' => 'የጉዳዩ ዝርዝር',
+        'case_information' => 'የጉዳዩ መረጃ',
+        'case_details_placeholder' => 'የጉዳዩ ዝርዝር መረጃ በችሎቱ ሠራተኞች እየተመረመረ ነው።',
+        'next_steps' => 'ቀጣይ እርምጃዎች',
+        'step_1' => 'አውቶማቲክ አቀባበል እና ማረጋገጫ',
+        'step_2' => 'የማስረጃ አሰባሰብ እና ችሎቶች',
+        'step_3' => 'የውሳኔ ዝግጅት',
+        'share_case' => 'ጉዳዩን ያጋሩ',
+        'share_text' => 'ይህንን ጉዳይ በችሎቱ መድረክ ላይ ይመልከቱ',
+        'link_copied' => 'ሊንኩ ተገልብጧል',
+        'copied_to_clipboard' => 'ወደ ማህደረ ትውስታ (Clipboard) ተገልብጧል',
+        'copy_failed' => 'ሊንኩን መቅዳት አልተቻለም',
+        'metric_details_placeholder' => 'ዝርዝር መረጃዎች እና አዝማሚያዎች እዚህ ይታያሉ።',
+        'metric_breakdown' => 'የመለኪያዎች ዝርዝር',
+        'current_month' => 'የዚህ ወር',
+        'previous_month' => 'የባለፈው ወር',
+        'yearly_average' => 'የዓመት አማካይ',
+        'key_activities' => 'ዋና ዋና ተግባራት',
+        'activity_1' => 'አውቶማቲክ ማረጋገጫ',
+        'activity_2' => 'የማስረጃ ግምገማ',
+        'activity_3' => 'የውሳኔ ረቂቅ ዝግጅት',
+        'key_features' => 'ዋና ዋና ባህሪያት',
+        'benefits' => 'የመድረኩ ጥቅሞች',
+        'benefit_1' => 'ቅጽበታዊ መረጃዎች',
+        'benefit_2' => 'ደህንነቱ የተጠበቀ የሰነድ ግምጃ ቤት',
+        'benefit_3' => 'የጋራ የሥራ ሂደት',
+        'back_online' => 'ተመልሰው መስመር ላይ ገብተዋል',
+        'offline_mode' => 'ከመስመር ውጭ ነዎት — ለውጦች በቅርቡ ይመሳሰላሉ',
+    ],
+
+    'loading' => 'በመጫን ላይ...',
+
+    'footer' => [
+        'description' => 'በዲጂታል ፈጠራ የታገዘ ቀልጣፋ እና ግልጽ የአስተዳደር ፍትሕ መስጠት።',
+        'agency_label' => 'የአስተዳደር ችሎት',
+        'quick_links' => 'ፈጣን ሊንኮች',
+        'links' => [
+            [
+                'text' => 'መነሻ',
+                'url' => '#home',
+                'icon' => 'fas fa-home',
+            ],
+            [
+                'text' => 'ስታቲስቲክስ',
+                'url' => '#statistics',
+                'icon' => 'fas fa-chart-line',
+            ],
+            [
+                'text' => 'ሂደት',
+                'url' => '#timeline',
+                'icon' => 'fas fa-stream',
+            ],
+            [
+                'text' => 'አገልግሎቶች',
+                'url' => '#services',
+                'icon' => 'fas fa-briefcase',
+            ],
+        ],
+        'portals' => 'መግቢያዎች',
+        'contact_title' => 'ግንኙነት እና ድጋፍ',
+        'contact_email' => 'support@tribunal.gov',
+        'contact_phone' => '+1 (234) 567-890',
+        'contact_address' => '123 የችሎት አቬኑ፣ ዋና ከተማ',
+        'privacy_policy' => 'የግል መረጃ ጥበቃ ፖሊሲ',
+        'terms_of_service' => 'የአገልግሎት ውሎች',
+        'accessibility' => 'ተደራሽነት',
+        'sitemap' => 'የጣቢያ ካርታ',
+        'rights' => 'መብቱ በሕግ የተጠበቀ ነው።',
+        'track_case_status' => 'የጉዳይ ሁኔታን ይከታተሉ',
+        'version' => 'እትም 1.0.0',
+    ],
+];
