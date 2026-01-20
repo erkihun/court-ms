@@ -25,7 +25,6 @@
                 {{ __('roles.index.new_role') }}
             </a>
         </div>
-    </div>
 
     @if(session('ok'))
     <div class="p-3 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">{{ session('ok') }}</div>
