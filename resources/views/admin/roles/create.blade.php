@@ -54,6 +54,10 @@
                 </div>
             </div>
 
+            @php
+                $selectedPermissionIds = [];
+            @endphp
+
             {{-- Permissions --}}
             <div class="lg:col-span-2 p-5 rounded-xl border border-gray-200 bg-white shadow-sm space-y-4">
                 <div class="flex items-center justify-between">
@@ -67,18 +71,36 @@
                     </button>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[28rem] overflow-auto pr-2" id="perm-list">
-                    @foreach($perms as $perm)
-                    <label class="flex items-center gap-3 text-gray-700 border border-gray-200 rounded-lg px-3 py-2 hover:bg-gray-50">
-                        <input type="checkbox" name="permissions[]" value="{{ $perm->id }}"
-                            class="rounded border-gray-300 bg-white text-indigo-600 focus:ring-indigo-500">
-                        <div class="flex-1">
-                            <div class="text-sm font-medium text-gray-900">{{ $perm->name }}</div>
-                            @if(!empty($perm->labelLocalized))
-                            <div class="text-xs text-gray-500">{{ $perm->labelLocalized }}</div>
-                            @endif
+                <div class="space-y-5 max-h-[28rem] overflow-auto pr-2" id="perm-list">
+                    @foreach($permissionGroups as $group)
+                    <div class="space-y-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <p class="text-sm font-semibold text-gray-900">{{ $group['label'] }}</p>
+                                <p class="text-xs text-gray-500">
+                                    @choice('roles.groups.perms_count', $group['permissions']->count(), ['count' => $group['permissions']->count()])
+                                </p>
+                            </div>
+                            <span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">
+                                {{ $group['permissions']->count() }}
+                            </span>
                         </div>
-                    </label>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            @foreach($group['permissions'] as $perm)
+                            <label class="flex items-center gap-3 text-gray-700 border border-gray-200 rounded-lg px-3 py-2 hover:bg-gray-50">
+                                <input type="checkbox" name="permissions[]" value="{{ $perm->id }}"
+                                    class="rounded border-gray-300 bg-white text-indigo-600 focus:ring-indigo-500">
+                                <div class="flex-1">
+                                    <div class="text-sm font-medium text-gray-900">{{ $perm->name }}</div>
+                                    @if(!empty($perm->labelLocalized))
+                                    <div class="text-xs text-gray-500">{{ $perm->labelLocalized }}</div>
+                                    @endif
+                                </div>
+                            </label>
+                            @endforeach
+                        </div>
+                    </div>
                     @endforeach
                 </div>
 

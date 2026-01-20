@@ -175,11 +175,7 @@
                 class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
                       {{ request()->routeIs('dashboard') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                    </svg>
+                    <x-heroicon-o-home class="sidebar-icon h-5 w-5" aria-hidden="true" />
                 </div>
                 <span class="truncate origin-left"
                     x-show="!compact"
@@ -207,11 +203,7 @@
                 class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
                 {{ request()->routeIs('appeals.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
+                    <x-heroicon-o-shield-check class="sidebar-icon h-5 w-5" aria-hidden="true" />
                 </div>
                 <span class="truncate origin-left"
                     x-show="!compact"
@@ -234,11 +226,7 @@
                 class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
                 {{ request()->routeIs('decisions.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 17h6M9 13h6M9 9h6M6 5h12a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2z" />
-                    </svg>
+                    <x-heroicon-o-document-text class="sidebar-icon h-5 w-5" aria-hidden="true" />
                 </div>
                 <span class="truncate origin-left"
                     x-show="!compact"
@@ -259,11 +247,7 @@
                 class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
                 {{ request()->routeIs('cases.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
+                    <x-heroicon-o-briefcase class="sidebar-icon h-5 w-5" aria-hidden="true" />
                 </div>
                 <span class="truncate origin-left"
                     x-show="!compact"
@@ -284,11 +268,7 @@
                 class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
                 {{ request()->routeIs('recordes.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M8 16h8M8 12h8m-7-8h6a2 2 0 012 2v12l-4-2-4 2V6a2 2 0 012-2z" />
-                    </svg>
+                    <x-heroicon-o-bookmark class="sidebar-icon h-5 w-5" aria-hidden="true" />
                 </div>
                 <span class="truncate origin-left"
                     x-show="!compact"
@@ -308,11 +288,7 @@
                 class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
                 {{ request()->routeIs('reports.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 12h2v8H4zm6-6h2v14h-2zm6 4h2v10h-2z" />
-                    </svg>
+                    <x-heroicon-o-chart-bar class="sidebar-icon h-5 w-5" aria-hidden="true" />
                 </div>
                 <span class="truncate origin-left"
                     x-show="!compact"
@@ -333,11 +309,7 @@
                 class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
                 {{ $applicantsActive ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                            d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-                    </svg>
+                    <x-heroicon-o-user-group class="sidebar-icon h-5 w-5" aria-hidden="true" />
                 </div>
                 <span class="truncate origin-left"
                     x-show="!compact"
@@ -358,12 +330,7 @@
                 class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
                 {{ request()->routeIs('case-types.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    {{-- tags icon --}}
-                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M7 7h.01M3 10l7.586-7.586a2 2 0 012.828 0L21 9.999a2 2 0 010 2.828L13.828 20a2 2 0 01-2.828 0L3 12.999V10z" />
-                    </svg>
+                    <x-heroicon-o-tag class="sidebar-icon h-5 w-5" aria-hidden="true" />
                 </div>
                 <span class="truncate origin-left"
                     x-show="!compact"
@@ -390,10 +357,7 @@
                     :aria-expanded="open.toString()">
                     <span class="flex items-center gap-3">
                         <div class="grid place-items-center w-6" aria-hidden="true">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M3 5h18M4 7l8 5 8-5M4 19h16a1 1 0 001-1V6M3 19a1 1 0 01-1-1V6" />
-                            </svg>
+                            <x-heroicon-o-envelope class="sidebar-icon h-5 w-5" aria-hidden="true" />
                         </div>
                         <span class="truncate origin-left"
                             x-show="!compact"
@@ -437,10 +401,7 @@
                     <a href="{{ route('letters.index') }}"
                         class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
                         {{ $lettersActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M3 5h18M4 7l8 5 8-5M4 19h16a1 1 0 001-1V6M3 19a1 1 0 01-1-1V6" />
-                        </svg>
+                        <x-heroicon-o-envelope-open class="sidebar-icon h-4 w-4" aria-hidden="true" />
                         <span>{{ __('app.Letters') }}</span>
                     </a>
                     @endif
@@ -449,10 +410,7 @@
                     <a href="{{ route('letters.compose') }}"
                         class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
                         {{ $composeActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8 16h8M8 12h8m-5-8h5l3 3v11a2 2 0 01-2 2H8a2 2 0 01-2-2V5a2 2 0 012-2h3z" />
-                        </svg>
+                        <x-heroicon-o-pencil-square class="sidebar-icon h-4 w-4" aria-hidden="true" />
                         <span>{{ __('app.Compose Letter') }}</span>
                     </a>
                     @endif
@@ -466,11 +424,7 @@
                 class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
                 {{ request()->routeIs('admin.notifications.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 1 1-6 0h6z" />
-                    </svg>
+                    <x-heroicon-o-bell class="sidebar-icon h-5 w-5" aria-hidden="true" />
                 </div>
                 <span class="truncate origin-left"
                     x-show="!compact"
@@ -497,10 +451,7 @@
                     :aria-expanded="open.toString()">
                     <span class="flex items-center gap-3">
                         <div class="grid place-items-center w-6" aria-hidden="true">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                            </svg>
+                            <x-heroicon-o-users class="sidebar-icon h-5 w-5" aria-hidden="true" />
                         </div>
                         <span class="truncate origin-left"
                             x-show="!compact"
@@ -532,10 +483,7 @@
                     <a href="{{ route('users.index') }}"
                         class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
                         {{ $usersActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
+                        <x-heroicon-o-user class="sidebar-icon h-4 w-4" aria-hidden="true" />
                         <span>{{ __('app.Users') }}</span>
                     </a>
                     @endif
@@ -544,10 +492,7 @@
                     <a href="{{ route('permissions.index') }}"
                         class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
                         {{ $permissionsActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M7 7h.01M3 10l7.586-7.586a2 2 0 012.828 0L21 10a2 2 0 010 2.828L13.828 20a2 2 0 01-2.828 0L3 13v-3z" />
-                        </svg>
+                        <x-heroicon-o-key class="sidebar-icon h-4 w-4" aria-hidden="true" />
                         <span>{{ __('app.Permissions') }}</span>
                     </a>
                     @endif
@@ -557,25 +502,18 @@
                     <a href="{{ route('teams.index') }}"
                         class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
                         {{ $teamsActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 7h12M6 11h12M6 15h12M6 5h12a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2z" />
-                        </svg>
+                        <x-heroicon-o-squares-2x2 class="sidebar-icon h-4 w-4" aria-hidden="true" />
                         <span>{{ __('app.Teams') }}</span>
                     </a>
                     @endif
 
             @if($canManageRoles)
-            <a href="{{ route('roles.index') }}"
+                <a href="{{ route('roles.index') }}"
                 class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
                 {{ $rolesActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
-                <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-
-                    </svg>
-                    <span>{{ __('app.Roles') }}</span>
-                </a>
+                <x-heroicon-o-check-badge class="sidebar-icon h-4 w-4" aria-hidden="true" />
+                <span>{{ __('app.Roles') }}</span>
+            </a>
                 @endif
             </div>
         </div>
@@ -592,11 +530,7 @@
                 :aria-expanded="open.toString()">
                 <span class="flex items-center gap-3">
                     <div class="grid place-items-center w-6" aria-hidden="true">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                        </svg>
+                        <x-heroicon-o-cog class="sidebar-icon h-5 w-5" aria-hidden="true" />
                     </div>
                     <span class="truncate origin-left"
                         x-show="!compact"
@@ -627,11 +561,7 @@
                 <a href="{{ route('settings.system.edit') }}"
                     class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
                     {{ request()->routeIs('settings.system.*') ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M10.325 4.317L9.6 2.4m4.075 1.917l.725-1.917M4.318 10.325L2.4 9.6m1.918 4.075L2.4 14.4M19.682 10.325l1.918-.725m-1.918 4.075l1.918.725M12 8a4 4 0 100 8 4 4 0 000-8z" />
-                    </svg>
+                    <x-heroicon-o-adjustments-horizontal class="sidebar-icon h-4 w-4" aria-hidden="true" />
                     <span>{{ __('app.System_Settings') }}</span>
                 </a>
                 @endif
@@ -640,13 +570,7 @@
                 <a href="{{ route('terms.index') }}"
                     class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
                     {{ request()->routeIs('terms.*') ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 6l-2-2H6a2 2 0 00-2 2v13a1 1 0 001 1h14a1 1 0 001-1V6H12z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 6l2-2h4a2 2 0 012 2v13a1 1 0 01-1 1H7a1 1 0 01-1-1V6h6z" />
-                    </svg>
+                    <x-heroicon-o-document-text class="sidebar-icon h-4 w-4" aria-hidden="true" />
                     <span>{{ __('app.Terms') }}</span>
                 </a>
                 @endif
@@ -655,11 +579,7 @@
                 <a href="{{ route('admin.audit') }}"
                     class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
                     {{ request()->routeIs('admin.audit') ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 5h6m-6 4h6m-6 4h6m-9 4h12a2 2 0 002-2V7a2 2 0 00-2-2h-3l-1-2H9L8 5H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
+                    <x-heroicon-o-eye class="sidebar-icon h-4 w-4" aria-hidden="true" />
                     <span>{{ __('app.System_Audit') }}</span>
                 </a>
                 @endif

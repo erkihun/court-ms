@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-
-use App\Models\Role;
 use App\Models\Permission;
+use App\Models\Role;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class RolesController extends Controller
@@ -30,7 +31,10 @@ class RolesController extends Controller
     public function create()
     {
         $perms = Permission::orderBy('name')->get();
-        return view('admin.roles.create', compact('perms'));
+        return view('admin.roles.create', [
+            'perms' => $perms,
+            'permissionGroups' => $this->groupPermissions($perms),
+        ]);
     }
 
     public function store(Request $request)
@@ -57,7 +61,11 @@ class RolesController extends Controller
         $role->load('permissions');
         $perms = Permission::orderBy('name')->get();
 
-        return view('admin.roles.edit', compact('role', 'perms'));
+        return view('admin.roles.edit', [
+            'role' => $role,
+            'perms' => $perms,
+            'permissionGroups' => $this->groupPermissions($perms),
+        ]);
     }
 
     public function update(Request $request, Role $role)
@@ -83,5 +91,68 @@ class RolesController extends Controller
     {
         $role->delete();
         return back()->with('ok', 'Role deleted.');
+    }
+
+    private function groupPermissions(Collection $perms): Collection
+    {
+        $grouped = [];
+
+        foreach ($perms as $perm) {
+            $groupKey = $this->normalizePermissionGroupKey(Str::before($perm->name, '.'));
+            $grouped[$groupKey][] = $perm;
+        }
+
+        $orderedLabels = collect($this->permissionGroupLabels())
+            ->filter(fn ($_, $key) => isset($grouped[$key]));
+
+        $ordered = $orderedLabels->map(function ($label, $key) use ($grouped) {
+            return [
+                'key' => $key,
+                'label' => $label,
+                'permissions' => collect($grouped[$key])->sortBy('name'),
+            ];
+        });
+
+        $remaining = collect($grouped)
+            ->except($ordered->pluck('key')->all())
+            ->map(fn ($items, $key) => [
+                'key' => $key,
+                'label' => Str::headline(str_replace(['-', '_'], ' ', $key)),
+                'permissions' => collect($items)->sortBy('name'),
+            ]);
+
+        return $ordered->concat($remaining);
+    }
+
+    private function normalizePermissionGroupKey(string $key): string
+    {
+        $aliases = [
+            'decisions' => 'decision',
+        ];
+
+        return $aliases[$key] ?? $key;
+    }
+
+    private function permissionGroupLabels(): array
+    {
+        return [
+            'cases' => __('roles.groups.cases'),
+            'appeals' => __('roles.groups.appeals'),
+            'decision' => __('roles.groups.decisions'),
+            'bench-notes' => __('roles.groups.bench_notes'),
+            'letters' => __('roles.groups.letters'),
+            'hearing' => __('roles.groups.hearings'),
+            'file' => __('roles.groups.files'),
+            'message' => __('roles.groups.messaging'),
+            'reports' => __('roles.groups.reports'),
+            'settings' => __('roles.groups.system'),
+            'teams' => __('roles.groups.teams'),
+            'users' => __('roles.groups.users'),
+            'roles' => __('roles.groups.roles'),
+            'permissions' => __('roles.groups.permissions'),
+            'templates' => __('roles.groups.templates'),
+            'applicants' => __('roles.groups.applicants'),
+            'notes' => __('roles.groups.notes'),
+        ];
     }
 }

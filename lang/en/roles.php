@@ -52,4 +52,24 @@ return [
 
 
     ],
+    'groups' => [
+        'cases' => 'Cases',
+        'appeals' => 'Appeals',
+        'decisions' => 'Decisions',
+        'bench_notes' => 'Bench Notes',
+        'letters' => 'Letters',
+        'hearings' => 'Hearings',
+        'files' => 'Files',
+        'messaging' => 'Messaging',
+        'reports' => 'Reports',
+        'system' => 'System & Settings',
+        'teams' => 'Teams',
+        'users' => 'Users',
+        'roles' => 'Roles',
+        'permissions' => 'Permissions',
+        'templates' => 'Templates',
+        'applicants' => 'Applicants',
+        'notes' => 'Notes',
+        'perms_count' => '{count} permission|{count} permissions',
+    ],
 ];
