@@ -129,15 +129,26 @@ return new class extends Migration
         if (!Schema::hasTable('court_cases')) {
             Schema::create('court_cases', function (Blueprint $table) {
                 $table->id();
+                $table->unsignedBigInteger('applicant_id')->nullable();
                 $table->string('case_number')->unique();
+                $table->string('code', 8)->nullable()->unique();
                 $table->string('title');
+                $table->string('respondent_name')->nullable();
+                $table->string('respondent_address')->nullable();
                 $table->text('description')->nullable();
+                $table->text('relief_requested')->nullable();
                 $table->foreignId('case_type_id')->constrained();
                 $table->foreignId('judge_id')->nullable()->constrained('users');
                 $table->date('filing_date');
                 $table->date('first_hearing_date')->nullable();
                 $table->enum('status', ['pending', 'active', 'adjourned', 'dismissed', 'closed'])->default('pending');
+                $table->foreignId('assigned_user_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->timestamp('assigned_at')->nullable();
                 $table->text('notes')->nullable();
+                $table->string('review_status', 30)->default('awaiting_review')->index();
+                $table->text('review_note')->nullable();
+                $table->foreignId('reviewed_by_user_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->timestamp('reviewed_at')->nullable();
                 $table->timestamps();
             });
         }
