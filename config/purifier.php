@@ -3,16 +3,30 @@
 // config/purifier.php
 
 $cachePath = env('PURIFIER_CACHE_PATH', storage_path('framework/cache/purifier'));
-if (!is_dir($cachePath)) {
-    @mkdir($cachePath, 0755, true);
-}
 
-if (!is_dir($cachePath) || !is_writable($cachePath)) {
-    $cachePath = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'purifier-cache';
-    if (!is_dir($cachePath)) {
-        @mkdir($cachePath, 0755, true);
+$findWritableCachePath = static function (string $candidate): ?string {
+    $path = rtrim($candidate, DIRECTORY_SEPARATOR);
+    if (!is_dir($path) && !@mkdir($path, 0755, true)) {
+        return null;
     }
-}
+
+    if (!is_dir($path) || !is_writable($path)) {
+        return null;
+    }
+
+    $testFile = $path . DIRECTORY_SEPARATOR . 'purifier-cache-test-' . uniqid('', true);
+    if (@file_put_contents($testFile, 'purifier-cache-test') === false) {
+        return null;
+    }
+
+    @unlink($testFile);
+
+    return $path;
+};
+
+$cachePath = $findWritableCachePath($cachePath)
+    ?? $findWritableCachePath(rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'purifier-cache')
+    ?? sys_get_temp_dir();
 
 return [
     'encoding'      => 'UTF-8',

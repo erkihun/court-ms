@@ -22,6 +22,7 @@ class AppServiceProvider extends ServiceProvider
             $purifierCachePath = config('purifier.cachePath');
             if ($purifierCachePath) {
                 File::ensureDirectoryExists($purifierCachePath, 0755, true);
+                File::ensureDirectoryExists($purifierCachePath . DIRECTORY_SEPARATOR . 'CSS', 0755, true);
                 File::ensureDirectoryExists($purifierCachePath . DIRECTORY_SEPARATOR . 'HTML', 0755, true);
                 File::ensureDirectoryExists($purifierCachePath . DIRECTORY_SEPARATOR . 'URI', 0755, true);
             }
