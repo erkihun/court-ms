@@ -2,29 +2,22 @@
 
 // config/purifier.php
 
+$cachePath = env('PURIFIER_CACHE_PATH', storage_path('framework/cache/purifier'));
+if (!is_dir($cachePath)) {
+    @mkdir($cachePath, 0755, true);
+}
+
+if (!is_dir($cachePath) || !is_writable($cachePath)) {
+    $cachePath = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'purifier-cache';
+    if (!is_dir($cachePath)) {
+        @mkdir($cachePath, 0755, true);
+    }
+}
+
 return [
     'encoding'      => 'UTF-8',
     'finalize'      => true,
-
-    // Prefer an env override, fall back to storage, and finally /tmp if storage isn't writable.
-+    'cachePath'     => (function () {
-        $candidate = env('PURIFIER_CACHE_PATH', storage_path('framework/cache/purifier'));
-
-        if (!is_dir($candidate)) {
-            @mkdir($candidate, 0755, true);
-        }
-
-        if (is_dir($candidate) && is_writable($candidate)) {
-            return $candidate;
-        }
-
-        $tempPath = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'purifier-cache';
-        if (!is_dir($tempPath)) {
-            @mkdir($tempPath, 0755, true);
-        }
-
-        return $tempPath;
-    })(),
+    'cachePath'     => $cachePath,
     // File mode for cache files (directories are handled by the package)
     'cacheFileMode' => 0644,
 
