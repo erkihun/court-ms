@@ -5,7 +5,26 @@
 return [
     'encoding'      => 'UTF-8',
     'finalize'      => true,
-    'cachePath'     => env('PURIFIER_CACHE_PATH', storage_path('framework/cache/purifier')),
+
+    // Prefer an env override, fall back to storage, and finally /tmp if storage isn't writable.
++    'cachePath'     => (function () {
+        $candidate = env('PURIFIER_CACHE_PATH', storage_path('framework/cache/purifier'));
+
+        if (!is_dir($candidate)) {
+            @mkdir($candidate, 0755, true);
+        }
+
+        if (is_dir($candidate) && is_writable($candidate)) {
+            return $candidate;
+        }
+
+        $tempPath = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'purifier-cache';
+        if (!is_dir($tempPath)) {
+            @mkdir($tempPath, 0755, true);
+        }
+
+        return $tempPath;
+    })(),
     // File mode for cache files (directories are handled by the package)
     'cacheFileMode' => 0644,
 

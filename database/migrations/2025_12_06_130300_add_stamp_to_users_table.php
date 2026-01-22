@@ -9,7 +9,10 @@ return new class extends Migration {
     {
         Schema::table('users', function (Blueprint $table) {
             if (!Schema::hasColumn('users', 'stamp_path')) {
-                $table->string('stamp_path')->nullable()->after('signature_path');
+                $column = $table->string('stamp_path')->nullable();
+                if (Schema::hasColumn('users', 'signature_path')) {
+                    $column->after('signature_path');
+                }
             }
         });
     }
