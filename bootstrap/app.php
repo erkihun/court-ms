@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'perm' => \App\Http\Middleware\RequirePermission::class,
         ]);
 
+        $middleware->prependToGroup('web', \App\Http\Middleware\AdminSessionTimeout::class);
         $middleware->appendToGroup('web', \App\Http\Middleware\ForceHttps::class);
 
         // If you ever need global middleware:
