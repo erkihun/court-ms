@@ -20,7 +20,6 @@ class Kernel extends HttpKernel
 
     protected $middlewareGroups = [
         'web' => [
-            \App\Http\Middleware\ForceHttps::class,
             \App\Http\Middleware\EncryptCookies::class,
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
             \Illuminate\Session\Middleware\StartSession::class,

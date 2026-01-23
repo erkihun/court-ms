@@ -12,6 +12,11 @@ class AdminChatMessage extends Model
         'sender_user_id',
         'recipient_user_id',
         'message',
+        'read_at',
+    ];
+
+    protected $casts = [
+        'read_at' => 'datetime',
     ];
 
     public function sender(): BelongsTo

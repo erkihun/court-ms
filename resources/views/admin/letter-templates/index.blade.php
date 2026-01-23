@@ -13,6 +13,9 @@ $canDeleteTemplate = function_exists('userHasPermission')
 $canCreateLetter = function_exists('userHasPermission')
     ? userHasPermission('letters.create')
     : (auth()->user()?->hasPermission('letters.create') ?? false);
+$canViewCategories = function_exists('userHasPermission')
+    ? userHasPermission('letters.templet.view')
+    : (auth()->user()?->hasPermission('letters.templet.view') ?? false);
 @endphp
 
 <x-admin-layout title="{{ __('letters.templates.title') }}">
@@ -25,6 +28,12 @@ $canCreateLetter = function_exists('userHasPermission')
                 <p class="text-sm text-gray-500">{{ __('letters.templates.description') }}</p>
             </div>
             <div class="flex flex-wrap gap-2">
+                @if($canViewCategories)
+                <a href="{{ route('letter-categories.index') }}"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50">
+                    Manage categories
+                </a>
+                @endif
                 @if($canCreateTemplate)
                 <a href="{{ route('letter-templates.create') }}"
                     class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700">

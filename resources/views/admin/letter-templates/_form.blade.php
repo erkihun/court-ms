@@ -5,6 +5,7 @@ if (is_array($placeholders)) {
 $placeholders = implode(', ', $placeholders);
 }
 $placeholderValue = old('placeholders', $placeholders);
+$categories = $categories ?? collect();
 @endphp
 
 <div class="space-y-4">
@@ -16,19 +17,27 @@ $placeholderValue = old('placeholders', $placeholders);
         <p class="text-xs text-red-600 mt-1" role="alert">{{ $message }}</p>
         @enderror
     </div>
-    <select id="category-select" name="category"
-        class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
-
-        <option value="">Select Category</option>
-
-        @foreach($caseTypes as $type)
-        <option
-            value="{{ $type->name }}"
-            {{ old('category', $template->category) === $type->name ? 'selected' : '' }}>
-            {{ $type->name }}
-        </option>
-        @endforeach
-    </select>
+    <div>
+        <label class="block text-sm font-medium text-gray-700">{{ __('letters.templates.form.category') }}</label>
+        <input
+            id="category-select"
+            list="letter-category-list"
+            name="category"
+            value="{{ old('category', $template->category) }}"
+            class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+            placeholder="Select or type a category">
+        <datalist id="letter-category-list">
+            @foreach($categories as $category)
+            <option value="{{ $category->name }}"></option>
+            @endforeach
+        </datalist>
+        @if($categories->isEmpty())
+        <p class="text-xs text-gray-500 mt-1">No categories yet. Create one first.</p>
+        @endif
+        @error('category')
+        <p class="text-xs text-red-600 mt-1" role="alert">{{ $message }}</p>
+        @enderror
+    </div>
 
 
 

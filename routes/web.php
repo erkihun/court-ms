@@ -38,6 +38,7 @@ use App\Http\Controllers\Admin\DecisionController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\SystemSettingController;
 use App\Http\Controllers\Admin\LetterTemplateController;
+use App\Http\Controllers\Admin\LetterCategoryController;
 use App\Http\Controllers\Admin\ChatController;
 use App\Http\Controllers\Admin\LetterController;
 use App\Http\Controllers\Admin\LetterComposerController;
@@ -342,6 +343,7 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::get('/admin/chat',              [ChatController::class, 'index'])->middleware('perm:cases.view')->name('admin.chat');
             Route::get('/admin/chat/conversation/{user}', [ChatController::class, 'conversation'])->middleware('perm:cases.view')->name('admin.chat.conversation');
             Route::post('/admin/chat/messages',    [ChatController::class, 'storeMessage'])->middleware('perm:cases.edit')->name('admin.chat.messages');
+            Route::post('/admin/chat/read',        [ChatController::class, 'markRead'])->middleware('perm:cases.view')->name('admin.chat.read');
 
             // Files
             Route::post('/cases/{case}/files',          [CaseController::class, 'storeFile'])->middleware('perm:cases.edit')->name('cases.files.upload');
@@ -512,6 +514,26 @@ Route::middleware(SetLocale::class)->group(function () {
                 ->except(['show'])
                 ->middleware('perm:settings.manage')
                 ->names('terms');
+
+            // Letter categories
+            Route::get('/letter-categories', [LetterCategoryController::class, 'index'])
+                ->middleware('perm:letters.templet.view')
+                ->name('letter-categories.index');
+            Route::get('/letter-categories/create', [LetterCategoryController::class, 'create'])
+                ->middleware('perm:letters.templet.create')
+                ->name('letter-categories.create');
+            Route::post('/letter-categories', [LetterCategoryController::class, 'store'])
+                ->middleware('perm:letters.templet.create')
+                ->name('letter-categories.store');
+            Route::get('/letter-categories/{letterCategory}/edit', [LetterCategoryController::class, 'edit'])
+                ->middleware('perm:letters.templet.update')
+                ->name('letter-categories.edit');
+            Route::patch('/letter-categories/{letterCategory}', [LetterCategoryController::class, 'update'])
+                ->middleware('perm:letters.templet.update')
+                ->name('letter-categories.update');
+            Route::delete('/letter-categories/{letterCategory}', [LetterCategoryController::class, 'destroy'])
+                ->middleware('perm:letters.templet.delete')
+                ->name('letter-categories.destroy');
 
             // Letters with granular permissions
             Route::get('/letters/compose', [LetterComposerController::class, 'create'])

@@ -109,6 +109,7 @@
         <div
             x-show="open"
             x-cloak
+            style="display: none;"
             class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4"
             x-transition.opacity>
             <div class="w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl" @click.outside="close()">

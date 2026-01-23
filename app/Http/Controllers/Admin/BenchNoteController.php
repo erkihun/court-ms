@@ -20,9 +20,9 @@ class BenchNoteController extends Controller
             ->with([
                 'case:id,case_number,title',
                 'user:id,name',
-                'judgeOne:id,name',
-                'judgeTwo:id,name',
-                'judgeThree:id,name',
+                'judgeOne:id,name,signature_path',
+                'judgeTwo:id,name,signature_path',
+                'judgeThree:id,name,signature_path',
             ])
             ->when($caseId, fn($q) => $q->where('case_id', $caseId))
             ->orderByDesc('created_at')
@@ -85,16 +85,24 @@ class BenchNoteController extends Controller
 
     public function show(BenchNote $benchNote)
     {
-        return redirect()->route('bench-notes.index', ['case_id' => $benchNote->case_id]);
+        $benchNote->load([
+            'case:id,case_number,title',
+            'user:id,name',
+            'judgeOne:id,name,signature_path',
+            'judgeTwo:id,name,signature_path',
+            'judgeThree:id,name,signature_path',
+        ]);
+
+        return view('admin.bench-notes.show', compact('benchNote'));
     }
 
     public function edit(BenchNote $benchNote)
     {
         $benchNote->load([
             'case:id,case_number,title',
-            'judgeOne:id,name',
-            'judgeTwo:id,name',
-            'judgeThree:id,name',
+            'judgeOne:id,name,signature_path',
+            'judgeTwo:id,name,signature_path',
+            'judgeThree:id,name,signature_path',
         ]);
 
         $cases = CourtCase::query()

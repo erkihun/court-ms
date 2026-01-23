@@ -2,6 +2,9 @@
 
 @php
 $layout = $publicLayout ?? [];
+if (is_object($layout)) {
+    $layout = method_exists($layout, 'toArray') ? $layout->toArray() : (array) $layout;
+}
 $systemSettings = $layout['systemSettings'] ?? null;
 $brandName = $layout['brandName'] ?? config('app.name', __('app.court_ms'));
 $shortName = $layout['shortName'] ?? $brandName;
@@ -223,6 +226,12 @@ $respondentNotifList = collect();
 
     <title>{{ $title }} | {{ $brandName }}</title>
 
+    <style>
+        [x-cloak] {
+            display: none !important;
+        }
+    </style>
+
     {{-- Optional favicon if you later store it in system_settings --}}
     @if(!empty($systemSettings?->favicon_path))
     <link rel="icon" href="{{ asset('storage/'.$systemSettings->favicon_path) }}">
@@ -255,7 +264,7 @@ $respondentNotifList = collect();
 
                     <div class="flex flex-col leading-tight">
                         <span class="font-semibold text-base md:text-lg">
-                            {{ $brandName }}</br>{{ $shortName }}
+                            {{ $brandName }}<br>{{ $shortName }}
                         </span>
 
                     </div>
@@ -320,8 +329,8 @@ $respondentNotifList = collect();
                         </a>
                     </li>
                     {{-- Language (respondent) --}}
-                    <li x-data="{ open: false }" class="relative">
-                        <button @click="open = !open"
+                    <li x-data="{ open: false }" class="relative z-[60]" @close-language-menus.window="open = false">
+                        <button @click.stop="open = !open; $dispatch('close-notification-menus'); $dispatch('close-profile-menus')"
                             class="{{ $navBase }} {{ $navIdle }} border border-white/30 bg-white/10">
                             <span class="fi fi-{{ app()->getLocale() == 'am' ? 'et' : 'us' }}"></span>
                             <span>{{ __('app.Language') }}</span>
@@ -331,7 +340,7 @@ $respondentNotifList = collect();
                             </svg>
                         </button>
                         <div x-cloak x-show="open" @click.outside="open = false"
-                            class="absolute right-0 mt-2 w-36 rounded-md border border-slate-200 bg-white shadow-lg z-50">
+                            class="absolute right-0 mt-2 w-36 rounded-md border border-slate-200 bg-white shadow-lg z-[60]">
                             <div class="p-2 space-y-1 text-slate-700 text-sm">
                                 <a href="{{ route('language.switch', ['locale' => 'en', 'return' => url()->current()]) }}"
                                     class="flex items-center gap-2 w-full px-3 py-2 rounded hover:bg-slate-50 {{ app()->getLocale() == 'en' ? 'bg-blue-50 text-blue-700' : '' }}">
@@ -347,8 +356,8 @@ $respondentNotifList = collect();
                         </div>
                     </li>
                     {{-- Notifications (respondent) --}}
-                    <li x-data="{ open: false }" class="relative">
-                        <button @click="open = !open"
+                    <li x-data="{ open: false }" class="relative z-[60]" @close-notification-menus.window="open = false">
+                        <button @click.stop="open = !open; $dispatch('close-language-menus'); $dispatch('close-profile-menus')"
                             class="relative inline-flex items-center gap-2 px-3 py-2 rounded-md border border-blue-700 bg-blue-700/80 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-800 focus:ring-white">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
@@ -447,8 +456,8 @@ $respondentNotifList = collect();
                         </a>
                     </li>
                     {{-- Language Switcher (applicant) --}}
-                    <li x-data="{ open: false }" class="relative">
-                        <button @click="open = !open"
+                    <li x-data="{ open: false }" class="relative z-[60]" @close-language-menus.window="open = false">
+                        <button @click.stop="open = !open; $dispatch('close-notification-menus'); $dispatch('close-profile-menus')"
                             class="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-blue-600 bg-blue-700  font-medium hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-800 focus:ring-orange-400">
                             <span class="fi fi-{{ app()->getLocale() == 'am' ? 'et' : 'us' }}"></span>
                             <span>{{ __('app.Language') }}</span>
@@ -460,7 +469,7 @@ $respondentNotifList = collect();
                         </button>
 
                         <div x-cloak x-show="open" @click.outside="open = false"
-                            class="absolute right-0 mt-2 w-36 rounded-md border border-slate-200 bg-white shadow-lg z-50">
+                            class="absolute right-0 mt-2 w-36 rounded-md border border-slate-200 bg-white shadow-lg z-[60]">
                             <div class="p-2 space-y-1 text-slate-700 text-sm">
                                 <a href="{{ route('language.switch', ['locale' => 'en', 'return' => url()->current()]) }}"
                                     class="flex items-center gap-2 w-full px-3 py-2 rounded hover:bg-slate-50 {{ app()->getLocale() == 'en' ? 'bg-blue-50 text-blue-700' : '' }}">
@@ -481,10 +490,10 @@ $respondentNotifList = collect();
 
                     @if(!$actingRespondent && auth('applicant')->check())
                     {{-- Notifications (desktop) --}}
-                    <li x-data="{ open:false, tab:'notifications', messageModal:false }" class="relative">
+                    <li x-data="{ open:false, tab:'notifications', messageModal:false, messageCount: {{ (int) $messageNotificationCount }} }" class="relative" @close-notification-menus.window="open = false">
                         <div class="flex items-center gap-2">
                             <button type="button"
-                                @click="tab = 'messages'; open = true; if ($messageNotificationCount > 0) { messageModal = true }"
+                                @click.stop="tab = 'messages'; open = true; if (messageCount > 0) { messageModal = true }; $dispatch('close-language-menus'); $dispatch('close-profile-menus')"
                                 class="relative inline-flex items-center gap-1.5 rounded-md border border-blue-500 px-3 py-1.5 bg-blue-700 text-blue-50 font-medium hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-800 focus:ring-orange-400"
                                 :class="tab === 'messages' ? 'bg-white text-blue-800' : ''"
                                 aria-label="{{ __('cases.messages') }}">
@@ -501,7 +510,7 @@ $respondentNotifList = collect();
                                 @endif
                             </button>
                             <button type="button"
-                                @click="if (tab === 'notifications') { open = !open } else { tab = 'notifications'; open = true }"
+                                @click.stop="if (tab === 'notifications') { open = !open } else { tab = 'notifications'; open = true }; $dispatch('close-language-menus'); $dispatch('close-profile-menus')"
                                     class="relative inline-flex items-center gap-1.5 rounded-md border border-blue-500 px-3 py-1.5 bg-blue-700 text-blue-50 font-medium hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-800 focus:ring-orange-400"
                                 :class="tab === 'notifications' ? 'bg-white text-blue-800' : ''"
                                 aria-label="{{ __('app.Notifications') }}">
@@ -774,8 +783,8 @@ $respondentNotifList = collect();
 
                     {{-- Applicant menu --}}
                     @if(auth('applicant')->check() || $actingRespondent)
-                    <li x-data="{ open: false }" class="relative">
-                        <button @click="open = !open" type="button"
+                    <li x-data="{ open: false }" class="relative" @close-profile-menus.window="open = false">
+                        <button @click.stop="open = !open; $dispatch('close-language-menus'); $dispatch('close-notification-menus')" type="button"
                             class="{{ $navBase }} {{ $navIdle }} whitespace-nowrap"
                             :class="{ 'bg-white text-blue-800': open }">
                             <span class="truncate">{{ $applicantDisplayName }}</span>
@@ -987,7 +996,7 @@ $respondentNotifList = collect();
                         {{-- Mobile: notifications (inline list) --}}
                         @if(!$actingRespondent && auth('applicant')->check())
                         <li x-data="{ bell:false }" class="relative">
-                            <button @click="bell=!bell"
+                            <button @click.stop="bell=!bell"
                                 class="flex w-full items-center justify-between px-4 py-2 hover:bg-slate-50">
                                 <div class="flex items-center gap-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24"

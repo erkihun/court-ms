@@ -83,6 +83,7 @@
     $hasSystemSettings = Route::has('settings.system.edit');
     $hasTerms = Route::has('terms.index');
     $hasLetterTemplates = Route::has('letter-templates.index');
+    $hasLetterCategories = Route::has('letter-categories.index');
     $hasLetterComposer = Route::has('letters.compose');
     $hasLetters = Route::has('letters.index');
     $hasAudit = Route::has('admin.audit');
@@ -95,9 +96,10 @@
     $canManageRoles = $hasRoles && auth()->user()?->hasPermission('roles.manage');
     $canManageTeams = $hasTeams && auth()->user()?->hasPermission('teams.manage');
     $letterTemplatesActive = request()->routeIs('letter-templates.*');
+    $letterCategoriesActive = request()->routeIs('letter-categories.*');
     $lettersActive = request()->routeIs('letters.index') || request()->routeIs('letters.show');
     $composeActive = request()->routeIs('letters.compose');
-    $letterMenuOpen = $letterTemplatesActive || $lettersActive || $composeActive;
+    $letterMenuOpen = $letterTemplatesActive || $letterCategoriesActive || $lettersActive || $composeActive;
     $applicantsActive = request()->routeIs('applicants.*');
     $usersActive = request()->routeIs('users.*');
     $permissionsActive = request()->routeIs('permissions.*');
@@ -438,6 +440,15 @@
                                 d="M8 4h10a2 2 0 012 2v11a2 2 0 01-2 2H8l-4 3V6a2 2 0 012-2h2z" />
                         </svg>
                         <span>{{ __('app.Letter Templates') }}</span>
+                    </a>
+                    @endif
+
+                    @if($hasLetterCategories && $canManageTemplates)
+                    <a href="{{ route('letter-categories.index') }}"
+                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
+                        {{ $letterCategoriesActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                        <x-heroicon-o-rectangle-stack class="sidebar-icon h-4 w-4" aria-hidden="true" />
+                        <span>Letter categories</span>
                     </a>
                     @endif
 

@@ -57,6 +57,7 @@ class ApplicantAuthController extends Controller
         ]);
 
         Auth::guard('applicant')->login($applicant);
+        $request->session()->regenerate();
 
         // Send verification immediately
         try {

@@ -22,9 +22,9 @@ class LetterTemplateController extends Controller
     public function create()
     {
         $template = new LetterTemplate();
-        $caseTypes = \App\Models\CaseType::select('name')->orderBy('name')->get();
+        $categories = \App\Models\LetterCategory::select('name')->orderBy('name')->get();
 
-        return view('admin.letter-templates.create', compact('template', 'caseTypes'));
+        return view('admin.letter-templates.create', compact('template', 'categories'));
     }
 
     public function store(Request $request)
@@ -39,11 +39,11 @@ class LetterTemplateController extends Controller
 
     public function edit(LetterTemplate $letterTemplate)
     {
-        $caseTypes = \App\Models\CaseType::select('name')->orderBy('name')->get();
+        $categories = \App\Models\LetterCategory::select('name')->orderBy('name')->get();
 
         return view('admin.letter-templates.edit', [
             'template' => $letterTemplate,
-            'caseTypes' => $caseTypes
+            'categories' => $categories
         ]);
     }
 

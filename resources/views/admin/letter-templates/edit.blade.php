@@ -10,7 +10,10 @@
             <form method="POST" action="{{ route('letter-templates.update', $template) }}" class="space-y-6" enctype="multipart/form-data">
                 @csrf
                 @method('PATCH')
-                @include('admin.letter-templates._form', ['template' => $template])
+                @include('admin.letter-templates._form', [
+                    'template' => $template,
+                    'categories' => $categories,
+                ])
                 <div class="flex items-center justify-between">
                     <a href="{{ route('letter-templates.index') }}"
                         class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">{{ __('letters.templates.actions.back') }}</a>

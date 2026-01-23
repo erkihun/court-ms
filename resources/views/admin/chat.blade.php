@@ -26,19 +26,20 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <input type="text"
+                    data-chat-search
                     placeholder="{{ __('chat.search_placeholder') }}"
                     class="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition">
             </div>
 
             {{-- Online status filter --}}
             <div class="flex items-center space-x-2 overflow-x-auto pb-2">
-                <button class="px-3 py-1.5 text-sm font-medium rounded-full bg-blue-600 text-white">
+                <button type="button" data-chat-filter="all" class="px-3 py-1.5 text-sm font-medium rounded-full bg-blue-600 text-white">
                     {{ __('chat.all') }}
                 </button>
-                <button class="px-3 py-1.5 text-sm font-medium rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200">
+                <button type="button" data-chat-filter="online" class="px-3 py-1.5 text-sm font-medium rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200">
                     {{ __('chat.online') }}
                 </button>
-                <button class="px-3 py-1.5 text-sm font-medium rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200">
+                <button type="button" data-chat-filter="unread" class="px-3 py-1.5 text-sm font-medium rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200">
                     {{ __('chat.unread') }}
                 </button>
             </div>
@@ -51,8 +52,13 @@
                     $initials = strtoupper(substr($user->name ?? 'US', 0, 2));
                     $isSelected = $selectedUser && $user->id === $selectedUser->id;
                     $avatar = $user->avatar_url ?? (!empty($user->avatar_path) ? asset('storage/' . $user->avatar_path) : null);
-                    $isOnline = true; // Assume online for demo
-                    $unreadCount = rand(0, 5); // Demo data
+                    $isOnline = true;
+                    $meta = $chatMeta[$user->id] ?? null;
+                    $unreadCount = $meta['unread_count'] ?? 0;
+                    $lastMessage = $meta['last_message'] ?? null;
+                    $lastAt = $meta['last_at'] ?? null;
+                    $lastIsSender = $meta['last_is_sender'] ?? false;
+                    $previewText = $lastMessage ? ($lastIsSender ? 'You: ' : '') . $lastMessage : $handle;
                 @endphp
                 <div
                     role="button"
@@ -61,6 +67,10 @@
                     data-chat-user-name="{{ $user->name ?? __('chat.no_name') }}"
                     data-chat-user-handle="{{ $handle }}"
                     data-chat-user-initials="{{ $initials }}"
+                    data-chat-user-avatar="{{ $avatar }}"
+                    data-chat-user-phone="{{ $user->phone }}"
+                    data-chat-unread="{{ $unreadCount }}"
+                    data-chat-online="{{ $isOnline ? 'true' : 'false' }}"
                     class="group flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer {{ $isSelected ? 'bg-blue-50 border border-blue-100 shadow-sm' : 'hover:bg-gray-50' }}">
                     <div class="relative">
                         <div class="flex h-11 w-11 items-center justify-center rounded-full {{ $isSelected ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700' }} font-medium overflow-hidden">
@@ -71,7 +81,7 @@
                             @endif
                         </div>
                         @if($isOnline)
-                        <span class="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-green-500"></span>
+                        <span data-chat-online-dot class="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-green-500 {{ $isOnline ? '' : 'hidden' }}"></span>
                         @endif
                     </div>
 
@@ -80,19 +90,17 @@
                             <h4 class="text-sm font-semibold text-gray-900 truncate">
                                 {{ $user->name ?? __('chat.no_name') }}
                             </h4>
-                            <span class="text-xs text-gray-400">
-                                {{ $user->created_at ? \Illuminate\Support\Carbon::parse($user->created_at)->format('h:i A') : '1m ago' }}
+                            <span class="text-xs text-gray-400" data-chat-last-time>
+                                {{ $lastAt ? \Illuminate\Support\Carbon::parse($lastAt)->format('h:i A') : '—' }}
                             </span>
                         </div>
                         <div class="flex items-center justify-between mt-0.5">
-                            <p class="text-xs text-gray-500 truncate">
-                                {{ $unreadCount > 0 ? 'New message' : $handle }}
+                            <p class="text-xs text-gray-500 truncate" data-chat-last-preview>
+                                {{ $unreadCount > 0 ? 'New message' : $previewText }}
                             </p>
-                            @if($unreadCount > 0)
-                            <span class="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-xs font-medium text-white">
+                            <span data-chat-unread-badge class="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-xs font-medium text-white {{ $unreadCount > 0 ? '' : 'hidden' }}">
                                 {{ $unreadCount }}
                             </span>
-                            @endif
                         </div>
                     </div>
                 </div>
@@ -126,6 +134,7 @@
                             <div class="flex items-center gap-1.5 mt-0.5">
                                 <span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>
                                 <p data-chat-header-handle class="text-xs text-gray-500">{{ __('chat.online') }}</p>
+                                <p data-chat-typing class="text-xs text-blue-600 hidden">Typing...</p>
                             </div>
                         </div>
                     </div>
@@ -136,7 +145,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                         </button>
-                        <button class="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100">
+                        <button type="button" data-chat-phone-button class="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                             </svg>
@@ -146,6 +155,9 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
                             </svg>
                         </button>
+                        <div data-chat-phone-display class="hidden items-center rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+                            <span data-chat-phone-text>--</span>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -173,7 +185,10 @@
                 </div>
                 @else
                 {{-- User message --}}
-                <div class="flex {{ $isCurrentUser ? 'justify-end' : 'justify-start' }} group">
+                <div class="flex {{ $isCurrentUser ? 'justify-end' : 'justify-start' }} group"
+                    data-chat-message-id="{{ $message->id }}"
+                    data-chat-sender-id="{{ $message->sender_user_id }}"
+                    data-chat-recipient-id="{{ $message->recipient_user_id }}">
                     <div class="max-w-[75%] relative">
                         @if(!$isCurrentUser)
                         <div class="flex items-end gap-2 mb-1">
@@ -187,7 +202,7 @@
                         </div>
 
                         @if($isCurrentUser)
-                        <div class="flex items-center justify-end gap-1.5 mt-1">
+                        <div class="flex items-center justify-end gap-1.5 mt-1" data-chat-read-status>
                             <span class="text-xs text-gray-400">{{ $message->created_at->format('h:i A') }}</span>
                             @if($message->read_at)
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -263,6 +278,7 @@
         window.ADMIN_CHAT_SYSTEM_LABEL = @json(__('chat.system'));
         window.ADMIN_CHAT_CONVERSATION_URL_TEMPLATE = @json(route('admin.chat.conversation', ['user' => '__USER__']));
         window.ADMIN_CHAT_INITIAL_RECIPIENT_ID = @json($selectedUser?->id);
+        window.ADMIN_CHAT_READ_URL = @json(route('admin.chat.read'));
     </script>
     @endpush
 </x-admin-layout>

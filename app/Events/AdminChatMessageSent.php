@@ -3,9 +3,7 @@
 namespace App\Events;
 
 use App\Models\AdminChatMessage;
-use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -22,9 +20,12 @@ class AdminChatMessageSent implements ShouldBroadcast
         $this->message = $message->load('sender');
     }
 
-    public function broadcastOn(): Channel
+    public function broadcastOn(): array
     {
-        return new Channel('admin-chat');
+        return [
+            new PrivateChannel('admin-chat.' . $this->message->recipient_user_id),
+            new PrivateChannel('admin-chat.' . $this->message->sender_user_id),
+        ];
     }
 
     public function broadcastWith(): array

@@ -340,8 +340,41 @@ $canViewBench = function_exists('userHasPermission')
             </div>
 
             <div class="card-body">
+                <div class="mb-6 text-center space-y-1 text-sm text-gray-700">
+                    <div>{{ $note->judgeOne?->name ?? __('bench.meta.unknown') }}</div>
+                    <div>{{ $note->judgeTwo?->name ?? __('bench.meta.unknown') }}</div>
+                    <div>{{ $note->judgeThree?->name ?? __('bench.meta.unknown') }}</div>
+                </div>
+
+                <div class="mb-6 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                    <div class="grid gap-3 text-sm text-gray-700 sm:grid-cols-4">
+                        <div>
+                            <div class="text-xs uppercase tracking-wide text-gray-400">{{ __('bench.labels.author') }}</div>
+                            <div class="font-medium">{{ $note->user?->name ?? __('bench.meta.unknown') }}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs uppercase tracking-wide text-gray-400">{{ __('bench.labels.created_date') }}</div>
+                            <div class="font-medium">{{ \App\Support\EthiopianDate::format($note->created_at) }}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs uppercase tracking-wide text-gray-400">{{ __('bench.labels.created_time') }}</div>
+                            <div class="font-medium">{{ \App\Support\EthiopianDate::formatTime($note->created_at, timeFormat: 'g:i A') }}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs uppercase tracking-wide text-gray-400">{{ __('bench.labels.last_updated') }}</div>
+                            <div class="font-medium">
+                                @if($note->updated_at && $note->updated_at != $note->created_at)
+                                {{ \App\Support\EthiopianDate::format($note->updated_at, withTime: true) }}
+                                @else
+                                -
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="mb-6">
-                    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">{{ __('bench.sections.note_content') }}</h3>
+                    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">Note Content</h3>
                     <div class="cms-output">
                         @if($note->note)
                         {!! $safeNote !!}
@@ -351,96 +384,47 @@ $canViewBench = function_exists('userHasPermission')
                     </div>
                 </div>
 
-                <div class="meta-grid">
-                    <div class="meta-item">
-                        <div class="meta-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-                            </svg>
-                        </div>
-                        <div class="meta-content">
-                            <div class="meta-label">{{ __('bench.labels.author') }}</div>
-                            <div class="meta-value">{{ $note->user?->name ?? __('bench.meta.unknown') }}</div>
-                        </div>
-                    </div>
-
-                    <div class="meta-item">
-                        <div class="meta-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
-                            </svg>
-                        </div>
-                        <div class="meta-content">
-                            <div class="meta-label">{{ __('bench.labels.created_date') }}</div>
-                            <div class="meta-value">{{ \App\Support\EthiopianDate::format($note->created_at) }}</div>
-                        </div>
-                    </div>
-
-                    <div class="meta-item">
-                        <div class="meta-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                            </svg>
-                        </div>
-                        <div class="meta-content">
-                            <div class="meta-label">{{ __('bench.labels.created_time') }}</div>
-                            <div class="meta-value">{{ \App\Support\EthiopianDate::formatTime($note->created_at, timeFormat: 'g:i A') }}</div>
-                        </div>
-                    </div>
-
-                    @if($note->updated_at && $note->updated_at != $note->created_at)
-                    <div class="meta-item">
-                        <div class="meta-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                            </svg>
-                        </div>
-                        <div class="meta-content">
-                            <div class="meta-label">{{ __('bench.labels.last_updated') }}</div>
-                            <div class="meta-value">{{ \App\Support\EthiopianDate::format($note->updated_at, withTime: true) }}</div>
-                        </div>
-                    </div>
-                    @endif
-
-                    @php
-                    $panelJudgeNames = collect([
-                        $note->judgeOne?->name,
-                        $note->judgeTwo?->name,
-                        $note->judgeThree?->name,
-                    ])->filter()->values();
-                    @endphp
-                    @if($panelJudgeNames->isNotEmpty())
-                    <div class="meta-item">
-                        <div class="meta-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M5 7h14M5 12h14M5 17h14" />
-                            </svg>
-                        </div>
-                        <div class="meta-content">
-                            <div class="meta-label">{{ __('bench.sections.judges') }}</div>
-                            <div class="meta-value text-sm space-y-1">
-                                @foreach($panelJudgeNames as $index => $judgeName)
-                                <div>{{ __('bench.labels.panel_judge_format', ['position' => $index + 1, 'name' => $judgeName]) }}</div>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
-                    @endif
-                </div>
+                <div class="meta-grid"></div>
             </div>
 
             <div class="card-footer">
+                <div class="mb-4 grid grid-cols-3 gap-6 text-center">
+                    <div>
+                        <div class="text-sm font-medium text-gray-700">{{ $note->judgeOne?->name ?? __('bench.meta.unknown') }}</div>
+                        @if(!empty($note->judgeOne?->signature_url))
+                        <img src="{{ $note->judgeOne?->signature_url }}" alt="{{ $note->judgeOne?->name }}" class="mx-auto mt-2 max-h-16 w-auto">
+                        @else
+                        <div class="mt-2 text-sm text-gray-400">Judge 1 signature</div>
+                        @endif
+                    </div>
+                    <div>
+                        <div class="text-sm font-medium text-gray-700">{{ $note->judgeTwo?->name ?? __('bench.meta.unknown') }}</div>
+                        @if(!empty($note->judgeTwo?->signature_url))
+                        <img src="{{ $note->judgeTwo?->signature_url }}" alt="{{ $note->judgeTwo?->name }}" class="mx-auto mt-2 max-h-16 w-auto">
+                        @else
+                        <div class="mt-2 text-sm text-gray-400">Judge 2 signature</div>
+                        @endif
+                    </div>
+                    <div>
+                        <div class="text-sm font-medium text-gray-700">{{ $note->judgeThree?->name ?? __('bench.meta.unknown') }}</div>
+                        @if(!empty($note->judgeThree?->signature_url))
+                        <img src="{{ $note->judgeThree?->signature_url }}" alt="{{ $note->judgeThree?->name }}" class="mx-auto mt-2 max-h-16 w-auto">
+                        @else
+                        <div class="mt-2 text-sm text-gray-400">Judge 3 signature</div>
+                        @endif
+                    </div>
+                </div>
                 <div class="action-buttons">
+                    <a href="{{ route('bench-notes.show', $note->id) }}" class="btn btn-view">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        View
+                    </a>
                     @if($canUpdateBench)
                     <a href="{{ route('bench-notes.edit', $note->id) }}" class="btn btn-edit">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"

@@ -2,6 +2,10 @@
 
 use Illuminate\Support\Str;
 
+$appUrl = (string) env('APP_URL', '');
+$appHost = $appUrl !== '' ? parse_url($appUrl, PHP_URL_HOST) : null;
+$appUsesHttps = $appUrl !== '' && Str::startsWith($appUrl, 'https://');
+
 return [
 
     /*
@@ -156,7 +160,7 @@ return [
     |
     */
 
-    'domain' => env('SESSION_DOMAIN'),
+    'domain' => env('SESSION_DOMAIN', $appHost),
 
     /*
     |--------------------------------------------------------------------------
@@ -169,7 +173,7 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE', env('APP_ENV') === 'production'),
+    'secure' => env('SESSION_SECURE_COOKIE', $appUsesHttps),
 
     /*
     |--------------------------------------------------------------------------
