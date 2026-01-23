@@ -264,6 +264,5 @@
         window.ADMIN_CHAT_CONVERSATION_URL_TEMPLATE = @json(route('admin.chat.conversation', ['user' => '__USER__']));
         window.ADMIN_CHAT_INITIAL_RECIPIENT_ID = @json($selectedUser?->id);
     </script>
-    @vite('resources/js/admin-chat.js')
     @endpush
 </x-admin-layout>
