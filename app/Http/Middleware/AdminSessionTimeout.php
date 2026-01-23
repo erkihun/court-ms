@@ -20,7 +20,7 @@ class AdminSessionTimeout
         $isNamedAdmin = $routeName && (str_starts_with($routeName, 'admin.') || $routeName === 'dashboard');
 
         if ($isAdminRoute || $isNamedAdmin) {
-            config(['session.lifetime' => 1]);
+            config(['session.lifetime' => 30]);
         }
 
         return $next($request);
