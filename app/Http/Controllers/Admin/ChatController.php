@@ -137,7 +137,7 @@ class ChatController extends Controller
             'sender_user_id' => ['required', 'exists:users,id'],
         ]);
 
-        $readAt = now()->toIsoString();
+        $readAt = now();
         $count = AdminChatMessage::query()
             ->where('sender_user_id', $data['sender_user_id'])
             ->where('recipient_user_id', Auth::id())
