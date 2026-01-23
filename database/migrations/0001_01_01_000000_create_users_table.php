@@ -18,8 +18,8 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->boolean('is_admin')->default(false)->index();
             $table->string('password');
-            $table->string('avatar_path')->nullable()->after('password');
-            $table->string('signature_path')->nullable()->after('avatar_path');
+            $table->string('avatar_path')->nullable();
+            $table->string('signature_path')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
