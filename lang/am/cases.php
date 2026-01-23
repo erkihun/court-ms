@@ -61,8 +61,8 @@ return [
     'respondent_defendant' => 'የተከሰሰ / ተከሳሽ',
     'name' => 'ስም',
     'address' => 'አድራሻ',
-        'summary' => '?????',
-        'not_available' => '???',
+    'summary' => '?????',
+    'not_available' => '???',
     'submitted_documents' => 'የቀረቡ ሰነዶች',
     'items' => 'እቃዎች',
     'no_submitted_documents' => 'ምንም የቀረቡ ሰነዶች የሉም።',
@@ -165,6 +165,8 @@ return [
         'case_number' => 'መዝገብ ቁጥር #',
         'title' => 'ርዕስ',
         'type' => 'ዓይነት',
+        'team' => 'ችሎት',
+        'team_member' => 'የችሎት አባል',
         'assignee' => 'የተመደበ',
         'status' => 'ሁኔታ',
         'filing_date' => 'መዝገቡ የቀረበበት ቀን',
@@ -224,7 +226,7 @@ return [
         'relief_requested' => 'የተጠየቀ ዳኝነት',
     ],
 
-   'assign' => [
+    'assign' => [
         'assign_case' => 'ፋይል ይመድቡ',
         'summary_title' => 'ፋይል',
         'case_number' => 'ፋይል ቁጥር:',
@@ -338,6 +340,7 @@ return [
         'rejected' => 'ውድቅ የተደረገ',
         'accepted' => 'የጸደቀ',
     ],
+    'reviewed_by' => 'በ :name ተመረምሮአል',
     'review_messages' => [
         'returned' => 'ከላይ በተሰጥዎ ማስተካከያ መሰረት እባክዎ አስተካከለው ይላኩ።',
         'rejected' => 'ይህ ጉዳይ ውድቅ ተደርጓል። ለዝርዝር መረጃ ከላይ ያለውን የገምጋሚ ማስታወሻ ይመልከቱ።',
@@ -357,5 +360,18 @@ return [
             'rejected' => 'ውድቅ የተደረገ',
             'draft' => 'ረቂቅ',
         ],
+    ],
+    'chat' => [
+        'title' => 'የክስ ቻት',
+        'select_case' => 'ቻት ለማግኘት ክስ ይምረጡ።',
+        'search_placeholder' => 'በቁጥር፣ ርዕስ፣ አይነት ወይም ተጠያቂ ይፈልጉ',
+        'no_cases' => 'ማንኛውም የሚደርስዎ ክስ አልተገኘም።',
+        'case_type' => 'አይነት:',
+        'assignee' => 'ተጠያቂ:',
+        'applicant' => 'እርዳታ ፈላጊ:',
+        'messages_heading' => 'ውይይት',
+        'messages_label' => 'መልዕክቶች',
+        'cases_label' => 'ክሶች',
+        'message_restricted' => 'በዚህ ክስ ውስጥ የቻት መልዕክት ማስተላለፊያ ፈቃድ የለዎትም።',
     ],
 ];

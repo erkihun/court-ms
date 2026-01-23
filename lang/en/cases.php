@@ -139,6 +139,8 @@ return [
         'case_number' => 'Case #',
         'title' => 'Title',
         'type' => 'Type',
+        'team' => 'Team',
+        'team_member' => 'Team member',
         'assignee' => 'Assignee',
         'status' => 'Status',
         'filing_date' => 'Filing Date',
@@ -336,6 +338,7 @@ return [
         'rejected' => 'Rejected',
         'accepted' => 'Approved',
     ],
+    'reviewed_by' => 'Reviewed by :name',
     'review_messages' => [
         'returned' => 'This case needs corrections based on the reviewer note above. Update your filing and resubmit.',
         'rejected' => 'This case has been rejected. Please review the reviewer note above for details.',
@@ -355,5 +358,19 @@ return [
             'rejected' => 'Rejected',
             'draft' => 'Draft',
         ],
+    ],
+
+    'chat' => [
+        'title' => 'Case chat',
+        'select_case' => 'Select a case to open the chat thread.',
+        'search_placeholder' => 'Search cases by number, title, type, or assignee',
+        'no_cases' => 'No accessible cases were found.',
+        'case_type' => 'Type:',
+        'assignee' => 'Assignee:',
+        'applicant' => 'Applicant:',
+        'messages_heading' => 'Conversation',
+        'messages_label' => 'messages',
+        'cases_label' => 'cases',
+        'message_restricted' => 'You do not have permission to send chat messages in this case.',
     ],
 ];

@@ -22,7 +22,9 @@ return [
     'Appeals' => 'አቤቱታዎች',
     'Applicant' => 'አመልካቾች',
     'Cases' => 'መዝገቦች',
+    'Chat' => 'ቻት',
     'Records' => 'Records',
+    'Hearings' => 'Hearings',
 
     'Case Types' => 'የክስ አይነቶች',
     'Notifications' => 'ማስታወቂያዎች',
@@ -108,3 +110,4 @@ return [
         'case details' => 'የክስ ዝርዝሮች',
     ],
 ];
+

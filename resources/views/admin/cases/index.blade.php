@@ -128,7 +128,8 @@
                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('cases.table.case_number') }}</th>
                     
                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('cases.table.type') }}</th>
-                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('cases.table.assignee') }}</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('cases.table.team') }}</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('cases.table.team_member') }}</th>
                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('cases.table.status') }}</th>
                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('cases.table.filing_date') }}</th>
                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Review</th>
@@ -148,6 +149,7 @@
                     {{-- Increased padding to px-6 py-4 --}}
                     
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ $c->case_type }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ $c->team_name ?? '—' }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ $c->assignee_name ?? '-' }}</td>
 
                     {{-- Case Status (Updated styling to full rounded pill) --}}
@@ -189,6 +191,9 @@
                             ])">
                             {{ ucfirst(str_replace('_',' ', $displayRs)) }}
                         </span>
+                        @if(!empty($c->reviewer_name))
+                        <div class="text-xs text-gray-500 mt-1">{{ __('cases.reviewed_by', ['name' => $c->reviewer_name]) }}</div>
+                        @endif
 
                     </td>
 

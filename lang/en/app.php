@@ -16,7 +16,9 @@ return [
     // Modules / Nav
     'Appeals' => 'Appeals',
     'Cases' => 'Cases',
+    'Chat' => 'Chat',
     'Records' => 'Records',
+    'Hearings' => 'Hearings',
     'Applicant' => 'Applicant',
     'Case Types' => 'Case Types',
     'Notifications' => 'Notifications',

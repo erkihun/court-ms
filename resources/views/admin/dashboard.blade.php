@@ -307,6 +307,21 @@
         </ul>
     </div>
 
+    @if(config('pulse.enabled'))
+    <div class="mt-8 space-y-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-sm font-semibold text-gray-900">Realtime Reverb</h3>
+                <p class="text-xs text-gray-500">WebSocket connections and message throughput</p>
+            </div>
+        </div>
+        <div class="grid gap-6 xl:grid-cols-2">
+            <livewire:reverb.connections cols="6" rows="4" />
+            <livewire:reverb.messages cols="6" rows="4" />
+        </div>
+    </div>
+    @endif
+
     @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>

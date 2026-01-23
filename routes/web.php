@@ -38,10 +38,12 @@ use App\Http\Controllers\Admin\DecisionController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\SystemSettingController;
 use App\Http\Controllers\Admin\LetterTemplateController;
+use App\Http\Controllers\Admin\ChatController;
 use App\Http\Controllers\Admin\LetterController;
 use App\Http\Controllers\Admin\LetterComposerController;
 use App\Http\Controllers\Admin\TermsAndConditionsController;
 use App\Http\Controllers\Admin\RecordController;
+use App\Http\Controllers\Admin\HearingController;
 
 // Localization middleware
 use App\Http\Middleware\SetLocale;
@@ -335,6 +337,11 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::post('/cases/{case}/hearings',  [CaseController::class, 'storeHearing'])->middleware('perm:cases.edit')->name('cases.hearings.store');
             Route::patch('/hearings/{hearing}',    [CaseController::class, 'updateHearing'])->middleware('perm:cases.edit')->name('cases.hearings.update');
             Route::delete('/hearings/{hearing}',   [CaseController::class, 'deleteHearing'])->middleware('perm:cases.edit')->name('cases.hearings.delete');
+            Route::get('/hearings',                [HearingController::class, 'index'])->middleware('perm:cases.view')->name('admin.hearings.index');
+
+            Route::get('/admin/chat',              [ChatController::class, 'index'])->middleware('perm:cases.view')->name('admin.chat');
+            Route::get('/admin/chat/conversation/{user}', [ChatController::class, 'conversation'])->middleware('perm:cases.view')->name('admin.chat.conversation');
+            Route::post('/admin/chat/messages',    [ChatController::class, 'storeMessage'])->middleware('perm:cases.edit')->name('admin.chat.messages');
 
             // Files
             Route::post('/cases/{case}/files',          [CaseController::class, 'storeFile'])->middleware('perm:cases.edit')->name('cases.files.upload');

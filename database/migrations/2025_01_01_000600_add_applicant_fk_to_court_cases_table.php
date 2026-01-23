@@ -12,11 +12,23 @@ return new class extends Migration {
         }
 
         Schema::table('court_cases', function (Blueprint $table) {
-            if (Schema::hasColumn('court_cases', 'applicant_id')) {
+            if (!Schema::hasColumn('court_cases', 'applicant_id')) {
+                return;
+            }
+
+            try {
+                $table->dropForeign(['applicant_id']);
+            } catch (\Throwable $e) {
+                // ignore if fk missing
+            }
+
+            try {
                 $table->foreign('applicant_id')
                     ->references('id')
                     ->on('applicants')
                     ->nullOnDelete();
+            } catch (\Throwable $e) {
+                // handle duplicates if constraint already exists
             }
         });
     }

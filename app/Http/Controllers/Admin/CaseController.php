@@ -39,16 +39,25 @@ class CaseController extends Controller
             $isReviewer = (bool) Auth::user()->can('cases.review');
         }
 
+        $teamNameSubquery = DB::table('teams as t')
+            ->join('team_user as tu', 'tu.team_id', '=', 't.id')
+            ->whereColumn('tu.user_id', 'ass.id')
+            ->orderBy('t.name')
+            ->limit(1)
+            ->select('t.name');
+
         $builder = DB::table('court_cases as c')
             ->leftJoin('case_types as ct', 'ct.id', '=', 'c.case_type_id')
-
             ->leftJoin('users as ass', 'ass.id', '=', 'c.assigned_user_id')
+            ->leftJoin('users as reviewer', 'reviewer.id', '=', 'c.reviewed_by_user_id')
             ->select(
                 'c.*',
                 'ct.name as case_type',
 
-                'ass.name as assignee_name'
-            );
+                'ass.name as assignee_name',
+                'reviewer.name as reviewer_name'
+            )
+            ->selectSub($teamNameSubquery, 'team_name');
 
         if ($q !== '') {
             $builder->where(function ($w) use ($q) {
@@ -117,9 +126,15 @@ class CaseController extends Controller
         $from       = $request->date('from');
         $to         = $request->date('to');
 
+        $teamNameSubquery = DB::table('teams as t')
+            ->join('team_user as tu', 'tu.team_id', '=', 't.id')
+            ->whereColumn('tu.user_id', 'ass.id')
+            ->orderBy('t.name')
+            ->limit(1)
+            ->select('t.name');
+
         $builder = DB::table('court_cases as c')
             ->leftJoin('case_types as ct', 'ct.id', '=', 'c.case_type_id')
-
             ->leftJoin('users as ass', 'ass.id', '=', 'c.assigned_user_id')
             ->select(
                 'c.case_number',
@@ -129,7 +144,8 @@ class CaseController extends Controller
                 'c.status',
                 'c.filing_date',
                 'ass.name as assignee_name'
-            );
+            )
+            ->selectSub($teamNameSubquery, 'team_name');
 
         if ($q !== '') {
             $builder->where(function ($w) use ($q) {

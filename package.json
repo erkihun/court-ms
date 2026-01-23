@@ -27,6 +27,8 @@
         "bootstrap": "^5.3.8",
         "chart.js": "^4.5.0",
         "jquery": "^3.7.1",
+        "laravel-echo": "^1.14.0",
+        "pusher-js": "^8.0.0",
         "tinymce": "^8.1.2",
         "xhtml-purifier": "^0.4.1"
     }

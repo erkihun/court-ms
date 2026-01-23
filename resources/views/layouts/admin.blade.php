@@ -1,3 +1,4 @@
+@use('Laravel\Pulse\Facades\Pulse')
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
@@ -15,6 +16,11 @@
     <!-- Scripts -->
 
     @vite(['resources/css/app.css','resources/js/app.js','resources/js/dashboard.js'])
+    {!! Pulse::css() !!}
+    @livewireStyles
+
+    {!! Pulse::js() !!}
+    @livewireScriptConfig
 
 </head>
 
