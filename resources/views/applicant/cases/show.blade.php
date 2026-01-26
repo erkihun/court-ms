@@ -69,7 +69,7 @@
         {{-- CASE HEADER / ACTIONS --}}
         <section class="lg:col-span-3 rounded-xl border border-slate-200 bg-white overflow-hidden shadow-lg">
             <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
-                <div class="flex items-start md:items-center gap-4">
+                <div class="flex items-start md:items-center gap-6">
                     <div>
                         <div class="text-[11px] uppercase tracking-wide text-slate-500">
                             {{ __('cases.case_number') }}
@@ -91,6 +91,29 @@
                             </button>
                         </div>
                     </div>
+                    @if(!empty($case->code))
+                    <div>
+                        <div class="text-[11px] uppercase tracking-wide text-slate-500">
+                            Case access code
+                        </div>
+                        <div class="mt-0.5 flex flex-wrap items-center gap-2">
+                            <span id="case-code" class="text-lg font-semibold tracking-tight text-slate-900">
+                                {{ $case->code }}
+                            </span>
+                            <button
+                                x-data
+                                x-on:click="
+                                    navigator.clipboard.writeText(document.querySelector('#case-code').textContent);
+                                    $el.innerText='{{ __('cases.copied') }}';
+                                    setTimeout(()=>{$el.innerText='{{ __('cases.copy') }}';},1400);
+                                "
+                                type="button"
+                                class="text-[11px] rounded-full border border-slate-300 px-3 py-1 text-slate-600 hover:bg-slate-100">
+                                {{ __('cases.copy') }}
+                            </button>
+                        </div>
+                    </div>
+                    @endif
 
                     @php
                     $status = $case->status;

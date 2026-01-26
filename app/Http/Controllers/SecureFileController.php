@@ -130,10 +130,18 @@ class SecureFileController extends Controller
             return false;
         }
 
-        return DB::table('respondent_case_views')
-            ->where('respondent_id', $respondentId)
-            ->where('case_id', $caseId)
-            ->exists();
+        $access = session('respondent_case_access', []);
+        if (!is_array($access)) {
+            return false;
+        }
+
+        $lifetime = (int) config('session.lifetime', 120);
+        $threshold = now()->subMinutes($lifetime)->timestamp;
+        $access = array_filter($access, fn ($ts) => is_int($ts) && $ts >= $threshold);
+
+        session(['respondent_case_access' => $access]);
+
+        return array_key_exists($caseId, $access);
     }
 
     private function actingRespondentId(): ?int

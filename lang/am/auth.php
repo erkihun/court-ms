@@ -2,6 +2,11 @@
 
 return [
     // Registration
+    'sign_up_title' => 'ይመዝገቡ',
+    'sign_up_subtitle' => 'አካውንት ለመፍጠር ዝርዝር መረጃዎትን ያስገቡ።',
+    'lawyer_question' => 'ጠበቃ ነዎት?',
+    'yes' => 'አዎ',
+    'no' => 'አይ',
     'registration_title' => 'የማመልከቻ ምዝገባ',
     'create_account' => 'መግቢያ መለያ ይፍጠሩ',
     'fill_basic_info' => 'መሰረታዊ መረጃዎችዎን ያስገቡ።',
@@ -28,12 +33,17 @@ return [
     'create_account_button' => 'መለያ ፍጠር',
 
     // Login
+
     'login_title' => 'ግባ',
     'login_subtitle' => 'ኢሜይል እና የይለፍ ቃልዎን ያስገቡ።',
+    'sign_in_title' => 'ግባ',
+    'sign_in_subtitle' => 'ኢሜይል እና የይለፍ ቃልዎን ያስገቡ።',
     'remember_me' => 'አስታውሰኝ',
     'forgot_password' => 'የይለፍ ቃል ረሱ?',
     'sign_in' => 'ግባ',
     'no_account' => 'መግቢያ መለያ የሎትም?',
+
+
 
     // Password Reset
     'forgot_password_title' => 'የይለፍ ቃልዎን ረሱ?',

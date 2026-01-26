@@ -10,6 +10,9 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class UsersController extends Controller
 {
@@ -80,11 +83,8 @@ class UsersController extends Controller
             'stamp'                 => ['nullable', 'image', 'mimes:png,webp,jpg,jpeg', 'max:2048'],
         ]);
 
-        // Always assign the configured default password; user will be forced to change on first login.
-        $rawPassword = config('auth.default_user_password');
-        if (empty($rawPassword)) {
-            throw new \RuntimeException('DEFAULT_USER_PASSWORD is not configured.');
-        }
+        // Use a random password and force reset via email.
+        $rawPassword = Str::random(32);
 
         $avatarPath = $request->hasFile('avatar')
             ? $request->file('avatar')->store('avatars', 'public')
@@ -125,7 +125,19 @@ class UsersController extends Controller
             $user->roles()->sync($data['roles']);
         }
 
-        return redirect()->route('users.index')->with('success', 'User created.');
+        try {
+            Password::broker()->sendResetLink(['email' => $user->email]);
+            $message = 'User created. A password reset link was sent.';
+        } catch (\Throwable $e) {
+            Log::warning('Failed sending user reset link', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'error' => $e->getMessage(),
+            ]);
+            $message = 'User created. Ask the user to reset their password.';
+        }
+
+        return redirect()->route('users.index')->with('success', $message);
     }
 
     /** Edit form (policy: update) */

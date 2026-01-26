@@ -12,7 +12,7 @@ class CaseFileController extends Controller
 
     {
         $validated = $request->validate([
-            'file' => ['required', 'file', 'max:2048'],
+            'file' => ['required', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png,webp', 'max:2048'],
             'label' => ['nullable', 'string', 'max:255'],
         ]);
 

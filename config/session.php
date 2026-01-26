@@ -3,7 +3,6 @@
 use Illuminate\Support\Str;
 
 $appUrl = (string) env('APP_URL', '');
-$appHost = $appUrl !== '' ? parse_url($appUrl, PHP_URL_HOST) : null;
 $appUsesHttps = $appUrl !== '' && Str::startsWith($appUrl, 'https://');
 
 return [
@@ -131,6 +130,11 @@ return [
     |
     */
 
+    'cookie_base' => env(
+        'SESSION_COOKIE',
+        Str::slug((string) env('APP_NAME', 'laravel')).'-session'
+    ),
+
     'cookie' => env(
         'SESSION_COOKIE',
         Str::slug((string) env('APP_NAME', 'laravel')).'-session'
@@ -160,7 +164,7 @@ return [
     |
     */
 
-    'domain' => env('SESSION_DOMAIN', $appHost),
+    'domain' => env('SESSION_DOMAIN'),
 
     /*
     |--------------------------------------------------------------------------

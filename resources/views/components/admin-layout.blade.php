@@ -266,27 +266,6 @@
             </a>
             @endif
 
-            {{-- Chat --}}
-            @if(Route::has('admin.chat') && auth()->user()?->hasPermission('cases.view'))
-            <a href="{{ route('admin.chat') }}"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
-                {{ request()->routeIs('cases.chat') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
-                <div class="grid place-items-center w-6" aria-hidden="true">
-                    <x-heroicon-o-chat-bubble-bottom-center class="sidebar-icon h-5 w-5" aria-hidden="true" />
-                </div>
-                <span class="truncate origin-left"
-                    x-show="!compact"
-                    x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 -translate-x-1"
-                    x-transition:enter-end="opacity-100 translate-x-0"
-                    x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100 translate-x-0"
-                    x-transition:leave-end="opacity-0 -translate-x-1">
-                    {{ __('app.Chat') }}
-                </span>
-            </a>
-            @endif
-
             {{-- Hearings --}}
             @if($hasHearings && auth()->user()?->hasPermission('cases.view'))
             <a href="{{ route('admin.hearings.index') }}"
@@ -703,7 +682,6 @@
             @php
             use Illuminate\Support\Str;
             use Illuminate\Support\Carbon;
-            use App\Models\AdminChatMessage;
 
             $uid = auth()->id();
 
@@ -796,12 +774,6 @@
             }
 
             $__adminNotifCount = $adminUnseenMsgs->count() + $adminUnseenCases->count() + $adminUpcomingHearings->count() + ($adminRespondentViews->count() ?? 0);
-            $adminChatNotificationsCount = 0;
-            if ($uid) {
-                $adminChatNotificationsCount = AdminChatMessage::where('recipient_user_id', $uid)
-                    ->where('sender_user_id', '<>', $uid)
-                    ->count();
-            }
             $u = auth()->user();
             @endphp
 
@@ -846,25 +818,6 @@
                     </div>
                 </div>
                 @endif
-
-                {{-- Admin chat button --}}
-                <div class="relative">
-                    <a href="{{ route('admin.chat') }}"
-                        class="relative inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 hover:bg-gray-50 shadow-sm focus-ring text-blue-600"
-                        aria-label="{{ __('app.Chat') }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                                d="M4 4h16v12H8l-4 4V4z" />
-                        </svg>
-                        <span id="admin-chat-badge"
-                            class="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 grid h-4 min-w-[18px] place-items-center rounded-full bg-red-600 px-1.5 text-[10px] font-bold text-white shadow"
-                            data-count="{{ $adminChatNotificationsCount }}"
-                            {{ $adminChatNotificationsCount === 0 ? 'hidden' : '' }}>
-                            {{ $adminChatNotificationsCount > 99 ? '99+' : $adminChatNotificationsCount }}
-                        </span>
-                    </a>
-                </div>
 
                 {{-- Admin Notifications bell --}}
                 @if($hasNotifIndex)
@@ -1327,55 +1280,6 @@
         })();
     </script>
     @endif
-    <script>
-        (() => {
-            const currentUserId = @json($uid);
-            if (!currentUserId || typeof window.Echo === 'undefined') {
-                return;
-            }
-
-            const badge = document.getElementById('admin-chat-badge');
-            const toastHost = document.createElement('div');
-            toastHost.className = 'fixed top-4 right-4 z-[9999] flex flex-col gap-2 items-end';
-            document.body.appendChild(toastHost);
-
-            const showNotification = (senderName, message) => {
-                const card = document.createElement('div');
-                card.className = 'max-w-sm rounded-2xl border border-gray-200 bg-white/90 px-4 py-3 shadow-xl backdrop-blur text-sm text-gray-900';
-                const title = document.createElement('div');
-                title.className = 'font-semibold text-gray-900';
-                title.textContent = senderName || @json(__('chat.title'));
-                const body = document.createElement('div');
-                body.className = 'text-xs text-gray-600 mt-1';
-                body.textContent = message || 'New message';
-                card.appendChild(title);
-                card.appendChild(body);
-                toastHost.appendChild(card);
-
-                setTimeout(() => card.remove(), 4200);
-            };
-
-            window.Echo.channel('admin-chat')
-                .listen('.AdminChatMessageSent', (event) => {
-                    const recipientId = Number(event.recipient_id);
-                    if (recipientId !== Number(currentUserId)) {
-                        return;
-                    }
-                    if (Number(event.sender_id) === Number(currentUserId)) {
-                        return;
-                    }
-
-                    if (badge) {
-                        const currentCount = Number(badge.dataset.count || 0) + 1;
-                        badge.dataset.count = String(currentCount);
-                        badge.textContent = currentCount > 99 ? '99+' : currentCount;
-                        badge.classList.remove('hidden');
-                    }
-
-                    showNotification(event.sender_name, event.message);
-                });
-        })();
-    </script>
     @livewireScripts
     @stack('scripts')
 </body>

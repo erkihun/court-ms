@@ -55,6 +55,10 @@
                 <div class="text-right">
                     <div class="text-xs text-slate-500">Case #</div>
                     <div class="text-lg font-semibold tracking-tight">{{ $case->case_number }}</div>
+                    @if(!empty($case->code))
+                    <div class="mt-1 text-xs text-slate-500">Access code</div>
+                    <div class="text-sm font-semibold tracking-tight">{{ $case->code }}</div>
+                    @endif
                     <div class="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs capitalize
                         @if($case->status==='pending') bg-amber-100 text-amber-800 border border-amber-200
                         @elseif($case->status==='active') bg-blue-100 text-blue-800 border border-blue-200

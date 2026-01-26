@@ -157,6 +157,10 @@
         <div style="text-align:right;">
             <div class="muted">{{ __('Case Number / የክስ ቁጥር') }}</div>
             <div class="info-value">{{ $case->case_number }}</div>
+            @if(!empty($case->code))
+            <div class="muted">Access Code</div>
+            <div class="info-value">{{ $case->code }}</div>
+            @endif
             <div class="muted">{{ __('Receipt ID / የደረሰኝ መለያ') }}: {{ strtoupper(Str::random(6)) }}</div>
         </div>
     </div>

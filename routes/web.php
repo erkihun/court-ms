@@ -39,7 +39,6 @@ use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\SystemSettingController;
 use App\Http\Controllers\Admin\LetterTemplateController;
 use App\Http\Controllers\Admin\LetterCategoryController;
-use App\Http\Controllers\Admin\ChatController;
 use App\Http\Controllers\Admin\LetterController;
 use App\Http\Controllers\Admin\LetterComposerController;
 use App\Http\Controllers\Admin\TermsAndConditionsController;
@@ -85,7 +84,9 @@ Route::middleware(SetLocale::class)->group(function () {
         return view('home', compact('totalCases', 'pendingCases', 'resolvedCases', 'openCases', 'upcomingHearings', 'recentCases'));
     })->name('landing.home');
 
-    Route::get('/debug-locale', fn() => 'locale=' . app()->getLocale());
+    if (app()->environment('local')) {
+        Route::get('/debug-locale', fn() => 'locale=' . app()->getLocale());
+    }
     Route::get('/', fn() => redirect()->route('applicant.login'))->name('root');
     Route::get('/terms', [TermsDisplayController::class, 'show'])->name('public.terms');
     Route::get('/signage', [PublicSignageController::class, 'show'])
@@ -99,14 +100,14 @@ Route::middleware(SetLocale::class)->group(function () {
     | Respondent Public Routes (guest:respondent)
     |-------------------------------------------------------------------------- 
     */
-    Route::middleware('guest:respondent')->group(function () {
+    Route::middleware(['guest:respondent', 'use.guard:respondent'])->group(function () {
         Route::get('/respondent/register', fn () => redirect()->route('applicant.login', ['login_as' => 'respondent']))->name('respondent.register');
         Route::post('/respondent/register', fn () => redirect()->route('applicant.login', ['login_as' => 'respondent']))->name('respondent.register.submit');
         Route::get('/respondent/login', fn () => redirect()->route('applicant.login', ['login_as' => 'respondent']))->name('respondent.login');
         Route::post('/respondent/login', fn () => redirect()->route('applicant.login', ['login_as' => 'respondent']))->name('respondent.login.submit');
     });
 
-    Route::middleware(['auth:applicant'])->group(function () {
+    Route::middleware(['auth:applicant', 'use.guard:applicant'])->group(function () {
         Route::post('/respondent/logout', [RespondentAuthController::class, 'logout'])->name('respondent.logout');
         Route::get('/respondent/dashboard', [RespondentDashboardController::class, 'index'])->name('respondent.dashboard');
         Route::get('/respondent/case-search/results', [CaseSearchController::class, 'myCases'])->name('respondent.cases.my');
@@ -153,7 +154,7 @@ Route::middleware(SetLocale::class)->group(function () {
     | Applicant Auth (guest:applicant)
     |--------------------------------------------------------------------------
     */
-    Route::middleware('guest:applicant')->group(function () {
+    Route::middleware(['guest:applicant', 'use.guard:applicant'])->group(function () {
         // Register
         Route::get('/applicant/register',  [ApplicantAuthController::class, 'showRegister'])->name('applicant.register');
         Route::post('/applicant/register', [ApplicantAuthController::class, 'register'])->name('applicant.register.submit');
@@ -170,7 +171,7 @@ Route::middleware(SetLocale::class)->group(function () {
     | Applicant Portal (auth:applicant)
     |--------------------------------------------------------------------------
     */
-    Route::middleware('auth:applicant')->group(function () {
+    Route::middleware(['auth:applicant', 'use.guard:applicant'])->group(function () {
         Route::post('/applicant/logout', [ApplicantAuthController::class, 'logout'])->name('applicant.logout');
 
         // Email verification
@@ -340,10 +341,6 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::delete('/hearings/{hearing}',   [CaseController::class, 'deleteHearing'])->middleware('perm:cases.edit')->name('cases.hearings.delete');
             Route::get('/hearings',                [HearingController::class, 'index'])->middleware('perm:cases.view')->name('admin.hearings.index');
 
-            Route::get('/admin/chat',              [ChatController::class, 'index'])->middleware('perm:cases.view')->name('admin.chat');
-            Route::get('/admin/chat/conversation/{user}', [ChatController::class, 'conversation'])->middleware('perm:cases.view')->name('admin.chat.conversation');
-            Route::post('/admin/chat/messages',    [ChatController::class, 'storeMessage'])->middleware('perm:cases.edit')->name('admin.chat.messages');
-            Route::post('/admin/chat/read',        [ChatController::class, 'markRead'])->middleware('perm:cases.view')->name('admin.chat.read');
 
             // Files
             Route::post('/cases/{case}/files',          [CaseController::class, 'storeFile'])->middleware('perm:cases.edit')->name('cases.files.upload');

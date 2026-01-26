@@ -23,6 +23,7 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\EncryptCookies::class,
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
             \Illuminate\Session\Middleware\StartSession::class,
+            \Illuminate\Session\Middleware\AuthenticateSession::class,
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
@@ -59,6 +60,7 @@ class Kernel extends HttpKernel
         'role'               => \App\Http\Middleware\RequireRole::class,
         'audit'              => \App\Http\Middleware\SystemAuditMiddleware::class,
         'act.respondent'     => \App\Http\Middleware\ActAsRespondent::class,
+        'use.guard'          => \App\Http\Middleware\UseGuard::class,
     ];
 
     /**
@@ -81,6 +83,7 @@ class Kernel extends HttpKernel
         'role'               => \App\Http\Middleware\RequireRole::class,
         'audit'              => \App\Http\Middleware\SystemAuditMiddleware::class,
         'act.respondent'     => \App\Http\Middleware\ActAsRespondent::class,
+        'use.guard'          => \App\Http\Middleware\UseGuard::class,
     ];
 
     /**

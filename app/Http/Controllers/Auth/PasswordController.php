@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 
 class PasswordController extends Controller
@@ -27,7 +28,11 @@ class PasswordController extends Controller
         $user->update([
             'password' => Hash::make($validated['password']),
             'must_change_password' => false,
+            'remember_token' => Str::random(60),
         ]);
+
+        Auth::logoutOtherDevices($validated['password']);
+        $request->session()->regenerate();
 
         // If they were forced to change password, log them out and send to login.
         if ($wasForced) {

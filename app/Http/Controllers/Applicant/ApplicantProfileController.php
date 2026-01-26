@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Applicant;
 use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class ApplicantProfileController extends Controller
 {
@@ -38,6 +40,7 @@ class ApplicantProfileController extends Controller
             if (empty($validated['current_password'])) {
                 return back()->withErrors(['current_password' => 'Enter your current password to set a new one.']);
             }
+            $currentPassword = $validated['current_password'];
             $validated['password'] = Hash::make($validated['password']);
         } else {
             unset($validated['password']);
@@ -45,7 +48,16 @@ class ApplicantProfileController extends Controller
 
         unset($validated['current_password']);
 
-        $user->fill($validated)->save();
+        $user->fill($validated);
+        if (!empty($currentPassword)) {
+            $user->forceFill(['remember_token' => Str::random(60)]);
+        }
+        $user->save();
+
+        if (!empty($currentPassword)) {
+            Auth::guard('applicant')->logoutOtherDevices($currentPassword);
+            $request->session()->regenerate();
+        }
 
         return back()->with('success', 'Profile updated.');
     }

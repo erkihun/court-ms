@@ -20,6 +20,9 @@ class RedirectIfAuthenticated
                 // If already signed in as applicant, honor login_as flag for respondent dashboard
                 if ($guard === 'applicant' || $guard === null) {
                     if ($request->query('login_as') === 'respondent') {
+                        if (!$request->session()->get('acting_as_respondent')) {
+                            $request->session()->regenerate();
+                        }
                         $request->session()->put('acting_as_respondent', true);
                         return redirect()->route('respondent.dashboard');
                     }

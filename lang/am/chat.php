@@ -3,7 +3,7 @@
 return [
     'title' => 'አስተዳደር ቻት',
     'subtitle' => 'ከባለሙያዎች ጋር በቀጥታ ይተካሉ',
-    'description' => 'ምስጢራዊ የሆነ የReverb ላይ የተላለፈ ጽሁፍ፣ እያለፉ በማስተካከያ ላይ.',
+    'description' => 'ምስጢራዊ የሆነ የ ላይ የተላለፈ ጽሁፍ፣ እያለፉ በማስተካከያ ላይ.',
     'users_label' => 'የቡድን አባላት',
     'search_placeholder' => 'ስም ወይም ኢሜይል ይፈልጉ',
     'online' => 'በመስመር',

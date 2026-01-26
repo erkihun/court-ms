@@ -3,6 +3,11 @@
 return [
     // Registration
     'registration_title' => 'Applicant Registration',
+    'sign_up_title' => 'Sign Up',
+    'sign_up_subtitle' => 'Enter your details to create your account.',
+    'lawyer_question' => 'Are you a lawyer?',
+    'yes' => 'Yes',
+    'no' => 'No',
     'create_account' => 'Create your account',
     'fill_basic_info' => 'Fill in your basic information.',
     'first_name' => 'First Name',
@@ -30,6 +35,8 @@ return [
     // Login
     'login_title' => 'Sign in',
     'login_subtitle' => 'Enter your email and password.',
+    'sign_in_title' => 'Sign In',
+    'sign_in_subtitle' => 'Enter your email and password to sign in.',
     'remember_me' => 'Remember me',
     'forgot_password' => 'Forgot password?',
     'sign_in' => 'Sign in',

@@ -843,7 +843,7 @@ class CaseController extends Controller
 
         $data = $request->validate([
             'label' => ['nullable', 'string', 'max:255'],
-            'file'  => ['required', 'file', 'max:10240'], // 10MB
+            'file'  => ['required', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png,webp', 'max:10240'], // 10MB
         ]);
 
         $stored = $request->file('file')->store('case_files', 'private');

@@ -18,7 +18,9 @@ class CaseSearchController extends Controller
     {
         Session::put('acting_as_respondent', true);
         $caseNumber = trim((string) $request->get('case_number', ''));
+        $caseCode = trim((string) $request->get('case_code', ''));
         $case = null;
+        $codeError = false;
 
         if ($caseNumber !== '') {
             $case = DB::table('court_cases')
@@ -33,6 +35,14 @@ class CaseSearchController extends Controller
             }
 
             if ($case) {
+                if (!$this->caseCodeMatches($case, $caseCode)) {
+                    $case = null;
+                    $codeError = true;
+                }
+            }
+
+            if ($case) {
+                $this->grantCaseAccess($case->id);
                 $history = collect(session('respondent_viewed_cases', []));
                 $history = $history->prepend($caseNumber)->unique()->take(12);
                 session(['respondent_viewed_cases' => $history->values()->all()]);
@@ -53,13 +63,16 @@ class CaseSearchController extends Controller
 
         return view('applicant.respondent.cases.search', [
             'caseNumber' => $caseNumber,
+            'caseCode' => $caseCode,
             'case' => $case,
+            'codeError' => $codeError,
         ]);
     }
 
     public function show(string $caseNumber)
     {
         Session::put('acting_as_respondent', true);
+        $caseCode = trim((string) request()->query('case_code', ''));
         $case = DB::table('court_cases as c')
             ->leftJoin('case_types as ct', 'ct.id', '=', 'c.case_type_id')
             ->leftJoin('applicants as a', 'a.id', '=', 'c.applicant_id')
@@ -77,6 +90,11 @@ class CaseSearchController extends Controller
             ->first();
 
         abort_if(!$case, 404);
+
+        if (!$this->hasCaseAccess($case->id)) {
+            abort_if(!$this->caseCodeMatches($case, $caseCode), 404);
+            $this->grantCaseAccess($case->id);
+        }
 
         // Prevent applicants from viewing/searching their own cases while in respondent mode.
         $applicantId = Auth::guard('applicant')->id();
@@ -337,5 +355,40 @@ class CaseSearchController extends Controller
             return null;
         }
         return substr($digits, 0, 16);
+    }
+
+    private function caseCodeMatches(object $case, string $provided): bool
+    {
+        $code = trim((string) ($case->code ?? ''));
+        if ($code === '') {
+            return false;
+        }
+        if (!preg_match('/^\d{5}$/', $provided)) {
+            return false;
+        }
+        return hash_equals($code, $provided);
+    }
+
+    private function grantCaseAccess(int $caseId): void
+    {
+        $access = session('respondent_case_access', []);
+        $access[$caseId] = now()->timestamp;
+        session(['respondent_case_access' => $access]);
+    }
+
+    private function hasCaseAccess(int $caseId): bool
+    {
+        $access = session('respondent_case_access', []);
+        if (!is_array($access)) {
+            return false;
+        }
+
+        $lifetime = (int) config('session.lifetime', 120);
+        $threshold = now()->subMinutes($lifetime)->timestamp;
+        $access = array_filter($access, fn ($ts) => is_int($ts) && $ts >= $threshold);
+
+        session(['respondent_case_access' => $access]);
+
+        return array_key_exists($caseId, $access);
     }
 }

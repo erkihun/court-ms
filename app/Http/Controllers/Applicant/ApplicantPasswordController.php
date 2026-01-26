@@ -55,7 +55,7 @@ class ApplicantPasswordController extends Controller
 
         $status = Password::broker('applicants')->reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
-            function ($applicant, $password) {
+            function ($applicant, $password) use ($request) {
                 // If Applicant model uses 'password' => 'hashed' cast, don't double-hash:
                 $applicant->forceFill([
                     'password'       => $password,
@@ -65,6 +65,8 @@ class ApplicantPasswordController extends Controller
                 event(new PasswordReset($applicant));
 
                 Auth::guard('applicant')->login($applicant);
+                Auth::guard('applicant')->logoutOtherDevices($password);
+                $request->session()->regenerate();
             }
         );
 

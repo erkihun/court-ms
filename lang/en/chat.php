@@ -3,7 +3,7 @@
 return [
     'title' => 'Admin chat',
     'subtitle' => 'Collaborate live with colleagues',
-    'description' => 'Every message is broadcast over Reverb so your team can follow along without refreshing.',
+    'description' => 'Every message is delivered in real time so your team can follow along without refreshing.',
     'users_label' => 'Team members',
     'search_placeholder' => 'Search names or email addresses',
     'online' => 'Online',

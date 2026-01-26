@@ -16,9 +16,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // Add/keep your other aliases here too
         $middleware->alias([
             'force.password.change' => \App\Http\Middleware\ForcePasswordChange::class,
+            'admin.only' => \App\Http\Middleware\AdminOnly::class,
             'perm' => \App\Http\Middleware\RequirePermission::class,
+            'use.guard' => \App\Http\Middleware\UseGuard::class,
         ]);
 
+        $middleware->prependToGroup('web', \App\Http\Middleware\SetSessionCookieForGuard::class);
         $middleware->prependToGroup('web', \App\Http\Middleware\AdminSessionTimeout::class);
         $middleware->appendToGroup('web', \App\Http\Middleware\ForceHttps::class);
 
