@@ -21,7 +21,16 @@ class SetSessionCookieForGuard
         $base = config('session.cookie_base', config('session.cookie'));
 
         if ($base) {
-            if ($request->is('applicant/*')) {
+            // Prefer existing session cookie to avoid CSRF token mismatches when
+            // navigating between applicant/respondent and public pages.
+            $applicantCookie = $base . '-applicant';
+            $respondentCookie = $base . '-respondent';
+
+            if ($request->cookies->has($applicantCookie)) {
+                config(['session.cookie' => $applicantCookie]);
+            } elseif ($request->cookies->has($respondentCookie)) {
+                config(['session.cookie' => $respondentCookie]);
+            } elseif ($request->is('applicant/*')) {
                 config(['session.cookie' => $base . '-applicant']);
             } elseif ($request->is('respondent/*')) {
                 config(['session.cookie' => $base . '-respondent']);
