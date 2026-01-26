@@ -100,14 +100,14 @@ Route::middleware(SetLocale::class)->group(function () {
     | Respondent Public Routes (guest:respondent)
     |-------------------------------------------------------------------------- 
     */
-    Route::middleware(['guest:respondent', 'use.guard:respondent'])->group(function () {
+    Route::middleware(['guest:respondent', \App\Http\Middleware\UseGuard::class . ':respondent'])->group(function () {
         Route::get('/respondent/register', fn () => redirect()->route('applicant.login', ['login_as' => 'respondent']))->name('respondent.register');
         Route::post('/respondent/register', fn () => redirect()->route('applicant.login', ['login_as' => 'respondent']))->name('respondent.register.submit');
         Route::get('/respondent/login', fn () => redirect()->route('applicant.login', ['login_as' => 'respondent']))->name('respondent.login');
         Route::post('/respondent/login', fn () => redirect()->route('applicant.login', ['login_as' => 'respondent']))->name('respondent.login.submit');
     });
 
-    Route::middleware(['auth:applicant', 'use.guard:applicant'])->group(function () {
+    Route::middleware(['auth:applicant', \App\Http\Middleware\UseGuard::class . ':applicant'])->group(function () {
         Route::post('/respondent/logout', [RespondentAuthController::class, 'logout'])->name('respondent.logout');
         Route::get('/respondent/dashboard', [RespondentDashboardController::class, 'index'])->name('respondent.dashboard');
         Route::get('/respondent/case-search/results', [CaseSearchController::class, 'myCases'])->name('respondent.cases.my');
@@ -154,7 +154,7 @@ Route::middleware(SetLocale::class)->group(function () {
     | Applicant Auth (guest:applicant)
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['guest:applicant', 'use.guard:applicant'])->group(function () {
+    Route::middleware(['guest:applicant', \App\Http\Middleware\UseGuard::class . ':applicant'])->group(function () {
         // Register
         Route::get('/applicant/register',  [ApplicantAuthController::class, 'showRegister'])->name('applicant.register');
         Route::post('/applicant/register', [ApplicantAuthController::class, 'register'])->name('applicant.register.submit');
@@ -171,7 +171,7 @@ Route::middleware(SetLocale::class)->group(function () {
     | Applicant Portal (auth:applicant)
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['auth:applicant', 'use.guard:applicant'])->group(function () {
+    Route::middleware(['auth:applicant', \App\Http\Middleware\UseGuard::class . ':applicant'])->group(function () {
         Route::post('/applicant/logout', [ApplicantAuthController::class, 'logout'])->name('applicant.logout');
 
         // Email verification
