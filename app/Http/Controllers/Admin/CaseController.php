@@ -239,17 +239,33 @@ class CaseController extends Controller
         abort_if(!$case, 404);
 
         $assigning = !$request->boolean('unassign') && !empty($validated['assigned_user_id']);
+        $assignedUserId = $assigning ? (int) $validated['assigned_user_id'] : null;
+        $assignedTeamId = null;
+        $assignedMemberUserId = null;
+
+        if ($assigning) {
+            if (($scope['mode'] ?? null) === 'leader') {
+                $assignedTeamId = $scope['leaderTeam']?->id;
+                $assignedMemberUserId = $assignedUserId;
+            } else {
+                $assignedTeamId = Team::where('team_leader_id', $assignedUserId)->value('id');
+            }
+        }
 
         DB::table('court_cases')
             ->where('id', $caseId)
             ->update([
-                'assigned_user_id' => $assigning ? $validated['assigned_user_id'] : null,
+                'assigned_user_id' => $assignedUserId,
+                'assigned_team_id' => $assignedTeamId,
+                'assigned_member_user_id' => $assignedMemberUserId,
                 'assigned_at'      => $assigning ? Carbon::now() : null,
                 'updated_at'       => Carbon::now(),
             ]);
 
         $this->logCaseAudit($caseId, $assigning ? 'assigned' : 'unassigned', [
-            'assigned_user_id' => $assigning ? $validated['assigned_user_id'] : null,
+            'assigned_user_id' => $assignedUserId,
+            'assigned_team_id' => $assignedTeamId,
+            'assigned_member_user_id' => $assignedMemberUserId,
         ]);
 
         return redirect()
