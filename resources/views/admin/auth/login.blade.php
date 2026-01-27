@@ -103,9 +103,25 @@ $bannerPath = $settings?->banner_path ?? null;
                 {{-- PASSWORD --}}
                 <div class="space-y-1">
                     <label class="block text-md text-indigo-600 font-medium" for="password">Password</label>
-                    <input id="password" name="password" type="password" required
-                        class="w-full rounded-lg border border-indigo-300 px-3 py-2.5 text-sm bg-white
-                                  focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600">
+                    <div class="relative">
+                        <input id="password" name="password" type="password" required
+                            class="w-full rounded-lg border border-indigo-300 px-3 py-2.5 pr-10 text-sm bg-white
+                                      focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600">
+                        <button type="button" id="toggle-password"
+                            class="absolute inset-y-0 right-2 inline-flex items-center text-indigo-600 hover:text-indigo-800 focus:outline-none"
+                            aria-label="Show password" aria-pressed="false">
+                            <svg id="eye-open" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            <svg id="eye-closed" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 3l18 18M10.477 10.48a3 3 0 004.243 4.243M9.88 5.08A9.953 9.953 0 0112 5c4.478 0 8.269 2.943 9.543 7a10.047 10.047 0 01-4.132 5.411M6.228 6.228A10.045 10.045 0 002.457 12c.738 2.344 2.327 4.286 4.45 5.41M12 19c-1.043 0-2.054-.147-3.01-.423" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 {{-- REMEMBER + FORGOT --}}
@@ -135,4 +151,22 @@ $bannerPath = $settings?->banner_path ?? null;
         </div>
 
     </div>
+    <script>
+        (function () {
+            const input = document.getElementById('password');
+            const toggle = document.getElementById('toggle-password');
+            const eyeOpen = document.getElementById('eye-open');
+            const eyeClosed = document.getElementById('eye-closed');
+            if (!input || !toggle) return;
+
+            toggle.addEventListener('click', () => {
+                const isHidden = input.type === 'password';
+                input.type = isHidden ? 'text' : 'password';
+                eyeOpen.classList.toggle('hidden', !isHidden);
+                eyeClosed.classList.toggle('hidden', isHidden);
+                toggle.setAttribute('aria-pressed', String(isHidden));
+                toggle.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+            });
+        })();
+    </script>
 </x-guest-layout>
