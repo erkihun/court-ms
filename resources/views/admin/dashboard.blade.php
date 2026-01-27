@@ -1,6 +1,6 @@
 ﻿{{-- resources/views/admin/dashboard.blade.php --}}
-<x-admin-layout title="{{ __('dashboard.title') }}">
-    @section('page_header', __('dashboard.title'))
+<x-admin-layout title="{{ __('app.dashboard') }}">
+    @section('page_header', __('app.dashboard'))
 
     @php
     // ---- Safe defaults to avoid "Undefined variable" ----
