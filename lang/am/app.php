@@ -65,7 +65,7 @@ return [
     'Type' => 'አይነት',
     'Assignee' => 'ተመድቧል ለ',
     'Status' => 'ሁኔታ',
-    'Active' => 'Active',
+    'Active' => 'ንቁ',
     'Inactive' => 'Inactive',
     'Activate' => 'Activate',
     'Deactivate' => 'Deactivate',
@@ -79,8 +79,8 @@ return [
     'All assignees' => 'የተመደቡት ሁሉም',
     'case_number' => 'የክስ ቁጥር',
     'showing_from_to_of_total' => 'ከ :total ውስጥ :from–:to ታይቷል',
-    'court_portal' => 'የ Court መተግበሪያ',
-    'court_ms' => 'Court-MS',
+    'court_portal' => 'የ አስተዳደር ፍርድቤት መተግበሪያ',
+    'court_ms' => 'አስተዳደር ፍርድቤት ሲስተም',
     'home' => 'መነሻ',
     'my_cases' => 'የኔ መዝገብ',
     'new_case' => 'አዲስ መዝገብ',
@@ -110,4 +110,3 @@ return [
         'case details' => 'የክስ ዝርዝሮች',
     ],
 ];
-

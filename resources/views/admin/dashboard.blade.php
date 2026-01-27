@@ -1,6 +1,6 @@
 ﻿{{-- resources/views/admin/dashboard.blade.php --}}
-<x-admin-layout title="{{ __('app.dashboard') }}">
-    @section('page_header', __('app.dashboard'))
+<x-admin-layout title="{{ __('app.Dashboard') }}">
+    @section('page_header', __('app.Dashboard'))
 
     @php
     // ---- Safe defaults to avoid "Undefined variable" ----
@@ -31,18 +31,18 @@
     @php
     // Override resolvedCases to count cases that have an active decision.
     try {
-        $resolvedCases = \App\Models\Decision::where('status', 'active')->distinct('court_case_id')->count('court_case_id');
+    $resolvedCases = \App\Models\Decision::where('status', 'active')->distinct('court_case_id')->count('court_case_id');
     } catch (\Throwable $e) {
-        // Fallback gracefully if DB not reachable in view context.
+    // Fallback gracefully if DB not reachable in view context.
     }
 
     // Compute active cases (status = active) if not already provided.
     if (empty($activeCases)) {
-        try {
-            $activeCases = \App\Models\CourtCase::where('status', 'active')->count();
-        } catch (\Throwable $e) {
-            $activeCases = $activeCases ?? 0;
-        }
+    try {
+    $activeCases = \App\Models\CourtCase::where('status', 'active')->count();
+    } catch (\Throwable $e) {
+    $activeCases = $activeCases ?? 0;
+    }
     }
     @endphp
 

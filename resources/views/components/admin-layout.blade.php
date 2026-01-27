@@ -8,8 +8,14 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @php
-    // Localized title via group-only keys
-    $t = __('app.' . $title);
+    // Localized title with safe fallbacks (accepts keys or plain strings)
+    if (is_string($title) && \Illuminate\Support\Facades\Lang::has($title)) {
+        $t = __($title);
+    } elseif (is_string($title) && \Illuminate\Support\Facades\Lang::has('app.' . $title)) {
+        $t = __('app.' . $title);
+    } else {
+        $t = $title;
+    }
     @endphp
     <title>{{ $t }} | {{ $systemSettings->app_name ?? config('app.name','CMS') }}</title>
     <style>
@@ -110,7 +116,7 @@
     $canViewReports = $hasReports && auth()->user()?->hasPermission('reports.view');
     @endphp
 
-        <aside
+    <aside
         {{-- UPDATED: Deep Blue/Navy Sidebar BG (Primary Brand Color for Authority) --}}
         class="fixed md:sticky z-40 inset-y-0 left-0
                transform transition-transform duration-300 ease-out
@@ -196,8 +202,8 @@
 
             @php
             $settingsDropdownVisible = ($hasSystemSettings && auth()->user()?->hasPermission('settings.manage'))
-                || ($hasTerms && auth()->user()?->hasPermission('settings.manage'))
-                || $hasAudit;
+            || ($hasTerms && auth()->user()?->hasPermission('settings.manage'))
+            || $hasAudit;
             @endphp
 
 
@@ -541,85 +547,85 @@
                     </a>
                     @endif
 
-            @if($canManageRoles)
-                <a href="{{ route('roles.index') }}"
-                class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
+                    @if($canManageRoles)
+                    <a href="{{ route('roles.index') }}"
+                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
                 {{ $rolesActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
-                <x-heroicon-o-check-badge class="sidebar-icon h-4 w-4" aria-hidden="true" />
-                <span>{{ __('app.Roles') }}</span>
-            </a>
-                @endif
+                        <x-heroicon-o-check-badge class="sidebar-icon h-4 w-4" aria-hidden="true" />
+                        <span>{{ __('app.Roles') }}</span>
+                    </a>
+                    @endif
+                </div>
             </div>
-        </div>
-        @endif
+            @endif
 
-        {{-- Settings --}}
-        @if($settingsDropdownVisible)
-        <div x-data="{ open: {{ json_encode($settingsMenuOpen) }} }" class="space-y-1">
-            <button type="button"
-                class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition focus-ring
+            {{-- Settings --}}
+            @if($settingsDropdownVisible)
+            <div x-data="{ open: {{ json_encode($settingsMenuOpen) }} }" class="space-y-1">
+                <button type="button"
+                    class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition focus-ring
                 {{ $settingsMenuOpen ? 'bg-blue-700 text-white shadow-md' : 'text-blue-100 hover:text-white hover:bg-blue-600/30' }}"
-                @click="open = !open"
-                aria-haspopup="true"
-                :aria-expanded="open.toString()">
-                <span class="flex items-center gap-3">
-                    <div class="grid place-items-center w-6" aria-hidden="true">
-                        <x-heroicon-o-cog class="sidebar-icon h-5 w-5" aria-hidden="true" />
-                    </div>
-                    <span class="truncate origin-left"
-                        x-show="!compact"
-                        x-transition:enter="transition ease-out duration-200"
-                        x-transition:enter-start="opacity-0 -translate-x-1"
-                        x-transition:enter-end="opacity-100 translate-x-0"
-                        x-transition:leave="transition ease-in duration-150"
-                        x-transition:leave-start="opacity-100 translate-x-0"
-                        x-transition:leave-end="opacity-0 -translate-x-1">
-                        {{ __('app.Settings') }}
+                    @click="open = !open"
+                    aria-haspopup="true"
+                    :aria-expanded="open.toString()">
+                    <span class="flex items-center gap-3">
+                        <div class="grid place-items-center w-6" aria-hidden="true">
+                            <x-heroicon-o-cog class="sidebar-icon h-5 w-5" aria-hidden="true" />
+                        </div>
+                        <span class="truncate origin-left"
+                            x-show="!compact"
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 -translate-x-1"
+                            x-transition:enter-end="opacity-100 translate-x-0"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100 translate-x-0"
+                            x-transition:leave-end="opacity-0 -translate-x-1">
+                            {{ __('app.Settings') }}
+                        </span>
                     </span>
-                </span>
-                <svg x-show="!compact" xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4 transition-transform duration-200"
-                    :class="open ? 'rotate-90' : 'rotate-0'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                </svg>
-            </button>
+                    <svg x-show="!compact" xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4 transition-transform duration-200"
+                        :class="open ? 'rotate-90' : 'rotate-0'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
 
-            <div x-show="open && !compact"
-                x-transition:enter="transition ease-out duration-150"
-                x-transition:enter-start="opacity-0 -translate-y-1"
-                x-transition:enter-end="opacity-100 translate-y-0"
-                x-transition:leave="transition ease-in duration-100"
-                x-transition:leave-start="opacity-100 translate-y-0"
-                x-transition:leave-end="opacity-0 -translate-y-1"
-                class="pl-11 space-y-1">
-                @if($hasSystemSettings && auth()->user()?->hasPermission('settings.manage'))
-                <a href="{{ route('settings.system.edit') }}"
-                    class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
+                <div x-show="open && !compact"
+                    x-transition:enter="transition ease-out duration-150"
+                    x-transition:enter-start="opacity-0 -translate-y-1"
+                    x-transition:enter-end="opacity-100 translate-y-0"
+                    x-transition:leave="transition ease-in duration-100"
+                    x-transition:leave-start="opacity-100 translate-y-0"
+                    x-transition:leave-end="opacity-0 -translate-y-1"
+                    class="pl-11 space-y-1">
+                    @if($hasSystemSettings && auth()->user()?->hasPermission('settings.manage'))
+                    <a href="{{ route('settings.system.edit') }}"
+                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
                     {{ request()->routeIs('settings.system.*') ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
-                    <x-heroicon-o-adjustments-horizontal class="sidebar-icon h-4 w-4" aria-hidden="true" />
-                    <span>{{ __('app.System_Settings') }}</span>
-                </a>
-                @endif
+                        <x-heroicon-o-adjustments-horizontal class="sidebar-icon h-4 w-4" aria-hidden="true" />
+                        <span>{{ __('app.System_Settings') }}</span>
+                    </a>
+                    @endif
 
-                @if($hasTerms && auth()->user()?->hasPermission('settings.manage'))
-                <a href="{{ route('terms.index') }}"
-                    class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
+                    @if($hasTerms && auth()->user()?->hasPermission('settings.manage'))
+                    <a href="{{ route('terms.index') }}"
+                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
                     {{ request()->routeIs('terms.*') ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
-                    <x-heroicon-o-document-text class="sidebar-icon h-4 w-4" aria-hidden="true" />
-                    <span>{{ __('app.Terms') }}</span>
-                </a>
-                @endif
+                        <x-heroicon-o-document-text class="sidebar-icon h-4 w-4" aria-hidden="true" />
+                        <span>{{ __('app.Terms') }}</span>
+                    </a>
+                    @endif
 
-                @if($hasAudit)
-                <a href="{{ route('admin.audit') }}"
-                    class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
+                    @if($hasAudit)
+                    <a href="{{ route('admin.audit') }}"
+                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
                     {{ request()->routeIs('admin.audit') ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
-                    <x-heroicon-o-eye class="sidebar-icon h-4 w-4" aria-hidden="true" />
-                    <span>{{ __('app.System_Audit') }}</span>
-                </a>
-                @endif
+                        <x-heroicon-o-eye class="sidebar-icon h-4 w-4" aria-hidden="true" />
+                        <span>{{ __('app.System_Audit') }}</span>
+                    </a>
+                    @endif
+                </div>
             </div>
-        </div>
-        @endif
+            @endif
 
         </nav>
 
@@ -752,9 +758,9 @@
             'v.case_id',
             'c.case_number',
             \DB::raw(
-                (\DB::getDriverName() === 'sqlite')
-                    ? "TRIM(COALESCE(r.first_name,'') || ' ' || COALESCE(r.middle_name,'') || ' ' || COALESCE(r.last_name,'')) as respondent_name"
-                    : "TRIM(CONCAT_WS(' ', r.first_name, r.middle_name, r.last_name)) as respondent_name"
+            (\DB::getDriverName() === 'sqlite')
+            ? "TRIM(COALESCE(r.first_name,'') || ' ' || COALESCE(r.middle_name,'') || ' ' || COALESCE(r.last_name,'')) as respondent_name"
+            : "TRIM(CONCAT_WS(' ', r.first_name, r.middle_name, r.last_name)) as respondent_name"
             )
             )
             ->where(function($q) use ($uid) {
