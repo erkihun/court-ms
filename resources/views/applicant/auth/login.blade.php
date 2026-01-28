@@ -197,7 +197,7 @@ session()->forget('acting_as_respondent');
                         <span class="text-2xl font-semibold text-white">{{ $brandName }}</span>
                     </a>
                     <p class="text-sm text-white/70">
-                        Free and Open-Source Tailwind CSS Admin Dashboard Template
+                        {{ __('auth.sign_in_subtitle') }}
                     </p>
                 </div>
             </div>

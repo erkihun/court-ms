@@ -11,15 +11,15 @@ $logoPath = $settings?->logo_path ?? null;
 
 $lawyerQuestionText = __('auth.lawyer_question');
 if ($lawyerQuestionText === 'auth.lawyer_question') {
-    $lawyerQuestionText = 'Are you a lawyer?';
+$lawyerQuestionText = 'Are you a lawyer?';
 }
 $yesText = __('auth.yes');
 if ($yesText === 'auth.yes') {
-    $yesText = 'Yes';
+$yesText = 'Yes';
 }
 $noText = __('auth.no');
 if ($noText === 'auth.no') {
-    $noText = 'No';
+$noText = 'No';
 }
 @endphp
 
@@ -27,7 +27,7 @@ if ($noText === 'auth.no') {
 
 @section('content')
 <div class="relative z-1 bg-white p-6 sm:p-0">
-        <div class="relative flex min-h-screen w-full flex-col sm:p-0 lg:flex-row lg:items-stretch">
+    <div class="relative flex min-h-screen w-full flex-col sm:p-0 lg:flex-row lg:items-stretch">
         <div class="absolute right-6 top-6 z-20">
             <div x-data="{ open: false }" class="relative">
                 <button type="button" @click.stop="open = !open"
@@ -59,19 +59,19 @@ if ($noText === 'auth.no') {
             </div>
         </div>
 
-            <div class="flex w-full flex-1 flex-col lg:w-1/2 lg:px-12 xl:px-16">
-                <div class="mx-auto w-full max-w-md pt-10 sm:max-w-lg lg:max-w-none"></div>
+        <div class="flex w-full flex-1 flex-col lg:w-1/2 lg:px-12 xl:px-16">
+            <div class="mx-auto w-full max-w-md pt-10 sm:max-w-lg lg:max-w-none"></div>
 
-                <div class="mx-auto flex w-full max-w-md flex-1 flex-col lg:justify-center sm:max-w-lg lg:max-w-none">
-                    <div class="rounded-2xl bg-white p-5 shadow-lg ring-1 ring-gray-100 sm:p-8">
-                        <div class="mb-6">
-                            <h1 class="text-3xl font-semibold text-gray-900 sm:text-4xl">
-                                {{ __('auth.sign_up_title') }}
-                            </h1>
-                            <p class="mt-2 text-sm text-gray-500">
-                                {{ __('auth.sign_up_subtitle') }}
-                            </p>
-                        </div>
+            <div class="mx-auto flex w-full max-w-md flex-1 flex-col lg:justify-center sm:max-w-lg lg:max-w-none">
+                <div class="rounded-2xl bg-white p-5 shadow-lg ring-1 ring-gray-100 sm:p-8">
+                    <div class="mb-6">
+                        <h1 class="text-3xl font-semibold text-gray-900 sm:text-4xl">
+                            {{ __('auth.sign_up_title') }}
+                        </h1>
+                        <p class="mt-2 text-sm text-gray-500">
+                            {{ __('auth.sign_up_subtitle') }}
+                        </p>
+                    </div>
 
                     @if ($errors->any())
                     <div class="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -83,7 +83,7 @@ if ($noText === 'auth.no') {
                     </div>
                     @endif
 
-                        <form method="POST" action="{{ route('applicant.register.submit') }}" class="space-y-6">
+                    <form method="POST" action="{{ route('applicant.register.submit') }}" class="space-y-6">
                         @csrf
 
                         <div class="flex flex-wrap items-center gap-4">
@@ -268,7 +268,7 @@ if ($noText === 'auth.no') {
                         <span class="text-2xl font-semibold text-white">{{ $brandName }}</span>
                     </a>
                     <p class="text-sm text-white/70">
-                        Free and Open-Source Tailwind CSS Admin Dashboard Template
+                        {{ __('auth.sign_up_subtitle') }}
                     </p>
                 </div>
             </div>
