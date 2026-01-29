@@ -8,6 +8,14 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @php
+    $systemSettings = $systemSettings ?? null;
+    if (!$systemSettings) {
+        try {
+            $systemSettings = \App\Models\SystemSetting::query()->first();
+        } catch (\Throwable $e) {
+            $systemSettings = null;
+        }
+    }
     // Localized title with safe fallbacks (accepts keys or plain strings)
     if (is_string($title) && \Illuminate\Support\Facades\Lang::has($title)) {
         $t = __($title);
@@ -88,6 +96,7 @@
     $hasLangSwitch = Route::has('language.switch');
     $hasSystemSettings = Route::has('settings.system.edit');
     $hasTerms = Route::has('terms.index');
+    $hasAbout = Route::has('about.index');
     $hasLetterTemplates = Route::has('letter-templates.index');
     $hasLetterCategories = Route::has('letter-categories.index');
     $hasLetterComposer = Route::has('letters.compose');
@@ -112,7 +121,10 @@
     $rolesActive = request()->routeIs('roles.*');
     $teamsActive = request()->routeIs('teams.*');
     $userControlOpen = $usersActive || $permissionsActive || $rolesActive || $teamsActive;
-    $settingsMenuOpen = request()->routeIs('settings.system.*') || request()->routeIs('terms.*') || request()->routeIs('admin.audit');
+    $settingsMenuOpen = request()->routeIs('settings.system.*')
+        || request()->routeIs('terms.*')
+        || request()->routeIs('about.*')
+        || request()->routeIs('admin.audit');
     $canViewReports = $hasReports && auth()->user()?->hasPermission('reports.view');
     @endphp
 
@@ -203,6 +215,7 @@
             @php
             $settingsDropdownVisible = ($hasSystemSettings && auth()->user()?->hasPermission('settings.manage'))
             || ($hasTerms && auth()->user()?->hasPermission('settings.manage'))
+            || ($hasAbout && auth()->user()?->hasPermission('about.manage'))
             || $hasAudit;
             @endphp
 
@@ -612,6 +625,15 @@
                     {{ request()->routeIs('terms.*') ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
                         <x-heroicon-o-document-text class="sidebar-icon h-4 w-4" aria-hidden="true" />
                         <span>{{ __('app.Terms') }}</span>
+                    </a>
+                    @endif
+
+                    @if($hasAbout && auth()->user()?->hasPermission('about.manage'))
+                    <a href="{{ route('about.index') }}"
+                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
+                    {{ request()->routeIs('about.*') ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                        <x-heroicon-o-information-circle class="sidebar-icon h-4 w-4" aria-hidden="true" />
+                        <span>{{ __('app.About') }}</span>
                     </a>
                     @endif
 

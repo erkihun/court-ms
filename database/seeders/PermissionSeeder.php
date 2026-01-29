@@ -160,6 +160,11 @@ class PermissionSeeder extends Seeder
                 'description' => null,
             ],
             [
+                'name' => 'about.manage',
+                'label' => 'Manage about pages',
+                'description' => null,
+            ],
+            [
                 'name' => 'teams.manage',
                 'label' => 'Manage teams',
                 'description' => null,

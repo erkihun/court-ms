@@ -16,6 +16,15 @@ $applicantPanelLabel = __('auth.applicant_panel_label');
 $respondentPanelLabel = __('auth.respondent_panel_label');
 $panelLabel = $isRespondent ? $respondentPanelLabel : $applicantPanelLabel;
 
+try {
+    $aboutPage = \App\Models\AboutPage::query()
+        ->where('is_published', true)
+        ->orderByDesc('updated_at')
+        ->first();
+} catch (\Throwable $e) {
+    $aboutPage = null;
+}
+
 session()->forget('acting_as_respondent');
 @endphp
 
@@ -183,11 +192,12 @@ session()->forget('acting_as_respondent');
             </div>
         </div>
 
-        <div class="auth-visual relative hidden h-full w-full items-center lg:grid lg:w-1/2">
+        <div class="auth-visual relative hidden h-full w-full min-w-0 overflow-hidden items-center lg:grid lg:w-1/2">
             <div class="auth-grid pointer-events-none absolute inset-0"></div>
-            <div class="relative z-10 flex items-center justify-center">
-                <div class="flex max-w-xs flex-col items-center text-center">
-                    <a href="/" class="mb-4 inline-flex items-center gap-3">
+            <div class="relative z-10 flex h-full w-full min-w-0 items-stretch justify-center px-8 py-8 overflow-hidden">
+                <div class="flex h-full w-full max-w-4xl min-w-0 flex-col items-stretch text-center">
+                    <div class="flex flex-col items-center text-center shrink-0">
+                        <a href="/" class="mb-3 inline-flex items-center gap-3">
                         @if ($logoPath)
                         <img src="{{ asset('storage/' . $logoPath) }}" alt="{{ $brandName }}"
                             class="h-12 w-auto rounded-lg bg-white/10 p-2" />
@@ -199,6 +209,27 @@ session()->forget('acting_as_respondent');
                     <p class="text-sm text-white/70">
                         {{ __('auth.sign_in_subtitle') }}
                     </p>
+                    </div>
+                    @if($aboutPage)
+                    <div class="mt-4 w-full flex-1 min-h-0 min-w-0 text-left">
+                        <div class="h-full w-full min-h-0 min-w-0 rounded-2xl border border-white/15 bg-gradient-to-br from-white/10 via-white/5 to-transparent p-5 shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur overflow-hidden flex flex-col">
+                            <div class="sticky top-0 z-10 -mx-5 px-5 pb-3 pt-1 backdrop-blur bg-gradient-to-b from-[#20265f]/80 via-[#20265f]/60 to-transparent">
+                                <div class="flex items-center justify-between">
+                                    <span class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-wider text-white/70">
+                                        {{ __('app.About') }}
+                                    </span>
+                                    <span class="text-[11px] text-white/40">{{ $aboutPage->updated_at?->format('M d, Y') }}</span>
+                                </div>
+                                <div class="mt-3 text-lg font-semibold text-white">
+                                    {{ $aboutPage->title }}
+                                </div>
+                            </div>
+                            <div class="mt-2 flex-1 min-h-0 overflow-y-auto pr-1 text-sm leading-6 text-white/75 break-words">
+                                {!! clean($aboutPage->body ?? '', 'cases') !!}
+                            </div>
+                        </div>
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>

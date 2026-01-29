@@ -41,6 +41,7 @@ return [
 
     'User Control' => 'የተጠቃሚ መቆጣጠሪያ',
     'Terms' => 'ውሎች እና ቅድመ ሁኔታዎች',
+    'About' => 'ስለ እኛ',
     // Notifications dropdown
     'Mark all as seen' => 'ሁሉንም እንደታዩ ምልክት ያድርጉ',
     'Seen' => 'ታይቷል',

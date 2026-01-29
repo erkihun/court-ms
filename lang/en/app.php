@@ -36,6 +36,7 @@ return [
     'Terms' => 'Terms & Conditions',
     'System_Settings' => 'System Settings',
     'Settings' => 'Settings',
+    'About' => 'About',
 
     // Notifications dropdown
     'Mark all as seen' => 'Mark all as seen',

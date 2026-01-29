@@ -77,12 +77,22 @@ class CaseController extends Controller
 
         $memberScopeIds = $this->teamLeaderAssignmentIds(Auth::user());
         if (!empty($memberScopeIds)) {
-            $builder->whereIn('c.assigned_user_id', $memberScopeIds);
-        }
+            $leaderTeamId = Team::where('team_leader_id', Auth::id())->value('id');
+            $builder->where(function ($q) use ($memberScopeIds, $leaderTeamId) {
+                $q->whereIn('c.assigned_user_id', $memberScopeIds);
+                if ($leaderTeamId) {
+                    $q->orWhere('c.assigned_team_id', $leaderTeamId);
+                }
+            });
+        } else {
+            $uid = Auth::id();
+            $isTeamMember = $uid && DB::table('team_user')->where('user_id', $uid)->exists();
+            $isLeader = Auth::user()?->hasPermission('cases.assign.member') ?? false;
+            $canAssignTeams = Auth::user()?->hasPermission('cases.assign.team') ?? false;
 
-        $memberScopeIds = $this->teamLeaderAssignmentIds(Auth::user());
-        if (!empty($memberScopeIds)) {
-            $builder->whereIn('c.assigned_user_id', $memberScopeIds);
+            if ($isTeamMember && !$isLeader && !$canAssignTeams) {
+                $builder->where('c.assigned_member_user_id', $uid);
+            }
         }
 
         if (!$isReviewer)     $builder->where('c.review_status', 'accepted');
@@ -161,6 +171,26 @@ class CaseController extends Controller
         if ($assigneeId)      $builder->where('c.assigned_user_id', $assigneeId);
         if ($from)            $builder->whereDate('c.filing_date', '>=', $from->format('Y-m-d'));
         if ($to)              $builder->whereDate('c.filing_date', '<=', $to->format('Y-m-d'));
+
+        $memberScopeIds = $this->teamLeaderAssignmentIds(Auth::user());
+        if (!empty($memberScopeIds)) {
+            $leaderTeamId = Team::where('team_leader_id', Auth::id())->value('id');
+            $builder->where(function ($q) use ($memberScopeIds, $leaderTeamId) {
+                $q->whereIn('c.assigned_user_id', $memberScopeIds);
+                if ($leaderTeamId) {
+                    $q->orWhere('c.assigned_team_id', $leaderTeamId);
+                }
+            });
+        } else {
+            $uid = Auth::id();
+            $isTeamMember = $uid && DB::table('team_user')->where('user_id', $uid)->exists();
+            $isLeader = Auth::user()?->hasPermission('cases.assign.member') ?? false;
+            $canAssignTeams = Auth::user()?->hasPermission('cases.assign.team') ?? false;
+
+            if ($isTeamMember && !$isLeader && !$canAssignTeams) {
+                $builder->where('c.assigned_member_user_id', $uid);
+            }
+        }
 
         $rows = $builder->orderBy('c.filing_date')->get();
 
@@ -355,6 +385,23 @@ class CaseController extends Controller
             ->first();
 
         abort_if(!$case, 404, 'Case not found.');
+
+        $memberScopeIds = $this->teamLeaderAssignmentIds(Auth::user());
+        if (!empty($memberScopeIds)) {
+            $leaderTeamId = Team::where('team_leader_id', Auth::id())->value('id');
+            $allowed = in_array($case->assigned_user_id, $memberScopeIds, true)
+                || ($leaderTeamId && (int) $case->assigned_team_id === (int) $leaderTeamId);
+            abort_if(!$allowed, 403, 'You do not have access to this case.');
+        } else {
+            $uid = Auth::id();
+            $isTeamMember = $uid && DB::table('team_user')->where('user_id', $uid)->exists();
+            $isLeader = Auth::user()?->hasPermission('cases.assign.member') ?? false;
+            $canAssignTeams = Auth::user()?->hasPermission('cases.assign.team') ?? false;
+
+            if ($isTeamMember && !$isLeader && !$canAssignTeams) {
+                abort_if((int) $case->assigned_member_user_id !== (int) $uid, 403, 'You do not have access to this case.');
+            }
+        }
 
         // Make HTML fields explicit for Blade raw rendering
         $case->description_html        = (string) ($case->description ?? '');

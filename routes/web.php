@@ -44,6 +44,7 @@ use App\Http\Controllers\Admin\LetterComposerController;
 use App\Http\Controllers\Admin\TermsAndConditionsController;
 use App\Http\Controllers\Admin\RecordController;
 use App\Http\Controllers\Admin\HearingController;
+use App\Http\Controllers\Admin\AboutController;
 
 // Localization middleware
 use App\Http\Middleware\SetLocale;
@@ -511,6 +512,10 @@ Route::middleware(SetLocale::class)->group(function () {
                 ->except(['show'])
                 ->middleware('perm:settings.manage')
                 ->names('terms');
+
+            Route::resource('about', AboutController::class)
+                ->middleware('perm:about.manage')
+                ->names('about');
 
             // Letter categories
             Route::get('/letter-categories', [LetterCategoryController::class, 'index'])
