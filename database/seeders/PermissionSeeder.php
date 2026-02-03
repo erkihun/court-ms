@@ -170,6 +170,31 @@ class PermissionSeeder extends Seeder
                 'description' => null,
             ],
             [
+                'name' => 'case-inspections.manage',
+                'label' => 'Manage case inspections',
+                'description' => null,
+            ],
+            [
+                'name' => 'view.inspections',
+                'label' => 'View inspections',
+                'description' => null,
+            ],
+            [
+                'name' => 'create.inspections',
+                'label' => 'Create inspections',
+                'description' => null,
+            ],
+            [
+                'name' => 'delete.inspections',
+                'label' => 'Delete inspections',
+                'description' => null,
+            ],
+            [
+                'name' => 'assign.inspections',
+                'label' => 'Assign inspections',
+                'description' => null,
+            ],
+            [
                 'name' => 'notes.manage',
                 'label' => null,
                 'description' => null,

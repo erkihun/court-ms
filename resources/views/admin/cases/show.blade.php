@@ -404,6 +404,14 @@
 
     <div x-data="{
             activeSection: {{ json_encode($defaultSection) }},
+            inspectionOpen: false,
+            selectedInspectorId: null,
+            selectedInspectorName: '',
+            openInspection(id, name) {
+                this.selectedInspectorId = id;
+                this.selectedInspectorName = name || '';
+                this.inspectionOpen = true;
+            },
             init() {
                 const hashSection = window.location.hash ? window.location.hash.substring(1) : null;
                 if (hashSection) {
@@ -460,6 +468,38 @@
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">
+                    @if(auth()->user()?->hasPermission('assign.inspections'))
+                    <div x-data="{ open:false }" class="relative">
+                        <button type="button"
+                            @click="open = !open"
+                            class="px-4 py-2.5 rounded-lg bg-slate-700 hover:bg-slate-800 font-medium text-white transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M9 8h6m-7 12h8a2 2 0 002-2V6a2 2 0 00-2-2H8a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            Inspection
+                        </button>
+                        <div x-cloak x-show="open" @click.outside="open=false"
+                            class="absolute right-0 mt-2 w-64 rounded-xl border border-gray-200 bg-white shadow-xl overflow-hidden z-50">
+                            <div class="px-4 py-3 border-b border-gray-100 text-xs uppercase tracking-wide text-gray-500">
+                                Assign inspection
+                            </div>
+                            <div class="p-3 space-y-2 max-h-64 overflow-y-auto">
+                                @forelse($inspectionAssignees as $inspector)
+                                <button type="button"
+                                    @click.prevent="openInspection({{ $inspector->id }}, @js($inspector->name))"
+                                    class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50 text-sm text-gray-700">
+                                    <span>{{ $inspector->name }}</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
+                                @empty
+                                <div class="px-3 py-3 text-sm text-gray-500">No inspectors available.</div>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
+                    @endif
                     @if(in_array($reviewStatus, ['awaiting_review','returned']) && $canReview)
                     <div class="flex flex-wrap gap-2">
                         <button type="button" class="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700  font-medium text-white shadow-sm hover:shadow transition-all duration-200"
@@ -539,6 +579,60 @@
             </div>
             @endif
         </div>
+
+        @if(auth()->user()?->hasPermission('assign.inspections'))
+        <div x-cloak x-show="inspectionOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div class="w-full max-w-2xl rounded-2xl bg-white shadow-xl">
+                <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+                    <div>
+                        <div class="text-sm text-gray-500">Assign inspection to</div>
+                        <div class="text-lg font-semibold text-gray-900" x-text="selectedInspectorName || 'Inspector'"></div>
+                    </div>
+                    <button type="button" @click="inspectionOpen=false"
+                        class="rounded-lg p-2 text-gray-500 hover:bg-gray-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <form method="POST" action="{{ route('case-inspections.store') }}" class="space-y-4 px-6 py-5">
+                    @csrf
+                    <input type="hidden" name="court_case_id" value="{{ $case->id }}">
+                    <input type="hidden" name="inspected_by_user_id" :value="selectedInspectorId">
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Inspection date</label>
+                        <input type="date" name="inspection_date" value="{{ now()->format('Y-m-d') }}"
+                            class="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Summary</label>
+                        <input type="text" name="summary" placeholder="Short summary"
+                            class="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Details</label>
+                        <textarea name="details" rows="6"
+                            class="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"></textarea>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-2 pt-2">
+                        <button type="button" @click="inspectionOpen=false"
+                            class="px-4 py-2 rounded-md border border-gray-300 text-gray-700 text-sm">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                            class="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700">
+                            Save inspection
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        @endif
 
         {{-- Quick Access Section --}}
         <div class="p-4 rounded-2xl border border-gray-200 bg-white shadow-sm mb-6">

@@ -22,6 +22,7 @@ return [
     'Appeals' => 'አቤቱታዎች',
     'Applicant' => 'አመልካቾች',
     'Cases' => 'መዝገቦች',
+    'Case Inspections' => 'የጉዳይ ምርመራ',
     'Chat' => 'ቻት',
     'Records' => 'Records',
     'Hearings' => 'Hearings',

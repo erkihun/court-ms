@@ -3,6 +3,7 @@
 
     <form method="POST" action="{{ route('applicant.register.submit') }}" class="bg-white p-6 rounded-lg border space-y-4">
         @csrf
+        <input type="hidden" name="email_verified_at" value="{{ now()->toDateTimeString() }}">
 
         <div class="grid md:grid-cols-3 gap-4">
             <div>

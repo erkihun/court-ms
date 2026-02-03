@@ -54,23 +54,11 @@ class ApplicantAuthController extends Controller
             'password' => Hash::make($data['password']),
             'is_active' => true,
             'is_lawyer' => (bool) $data['is_lawyer'],
+            'email_verified_at' => now(),
         ]);
 
         Auth::guard('applicant')->login($applicant);
         $request->session()->regenerate();
-
-        // Send verification immediately
-        try {
-            $applicant->sendEmailVerificationNotification();
-        } catch (\Throwable $e) {
-            Log::error('[VerifyEmail] send failed: ' . $e->getMessage());
-        }
-
-        /** @var Applicant $applicant */
-        if (!$applicant->hasVerifiedEmail()) {
-            return redirect()->route('applicant.verification.notice')
-                ->with('success', 'Verification link sent.');
-        }
 
         return redirect()->route('applicant.dashboard')->with('success', 'Welcome! Your account has been created.');
     }

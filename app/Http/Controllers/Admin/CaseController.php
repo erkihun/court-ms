@@ -15,6 +15,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
+use App\Models\User;
 
 class CaseController extends Controller
 {
@@ -546,6 +547,15 @@ class CaseController extends Controller
 
         $letterTemplates = DB::table('letter_templates')->orderBy('title')->get();
 
+        $inspectionAssignees = collect();
+        if (Auth::user()?->hasPermission('assign.inspections')) {
+            $inspectionAssignees = User::query()
+                ->where('status', 'active')
+                ->whereHas('roles.permissions', fn($q) => $q->where('name', 'case-inspections.manage'))
+                ->orderBy('name')
+                ->get(['id', 'name']);
+        }
+
         return view('admin.cases.show', [
             'case'       => $case,
             'timeline'   => $timeline,
@@ -558,6 +568,7 @@ class CaseController extends Controller
             'letters'    => $letters,
             'respondentResponses' => $respondentResponses,
             'letterTemplates' => $letterTemplates,
+            'inspectionAssignees' => $inspectionAssignees,
         ]);
     }
 
