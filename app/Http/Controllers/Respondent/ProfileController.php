@@ -23,7 +23,7 @@ class ProfileController extends Controller
             'first_name' => ['required', 'string', 'max:100'],
             'middle_name' => ['nullable', 'string', 'max:100'],
             'last_name' => ['required', 'string', 'max:100'],
-            'gender' => ['nullable', 'in:male,female,other'],
+            'gender' => ['nullable', 'in:male,female'],
             'position' => ['nullable', 'string', 'max:150'],
             'organization_name' => ['nullable', 'string', 'max:150'],
             'address' => ['nullable', 'string', 'max:255'],

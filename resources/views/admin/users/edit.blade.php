@@ -56,7 +56,6 @@
                         <option value="">Select</option>
                         <option value="male" @selected(old('gender',$user->gender)==='male')>Male</option>
                         <option value="female" @selected(old('gender',$user->gender)==='female')>Female</option>
-                        <option value="other" @selected(old('gender',$user->gender)==='other')>Other</option>
                     </select>
                     @error('gender') <p class="text-red-500 text-sm">{{ $message }}</p> @enderror
                 </div>

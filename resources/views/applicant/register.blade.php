@@ -8,17 +8,17 @@
         <div class="grid md:grid-cols-3 gap-4">
             <div>
                 <label class="block ">First name</label>
-                <input name="first_name" value="{{ old('first_name') }}" class="mt-1 w-full px-3 py-2 border rounded">
+                <input name="first_name" value="{{ old('first_name') }}" required class="mt-1 w-full px-3 py-2 border rounded">
                 @error('first_name') <p class="text-red-600 ">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="block ">Middle name</label>
-                <input name="middle_name" value="{{ old('middle_name') }}" class="mt-1 w-full px-3 py-2 border rounded">
+                <input name="middle_name" value="{{ old('middle_name') }}" required class="mt-1 w-full px-3 py-2 border rounded">
                 @error('middle_name') <p class="text-red-600 ">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="block ">Last name</label>
-                <input name="last_name" value="{{ old('last_name') }}" class="mt-1 w-full px-3 py-2 border rounded">
+                <input name="last_name" value="{{ old('last_name') }}" required class="mt-1 w-full px-3 py-2 border rounded">
                 @error('last_name') <p class="text-red-600 ">{{ $message }}</p> @enderror
             </div>
         </div>
@@ -26,9 +26,9 @@
         <div class="grid md:grid-cols-3 gap-4">
             <div>
                 <label class="block ">Gender</label>
-                <select name="gender" class="mt-1 w-full px-3 py-2 border rounded">
+                <select name="gender" required class="mt-1 w-full px-3 py-2 border rounded">
                     <option value="">-- Select --</option>
-                    @foreach(['male','female','other'] as $g)
+                    @foreach(['male','female'] as $g)
                         <option value="{{ $g }}" @selected(old('gender')===$g)>{{ ucfirst($g) }}</option>
                     @endforeach
                 </select>
@@ -36,12 +36,12 @@
             </div>
             <div>
                 <label class="block ">Phone</label>
-                <input name="phone" value="{{ old('phone') }}" class="mt-1 w-full px-3 py-2 border rounded">
+                <input name="phone" value="{{ old('phone') }}" required class="mt-1 w-full px-3 py-2 border rounded">
                 @error('phone') <p class="text-red-600 ">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="block ">National ID Number</label>
-                <input name="national_id_number" value="{{ old('national_id_number') }}" class="mt-1 w-full px-3 py-2 border rounded">
+                <input name="national_id_number" value="{{ old('national_id_number') }}" required class="mt-1 w-full px-3 py-2 border rounded">
                 @error('national_id_number') <p class="text-red-600 ">{{ $message }}</p> @enderror
             </div>
         </div>
@@ -49,12 +49,12 @@
         <div class="grid md:grid-cols-2 gap-4">
             <div>
                 <label class="block ">Email</label>
-                <input name="email" type="email" value="{{ old('email') }}" class="mt-1 w-full px-3 py-2 border rounded">
+                <input name="email" type="email" value="{{ old('email') }}" required class="mt-1 w-full px-3 py-2 border rounded">
                 @error('email') <p class="text-red-600 ">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="block ">Address</label>
-                <input name="address" value="{{ old('address') }}" class="mt-1 w-full px-3 py-2 border rounded">
+                <input name="address" value="{{ old('address') }}" required class="mt-1 w-full px-3 py-2 border rounded">
                 @error('address') <p class="text-red-600 ">{{ $message }}</p> @enderror
             </div>
         </div>
@@ -62,12 +62,12 @@
         <div class="grid md:grid-cols-2 gap-4">
             <div>
                 <label class="block ">Password</label>
-                <input name="password" type="password" class="mt-1 w-full px-3 py-2 border rounded">
+                <input name="password" type="password" required class="mt-1 w-full px-3 py-2 border rounded">
                 @error('password') <p class="text-red-600 ">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="block ">Confirm Password</label>
-                <input name="password_confirmation" type="password" class="mt-1 w-full px-3 py-2 border rounded">
+                <input name="password_confirmation" type="password" required class="mt-1 w-full px-3 py-2 border rounded">
             </div>
         </div>
 

@@ -90,7 +90,6 @@ $bannerPath = $settings?->banner_path ?? null;
                         <option value="">{{ __('auth.select_option') }}</option>
                         <option value="male" @selected(old('gender') === 'male')>{{ __('auth.male') }}</option>
                         <option value="female" @selected(old('gender') === 'female')>{{ __('auth.female') }}</option>
-                        <option value="other" @selected(old('gender') === 'other')>{{ __('auth.other') }}</option>
                     </select>
                 </div>
                 <div>

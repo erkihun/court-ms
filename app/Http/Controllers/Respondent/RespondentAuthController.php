@@ -26,7 +26,7 @@ class RespondentAuthController extends Controller
             'first_name'         => ['required', 'string', 'max:100'],
             'middle_name'        => ['required', 'string', 'max:100'],
             'last_name'          => ['required', 'string', 'max:100'],
-            'gender'             => ['nullable', Rule::in(['male', 'female', 'other'])],
+            'gender'             => ['nullable', Rule::in(['male', 'female'])],
             'position'           => ['required', 'string', 'max:150'],
             'organization_name'  => ['required', 'string', 'max:150'],
             'address'            => ['required', 'string', 'max:255'],

@@ -50,6 +50,7 @@
                         value="{{ $isLawyer ? old('title') : old('title', $applicantUser->full_name ?? $applicantUser->name ?? '') }}"
                         placeholder="{{ __('cases.applicant_name_placeholder') }}"
                         @unless($isLawyer) readonly @endunless
+                        required
                         class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
                                {{ $isLawyer ? 'bg-white' : 'bg-slate-100' }} focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                     @error('title')
@@ -65,6 +66,7 @@
                         value="{{ $isLawyer ? old('applicant_address') : old('applicant_address', $applicantUser->address ?? '') }}"
                         placeholder="{{ __('cases.applicant_address_placeholder') }}"
                         @unless($isLawyer) readonly @endunless
+                        required
                         class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
                                {{ $isLawyer ? 'bg-white' : 'bg-slate-100' }} focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                     @error('applicant_address')
@@ -86,6 +88,7 @@
                         name="respondent_name"
                         value="{{ old('respondent_name') }}"
                         placeholder="{{ __('cases.respondent_name_placeholder') }}"
+                        required
                         class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
                                focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                     @error('respondent_name')
@@ -100,6 +103,7 @@
                         name="respondent_address"
                         value="{{ old('respondent_address') }}"
                         placeholder="{{ __('cases.respondent_address_placeholder') }}"
+                        required
                         class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
                                focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                     @error('respondent_address')
@@ -130,6 +134,7 @@
                         x-ref="caseTypeSelect"
                         @change="updatePrefix()"
                         name="case_type_id"
+                        required
                         class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
                                bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                         <option value="">-- {{ __('cases.select_option') }} --</option>
@@ -151,14 +156,12 @@
                 <label class="block  font-medium text-slate-700">
                     {{ __('cases.case_details') }} <span class="text-red-600">*</span>
                 </label>
-                <div id="desc-counter" class="text-[11px] text-slate-500">
-                    0 / {{ __('cases.word_limit', ['limit' => 1300]) }}
-                </div>
             </div>
             <textarea
                 id="editor-description"
                 name="description"
                 rows="16"
+                required
                 class="mt-1 w-full rounded-lg border border-slate-300  text-slate-900">{{ old('description') }}</textarea>
             @error('description')
             <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
@@ -171,14 +174,12 @@
                 <label class="block  font-medium text-slate-700">
                     {{ __('cases.relief_requested') }} <span class="text-red-600">*</span>
                 </label>
-                <div id="relief-counter" class="text-[11px] text-slate-500">
-                    0 / {{ __('cases.word_limit', ['limit' => 1300]) }}
-                </div>
             </div>
             <textarea
                 id="editor-relief"
                 name="relief_requested"
                 rows="12"
+                required
                 class="mt-1 w-full rounded-lg border border-slate-300  text-slate-900">{{ old('relief_requested') }}</textarea>
             @error('relief_requested')
             <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
@@ -223,12 +224,14 @@
                         type="text"
                         name="evidence_titles[]"
                         placeholder="{{ __('cases.document_title_placeholder') }}"
+                        required
                         class="px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
                                bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                     <input
                         type="file"
                         name="evidence_files[]"
                         accept="application/pdf"
+                        required
                         class="px-3 py-2.5 rounded-lg border border-slate-300  bg-white text-slate-900
                                focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
                 </div>
@@ -273,21 +276,15 @@
 
                     <input
                         :name="'witnesses['+(i-1)+'][phone]'"
+                        required
                         value="{{ old('witnesses.0.phone') }}"
                         placeholder="{{ __('cases.witnesses_section.phone_placeholder') }}"
                         class="px-3 py-2.5 rounded-lg bg-white border border-slate-300  text-slate-900
                                focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
 
                     <input
-                        type="email"
-                        :name="'witnesses['+(i-1)+'][email]'"
-                        value="{{ old('witnesses.0.email') }}"
-                        placeholder="{{ __('cases.witnesses_section.email_placeholder') }}"
-                        class="px-3 py-2.5 rounded-lg bg-white border border-slate-300  text-slate-900
-                               focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
-
-                    <input
                         :name="'witnesses['+(i-1)+'][address]'"
+                        required
                         value="{{ old('witnesses.0.address') }}"
                         placeholder="{{ __('cases.witnesses_section.address_placeholder') }}"
                         class="px-3 py-2.5 rounded-lg bg-white border border-slate-300  text-slate-900 md:col-span-2
@@ -298,13 +295,7 @@
             @error('witnesses.*.full_name')
             <div class="text-xs text-red-600 -mt-1">{{ $message }}</div>
             @enderror
-            @error('witnesses.*.email')
-            <div class="text-xs text-red-600 -mt-1">{{ $message }}</div>
-            @enderror
             @error('witnesses_duplicate_phone')
-            <div class="text-xs text-red-600 -mt-1">{{ $message }}</div>
-            @enderror
-            @error('witnesses_duplicate_email')
             <div class="text-xs text-red-600 -mt-1">{{ $message }}</div>
             @enderror
         </section>
@@ -418,7 +409,7 @@
                 toolbar_mode: 'wrap',
                 toolbar_sticky: true,
 
-                plugins: 'lists link table code image advlist charmap fullscreen wordcount',
+                plugins: 'lists link table code image advlist charmap fullscreen',
                 toolbar: [
                     'undo redo |  fontfamily fontsize | bold italic underline strikethrough removeformat',
                     '| forecolor backcolor | alignleft aligncenter alignright alignjustify',

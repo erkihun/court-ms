@@ -69,7 +69,7 @@ class UsersController extends Controller
             'last_name'             => ['required', 'string', 'max:255'],
             'email'                 => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
             'status'                => ['required', Rule::in(['active', 'inactive'])],
-            'gender'                => ['nullable', Rule::in(['male','female','other'])],
+            'gender'                => ['nullable', Rule::in(['male','female'])],
             'date_of_birth'         => ['nullable', 'date'],
             'national_id'           => ['nullable', 'digits:16'],
             'position'              => ['nullable', 'string', 'max:255'],
@@ -168,7 +168,7 @@ class UsersController extends Controller
             'status'                => ['required', Rule::in(['active', 'inactive'])],
 
             'password'              => ['nullable', 'confirmed', 'min:6'],
-            'gender'                => ['nullable', Rule::in(['male','female','other'])],
+            'gender'                => ['nullable', Rule::in(['male','female'])],
             'date_of_birth'         => ['nullable', 'date'],
             'national_id'           => ['nullable', 'digits:16'],
             'position'              => ['nullable', 'string', 'max:255'],

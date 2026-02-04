@@ -115,24 +115,25 @@ class ApplicantCaseController extends Controller
         $rules = [
             'title'              => ['required', 'string', 'max:255'],
             'description'        => ['required', 'string', 'max:10000'],
-            'relief_requested'   => ['nullable', 'string', 'max:5000'],
+            'relief_requested'   => ['required', 'string', 'max:5000'],
             'certify_appeal'     => ['accepted'],
-            'respondent_name'    => ['nullable', 'string', 'max:255'],
-            'respondent_address' => ['nullable', 'string', 'max:500'],
+            'respondent_name'    => ['required', 'string', 'max:255'],
+            'respondent_address' => ['required', 'string', 'max:500'],
             'case_type_id'       => ['required', 'integer', 'exists:case_types,id'],
 
             'filing_date'        => ['required', 'date'],
             'first_hearing_date' => ['nullable', 'date'],
 
             // initial evidence & witnesses
-            'evidence_titles.*'  => ['nullable', 'string', 'max:255'],
-            'evidence_files.*'   => ['nullable', 'file', 'mimes:pdf', 'max:5120'],
+            'evidence_titles'    => ['required', 'array', 'min:1'],
+            'evidence_titles.*'  => ['required', 'string', 'max:255'],
+            'evidence_files'     => ['required', 'array', 'min:1'],
+            'evidence_files.*'   => ['required', 'file', 'mimes:pdf', 'max:5120'],
 
-            'witnesses'              => ['array'],
+            'witnesses'              => ['required', 'array', 'min:1'],
             'witnesses.*.full_name'  => ['required', 'string', 'max:255'],
-            'witnesses.*.phone'      => ['nullable', 'string', 'max:60'],
-            'witnesses.*.email'      => ['nullable', 'email', 'max:150'],
-            'witnesses.*.address'    => ['nullable', 'string', 'max:255'],
+            'witnesses.*.phone'      => ['required', 'string', 'max:60'],
+            'witnesses.*.address'    => ['required', 'string', 'max:255'],
             'certify_evidence'       => ['accepted'],
         ];
 
@@ -157,11 +158,7 @@ class ApplicantCaseController extends Controller
                 $validator->errors()->add('witnesses_duplicate_phone', 'Witness phone numbers must be unique.');
             }
 
-            $emails = $witnesses->pluck('email')->filter(fn($email) => filled($email))
-                ->map(fn($email) => mb_strtolower(trim($email)));
-            if ($emails->count() !== $emails->unique()->count()) {
-                $validator->errors()->add('witnesses_duplicate_email', 'Witness email addresses must be unique.');
-            }
+            // witness email removed from form; no email validation needed here
         });
 
         $data = $validator->validate();
@@ -169,13 +166,6 @@ class ApplicantCaseController extends Controller
         // Sanitize TinyMCE HTML (decode if entity-encoded, then Purifier 'cases' profile)
         $descHtml   = $this->cleanHtml($data['description'] ?? '');
         $reliefHtml = $this->cleanHtml($data['relief_requested'] ?? '');
-
-        // Optional: enforce ~1,300 words like your UI label
-        if ($this->wordCount($descHtml) > 1300 || $this->wordCount($reliefHtml) > 1300) {
-            return back()
-                ->withErrors(['description' => 'Please keep each editor under ~1,300 words.'])
-                ->withInput();
-        }
 
         DB::beginTransaction();
 

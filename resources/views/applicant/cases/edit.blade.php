@@ -204,9 +204,6 @@
                             <label class="block  font-medium text-slate-700">
                                 {{ __('cases.labels.description') }} <span class="text-red-600">*</span>
                             </label>
-                            <div id="desc-counter" class="text-[11px] text-slate-500 mt-0.5">
-                                0
-                            </div>
                         </div>
                         <textarea
                             id="editor-description"
@@ -227,9 +224,6 @@
                             <label class="block  font-medium text-slate-700">
                                 {{ __('cases.labels.relief_requested') }}
                             </label>
-                            <div id="relief-counter" class="text-[11px] text-slate-500 mt-0.5">
-                                0
-                            </div>
                         </div>
                         <textarea
                             id="editor-relief"
@@ -587,7 +581,7 @@
                 toolbar_mode: 'wrap',
                 toolbar_sticky: true,
 
-                plugins: 'lists link table code image advlist charmap fullscreen wordcount',
+                plugins: 'lists link table code image advlist charmap fullscreen',
                 toolbar: [
                     'undo redo |  fontfamily fontsize | bold italic underline strikethrough removeformat',
                     '| forecolor backcolor | alignleft aligncenter alignright alignjustify',
