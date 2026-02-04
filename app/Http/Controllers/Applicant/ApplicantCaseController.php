@@ -114,8 +114,8 @@ class ApplicantCaseController extends Controller
 
         $rules = [
             'title'              => ['required', 'string', 'max:255'],
-            'description'        => ['required', 'string', 'max:10000'],
-            'relief_requested'   => ['required', 'string', 'max:5000'],
+            'description'        => ['required', 'string'],
+            'relief_requested'   => ['required', 'string'],
             'certify_appeal'     => ['accepted'],
             'respondent_name'    => ['required', 'string', 'max:255'],
             'respondent_address' => ['required', 'string', 'max:500'],
