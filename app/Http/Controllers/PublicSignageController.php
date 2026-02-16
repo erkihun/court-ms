@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Announcement;
 use App\Models\CaseHearing;
 use App\Models\CourtCase;
 use App\Models\SystemSetting;
@@ -64,6 +65,12 @@ class PublicSignageController extends Controller
             ->limit(8)
             ->get();
 
+        $activeAnnouncements = Announcement::select('id', 'title', 'content', 'created_at')
+            ->where('status', 'active')
+            ->latest('created_at')
+            ->limit(3)
+            ->get();
+
         $activeStaff = User::active()
             ->select('id', 'name', 'position', 'avatar_path')
             ->orderBy('name')
@@ -80,6 +87,7 @@ class PublicSignageController extends Controller
             'categoryCounts' => $categoryCounts,
             'todayCases' => $todayCases,
             'todayHearings' => $todayHearings,
+            'activeAnnouncements' => $activeAnnouncements,
             'activeStaff' => $activeStaff,
         ]);
     }

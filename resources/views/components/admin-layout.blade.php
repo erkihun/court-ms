@@ -16,13 +16,25 @@
             $systemSettings = null;
         }
     }
+
+    use Illuminate\Support\Arr;
+
+    $wrappedTitle = Arr::wrap($title);
+    $titleCandidate = $wrappedTitle[0] ?? null;
+
     // Localized title with safe fallbacks (accepts keys or plain strings)
-    if (is_string($title) && \Illuminate\Support\Facades\Lang::has($title)) {
-        $t = __($title);
-    } elseif (is_string($title) && \Illuminate\Support\Facades\Lang::has('app.' . $title)) {
-        $t = __('app.' . $title);
+    if (is_string($titleCandidate) && \Illuminate\Support\Facades\Lang::has($titleCandidate)) {
+        $t = __($titleCandidate);
+    } elseif (is_string($titleCandidate) && \Illuminate\Support\Facades\Lang::has('app.' . $titleCandidate)) {
+        $t = __('app.' . $titleCandidate);
     } else {
-        $t = $title;
+        $t = $titleCandidate;
+    }
+
+    if (!is_string($t)) {
+        $wrappedTitleFallback = Arr::wrap($t);
+        $firstFallback = $wrappedTitleFallback[0] ?? '';
+        $t = is_scalar($firstFallback) ? (string) $firstFallback : '';
     }
     @endphp
     <title>{{ $t }} | {{ $systemSettings->app_name ?? config('app.name','CMS') }}</title>
@@ -104,6 +116,7 @@
     $hasLetters = Route::has('letters.index');
     $hasAudit = Route::has('admin.audit');
     $hasReports = Route::has('reports.index');
+    $hasAnnouncements = Route::has('announcements.index');
     $canManageTemplates = $hasLetterTemplates && auth()->user()?->hasPermission('templates.manage');
     $canViewLetters = $hasLetters && auth()->user()?->hasPermission('cases.edit');
     $canComposeLetters = $hasLetterComposer && auth()->user()?->hasPermission('cases.edit');
@@ -510,6 +523,27 @@
                     x-transition:leave-start="opacity-100 translate-x-0"
                     x-transition:leave-end="opacity-0 -translate-x-1">
                     {{ __('app.Notifications') }}
+                </span>
+            </a>
+            @endif
+
+            {{-- Announcements --}}
+            @if($hasAnnouncements && auth()->user()?->hasPermission('announcements.manage'))
+            <a href="{{ route('announcements.index') }}"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
+                {{ request()->routeIs('announcements.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
+                <div class="grid place-items-center w-6" aria-hidden="true">
+                    <x-heroicon-o-megaphone class="sidebar-icon h-5 w-5" aria-hidden="true" />
+                </div>
+                <span class="truncate origin-left"
+                    x-show="!compact"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 -translate-x-1"
+                    x-transition:enter-end="opacity-100 translate-x-0"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100 translate-x-0"
+                    x-transition:leave-end="opacity-0 -translate-x-1">
+                    {{ __('app.Announcements') }}
                 </span>
             </a>
             @endif

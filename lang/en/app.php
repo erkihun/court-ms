@@ -23,6 +23,7 @@ return [
     'Applicant' => 'Applicant',
     'Case Types' => 'Case Types',
     'Notifications' => 'Notifications',
+    'Announcements' => 'Announcements',
     'Users' => 'Users',
     'Decisions' => 'Decisions',
     'Permissions' => 'Permissions',
@@ -36,6 +37,7 @@ return [
     'User Control' => 'User Control',
     'Terms' => 'Terms & Conditions',
     'System_Settings' => 'System Settings',
+    'System_Audit' => 'System Audit',
     'Settings' => 'Settings',
     'About' => 'About',
 

@@ -24,8 +24,8 @@ return [
     'Cases' => 'መዝገቦች',
     'Case Inspections' => 'የጉዳይ ምርመራ',
     'Chat' => 'ቻት',
-    'Records' => 'Records',
-    'Hearings' => 'Hearings',
+    'Records' => 'ሪኮርዶች',
+    'Hearings' => 'ችሎት የሚሰማበት',
 
     'Case Types' => 'የክስ አይነቶች',
     'Notifications' => 'ማስታወቂያዎች',
@@ -38,7 +38,8 @@ return [
     'Compose Letter' => 'ደብዳቤ ይጻፉ',
     'Letters' => 'ደብዳቤዎች',
     'Responses' => 'መልስዎች',
-    'Reports' => 'Reports',
+    'Reports' => 'ረፖርቶች',
+    'Announcements' => 'ማሳወቂያዎች',
 
     'User Control' => 'የተጠቃሚ መቆጣጠሪያ',
     'Terms' => 'ውሎች እና ቅድመ ሁኔታዎች',

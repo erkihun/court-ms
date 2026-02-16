@@ -46,6 +46,7 @@ use App\Http\Controllers\Admin\RecordController;
 use App\Http\Controllers\Admin\HearingController;
 use App\Http\Controllers\Admin\AboutController;
 use App\Http\Controllers\Admin\CaseInspectionController;
+use App\Http\Controllers\Admin\AnnouncementController;
 
 // Localization middleware
 use App\Http\Middleware\SetLocale;
@@ -585,6 +586,12 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::delete('/letters/{letter}', [LetterController::class, 'destroy'])
                 ->middleware('perm:letters.delete')
                 ->name('letters.destroy');
+
+            Route::middleware('perm:announcements.manage')->group(function () {
+                Route::resource('announcements', AnnouncementController::class)
+                    ->names('announcements');
+            });
+
         });
 
         /*

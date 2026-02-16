@@ -152,6 +152,11 @@ class PermissionSeeder extends Seeder
                 'label' => 'Export reports',
                 'description' => null,
             ],
+            [
+                'name' => 'announcements.manage',
+                'label' => 'Manage announcements',
+                'description' => null,
+            ],
 
             // System + teams
             [
