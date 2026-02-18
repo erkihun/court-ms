@@ -204,6 +204,9 @@
                     <p class="text-xs text-slate-500 mt-0.5">
                         {{ __('cases.file_requirements') }}
                     </p>
+                    <p class="text-xs text-red-600 mt-0.5">
+                        File size must less than 2MB.
+                    </p>
                 </div>
                 <button type="button" @click="rows++"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md bg-orange-500 text-white font-medium hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-1">
