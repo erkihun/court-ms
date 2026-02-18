@@ -440,11 +440,36 @@
                             @endphp
                             <tr class="hover:bg-slate-50">
                                 <td class="px-3 py-2 font-medium text-slate-900">
+                                    @if($editable)
+                                    <form method="POST"
+                                        action="{{ route('applicant.cases.evidences.update', ['id' => $case->id, 'evidenceId' => $d->id]) }}"
+                                        enctype="multipart/form-data"
+                                        class="space-y-2">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input
+                                            type="text"
+                                            name="title"
+                                            value="{{ $docTitle }}"
+                                            class="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-xs text-slate-900 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                            placeholder="{{ __('cases.placeholders.document_title') }}">
+                                        <input
+                                            type="file"
+                                            name="file"
+                                            accept="application/pdf"
+                                            class="w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs text-slate-900 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                        <button
+                                            class="px-2.5 py-1.5 rounded-md bg-blue-600 text-white text-xs hover:bg-blue-700">
+                                            Update
+                                        </button>
+                                    </form>
+                                    @else
                                     {{ $docTitle }}
                                     @if(!$docPath)
                                     <span class="ml-2 text-[11px] text-slate-500">
                                         ({{ __('cases.inline') }})
                                     </span>
+                                    @endif
                                     @endif
                                 </td>
                                 <td class="px-3 py-2 text-right">
