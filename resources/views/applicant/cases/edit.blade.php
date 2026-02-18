@@ -25,6 +25,17 @@
         </p>
     </div>
 
+    @if ($errors->any())
+    <div class="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+        <div class="font-semibold mb-1">{{ __('cases.please_fix_errors') }}</div>
+        <ul class="list-disc list-inside mt-1 space-y-0.5">
+            @foreach ($errors->all() as $err)
+            <li>{{ $err }}</li>
+            @endforeach
+        </ul>
+    </div>
+    @endif
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {{-- LEFT: main edit form --}}
@@ -442,11 +453,13 @@
                                 <td class="px-3 py-2 font-medium text-slate-900">
                                     @if($editable)
                                     <form method="POST"
-                                        action="{{ route('applicant.cases.evidences.update', ['id' => $case->id, 'evidenceId' => $d->id]) }}"
+                                        action="{{ route('applicant.cases.update', $case->id) }}"
                                         enctype="multipart/form-data"
                                         class="space-y-2">
                                         @csrf
                                         @method('PATCH')
+                                        <input type="hidden" name="_evidence_update" value="1">
+                                        <input type="hidden" name="evidence_id" value="{{ $d->id }}">
                                         <input
                                             type="text"
                                             name="title"

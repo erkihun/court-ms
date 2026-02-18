@@ -587,6 +587,12 @@ class ApplicantCaseController extends Controller
      */
     public function update(Request $request, int $id)
     {
+        if ($request->has('_evidence_update')) {
+            $evidenceId = (int) $request->input('evidence_id');
+            abort_if($evidenceId <= 0, 404);
+            return $this->updateEvidence($request, $id, $evidenceId);
+        }
+
         $me = auth('applicant')->id();
 
         $case = DB::table('court_cases')
