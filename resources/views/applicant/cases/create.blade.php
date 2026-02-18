@@ -161,7 +161,6 @@
                 id="editor-description"
                 name="description"
                 rows="16"
-                required
                 class="mt-1 w-full rounded-lg border border-slate-300  text-slate-900">{{ old('description') }}</textarea>
             @error('description')
             <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
@@ -179,7 +178,6 @@
                 id="editor-relief"
                 name="relief_requested"
                 rows="12"
-                required
                 class="mt-1 w-full rounded-lg border border-slate-300  text-slate-900">{{ old('relief_requested') }}</textarea>
             @error('relief_requested')
             <p class="text-red-600 text-xs mt-1">{{ $message }}</p>

@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Session\TokenMismatchException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -29,6 +30,19 @@ return Application::configure(basePath: dirname(__DIR__))
         // $middleware->append(\App\Http\Middleware\SomethingGlobal::class);
     })
     ->withExceptions(function ($exceptions) {
+        $exceptions->render(function (PostTooLargeException $e, $request) {
+            $limit = (string) (ini_get('post_max_size') ?: 'server limit');
+            $message = "Upload is too large for the server limit ({$limit}). Reduce file size/quantity and try again.";
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => $message,
+                ], 413);
+            }
+
+            return back()->with('error', $message);
+        });
+
         $exceptions->render(function (TokenMismatchException $e, $request) {
             if ($request->expectsJson()) {
                 return response()->json([

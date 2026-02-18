@@ -209,7 +209,6 @@
                             id="editor-description"
                             name="description"
                             rows="16"
-                            required
                             class="mt-1 w-full rounded-lg border border-slate-300  text-slate-900
                                    disabled:bg-slate-100 disabled:text-slate-500"
                             :disabled="!canEdit" {{ $editable ? '' : 'disabled' }}>{{ old('description', $case->description) }}</textarea>
