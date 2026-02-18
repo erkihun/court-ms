@@ -587,12 +587,6 @@ class ApplicantCaseController extends Controller
      */
     public function update(Request $request, int $id)
     {
-        if ($request->has('_evidence_update')) {
-            $evidenceId = (int) $request->input('evidence_id');
-            abort_if($evidenceId <= 0, 404);
-            return $this->updateEvidence($request, $id, $evidenceId);
-        }
-
         $me = auth('applicant')->id();
 
         $case = DB::table('court_cases')
@@ -828,82 +822,6 @@ class ApplicantCaseController extends Controller
         DB::table('case_evidences')->where('id', $evidenceId)->delete();
 
         return back()->with('success', 'Evidence removed.');
-    }
-
-    public function updateEvidence(Request $request, int $id, int $evidenceId)
-    {
-        $applicantId = auth('applicant')->id();
-
-        $case = DB::table('court_cases')
-            ->where('id', $id)
-            ->where('applicant_id', $applicantId)
-            ->first();
-        abort_if(!$case, 404);
-
-        if ($case->status !== 'pending' || ($case->review_status ?? null) === 'accepted') {
-            return back()->with('error', 'You can only update evidence on pending cases.');
-        }
-
-        $ev = DB::table('case_evidences')
-            ->where('id', $evidenceId)
-            ->where('case_id', $id)
-            ->where('type', 'document')
-            ->first();
-        abort_if(!$ev, 404);
-
-        $data = $request->validate([
-            'title' => ['nullable', 'string', 'max:255'],
-            'file'  => ['nullable', 'file', 'mimes:pdf', 'max:5120'],
-        ]);
-
-        if (!filled($data['title'] ?? null) && !$request->hasFile('file')) {
-            return back()->with('error', 'Provide a new document title or PDF file to update evidence.');
-        }
-
-        $updates = [
-            'updated_at' => now(),
-        ];
-
-        if (filled($data['title'] ?? null) && Schema::hasColumn('case_evidences', 'title')) {
-            $updates['title'] = trim((string) $data['title']);
-        }
-
-        if ($request->hasFile('file')) {
-            /** @var UploadedFile $file */
-            $file = $request->file('file');
-            $stored = $file->store('evidences', 'private');
-
-            if (Schema::hasColumn('case_evidences', 'file_path')) {
-                $updates['file_path'] = $stored;
-            }
-            if (Schema::hasColumn('case_evidences', 'path')) {
-                $updates['path'] = $stored;
-            }
-            if (Schema::hasColumn('case_evidences', 'mime')) {
-                $updates['mime'] = $file->getClientMimeType() ?: 'application/pdf';
-            }
-            if (Schema::hasColumn('case_evidences', 'size')) {
-                $updates['size'] = $file->getSize();
-            }
-
-            $oldPath = $ev->file_path ?? $ev->path ?? null;
-            if (!empty($oldPath)) {
-                $this->deleteStoredFile($oldPath);
-            }
-        }
-
-        DB::table('case_evidences')
-            ->where('id', $evidenceId)
-            ->where('case_id', $id)
-            ->update($updates);
-
-        $this->logCaseAudit($id, 'evidence_updated', [
-            'evidence_id' => $evidenceId,
-            'title'       => $updates['title'] ?? ($ev->title ?? null),
-            'file'        => isset($updates['file_path']) || isset($updates['path']),
-        ]);
-
-        return back()->with('success', 'Evidence updated.');
     }
 
     public function deleteWitness(int $id, int $witnessId)

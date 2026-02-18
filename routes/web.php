@@ -212,8 +212,6 @@ Route::middleware(SetLocale::class)->group(function () {
                 ->name('applicant.cases.files.download');
 
             // Evidences / Witnesses
-            Route::patch('/applicant/cases/{id}/evidences/{evidenceId}', [ApplicantCaseController::class, 'updateEvidence'])
-                ->name('applicant.cases.evidences.update');
             Route::delete('/applicant/cases/{id}/evidences/{evidenceId}', [ApplicantCaseController::class, 'deleteEvidence'])->name('applicant.cases.evidences.delete');
             Route::get('/applicant/cases/{id}/evidences/{evidenceId}/download', [SecureFileController::class, 'caseEvidence'])
                 ->name('applicant.cases.evidences.download');
