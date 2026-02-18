@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SecureFileController extends Controller
@@ -191,9 +192,17 @@ class SecureFileController extends Controller
             $disk = $fallback;
         }
 
-        $downloadName = $name ?: basename($path);
+        $downloadName = $this->sanitizeDownloadName($name ?: basename($path), basename($path));
+        $resolvedMime = $mime;
+        if (empty($resolvedMime)) {
+            try {
+                $resolvedMime = $disk->mimeType($path) ?: 'application/octet-stream';
+            } catch (\Throwable $e) {
+                $resolvedMime = 'application/octet-stream';
+            }
+        }
         $headers = [
-            'Content-Type' => $mime ?: $disk->mimeType($path) ?: 'application/octet-stream',
+            'Content-Type' => $resolvedMime,
         ];
 
         if ($inline) {
@@ -201,5 +210,29 @@ class SecureFileController extends Controller
         }
 
         return $disk->download($path, $downloadName, $headers);
+    }
+
+    private function sanitizeDownloadName(?string $preferredName, string $pathBasename): string
+    {
+        $name = trim((string) $preferredName);
+        if ($name === '') {
+            $name = $pathBasename;
+        }
+
+        // Avoid header/filename breaking chars.
+        $name = str_replace(["\r", "\n"], '', $name);
+        $name = str_replace(['/', '\\'], '-', $name);
+        $name = trim($name, " .\t\n\r\0\x0B");
+
+        if ($name === '') {
+            $name = $pathBasename ?: 'download';
+        }
+
+        $ext = pathinfo($pathBasename, PATHINFO_EXTENSION);
+        if ($ext !== '' && !Str::endsWith(Str::lower($name), '.' . Str::lower($ext))) {
+            $name .= '.' . $ext;
+        }
+
+        return $name;
     }
 }
