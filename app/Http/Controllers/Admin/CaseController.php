@@ -1158,6 +1158,17 @@ class CaseController extends Controller
             'updated_at'          => now(),
         ]);
 
+        // Avoid blocking review submissions when SMTP config is incomplete.
+        $mailer = (string) config('mail.default');
+        $fromAddress = (string) config('mail.from.address');
+        $smtpHost = (string) config('mail.mailers.smtp.host');
+        $smtpUser = (string) config('mail.mailers.smtp.username');
+        $smtpPass = (string) config('mail.mailers.smtp.password');
+        if ($mailer === 'smtp' && ($fromAddress === '' || $smtpHost === '' || $smtpUser === '' || $smtpPass === '')) {
+            Log::warning('Review email skipped due to incomplete SMTP config', ['case_id' => $case->id]);
+            return;
+        }
+
         try {
             $to = DB::table('applicants')->where('id', $case->applicant_id)->value('email');
             if ($to) {
