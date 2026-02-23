@@ -7,7 +7,6 @@
             <div class="flex-grow">
                 <label for="q-search" class="block text-xs font-medium text-gray-700 mb-1">Search Case Title or Number</label>
                 <input id="q-search" name="q" value="{{ $q ?? request('q','') }}" placeholder="{{ __('cases.search_placeholder') }}"
-                    {{-- Updated input styling --}}
                     class="w-full md:w-96 px-3 py-2 rounded-lg bg-gray-50 text-gray-900 border border-gray-300 focus:ring-blue-500 focus:border-blue-500 transition shadow-inner">
             </div>
             {{-- Updated button styling --}}
@@ -193,6 +192,31 @@
                         </span>
                         @if(!empty($c->reviewer_name))
                         <div class="text-xs text-gray-500 mt-1">{{ __('cases.reviewed_by', ['name' => $c->reviewer_name]) }}</div>
+                        @endif
+                        @if($canReview)
+                        <form method="POST" action="{{ route('cases.review') }}" class="mt-2 space-y-2">
+                            @csrf
+                            <input type="hidden" name="case_id" value="{{ $c->id }}">
+                            <input
+                                type="text"
+                                name="note"
+                                placeholder="Note (required for return/reject)"
+                                class="w-56 max-w-full px-2 py-1 rounded border border-gray-300 text-xs focus:ring-blue-500 focus:border-blue-500">
+                            <div class="flex flex-wrap gap-1">
+                                <button type="submit" name="decision" value="accept"
+                                    class="px-2 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium">
+                                    Accept
+                                </button>
+                                <button type="submit" name="decision" value="return"
+                                    class="px-2 py-1 rounded bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-medium">
+                                    Return
+                                </button>
+                                <button type="submit" name="decision" value="reject"
+                                    class="px-2 py-1 rounded bg-red-600 hover:bg-red-700 text-white text-xs font-medium">
+                                    Reject
+                                </button>
+                            </div>
+                        </form>
                         @endif
 
                     </td>
