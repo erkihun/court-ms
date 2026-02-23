@@ -501,13 +501,38 @@
                     </div>
                     @endif
                     @if(in_array($reviewStatus, ['awaiting_review','returned']) && $canReview)
-                    <div class="flex flex-wrap gap-2">
-                        <button type="button" class="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700  font-medium text-white shadow-sm hover:shadow transition-all duration-200"
-                            onclick="submitReviewDecision('accept')">Accept</button>
-                        <button type="button" class="px-4 py-2 rounded-lg bg-yellow-600 hover:bg-yellow-700  font-medium text-white shadow-sm hover:shadow transition-all duration-200"
-                            onclick="openReviewModal('return')">Return</button>
-                        <button type="button" class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700  font-medium text-white shadow-sm hover:shadow transition-all duration-200"
-                            onclick="openReviewModal('reject')">Reject</button>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <form method="POST" action="{{ route('cases.review.update', $case->id) }}">
+                            @csrf
+                            @method('PATCH')
+                            <input type="hidden" name="decision" value="accept">
+                            <input type="hidden" name="note" value="">
+                            <button type="submit" class="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 font-medium text-white shadow-sm hover:shadow transition-all duration-200">
+                                Accept
+                            </button>
+                        </form>
+
+                        <form method="POST" action="{{ route('cases.review.update', $case->id) }}" class="flex items-center gap-2">
+                            @csrf
+                            @method('PATCH')
+                            <input type="hidden" name="decision" value="return">
+                            <input type="text" name="note" required placeholder="Reason for return"
+                                class="px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-900 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
+                            <button type="submit" class="px-4 py-2 rounded-lg bg-yellow-600 hover:bg-yellow-700 font-medium text-white shadow-sm hover:shadow transition-all duration-200">
+                                Return
+                            </button>
+                        </form>
+
+                        <form method="POST" action="{{ route('cases.review.update', $case->id) }}" class="flex items-center gap-2">
+                            @csrf
+                            @method('PATCH')
+                            <input type="hidden" name="decision" value="reject">
+                            <input type="text" name="note" required placeholder="Reason for rejection"
+                                class="px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                            <button type="submit" class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 font-medium text-white shadow-sm hover:shadow transition-all duration-200">
+                                Reject
+                            </button>
+                        </form>
                     </div>
                     @endif
 
