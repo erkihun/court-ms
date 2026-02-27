@@ -31,7 +31,7 @@ class LetterController extends Controller
     {
         $data = $request->validate([
             'template_id'       => ['required', 'exists:letter_templates,id'],
-            'recipient_name'    => ['required', 'string', 'max:255'],
+            'recipient_name'    => ['nullable', 'string', 'max:255'],
             'recipient_title'   => ['nullable', 'string', 'max:255'],
             'recipient_company' => ['nullable', 'string', 'max:255'],
             'subject'           => ['nullable', 'string', 'max:255'],
@@ -65,6 +65,18 @@ class LetterController extends Controller
 
         $data['send_to_applicant'] = $sendToApplicant;
         $data['send_to_respondent'] = $sendToRespondent;
+        $recipientName = trim((string) ($data['recipient_name'] ?? ''));
+        if ($recipientName === '') {
+            $targets = [];
+            if ($sendToApplicant) {
+                $targets[] = __('letters.form.deliver_applicant');
+            }
+            if ($sendToRespondent) {
+                $targets[] = __('letters.form.deliver_respondent');
+            }
+            $recipientName = implode(', ', $targets);
+        }
+        $data['recipient_name'] = $recipientName;
 
         $letter          = null;
         $template        = LetterTemplate::findOrFail($data['template_id']);

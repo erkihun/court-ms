@@ -303,6 +303,17 @@
     $approvalTitle = $letter->approved_by_title ?? null;
     $displayName = $isApproved ? ($approvalName ?: $authorName) : '';
     $displayTitle = $isApproved ? ($approvalTitle ?: (optional($letter->author)->position ?? $authorTitle)) : '';
+    $recipientName = trim((string) ($letter->recipient_name ?? ''));
+    if ($recipientName === '') {
+    $recipientTargets = [];
+    if ((bool) ($letter->send_to_applicant ?? false)) {
+    $recipientTargets[] = __('letters.form.deliver_applicant');
+    }
+    if ((bool) ($letter->send_to_respondent ?? false)) {
+    $recipientTargets[] = __('letters.form.deliver_respondent');
+    }
+    $recipientName = implode(', ', $recipientTargets);
+    }
 
     $recipientCompanies = $letter->recipient_company
     ? array_filter(array_map('trim', explode(',', $letter->recipient_company)))
@@ -401,7 +412,7 @@
                 @endforeach
                 @endif
             </div>
-            <strong style="text-decoration: underline;">{{ $letter->recipient_name }}</strong>
+            <strong style="text-decoration: underline;">{{ $recipientName ?: '—' }}</strong>
         </div>
 
         <div id="raw-body-content">
