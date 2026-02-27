@@ -5,13 +5,15 @@
     <div class="p-4 mb-4 rounded-xl bg-white border border-gray-200 shadow-sm">
         <form method="GET" class="flex gap-3 items-end">
             <div class="flex-grow">
-                <label for="q-search" class="block text-xs font-medium text-gray-700 mb-1">Search Case Title or Number</label>
-                <input id="q-search" name="q" value="{{ $q ?? request('q','') }}" placeholder="{{ __('cases.search_placeholder') }}"
-                    {{-- Updated input styling --}}
+                <label for="q-search" class="block text-xs font-medium text-gray-700 mb-1">Search Case Title or
+                    Number</label>
+                <input id="q-search" name="q" value="{{ $q ?? request('q','') }}"
+                    placeholder="{{ __('cases.search_placeholder') }}" {{-- Updated input styling --}}
                     class="w-full md:w-96 px-3 py-2 rounded-lg bg-gray-50 text-gray-900 border border-gray-300 focus:ring-blue-500 focus:border-blue-500 transition shadow-inner">
             </div>
             {{-- Updated button styling --}}
-            <button class="h-[40px] px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition shadow-md">
+            <button
+                class="h-[40px] px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition shadow-md">
                 {{ __('cases.search') }}
             </button>
             @if(($q ?? request('q','')) !== '')
@@ -29,7 +31,8 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
             {{-- Status Filter --}}
             <div>
-                <label for="filter-status" class="block text-xs font-medium text-gray-700 mb-1">{{ __('cases.filters.status') }}</label>
+                <label for="filter-status"
+                    class="block text-xs font-medium text-gray-700 mb-1">{{ __('cases.filters.status') }}</label>
                 <select id="filter-status" name="status"
                     class="w-full px-3 py-2 rounded-lg bg-gray-50 text-gray-900 border border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-inner">
                     <option value="">{{ __('cases.filters.all_statuses') }}</option>
@@ -41,7 +44,8 @@
 
             {{-- Type Filter --}}
             <div>
-                <label for="filter-type" class="block text-xs font-medium text-gray-700 mb-1">{{ __('cases.table.type') }}</label>
+                <label for="filter-type"
+                    class="block text-xs font-medium text-gray-700 mb-1">{{ __('cases.table.type') }}</label>
                 <select id="filter-type" name="case_type_id"
                     class="w-full px-3 py-2 rounded-lg bg-gray-50 text-gray-900 border border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-inner">
                     <option value="">{{ __('cases.filters.all_types') }}</option>
@@ -53,7 +57,8 @@
 
             {{-- Assignee Filter --}}
             <div>
-                <label for="filter-assignee" class="block text-xs font-medium text-gray-700 mb-1">{{ __('cases.table.assignee') }}</label>
+                <label for="filter-assignee"
+                    class="block text-xs font-medium text-gray-700 mb-1">{{ __('cases.table.assignee') }}</label>
                 <select id="filter-assignee" name="assignee_id"
                     class="w-full px-3 py-2 rounded-lg bg-gray-50 text-gray-900 border border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-inner">
                     <option value="">{{ __('cases.filters.all_assignees') }}</option>
@@ -66,12 +71,14 @@
             {{-- Date Filters --}}
             <div class="md:col-span-2 flex gap-3">
                 <div>
-                    <label for="filter-from" class="block text-xs font-medium text-gray-700 mb-1">{{ __('cases.filters.from_date') }}</label>
+                    <label for="filter-from"
+                        class="block text-xs font-medium text-gray-700 mb-1">{{ __('cases.filters.from_date') }}</label>
                     <input id="filter-from" type="date" name="from" value="{{ optional($from)->format('Y-m-d') }}"
                         class="w-full px-3 py-2 rounded-lg bg-gray-50 text-gray-900 border border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-inner">
                 </div>
                 <div>
-                    <label for="filter-to" class="block text-xs font-medium text-gray-700 mb-1">{{ __('cases.filters.to_date') }}</label>
+                    <label for="filter-to"
+                        class="block text-xs font-medium text-gray-700 mb-1">{{ __('cases.filters.to_date') }}</label>
                     <input id="filter-to" type="date" name="to" value="{{ optional($to)->format('Y-m-d') }}"
                         class="w-full px-3 py-2 rounded-lg bg-gray-50 text-gray-900 border border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-inner">
                 </div>
@@ -124,16 +131,25 @@
             {{-- Table Header (Updated styling) --}}
             <thead class="bg-gray-50">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('cases.table.number') }}</th>
-                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('cases.table.case_number') }}</th>
-                    
-                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('cases.table.type') }}</th>
-                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('cases.table.team') }}</th>
-                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('cases.table.team_member') }}</th>
-                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('cases.table.status') }}</th>
-                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('cases.table.filing_date') }}</th>
-                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Review</th>
-                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('cases.table.actions') }}</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        {{ __('cases.table.number') }}</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        {{ __('cases.table.case_number') }}</th>
+
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        {{ __('cases.table.type') }}</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        {{ __('cases.table.team') }}</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        {{ __('cases.table.team_member') }}</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        {{ __('cases.table.status') }}</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        {{ __('cases.table.filing_date') }}</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Review
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        {{ __('cases.table.actions') }}</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200 bg-white">
@@ -147,7 +163,7 @@
                         <a href="{{ route('cases.show', $c->id) }}" class="hover:underline">{{ $c->case_number }}</a>
                     </td>
                     {{-- Increased padding to px-6 py-4 --}}
-                    
+
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ $c->case_type }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ $c->team_name ?? '—' }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ $c->assignee_name ?? '-' }}</td>
@@ -192,7 +208,8 @@
                             {{ ucfirst(str_replace('_',' ', $displayRs)) }}
                         </span>
                         @if(!empty($c->reviewer_name))
-                        <div class="text-xs text-gray-500 mt-1">{{ __('cases.reviewed_by', ['name' => $c->reviewer_name]) }}</div>
+                        <div class="text-xs text-gray-500 mt-1">
+                            {{ __('cases.reviewed_by', ['name' => $c->reviewer_name]) }}</div>
                         @endif
 
                     </td>
@@ -219,8 +236,10 @@
                 <tr>
                     {{-- Updated colspan for 8 columns --}}
                     <td colspan="9" class="px-6 py-12 text-center text-gray-500 text-base">
-                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9.25 10m.5 7h4.5M12 21a9 9 0 100-18 9 9 0 000 18z" />
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M9.75 17L9.25 10m.5 7h4.5M12 21a9 9 0 100-18 9 9 0 000 18z" />
                         </svg>
                         <h3 class="mt-2 text-sm font-medium text-gray-900">{{ __('cases.table.no_cases') }}</h3>
                         <p class="mt-1 text-sm text-gray-500">{{ __('cases.table.no_cases_found') }}</p>

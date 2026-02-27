@@ -303,6 +303,13 @@
     ? array_filter(array_map('trim', explode(',', $letter->cc)))
     : [];
 
+    $linkedCase = null;
+    if (!empty($letter->case_number)) {
+    $linkedCase = \App\Models\CourtCase::query()
+    ->where('case_number', $letter->case_number)
+    ->first(['case_number', 'code']);
+    }
+
     // Ensure the body allows basic formatting tags but strips malicious scripts
     $safeBody = \Mews\Purifier\Facades\Purifier::clean($letter->body ?? '', 'default');
 
@@ -371,7 +378,9 @@
             <div class="meta-header">
                 <div>
                     <strong>{{ __('letters.preview.ref_no') }}</strong>
-                    {{ $letter->reference_number ?? __('letters.cards.missing') }}
+                    {{ $letter->reference_number ?? __('letters.cards.missing') }}<br>
+                    <strong>Case Number:</strong> {{ $linkedCase->case_number ?? ($letter->case_number ?? __('letters.cards.missing')) }}<br>
+                    <strong>Code:</strong> {{ $linkedCase->code ?? __('letters.cards.missing') }}
                 </div>
                 <div>
                     <strong>{{ __('letters.preview.date') }}</strong> {{ $letterDate }}
