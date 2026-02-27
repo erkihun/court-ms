@@ -1694,7 +1694,7 @@
                                             {{ $selectedTemplate->category ?? ($selectedTemplate ? __('letters.form.category_fallback') : '') }}
                                         </p>
                                         <p id="inline-template-excerpt" class="mt-1 text-xs text-gray-500">
-                                            {{ $selectedTemplate? Str::limit($selectedTemplate->body, 100, '...') : '' }}
+                                            {{ $selectedTemplate ? \Illuminate\Support\Str::limit($selectedTemplate->body, 100, '...') : '' }}
                                         </p>
                                     </div>
 
@@ -2811,19 +2811,17 @@
             const calendarEl = document.getElementById('hearings-calendar');
             if (calendarEl && typeof ModernCalendar !== 'undefined') {
                 @php
-                $fcEvents = ($hearings ?? collect()) -
-                    > map(function($h) {
+                $fcEvents = ($hearings ?? collect())
+                    ->map(function ($h) {
                         $start = null;
                         try {
-                            $start = \Illuminate\ Support\ Carbon::parse($h - > hearing_at) - >
-                                toIso8601String();
+                            $start = \Illuminate\Support\Carbon::parse($h->hearing_at)->toIso8601String();
                         } catch (\Throwable $e) {
-                            if (is_string($h - > hearing_at)) {
-                                $clean = trim($h - > hearing_at);
-                                foreach(['d-m-Y H:i:s', 'd-m-Y H:i'] as $fmt) {
+                            if (is_string($h->hearing_at)) {
+                                $clean = trim($h->hearing_at);
+                                foreach (['d-m-Y H:i:s', 'd-m-Y H:i'] as $fmt) {
                                     try {
-                                        $start = \Illuminate\ Support\ Carbon::createFromFormat($fmt,
-                                            $clean) - > toIso8601String();
+                                        $start = \Illuminate\Support\Carbon::createFromFormat($fmt, $clean)->toIso8601String();
                                         break;
                                     } catch (\Throwable $e2) {
                                         $start = null;
@@ -2833,19 +2831,18 @@
                         }
                         if (!$start) return null;
                         return [
-                            'title' => trim(($h - > type ?? '').
-                                ' '.($h - > location ?? '')),
+                            'title' => trim(($h->type ?? '') . ' ' . ($h->location ?? '')),
                             'start' => $start,
                             'allDay' => false,
                             'extendedProps' => [
-                                'location' => $h - > location ?? null,
-                                'notes' => $h - > notes ?? null,
+                                'location' => $h->location ?? null,
+                                'notes' => $h->notes ?? null,
                             ],
                         ];
-                    }) -
-                    > filter() -
-                    > values() -
-                    > toArray();
+                    })
+                    ->filter()
+                    ->values()
+                    ->toArray();
                 @endphp
                 const fcEvents = @json($fcEvents);
                 const eventMetaByDate = {};
