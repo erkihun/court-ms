@@ -304,10 +304,20 @@
     : [];
 
     $linkedCase = null;
+    $linkedCaseCode = null;
     if (!empty($letter->case_number)) {
+    try {
     $linkedCase = \App\Models\CourtCase::query()
     ->where('case_number', $letter->case_number)
     ->first(['case_number', 'code']);
+    $linkedCaseCode = $linkedCase->code ?? null;
+    } catch (\Throwable $e) {
+    // Fallback for environments where `code` column may not exist yet.
+    $linkedCase = \App\Models\CourtCase::query()
+    ->where('case_number', $letter->case_number)
+    ->first(['case_number']);
+    $linkedCaseCode = null;
+    }
     }
 
     // Ensure the body allows basic formatting tags but strips malicious scripts
@@ -380,7 +390,7 @@
                     <strong>{{ __('letters.preview.ref_no') }}</strong>
                     {{ $letter->reference_number ?? __('letters.cards.missing') }}<br>
                     <strong>Case Number:</strong> {{ $linkedCase->case_number ?? ($letter->case_number ?? __('letters.cards.missing')) }}<br>
-                    <strong>Code:</strong> {{ $linkedCase->code ?? __('letters.cards.missing') }}
+                    <strong>Code:</strong> {{ $linkedCaseCode ?? __('letters.cards.missing') }}
                 </div>
                 <div>
                     <strong>{{ __('letters.preview.date') }}</strong> {{ $letterDate }}
