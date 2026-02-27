@@ -39,6 +39,17 @@
     $authorPosition = data_get($letter, 'author.position') ?? data_get($letter, 'author.title');
     $displayName = $isApproved ? ($letter->approved_by_name ?: $authorName) : '';
     $displayTitle = $isApproved ? ($letter->approved_by_title ?: $authorPosition ?? '') : '';
+    $recipientName = trim((string) ($letter->recipient_name ?? ''));
+    if ($recipientName === '') {
+        $recipientTargets = [];
+        if ((bool) ($letter->send_to_applicant ?? false)) {
+            $recipientTargets[] = __('letters.form.deliver_applicant');
+        }
+        if ((bool) ($letter->send_to_respondent ?? false)) {
+            $recipientTargets[] = __('letters.form.deliver_respondent');
+        }
+        $recipientName = implode(', ', $recipientTargets);
+    }
 
     if ($isApproved && (empty($displayName) || empty($authorSignature) || empty($displayTitle))) {
         $authorId = data_get($letter, 'user_id') ?? data_get($letter, 'author_id');
@@ -131,7 +142,7 @@
                         <div class="pl-4"><span class="mr-3 font-bold">ሰ</span> {{ $company }}</div>
                     @endforeach
                 </div>
-                <strong style="text-decoration: underline;">{{ $letter->recipient_name }}</strong>
+                <strong style="text-decoration: underline;">{{ $recipientName ?: '—' }}</strong>
             </div>
 
             <div class="content-block" data-role="before-body">

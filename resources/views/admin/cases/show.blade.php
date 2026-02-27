@@ -1553,11 +1553,9 @@
                                     <div class="grid md:grid-cols-2 gap-4">
                                         <div>
                                             <label
-                                                class="block  font-medium text-gray-700">{{ __('letters.form.recipient_name') }}<span
-                                                    class="text-red-500">*</span></label>
+                                                class="block  font-medium text-gray-700">{{ __('letters.form.recipient_name') }}</label>
                                             <input type="text" name="recipient_name" value="{{ $recipientName }}"
-                                                class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
-                                                required>
+                                                class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2">
                                             @error('recipient_name')
                                             <p class="text-xs text-red-600 mt-1" role="alert">{{ $message }}</p>
                                             @enderror
