@@ -68,11 +68,22 @@ class LetterController extends Controller
         $recipientName = trim((string) ($data['recipient_name'] ?? ''));
         if ($recipientName === '') {
             $targets = [];
+            $caseParty = null;
+            if (!empty($data['case_number'])) {
+                $caseParty = DB::table('court_cases as c')
+                    ->leftJoin('applicants as a', 'a.id', '=', 'c.applicant_id')
+                    ->select(
+                        'c.respondent_name',
+                        DB::raw("TRIM(CONCAT(COALESCE(a.first_name,''), ' ', COALESCE(a.last_name,''))) as applicant_name")
+                    )
+                    ->where('c.case_number', $data['case_number'])
+                    ->first();
+            }
             if ($sendToApplicant) {
-                $targets[] = __('letters.form.deliver_applicant');
+                $targets[] = trim((string) ($caseParty->applicant_name ?? '')) ?: __('letters.form.deliver_applicant');
             }
             if ($sendToRespondent) {
-                $targets[] = __('letters.form.deliver_respondent');
+                $targets[] = trim((string) ($caseParty->respondent_name ?? '')) ?: __('letters.form.deliver_respondent');
             }
             $recipientName = implode(', ', $targets);
         }

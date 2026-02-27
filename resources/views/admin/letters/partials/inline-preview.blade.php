@@ -39,14 +39,30 @@
     $authorPosition = data_get($letter, 'author.position') ?? data_get($letter, 'author.title');
     $displayName = $isApproved ? ($letter->approved_by_name ?: $authorName) : '';
     $displayTitle = $isApproved ? ($letter->approved_by_title ?: $authorPosition ?? '') : '';
+    $caseParty = null;
     $recipientName = trim((string) ($letter->recipient_name ?? ''));
-    if ($recipientName === '') {
+    if (!empty($letter->case_number)) {
+        $caseParty = \Illuminate\Support\Facades\DB::table('court_cases as c')
+            ->leftJoin('applicants as a', 'a.id', '=', 'c.applicant_id')
+            ->select(
+                'c.respondent_name',
+                \Illuminate\Support\Facades\DB::raw("TRIM(CONCAT(COALESCE(a.first_name,''), ' ', COALESCE(a.last_name,''))) as applicant_name")
+            )
+            ->where('c.case_number', $letter->case_number)
+            ->first();
+    }
+    $applicantLabel = mb_strtolower(trim((string) __('letters.form.deliver_applicant')));
+    $respondentLabel = mb_strtolower(trim((string) __('letters.form.deliver_respondent')));
+    $parts = array_values(array_filter(array_map('trim', explode(',', mb_strtolower($recipientName)))));
+    $isGenericRecipient = $recipientName !== '' && !empty($parts)
+        && collect($parts)->every(fn($p) => in_array($p, [$applicantLabel, $respondentLabel, 'applicant', 'respondent'], true));
+    if ($recipientName === '' || $isGenericRecipient) {
         $recipientTargets = [];
         if ((bool) ($letter->send_to_applicant ?? false)) {
-            $recipientTargets[] = __('letters.form.deliver_applicant');
+            $recipientTargets[] = trim((string) ($caseParty->applicant_name ?? '')) ?: __('letters.form.deliver_applicant');
         }
         if ((bool) ($letter->send_to_respondent ?? false)) {
-            $recipientTargets[] = __('letters.form.deliver_respondent');
+            $recipientTargets[] = trim((string) ($caseParty->respondent_name ?? '')) ?: __('letters.form.deliver_respondent');
         }
         $recipientName = implode(', ', $recipientTargets);
     }
