@@ -159,7 +159,7 @@ class LetterController extends Controller
         }
 
         $data = $request->validate([
-            'recipient_name'    => ['required', 'string', 'max:255'],
+            'recipient_name'    => ['nullable', 'string', 'max:255'],
             'recipient_title'   => ['nullable', 'string', 'max:255'],
             'recipient_company' => ['nullable', 'string', 'max:255'],
             'subject'           => ['nullable', 'string', 'max:255'],
@@ -184,6 +184,34 @@ class LetterController extends Controller
                 ->withErrors(['send_to_applicant' => __('letters.form.delivery_required')])
                 ->withInput();
         }
+
+        $recipientName = trim((string) ($data['recipient_name'] ?? ''));
+        if ($recipientName === '') {
+            $targets = [];
+            $caseParty = null;
+            $caseNumber = trim((string) ($data['case_number'] ?? $letter->case_number ?? ''));
+            if ($caseNumber !== '') {
+                $caseParty = DB::table('court_cases as c')
+                    ->leftJoin('applicants as a', 'a.id', '=', 'c.applicant_id')
+                    ->select(
+                        'c.respondent_name',
+                        DB::raw("TRIM(CONCAT(COALESCE(a.first_name,''), ' ', COALESCE(a.last_name,''))) as applicant_name")
+                    )
+                    ->where('c.case_number', $caseNumber)
+                    ->first();
+            }
+            if ($sendToApplicant) {
+                $targets[] = trim((string) ($caseParty->applicant_name ?? '')) ?: __('letters.form.deliver_applicant');
+            }
+            if ($sendToRespondent) {
+                $targets[] = trim((string) ($caseParty->respondent_name ?? '')) ?: __('letters.form.deliver_respondent');
+            }
+            $recipientName = implode(', ', $targets);
+        }
+        if ($recipientName === '') {
+            $recipientName = (string) ($letter->recipient_name ?? '');
+        }
+        $data['recipient_name'] = $recipientName;
 
         $letter->load('template');
 
