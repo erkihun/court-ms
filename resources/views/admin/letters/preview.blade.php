@@ -279,8 +279,11 @@
 
 <body>
     @php
-    $letterDate = \App\Support\EthiopianDate::format($letter->created_at ?? now());
     $isApproved = ($letter->approval_status === 'approved');
+    $letterDateSource = $isApproved
+    ? ($letter->updated_at ?? $letter->created_at ?? now())
+    : ($letter->created_at ?? now());
+    $letterDate = \App\Support\EthiopianDate::format($letterDateSource);
     $authorName = (function () use ($letter) {
     $full = optional($letter->author)->name;
     if (!$full) return '';
