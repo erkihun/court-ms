@@ -404,13 +404,6 @@
             <strong style="text-decoration: underline;">{{ $letter->recipient_name }}</strong>
         </div>
 
-        <div class="content-block" data-type="subject">
-            <div class="subject-line">
-                {{ __('letters.preview.subject') }}
-                {{ $letter->subject ?: ($template->title ?? __('letters.cards.untitled')) }}
-            </div>
-        </div>
-
         <div id="raw-body-content">
             {!! $safeBody !!}
         </div>
