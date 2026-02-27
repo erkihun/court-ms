@@ -290,6 +290,12 @@
     $authorTitle = optional($letter->author)->title ?? '';
     $authorSignature = optional($letter->author)->signature_url ?? null;
     $systemSettings = \App\Models\SystemSetting::query()->first();
+    $caseCode = null;
+    if (!empty($letter->case_number)) {
+    $caseCode = \Illuminate\Support\Facades\DB::table('court_cases')
+    ->where('case_number', $letter->case_number)
+    ->value('code');
+    }
     $approvalName = $letter->approved_by_name ?? null;
     $approvalTitle = $letter->approved_by_title ?? null;
     $displayName = $isApproved ? ($approvalName ?: $authorName) : '';
@@ -371,7 +377,12 @@
             <div class="meta-header">
                 <div>
                     <strong>{{ __('letters.preview.ref_no') }}</strong>
-                    {{ $letter->reference_number ?? __('letters.cards.missing') }}
+                    {{ $letter->reference_number ?? __('letters.cards.missing') }}<br>
+                    <span style="font-size: 11pt;">
+                        <strong>{{ __('cases.case_number') }}:</strong> {{ $letter->case_number ?? '—' }}
+                        |
+                        <strong>Code:</strong> {{ $caseCode ?? '—' }}
+                    </span>
                 </div>
                 <div>
                     <strong>{{ __('letters.preview.date') }}</strong> {{ $letterDate }}
