@@ -327,6 +327,7 @@
     }
     $recipientName = implode(', ', $recipientTargets);
     }
+    $recipientLines = array_values(array_filter(array_map('trim', explode(',', (string) $recipientName))));
 
     $recipientCompanies = $letter->recipient_company
     ? array_filter(array_map('trim', explode(',', $letter->recipient_company)))
@@ -425,7 +426,15 @@
                 @endforeach
                 @endif
             </div>
-            <strong style="text-decoration: underline;">{{ $recipientName ?: '—' }}</strong>
+            @if(!empty($recipientLines))
+            <ul class="list-disc ml-6 mt-1">
+                @foreach($recipientLines as $line)
+                <li><strong>{{ $line }}</strong></li>
+                @endforeach
+            </ul>
+            @else
+            <strong style="text-decoration: underline;">—</strong>
+            @endif
         </div>
 
         <div id="raw-body-content">

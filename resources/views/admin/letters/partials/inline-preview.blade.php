@@ -66,6 +66,7 @@
         }
         $recipientName = implode(', ', $recipientTargets);
     }
+    $recipientLines = array_values(array_filter(array_map('trim', explode(',', (string) $recipientName))));
 
     if ($isApproved && (empty($displayName) || empty($authorSignature) || empty($displayTitle))) {
         $authorId = data_get($letter, 'user_id') ?? data_get($letter, 'author_id');
@@ -158,7 +159,15 @@
                         <div class="pl-4"><span class="mr-3 font-bold">ሰ</span> {{ $company }}</div>
                     @endforeach
                 </div>
-                <strong style="text-decoration: underline;">{{ $recipientName ?: '—' }}</strong>
+                @if(!empty($recipientLines))
+                    <ul class="list-disc ml-6 mt-1">
+                        @foreach($recipientLines as $line)
+                            <li><strong>{{ $line }}</strong></li>
+                        @endforeach
+                    </ul>
+                @else
+                    <strong style="text-decoration: underline;">—</strong>
+                @endif
             </div>
 
             <div class="content-block" data-role="before-body">
