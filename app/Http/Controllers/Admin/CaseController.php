@@ -364,6 +364,17 @@ class CaseController extends Controller
     public function show(int $id)
     {
         $this->authorizeView();
+        $safeGet = function (callable $query, string $segment) {
+            try {
+                return $query();
+            } catch (\Throwable $e) {
+                Log::warning('Case show segment failed; using empty dataset.', [
+                    'segment' => $segment,
+                    'error' => $e->getMessage(),
+                ]);
+                return collect();
+            }
+        };
 
         $case = DB::table('court_cases as c')
             ->leftJoin('case_types as ct', 'ct.id', '=', 'c.case_type_id')
@@ -408,115 +419,152 @@ class CaseController extends Controller
         $case->description_html        = (string) ($case->description ?? '');
         $case->relief_requested_html   = (string) ($case->relief_requested ?? '');
 
-        $timeline = DB::table('case_status_logs')
-            ->select(
-                'case_status_logs.*',
-                DB::raw('NULL AS note') // so $t->note always exists
-            )
-            ->where('case_id', $id)
-            ->orderBy('created_at')
-            ->get();
+        $timeline = Schema::hasTable('case_status_logs')
+            ? $safeGet(function () use ($id) {
+                return DB::table('case_status_logs')
+                    ->select(
+                        'case_status_logs.*',
+                        DB::raw('NULL AS note') // so $t->note always exists
+                    )
+                    ->where('case_id', $id)
+                    ->orderBy('created_at')
+                    ->get();
+            }, 'case_status_logs')
+            : collect();
 
-        $letters = DB::table('letters as l')
-            ->leftJoin('letter_templates as lt', 'lt.id', '=', 'l.letter_template_id')
-            ->leftJoin('users as u', 'u.id', '=', 'l.user_id')
-            ->select(
-                'l.id',
-                'l.subject',
-                'l.reference_number',
-                'l.approval_status',
-                'l.created_at',
-                'lt.title as template_title',
-                'u.name as author_name'
-            )
-            ->where('l.case_number', $case->case_number)
-            ->orderByDesc('l.created_at')
-            ->get();
+        $letters = Schema::hasTable('letters')
+            ? $safeGet(function () use ($case) {
+                return DB::table('letters as l')
+                    ->leftJoin('letter_templates as lt', 'lt.id', '=', 'l.letter_template_id')
+                    ->leftJoin('users as u', 'u.id', '=', 'l.user_id')
+                    ->select(
+                        'l.id',
+                        'l.subject',
+                        'l.reference_number',
+                        'l.approval_status',
+                        'l.created_at',
+                        'lt.title as template_title',
+                        'u.name as author_name'
+                    )
+                    ->where('l.case_number', $case->case_number)
+                    ->orderByDesc('l.created_at')
+                    ->get();
+            }, 'letters')
+            : collect();
 
-        $respondentResponses = DB::table('respondent_responses')
-            ->where('case_number', $case->case_number)
-            ->orderByDesc('created_at')
-            ->get()
-            ->map(function ($resp) {
-                $resp->pdf_embed = null;
-                if (empty($resp->pdf_path)) {
-                    return $resp;
-                }
+        $respondentResponses = Schema::hasTable('respondent_responses')
+            ? $safeGet(function () use ($case) {
+                return DB::table('respondent_responses')
+                    ->where('case_number', $case->case_number)
+                    ->orderByDesc('created_at')
+                    ->get()
+                    ->map(function ($resp) {
+                        $resp->pdf_embed = null;
+                        if (empty($resp->pdf_path)) {
+                            return $resp;
+                        }
 
-                $content = null;
-                if (Storage::disk('private')->exists($resp->pdf_path)) {
-                    $content = Storage::disk('private')->get($resp->pdf_path);
-                } elseif (Storage::disk('public')->exists($resp->pdf_path)) {
-                    $content = Storage::disk('public')->get($resp->pdf_path);
-                } elseif (file_exists($resp->pdf_path)) {
-                    $content = @file_get_contents($resp->pdf_path);
-                }
+                        $content = null;
+                        if (Storage::disk('private')->exists($resp->pdf_path)) {
+                            $content = Storage::disk('private')->get($resp->pdf_path);
+                        } elseif (Storage::disk('public')->exists($resp->pdf_path)) {
+                            $content = Storage::disk('public')->get($resp->pdf_path);
+                        } elseif (file_exists($resp->pdf_path)) {
+                            $content = @file_get_contents($resp->pdf_path);
+                        }
 
-                if ($content) {
-                    $resp->pdf_embed = [
-                        'mime' => 'application/pdf',
-                        'data' => base64_encode($content),
-                    ];
-                }
+                        if ($content) {
+                            $resp->pdf_embed = [
+                                'mime' => 'application/pdf',
+                                'data' => base64_encode($content),
+                            ];
+                        }
 
-                return $resp;
-            });
+                        return $resp;
+                    });
+            }, 'respondent_responses')
+            : collect();
 
         // Uploaded Files (admin + applicant)
-        $files = DB::table('case_files as f')
-            ->leftJoin('applicants as a', 'a.id', '=', 'f.uploaded_by_applicant_id')
-            ->leftJoin('users as u', 'u.id', '=', 'f.uploaded_by_user_id')
-            ->select('f.*', 'a.first_name', 'a.last_name', 'u.name as uploader_name')
-            ->where('f.case_id', $id)
-            ->orderByDesc('f.created_at')
-            ->get();
+        $files = Schema::hasTable('case_files')
+            ? $safeGet(function () use ($id) {
+                return DB::table('case_files as f')
+                    ->leftJoin('applicants as a', 'a.id', '=', 'f.uploaded_by_applicant_id')
+                    ->leftJoin('users as u', 'u.id', '=', 'f.uploaded_by_user_id')
+                    ->select('f.*', 'a.first_name', 'a.last_name', 'u.name as uploader_name')
+                    ->where('f.case_id', $id)
+                    ->orderByDesc('f.created_at')
+                    ->get();
+            }, 'case_files')
+            : collect();
 
         // Messages
-        $messages = DB::table('case_messages as m')
-            ->leftJoin('applicants as a', 'a.id', '=', 'm.sender_applicant_id')
-            ->leftJoin('users as u', 'u.id', '=', 'm.sender_user_id')
-            ->select('m.*', 'a.first_name', 'a.last_name', 'u.name as admin_name')
-            ->where('m.case_id', $id)
-            ->orderBy('m.created_at')
-            ->get();
+        $messages = Schema::hasTable('case_messages')
+            ? $safeGet(function () use ($id) {
+                return DB::table('case_messages as m')
+                    ->leftJoin('applicants as a', 'a.id', '=', 'm.sender_applicant_id')
+                    ->leftJoin('users as u', 'u.id', '=', 'm.sender_user_id')
+                    ->select('m.*', 'a.first_name', 'a.last_name', 'u.name as admin_name')
+                    ->where('m.case_id', $id)
+                    ->orderBy('m.created_at')
+                    ->get();
+            }, 'case_messages')
+            : collect();
 
         // Hearings
-        $hearings = DB::table('case_hearings')
-            ->where('case_id', $id)
-            ->orderByDesc('hearing_at')
-            ->get();
+        $hearings = Schema::hasTable('case_hearings')
+            ? $safeGet(function () use ($id) {
+                return DB::table('case_hearings')
+                    ->where('case_id', $id)
+                    ->orderByDesc('hearing_at')
+                    ->get();
+            }, 'case_hearings')
+            : collect();
 
         // Submitted documents – tolerate partial schemas by selecting only existing columns.
-        $docColumns = ['e.id', 'e.created_at'];
-        $hasColumn = fn(string $col) => Schema::hasColumn('case_evidences', $col);
+        $docs = collect();
+        if (Schema::hasTable('case_evidences')) {
+            $docColumns = ['e.id', 'e.created_at'];
+            $hasColumn = fn(string $col) => Schema::hasColumn('case_evidences', $col);
 
-        foreach (['title', 'description', 'file_path', 'path', 'mime', 'size', 'type'] as $col) {
-            if ($hasColumn($col)) {
-                $docColumns[] = "e.{$col}";
+            foreach (['title', 'description', 'file_path', 'path', 'mime', 'size', 'type'] as $col) {
+                if ($hasColumn($col)) {
+                    $docColumns[] = "e.{$col}";
+                }
             }
+
+            $docs = $safeGet(function () use ($id, $docColumns, $hasColumn) {
+                return DB::table('case_evidences as e')
+                    ->select($docColumns)
+                    ->where('e.case_id', $id)
+                    ->when(
+                        $hasColumn('type'),
+                        fn($q) => $q->where('e.type', 'document')
+                    )
+                    ->orderBy('e.id')
+                    ->get();
+            }, 'case_evidences');
         }
 
-        $docs = DB::table('case_evidences as e')
-            ->select($docColumns)
-            ->where('e.case_id', $id)
-            ->when(
-                $hasColumn('type'),
-                fn($q) => $q->where('e.type', 'document')
-            )
-            ->orderBy('e.id')
-            ->get();
-
         // Witnesses
-        $witnesses = DB::table('case_witnesses')
-            ->where('case_id', $id)
-            ->orderBy('full_name')
-            ->get();
+        $witnesses = Schema::hasTable('case_witnesses')
+            ? $safeGet(function () use ($id) {
+                return DB::table('case_witnesses')
+                    ->where('case_id', $id)
+                    ->orderBy('full_name')
+                    ->get();
+            }, 'case_witnesses')
+            : collect();
 
-        $audits = DB::table('case_audits')
-            ->where('case_id', $id)
-            ->orderByDesc('id')
-            ->limit(200)
-            ->get();
+        $audits = Schema::hasTable('case_audits')
+            ? $safeGet(function () use ($id) {
+                return DB::table('case_audits')
+                    ->where('case_id', $id)
+                    ->orderByDesc('id')
+                    ->limit(200)
+                    ->get();
+            }, 'case_audits')
+            : collect();
 
         // Enrich audits with actor names
         $userNames = collect();
@@ -545,7 +593,11 @@ class CaseController extends Controller
             }
         }
 
-        $letterTemplates = DB::table('letter_templates')->orderBy('title')->get();
+        $letterTemplates = Schema::hasTable('letter_templates')
+            ? $safeGet(function () {
+                return DB::table('letter_templates')->orderBy('title')->get();
+            }, 'letter_templates')
+            : collect();
 
         $inspectionAssignees = collect();
         if (Auth::user()?->hasPermission('assign.inspections')) {
