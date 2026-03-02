@@ -65,6 +65,10 @@ class LetterController extends Controller
 
         $data['send_to_applicant'] = $sendToApplicant;
         $data['send_to_respondent'] = $sendToRespondent;
+        $data['body'] = $this->applyTemplatePlaceholders(
+            (string) ($data['body'] ?? ''),
+            $data['case_number'] ?? null
+        );
         $recipientName = trim((string) ($data['recipient_name'] ?? ''));
         if ($recipientName === '') {
             $targets = [];
@@ -106,8 +110,10 @@ class LetterController extends Controller
             $caseNumber = $data['case_number'] ?? null;
 
             if ($caseNumber) {
+                // Lock rows for this case during reference generation.
                 $last = DB::table('letters')
                     ->where('case_number', $caseNumber)
+                    ->lockForUpdate()
                     ->orderBy('id', 'desc')
                     ->first();
 
@@ -117,9 +123,15 @@ class LetterController extends Controller
                     $nextSeq = 1;
                 }
 
-                $seq = str_pad($nextSeq, 2, '0', STR_PAD_LEFT);
-
-                $referenceNumber = "{$caseNumber}/{$seq}";
+                do {
+                    $seq = str_pad($nextSeq, 2, '0', STR_PAD_LEFT);
+                    $referenceNumber = "{$caseNumber}/{$seq}";
+                    $exists = DB::table('letters')
+                        ->where('reference_number', $referenceNumber)
+                        ->lockForUpdate()
+                        ->exists();
+                    $nextSeq++;
+                } while ($exists);
             } else {
                 $referenceNumber = null;
             }
@@ -212,6 +224,13 @@ class LetterController extends Controller
             $recipientName = (string) ($letter->recipient_name ?? '');
         }
         $data['recipient_name'] = $recipientName;
+        $resolvedCaseNumber = array_key_exists('case_number', $data)
+            ? (trim((string) ($data['case_number'] ?? '')) ?: null)
+            : ($letter->case_number ?: null);
+        $data['body'] = $this->applyTemplatePlaceholders(
+            (string) ($data['body'] ?? ''),
+            $resolvedCaseNumber
+        );
 
         $letter->load('template');
 
@@ -223,7 +242,7 @@ class LetterController extends Controller
             'recipient_title'   => $data['recipient_title'] ?? null,
             'recipient_company' => $data['recipient_company'] ?? null,
             'subject'           => $subjectValue,
-            'case_number'       => $data['case_number'] ?? null,
+            'case_number'       => $resolvedCaseNumber,
             'body'              => $data['body'],
             'cc'                => $data['cc'] ?? null,
             'send_to_applicant'  => $sendToApplicant,
@@ -436,5 +455,43 @@ class LetterController extends Controller
             'created_at'         => now(),
             'updated_at'         => now(),
         ]);
+    }
+
+    private function applyTemplatePlaceholders(string $content, ?string $caseNumber): string
+    {
+        if ($content === '') {
+            return $content;
+        }
+
+        $caseNumber = trim((string) $caseNumber);
+        if ($caseNumber === '') {
+            return $content;
+        }
+
+        $case = CourtCase::with('applicant')
+            ->where('case_number', $caseNumber)
+            ->first();
+
+        if (!$case) {
+            return $content;
+        }
+
+        $applicant = $case->applicant;
+        $map = [
+            '{case_number}' => (string) ($case->case_number ?? ''),
+            '{case_code}' => (string) ($case->code ?? ''),
+            '{case_title}' => (string) ($case->title ?? ''),
+            '{case_status}' => (string) ($case->status ?? ''),
+            '{respondent_name}' => (string) ($case->respondent_name ?? ''),
+            '{applicant_name}' => trim((string) ($applicant?->full_name ?? '')),
+            '{applicant_first_name}' => (string) ($applicant?->first_name ?? ''),
+            '{applicant_middle_name}' => (string) ($applicant?->middle_name ?? ''),
+            '{applicant_last_name}' => (string) ($applicant?->last_name ?? ''),
+            '{applicant_email}' => (string) ($applicant?->email ?? ''),
+            '{applicant_phone}' => (string) ($applicant?->phone ?? ''),
+            '{applicant_address}' => (string) ($applicant?->address ?? ''),
+        ];
+
+        return strtr($content, $map);
     }
 }

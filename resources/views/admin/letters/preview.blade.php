@@ -387,6 +387,7 @@
     <div class="preview-toolbar">
         <div id="page-counter" class="text-sm font-semibold text-gray-600">Loading Preview...</div>
         <div class="toolbar-actions">
+            <a href="{{ route('letters.index') }}" class="btn">Back to Letters</a>
             <button type="button" class="btn" onclick="printLetter()">
                 Print / Save Native PDF
             </button>

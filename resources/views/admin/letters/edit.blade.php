@@ -29,7 +29,7 @@
             $sendToRespondent = filter_var(old('send_to_respondent', $letter->send_to_respondent ?? true), FILTER_VALIDATE_BOOLEAN);
             @endphp
 
-            <form method="POST" action="{{ route('letters.update', $letter) }}" class="space-y-4">
+            <form method="POST" action="{{ route('letters.update', $letter) }}" class="space-y-4" target="_blank">
                 @csrf
                 @method('PATCH')
 
@@ -86,24 +86,22 @@
                     </div>
                 </div>
 
-                <div class="grid md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Approved By (Name)</label>
-                        <input type="text" name="approved_by_name" value="{{ old('approved_by_name', $letter->approved_by_name) }}"
-                            class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Approved By (Title)</label>
-                        <input type="text" name="approved_by_title" value="{{ old('approved_by_title', $letter->approved_by_title) }}"
-                            class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2">
-                    </div>
-                </div>
-
                 <div>
                     <label class="block text-sm font-medium text-gray-700">{{ __('letters.form.subject') }}</label>
                     <input type="text" name="subject" value="{{ old('subject', $letter->subject) }}"
                         class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2">
                     @error('subject')
+                    <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">{{ __('letters.form.case_number') }}</label>
+                    <input type="text" name="case_number" value="{{ old('case_number', $letter->case_number) }}"
+                        class="mt-1 w-full rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-gray-700"
+                        placeholder="{{ __('letters.form.case_number_placeholder') }}" readonly>
+                    <p class="text-xs text-gray-500 mt-1">{{ __('letters.form.case_number_help') }}</p>
+                    @error('case_number')
                     <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
                     @enderror
                 </div>

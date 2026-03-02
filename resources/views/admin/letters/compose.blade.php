@@ -27,7 +27,7 @@
         </div>
 
         <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
-            <form method="POST" action="{{ route('letters.store') }}" class="space-y-4">
+            <form method="POST" action="{{ route('letters.store') }}" class="space-y-4" target="_blank">
                 @csrf
                 <input type="hidden" name="template_id" value="{{ optional($selectedTemplate)->id }}">
 
