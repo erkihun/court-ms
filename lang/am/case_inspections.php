@@ -29,7 +29,7 @@ return [
     ],
 
     'requests' => [
-        'index_title' => 'የኢንስፔክሽን ጥያቄዎች',
+        'index_title' => 'ለኢንስፔክሽን የተላከ',
         'index_description' => 'የኢንስፔክሽን ጥያቄዎችን ከግኝቶች ለይተው ያስተዳድሩ።',
         'new' => 'አዲስ ጥያቄ',
         'create_title' => 'አዲስ ኢንስፔክሽን ጥያቄ ፍጠር',

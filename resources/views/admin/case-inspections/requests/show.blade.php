@@ -21,7 +21,7 @@
         </div>
 
         <div class="grid md:grid-cols-3 gap-4 text-sm">
-            <div><span class="text-gray-500">{{ __('case_inspections.requests.labels.request_date') }}:</span> <span class="text-gray-900">{{ optional($requestRecord->request_date)->format('Y-m-d') }}</span></div>
+            <div><span class="text-gray-500">{{ __('case_inspections.requests.labels.request_date') }}:</span> <span class="text-gray-900">{{ \App\Support\EthiopianDate::format($requestRecord->request_date) }}</span></div>
             <div><span class="text-gray-500">{{ __('case_inspections.requests.labels.status') }}:</span> <span class="text-gray-900">{{ __('case_inspections.status.' . $requestRecord->status) }}</span></div>
             <div><span class="text-gray-500">{{ __('case_inspections.requests.labels.inspector') }}:</span> <span class="text-gray-900">{{ $requestRecord->assignedInspector?->name ?? __('case_inspections.common.no_data') }}</span></div>
             <div><span class="text-gray-500">{{ __('case_inspections.requests.labels.created_by') }}:</span> <span class="text-gray-900">{{ $requestRecord->createdBy?->name ?? __('case_inspections.common.no_data') }}</span></div>
@@ -36,7 +36,7 @@
                 <div class="p-3 rounded-lg border border-gray-200 bg-white flex items-center justify-between">
                     <div>
                         <div class="font-medium text-gray-900">{{ $finding->title }}</div>
-                        <div class="text-xs text-gray-500">{{ optional($finding->finding_date)->format('Y-m-d') }} | {{ __('case_inspections.severity.' . $finding->severity) }}</div>
+                        <div class="text-xs text-gray-500">{{ \App\Support\EthiopianDate::format($finding->finding_date) }} | {{ __('case_inspections.severity.' . $finding->severity) }}</div>
                     </div>
                     <a href="{{ route('case-inspection-findings.show', $finding) }}" class="text-blue-700 hover:text-blue-800 text-sm">{{ __('case_inspections.common.view') }}</a>
                 </div>

@@ -31,10 +31,10 @@
     $statuses = [
     'pending' => __('cases.status.pending'),
     'active' => __('cases.status.active'),
-    'adjourned' => __('cases.status.adjourned'),
     'dismissed' => __('cases.status.dismissed'),
     'closed' => __('cases.status.closed'),
     ];
+    $selectedStatus = old('status', $reviewStatus === 'awaiting_review' ? 'pending' : $currentStatus);
 
     $statusChip = fn (string $s) => match ($s) {
     'pending' => 'bg-amber-100 text-amber-800 border border-amber-300',
@@ -52,10 +52,10 @@
     default => 'bg-emerald-100 text-emerald-800 border border-emerald-300',
     };
     $reviewLabel = fn (string $s) => match ($s) {
-    'awaiting_review' => 'Awaiting approval',
-    'returned' => 'Needs correction',
-    'rejected' => 'Rejected',
-    default => 'Approved',
+    'awaiting_review' => __('cases.review_status.awaiting_review'),
+    'returned' => __('cases.review_status.returned'),
+    'rejected' => __('cases.review_status.rejected'),
+    default => __('cases.review_status.accepted'),
     };
 
     $letterPanelOpen = $errors->has('template_id') || $errors->has('recipient_name') || $errors->has('body');
@@ -475,20 +475,31 @@
                     @if($canManageInspectionRequests)
                     <a href="{{ route('case-inspection-requests.create', ['case_id' => $case->id]) }}"
                         class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 font-medium text-white shadow-sm hover:shadow transition-all duration-200">
-                        Inspection Request
+                        {{ __('cases.show.inspection_request') }}
                     </a>
                     @endif
                     @if(in_array($reviewStatus, ['awaiting_review','returned']) && $canReview)
-                    <div class="flex flex-wrap gap-2">
+                    <div class="relative" x-data="{ reviewMenuOpen: false }" @click.outside="reviewMenuOpen = false">
                         <button type="button"
-                            class="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700  font-medium text-white shadow-sm hover:shadow transition-all duration-200"
-                            onclick="submitReviewDecision('accept')">Accept</button>
-                        <button type="button"
-                            class="px-4 py-2 rounded-lg bg-yellow-600 hover:bg-yellow-700  font-medium text-white shadow-sm hover:shadow transition-all duration-200"
-                            onclick="openReviewModal('return')">Return</button>
-                        <button type="button"
-                            class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700  font-medium text-white shadow-sm hover:shadow transition-all duration-200"
-                            onclick="openReviewModal('reject')">Reject</button>
+                            class="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-800 font-medium text-white shadow-sm hover:shadow transition-all duration-200 inline-flex items-center gap-2"
+                            @click="reviewMenuOpen = !reviewMenuOpen">
+                            {{ __('cases.show.review_actions') }}
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <div x-show="reviewMenuOpen" x-cloak
+                            class="absolute right-0 mt-2 w-44 rounded-lg border border-gray-200 bg-white shadow-lg z-20 py-1">
+                            <button type="button"
+                                class="w-full text-left px-3 py-2 text-sm text-emerald-700 hover:bg-emerald-50"
+                                @click="reviewMenuOpen = false; submitReviewDecision('accept')">{{ __('cases.show.accept') }}</button>
+                            <button type="button"
+                                class="w-full text-left px-3 py-2 text-sm text-amber-700 hover:bg-amber-50"
+                                @click="reviewMenuOpen = false; openReviewModal('return')">{{ __('cases.show.return') }}</button>
+                            <button type="button"
+                                class="w-full text-left px-3 py-2 text-sm text-red-700 hover:bg-red-50"
+                                @click="reviewMenuOpen = false; openReviewModal('reject')">{{ __('cases.show.reject') }}</button>
+                        </div>
                     </div>
                     @endif
 
@@ -512,7 +523,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M7 8h10M7 12h4M7 16h8M11 4h2a2 2 0 012 2v14h-4V6a2 2 0 012-2h2" />
                         </svg>
-                        Bench note
+                        {{ __('cases.show.bench_note') }}
                     </a>
                     @endif
 
@@ -524,7 +535,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 20h9M12 4h9m-9 8h9M5 6h.01M5 12h.01M5 18h.01" />
                         </svg>
-                        Write letter
+                        {{ __('cases.show.write_letter') }}
                     </a>
                     @endif
 
@@ -535,7 +546,7 @@
                             stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
-                        Give decision
+                        {{ __('cases.show.give_decision') }}
                     </a>
                     @endif
 
@@ -569,7 +580,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M13 16h-1v-4h-1m1-4h.01M12 19a7 7 0 110-14 7 7 0 010 14z" />
                 </svg>
-                <span>Actions are locked because this case is closed and has an active decision.</span>
+                <span>{{ __('cases.show.actions_locked') }}</span>
             </div>
             @endif
         </div>
@@ -583,9 +594,9 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
-                    <span class=" font-semibold text-gray-900">Quick Access</span>
+                    <span class=" font-semibold text-gray-900">{{ __('cases.show.quick_access') }}</span>
                 </div>
-                <span class="text-xs text-gray-500">Jump directly to frequently used sections</span>
+                <span class="text-xs text-gray-500">{{ __('cases.show.quick_access_hint') }}</span>
             </div>
 
             <div class="flex flex-wrap gap-3">
@@ -640,7 +651,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M16 4H8a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V6a2 2 0 00-2-2zM8 4l4 4 4-4" />
                     </svg>
-                    Letters
+                    {{ __('cases.navigation.letters') }}
                 </button>
             </div>
         </div>
@@ -648,22 +659,22 @@
         {{-- Modal for return/reject note --}}
         <div id="review-modal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-30">
             <div class="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 border border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-900 mb-3" id="review-modal-title">Review decision</h3>
+                <h3 class="text-lg font-semibold text-gray-900 mb-3" id="review-modal-title">{{ __('cases.show.review_decision') }}</h3>
                 <form method="POST" action="{{ route('cases.review.update', $case->id) }}" id="review-form"
                     class="space-y-4">
                     @csrf
                     @method('PATCH')
                     <input type="hidden" name="decision" id="review-decision" value="">
                     <div>
-                        <label class="block  font-medium text-gray-700 mb-2">Reason / note</label>
+                        <label class="block  font-medium text-gray-700 mb-2">{{ __('cases.show.reason_note') }}</label>
                         <textarea name="note" id="review-note" rows="3" required
                             class="w-full px-3 py-2 rounded-lg border border-gray-300  text-gray-900 focus:ring-2 focus:ring-blue-600 focus:border-blue-600">{{ old('note', $reviewNote ?? '') }}</textarea>
                     </div>
                     <div class="flex justify-end gap-2">
                         <button type="button" onclick="closeReviewModal()"
-                            class="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200  font-medium text-gray-800 border border-gray-300">Cancel</button>
+                            class="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200  font-medium text-gray-800 border border-gray-300">{{ __('cases.general.cancel') }}</button>
                         <button type="submit"
-                            class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700  font-medium text-white">Submit</button>
+                            class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700  font-medium text-white">{{ __('cases.show.submit') }}</button>
                     </div>
                 </form>
             </div>
@@ -696,7 +707,7 @@
                     <select name="status"
                         class="w-full px-4 py-2.5 rounded-lg bg-white text-gray-900 border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-150">
                         @foreach($statuses as $value => $label)
-                        <option value="{{ $value }}" @selected($currentStatus===$value)>{{ $label }}</option>
+                        <option value="{{ $value }}" @selected($selectedStatus===$value)>{{ $label }}</option>
                         @endforeach
                     </select>
                     @error('status') <p class="text-red-600  mt-1">{{ $message }}</p> @enderror
@@ -770,7 +781,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M3 7l9 6 9-6M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
                                     </svg>
-                                    <span>Letters</span>
+                                    <span>{{ __('cases.navigation.letters') }}</span>
                                 </button>
                             </li>
 
@@ -784,19 +795,17 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M9 17v-2m0 0V9m0 6h6m-6-4h6m2 8H7a2 2 0 01-2-2V7a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2z" />
                                     </svg>
-                                    <span>Case Audits</span>
+                                    <span>{{ __('cases.navigation.case_audits') }}</span>
                                 </button>
                             </li>
                         </ul>
 
                         {{-- Quick Access Sections in Sidebar --}}
                         <div class="pt-4 mt-2 border-t border-blue-700/60">
-                            <p class="text-[11px] font-semibold text-blue-200 uppercase tracking-[0.08em] mb-2">Quick
-                                sections</p>
+                            <p class="text-[11px] font-semibold text-blue-200 uppercase tracking-[0.08em] mb-2">{{ __('cases.show.quick_sections') }}</p>
                             <div class="space-y-1">
                                 @if($canManageInspectionRequests || $canManageInspectionFindings)
                                 <div class="pt-1 pb-2">
-                                    <p class="px-3 text-[10px] font-semibold text-blue-300 uppercase tracking-[0.08em] mb-2">Inspection</p>
                                     <div class="space-y-1">
                                         @if($canManageInspectionRequests)
                                         <button type="button" @click="openSection('inspection-requests')" :class="activeSection === 'inspection-requests'
@@ -1041,24 +1050,24 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M4 6h16M4 12h16M4 18h16" />
                             </svg>
-                            Case Audit Trail
+                            {{ __('cases.case_audit_trail') }}
                         </h3>
-                        <span class="text-xs text-gray-500">{{ ($audits ?? collect())->count() }} entries</span>
+                        <span class="text-xs text-gray-500">{{ ($audits ?? collect())->count() }} {{ __('cases.show.entries') }}</span>
                     </div>
                     @if(($audits ?? collect())->isEmpty())
                     <div
                         class="text-gray-500  border border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
-                        No audit records yet.
+                        {{ __('cases.no_audit_records') }}
                     </div>
                     @else
                     <div class="overflow-x-auto rounded-lg border border-gray-200">
                         <table class="min-w-full ">
                             <thead class="bg-gray-50 text-gray-700">
                                 <tr>
-                                    <th class="p-3 text-left font-medium border-b border-gray-200">When</th>
-                                    <th class="p-3 text-left font-medium border-b border-gray-200">Action</th>
-                                    <th class="p-3 text-left font-medium border-b border-gray-200">Actor</th>
-                                    <th class="p-3 text-left font-medium border-b border-gray-200">Details</th>
+                                    <th class="p-3 text-left font-medium border-b border-gray-200">{{ __('cases.show.when') }}</th>
+                                    <th class="p-3 text-left font-medium border-b border-gray-200">{{ __('cases.show.action') }}</th>
+                                    <th class="p-3 text-left font-medium border-b border-gray-200">{{ __('cases.show.actor') }}</th>
+                                    <th class="p-3 text-left font-medium border-b border-gray-200">{{ __('cases.show.details') }}</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100">
@@ -1242,23 +1251,23 @@
                     x-transition:enter-start="opacity-0 transform translate-y-4"
                     x-transition:enter-end="opacity-100 transform translate-y-0"
                     class="main-content-section rounded-2xl border border-gray-200 bg-white shadow-sm p-6 space-y-6">
-                    <h3 class="text-xl font-semibold text-gray-900">Case Details Overview</h3>
+                    <h3 class="text-xl font-semibold text-gray-900">{{ __('cases.show.case_details_overview') }}</h3>
 
                     <div class="grid md:grid-cols-2 gap-4 border border-gray-100 rounded-xl p-4 bg-gray-50">
                         <div>
-                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Applicant</p>
+                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">{{ __('cases.summary.applicant') }}</p>
                             <dl class=" text-gray-700 space-y-1">
                                 <div>
-                                    <dt class="text-xs text-gray-500">Name</dt>
+                                    <dt class="text-xs text-gray-500">{{ __('cases.name') }}</dt>
                                     <dd class="font-semibold text-gray-900">{{ $case->applicant_name ?? '&mdash;' }}
                                     </dd>
                                 </div>
                                 <div>
-                                    <dt class="text-xs text-gray-500">Address</dt>
+                                    <dt class="text-xs text-gray-500">{{ __('cases.address') }}</dt>
                                     <dd>{{ $case->applicant_address ?? '&mdash;' }}</dd>
                                 </div>
                                 <div>
-                                    <dt class="text-xs text-gray-500">Email</dt>
+                                    <dt class="text-xs text-gray-500">{{ __('cases.applicant_email') }}</dt>
                                     <dd>{{ $case->applicant_email ?? '&mdash;' }}</dd>
                                 </div>
                             </dl>
@@ -1268,12 +1277,12 @@
                                 {{ __('cases.respondent_defendant') }}</p>
                             <dl class=" text-gray-700 space-y-1">
                                 <div>
-                                    <dt class="text-xs text-gray-500">Name</dt>
+                                    <dt class="text-xs text-gray-500">{{ __('cases.name') }}</dt>
                                     <dd class="font-semibold text-gray-900">{{ $case->respondent_name ?? '&mdash;' }}
                                     </dd>
                                 </div>
                                 <div>
-                                    <dt class="text-xs text-gray-500">Address</dt>
+                                    <dt class="text-xs text-gray-500">{{ __('cases.address') }}</dt>
                                     <dd>{{ $case->respondent_address ?? '&mdash;' }}</dd>
                                 </div>
                             </dl>
@@ -1322,12 +1331,12 @@
                             <table class="min-w-full ">
                                 <thead class="bg-gray-50 text-gray-600">
                                     <tr>
-                                        <th class="px-3 py-2 text-left font-medium border-b border-gray-200">Document
+                                        <th class="px-3 py-2 text-left font-medium border-b border-gray-200">{{ __('cases.documents.document') }}
                                         </th>
-                                        <th class="px-3 py-2 text-left font-medium border-b border-gray-200">Type</th>
-                                        <th class="px-3 py-2 text-left font-medium border-b border-gray-200">Uploaded
+                                        <th class="px-3 py-2 text-left font-medium border-b border-gray-200">{{ __('cases.summary.type') }}</th>
+                                        <th class="px-3 py-2 text-left font-medium border-b border-gray-200">{{ __('cases.show.uploaded') }}
                                         </th>
-                                        <th class="px-3 py-2 text-right font-medium border-b border-gray-200">Action
+                                        <th class="px-3 py-2 text-right font-medium border-b border-gray-200">{{ __('cases.show.action') }}
                                         </th>
                                     </tr>
                                 </thead>
@@ -1742,12 +1751,12 @@
                                     @endphp
 
                                     <div>
-                                        <label class="block  font-medium text-gray-700">Reference Number (auto)</label>
+                                        <label class="block  font-medium text-gray-700">{{ __('cases.show.reference_number_auto') }}</label>
                                         <input type="text" value="{{ $nextReference }}" readonly
                                             class="mt-1 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
 
                                         <p class="text-xs text-gray-500 mt-1">
-                                            Auto-generated from case number. Final value assigned on save.
+                                            {{ __('cases.show.reference_number_hint') }}
                                         </p>
                                     </div>
                                     @endif
@@ -1830,9 +1839,8 @@
                             <h4 class=" font-medium text-gray-700 mb-3">{{ __('cases.hearings.add_new_hearing') }}</h4>
                             <div class="mb-4 bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                                 <div class="flex items-center justify-between mb-3">
-                                    <h5 class=" font-semibold text-gray-900">Hearing calendar</h5>
-                                    <span class="text-xs text-gray-500">Click a date/event to fill the form
-                                        below.</span>
+                                    <h5 class=" font-semibold text-gray-900">{{ __('cases.show.hearing_calendar') }}</h5>
+                                    <span class="text-xs text-gray-500">{{ __('cases.show.hearing_calendar_hint') }}</span>
                                 </div>
                                 <div id="hearings-calendar" style="min-height: 360px;"></div>
                             </div>
@@ -1847,7 +1855,7 @@
                                     autocomplete="off">
                                 <input id="hearing_time_new" type="time" min="00:00" max="11:59"
                                     class="px-3 py-2.5 rounded-lg bg-white border border-gray-300 text-gray-900 w-full focus:ring-2 focus:ring-emerald-500 focus-border-emerald-500 transition-colors duration-150"
-                                    placeholder="HH:MM (AM)" required>
+                                    placeholder="{{ __('cases.show.time_placeholder') }}" required>
                                 <input name="type" placeholder="{{ __('cases.hearings.type_placeholder') }}"
                                     class="px-3 py-2.5 rounded-lg bg-white border border-gray-300 text-gray-900 focus:ring-2 focus:ring-emerald-500 focus-border-emerald-500 transition-colors duration-150"
                                     required>
@@ -1899,7 +1907,7 @@
                                 <thead class="bg-gray-50 text-gray-600">
                                     <tr>
                                         <th class="px-3 py-2 text-left font-medium border-b border-gray-200 w-12">#</th>
-                                        <th class="px-3 py-2 text-left font-medium border-b border-gray-200">When</th>
+                                        <th class="px-3 py-2 text-left font-medium border-b border-gray-200">{{ __('cases.show.when') }}</th>
                                         <th class="px-3 py-2 text-left font-medium border-b border-gray-200">
                                             {{ __('cases.hearings.type_placeholder') }}</th>
                                         <th class="px-3 py-2 text-left font-medium border-b border-gray-200">
@@ -1907,7 +1915,7 @@
                                         <th class="px-3 py-2 text-left font-medium border-b border-gray-200">
                                             {{ __('cases.hearings.notes_placeholder') }}</th>
                                         <th class="px-3 py-2 text-left font-medium border-b border-gray-200">
-                                            {{ __('cases.labels.actions') ?? 'Actions' }}</th>
+                                            {{ __('cases.table.actions') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100">
@@ -2102,15 +2110,15 @@
                                     class="text-xs font-semibold text-gray-600">{{ __('cases.reviewer_note') }}</label>
                                 <textarea name="review_note" rows="2"
                                     class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
-                                    placeholder="Add a reason note...">{{ old('review_note', $respReviewNote ?? '') }}</textarea>
+                                    placeholder="{{ __('cases.show.add_reason_note') }}">{{ old('review_note', $respReviewNote ?? '') }}</textarea>
                                 <div class="flex flex-wrap items-center gap-2">
                                     <button type="submit" name="decision" value="accept"
                                         class="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-xs font-medium text-white shadow-sm transition-all duration-200">
-                                        Accept
+                                        {{ __('cases.show.accept') }}
                                     </button>
                                     <button type="submit" name="decision" value="return"
                                         class="px-3 py-1.5 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-xs font-medium text-white shadow-sm transition-all duration-200">
-                                        Return
+                                        {{ __('cases.show.return') }}
                                     </button>
                                 </div>
                             </form>
@@ -2278,7 +2286,7 @@
                                     {{ $f->label ?? basename($f->path) }}
                                 </div>
                                 <div class="text-xs text-gray-600 mt-1 flex items-center gap-3 flex-wrap">
-                                    <span>{{ $f->mime ?? 'file' }}</span>
+                                    <span>{{ $f->mime ?? __('cases.file') }}</span>
                                     <span>• {{ number_format(($f->size ?? 0)/1024,1) }} KB</span>
                                     <span>•
                                         {{ \App\Support\EthiopianDate::format($f->created_at, withTime: true) }}</span>
@@ -2332,7 +2340,7 @@
             const modal = document.getElementById('review-modal');
             document.getElementById('review-decision').value = decision;
             document.getElementById('review-note').value = existingReviewNote || '';
-            const title = decision === 'return' ? 'Return for correction' : 'Reject case';
+            const title = decision === 'return' ? @json(__('cases.show.return_for_correction')) : @json(__('cases.show.reject_case'));
             document.getElementById('review-modal-title').textContent = title;
             modal.classList.remove('hidden');
             modal.classList.add('flex');
@@ -2388,7 +2396,7 @@
             } = window.getHearingTimeHelpers();
             const existingHearingDates = window.caseHearingDateSet || new Set();
             const duplicateDateMessage =
-                'A hearing already exists for this case on the selected date. Please choose another day.';
+                @json(__('cases.show.duplicate_hearing_date'));
             const convertToGregorian = (value) => {
                 if (typeof window.hearingConvertToGregorian === 'function') {
                     return window.hearingConvertToGregorian(value);
@@ -2439,7 +2447,7 @@
                     }
                     if (!dateVal) {
                         e.preventDefault();
-                        alert('Please select a hearing date.');
+                        alert(@json(__('cases.show.select_hearing_date')));
                         return;
                     }
                     if (isDateUnavailable(dateVal)) {
@@ -2484,7 +2492,7 @@
                 editForm.addEventListener('submit', (e) => {
                     if (!editDate.value) {
                         e.preventDefault();
-                        alert('Please select a hearing date.');
+                        alert(@json(__('cases.show.select_hearing_date')));
                         return;
                     }
                     syncHidden();
@@ -2814,7 +2822,7 @@
                         const picked = new Date(date);
                         picked.setHours(0, 0, 0, 0);
                         if (picked < minDate) {
-                            alert('Please select today or a future date.');
+                            alert(@json(__('cases.show.select_today_or_future')));
                             input.value = '';
                             onValidPick?.(null, '');
                             return;
@@ -2841,8 +2849,7 @@
                         value;
                     const normalized = (gregorianValue || '').split('T')[0];
                     if (normalized && dateSet.has(normalized)) {
-                        alert(
-                            'A hearing already exists for this case on the selected date. Please choose another day.');
+                        alert(@json(__('cases.show.duplicate_hearing_date')));
                         window.hearingDateState?.setFromDate?.(null);
                         dateInput.value = '';
                         return;
@@ -2952,8 +2959,7 @@
                     const dd = String(d.getDate()).padStart(2, '0');
                     const dateStr = `${yyyy}-${mm}-${dd}`;
                     if (existingHearingDates.has(dateStr)) {
-                        alert(
-                            'A hearing already exists for this case on the selected date. Please choose another day.');
+                        alert(@json(__('cases.show.duplicate_hearing_date')));
                         if (dateField) {
                             dateField.value = '';
                         }
@@ -3027,7 +3033,7 @@
                 // Highlight existing hearings after initial render
                 requestAnimationFrame(highlightEventDays);
             } else if (calendarEl) {
-                calendarEl.innerHTML = '<div class=" text-red-600">Calendar library failed to load.</div>';
+                calendarEl.innerHTML = `<div class=" text-red-600">${@json(__('cases.show.calendar_load_failed'))}</div>`;
             }
 
             // Convert displayed hearing dates to Ethiopian calendar (UI only)

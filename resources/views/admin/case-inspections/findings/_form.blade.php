@@ -6,7 +6,7 @@
             <option value="">{{ __('case_inspections.findings.form.select_request') }}</option>
             @foreach($requests as $req)
             <option value="{{ $req->id }}" @selected(old('case_inspection_request_id', $prefillRequestId ?? $finding->case_inspection_request_id ?? null) == $req->id)>
-                {{ optional($req->request_date)->format('Y-m-d') }} - {{ $req->case?->case_number }} - {{ $req->subject }}
+                {{ \App\Support\EthiopianDate::format($req->request_date) }} - {{ $req->case?->case_number }} - {{ $req->subject }}
             </option>
             @endforeach
         </select>

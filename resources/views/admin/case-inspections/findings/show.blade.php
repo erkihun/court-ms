@@ -28,7 +28,7 @@
         </div>
 
         <div class="grid md:grid-cols-3 gap-4 text-sm">
-            <div><span class="text-gray-500">{{ __('case_inspections.findings.labels.finding_date') }}:</span> <span class="text-gray-900">{{ optional($finding->finding_date)->format('Y-m-d') }}</span></div>
+            <div><span class="text-gray-500">{{ __('case_inspections.findings.labels.finding_date') }}:</span> <span class="text-gray-900">{{ \App\Support\EthiopianDate::format($finding->finding_date) }}</span></div>
             <div><span class="text-gray-500">{{ __('case_inspections.findings.labels.severity') }}:</span> <span class="text-gray-900">{{ __('case_inspections.severity.' . $finding->severity) }}</span></div>
             <div><span class="text-gray-500">{{ __('case_inspections.findings.labels.recorded_by') }}:</span> <span class="text-gray-900">{{ $finding->recordedBy?->name ?? __('case_inspections.common.no_data') }}</span></div>
             <div>

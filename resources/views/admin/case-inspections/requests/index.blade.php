@@ -43,7 +43,7 @@
                     <tr>
                         <td class="px-4 py-3 text-sm text-gray-900">{{ $req->case?->case_number ?? __('case_inspections.common.no_data') }}</td>
                         <td class="px-4 py-3 text-sm text-gray-700">{{ $req->subject }}</td>
-                        <td class="px-4 py-3 text-sm text-gray-700">{{ optional($req->request_date)->format('Y-m-d') }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-700">{{ \App\Support\EthiopianDate::format($req->request_date) }}</td>
                         <td class="px-4 py-3 text-sm text-gray-700">{{ __('case_inspections.status.' . $req->status) }}</td>
                         <td class="px-4 py-3 text-sm text-gray-700">{{ $req->assignedInspector?->name ?? __('case_inspections.common.no_data') }}</td>
                         <td class="px-4 py-3 text-sm text-gray-700">{{ $req->createdBy?->name ?? __('case_inspections.common.no_data') }}</td>

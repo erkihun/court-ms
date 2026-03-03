@@ -714,13 +714,20 @@ class CaseController extends Controller
             'reject' => 'rejected',
         };
 
-        DB::table('court_cases')->where('id', $id)->update([
+        $updatePayload = [
             'review_status'       => $newStatus,
             'review_note'         => $note !== '' ? $note : null,
             'reviewed_by_user_id' => Auth::id(),
             'reviewed_at'         => now(),
             'updated_at'          => now(),
-        ]);
+        ];
+
+        // When review is accepted from "Review Actions", activate the case automatically.
+        if ($decision === 'accept') {
+            $updatePayload['status'] = 'active';
+        }
+
+        DB::table('court_cases')->where('id', $id)->update($updatePayload);
 
         $this->logCaseAudit($id, 'review_decision', [
             'decision' => $newStatus,

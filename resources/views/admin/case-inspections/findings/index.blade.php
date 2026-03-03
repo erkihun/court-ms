@@ -55,7 +55,7 @@
                             <span class="ml-2 inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">{{ __('case_inspections.findings.accepted') }}</span>
                             @endif
                         </td>
-                        <td class="px-4 py-3 text-sm text-gray-700">{{ optional($finding->finding_date)->format('Y-m-d') }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-700">{{ \App\Support\EthiopianDate::format($finding->finding_date) }}</td>
                         <td class="px-4 py-3 text-sm text-gray-700">{{ __('case_inspections.severity.' . $finding->severity) }}</td>
                         <td class="px-4 py-3 text-sm text-right space-x-2">
                             @if(!$finding->accepted_at)
