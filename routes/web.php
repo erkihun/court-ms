@@ -45,7 +45,8 @@ use App\Http\Controllers\Admin\TermsAndConditionsController;
 use App\Http\Controllers\Admin\RecordController;
 use App\Http\Controllers\Admin\HearingController;
 use App\Http\Controllers\Admin\AboutController;
-use App\Http\Controllers\Admin\CaseInspectionController;
+use App\Http\Controllers\Admin\CaseInspectionRequestController;
+use App\Http\Controllers\Admin\CaseInspectionFindingController;
 use App\Http\Controllers\Admin\AnnouncementController;
 
 // Localization middleware
@@ -519,27 +520,73 @@ Route::middleware(SetLocale::class)->group(function () {
                 ->middleware('perm:about.manage')
                 ->names('about');
 
-            Route::get('/case-inspections', [CaseInspectionController::class, 'index'])
-                ->middleware('perm:view.inspections')
+            Route::get('/case-inspections', function (Request $request) {
+                $user = $request->user();
+                abort_unless(
+                    $user && (
+                        $user->hasPermission('inspection-requests.manage')
+                        || $user->hasPermission('inspection-findings.manage')
+                    ),
+                    403
+                );
+
+                if ($user->hasPermission('inspection-requests.manage')) {
+                    return redirect()->route('case-inspection-requests.index');
+                }
+
+                return redirect()->route('case-inspection-findings.index');
+            })
                 ->name('case-inspections.index');
-            Route::get('/case-inspections/create', [CaseInspectionController::class, 'create'])
-                ->middleware('perm:create.inspections')
-                ->name('case-inspections.create');
-            Route::post('/case-inspections', [CaseInspectionController::class, 'store'])
-                ->middleware('perm:create.inspections')
-                ->name('case-inspections.store');
-            Route::get('/case-inspections/{caseInspection}', [CaseInspectionController::class, 'show'])
-                ->middleware('perm:view.inspections')
-                ->name('case-inspections.show');
-            Route::get('/case-inspections/{caseInspection}/edit', [CaseInspectionController::class, 'edit'])
-                ->middleware('perm:create.inspections')
-                ->name('case-inspections.edit');
-            Route::patch('/case-inspections/{caseInspection}', [CaseInspectionController::class, 'update'])
-                ->middleware('perm:create.inspections')
-                ->name('case-inspections.update');
-            Route::delete('/case-inspections/{caseInspection}', [CaseInspectionController::class, 'destroy'])
-                ->middleware('perm:delete.inspections')
-                ->name('case-inspections.destroy');
+            Route::prefix('/case-inspections/requests')->name('case-inspection-requests.')->group(function () {
+                Route::get('/', [CaseInspectionRequestController::class, 'index'])
+                    ->middleware('perm:inspection-requests.manage')
+                    ->name('index');
+                Route::get('/create', [CaseInspectionRequestController::class, 'create'])
+                    ->middleware('perm:inspection-requests.manage')
+                    ->name('create');
+                Route::post('/', [CaseInspectionRequestController::class, 'store'])
+                    ->middleware('perm:inspection-requests.manage')
+                    ->name('store');
+                Route::get('/{requestRecord}', [CaseInspectionRequestController::class, 'show'])
+                    ->middleware('perm:inspection-requests.manage')
+                    ->name('show');
+                Route::get('/{requestRecord}/edit', [CaseInspectionRequestController::class, 'edit'])
+                    ->middleware('perm:inspection-requests.manage')
+                    ->name('edit');
+                Route::patch('/{requestRecord}', [CaseInspectionRequestController::class, 'update'])
+                    ->middleware('perm:inspection-requests.manage')
+                    ->name('update');
+                Route::delete('/{requestRecord}', [CaseInspectionRequestController::class, 'destroy'])
+                    ->middleware('perm:inspection-requests.manage')
+                    ->name('destroy');
+            });
+
+            Route::prefix('/case-inspections/findings')->name('case-inspection-findings.')->group(function () {
+                Route::get('/', [CaseInspectionFindingController::class, 'index'])
+                    ->middleware('perm:inspection-findings.manage')
+                    ->name('index');
+                Route::get('/create', [CaseInspectionFindingController::class, 'create'])
+                    ->middleware('perm:inspection-findings.manage')
+                    ->name('create');
+                Route::post('/', [CaseInspectionFindingController::class, 'store'])
+                    ->middleware('perm:inspection-findings.manage')
+                    ->name('store');
+                Route::get('/{finding}', [CaseInspectionFindingController::class, 'show'])
+                    ->middleware('perm:inspection-findings.manage')
+                    ->name('show');
+                Route::get('/{finding}/edit', [CaseInspectionFindingController::class, 'edit'])
+                    ->middleware('perm:inspection-findings.manage')
+                    ->name('edit');
+                Route::patch('/{finding}', [CaseInspectionFindingController::class, 'update'])
+                    ->middleware('perm:inspection-findings.manage')
+                    ->name('update');
+                Route::post('/{finding}/accept', [CaseInspectionFindingController::class, 'accept'])
+                    ->middleware('perm:inspection-findings.manage')
+                    ->name('accept');
+                Route::delete('/{finding}', [CaseInspectionFindingController::class, 'destroy'])
+                    ->middleware('perm:inspection-findings.manage')
+                    ->name('destroy');
+            });
 
             // Letter categories
             Route::get('/letter-categories', [LetterCategoryController::class, 'index'])

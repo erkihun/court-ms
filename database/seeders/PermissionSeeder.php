@@ -180,6 +180,16 @@ class PermissionSeeder extends Seeder
                 'description' => null,
             ],
             [
+                'name' => 'inspection-requests.manage',
+                'label' => 'Manage inspection requests',
+                'description' => null,
+            ],
+            [
+                'name' => 'inspection-findings.manage',
+                'label' => 'Manage inspection findings',
+                'description' => null,
+            ],
+            [
                 'name' => 'view.inspections',
                 'label' => 'View inspections',
                 'description' => null,

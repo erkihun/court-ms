@@ -90,6 +90,12 @@
     $canDeleteFiles = function_exists('userHasPermission')
     ? userHasPermission('file.delete')
     : (auth()->user()?->hasPermission('file.delete') ?? false);
+    $canManageInspectionRequests = function_exists('userHasPermission')
+    ? userHasPermission('inspection-requests.manage')
+    : (auth()->user()?->hasPermission('inspection-requests.manage') ?? false);
+    $canManageInspectionFindings = function_exists('userHasPermission')
+    ? userHasPermission('inspection-findings.manage')
+    : (auth()->user()?->hasPermission('inspection-findings.manage') ?? false);
     $canCreateMessage = function_exists('userHasPermission')
     ? userHasPermission('message.create')
     : (auth()->user()?->hasPermission('message.create') ?? false);
@@ -405,14 +411,7 @@
 
     <div x-data="{
             activeSection: {{ json_encode($defaultSection) }},
-            inspectionOpen: false,
-            selectedInspectorId: null,
-            selectedInspectorName: '',
-            openInspection(id, name) {
-                this.selectedInspectorId = id;
-                this.selectedInspectorName = name || '';
-                this.inspectionOpen = true;
-            },
+            selectedFindingId: null,
             init() {
                 const hashSection = window.location.hash ? window.location.hash.substring(1) : null;
                 if (hashSection) {
@@ -433,7 +432,11 @@
                     const target = document.getElementById(section);
                     if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 });
-            }
+            },
+            toggleFindingDetails(id) {
+                this.activeSection = 'inspection-findings';
+                this.selectedFindingId = this.selectedFindingId === id ? null : id;
+            },
         }" x-on:open-section.window="openSection($event.detail.section)" x-init="init()">
 
         {{-- Header Card --}}
@@ -469,41 +472,11 @@
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">
-                    @if(auth()->user()?->hasPermission('assign.inspections'))
-                    <div x-data="{ open:false }" class="relative">
-                        <button type="button" @click="open = !open"
-                            class="px-4 py-2.5 rounded-lg bg-slate-700 hover:bg-slate-800 font-medium text-white transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12h6m-6 4h6M9 8h6m-7 12h8a2 2 0 002-2V6a2 2 0 00-2-2H8a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            Inspection
-                        </button>
-                        <div x-cloak x-show="open" @click.outside="open=false"
-                            class="absolute right-0 mt-2 w-64 rounded-xl border border-gray-200 bg-white shadow-xl overflow-hidden z-50">
-                            <div
-                                class="px-4 py-3 border-b border-gray-100 text-xs uppercase tracking-wide text-gray-500">
-                                Assign inspection
-                            </div>
-                            <div class="p-3 space-y-2 max-h-64 overflow-y-auto">
-                                @forelse($inspectionAssignees as $inspector)
-                                <button type="button"
-                                    @click.prevent="openInspection({{ $inspector->id }}, @js($inspector->name))"
-                                    class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50 text-sm text-gray-700">
-                                    <span>{{ $inspector->name }}</span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </button>
-                                @empty
-                                <div class="px-3 py-3 text-sm text-gray-500">No inspectors available.</div>
-                                @endforelse
-                            </div>
-                        </div>
-                    </div>
+                    @if($canManageInspectionRequests)
+                    <a href="{{ route('case-inspection-requests.create', ['case_id' => $case->id]) }}"
+                        class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 font-medium text-white shadow-sm hover:shadow transition-all duration-200">
+                        Inspection Request
+                    </a>
                     @endif
                     @if(in_array($reviewStatus, ['awaiting_review','returned']) && $canReview)
                     <div class="flex flex-wrap gap-2">
@@ -601,64 +574,6 @@
             @endif
         </div>
 
-        @if(auth()->user()?->hasPermission('assign.inspections'))
-        <div x-cloak x-show="inspectionOpen"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div class="w-full max-w-2xl rounded-2xl bg-white shadow-xl">
-                <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-                    <div>
-                        <div class="text-sm text-gray-500">Assign inspection to</div>
-                        <div class="text-lg font-semibold text-gray-900" x-text="selectedInspectorName || 'Inspector'">
-                        </div>
-                    </div>
-                    <button type="button" @click="inspectionOpen=false"
-                        class="rounded-lg p-2 text-gray-500 hover:bg-gray-100">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-
-                <form method="POST" action="{{ route('case-inspections.store') }}" class="space-y-4 px-6 py-5">
-                    @csrf
-                    <input type="hidden" name="court_case_id" value="{{ $case->id }}">
-                    <input type="hidden" name="inspected_by_user_id" :value="selectedInspectorId">
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Inspection date</label>
-                        <input type="date" name="inspection_date" value="{{ now()->format('Y-m-d') }}"
-                            class="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Summary</label>
-                        <input type="text" name="summary" placeholder="Short summary"
-                            class="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Details</label>
-                        <textarea name="details" rows="6"
-                            class="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"></textarea>
-                    </div>
-
-                    <div class="flex items-center justify-end gap-2 pt-2">
-                        <button type="button" @click="inspectionOpen=false"
-                            class="px-4 py-2 rounded-md border border-gray-300 text-gray-700 text-sm">
-                            Cancel
-                        </button>
-                        <button type="submit"
-                            class="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700">
-                            Save inspection
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-        @endif
-
         {{-- Quick Access Section --}}
         <div class="p-4 rounded-2xl border border-gray-200 bg-white shadow-sm mb-6">
             <div class="flex flex-wrap items-center gap-2 mb-4">
@@ -742,7 +657,7 @@
                     <div>
                         <label class="block  font-medium text-gray-700 mb-2">Reason / note</label>
                         <textarea name="note" id="review-note" rows="3" required
-                            class="w-full px-3 py-2 rounded-lg border border-gray-300  text-gray-900 focus:ring-2 focus:ring-blue-600 focus:border-blue-600"></textarea>
+                            class="w-full px-3 py-2 rounded-lg border border-gray-300  text-gray-900 focus:ring-2 focus:ring-blue-600 focus:border-blue-600">{{ old('note', $reviewNote ?? '') }}</textarea>
                     </div>
                     <div class="flex justify-end gap-2">
                         <button type="button" onclick="closeReviewModal()"
@@ -879,6 +794,40 @@
                             <p class="text-[11px] font-semibold text-blue-200 uppercase tracking-[0.08em] mb-2">Quick
                                 sections</p>
                             <div class="space-y-1">
+                                @if($canManageInspectionRequests || $canManageInspectionFindings)
+                                <div class="pt-1 pb-2">
+                                    <p class="px-3 text-[10px] font-semibold text-blue-300 uppercase tracking-[0.08em] mb-2">Inspection</p>
+                                    <div class="space-y-1">
+                                        @if($canManageInspectionRequests)
+                                        <button type="button" @click="openSection('inspection-requests')" :class="activeSection === 'inspection-requests'
+                                            ? 'bg-white/10 text-white shadow-sm'
+                                            : 'text-blue-100 hover:bg-white/5 hover:text-white'"
+                                            class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg font-medium leading-5 transition-all duration-150 text-left">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 12h6m-6 4h6M7 8h10M5 5h14v14H5z" />
+                                            </svg>
+                                            {{ __('case_inspections.requests.index_title') }}
+                                        </button>
+                                        @endif
+                                        @if($canManageInspectionFindings)
+                                        <button type="button" @click="openSection('inspection-findings')" :class="activeSection === 'inspection-findings'
+                                            ? 'bg-white/10 text-white shadow-sm'
+                                            : 'text-blue-100 hover:bg-white/5 hover:text-white'"
+                                            class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg font-medium leading-5 transition-all duration-150 text-left">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 12h6m-6 4h6M7 8h10M5 5h14v14H5z" />
+                                            </svg>
+                                            {{ __('case_inspections.findings.index_title') }}
+                                        </button>
+                                        @endif
+                                    </div>
+                                </div>
+                                @endif
+
                                 @if($canViewFiles || $canCreateFiles || $canUpdateFiles || $canDeleteFiles)
                                 <button type="button" @click="openSection('uploaded-files')" :class="activeSection === 'uploaded-files'
                                     ? 'bg-white/10 text-white shadow-sm'
@@ -1145,6 +1094,139 @@
                     </div>
                     @endif
                 </section>
+
+                @if($canManageInspectionRequests)
+                <section id="inspection-requests" x-show="activeSection === 'inspection-requests'"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 transform translate-y-4"
+                    x-transition:enter-end="opacity-100 transform translate-y-0"
+                    class="main-content-section p-6 rounded-2xl border border-gray-200 bg-white shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-gray-200 pb-3">
+                        <h3 class="text-lg font-semibold text-gray-900">{{ __('case_inspections.requests.index_title') }}</h3>
+                        <span class="text-xs font-medium text-gray-600 bg-gray-100 rounded-full px-2.5 py-1">
+                            {{ ($inspectionRequests ?? collect())->count() }} entries
+                        </span>
+                    </div>
+
+                    @if(($inspectionRequests ?? collect())->isEmpty())
+                    <div class="text-gray-500 border border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
+                        {{ __('case_inspections.requests.empty') }}
+                    </div>
+                    @else
+                    <div class="overflow-x-auto rounded-lg border border-gray-100">
+                        <table class="min-w-full">
+                            <thead class="bg-gray-50 text-gray-600">
+                                <tr>
+                                    <th class="px-3 py-2 text-left font-medium border-b border-gray-200">{{ __('case_inspections.requests.table_date') }}</th>
+                                    <th class="px-3 py-2 text-left font-medium border-b border-gray-200">{{ __('case_inspections.requests.table_subject') }}</th>
+                                    <th class="px-3 py-2 text-left font-medium border-b border-gray-200">{{ __('case_inspections.requests.table_status') }}</th>
+                                    <th class="px-3 py-2 text-left font-medium border-b border-gray-200">{{ __('case_inspections.requests.table_inspector') }}</th>
+                                    <th class="px-3 py-2 text-left font-medium border-b border-gray-200">{{ __('case_inspections.requests.table_created_by') }}</th>
+                                    <th class="px-3 py-2 text-right font-medium border-b border-gray-200">{{ __('cases.labels.actions') ?? 'Actions' }}</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                @foreach(($inspectionRequests ?? collect()) as $req)
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-3 py-2 text-gray-700">{{ \Illuminate\Support\Carbon::parse($req->request_date)->format('Y-m-d') }}</td>
+                                    <td class="px-3 py-2 text-gray-900">{{ $req->subject }}</td>
+                                    <td class="px-3 py-2 text-gray-700">{{ __('case_inspections.status.' . $req->status) }}</td>
+                                    <td class="px-3 py-2 text-gray-700">{{ $req->assigned_inspector_name ?? __('case_inspections.common.no_data') }}</td>
+                                    <td class="px-3 py-2 text-gray-700">{{ $req->created_by_name ?? __('case_inspections.common.no_data') }}</td>
+                                    <td class="px-3 py-2 text-right space-x-2">
+                                        <a href="{{ route('case-inspection-requests.show', $req->id) }}" class="text-blue-700 hover:text-blue-800 text-sm">{{ __('case_inspections.common.view') }}</a>
+                                        @if(($req->status ?? '') !== 'completed')
+                                        <a href="{{ route('case-inspection-requests.edit', $req->id) }}" class="text-amber-700 hover:text-amber-800 text-sm">{{ __('case_inspections.common.edit') }}</a>
+                                        @endif
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    @endif
+                </section>
+                @endif
+
+                @if($canManageInspectionFindings)
+                <section id="inspection-findings" x-show="activeSection === 'inspection-findings'"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 transform translate-y-4"
+                    x-transition:enter-end="opacity-100 transform translate-y-0"
+                    class="main-content-section p-6 rounded-2xl border border-gray-200 bg-white shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-gray-200 pb-3">
+                        <h3 class="text-lg font-semibold text-gray-900">{{ __('case_inspections.findings.index_title') }}</h3>
+                        <span class="text-xs font-medium text-gray-600 bg-gray-100 rounded-full px-2.5 py-1">
+                            {{ ($inspectionFindings ?? collect())->count() }} entries
+                        </span>
+                    </div>
+
+                    @if(($inspectionFindings ?? collect())->isEmpty())
+                    <div class="text-gray-500 border border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
+                        {{ __('case_inspections.findings.empty') }}
+                    </div>
+                    @else
+                    <div class="overflow-x-auto rounded-lg border border-gray-100">
+                        <table class="min-w-full">
+                            <thead class="bg-gray-50 text-gray-600">
+                                <tr>
+                                    <th class="px-3 py-2 text-left font-medium border-b border-gray-200">{{ __('case_inspections.findings.table_date') }}</th>
+                                    <th class="px-3 py-2 text-left font-medium border-b border-gray-200">{{ __('case_inspections.findings.table_title') }}</th>
+                                    <th class="px-3 py-2 text-left font-medium border-b border-gray-200">{{ __('case_inspections.findings.table_severity') }}</th>
+                                    <th class="px-3 py-2 text-left font-medium border-b border-gray-200">{{ __('case_inspections.findings.table_request') }}</th>
+                                    <th class="px-3 py-2 text-left font-medium border-b border-gray-200">{{ __('case_inspections.requests.table_inspector') }}</th>
+                                    <th class="px-3 py-2 text-right font-medium border-b border-gray-200">{{ __('cases.labels.actions') ?? 'Actions' }}</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                @foreach(($inspectionFindings ?? collect()) as $finding)
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-3 py-2 text-gray-700">{{ \Illuminate\Support\Carbon::parse($finding->finding_date)->format('Y-m-d') }}</td>
+                                    <td class="px-3 py-2 text-gray-900">
+                                        {{ $finding->title }}
+                                        @if(!empty($finding->accepted_at))
+                                        <span class="ml-2 inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">{{ __('case_inspections.findings.accepted') }}</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-3 py-2 text-gray-700">{{ __('case_inspections.severity.' . $finding->severity) }}</td>
+                                    <td class="px-3 py-2 text-gray-700">{{ $finding->request_subject ?? __('case_inspections.common.no_data') }}</td>
+                                    <td class="px-3 py-2 text-gray-700">{{ $finding->assigned_inspector_name ?? __('case_inspections.common.no_data') }}</td>
+                                    <td class="px-3 py-2 text-right space-x-2">
+                                        @if(($canManageInspectionFindings ?? false) && (auth()->user()?->hasRole('admin') ?? false) && empty($finding->accepted_at))
+                                        <form method="POST" action="{{ route('case-inspection-findings.accept', $finding->id) }}" class="inline">
+                                            @csrf
+                                            <button type="submit" class="text-emerald-700 hover:text-emerald-800 text-sm">{{ __('case_inspections.findings.accept') }}</button>
+                                        </form>
+                                        @endif
+                                        <button type="button" @click="toggleFindingDetails({{ (int) $finding->id }})" class="text-blue-700 hover:text-blue-800 text-sm">{{ __('case_inspections.common.view') }}</button>
+                                    </td>
+                                </tr>
+                                <tr x-show="selectedFindingId === {{ (int) $finding->id }}" x-cloak class="bg-gray-50">
+                                    <td colspan="6" class="px-4 py-3">
+                                        <div class="rounded-lg border border-gray-200 bg-white p-4 space-y-3">
+                                            <div class="grid md:grid-cols-3 gap-3 text-sm">
+                                                <div><span class="text-gray-500">{{ __('case_inspections.findings.labels.finding_date') }}:</span> <span class="text-gray-900">{{ \Illuminate\Support\Carbon::parse($finding->finding_date)->format('Y-m-d') }}</span></div>
+                                                <div><span class="text-gray-500">{{ __('case_inspections.findings.labels.severity') }}:</span> <span class="text-gray-900">{{ __('case_inspections.severity.' . $finding->severity) }}</span></div>
+                                                <div><span class="text-gray-500">{{ __('case_inspections.findings.labels.recorded_by') }}:</span> <span class="text-gray-900">{{ $finding->recorded_by_name ?? __('case_inspections.common.no_data') }}</span></div>
+                                            </div>
+                                            <div>
+                                                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{{ __('case_inspections.findings.labels.details') }}</p>
+                                                <div class="text-sm text-gray-800 whitespace-pre-wrap">{{ $finding->details }}</div>
+                                            </div>
+                                            <div>
+                                                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{{ __('case_inspections.findings.labels.recommendation') }}</p>
+                                                <div class="text-sm text-gray-800 whitespace-pre-wrap">{{ $finding->recommendation ?: __('case_inspections.common.no_data') }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    @endif
+                </section>
+                @endif
 
                 {{-- Case Details --}}
                 @php
@@ -2246,9 +2328,10 @@
 
         <script>
         function openReviewModal(decision) {
+            const existingReviewNote = @json(old('note', $reviewNote ?? ''));
             const modal = document.getElementById('review-modal');
             document.getElementById('review-decision').value = decision;
-            document.getElementById('review-note').value = '';
+            document.getElementById('review-note').value = existingReviewNote || '';
             const title = decision === 'return' ? 'Return for correction' : 'Reject case';
             document.getElementById('review-modal-title').textContent = title;
             modal.classList.remove('hidden');

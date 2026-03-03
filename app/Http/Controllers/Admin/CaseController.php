@@ -603,9 +603,71 @@ class CaseController extends Controller
         if (Auth::user()?->hasPermission('assign.inspections')) {
             $inspectionAssignees = User::query()
                 ->where('status', 'active')
-                ->whereHas('roles.permissions', fn($q) => $q->where('name', 'case-inspections.manage'))
+                ->whereHas('roles.permissions', fn($q) => $q->where('name', 'inspection-requests.manage'))
                 ->orderBy('name')
                 ->get(['id', 'name']);
+        }
+
+        $inspectionRequests = collect();
+        if (Schema::hasTable('case_inspection_requests')) {
+            $inspectionRequests = $safeGet(function () use ($id) {
+                $user = Auth::user();
+                $canAssignInspections = $user?->hasPermission('assign.inspections') ?? false;
+                $canManageInspectionRequests = $user?->hasPermission('inspection-requests.manage') ?? false;
+
+                $query = DB::table('case_inspection_requests as cir')
+                    ->leftJoin('users as req', 'req.id', '=', 'cir.requested_by_user_id')
+                    ->leftJoin('users as assn', 'assn.id', '=', 'cir.assigned_inspector_user_id')
+                    ->leftJoin('users as creator', 'creator.id', '=', 'cir.created_by_user_id')
+                    ->select(
+                        'cir.*',
+                        'req.name as requested_by_name',
+                        'assn.name as assigned_inspector_name',
+                        'creator.name as created_by_name'
+                    )
+                    ->where('cir.court_case_id', $id)
+                    ->orderByDesc('cir.request_date')
+                    ->orderByDesc('cir.id');
+
+                if (!$canAssignInspections && !$canManageInspectionRequests) {
+                    $query->where(function ($q) use ($user) {
+                        $q->where('cir.assigned_inspector_user_id', $user?->id)
+                            ->orWhere('cir.requested_by_user_id', $user?->id);
+                    });
+                }
+
+                return $query->get();
+            }, 'case_inspection_requests');
+        }
+
+        $inspectionFindings = collect();
+        if (Schema::hasTable('case_inspection_findings') && Schema::hasTable('case_inspection_requests')) {
+            $inspectionFindings = $safeGet(function () use ($id) {
+                $user = Auth::user();
+                $isAdmin = $user?->hasRole('admin') ?? false;
+
+                $query = DB::table('case_inspection_findings as cif')
+                    ->join('case_inspection_requests as cir', 'cir.id', '=', 'cif.case_inspection_request_id')
+                    ->leftJoin('users as rec', 'rec.id', '=', 'cif.recorded_by_user_id')
+                    ->leftJoin('users as assn', 'assn.id', '=', 'cir.assigned_inspector_user_id')
+                    ->select(
+                        'cif.*',
+                        'cir.subject as request_subject',
+                        'cir.status as request_status',
+                        'cir.assigned_inspector_user_id',
+                        'assn.name as assigned_inspector_name',
+                        'rec.name as recorded_by_name'
+                    )
+                    ->where('cir.court_case_id', $id)
+                    ->orderByDesc('cif.finding_date')
+                    ->orderByDesc('cif.id');
+
+                if (!$isAdmin) {
+                    $query->where('cir.assigned_inspector_user_id', $user?->id);
+                }
+
+                return $query->get();
+            }, 'case_inspection_findings');
         }
 
         return view('admin.cases.show', [
@@ -621,6 +683,8 @@ class CaseController extends Controller
             'respondentResponses' => $respondentResponses,
             'letterTemplates' => $letterTemplates,
             'inspectionAssignees' => $inspectionAssignees,
+            'inspectionRequests' => $inspectionRequests,
+            'inspectionFindings' => $inspectionFindings,
         ]);
     }
 

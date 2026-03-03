@@ -92,6 +92,10 @@
 
     $hasCases = Route::has('cases.index');
     $hasCaseInspections = Route::has('case-inspections.index');
+    $hasCaseInspectionRequests = Route::has('case-inspection-requests.index');
+    $hasCaseInspectionFindings = Route::has('case-inspection-findings.index');
+    $canManageInspectionRequests = auth()->user()?->hasPermission('inspection-requests.manage') ?? false;
+    $canManageInspectionFindings = auth()->user()?->hasPermission('inspection-findings.manage') ?? false;
     $hasApplicants = Route::has('applicants.index');
     $hasRecordes = Route::has('recordes.index');
     $hasCaseTypes = Route::has('case-types.index');
@@ -130,6 +134,9 @@
     $composeActive = request()->routeIs('letters.compose');
     $letterMenuOpen = $letterTemplatesActive || $letterCategoriesActive || $lettersActive || $composeActive;
     $applicantsActive = request()->routeIs('applicants.*');
+    $inspectionRequestsActive = request()->routeIs('case-inspection-requests.*');
+    $inspectionFindingsActive = request()->routeIs('case-inspection-findings.*');
+    $inspectionMenuOpen = $inspectionRequestsActive || $inspectionFindingsActive;
     $usersActive = request()->routeIs('users.*');
     $permissionsActive = request()->routeIs('permissions.*');
     $rolesActive = request()->routeIs('roles.*');
@@ -300,24 +307,62 @@
             @endif
 
             {{-- Case Inspections --}}
-            @if($hasCaseInspections && auth()->user()?->hasPermission('case-inspections.manage'))
-            <a href="{{ route('case-inspections.index') }}"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
-                {{ request()->routeIs('case-inspections.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
-                <div class="grid place-items-center w-6" aria-hidden="true">
-                    <x-heroicon-o-clipboard-document-check class="sidebar-icon h-5 w-5" aria-hidden="true" />
+            @if($hasCaseInspections && ($canManageInspectionRequests || $canManageInspectionFindings))
+            <div x-data="{ open: {{ $inspectionMenuOpen ? 'true' : 'false' }} }" class="space-y-1">
+                <button type="button"
+                    class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition focus-ring
+                    {{ $inspectionMenuOpen ? 'bg-blue-700 text-white shadow-md' : 'text-blue-100 hover:text-white hover:bg-blue-600/30' }}"
+                    @click="open=!open"
+                    aria-haspopup="true"
+                    :aria-expanded="open.toString()">
+                    <span class="flex items-center gap-3">
+                        <div class="grid place-items-center w-6" aria-hidden="true">
+                            <x-heroicon-o-clipboard-document-check class="sidebar-icon h-5 w-5" aria-hidden="true" />
+                        </div>
+                        <span class="truncate origin-left"
+                            x-show="!compact"
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 -translate-x-1"
+                            x-transition:enter-end="opacity-100 translate-x-0"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100 translate-x-0"
+                            x-transition:leave-end="opacity-0 -translate-x-1">
+                            {{ __('app.Case Inspections') }}
+                        </span>
+                    </span>
+                    <svg x-show="!compact" xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4 transition-transform duration-200"
+                        :class="{ 'rotate-90': open }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
+
+                <div x-show="open && !compact"
+                    x-transition:enter="transition ease-out duration-150"
+                    x-transition:enter-start="opacity-0 -translate-y-1"
+                    x-transition:enter-end="opacity-100 translate-y-0"
+                    x-transition:leave="transition ease-in duration-100"
+                    x-transition:leave-start="opacity-100 translate-y-0"
+                    x-transition:leave-end="opacity-0 -translate-y-1"
+                    class="pl-11 space-y-1">
+                    @if($hasCaseInspectionRequests && $canManageInspectionRequests)
+                    <a href="{{ route('case-inspection-requests.index') }}"
+                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
+                        {{ $inspectionRequestsActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                        <x-heroicon-o-document-text class="sidebar-icon h-4 w-4" aria-hidden="true" />
+                        <span>{{ __('case_inspections.requests.index_title') }}</span>
+                    </a>
+                    @endif
+
+                    @if($hasCaseInspectionFindings && $canManageInspectionFindings)
+                    <a href="{{ route('case-inspection-findings.index') }}"
+                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
+                        {{ $inspectionFindingsActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                        <x-heroicon-o-clipboard class="sidebar-icon h-4 w-4" aria-hidden="true" />
+                        <span>{{ __('case_inspections.findings.index_title') }}</span>
+                    </a>
+                    @endif
                 </div>
-                <span class="truncate origin-left"
-                    x-show="!compact"
-                    x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 -translate-x-1"
-                    x-transition:enter-end="opacity-100 translate-x-0"
-                    x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100 translate-x-0"
-                    x-transition:leave-end="opacity-0 -translate-x-1">
-                    {{ __('app.Case Inspections') }}
-                </span>
-            </a>
+            </div>
             @endif
 
             {{-- Hearings --}}

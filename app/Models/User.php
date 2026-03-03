@@ -84,6 +84,11 @@ class User extends Authenticatable implements MustVerifyEmailContract, Auditable
      */
     public function hasPermission(string $perm): bool
     {
+        // Global bypass: Admin role has full permission access.
+        if ($this->hasRole('admin')) {
+            return true;
+        }
+
         return $this->roles()
             ->whereHas('permissions', fn($q) => $q->where('name', $perm))
             ->exists();
@@ -91,7 +96,9 @@ class User extends Authenticatable implements MustVerifyEmailContract, Auditable
 
     public function hasRole(string $role): bool
     {
-        return $this->roles()->where('name', $role)->exists();
+        return $this->roles()
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($role)])
+            ->exists();
     }
 
     public function getIsAdminAttribute(): bool
