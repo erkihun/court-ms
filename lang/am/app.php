@@ -53,6 +53,16 @@ return [
     'Upcoming hearings' => 'ቀጣይ ችሎት የሚሰማበት ቀን',
     'Hearing' => 'ችሎት የሚሰማበት',
     'youre_all_caught_up' => 'ሁሉንም አይተዋል።',
+    'admin_notifications' => [
+        'your_notifications' => 'የእርስዎ ማሳወቂያዎች',
+        'no_new_messages' => 'አዲስ መልዕክቶች የሉም።',
+        'no_new_cases' => 'አዲስ ጉዳዮች የሉም።',
+        'no_upcoming_hearings' => 'ቀጣይ ችሎቶች የሉም።',
+        'respondent_views' => 'የተጠሪ እይታዎች',
+        'respondent_default' => 'ተጠሪ',
+        'respondent_viewed_case' => ':name ይህን ጉዳይ አይቷል',
+        'no_respondent_views' => 'የተጠሪ እይታ የለም።',
+    ],
 
     // Profile menu
     'hi_name' => 'ሰላም፣ :name',

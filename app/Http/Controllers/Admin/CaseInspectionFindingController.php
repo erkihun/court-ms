@@ -87,7 +87,7 @@ class CaseInspectionFindingController extends Controller
         $requestRecord = CaseInspectionRequest::findOrFail((int) $data['case_inspection_request_id']);
         if (!$this->canAccessAllFindings() && (int) ($requestRecord->assigned_inspector_user_id ?? 0) !== (int) $request->user()?->id) {
             return back()
-                ->withErrors(['case_inspection_request_id' => 'You can only create findings for requests assigned to you.'])
+                ->withErrors(['case_inspection_request_id' => __('case_inspections.findings.create_assigned_only')])
                 ->withInput();
         }
 
@@ -109,7 +109,7 @@ class CaseInspectionFindingController extends Controller
             'updated_by_user_id' => $request->user()?->id,
         ]);
 
-        return redirect()->route('case-inspection-findings.index')->with('success', 'Inspection finding created.');
+        return redirect()->route('case-inspection-findings.index')->with('success', __('case_inspections.findings.created'));
     }
 
     public function show(CaseInspectionFinding $finding)
@@ -164,7 +164,7 @@ class CaseInspectionFindingController extends Controller
         $requestRecord = CaseInspectionRequest::findOrFail((int) $data['case_inspection_request_id']);
         if (!$this->canAccessAllFindings() && (int) ($requestRecord->assigned_inspector_user_id ?? 0) !== (int) $request->user()?->id) {
             return back()
-                ->withErrors(['case_inspection_request_id' => 'You can only update findings for requests assigned to you.'])
+                ->withErrors(['case_inspection_request_id' => __('case_inspections.findings.update_assigned_only')])
                 ->withInput();
         }
 
@@ -178,7 +178,7 @@ class CaseInspectionFindingController extends Controller
             'updated_by_user_id' => $request->user()?->id,
         ]);
 
-        return redirect()->route('case-inspection-findings.index')->with('success', 'Inspection finding updated.');
+        return redirect()->route('case-inspection-findings.index')->with('success', __('case_inspections.findings.updated'));
     }
 
     public function destroy(CaseInspectionFinding $finding)
@@ -192,7 +192,7 @@ class CaseInspectionFindingController extends Controller
 
         $finding->delete();
 
-        return redirect()->route('case-inspection-findings.index')->with('success', 'Inspection finding deleted.');
+        return redirect()->route('case-inspection-findings.index')->with('success', __('case_inspections.findings.deleted'));
     }
 
     public function accept(CaseInspectionFinding $finding)

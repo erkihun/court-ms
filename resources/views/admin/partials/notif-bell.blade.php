@@ -74,22 +74,22 @@ $__adminNotifCount = $adminUnseenMsgs->count() + $adminUnseenCases->count() + $a
         class="absolute right-0 mt-2 w-[32rem] max-w-[90vw] rounded-md border border-slate-700 bg-slate-900 text-slate-100 shadow-xl">
         <div class="p-3">
             <div class="mb-2 flex items-center justify-between">
-                <div class="text-sm font-semibold">Notifications</div>
+                <div class="text-sm font-semibold">{{ __('app.Notifications') }}</div>
                 @if($__adminNotifCount > 0)
                 <form method="POST" action="{{ route('admin.notifications.markAll') }}">
                     @csrf
-                    <button class="text-xs px-2 py-1 rounded border border-slate-700 hover:bg-slate-800">Mark all as seen</button>
+                    <button class="text-xs px-2 py-1 rounded border border-slate-700 hover:bg-slate-800">{{ __('app.Mark all as seen') }}</button>
                 </form>
                 @endif
             </div>
 
             @if($__adminNotifCount === 0)
-            <div class="text-sm text-slate-400">You’re all caught up.</div>
+            <div class="text-sm text-slate-400">{{ __('app.youre_all_caught_up') }}</div>
             @else
             {{-- Applicant messages --}}
             @if($adminUnseenMsgs->isNotEmpty())
             <div class="mt-3">
-                <div class="text-xs font-medium text-slate-400 mb-1">Applicant messages</div>
+                <div class="text-xs font-medium text-slate-400 mb-1">{{ __('app.Applicant messages') }}</div>
                 <ul class="divide-y divide-slate-800">
                     @foreach($adminUnseenMsgs as $m)
                     <li class="py-2 flex items-center justify-between">
@@ -104,7 +104,7 @@ $__adminNotifCount = $adminUnseenMsgs->count() + $adminUnseenCases->count() + $a
                             @csrf
                             <input type="hidden" name="type" value="message">
                             <input type="hidden" name="sourceId" value="{{ $m->id }}">
-                            <button class="text-xs px-2 py-1 rounded border border-slate-700 hover:bg-slate-800">Seen</button>
+                            <button class="text-xs px-2 py-1 rounded border border-slate-700 hover:bg-slate-800">{{ __('app.Seen') }}</button>
                         </form>
                     </li>
                     @endforeach
@@ -115,7 +115,7 @@ $__adminNotifCount = $adminUnseenMsgs->count() + $adminUnseenCases->count() + $a
             {{-- New cases --}}
             @if($adminUnseenCases->isNotEmpty())
             <div class="mt-3">
-                <div class="text-xs font-medium text-slate-400 mb-1">New cases</div>
+                <div class="text-xs font-medium text-slate-400 mb-1">{{ __('app.New cases') }}</div>
                 <ul class="divide-y divide-slate-800">
                     @foreach($adminUnseenCases as $c)
                     <li class="py-2 flex items-center justify-between">
@@ -130,7 +130,7 @@ $__adminNotifCount = $adminUnseenMsgs->count() + $adminUnseenCases->count() + $a
                             @csrf
                             <input type="hidden" name="type" value="case">
                             <input type="hidden" name="sourceId" value="{{ $c->id }}">
-                            <button class="text-xs px-2 py-1 rounded border border-slate-700 hover:bg-slate-800">Seen</button>
+                            <button class="text-xs px-2 py-1 rounded border border-slate-700 hover:bg-slate-800">{{ __('app.Seen') }}</button>
                         </form>
                     </li>
                     @endforeach
@@ -141,7 +141,7 @@ $__adminNotifCount = $adminUnseenMsgs->count() + $adminUnseenCases->count() + $a
             {{-- Upcoming hearings --}}
             @if($adminUpcomingHearings->isNotEmpty())
             <div class="mt-3">
-                <div class="text-xs font-medium text-slate-400 mb-1">Upcoming hearings</div>
+                <div class="text-xs font-medium text-slate-400 mb-1">{{ __('app.Upcoming hearings') }}</div>
                 <ul class="divide-y divide-slate-800">
                     @foreach($adminUpcomingHearings as $h)
                     <li class="py-2 flex items-center justify-between">
@@ -150,14 +150,14 @@ $__adminNotifCount = $adminUnseenMsgs->count() + $adminUnseenCases->count() + $a
                                 {{ $h->case_number }} — {{ \App\Support\EthiopianDate::format($h->hearing_at, withTime: true) }}
                             </div>
                             <div class="text-xs text-slate-400">
-                                {{ $h->type ?: 'Hearing' }} · {{ $h->location ?: '—' }}
+                                {{ $h->type ?: __('app.Hearing') }} · {{ $h->location ?: '—' }}
                             </div>
                         </a>
                         <form method="POST" action="{{ route('admin.notifications.markOne') }}">
                             @csrf
                             <input type="hidden" name="type" value="hearing">
                             <input type="hidden" name="sourceId" value="{{ $h->id }}">
-                            <button class="text-xs px-2 py-1 rounded border border-slate-700 hover:bg-slate-800">Seen</button>
+                            <button class="text-xs px-2 py-1 rounded border border-slate-700 hover:bg-slate-800">{{ __('app.Seen') }}</button>
                         </form>
                     </li>
                     @endforeach
@@ -167,7 +167,7 @@ $__adminNotifCount = $adminUnseenMsgs->count() + $adminUnseenCases->count() + $a
 
             <div class="mt-3 flex items-center justify-end">
                 <a href="{{ route('admin.notifications.index') }}"
-                    class="text-xs px-2 py-1 rounded border border-slate-700 hover:bg-slate-800">View all</a>
+                    class="text-xs px-2 py-1 rounded border border-slate-700 hover:bg-slate-800">{{ __('app.View all') }}</a>
             </div>
             @endif
         </div>

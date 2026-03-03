@@ -83,7 +83,7 @@ class CaseInspectionRequestController extends Controller
             'updated_by_user_id' => $request->user()?->id,
         ]);
 
-        return redirect()->route('case-inspection-requests.index')->with('success', 'Inspection request created.');
+        return redirect()->route('case-inspection-requests.index')->with('success', __('case_inspections.requests.created'));
     }
 
     public function show(CaseInspectionRequest $requestRecord)
@@ -145,7 +145,7 @@ class CaseInspectionRequestController extends Controller
             'updated_by_user_id' => $request->user()?->id,
         ]);
 
-        return redirect()->route('case-inspection-requests.index')->with('success', 'Inspection request updated.');
+        return redirect()->route('case-inspection-requests.index')->with('success', __('case_inspections.requests.updated'));
     }
 
     public function destroy(CaseInspectionRequest $requestRecord)
@@ -158,7 +158,7 @@ class CaseInspectionRequestController extends Controller
 
         $requestRecord->delete();
 
-        return redirect()->route('case-inspection-requests.index')->with('success', 'Inspection request deleted.');
+        return redirect()->route('case-inspection-requests.index')->with('success', __('case_inspections.requests.deleted'));
     }
 
     private function inspectorsForAssign()

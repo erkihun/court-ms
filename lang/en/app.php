@@ -50,6 +50,16 @@ return [
     'Upcoming hearings' => 'Upcoming hearings',
     'Hearing' => 'Hearing',
     'youre_all_caught_up' => "You're all caught up.", // NOTE: no dot in key name
+    'admin_notifications' => [
+        'your_notifications' => 'Your notifications',
+        'no_new_messages' => 'No new messages.',
+        'no_new_cases' => 'No new cases.',
+        'no_upcoming_hearings' => 'No upcoming hearings.',
+        'respondent_views' => 'Respondent views',
+        'respondent_default' => 'Respondent',
+        'respondent_viewed_case' => ':name viewed this case',
+        'no_respondent_views' => 'No respondent views.',
+    ],
 
     // Profile menu
     'hi_name' => 'Hi, :name',
