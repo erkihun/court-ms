@@ -8,6 +8,7 @@ use App\Models\CourtCase;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Schema;
 use Mews\Purifier\Facades\Purifier;
 
 class BenchNoteController extends Controller
@@ -67,16 +68,26 @@ class BenchNoteController extends Controller
 
         $panelJudges = $this->normalizePanelJudges($data['judges'] ?? []);
 
-        $benchNote = BenchNote::create([
-            'case_id'      => $data['case_id'],
-            'user_id'      => $request->user()->id,
-            'title'        => trim($data['title']),
-            'note'         => $cleanNote,
-            'hearing_id'   => null,
-            'judge_one_id' => $panelJudges[0] ?? null,
-            'judge_two_id' => $panelJudges[1] ?? null,
-            'judge_three_id' => $panelJudges[2] ?? null,
-        ]);
+        $payload = [
+            'case_id'    => $data['case_id'],
+            'user_id'    => $request->user()->id,
+            'note'       => $cleanNote,
+            'hearing_id' => null,
+        ];
+        if (Schema::hasColumn('bench_notes', 'title')) {
+            $payload['title'] = trim($data['title']);
+        }
+        if (Schema::hasColumn('bench_notes', 'judge_one_id')) {
+            $payload['judge_one_id'] = $panelJudges[0] ?? null;
+        }
+        if (Schema::hasColumn('bench_notes', 'judge_two_id')) {
+            $payload['judge_two_id'] = $panelJudges[1] ?? null;
+        }
+        if (Schema::hasColumn('bench_notes', 'judge_three_id')) {
+            $payload['judge_three_id'] = $panelJudges[2] ?? null;
+        }
+
+        $benchNote = BenchNote::create($payload);
 
         return redirect()
             ->route('bench-notes.index', ['case_id' => $benchNote->case_id])
@@ -134,14 +145,22 @@ class BenchNoteController extends Controller
 
         $updatePayload = [
             'case_id' => $data['case_id'],
-            'title'   => trim($data['title']),
             'note'    => $cleanNote,
         ];
+        if (Schema::hasColumn('bench_notes', 'title')) {
+            $updatePayload['title'] = trim($data['title']);
+        }
 
         if ($panelJudges !== null) {
-            $updatePayload['judge_one_id'] = $panelJudges[0] ?? null;
-            $updatePayload['judge_two_id'] = $panelJudges[1] ?? null;
-            $updatePayload['judge_three_id'] = $panelJudges[2] ?? null;
+            if (Schema::hasColumn('bench_notes', 'judge_one_id')) {
+                $updatePayload['judge_one_id'] = $panelJudges[0] ?? null;
+            }
+            if (Schema::hasColumn('bench_notes', 'judge_two_id')) {
+                $updatePayload['judge_two_id'] = $panelJudges[1] ?? null;
+            }
+            if (Schema::hasColumn('bench_notes', 'judge_three_id')) {
+                $updatePayload['judge_three_id'] = $panelJudges[2] ?? null;
+            }
         }
 
         $benchNote->update($updatePayload);
@@ -183,7 +202,7 @@ class BenchNoteController extends Controller
             $query->whereHas('teams', fn($q) => $q->whereIn('teams.id', $teamIds));
         }
 
-        $judgeUsers = $query->get(['id', 'name']);
+        $judgeUsers = $query->get(['id', 'name', 'team_id']);
         if ($user && !$judgeUsers->contains('id', $user->id)) {
             $judgeUsers->push($user);
         }
