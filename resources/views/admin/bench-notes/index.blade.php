@@ -388,31 +388,13 @@ $canViewBench = function_exists('userHasPermission')
             </div>
 
             <div class="card-footer">
-                <div class="mb-4 grid grid-cols-3 gap-6 text-center">
-                    <div>
-                        <div class="text-sm font-medium text-gray-700">{{ $note->judgeOne?->name ?? __('bench.meta.unknown') }}</div>
-                        @if(!empty($note->judgeOne?->signature_url))
-                        <img src="{{ $note->judgeOne?->signature_url }}" alt="{{ $note->judgeOne?->name }}" class="mx-auto mt-2 max-h-16 w-auto">
-                        @else
-                        <div class="mt-2 text-sm text-gray-400">Judge 1 signature</div>
-                        @endif
-                    </div>
-                    <div>
-                        <div class="text-sm font-medium text-gray-700">{{ $note->judgeTwo?->name ?? __('bench.meta.unknown') }}</div>
-                        @if(!empty($note->judgeTwo?->signature_url))
-                        <img src="{{ $note->judgeTwo?->signature_url }}" alt="{{ $note->judgeTwo?->name }}" class="mx-auto mt-2 max-h-16 w-auto">
-                        @else
-                        <div class="mt-2 text-sm text-gray-400">Judge 2 signature</div>
-                        @endif
-                    </div>
-                    <div>
-                        <div class="text-sm font-medium text-gray-700">{{ $note->judgeThree?->name ?? __('bench.meta.unknown') }}</div>
-                        @if(!empty($note->judgeThree?->signature_url))
-                        <img src="{{ $note->judgeThree?->signature_url }}" alt="{{ $note->judgeThree?->name }}" class="mx-auto mt-2 max-h-16 w-auto">
-                        @else
-                        <div class="mt-2 text-sm text-gray-400">Judge 3 signature</div>
-                        @endif
-                    </div>
+                <div class="mb-4 text-center">
+                    <div class="text-sm font-medium text-gray-700">{{ $note->judgeOne?->name ?? __('bench.meta.unknown') }}</div>
+                    @if(!empty($note->judgeOne?->signature_url))
+                    <img src="{{ $note->judgeOne?->signature_url }}" alt="{{ $note->judgeOne?->name }}" class="mx-auto mt-2 max-h-16 w-auto">
+                    @else
+                    <div class="mt-2 text-sm text-gray-400">Judge 1 signature</div>
+                    @endif
                 </div>
                 <div class="action-buttons">
                     <a href="{{ route('bench-notes.show', $note->id) }}" class="btn btn-view">

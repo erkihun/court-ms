@@ -437,15 +437,15 @@
                         <div class="grid md:grid-cols-3 gap-4">
                             @for ($i = 0; $i < 3; $i++)
                             @php
-                            $defaultJudgeId = $i === 1 ? auth()->id() : null;
+                            $defaultJudgeId = $i === 0 ? auth()->id() : null;
                             $selectedJudge = old("judges.$i.admin_user_id", $storedJudges[$i] ?? $defaultJudgeId);
-                            $isMiddle = $i === 1;
+                            $isMiddle = $i === 0;
                             $isThird = $i === 2;
                             $availableJudges = $isThird
                                 ? ($teamJudgeUsers->isNotEmpty() ? $teamJudgeUsers : $judgeUsersCollection)
                                 : $judgeUsersCollection;
                             $displayName = optional($judgeUsersCollection->firstWhere('id', $selectedJudge))->name
-                                ?? ($isMiddle ? ($benchNote->judgeTwo?->name ?? auth()->user()?->name ?? 'Current Judge') : null);
+                                ?? ($isMiddle ? ($benchNote->judgeOne?->name ?? auth()->user()?->name ?? 'Current Judge') : null);
                             @endphp
                             <div>
                                 <label class="form-label">Judge {{ $i + 1 }}</label>

@@ -22,8 +22,8 @@ return [
 
     'descriptions' => [
         'index' => 'Internal notes tied to cases (sanitized via HTML Purifier).',
-        'create' => 'Attach a note to a case. Content is sanitized via HTML Purifier.',
-        'edit' => 'Update the note content. All changes are sanitized via HTML Purifier.',
+        'create' => 'Attach a note to a case.',
+        'edit' => 'Update the note content.',
         'about' => 'Bench notes are internal notes attached to cases. They support rich text formatting, and all content is automatically sanitized via HTML Purifier for security. Notes can be edited or deleted at any time by authorized users.',
         'editing_notice' => 'You are editing an existing bench note. All changes will be saved immediately when you click "Update Note".',
         'created_meta' => 'The note was originally created by :author on :date.',
@@ -64,7 +64,7 @@ return [
     'helpers' => [
         'select_case' => 'Select the case this note belongs to',
         'title' => 'Brief title for the note (max 255 characters)',
-        'note_editor' => 'Rich text editor powered by TinyMCE. All HTML is purified before saving.',
+        'note_editor' => 'Rich text editor powered by TinyMCE.',
         'no_teammates' => 'No teammates are assigned to your current team.',
         'empty_content' => 'No content provided.',
     ],

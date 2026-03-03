@@ -34,31 +34,13 @@ $safeNote = clean($benchNote->note ?? '', 'default');
             </div>
         </div>
 
-        <div class="grid grid-cols-3 gap-6 text-center text-sm text-gray-800">
-            <div class="space-y-2">
-                <div class="font-medium">{{ $benchNote->judgeOne?->name ?? __('bench.meta.unknown') }}</div>
-                @if(!empty($benchNote->judgeOne?->signature_url))
-                <img src="{{ $benchNote->judgeOne?->signature_url }}" alt="{{ $benchNote->judgeOne?->name }}" class="mx-auto max-h-16 w-auto">
-                @else
-                <div class="text-gray-500">Judge 1 signature</div>
-                @endif
-            </div>
-            <div class="space-y-2">
-                <div class="font-medium">{{ $benchNote->judgeTwo?->name ?? __('bench.meta.unknown') }}</div>
-                @if(!empty($benchNote->judgeTwo?->signature_url))
-                <img src="{{ $benchNote->judgeTwo?->signature_url }}" alt="{{ $benchNote->judgeTwo?->name }}" class="mx-auto max-h-16 w-auto">
-                @else
-                <div class="text-gray-500">Judge 2 signature</div>
-                @endif
-            </div>
-            <div class="space-y-2">
-                <div class="font-medium">{{ $benchNote->judgeThree?->name ?? __('bench.meta.unknown') }}</div>
-                @if(!empty($benchNote->judgeThree?->signature_url))
-                <img src="{{ $benchNote->judgeThree?->signature_url }}" alt="{{ $benchNote->judgeThree?->name }}" class="mx-auto max-h-16 w-auto">
-                @else
-                <div class="text-gray-500">Judge 3 signature</div>
-                @endif
-            </div>
+        <div class="text-center text-sm text-gray-800">
+            <div class="font-medium">{{ $benchNote->judgeOne?->name ?? __('bench.meta.unknown') }}</div>
+            @if(!empty($benchNote->judgeOne?->signature_url))
+            <img src="{{ $benchNote->judgeOne?->signature_url }}" alt="{{ $benchNote->judgeOne?->name }}" class="mx-auto mt-2 max-h-16 w-auto">
+            @else
+            <div class="mt-2 text-gray-500">Judge 1 signature</div>
+            @endif
         </div>
     </div>
 </x-admin-layout>
