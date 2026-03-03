@@ -146,6 +146,10 @@ $hasAny = $unseenHearings->isNotEmpty() || $unseenMsgs->isNotEmpty() || $unseenS
             @foreach($unseenMsgs as $m)
             @php
             $msgBody = trim($m->body);
+            $legacyApplicantUpdate = 'Applicant updated the case details. Please review the submission.';
+            $msgBodyLocalized = $msgBody === $legacyApplicantUpdate
+                ? __('cases.notifications.applicant_updated_submission')
+                : $msgBody;
             $isUrl = filter_var($msgBody, FILTER_VALIDATE_URL);
             @endphp
             <li class="py-2 flex items-center justify-between gap-3">
@@ -159,7 +163,7 @@ $hasAny = $unseenHearings->isNotEmpty() || $unseenMsgs->isNotEmpty() || $unseenS
                             {{ __('app.admin_notifications.view_letter_preview') }}
                         </a>
                         @else
-                        {{ \Illuminate\Support\Str::limit($m->body, 80) }}
+                        {{ \Illuminate\Support\Str::limit($msgBodyLocalized, 80) }}
                         @endif
                         <span class="text-slate-400">·</span>
                         {{ \Illuminate\Support\Carbon::parse($m->created_at)->diffForHumans() }}

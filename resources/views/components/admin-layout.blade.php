@@ -1005,11 +1005,17 @@
                                 <div class="text-sm font-bold text-blue-700 mb-1">{{ __('app.Applicant messages') }}</div>
                                 <ul class="divide-y divide-gray-100">
                                     @foreach($adminUnseenMsgs as $m)
+                                    @php
+                                    $legacyApplicantUpdate = 'Applicant updated the case details. Please review the submission.';
+                                    $displayBody = trim((string) $m->body) === $legacyApplicantUpdate
+                                        ? __('cases.notifications.applicant_updated_submission')
+                                        : (string) $m->body;
+                                    @endphp
                                     <li class="py-2 flex items-center justify-between hover:bg-gray-50 rounded-md px-1">
                                         <a href="{{ $hasCases ? route('cases.show', $m->case_id) : '#' }}" class="text-sm flex-1 mr-4">
                                             <div class="font-medium text-gray-900 truncate">{{ $m->case_number }}</div>
                                             <div class="text-xs text-gray-600">
-                                                {{ Str::limit($m->body, 80) }}
+                                                {{ Str::limit($displayBody, 80) }}
                                                 · {{ \Illuminate\Support\Carbon::parse($m->created_at)->diffForHumans() }}
                                             </div>
                                         </a>

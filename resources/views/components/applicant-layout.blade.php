@@ -555,12 +555,18 @@ $respondentNotifList = collect();
                                     @else
                                     <ul class="divide-y">
                                         @foreach($unseenMsgs as $m)
+                                        @php
+                                        $legacyApplicantUpdate = 'Applicant updated the case details. Please review the submission.';
+                                        $displayBody = trim((string) $m->body) === $legacyApplicantUpdate
+                                            ? __('cases.notifications.applicant_updated_submission')
+                                            : (string) $m->body;
+                                        @endphp
                                         <li class="py-2 flex items-center justify-between gap-3">
                                             <a href="{{ route('applicant.cases.show', $m->case_id) }}"
                                                 class="text-sm flex-1">
                                                 <div class="font-medium text-slate-800">{{ $m->case_number }}</div>
                                                 <div class="text-xs text-slate-500">
-                                                    {{ \Illuminate\Support\Str::limit($m->body, 80) }}
+                                                    {{ \Illuminate\Support\Str::limit($displayBody, 80) }}
                                                     <span class="text-slate-400">·</span>
                                                     {{ \Illuminate\Support\Carbon::parse($m->created_at)->diffForHumans() }}
                                                 </div>
@@ -731,6 +737,12 @@ $respondentNotifList = collect();
                                     @else
                                     <ul class="divide-y">
                                         @foreach($unseenMsgs as $m)
+                                        @php
+                                        $legacyApplicantUpdate = 'Applicant updated the case details. Please review the submission.';
+                                        $displayBody = trim((string) $m->body) === $legacyApplicantUpdate
+                                            ? __('cases.notifications.applicant_updated_submission')
+                                            : (string) $m->body;
+                                        @endphp
                                         <li class="py-2">
                                             <div class="flex items-start gap-3">
                                                 <div class="flex-1">
@@ -739,7 +751,7 @@ $respondentNotifList = collect();
                                                         {{ $m->case_number }}
                                                     </a>
                                                     <p class="text-xs text-slate-500 mt-0.5">
-                                                        {{ \Illuminate\Support\Str::limit($m->body, 90) }}
+                                                        {{ \Illuminate\Support\Str::limit($displayBody, 90) }}
                                                         <span class="text-slate-400">·</span>
                                                         {{ \Illuminate\Support\Carbon::parse($m->created_at)->diffForHumans() }}
                                                     </p>

@@ -22,11 +22,17 @@
             </div>
             <div class="divide-y divide-gray-200">
                 @forelse($msgs as $m)
+                @php
+                $legacyApplicantUpdate = 'Applicant updated the case details. Please review the submission.';
+                $displayBody = trim((string) $m->body) === $legacyApplicantUpdate
+                    ? __('cases.notifications.applicant_updated_submission')
+                    : (string) $m->body;
+                @endphp
                 <div class="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors duration-150">
                     <a class="text-sm" href="{{ route('cases.show', $m->case_id) }}">
                         <div class="font-medium text-gray-900">{{ $m->case_number }}</div>
                         <div class="text-xs text-gray-600">
-                            {{ \Illuminate\Support\Str::limit($m->body, 120) }}
+                            {{ \Illuminate\Support\Str::limit($displayBody, 120) }}
                             · {{ \Illuminate\Support\Carbon::parse($m->created_at)->diffForHumans() }}
                         </div>
                     </a>

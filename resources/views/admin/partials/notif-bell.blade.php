@@ -92,11 +92,17 @@ $__adminNotifCount = $adminUnseenMsgs->count() + $adminUnseenCases->count() + $a
                 <div class="text-xs font-medium text-slate-400 mb-1">{{ __('app.Applicant messages') }}</div>
                 <ul class="divide-y divide-slate-800">
                     @foreach($adminUnseenMsgs as $m)
+                    @php
+                    $legacyApplicantUpdate = 'Applicant updated the case details. Please review the submission.';
+                    $displayBody = trim((string) $m->body) === $legacyApplicantUpdate
+                        ? __('cases.notifications.applicant_updated_submission')
+                        : (string) $m->body;
+                    @endphp
                     <li class="py-2 flex items-center justify-between">
                         <a href="{{ route('cases.show', $m->case_id) }}" class="text-sm">
                             <div class="font-medium text-slate-100">{{ $m->case_number }}</div>
                             <div class="text-xs text-slate-400">
-                                {{ \Illuminate\Support\Str::limit($m->body, 80) }}
+                                {{ \Illuminate\Support\Str::limit($displayBody, 80) }}
                                 · {{ \Illuminate\Support\Carbon::parse($m->created_at)->diffForHumans() }}
                             </div>
                         </a>
