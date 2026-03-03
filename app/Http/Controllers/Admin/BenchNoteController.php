@@ -202,7 +202,7 @@ class BenchNoteController extends Controller
             $query->whereHas('teams', fn($q) => $q->whereIn('teams.id', $teamIds));
         }
 
-        $judgeUsers = $query->get(['id', 'name', 'team_id']);
+        $judgeUsers = $query->get(['id', 'name']);
         if ($user && !$judgeUsers->contains('id', $user->id)) {
             $judgeUsers->push($user);
         }
