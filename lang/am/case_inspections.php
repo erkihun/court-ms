@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'title' => 'የጉዳይ ፍተሻዎች',
+    'title' => 'የመዝገብ ፍተሻዎች',
 
     'common' => [
         'filter' => 'አጣራ',
@@ -29,12 +29,12 @@ return [
     ],
 
     'requests' => [
-        'index_title' => 'የፍተሻ ጥያቄዎች',
-        'index_description' => 'የፍተሻ ጥያቄዎችን ከግኝቶች ለይተው ያስተዳድሩ።',
+        'index_title' => 'የኢንስፔክሽን ጥያቄዎች',
+        'index_description' => 'የኢንስፔክሽን ጥያቄዎችን ከግኝቶች ለይተው ያስተዳድሩ።',
         'new' => 'አዲስ ጥያቄ',
-        'create_title' => 'አዲስ የፍተሻ ጥያቄ ፍጠር',
-        'edit_title' => 'የፍተሻ ጥያቄን አርም',
-        'show_title' => 'የፍተሻ ጥያቄ',
+        'create_title' => 'አዲስ ኢንስፔክሽን ጥያቄ ፍጠር',
+        'edit_title' => 'የኢንስፔክሽን ጥያቄን አርም',
+        'show_title' => 'የኢንስፔክሽን ጥያቄ',
         'save' => 'ጥያቄውን መዝግብ',
         'update' => 'ጥያቄውን አዘምን',
         'all_cases' => 'ሁሉም ጉዳዮች',
@@ -43,19 +43,19 @@ return [
         'table_subject' => 'ርዕሰ ጉዳይ',
         'table_date' => 'ቀን',
         'table_status' => 'ሁኔታ',
-        'table_inspector' => 'ፈታሽ',
+        'table_inspector' => 'ባለሙያ',
         'table_created_by' => 'Created By',
-        'empty' => 'ምንም የፍተሻ ጥያቄ አልተገኘም።',
+        'empty' => 'ምንም የኢንስፔክሽን ጥያቄ አልተገኘም።',
         'labels' => [
             'request_date' => 'የተጠየቀበት ቀን',
             'status' => 'ሁኔታ',
-            'inspector' => 'ፈታሽ',
+            'inspector' => 'ባለሙያ',
             'created_by' => 'Created By',
             'findings' => 'ግኝቶች',
             'no_findings' => 'እስካሁን ምንም ግኝቶች አልተጨመሩም።',
         ],
         'completed_locked' => 'Completed requests cannot be edited or deleted.',
-        'confirm_delete' => 'ይህንን የፍተሻ ጥያቄ መሰረዝ ይፈልጋሉ?',
+        'confirm_delete' => 'ይህንን የኢንስፔክሽን ጥያቄ መሰረዝ ይፈልጋሉ?',
         'form' => [
             'case' => 'ጉዳይ',
             'select_case' => 'ጉዳይ ይምረጡ',
@@ -69,7 +69,7 @@ return [
     ],
 
     'findings' => [
-        'index_title' => 'የፍተሻ ግኝቶች',
+        'index_title' => 'የኢንስፔክሽን ግኝቶች',
         'index_description' => 'ግኝቶችን ከጥያቄዎች ነፃ በሆነ መልኩ ይመዝግቡ እና ያስተዳድሩ።',
         'new' => 'አዲስ ግኝት',
         'accept' => 'Accept',
@@ -78,9 +78,9 @@ return [
         'accepted_success' => 'Inspection finding accepted.',
         'already_accepted' => 'Inspection finding is already accepted.',
         'accepted_locked' => 'Accepted findings cannot be updated or deleted by inspectors.',
-        'create_title' => 'አዲስ የፍተሻ ግኝት ይመዝግቡ',
-        'edit_title' => 'የፍተሻ ግኝትን ያርሙ',
-        'show_title' => 'የፍተሻ ግኝት',
+        'create_title' => 'አዲስ የኢንስፔክሽን ግኝት ይመዝግቡ',
+        'edit_title' => 'የኢንስፔክሽን ግኝትን ያርሙ',
+        'show_title' => 'የኢንስፔክሽን ግኝት',
         'save' => 'ግኝቱን መዝግብ',
         'update' => 'ግኝቱን አዘምን',
         'all_requests' => 'ሁሉም ጥያቄዎች',
@@ -90,7 +90,7 @@ return [
         'table_title' => 'ርዕስ',
         'table_date' => 'ቀን',
         'table_severity' => 'ክብደት',
-        'empty' => 'ምንም ግኝቶች አልተገኙም።',
+        'empty' => 'ምንም የኢንስፔክሽን ግኝቶች አልተገኙም።',
         'labels' => [
             'finding_date' => 'የግኝት ቀን',
             'severity' => 'ክብደት',
@@ -99,9 +99,9 @@ return [
             'details' => 'ዝርዝሮች',
             'recommendation' => 'የቀረበ ሀሳብ/ምክረ-ሀሳብ',
         ],
-        'confirm_delete' => 'ይህንን የፍተሻ ግኝት መሰረዝ ይፈልጋሉ?',
+        'confirm_delete' => 'ይህንን የኢንስፔክሽን ግኝት መሰረዝ ይፈልጋሉ?',
         'form' => [
-            'request' => 'የፍተሻ ጥያቄ',
+            'request' => 'የኢንስፔክሽን ጥያቄ',
             'select_request' => 'ጥያቄ ይምረጡ',
             'finding_date' => 'የግኝት ቀን',
             'severity' => 'ክብደት',
