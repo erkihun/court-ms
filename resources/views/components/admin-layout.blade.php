@@ -154,7 +154,7 @@
         class="fixed md:sticky z-40 inset-y-0 left-0
                transform transition-transform duration-300 ease-out
                -translate-x-full md:translate-x-0
-               flex flex-col bg-blue-950 border-r border-blue-800
+               flex flex-col bg-[#052e4a] border-r border-blue-800
                w-72 md:h-screen md:overflow-y-auto md:[transition-property:width] md:duration-300 md:ease-in-out transition-size"
         :class="{
             'translate-x-0': sidebar,
@@ -165,10 +165,16 @@
 
         {{-- Brand / collapse toggle row --}}
         {{-- UPDATED: Border uses darker blue --}}
-        <div class="flex items-center justify-between gap-2 px-4 py-5 border-b border-blue-800">
-            <div class="flex items-center gap-2">
+        <div class="relative flex items-center justify-center gap-2 px-4 py-5 border-b border-blue-800">
+            <div class="flex items-center justify-center w-full">
                 {{-- Text color is white/light blue --}}
-                <a href="{{ $hasDashboard ? route('dashboard') : url('/') }}" aria-label="{{ __('app.Dashboard') }}" class="focus-ring rounded">
+                <a href="{{ $hasDashboard ? route('dashboard') : url('/') }}" aria-label="{{ __('app.Dashboard') }}" class="focus-ring rounded flex flex-col items-center text-center">
+                    @if(!empty($systemSettings?->logo_path))
+                    <img
+                        src="{{ asset('storage/'.$systemSettings->logo_path) }}"
+                        alt="{{ $systemSettings->app_name ?? config('app.name','CMS') }}"
+                        class="h-10 w-auto object-contain">
+                    @endif
                     {{-- Full name (shown when NOT compact) --}}
                     <span class="text-white text-xl font-extrabold truncate origin-left"
                         x-show="!compact"
@@ -198,7 +204,7 @@
             {{-- Close on mobile --}}
             {{-- UPDATED: Hover uses darker blue --}}
             <button type="button"
-                class="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-md text-blue-300 hover:bg-blue-800 focus-ring"
+                class="md:hidden absolute right-3 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-9 h-9 rounded-md text-blue-300 hover:bg-blue-800 focus-ring"
                 @click="sidebar=false"
                 aria-label="{{ __('app.Close sidebar') }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">

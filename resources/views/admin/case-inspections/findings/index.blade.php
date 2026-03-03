@@ -58,12 +58,6 @@
                         <td class="px-4 py-3 text-sm text-gray-700">{{ optional($finding->finding_date)->format('Y-m-d') }}</td>
                         <td class="px-4 py-3 text-sm text-gray-700">{{ __('case_inspections.severity.' . $finding->severity) }}</td>
                         <td class="px-4 py-3 text-sm text-right space-x-2">
-                            @if($isAdmin && !$finding->accepted_at)
-                            <form method="POST" action="{{ route('case-inspection-findings.accept', $finding) }}" class="inline">
-                                @csrf
-                                <button type="submit" class="text-emerald-700 hover:text-emerald-800">{{ __('case_inspections.findings.accept') }}</button>
-                            </form>
-                            @endif
                             @if(!$finding->accepted_at)
                             <a href="{{ route('case-inspection-findings.edit', $finding) }}" class="text-amber-700 hover:text-amber-800">{{ __('case_inspections.common.edit') }}</a>
                             @endif
