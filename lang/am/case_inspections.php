@@ -64,7 +64,7 @@ return [
             'subject' => 'ርዕሰ መዝገብ',
             'assigned_inspector' => 'የተመደበ ፈታሽ',
             'unassigned' => 'ያልተመደበ',
-            'request_note' => 'የጥያቄ ማስታወሻ',
+            'request_note' => 'ኢንስፔክሽን የሚደረግበት ዋና ጉዳይ',
         ],
     ],
 
