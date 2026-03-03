@@ -412,4 +412,13 @@ return [
         'cases_label' => 'ክሶች',
         'message_restricted' => 'በዚህ ክስ ውስጥ የቻት መልዕክት ማስተላለፊያ ፈቃድ የለዎትም።',
     ],
+    'notifications' => [
+        'status_changed_note' => '[ሁኔታ ወደ :status ተቀይሯል] :note',
+        'case_reviewed' => 'የእርስዎ መዝገብ (:case) ተገምግሟል። ውሳኔ: :decision።',
+        'reviewer_notes' => 'የገምጋሚ ማስታወሻ',
+        'letter' => 'ደብዳቤ',
+        'approved_letter_subject' => 'የጸደቀ ደብዳቤ: :subject',
+        'preview_link' => 'ቅድመ እይታ: :url',
+        'applicant_updated_submission' => 'አመልካቹ የክሱን ዝርዝር አዘምኗል። እባክዎ የቀረበውን ያረጋግጡ።',
+    ],
 ];

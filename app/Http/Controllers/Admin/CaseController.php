@@ -853,7 +853,10 @@ class CaseController extends Controller
                 'case_id'             => $id,
                 'sender_user_id'      => Auth::id(),
                 'sender_applicant_id' => null,
-                'body'                => '[Status changed to ' . ucfirst($new) . '] ' . $data['note'],
+                'body'                => __('cases.notifications.status_changed_note', [
+                    'status' => __('cases.status.' . $new),
+                    'note' => $data['note'],
+                ]),
                 'created_at'          => now(),
                 'updated_at'          => now(),
             ]);
@@ -1261,15 +1264,18 @@ class CaseController extends Controller
         }
 
         $decisionText = match ($reviewStatus) {
-            'accepted' => 'accepted',
-            'returned' => 'returned for correction',
-            'rejected' => 'rejected',
+            'accepted' => __('cases.review_status.accepted'),
+            'returned' => __('cases.review_status.returned'),
+            'rejected' => __('cases.review_status.rejected'),
             default    => $reviewStatus,
         };
 
-        $body = "Your case {$case->case_number} has been {$decisionText}.";
+        $body = __('cases.notifications.case_reviewed', [
+            'case_number' => $case->case_number,
+            'decision' => $decisionText,
+        ]);
         if ($note !== '') {
-            $body .= "\n\nNotes from reviewer:\n{$note}";
+            $body .= "\n\n" . __('cases.notifications.reviewer_notes') . ":\n{$note}";
         }
 
         DB::table('case_messages')->insert([

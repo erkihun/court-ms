@@ -444,8 +444,10 @@ class LetterController extends Controller
             ? URL::signedRoute('letters.case-preview', ['letter' => $letter->getKey()])
             : URL::to('/case-letters/' . $letter->getKey());
 
-        $subject = $letter->subject ?: optional($letter->template)->title ?: 'Letter';
-        $body = "Approved letter subject: {$subject}\nPreview: {$previewUrl}";
+        $subject = $letter->subject ?: optional($letter->template)->title ?: __('cases.notifications.letter');
+        $body = __('cases.notifications.approved_letter_subject', ['subject' => $subject])
+            . "\n"
+            . __('cases.notifications.preview_link', ['url' => $previewUrl]);
 
         DB::table('case_messages')->insert([
             'case_id'            => $caseId,

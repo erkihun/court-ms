@@ -102,7 +102,7 @@ class AdminNotificationController extends Controller
             ['seen_at' => now(), 'updated_at' => now(), 'created_at' => now()]
         );
 
-        return back()->with('success', 'Marked as seen.');
+        return back()->with('success', __('app.admin_notifications.marked_as_seen'));
     }
 
     public function markAll()
@@ -172,6 +172,6 @@ class AdminNotificationController extends Controller
             );
         }
 
-        return back()->with('success', 'All marked as seen.');
+        return back()->with('success', __('app.admin_notifications.all_marked_as_seen'));
     }
 }

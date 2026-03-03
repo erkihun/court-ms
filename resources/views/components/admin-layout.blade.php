@@ -1094,15 +1094,15 @@
                             @if($adminRespondentViews->isNotEmpty())
                             <div class="mt-3">
                                 {{-- UPDATED: Notification headers use Primary Brand Blue --}}
-                                <div class="text-xs font-bold text-blue-700 mb-1">Respondent views</div>
+                                <div class="text-xs font-bold text-blue-700 mb-1">{{ __('app.admin_notifications.respondent_views') }}</div>
                                 <ul class="divide-y divide-gray-100">
                                     @foreach($adminRespondentViews as $v)
                                     <li class="py-2 flex items-center justify-between hover:bg-gray-50 rounded-md px-1">
                                         <a href="{{ $hasCases ? route('cases.show', $v->case_id) : '#' }}" class="text-sm flex-1 mr-4">
                                             <div class="font-medium text-gray-900 truncate">{{ $v->case_number }}</div>
                                             <div class="text-xs text-gray-600">
-                                                {{ $v->respondent_name ?: 'Respondent' }} viewed this case
-                                                A· {{ \Illuminate\Support\Carbon::parse($v->viewed_at)->diffForHumans() }}
+                                                {{ __('app.admin_notifications.respondent_viewed_case', ['name' => ($v->respondent_name ?: __('app.admin_notifications.respondent_default'))]) }}
+                                                · {{ \Illuminate\Support\Carbon::parse($v->viewed_at)->diffForHumans() }}
                                             </div>
                                         </a>
                                         @if($hasNotifMarkOne)

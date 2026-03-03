@@ -627,7 +627,7 @@ $respondentNotifList = collect();
                                     @if($respondentViews->isNotEmpty())
                                     <div>
                                         <div class="mb-1 flex items-center justify-between">
-                                            <div class="text-xs font-medium text-slate-500">Respondents viewed</div>
+                                            <div class="text-xs font-medium text-slate-500">{{ __('app.admin_notifications.respondent_views') }}</div>
                                             <span class="text-[11px] rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">
                                                 {{ $respondentViews->count() }}
                                             </span>
@@ -639,7 +639,7 @@ $respondentNotifList = collect();
                                                     class="text-sm flex-1">
                                                     <div class="font-medium text-slate-800">{{ $v->case_number }}</div>
                                                     <div class="text-xs text-slate-500">
-                                                        {{ $v->respondent_name ?: 'Respondent' }}
+                                                        {{ $v->respondent_name ?: __('app.admin_notifications.respondent_default') }}
                                                         <span class="text-slate-400">·</span>
                                                         {{ \Illuminate\Support\Carbon::parse($v->viewed_at)->diffForHumans() }}
                                                     </div>
@@ -661,7 +661,7 @@ $respondentNotifList = collect();
                                     @if($unseenStatus->isNotEmpty())
                                     <div>
                                         <div class="mb-1 flex items-center justify-between">
-                                            <div class="text-xs font-medium text-slate-500">Status updates</div>
+                                            <div class="text-xs font-medium text-slate-500">{{ __('app.admin_notifications.status_updates') }}</div>
                                             <span class="text-[11px] rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">
                                                 {{ $unseenStatus->count() }}
                                             </span>
@@ -700,7 +700,7 @@ $respondentNotifList = collect();
                                     <a href="{{ route('applicant.notifications.index') }}"
                                         class="text-xs text-slate-600 hover:text-slate-800">{{ __('app.View all') }}</a>
                                     <a href="{{ route('applicant.notifications.settings') }}"
-                                        class="text-xs text-slate-600 hover:text-slate-800">Settings</a>
+                                        class="text-xs text-slate-600 hover:text-slate-800">{{ __('app.Settings') }}</a>
                                 </div>
                             </div>
                         </div>

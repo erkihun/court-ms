@@ -91,7 +91,7 @@ $respondentMessages = (clone $base)->limit(6)->get();
                 <div class="text-slate-700 truncate">
                     @if($isUrl)
                     <a href="{{ $msgBody }}" class="text-blue-600 hover:underline" target="_blank" rel="noreferrer">
-                        View letter preview
+                        {{ __('app.admin_notifications.view_letter_preview') }}
                     </a>
                     @else
                     {{ \Illuminate\Support\Str::limit($msg->body, 120) }}

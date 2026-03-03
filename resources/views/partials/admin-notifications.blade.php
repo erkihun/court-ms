@@ -86,23 +86,23 @@ $hasAny = $newCases->isNotEmpty() || $msgs->isNotEmpty() || $status->isNotEmpty(
 
 <div class="p-3">
     <div class="mb-2 flex items-center justify-between">
-        <div class="text-sm font-semibold text-slate-700">Notifications</div>
+        <div class="text-sm font-semibold text-slate-700">{{ __('app.Notifications') }}</div>
         @if($hasAny)
         <form method="POST" action="{{ route('admin.notifications.markAll') }}">
             @csrf
-            <button class="text-xs px-2 py-1 rounded border hover:bg-slate-50">Mark all as seen</button>
+            <button class="text-xs px-2 py-1 rounded border hover:bg-slate-50">{{ __('app.Mark all as seen') }}</button>
         </form>
         @endif
     </div>
 
     @unless($hasAny)
-    <div class="text-sm text-slate-500">You’re all caught up.</div>
+    <div class="text-sm text-slate-500">{{ __('app.youre_all_caught_up') }}</div>
     @endunless
 
     {{-- New filings --}}
     @if($newCases->isNotEmpty())
     <div class="mt-3">
-        <div class="text-xs font-medium text-slate-500 mb-1">New filings</div>
+        <div class="text-xs font-medium text-slate-500 mb-1">{{ __('app.New cases') }}</div>
         <ul class="divide-y">
             @foreach($newCases as $c)
             <li class="py-2 flex items-center justify-between">
@@ -114,7 +114,7 @@ $hasAny = $newCases->isNotEmpty() || $msgs->isNotEmpty() || $status->isNotEmpty(
                     @csrf
                     <input type="hidden" name="type" value="new_case">
                     <input type="hidden" name="sourceId" value="{{ $c->id }}">
-                    <button class="text-xs px-2 py-1 rounded border hover:bg-slate-50">Seen</button>
+                    <button class="text-xs px-2 py-1 rounded border hover:bg-slate-50">{{ __('app.Seen') }}</button>
                 </form>
             </li>
             @endforeach
@@ -125,7 +125,7 @@ $hasAny = $newCases->isNotEmpty() || $msgs->isNotEmpty() || $status->isNotEmpty(
     {{-- Messages --}}
     @if($msgs->isNotEmpty())
     <div class="mt-3">
-        <div class="text-xs font-medium text-slate-500 mb-1">Applicant messages</div>
+        <div class="text-xs font-medium text-slate-500 mb-1">{{ __('app.Applicant messages') }}</div>
         <ul class="divide-y">
             @foreach($msgs as $m)
             <li class="py-2 flex items-center justify-between">
@@ -140,7 +140,7 @@ $hasAny = $newCases->isNotEmpty() || $msgs->isNotEmpty() || $status->isNotEmpty(
                     @csrf
                     <input type="hidden" name="type" value="message">
                     <input type="hidden" name="sourceId" value="{{ $m->id }}">
-                    <button class="text-xs px-2 py-1 rounded border hover:bg-slate-50">Seen</button>
+                    <button class="text-xs px-2 py-1 rounded border hover:bg-slate-50">{{ __('app.Seen') }}</button>
                 </form>
             </li>
             @endforeach
@@ -151,14 +151,14 @@ $hasAny = $newCases->isNotEmpty() || $msgs->isNotEmpty() || $status->isNotEmpty(
     {{-- Status --}}
     @if($status->isNotEmpty())
     <div class="mt-3">
-        <div class="text-xs font-medium text-slate-500 mb-1">Status updates</div>
+        <div class="text-xs font-medium text-slate-500 mb-1">{{ __('app.admin_notifications.status_updates') }}</div>
         <ul class="divide-y">
             @foreach($status as $s)
             <li class="py-2 flex items-center justify-between">
                 <a href="{{ route('cases.show', $s->case_id) }}" class="text-sm">
                     <div class="font-medium text-slate-800">{{ $s->case_number }}</div>
                     <div class="text-xs text-slate-500">
-                        {{ ucfirst($s->from_status) }} → <strong>{{ ucfirst($s->to_status) }}</strong>
+                        {{ __('app.admin_notifications.status_changed', ['from' => ucfirst($s->from_status), 'to' => ucfirst($s->to_status)]) }}
                         · {{ \Illuminate\Support\Carbon::parse($s->created_at)->diffForHumans() }}
                     </div>
                 </a>
@@ -166,7 +166,7 @@ $hasAny = $newCases->isNotEmpty() || $msgs->isNotEmpty() || $status->isNotEmpty(
                     @csrf
                     <input type="hidden" name="type" value="status">
                     <input type="hidden" name="sourceId" value="{{ $s->id }}">
-                    <button class="text-xs px-2 py-1 rounded border hover:bg-slate-50">Seen</button>
+                    <button class="text-xs px-2 py-1 rounded border hover:bg-slate-50">{{ __('app.Seen') }}</button>
                 </form>
             </li>
             @endforeach
@@ -177,7 +177,7 @@ $hasAny = $newCases->isNotEmpty() || $msgs->isNotEmpty() || $status->isNotEmpty(
     {{-- Hearings --}}
     @if($hearings->isNotEmpty())
     <div class="mt-3">
-        <div class="text-xs font-medium text-slate-500 mb-1">Upcoming hearings</div>
+        <div class="text-xs font-medium text-slate-500 mb-1">{{ __('app.Upcoming hearings') }}</div>
         <ul class="divide-y">
             @foreach($hearings as $h)
             <li class="py-2 flex items-center justify-between">
@@ -186,13 +186,13 @@ $hasAny = $newCases->isNotEmpty() || $msgs->isNotEmpty() || $status->isNotEmpty(
                         {{ $h->case_number }}
                         — {{ \App\Support\EthiopianDate::format($h->hearing_at, withTime: true) }}
                     </div>
-                    <div class="text-xs text-slate-500">{{ $h->type ?: 'Hearing' }} · {{ $h->location ?: '—' }}</div>
+                    <div class="text-xs text-slate-500">{{ $h->type ?: __('app.Hearing') }} · {{ $h->location ?: '—' }}</div>
                 </a>
                 <form method="POST" action="{{ route('admin.notifications.markOne') }}">
                     @csrf
                     <input type="hidden" name="type" value="hearing">
                     <input type="hidden" name="sourceId" value="{{ $h->id }}">
-                    <button class="text-xs px-2 py-1 rounded border hover:bg-slate-50">Seen</button>
+                    <button class="text-xs px-2 py-1 rounded border hover:bg-slate-50">{{ __('app.Seen') }}</button>
                 </form>
             </li>
             @endforeach
@@ -203,15 +203,15 @@ $hasAny = $newCases->isNotEmpty() || $msgs->isNotEmpty() || $status->isNotEmpty(
     {{-- Respondent views --}}
     @if($respondentViews->isNotEmpty())
     <div class="mt-3">
-        <div class="text-xs font-medium text-slate-500 mb-1">Respondents viewed</div>
+        <div class="text-xs font-medium text-slate-500 mb-1">{{ __('app.admin_notifications.respondent_views') }}</div>
         <ul class="divide-y">
             @foreach($respondentViews as $v)
             <li class="py-2 flex items-center justify-between gap-3">
                 <a href="{{ route('cases.show', $v->case_id) }}" class="text-sm flex-1">
                     <div class="font-medium text-slate-800">{{ $v->case_number }}</div>
                     <div class="text-xs text-slate-500">
-                        {{ $v->respondent_name ?: 'Respondent' }} viewed this case
-                        <span class="text-slate-400">A�</span>
+                        {{ __('app.admin_notifications.respondent_viewed_case', ['name' => ($v->respondent_name ?: __('app.admin_notifications.respondent_default'))]) }}
+                        <span class="text-slate-400">·</span>
                         {{ \Illuminate\Support\Carbon::parse($v->viewed_at)->diffForHumans() }}
                     </div>
                 </a>
@@ -220,7 +220,7 @@ $hasAny = $newCases->isNotEmpty() || $msgs->isNotEmpty() || $status->isNotEmpty(
                     <input type="hidden" name="type" value="respondent_view">
                     <input type="hidden" name="sourceId" value="{{ $v->id }}">
                     <button class="text-xs px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">
-                        Seen
+                        {{ __('app.Seen') }}
                     </button>
                 </form>
             </li>
@@ -231,7 +231,7 @@ $hasAny = $newCases->isNotEmpty() || $msgs->isNotEmpty() || $status->isNotEmpty(
 
     <div class="mt-3 text-right">
         <a href="{{ route('admin.notifications.index') }}" class="text-xs text-blue-700 hover:underline">
-            View all
+            {{ __('app.View all') }}
         </a>
     </div>
 </div>

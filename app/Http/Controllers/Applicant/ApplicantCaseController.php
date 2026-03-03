@@ -1228,7 +1228,7 @@ class ApplicantCaseController extends Controller
     private function notifyAdminCaseUpdated(object $case, int $applicantId): void
     {
         try {
-            $body = 'Applicant updated the case details. Please review the submission.';
+            $body = __('cases.notifications.applicant_updated_submission');
             DB::table('case_messages')->insert([
                 'case_id'             => $case->id,
                 'sender_applicant_id' => $applicantId,

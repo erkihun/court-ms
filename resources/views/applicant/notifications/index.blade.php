@@ -1,17 +1,17 @@
 {{-- resources/views/applicant/notifications/index.blade.php --}}
-<x-applicant-layout title="Notifications">
+<x-applicant-layout title="{{ __('app.Notifications') }}">
     <div class="mb-4 flex items-center justify-between">
-        <h1 class="text-lg font-semibold">Notifications</h1>
+        <h1 class="text-lg font-semibold">{{ __('app.Notifications') }}</h1>
         <form method="POST" action="{{ route('applicant.notifications.markAll') }}">
             @csrf
-            <button class="text-xs px-3 py-1.5 rounded-md border hover:bg-slate-50">Mark all as seen</button>
+            <button class="text-xs px-3 py-1.5 rounded-md border hover:bg-slate-50">{{ __('app.Mark all as seen') }}</button>
         </form>
     </div>
 
     {{-- Hearings --}}
     <div class="rounded-lg border bg-white p-4">
         <div class="mb-2 flex items-center justify-between">
-            <h2 class="text-sm font-semibold text-slate-700">Hearings</h2>
+            <h2 class="text-sm font-semibold text-slate-700">{{ __('cases.hearings.title') }}</h2>
             <span class="text-[11px] rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">
                 {{ $unseenHearings->total() }}
             </span>
@@ -26,7 +26,7 @@
                         {{ $h->case_number }} — {{ \App\Support\EthiopianDate::format($h->hearing_at, withTime: true) }}
                     </div>
                     <div class="text-xs text-slate-500">
-                        {{ $h->type ?: 'Hearing' }}
+                        {{ $h->type ?: __('app.Hearing') }}
                         @if($h->location)
                         <span class="text-slate-400">·</span> {{ $h->location }}
                         @endif
@@ -36,21 +36,21 @@
                     @csrf
                     <input type="hidden" name="type" value="hearing">
                     <input type="hidden" name="sourceId" value="{{ $h->id }}">
-                    <button class="text-xs px-2 py-1 rounded border hover:bg-slate-50">Seen</button>
+                    <button class="text-xs px-2 py-1 rounded border hover:bg-slate-50">{{ __('app.Seen') }}</button>
                 </form>
             </li>
             @endforeach
         </ul>
         <div class="mt-3">{{ $unseenHearings->onEachSide(0)->links() }}</div>
         @else
-        <div class="text-sm text-slate-500">No new hearings.</div>
+        <div class="text-sm text-slate-500">{{ __('app.admin_notifications.no_upcoming_hearings') }}</div>
         @endif
     </div>
 
     {{-- Messages --}}
     <div class="mt-6 rounded-lg border bg-white p-4">
         <div class="mb-2 flex items-center justify-between">
-            <h2 class="text-sm font-semibold text-slate-700">Messages</h2>
+            <h2 class="text-sm font-semibold text-slate-700">{{ __('app.admin_notifications.messages') }}</h2>
             <span class="text-[11px] rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">
                 {{ $unseenMsgs->total() }}
             </span>
@@ -71,7 +71,7 @@
                     <div class="text-xs text-slate-500 mt-0.5">
                         @if($isUrl)
                         <a href="{{ $msgBody }}" class="text-blue-600 hover:underline" target="_blank" rel="noreferrer">
-                            View letter preview
+                            {{ __('app.admin_notifications.view_letter_preview') }}
                         </a>
                         @else
                         {{ \Illuminate\Support\Str::limit($m->body, 80) }}
@@ -84,21 +84,21 @@
                     @csrf
                     <input type="hidden" name="type" value="message">
                     <input type="hidden" name="sourceId" value="{{ $m->id }}">
-                    <button class="text-xs px-2 py-1 rounded border hover:bg-slate-50">Seen</button>
+                    <button class="text-xs px-2 py-1 rounded border hover:bg-slate-50">{{ __('app.Seen') }}</button>
                 </form>
             </li>
             @endforeach
         </ul>
         <div class="mt-3">{{ $unseenMsgs->onEachSide(0)->links() }}</div>
         @else
-        <div class="text-sm text-slate-500">No new messages.</div>
+        <div class="text-sm text-slate-500">{{ __('app.admin_notifications.no_new_messages') }}</div>
         @endif
     </div>
 
     {{-- Respondent views --}}
     <div class="mt-6 rounded-lg border bg-white p-4">
         <div class="mb-2 flex items-center justify-between">
-            <h2 class="text-sm font-semibold text-slate-700">Respondent viewed case</h2>
+            <h2 class="text-sm font-semibold text-slate-700">{{ __('app.admin_notifications.respondent_views') }}</h2>
             <span class="text-[11px] rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">
                 {{ $respondentViews->total() }}
             </span>
@@ -113,7 +113,7 @@
                         {{ $v->case_number }}
                     </div>
                     <div class="text-xs text-slate-500">
-                        {{ $v->respondent_name ?: 'Respondent' }} viewed this case
+                        {{ __('app.admin_notifications.respondent_viewed_case', ['name' => ($v->respondent_name ?: __('app.admin_notifications.respondent_default'))]) }}
                         <span class="text-slate-400 mx-1">·</span>
                         {{ \Illuminate\Support\Carbon::parse($v->viewed_at)->diffForHumans() }}
                     </div>
@@ -122,21 +122,21 @@
                     @csrf
                     <input type="hidden" name="type" value="respondent_view">
                     <input type="hidden" name="sourceId" value="{{ $v->id }}">
-                    <button class="text-xs px-2 py-1 rounded border hover:bg-slate-50">Seen</button>
+                    <button class="text-xs px-2 py-1 rounded border hover:bg-slate-50">{{ __('app.Seen') }}</button>
                 </form>
             </li>
             @endforeach
         </ul>
         <div class="mt-3">{{ $respondentViews->onEachSide(0)->links() }}</div>
         @else
-        <div class="text-sm text-slate-500">No recent respondent views.</div>
+        <div class="text-sm text-slate-500">{{ __('app.admin_notifications.no_respondent_views') }}</div>
         @endif
     </div>
 
     {{-- Status --}}
     <div class="mt-6 rounded-lg border bg-white p-4">
         <div class="mb-2 flex items-center justify-between">
-            <h2 class="text-sm font-semibold text-slate-700">Status updates</h2>
+            <h2 class="text-sm font-semibold text-slate-700">{{ __('app.admin_notifications.status_updates') }}</h2>
             <span class="text-[11px] rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">
                 {{ $unseenStatus->total() }}
             </span>
@@ -158,14 +158,14 @@
                     @csrf
                     <input type="hidden" name="type" value="status">
                     <input type="hidden" name="sourceId" value="{{ $s->id }}">
-                    <button class="text-xs px-2 py-1 rounded border hover:bg-slate-50">Seen</button>
+                    <button class="text-xs px-2 py-1 rounded border hover:bg-slate-50">{{ __('app.Seen') }}</button>
                 </form>
             </li>
             @endforeach
         </ul>
         <div class="mt-3">{{ $unseenStatus->onEachSide(0)->links() }}</div>
         @else
-        <div class="text-sm text-slate-500">No new status updates.</div>
+        <div class="text-sm text-slate-500">{{ __('app.admin_notifications.no_new_status_updates') }}</div>
         @endif
     </div>
 </x-applicant-layout>

@@ -410,4 +410,13 @@ return [
         'cases_label' => 'cases',
         'message_restricted' => 'You do not have permission to send chat messages in this case.',
     ],
+    'notifications' => [
+        'applicant_updated_submission' => 'Applicant updated the case details. Please review the submission.',
+        'status_changed_note' => '[Status changed to :status] :note',
+        'case_reviewed' => 'Your case (:case) has been reviewed. Decision: :decision.',
+        'reviewer_notes' => 'Reviewer notes',
+        'letter' => 'Letter',
+        'approved_letter_subject' => 'Approved letter: :subject',
+        'preview_link' => 'Preview: :url',
+    ],
 ];

@@ -67,7 +67,7 @@ $q->from('notification_reads as nr')
 ->where('nr.type','message')
 ->where('nr.applicant_id',$me);
 })
-->selectRaw("'message' as type, m.id as source_id, m.case_id, m.created_at, COALESCE(u.name,'Court Staff') as meta1, NULL as meta2, m.body as meta3");
+->selectRaw("'message' as type, m.id as source_id, m.case_id, m.created_at, COALESCE(u.name,'".addslashes(__('respondent.court_staff'))."') as meta1, NULL as meta2, m.body as meta3");
 
 $hrs = \DB::table('case_hearings as h')
 ->join('court_cases as c','c.id','=','h.case_id')
@@ -127,21 +127,21 @@ $items = $msgs->unionAll($hrs)->unionAll($sts)->unionAll($views)->orderBy('creat
             {{ $count }}
         </span>
         @endif
-        <span class="hidden md:inline">Notifications</span>
+        <span class="hidden md:inline">{{ __('app.Notifications') }}</span>
     </button>
 
     <div x-cloak x-show="open" @click.outside="open=false"
         class="absolute right-0 mt-2 w-80 rounded-md border bg-white shadow-lg">
         <div class="flex items-center justify-between px-3 py-2 border-b">
-            <div class="text-sm font-semibold">Notifications</div>
+            <div class="text-sm font-semibold">{{ __('app.Notifications') }}</div>
             <form method="POST" action="{{ route('applicant.notifications.markAll') }}">
                 @csrf
-                <button class="text-xs text-slate-600 hover:text-slate-900">Mark all as read</button>
+                <button class="text-xs text-slate-600 hover:text-slate-900">{{ __('app.Mark all as seen') }}</button>
             </form>
         </div>
 
         @if($count===0)
-        <div class="p-3 text-sm text-slate-500">You’re all caught up.</div>
+        <div class="p-3 text-sm text-slate-500">{{ __('app.youre_all_caught_up') }}</div>
         @else
         <ul class="max-h-80 overflow-auto divide-y">
             @foreach($items as $n)
@@ -169,14 +169,14 @@ $items = $msgs->unionAll($hrs)->unionAll($sts)->unionAll($views)->orderBy('creat
                     </div>
                     <div class="text-sm text-slate-800">
                         @if($n->type === 'message')
-                        New message from {{ $n->meta1 ?? 'Court Staff' }}
+                        {{ __('app.admin_notifications.new_message_from', ['name' => ($n->meta1 ?? __('respondent.court_staff'))]) }}
                         @elseif($n->type === 'hearing')
                         Hearing {{ $n->meta2 ? "($n->meta2) " : '' }}on
                         {{ \App\Support\EthiopianDate::format($n->meta3, withTime: true) }}
                         @elseif($n->type === 'respondent_view')
-                        Respondent {{ $n->meta1 ?? 'Viewed the case' }} viewed this case
+                        {{ __('app.admin_notifications.respondent_viewed_case', ['name' => ($n->meta1 ?? __('app.admin_notifications.respondent_default'))]) }}
                         @else
-                        Status changed: {{ ucfirst($n->meta1 ?? '-') }} &rarr; {{ ucfirst($n->meta2 ?? '-') }}
+                        {{ __('app.admin_notifications.status_changed', ['from' => ucfirst($n->meta1 ?? '-'), 'to' => ucfirst($n->meta2 ?? '-')]) }}
                         @endif
                     </div>
                 @if($url)</a>@else</div>@endif
@@ -185,7 +185,7 @@ $items = $msgs->unionAll($hrs)->unionAll($sts)->unionAll($views)->orderBy('creat
         </ul>
         <div class="px-3 py-2">
             <a href="{{ route('applicant.notifications.index') }}" class="text-xs text-slate-700 hover:underline">
-                See all
+                {{ __('app.View all') }}
             </a>
         </div>
         @endif

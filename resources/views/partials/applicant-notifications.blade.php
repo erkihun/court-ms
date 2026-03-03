@@ -2,7 +2,7 @@
 @php
 $aid = auth('applicant')->id();
 if (!$aid) {
-    echo '<div class="p-4 text-sm text-slate-600">Please sign in to see notifications.</div>';
+    echo '<div class="p-4 text-sm text-slate-600">' . e(__('app.admin_notifications.sign_in_to_see_notifications')) . '</div>';
     return;
 }
 
@@ -83,27 +83,27 @@ $hasAny = $unseenHearings->isNotEmpty() || $unseenMsgs->isNotEmpty() || $unseenS
 
 <div class="p-3">
     <div class="flex items-center justify-between">
-        <div class="text-sm font-semibold text-slate-700">Notifications</div>
+        <div class="text-sm font-semibold text-slate-700">{{ __('app.Notifications') }}</div>
 
         @if($hasAny)
         <form method="POST" action="{{ route('applicant.notifications.markAll') }}">
             @csrf
             <button class="text-xs text-slate-700 px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">
-                Mark all as seen
+                {{ __('app.Mark all as seen') }}
             </button>
         </form>
         @endif
     </div>
 
     @unless($hasAny)
-    <div class="text-sm text-slate-500 mt-3">You're all caught up.</div>
+    <div class="text-sm text-slate-500 mt-3">{{ __('app.youre_all_caught_up') }}</div>
     @endunless
 
     {{-- Hearings --}}
     @if($unseenHearings->isNotEmpty())
     <div class="mt-3">
         <div class="mb-1 flex items-center justify-between">
-            <div class="text-xs font-medium text-slate-500">Hearings</div>
+            <div class="text-xs font-medium text-slate-500">{{ __('app.Upcoming hearings') }}</div>
             <span class="text-[11px] rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">
                 {{ $unseenHearings->count() }}
             </span>
@@ -118,13 +118,13 @@ $hasAny = $unseenHearings->isNotEmpty() || $unseenMsgs->isNotEmpty() || $unseenS
                         {{ \App\Support\EthiopianDate::format($h->hearing_at, withTime: true) }}
                     </div>
                     <div class="text-xs text-slate-500">
-                    <div class="text-xs text-slate-500">Hearing</div>
+                    <div class="text-xs text-slate-500">{{ __('app.Hearing') }}</div>
                     </div>
                 </a>
                 <form method="POST" action="{{ route('applicant.notifications.markOne', ['type'=>'hearing','sourceId'=>$h->id]) }}">
                     @csrf
                     <button class="text-xs text-slate-700 px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">
-                        Seen
+                        {{ __('app.Seen') }}
                     </button>
                 </form>
             </li>
@@ -137,7 +137,7 @@ $hasAny = $unseenHearings->isNotEmpty() || $unseenMsgs->isNotEmpty() || $unseenS
     @if($unseenMsgs->isNotEmpty())
     <div class="mt-4">
         <div class="mb-1 flex items-center justify-between">
-            <div class="text-xs font-medium text-slate-500">Messages</div>
+            <div class="text-xs font-medium text-slate-500">{{ __('app.admin_notifications.messages') }}</div>
             <span class="text-[11px] rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">
                 {{ $unseenMsgs->count() }}
             </span>
@@ -156,7 +156,7 @@ $hasAny = $unseenHearings->isNotEmpty() || $unseenMsgs->isNotEmpty() || $unseenS
                     <div class="text-xs text-slate-500 mt-0.5">
                         @if($isUrl)
                         <a href="{{ $msgBody }}" class="text-blue-600 hover:underline" target="_blank" rel="noreferrer">
-                            View letter preview
+                            {{ __('app.admin_notifications.view_letter_preview') }}
                         </a>
                         @else
                         {{ \Illuminate\Support\Str::limit($m->body, 80) }}
@@ -168,7 +168,7 @@ $hasAny = $unseenHearings->isNotEmpty() || $unseenMsgs->isNotEmpty() || $unseenS
                 <form method="POST" action="{{ route('applicant.notifications.markOne', ['type'=>'message','sourceId'=>$m->id]) }}">
                     @csrf
                     <button class="text-xs text-slate-700 px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">
-                        Seen
+                        {{ __('app.Seen') }}
                     </button>
                 </form>
             </li>
@@ -181,7 +181,7 @@ $hasAny = $unseenHearings->isNotEmpty() || $unseenMsgs->isNotEmpty() || $unseenS
     @if($respondentViews->isNotEmpty())
     <div class="mt-4">
         <div class="mb-1 flex items-center justify-between">
-            <div class="text-xs font-medium text-slate-500">Respondents viewed</div>
+            <div class="text-xs font-medium text-slate-500">{{ __('app.admin_notifications.respondent_views') }}</div>
             <span class="text-[11px] rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">
                 {{ $respondentViews->count() }}
             </span>
@@ -192,7 +192,7 @@ $hasAny = $unseenHearings->isNotEmpty() || $unseenMsgs->isNotEmpty() || $unseenS
                 <a href="{{ route('applicant.cases.show', $v->case_id) }}" class="text-sm flex-1">
                     <div class="font-medium text-slate-800">{{ $v->case_number }}</div>
                     <div class="text-xs text-slate-500">
-                        {{ $v->respondent_name ?: 'Respondent' }} viewed this case
+                        {{ __('app.admin_notifications.respondent_viewed_case', ['name' => ($v->respondent_name ?: __('app.admin_notifications.respondent_default'))]) }}
                         <span class="text-slate-400">·</span>
                         {{ \Illuminate\Support\Carbon::parse($v->viewed_at)->diffForHumans() }}
                     </div>
@@ -200,7 +200,7 @@ $hasAny = $unseenHearings->isNotEmpty() || $unseenMsgs->isNotEmpty() || $unseenS
                 <form method="POST" action="{{ route('applicant.notifications.markOne', ['type'=>'respondent_view','sourceId'=>$v->id]) }}">
                     @csrf
                     <button class="text-xs text-slate-700 px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">
-                        Seen
+                        {{ __('app.Seen') }}
                     </button>
                 </form>
             </li>
@@ -213,7 +213,7 @@ $hasAny = $unseenHearings->isNotEmpty() || $unseenMsgs->isNotEmpty() || $unseenS
     @if($unseenStatus->isNotEmpty())
     <div class="mt-4">
         <div class="mb-1 flex items-center justify-between">
-            <div class="text-xs font-medium text-slate-500">Status updates</div>
+            <div class="text-xs font-medium text-slate-500">{{ __('app.admin_notifications.status_updates') }}</div>
             <span class="text-[11px] rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">
                 {{ $unseenStatus->count() }}
             </span>
@@ -224,7 +224,7 @@ $hasAny = $unseenHearings->isNotEmpty() || $unseenMsgs->isNotEmpty() || $unseenS
                 <a href="{{ route('applicant.cases.show', $s->case_id) }}" class="text-sm flex-1">
                     <div class="font-medium text-slate-800">{{ $s->case_number }}</div>
                     <div class="text-xs text-slate-500">
-                        {{ ucfirst($s->from_status) }} → <strong>{{ ucfirst($s->to_status) }}</strong>
+                        {{ __('app.admin_notifications.status_changed', ['from' => ucfirst($s->from_status), 'to' => ucfirst($s->to_status)]) }}
                         <span class="text-slate-400">·</span>
                         {{ \Illuminate\Support\Carbon::parse($s->created_at)->diffForHumans() }}
                     </div>
@@ -232,7 +232,7 @@ $hasAny = $unseenHearings->isNotEmpty() || $unseenMsgs->isNotEmpty() || $unseenS
                 <form method="POST" action="{{ route('applicant.notifications.markOne', ['type'=>'status','sourceId'=>$s->id]) }}">
                     @csrf
                     <button class="text-xs px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">
-                        Seen
+                        {{ __('app.Seen') }}
                     </button>
                 </form>
             </li>
@@ -242,7 +242,7 @@ $hasAny = $unseenHearings->isNotEmpty() || $unseenMsgs->isNotEmpty() || $unseenS
     @endif
 
     <div class="mt-3 border-t pt-2 flex items-center justify-between">
-        <a href="{{ route('applicant.notifications.index') }}" class="text-xs text-slate-600 hover:text-slate-800">View all</a>
-        <a href="{{ route('applicant.notifications.settings') }}" class="text-xs text-slate-600 hover:text-slate-800">Settings</a>
+        <a href="{{ route('applicant.notifications.index') }}" class="text-xs text-slate-600 hover:text-slate-800">{{ __('app.View all') }}</a>
+        <a href="{{ route('applicant.notifications.settings') }}" class="text-xs text-slate-600 hover:text-slate-800">{{ __('app.Settings') }}</a>
     </div>
 </div>

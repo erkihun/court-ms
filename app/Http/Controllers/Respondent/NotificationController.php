@@ -33,7 +33,7 @@ class NotificationController extends Controller
             ]
         );
 
-        return back()->with('success', 'Marked as seen.');
+        return back()->with('success', __('app.admin_notifications.marked_as_seen'));
     }
 
     public function markAll()
@@ -50,7 +50,7 @@ class NotificationController extends Controller
             && DB::getSchemaBuilder()->hasTable('case_messages');
 
         if (!$tablesExist) {
-            return back()->with('success', 'Marked as seen.');
+            return back()->with('success', __('app.admin_notifications.marked_as_seen'));
         }
 
         $caseIds = DB::table('respondent_case_views')
@@ -111,7 +111,7 @@ class NotificationController extends Controller
             DB::table('respondent_notification_reads')->insert($rows);
         }
 
-        return back()->with('success', 'All marked as seen.');
+        return back()->with('success', __('app.admin_notifications.all_marked_as_seen'));
     }
 
     private function resolveRespondentId(): ?int
