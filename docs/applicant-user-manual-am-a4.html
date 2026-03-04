@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="am">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>የአመልካች የተጠቃሚ መመሪያ</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 16mm 14mm;
+        }
+
+        :root {
+            --ink: #111827;
+            --muted: #4b5563;
+            --line: #d1d5db;
+            --accent: #0f3d5e;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Noto Sans Ethiopic", "Nyala", "Abyssinica SIL", sans-serif;
+            color: var(--ink);
+            background: #fff;
+            line-height: 1.5;
+            font-size: 12pt;
+        }
+
+        .page {
+            max-width: 180mm;
+            margin: 0 auto;
+        }
+
+        .header {
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 10px;
+            margin-bottom: 14px;
+        }
+
+        h1 {
+            margin: 0 0 6px;
+            color: var(--accent);
+            font-size: 20pt;
+            line-height: 1.2;
+        }
+
+        .meta {
+            margin: 0;
+            color: var(--muted);
+            font-size: 10.5pt;
+        }
+
+        h2 {
+            margin: 14px 0 6px;
+            font-size: 13.5pt;
+            color: #0b2f49;
+            border-left: 4px solid var(--accent);
+            padding-left: 8px;
+        }
+
+        p {
+            margin: 4px 0;
+        }
+
+        ol, ul {
+            margin: 6px 0 6px 22px;
+            padding: 0;
+        }
+
+        li {
+            margin: 3px 0;
+        }
+
+        .note {
+            border: 1px solid var(--line);
+            background: #f9fafb;
+            padding: 8px 10px;
+            border-radius: 6px;
+            margin-top: 8px;
+        }
+
+        .footer {
+            margin-top: 18px;
+            padding-top: 8px;
+            border-top: 1px solid var(--line);
+            color: var(--muted);
+            font-size: 10pt;
+        }
+
+        @media print {
+            .page {
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <header class="header">
+            <h1>የአመልካች የተጠቃሚ መመሪያ</h1>
+            <p class="meta">Court Case Management System (CCMS) - አጭር እና ታታሚ የA4 መመሪያ</p>
+        </header>
+
+        <section>
+            <h2>1. ዓላማ</h2>
+            <p>ይህ መመሪያ አመልካቾች በስርዓቱ ላይ ለመመዝገብ፣ ጉዳይ ለማስገባት፣ ሁኔታ ለመከታተል እና ከፍርድ ቤት ጋር ለመገናኘት ይረዳል።</p>
+        </section>
+
+        <section>
+            <h2>2. መግቢያ እና መመዝገብ</h2>
+            <ol>
+                <li>የአመልካች ፖርታል ይክፈቱ።</li>
+                <li>አዲስ ተጠቃሚ ከሆኑ <strong>Register</strong> ይጫኑ።</li>
+                <li>ስም፣ ኢሜይል፣ ስልክ፣ መታወቂያ እና አድራሻ ያስገቡ።</li>
+                <li>ጠንካራ የይለፍ ቃል ይፍጠሩ እና ያስገቡ።</li>
+            </ol>
+        </section>
+
+        <section>
+            <h2>3. ግባ (Login)</h2>
+            <ol>
+                <li><strong>Login</strong> ይጫኑ።</li>
+                <li>ኢሜይል እና የይለፍ ቃል ያስገቡ።</li>
+                <li>ወደ Dashboard ይግቡ።</li>
+            </ol>
+        </section>
+
+        <section>
+            <h2>4. አዲስ ጉዳይ ማስገባት</h2>
+            <ol>
+                <li><strong>My Cases</strong> - <strong>Create New Case</strong> ይሂዱ።</li>
+                <li>የጉዳይ አይነት፣ የተጠሪ መረጃ፣ ርዕስ እና ዝርዝር ያስገቡ።</li>
+                <li>አስፈላጊ ሰነዶችን ይጫኑ (Upload)።</li>
+                <li><strong>Submit</strong> በመጫን ያስገቡ።</li>
+            </ol>
+        </section>
+
+        <section>
+            <h2>5. ሰነድ መጫን (Upload)</h2>
+            <ul>
+                <li>የተፈቀዱ ፋይል አይነቶችን ብቻ ይጠቀሙ (ለምሳሌ PDF/JPG/PNG)።</li>
+                <li>ፋይል መጠን ከተፈቀደው ገደብ እንዳይበልጥ ያረጋግጡ።</li>
+                <li>ግልጽ የፋይል ስም ይጠቀሙ (ለምሳሌ <code>Evidence_Contract.pdf</code>)።</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>6. የጉዳይ ሁኔታ መከታተል</h2>
+            <ol>
+                <li><strong>My Cases</strong> ውስጥ ጉዳዩን ይክፈቱ።</li>
+                <li>የጉዳይ ቁጥር፣ ሁኔታ፣ ቀጠሮዎች እና Timeline ይመልከቱ።</li>
+                <li>Notifications እና Messages በየጊዜው ይመልከቱ።</li>
+            </ol>
+        </section>
+
+        <section>
+            <h2>7. ደብዳቤዎች እና ማውረድ</h2>
+            <ol>
+                <li>የጉዳይ ዝርዝር ገጽ ይክፈቱ።</li>
+                <li><strong>Letters</strong> ክፍል ይምረጡ።</li>
+                <li>የተላኩ ደብዳቤዎችን ይመልከቱ፣ ያትሙ ወይም ያውርዱ።</li>
+            </ol>
+        </section>
+
+        <section>
+            <h2>8. መገለጫ ማዘመን</h2>
+            <ol>
+                <li><strong>Profile</strong> ይክፈቱ።</li>
+                <li>ስልክ፣ ኢሜይል ወይም የይለፍ ቃል ያዘምኑ።</li>
+                <li><strong>Save</strong> ይጫኑ።</li>
+            </ol>
+        </section>
+
+        <section>
+            <h2>9. የተለመዱ ችግኝቶች</h2>
+            <ul>
+                <li>ጉዳይ ካልተላከ: የተጠየቁ መስኮች ሙሉ መሆናቸውን ያረጋግጡ።</li>
+                <li>ፋይል ካልተጫነ: የፋይል አይነት/መጠን ያረጋግጡ።</li>
+                <li>መግባት ካልቻሉ: <strong>Forgot Password</strong> ይጠቀሙ።</li>
+            </ul>
+            <p class="note"><strong>ማሳሰቢያ:</strong> የይለፍ ቃልዎን ከማንም ጋር አያጋሩ፤ በጋራ ኮምፒውተር ከተጠቀሙ በኋላ ሁልጊዜ Logout ያድርጉ።</p>
+        </section>
+
+        <footer class="footer">
+            <p>የድጋፍ መረጃ: [የፍርድ ቤት ስልክ] | [ኢሜይል] | [የሥራ ሰዓት]</p>
+        </footer>
+    </main>
+</body>
+</html>
+

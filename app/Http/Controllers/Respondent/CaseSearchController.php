@@ -359,14 +359,21 @@ class CaseSearchController extends Controller
 
     private function caseCodeMatches(object $case, string $provided): bool
     {
-        $code = trim((string) ($case->code ?? ''));
-        if ($code === '') {
+        $stored = trim((string) ($case->code ?? ''));
+        $input = trim((string) $provided);
+
+        if ($stored === '' || $input === '') {
             return false;
         }
-        if (!preg_match('/^\d{5}$/', $provided)) {
-            return false;
-        }
-        return hash_equals($code, $provided);
+
+        // Support legacy and current code formats by matching normalized values.
+        // Normalize by removing spaces and comparing case-insensitively.
+        $normalize = static fn (string $value): string => mb_strtoupper(
+            preg_replace('/\s+/u', '', $value) ?? '',
+            'UTF-8'
+        );
+
+        return hash_equals($normalize($stored), $normalize($input));
     }
 
     private function grantCaseAccess(int $caseId): void

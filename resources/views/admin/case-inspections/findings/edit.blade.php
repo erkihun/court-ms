@@ -4,7 +4,7 @@
     <div class="p-6 bg-white rounded-xl border border-gray-200">
         <h1 class="text-2xl font-semibold text-gray-900 mb-4">{{ __('case_inspections.findings.edit_title') }}</h1>
 
-        <form method="POST" action="{{ route('case-inspection-findings.update', $finding) }}" class="space-y-6">
+        <form method="POST" action="{{ route('case-inspection-findings.update', $finding) }}" enctype="multipart/form-data" class="space-y-6">
             @method('PATCH')
             @include('admin.case-inspections.findings._form')
 

@@ -54,6 +54,13 @@
                             @if($finding->accepted_at)
                             <span class="ml-2 inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">{{ __('case_inspections.findings.accepted') }}</span>
                             @endif
+                            @if($finding->attachment_path)
+                            <div class="mt-1">
+                                <a href="{{ route('case-inspection-findings.attachment', $finding) }}" target="_blank" rel="noopener noreferrer" class="text-xs text-blue-700 hover:text-blue-800 underline">
+                                    {{ __('case_inspections.findings.labels.download_attachment') }}
+                                </a>
+                            </div>
+                            @endif
                         </td>
                         <td class="px-4 py-3 text-sm text-gray-700">{{ \App\Support\EthiopianDate::format($finding->finding_date) }}</td>
                         <td class="px-4 py-3 text-sm text-gray-700">{{ __('case_inspections.severity.' . $finding->severity) }}</td>

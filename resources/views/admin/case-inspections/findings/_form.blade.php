@@ -47,9 +47,17 @@
     </div>
 
     <div>
-        <label class="block text-sm font-medium text-gray-700">{{ __('case_inspections.findings.form.recommendation') }}</label>
-        <textarea name="recommendation" rows="5"
-            class="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">{{ old('recommendation', $finding->recommendation ?? '') }}</textarea>
-        @error('recommendation')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+        <label class="block text-sm font-medium text-gray-700">{{ __('case_inspections.findings.form.attachment_pdf') }}</label>
+        <input type="file" name="attachment_pdf" accept="application/pdf"
+            class="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+        <p class="mt-1 text-xs text-gray-500">{{ __('case_inspections.findings.form.attachment_hint') }}</p>
+        @if(!empty($finding?->attachment_path))
+        <p class="mt-1 text-xs">
+            <a href="{{ route('case-inspection-findings.attachment', $finding) }}" target="_blank" rel="noopener noreferrer" class="text-blue-700 hover:text-blue-800 underline">
+                {{ __('case_inspections.findings.form.current_attachment') }}: {{ $finding->attachment_original_name ?? basename($finding->attachment_path) }}
+            </a>
+        </p>
+        @endif
+        @error('attachment_pdf')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
     </div>
 </div>

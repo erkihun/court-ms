@@ -583,6 +583,9 @@ Route::middleware(SetLocale::class)->group(function () {
                 Route::post('/{finding}/accept', [CaseInspectionFindingController::class, 'accept'])
                     ->middleware('perm:inspection-findings.manage')
                     ->name('accept');
+                Route::get('/{finding}/attachment', [CaseInspectionFindingController::class, 'downloadAttachment'])
+                    ->middleware('perm:inspection-findings.manage')
+                    ->name('attachment');
                 Route::delete('/{finding}', [CaseInspectionFindingController::class, 'destroy'])
                     ->middleware('perm:inspection-findings.manage')
                     ->name('destroy');

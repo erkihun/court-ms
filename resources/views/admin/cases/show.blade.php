@@ -1223,14 +1223,20 @@
                                                 <div><span class="text-gray-500">{{ __('case_inspections.findings.labels.finding_date') }}:</span> <span class="text-gray-900">{{ \Illuminate\Support\Carbon::parse($finding->finding_date)->format('Y-m-d') }}</span></div>
                                                 <div><span class="text-gray-500">{{ __('case_inspections.findings.labels.severity') }}:</span> <span class="text-gray-900">{{ __('case_inspections.severity.' . $finding->severity) }}</span></div>
                                                 <div><span class="text-gray-500">{{ __('case_inspections.findings.labels.recorded_by') }}:</span> <span class="text-gray-900">{{ $finding->recorded_by_name ?? __('case_inspections.common.no_data') }}</span></div>
+                                                <div>
+                                                    <span class="text-gray-500">{{ __('case_inspections.findings.labels.attachment_pdf') }}:</span>
+                                                    @if(!empty($finding->attachment_path))
+                                                    <a href="{{ route('case-inspection-findings.attachment', $finding->id) }}" target="_blank" rel="noopener noreferrer" class="text-blue-700 hover:text-blue-800 underline">
+                                                        {{ $finding->attachment_original_name ?? __('case_inspections.findings.labels.download_attachment') }}
+                                                    </a>
+                                                    @else
+                                                    <span class="text-gray-900">{{ __('case_inspections.common.no_data') }}</span>
+                                                    @endif
+                                                </div>
                                             </div>
                                             <div>
                                                 <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{{ __('case_inspections.findings.labels.details') }}</p>
                                                 <div class="text-sm text-gray-800 whitespace-pre-wrap">{{ $finding->details }}</div>
-                                            </div>
-                                            <div>
-                                                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{{ __('case_inspections.findings.labels.recommendation') }}</p>
-                                                <div class="text-sm text-gray-800 whitespace-pre-wrap">{{ $finding->recommendation ?: __('case_inspections.common.no_data') }}</div>
                                             </div>
                                         </div>
                                     </td>

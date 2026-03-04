@@ -105,9 +105,10 @@ return [
             'finding_date' => 'Finding Date',
             'severity' => 'Severity',
             'recorded_by' => 'Recorded By',
+            'attachment_pdf' => 'Attachment (PDF)',
+            'download_attachment' => 'Download attachment',
             'accepted' => 'Acceptance',
             'details' => 'Details',
-            'recommendation' => 'Recommendation',
         ],
         'confirm_delete' => 'Delete this inspection finding?',
         'form' => [
@@ -117,7 +118,9 @@ return [
             'severity' => 'Severity',
             'title' => 'Title',
             'details' => 'Details',
-            'recommendation' => 'Recommendation',
+            'attachment_pdf' => 'Attachment (PDF)',
+            'attachment_hint' => 'Upload a PDF file only (max 2 MB).',
+            'current_attachment' => 'Current attachment',
         ],
     ],
 ];

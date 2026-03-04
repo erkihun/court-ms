@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CaseInspectionFinding;
 use App\Models\CaseInspectionRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class CaseInspectionFindingController extends Controller
 {
@@ -80,8 +81,8 @@ class CaseInspectionFindingController extends Controller
             'finding_date' => ['required', 'date'],
             'title' => ['required', 'string', 'max:255'],
             'details' => ['required', 'string'],
-            'recommendation' => ['nullable', 'string'],
             'severity' => ['required', 'in:low,medium,high,critical'],
+            'attachment_pdf' => ['nullable', 'file', 'mimes:pdf', 'max:2048'],
         ]);
 
         $requestRecord = CaseInspectionRequest::findOrFail((int) $data['case_inspection_request_id']);
@@ -91,12 +92,21 @@ class CaseInspectionFindingController extends Controller
                 ->withInput();
         }
 
+        $attachmentPath = null;
+        $attachmentOriginalName = null;
+        if ($request->hasFile('attachment_pdf')) {
+            $file = $request->file('attachment_pdf');
+            $attachmentPath = $file->store('case-inspections/findings', 'local');
+            $attachmentOriginalName = $file->getClientOriginalName();
+        }
+
         CaseInspectionFinding::create([
             'case_inspection_request_id' => $data['case_inspection_request_id'],
             'finding_date' => $data['finding_date'],
             'title' => $data['title'],
             'details' => $data['details'],
-            'recommendation' => $data['recommendation'] ?? null,
+            'attachment_path' => $attachmentPath,
+            'attachment_original_name' => $attachmentOriginalName,
             'severity' => $data['severity'],
             'recorded_by_user_id' => $request->user()?->id,
             'created_by_user_id' => $request->user()?->id,
@@ -157,8 +167,8 @@ class CaseInspectionFindingController extends Controller
             'finding_date' => ['required', 'date'],
             'title' => ['required', 'string', 'max:255'],
             'details' => ['required', 'string'],
-            'recommendation' => ['nullable', 'string'],
             'severity' => ['required', 'in:low,medium,high,critical'],
+            'attachment_pdf' => ['nullable', 'file', 'mimes:pdf', 'max:2048'],
         ]);
 
         $requestRecord = CaseInspectionRequest::findOrFail((int) $data['case_inspection_request_id']);
@@ -168,12 +178,24 @@ class CaseInspectionFindingController extends Controller
                 ->withInput();
         }
 
+        $attachmentPath = $finding->attachment_path;
+        $attachmentOriginalName = $finding->attachment_original_name;
+        if ($request->hasFile('attachment_pdf')) {
+            if ($attachmentPath && Storage::disk('local')->exists($attachmentPath)) {
+                Storage::disk('local')->delete($attachmentPath);
+            }
+            $file = $request->file('attachment_pdf');
+            $attachmentPath = $file->store('case-inspections/findings', 'local');
+            $attachmentOriginalName = $file->getClientOriginalName();
+        }
+
         $finding->update([
             'case_inspection_request_id' => $data['case_inspection_request_id'],
             'finding_date' => $data['finding_date'],
             'title' => $data['title'],
             'details' => $data['details'],
-            'recommendation' => $data['recommendation'] ?? null,
+            'attachment_path' => $attachmentPath,
+            'attachment_original_name' => $attachmentOriginalName,
             'severity' => $data['severity'],
             'updated_by_user_id' => $request->user()?->id,
         ]);
@@ -188,6 +210,10 @@ class CaseInspectionFindingController extends Controller
             return redirect()
                 ->route('case-inspection-findings.show', $finding)
                 ->with('error', __('case_inspections.findings.accepted_locked'));
+        }
+
+        if ($finding->attachment_path && Storage::disk('local')->exists($finding->attachment_path)) {
+            Storage::disk('local')->delete($finding->attachment_path);
         }
 
         $finding->delete();
@@ -211,6 +237,21 @@ class CaseInspectionFindingController extends Controller
         ]);
 
         return back()->with('success', __('case_inspections.findings.accepted_success'));
+    }
+
+    public function downloadAttachment(CaseInspectionFinding $finding)
+    {
+        $this->authorizeFindingAccess($finding);
+        abort_if(!$finding->attachment_path, 404);
+        abort_unless(Storage::disk('local')->exists($finding->attachment_path), 404);
+
+        $filename = $finding->attachment_original_name ?: ('finding-' . $finding->id . '.pdf');
+
+        return Storage::disk('local')->response(
+            $finding->attachment_path,
+            $filename,
+            ['Content-Type' => 'application/pdf']
+        );
     }
 
     private function canAccessAllFindings(): bool
