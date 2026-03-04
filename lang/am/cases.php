@@ -365,9 +365,9 @@ return [
     'show' => [
         'inspection_request' => 'ለኢንስፔክሽን ላክ',
         'review_actions' => 'የግምገማ እርምጃዎች',
-        'accept' => 'ፍቀድ',
-        'return' => 'መልስ',
-        'reject' => 'አትቀበል',
+        'accept' => 'ተቀብለናል',
+        'return' => 'ማስካከያ ያስፈልገዋል',
+        'reject' => 'ውድቅ የተደረገ',
         'bench_note' => 'የችሎት ውሎ',
         'write_letter' => 'ደብዳቤ ጻፍ',
         'give_decision' => 'ውሳኔ ስጥ',
