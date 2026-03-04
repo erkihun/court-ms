@@ -23,10 +23,7 @@ class CaseSearchController extends Controller
         $codeError = false;
 
         if ($caseNumber !== '') {
-            $case = DB::table('court_cases')
-                ->select('id', 'case_number', 'code', 'title', 'status', 'created_at', 'applicant_id')
-                ->where('case_number', $caseNumber)
-                ->first();
+            $case = $this->findCaseForSearch($caseNumber);
 
             // Prevent applicants from viewing/searching their own cases while in respondent mode.
             $applicantId = Auth::guard('applicant')->id();
@@ -359,21 +356,74 @@ class CaseSearchController extends Controller
 
     private function caseCodeMatches(object $case, string $provided): bool
     {
-        $stored = trim((string) ($case->code ?? ''));
-        $input = trim((string) $provided);
+        $stored = $this->normalizeCaseCode((string) ($case->code ?? ''));
+        $input = $this->normalizeCaseCode($provided);
 
         if ($stored === '' || $input === '') {
             return false;
         }
 
-        // Support legacy and current code formats by matching normalized values.
-        // Normalize by removing spaces and comparing case-insensitively.
-        $normalize = static fn (string $value): string => mb_strtoupper(
-            preg_replace('/\s+/u', '', $value) ?? '',
-            'UTF-8'
-        );
+        return hash_equals($stored, $input);
+    }
 
-        return hash_equals($normalize($stored), $normalize($input));
+    private function findCaseForSearch(string $caseNumber): ?object
+    {
+        $select = ['id', 'case_number', 'code', 'title', 'status', 'created_at', 'applicant_id'];
+
+        $exact = DB::table('court_cases')
+            ->select($select)
+            ->where('case_number', $caseNumber)
+            ->first();
+        if ($exact) {
+            return $exact;
+        }
+
+        $normalizedInput = $this->normalizeCaseNumber($caseNumber);
+        if ($normalizedInput === '') {
+            return null;
+        }
+
+        // Fallback for copied values that include hidden/variant separators or extra spaces.
+        return DB::table('court_cases')
+            ->select($select)
+            ->get()
+            ->first(fn ($row) => $this->normalizeCaseNumber((string) ($row->case_number ?? '')) === $normalizedInput);
+    }
+
+    private function normalizeCaseNumber(string $value): string
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return '';
+        }
+
+        // Remove invisible format characters and all spaces.
+        $value = preg_replace('/\p{Cf}+/u', '', $value) ?? $value;
+        $value = preg_replace('/\s+/u', '', $value) ?? $value;
+
+        // Normalize common slash variants users may paste.
+        $value = str_replace(['／', '⁄', '∕', '\\'], '/', $value);
+
+        return mb_strtoupper($value, 'UTF-8');
+    }
+
+    private function normalizeCaseCode(string $value): string
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return '';
+        }
+
+        $map = [
+            '٠' => '0', '١' => '1', '٢' => '2', '٣' => '3', '٤' => '4',
+            '٥' => '5', '٦' => '6', '٧' => '7', '٨' => '8', '٩' => '9',
+            '۰' => '0', '۱' => '1', '۲' => '2', '۳' => '3', '۴' => '4',
+            '۵' => '5', '۶' => '6', '۷' => '7', '۸' => '8', '۹' => '9',
+        ];
+        $value = strtr($value, $map);
+        $value = preg_replace('/\s+/u', '', $value) ?? $value;
+
+        return mb_strtoupper($value, 'UTF-8');
     }
 
     private function grantCaseAccess(int $caseId): void
