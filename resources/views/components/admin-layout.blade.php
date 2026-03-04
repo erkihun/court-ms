@@ -73,7 +73,7 @@
     @vite(['resources/css/app.css','resources/js/app.js'])
     @livewireStyles
     @if(app()->getLocale() === 'am')
-    <link rel="stylesheet" href="{{ asset('vendor/etcalander/css/jquery.calendars.picker.css') }}">
+    <link rel="stylesheet" href="{{ asset('vendor/modern-ethiopian-calendar/css/datepicker.css') }}">
     @endif
     @stack('styles')
 </head>

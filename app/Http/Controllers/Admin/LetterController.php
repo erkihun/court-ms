@@ -483,6 +483,7 @@ class LetterController extends Controller
             '{case_number}' => (string) ($case->case_number ?? ''),
             '{case_code}' => (string) ($case->code ?? ''),
             '{case_title}' => (string) ($case->title ?? ''),
+            '{case_filing_date}' => (string) ($case->filing_date ? \App\Support\EthiopianDate::format($case->filing_date) : ''),
             '{case_status}' => (string) ($case->status ?? ''),
             '{respondent_name}' => (string) ($case->respondent_name ?? ''),
             '{applicant_name}' => trim((string) ($applicant?->full_name ?? '')),

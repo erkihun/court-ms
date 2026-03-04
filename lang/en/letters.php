@@ -84,6 +84,8 @@ return [
 
     'preview' => [
         'ref_no' => 'Ref No:',
+        'case_no' => 'Case No',
+        'code' => 'Code',
         'date' => 'Date:',
         'subject' => 'Subject:',
         'closing' => 'Sincerely,',

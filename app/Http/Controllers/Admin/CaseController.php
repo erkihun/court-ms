@@ -391,7 +391,8 @@ class CaseController extends Controller
                 'ass.email as assignee_email',
                 'ass_team.name as assignee_team_name',
                 DB::raw("CONCAT(COALESCE(ap.first_name,''),' ',COALESCE(ap.last_name,'')) as applicant_name"),
-                'ap.email as applicant_email'
+                'ap.email as applicant_email',
+                'ap.address as applicant_profile_address'
             )
             ->where('c.id', $id)
             ->first();
@@ -411,7 +412,9 @@ class CaseController extends Controller
             $canAssignTeams = Auth::user()?->hasPermission('cases.assign.team') ?? false;
 
             if ($isTeamMember && !$isLeader && !$canAssignTeams) {
-                abort_if((int) $case->assigned_member_user_id !== (int) $uid, 403, 'You do not have access to this case.');
+                // Backward compatibility: many cases are assigned via assigned_user_id only.
+                $assignedTo = (int) ($case->assigned_member_user_id ?? $case->assigned_user_id ?? 0);
+                abort_if($assignedTo !== (int) $uid, 403, 'You do not have access to this case.');
             }
         }
 

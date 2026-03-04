@@ -303,7 +303,7 @@
     @push('scripts')
     <script>
     (function() {
-        const templates = @json($inlineTemplatesData ?? []);
+        const templates = {{ \Illuminate\Support\Js::from($inlineTemplatesData ?? []) }};
         const selectEl = document.getElementById('inline-template-select');
         const loadBtn = document.getElementById('inline-template-load');
         const hiddenTemplate = document.getElementById('inline-template-hidden');
@@ -316,7 +316,7 @@
         const summaryTitle = document.getElementById('inline-template-title');
         const summaryCategory = document.getElementById('inline-template-category');
         const summaryExcerpt = document.getElementById('inline-template-excerpt');
-        const categoryFallback = @json(__('letters.form.category_fallback'));
+        const categoryFallback = {{ \Illuminate\Support\Js::from(__('letters.form.category_fallback')) }};
 
         const getTpl = (id) => templates[id] || templates[String(id)] || templates[Number(id)];
 
@@ -389,7 +389,7 @@
         const handleLoad = () => {
             const id = selectEl?.value;
             if (!id) {
-                alert(@json(__('letters.form.select_placeholder')));
+                alert({{ \Illuminate\Support\Js::from(__('letters.form.select_placeholder')) }});
                 return;
             }
             const tpl = getTpl(id);
@@ -965,7 +965,13 @@
                                     {{ __('cases.summary.applicant') }}</div>
                                 <p class="font-semibold text-gray-900">
                                     {{ $case->applicant_name ?? $case->applicant_full_name ?? '—' }}</p>
-                                <p class="text-xs text-gray-500">{{ $case->applicant_address ?? '—' }}</p>
+                                @php
+                                $applicantAddress = trim((string) ($case->applicant_address ?? ''));
+                                if ($applicantAddress === '') {
+                                    $applicantAddress = trim((string) ($case->applicant_profile_address ?? ''));
+                                }
+                                @endphp
+                                <p class="text-xs text-gray-500 whitespace-pre-line">{{ $applicantAddress !== '' ? $applicantAddress : '—' }}</p>
                             </div>
                             <div>
                                 <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">
@@ -1264,7 +1270,13 @@
                                 </div>
                                 <div>
                                     <dt class="text-xs text-gray-500">{{ __('cases.address') }}</dt>
-                                    <dd>{{ $case->applicant_address ?? '&mdash;' }}</dd>
+                                    @php
+                                    $applicantAddress = trim((string) ($case->applicant_address ?? ''));
+                                    if ($applicantAddress === '') {
+                                        $applicantAddress = trim((string) ($case->applicant_profile_address ?? ''));
+                                    }
+                                    @endphp
+                                    <dd class="whitespace-pre-line">{{ $applicantAddress !== '' ? $applicantAddress : '—' }}</dd>
                                 </div>
                                 <div>
                                     <dt class="text-xs text-gray-500">{{ __('cases.applicant_email') }}</dt>
@@ -1996,7 +2008,7 @@
 
                                                 @if(!$caseLocked && $canDeleteHearings)
                                                 <form method="POST" action="{{ route('cases.hearings.delete',$h->id) }}"
-                                                    onsubmit="return confirm(@json(__('cases.hearings.remove_confirm')))">
+                                                    onsubmit="return confirm({{ \Illuminate\Support\Js::from(__('cases.hearings.remove_confirm')) }})">
                                                     @csrf @method('DELETE')
                                                     <button
                                                         class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors duration-150 flex items-center gap-1">
@@ -2311,7 +2323,7 @@
                                 @endif
                                 @if($canDeleteFiles)
                                 <form method="POST" action="{{ route('cases.files.delete', [$case->id, $f->id]) }}"
-                                    onsubmit="return confirm(@json(__('cases.files.remove_confirm')))">
+                                    onsubmit="return confirm({{ \Illuminate\Support\Js::from(__('cases.files.remove_confirm')) }})">
                                     @csrf @method('DELETE')
                                     <button
                                         class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors duration-150 flex items-center gap-1">
@@ -2336,11 +2348,13 @@
 
         <script>
         function openReviewModal(decision) {
-            const existingReviewNote = @json(old('note', $reviewNote ?? ''));
+            const existingReviewNote = {{ \Illuminate\Support\Js::from(old('note', $reviewNote ?? '')) }};
             const modal = document.getElementById('review-modal');
             document.getElementById('review-decision').value = decision;
             document.getElementById('review-note').value = existingReviewNote || '';
-            const title = decision === 'return' ? @json(__('cases.show.return_for_correction')) : @json(__('cases.show.reject_case'));
+            const title = decision === 'return'
+                ? {{ \Illuminate\Support\Js::from(__('cases.show.return_for_correction')) }}
+                : {{ \Illuminate\Support\Js::from(__('cases.show.reject_case')) }};
             document.getElementById('review-modal-title').textContent = title;
             modal.classList.remove('hidden');
             modal.classList.add('flex');
@@ -2384,7 +2398,7 @@
             };
             return window.hearingTimeHelpers;
         };
-        window.caseHearingDateSet = new Set(@json($hearingDateKeys));
+        window.caseHearingDateSet = new Set({{ \Illuminate\Support\Js::from($hearingDateKeys) }});
 
         document.addEventListener('DOMContentLoaded', () => {
             const form = document.querySelector('[data-hearing-create-form]');
@@ -2396,7 +2410,7 @@
             } = window.getHearingTimeHelpers();
             const existingHearingDates = window.caseHearingDateSet || new Set();
             const duplicateDateMessage =
-                @json(__('cases.show.duplicate_hearing_date'));
+                {{ \Illuminate\Support\Js::from(__('cases.show.duplicate_hearing_date')) }};
             const convertToGregorian = (value) => {
                 if (typeof window.hearingConvertToGregorian === 'function') {
                     return window.hearingConvertToGregorian(value);
@@ -2447,7 +2461,7 @@
                     }
                     if (!dateVal) {
                         e.preventDefault();
-                        alert(@json(__('cases.show.select_hearing_date')));
+                        alert({{ \Illuminate\Support\Js::from(__('cases.show.select_hearing_date')) }});
                         return;
                     }
                     if (isDateUnavailable(dateVal)) {
@@ -2492,7 +2506,7 @@
                 editForm.addEventListener('submit', (e) => {
                     if (!editDate.value) {
                         e.preventDefault();
-                        alert(@json(__('cases.show.select_hearing_date')));
+                        alert({{ \Illuminate\Support\Js::from(__('cases.show.select_hearing_date')) }});
                         return;
                     }
                     syncHidden();
@@ -2506,8 +2520,8 @@
         <script>
         (function() {
             const TINY_BASE = "{{ asset('vendor/tinymce') }}";
-            const categoryFallback = @json(__('letters.form.category_fallback'));
-            const inlineTemplates = @json($inlineTemplatesData) || {};
+            const categoryFallback = {{ \Illuminate\Support\Js::from(__('letters.form.category_fallback')) }};
+            const inlineTemplates = {{ \Illuminate\Support\Js::from($inlineTemplatesData) }} || {};
             let pendingBody = '';
 
             const common = {
@@ -2692,7 +2706,7 @@
                     e.preventDefault();
                     const id = templateSelect?.value;
                     if (!id) {
-                        alert(@json(__('letters.form.select_placeholder')));
+                        alert({{ \Illuminate\Support\Js::from(__('letters.form.select_placeholder')) }});
                         return;
                     }
                     fillFromTemplate(id);
@@ -2822,7 +2836,7 @@
                         const picked = new Date(date);
                         picked.setHours(0, 0, 0, 0);
                         if (picked < minDate) {
-                            alert(@json(__('cases.show.select_today_or_future')));
+                            alert({{ \Illuminate\Support\Js::from(__('cases.show.select_today_or_future')) }});
                             input.value = '';
                             onValidPick?.(null, '');
                             return;
@@ -2849,7 +2863,7 @@
                         value;
                     const normalized = (gregorianValue || '').split('T')[0];
                     if (normalized && dateSet.has(normalized)) {
-                        alert(@json(__('cases.show.duplicate_hearing_date')));
+                        alert({{ \Illuminate\Support\Js::from(__('cases.show.duplicate_hearing_date')) }});
                         window.hearingDateState?.setFromDate?.(null);
                         dateInput.value = '';
                         return;
@@ -2932,7 +2946,7 @@
                     ->values()
                     ->toArray();
                 @endphp
-                const fcEvents = @json($fcEvents);
+                const fcEvents = {{ \Illuminate\Support\Js::from($fcEvents) }};
                 const eventMetaByDate = {};
                 const eventDateSet = new Set(
                     (fcEvents || [])
@@ -2959,7 +2973,7 @@
                     const dd = String(d.getDate()).padStart(2, '0');
                     const dateStr = `${yyyy}-${mm}-${dd}`;
                     if (existingHearingDates.has(dateStr)) {
-                        alert(@json(__('cases.show.duplicate_hearing_date')));
+                        alert({{ \Illuminate\Support\Js::from(__('cases.show.duplicate_hearing_date')) }});
                         if (dateField) {
                             dateField.value = '';
                         }
@@ -3033,7 +3047,7 @@
                 // Highlight existing hearings after initial render
                 requestAnimationFrame(highlightEventDays);
             } else if (calendarEl) {
-                calendarEl.innerHTML = `<div class=" text-red-600">${@json(__('cases.show.calendar_load_failed'))}</div>`;
+                calendarEl.innerHTML = `<div class=" text-red-600">${{{ \Illuminate\Support\Js::from(__('cases.show.calendar_load_failed')) }}}</div>`;
             }
 
             // Convert displayed hearing dates to Ethiopian calendar (UI only)

@@ -408,9 +408,9 @@
                     <strong>{{ __('letters.preview.ref_no') }}</strong>
                     {{ $letter->reference_number ?? __('letters.cards.missing') }}<br>
                     <span style="font-size: 11pt;">
-                        <strong>{{ __('cases.case_number') }}:</strong> {{ $letter->case_number ?? '—' }}
+                        <strong>{{ __('letters.preview.case_no') }}:</strong> {{ $letter->case_number ?? '—' }}
                         |
-                        <strong>Code:</strong> {{ $caseCode ?? '—' }}
+                        <strong>{{ __('letters.preview.code') }}:</strong> {{ $caseCode ?? '—' }}
                     </span>
                 </div>
                 <div>
