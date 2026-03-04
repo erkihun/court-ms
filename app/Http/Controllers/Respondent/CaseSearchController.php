@@ -24,7 +24,7 @@ class CaseSearchController extends Controller
 
         if ($caseNumber !== '') {
             $case = DB::table('court_cases')
-                ->select('id', 'case_number', 'title', 'status', 'created_at', 'applicant_id')
+                ->select('id', 'case_number', 'code', 'title', 'status', 'created_at', 'applicant_id')
                 ->where('case_number', $caseNumber)
                 ->first();
 
