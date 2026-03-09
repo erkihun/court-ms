@@ -319,7 +319,10 @@ class ModernCalendar {
   }
   
   previousMonth() {
-    this.viewDate.setMonth(this.viewDate.getMonth() - 1);
+    // Prevent JS Date overflow (e.g. 31st -> skips a month)
+    const year = this.viewDate.getFullYear();
+    const month = this.viewDate.getMonth();
+    this.viewDate = new Date(year, month - 1, 1);
     this.render();
     if (this.options.onMonthChange) {
       this.options.onMonthChange(this.viewDate);
@@ -327,7 +330,10 @@ class ModernCalendar {
   }
   
   nextMonth() {
-    this.viewDate.setMonth(this.viewDate.getMonth() + 1);
+    // Prevent JS Date overflow (e.g. 31st -> skips a month)
+    const year = this.viewDate.getFullYear();
+    const month = this.viewDate.getMonth();
+    this.viewDate = new Date(year, month + 1, 1);
     this.render();
     if (this.options.onMonthChange) {
       this.options.onMonthChange(this.viewDate);

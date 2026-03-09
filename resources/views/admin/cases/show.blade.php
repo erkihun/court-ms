@@ -1345,7 +1345,7 @@
                             {{ __('cases.documents.no_documents') }}
                         </div>
                         @else
-                        <div class="overflow-x-auto rounded-lg border border-gray-100">
+                        <div class="relative overflow-visible rounded-lg border border-gray-100">
                             <table class="min-w-full ">
                                 <thead class="bg-gray-50 text-gray-600">
                                     <tr>
@@ -1429,7 +1429,7 @@
                             {{ __('cases.witnesses_section.no_witnesses') }}
                         </div>
                         @else
-                        <div class="overflow-x-auto rounded-lg border border-gray-100">
+                        <div class="relative overflow-x-auto overflow-y-visible rounded-lg border border-gray-100">
                             <table class="min-w-full ">
                                 <thead class="bg-gray-50 text-gray-600">
                                     <tr>
@@ -1960,7 +1960,7 @@
                                         <td class="px-3 py-2">
                                             <div class="flex flex-wrap gap-2">
                                                 @if(!$caseLocked && $canUpdateHearings)
-                                                <details class="relative">
+                                                <details class="relative z-50">
                                                     <summary
                                                         class="px-3 py-1.5 rounded-lg bg-white text-xs cursor-pointer text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 flex items-center gap-1">
                                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3"
@@ -1972,7 +1972,7 @@
                                                         {{ __('cases.general.edit') }}
                                                     </summary>
                                                     <div
-                                                        class="absolute right-0 z-10 mt-2 w-80 p-4 rounded-lg border border-gray-200 bg-white shadow-xl">
+                                                        class="relative z-[9999] mt-2 w-80 max-h-[75vh] overflow-y-auto overscroll-contain p-4 rounded-lg border border-gray-200 bg-white shadow-xl">
                                                         <form method="POST"
                                                             action="{{ route('cases.hearings.update',$h->id) }}"
                                                             class="space-y-3" data-hearing-edit-form>
@@ -2487,12 +2487,18 @@
             const editForms = document.querySelectorAll('[data-hearing-edit-form]');
             const buildDateValue = (dateString, timeString) => {
                 if (!dateString) return '';
-                const t = timeString || '00:00';
+                const t = normalizeToAm(timeString || defaultTime);
                 const toGreg = (typeof window.hearingConvertToGregorian === 'function') ?
                     window.hearingConvertToGregorian :
                     (v) => v;
                 const gregDate = toGreg(dateString) || dateString;
                 return `${gregDate}T${t}:00`;
+            };
+            const extractTimeValue = (dateTimeValue) => {
+                if (!dateTimeValue) return '';
+                const parts = String(dateTimeValue).split('T');
+                if (parts.length < 2) return '';
+                return parts[1].slice(0, 5);
             };
 
             editForms.forEach((editForm) => {
@@ -2502,18 +2508,26 @@
                 if (!editDate || !editTarget) return;
 
                 const syncHidden = () => {
+                    if (!editDate.value) return;
                     editTarget.value = buildDateValue(editDate.value, editTime?.value);
                 };
 
+                if (editTime && !editTime.value) {
+                    const existingTime = extractTimeValue(editTarget.value);
+                    editTime.value = normalizeToAm(existingTime || defaultTime);
+                }
+
                 editDate.addEventListener('input', syncHidden);
                 editTime?.addEventListener('input', syncHidden);
-                syncHidden();
 
                 editForm.addEventListener('submit', (e) => {
                     if (!editDate.value) {
                         e.preventDefault();
                         alert({{ \Illuminate\Support\Js::from(__('cases.show.select_hearing_date')) }});
                         return;
+                    }
+                    if (editTime && !editTime.value) {
+                        editTime.value = defaultTime;
                     }
                     syncHidden();
                 });
@@ -2906,7 +2920,7 @@
                             return;
                         }
                         const timeVal = normalizeToAm(timeEl?.value || defaultTime);
-                        const gregDateStr = convertToGregorian(value) || value;
+                        const gregDateStr = toGregorianString(value) || value;
                         target.value = `${gregDateStr}T${timeVal}:00`;
                         if (timeEl && !timeEl.value) {
                             timeEl.value = timeVal;

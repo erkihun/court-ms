@@ -52,6 +52,8 @@ class ModernDatePicker {
     this.input.parentNode.insertBefore(wrapper, this.input);
     wrapper.appendChild(this.input);
     wrapper.appendChild(icon);
+    this.wrapper = wrapper;
+    this.icon = icon;
     
     icon.addEventListener('click', () => this.toggle());
   }
@@ -71,9 +73,14 @@ class ModernDatePicker {
   attachEvents() {
     this.input.addEventListener('click', () => this.show());
     this.input.addEventListener('focus', () => this.show());
+    this.popup.addEventListener('click', (e) => e.stopPropagation());
+    this.wrapper?.addEventListener('click', (e) => e.stopPropagation());
     
     document.addEventListener('click', (e) => {
-      if (!this.popup.contains(e.target) && e.target !== this.input) {
+      const path = typeof e.composedPath === 'function' ? e.composedPath() : [];
+      const clickedInsidePopup = path.includes(this.popup) || this.popup.contains(e.target);
+      const clickedTrigger = this.input === e.target || this.wrapper?.contains(e.target);
+      if (!clickedInsidePopup && !clickedTrigger) {
         this.hide();
       }
     });
