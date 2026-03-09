@@ -294,9 +294,22 @@
         }
     }
     </style>
+    @php
+    $assetVersion = function (string $path): string {
+        try {
+            return (string) filemtime(public_path($path));
+        } catch (\Throwable $e) {
+            return (string) now()->timestamp;
+        }
+    };
+    $modernCalendarCssV = $assetVersion('vendor/modern-ethiopian-calendar/css/modern-calendar.css');
+    $modernDatepickerCssV = $assetVersion('vendor/modern-ethiopian-calendar/css/datepicker.css');
+    @endphp
     {{-- Modern Ethiopian calendar assets --}}
-    <link rel="stylesheet" href="{{ asset('vendor/modern-ethiopian-calendar/css/modern-calendar.css') }}">
-    <link rel="stylesheet" href="{{ asset('vendor/modern-ethiopian-calendar/css/datepicker.css') }}">
+    <link rel="stylesheet"
+        href="{{ asset('vendor/modern-ethiopian-calendar/css/modern-calendar.css') }}?v={{ $modernCalendarCssV }}">
+    <link rel="stylesheet"
+        href="{{ asset('vendor/modern-ethiopian-calendar/css/datepicker.css') }}?v={{ $modernDatepickerCssV }}">
 
     @endpush
 
@@ -2763,8 +2776,12 @@
         @endpush
 
         @push('scripts')
-        <script src="{{ asset('vendor/modern-ethiopian-calendar/js/modern-calendar.js') }}"></script>
-        <script src="{{ asset('vendor/modern-ethiopian-calendar/js/datepicker.js') }}"></script>
+        @php
+        $modernCalendarJsV = $assetVersion('vendor/modern-ethiopian-calendar/js/modern-calendar.js');
+        $modernDatepickerJsV = $assetVersion('vendor/modern-ethiopian-calendar/js/datepicker.js');
+        @endphp
+        <script src="{{ asset('vendor/modern-ethiopian-calendar/js/modern-calendar.js') }}?v={{ $modernCalendarJsV }}"></script>
+        <script src="{{ asset('vendor/modern-ethiopian-calendar/js/datepicker.js') }}?v={{ $modernDatepickerJsV }}"></script>
         <script>
         document.addEventListener('DOMContentLoaded', () => {
             const hasModernPicker = (typeof ModernDatePicker !== 'undefined');
