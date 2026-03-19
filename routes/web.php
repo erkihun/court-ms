@@ -352,6 +352,9 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::get('/cases/{case}/files/{file}/download', [SecureFileController::class, 'caseFile'])
                 ->middleware('perm:cases.view')
                 ->name('cases.files.download');
+            Route::get('/respondent-responses/{response}/download', [SecureFileController::class, 'respondentResponse'])
+                ->middleware('perm:cases.view')
+                ->name('respondent-responses.download');
 
             // Witnesses
             Route::post('/cases/{case}/witnesses',            [CaseController::class, 'storeWitness'])->middleware('perm:cases.edit')->name('cases.witnesses.store');

@@ -2093,6 +2093,12 @@
                         'rejected' => __('cases.review_status.rejected'),
                         default => __('cases.review_status.accepted'),
                         };
+                        $respPdfInlineUrl = !empty($resp->id)
+                            ? route('respondent-responses.download', ['response' => $resp->id, 'inline' => 1])
+                            : null;
+                        $respPdfDownloadUrl = !empty($resp->id)
+                            ? route('respondent-responses.download', ['response' => $resp->id])
+                            : null;
                         @endphp
                         <div class="rounded-2xl border border-gray-100 bg-gray-50 p-4 shadow-sm space-y-3">
                             <div class="flex flex-wrap items-center justify-between gap-2 text-gray-500">
@@ -2123,13 +2129,28 @@
                                 {{ $respReviewNote }}
                             </div>
                             @endif
-                            @if(!empty($resp->pdf_embed['data']))
+                            @if(!empty($resp->pdf_embed['data']) || !empty($respPdfInlineUrl))
                             <div class="rounded-xl border border-gray-200 overflow-hidden bg-white">
+                                @if(!empty($resp->pdf_embed['data']))
                                 <iframe
                                     src="data:{{ $resp->pdf_embed['mime'] ?? 'application/pdf' }};base64,{{ $resp->pdf_embed['data'] }}#toolbar=0&navpanes=0&scrollbar=0"
                                     loading="lazy" class="w-full" style="min-height: 360px;"
                                     title="{{ $resp->title ?? __('cases.respondent_response') }}">
                                 </iframe>
+                                @elseif(!empty($respPdfInlineUrl))
+                                <iframe src="{{ $respPdfInlineUrl }}#toolbar=0&navpanes=0&scrollbar=0"
+                                    loading="lazy" class="w-full" style="min-height: 360px;"
+                                    title="{{ $resp->title ?? __('cases.respondent_response') }}">
+                                </iframe>
+                                @endif
+                            </div>
+                            @endif
+                            @if(!empty($respPdfDownloadUrl))
+                            <div>
+                                <a href="{{ $respPdfDownloadUrl }}"
+                                    class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-medium transition-colors duration-150">
+                                    {{ __('cases.files.download') }}
+                                </a>
                             </div>
                             @endif
                             @if(in_array($respReviewStatus, ['awaiting_review', 'returned'], true) && $canReview)
