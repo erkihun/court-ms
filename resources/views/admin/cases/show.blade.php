@@ -156,6 +156,17 @@
     ->unique()
     ->values()
     ->toArray();
+
+    $applicantDisplayName = collect([
+    $case->applicant_first_name ?? null,
+    $case->applicant_middle_name ?? null,
+    $case->applicant_last_name ?? null,
+    ])->map(fn($part) => trim((string) $part))
+    ->filter()
+    ->implode(' ');
+    if ($applicantDisplayName === '') {
+    $applicantDisplayName = trim((string) ($case->applicant_name ?? $case->applicant_full_name ?? ''));
+    }
     @endphp
     @push('styles')
     <style>
@@ -977,7 +988,7 @@
                                 <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">
                                     {{ __('cases.summary.applicant') }}</div>
                                 <p class="font-semibold text-gray-900">
-                                    {{ $case->applicant_name ?? $case->applicant_full_name ?? '—' }}</p>
+                                    {{ $applicantDisplayName !== '' ? $applicantDisplayName : '—' }}</p>
                                 @php
                                 $applicantAddress = trim((string) ($case->applicant_address ?? ''));
                                 if ($applicantAddress === '') {
@@ -1284,7 +1295,8 @@
                             <dl class=" text-gray-700 space-y-1">
                                 <div>
                                     <dt class="text-xs text-gray-500">{{ __('cases.name') }}</dt>
-                                    <dd class="font-semibold text-gray-900">{{ $case->applicant_name ?? '&mdash;' }}
+                                    <dd class="font-semibold text-gray-900">
+                                        {{ $applicantDisplayName !== '' ? $applicantDisplayName : '—' }}
                                     </dd>
                                 </div>
                                 <div>

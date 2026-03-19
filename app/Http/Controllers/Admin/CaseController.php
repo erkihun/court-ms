@@ -390,7 +390,10 @@ class CaseController extends Controller
                 'ass.name as assignee_name',
                 'ass.email as assignee_email',
                 'ass_team.name as assignee_team_name',
-                DB::raw("CONCAT(COALESCE(ap.first_name,''),' ',COALESCE(ap.last_name,'')) as applicant_name"),
+                'ap.first_name as applicant_first_name',
+                'ap.middle_name as applicant_middle_name',
+                'ap.last_name as applicant_last_name',
+                DB::raw("TRIM(CONCAT(COALESCE(ap.first_name,''),' ',COALESCE(ap.middle_name,''),' ',COALESCE(ap.last_name,''))) as applicant_name"),
                 'ap.email as applicant_email',
                 'ap.address as applicant_profile_address'
             )
