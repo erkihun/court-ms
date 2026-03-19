@@ -15,7 +15,7 @@ return array (
   'Case Inspections' => 'የመዝገብ ምርመራዎች',
   'case_inspections' => 'የመዝገብ ምርመራዎች',
   'Chat' => 'ውይይት',
-  'Records' => 'መዝገቦች',
+  'Records' => 'ሪኮርዶች',
   'Hearings' => 'የችሎት ቀጠሮዎች',
   'Applicant' => 'አመልካች',
   'Case Types' => 'የመዝገብ አይነቶች',
