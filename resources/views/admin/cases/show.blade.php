@@ -1383,7 +1383,7 @@
                         <div>
                             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                 {{ __('cases.details.case_details') }}</p>
-                            <div class="cms-output mt-2 text-[14px] leading-relaxed">
+                            <div class="cms-output mt-2 text-[16px] leading-relaxed">
                                 {!! $case->description_html ?? clean($case->description ??
                                 __('cases.details.no_details'), 'cases') !!}
                             </div>
@@ -1391,7 +1391,7 @@
                         <div>
                             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                 {{ __('cases.details.relief_requested') }}</p>
-                            <div class="cms-output mt-2 text-[14px] leading-relaxed">
+                            <div class="cms-output mt-2 text-[16px] leading-relaxed">
                                 {!! $reliefHtmlOut ?? __('cases.details.no_relief_specified') !!}
                             </div>
                         </div>
