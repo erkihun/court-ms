@@ -2073,7 +2073,7 @@
                             {{ __('cases.respondent_responses') }}</span>
                     </div>
 
-                    <div class="space-y-4 max-h-[520px] overflow-auto pr-2">
+                    <div class="space-y-4 max-h-[85vh] overflow-auto pr-2">
                         @forelse($respondentResponses ?? [] as $resp)
                         @php
                         $respBody = clean($resp->description ?? '', 'cases');
@@ -2130,13 +2130,13 @@
                             <div class="rounded-xl border border-gray-200 overflow-hidden bg-white">
                                 @if(!empty($respPdfInlineUrl))
                                 <iframe src="{{ $respPdfInlineUrl }}#toolbar=0&navpanes=0&scrollbar=0"
-                                    loading="lazy" class="w-full" style="min-height: 360px;"
+                                    loading="lazy" class="w-full" style="height:min(80vh,980px); min-height:520px;"
                                     title="{{ $resp->title ?? __('cases.respondent_response') }}">
                                 </iframe>
                                 @elseif(!empty($resp->pdf_embed['data']))
                                 <iframe
                                     src="data:{{ $resp->pdf_embed['mime'] ?? 'application/pdf' }};base64,{{ $resp->pdf_embed['data'] }}#toolbar=0&navpanes=0&scrollbar=0"
-                                    loading="lazy" class="w-full" style="min-height: 360px;"
+                                    loading="lazy" class="w-full" style="height:min(80vh,980px); min-height:520px;"
                                     title="{{ $resp->title ?? __('cases.respondent_response') }}">
                                 </iframe>
                                 @endif
