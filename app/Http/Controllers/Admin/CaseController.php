@@ -988,6 +988,10 @@ class CaseController extends Controller
     {
         $h = DB::table('case_hearings')->where('id', $hearing)->first();
         abort_if(!$h, 404);
+        $existingHearingDate = Carbon::parse($h->hearing_at)->startOfDay();
+        if ($existingHearingDate->lte(Carbon::today())) {
+            return back()->with('error', 'Hearings scheduled for today or past dates cannot be edited.');
+        }
 
         $data = $request->validate([
             'hearing_at' => ['required', 'date'],
@@ -1028,7 +1032,14 @@ class CaseController extends Controller
      */
     public function deleteHearing(int $hearing)
     {
-        $caseId = DB::table('case_hearings')->where('id', $hearing)->value('case_id');
+        $row = DB::table('case_hearings')->where('id', $hearing)->first();
+        abort_if(!$row, 404);
+        $existingHearingDate = Carbon::parse($row->hearing_at)->startOfDay();
+        if ($existingHearingDate->lte(Carbon::today())) {
+            return back()->with('error', 'Hearings scheduled for today or past dates cannot be deleted.');
+        }
+
+        $caseId = $row->case_id;
         DB::table('case_hearings')->where('id', $hearing)->delete();
         if ($caseId) {
             $this->logCaseAudit($caseId, 'hearing_deleted', ['hearing_id' => $hearing]);

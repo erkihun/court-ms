@@ -1961,6 +1961,13 @@
                                             } catch (\Throwable $e) {
                                             $hearingDisplay = $h->hearing_at ?? '';
                                             }
+                                            try {
+                                            $hearingDateLocked = \Illuminate\Support\Carbon::parse($h->hearing_at)
+                                            ->startOfDay()
+                                            ->lte(\Illuminate\Support\Carbon::today());
+                                            } catch (\Throwable $e) {
+                                            $hearingDateLocked = false;
+                                            }
                                             @endphp
                                             <span class="font-medium" data-hearing-at="{{ $h->hearing_at }}"
                                                 data-hearing-display>
@@ -1972,7 +1979,7 @@
                                         <td class="px-3 py-2 text-gray-600">{{ $h->notes ?: '-' }}</td>
                                         <td class="px-3 py-2">
                                             <div class="flex flex-wrap gap-2">
-                                                @if(!$caseLocked && $canUpdateHearings)
+                                                @if(!$caseLocked && !$hearingDateLocked && $canUpdateHearings)
                                                 <details class="relative z-50">
                                                     <summary
                                                         class="px-3 py-1.5 rounded-lg bg-white text-xs cursor-pointer text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors duration-150 flex items-center gap-1">
@@ -2025,7 +2032,7 @@
                                                 </details>
                                                 @endif
 
-                                                @if(!$caseLocked && $canDeleteHearings)
+                                                @if(!$caseLocked && !$hearingDateLocked && $canDeleteHearings)
                                                 <form method="POST" action="{{ route('cases.hearings.delete',$h->id) }}"
                                                     onsubmit="return confirm({{ \Illuminate\Support\Js::from(__('cases.hearings.remove_confirm')) }})">
                                                     @csrf @method('DELETE')
@@ -2040,6 +2047,12 @@
                                                         {{ __('cases.general.delete') }}
                                                     </button>
                                                 </form>
+                                                @endif
+                                                @if($hearingDateLocked)
+                                                <span
+                                                    class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium border border-amber-200 bg-amber-50 text-amber-800">
+                                                    Locked (today/past)
+                                                </span>
                                                 @endif
                                             </div>
                                         </td>
