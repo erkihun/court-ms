@@ -2126,16 +2126,16 @@
                                 {{ $respReviewNote }}
                             </div>
                             @endif
-                            @if(!empty($resp->pdf_embed['data']) || !empty($respPdfInlineUrl))
+                            @if(!empty($respPdfInlineUrl) || !empty($resp->pdf_embed['data']))
                             <div class="rounded-xl border border-gray-200 overflow-hidden bg-white">
-                                @if(!empty($resp->pdf_embed['data']))
-                                <iframe
-                                    src="data:{{ $resp->pdf_embed['mime'] ?? 'application/pdf' }};base64,{{ $resp->pdf_embed['data'] }}#toolbar=0&navpanes=0&scrollbar=0"
+                                @if(!empty($respPdfInlineUrl))
+                                <iframe src="{{ $respPdfInlineUrl }}#toolbar=0&navpanes=0&scrollbar=0"
                                     loading="lazy" class="w-full" style="min-height: 360px;"
                                     title="{{ $resp->title ?? __('cases.respondent_response') }}">
                                 </iframe>
-                                @elseif(!empty($respPdfInlineUrl))
-                                <iframe src="{{ $respPdfInlineUrl }}#toolbar=0&navpanes=0&scrollbar=0"
+                                @elseif(!empty($resp->pdf_embed['data']))
+                                <iframe
+                                    src="data:{{ $resp->pdf_embed['mime'] ?? 'application/pdf' }};base64,{{ $resp->pdf_embed['data'] }}#toolbar=0&navpanes=0&scrollbar=0"
                                     loading="lazy" class="w-full" style="min-height: 360px;"
                                     title="{{ $resp->title ?? __('cases.respondent_response') }}">
                                 </iframe>
