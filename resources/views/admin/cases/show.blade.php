@@ -185,6 +185,11 @@
 
     }
 
+    .case-details-copy {
+        font-size: 16px;
+        line-height: 1.7;
+    }
+
     .cms-output p {
         margin: 0 0 .65rem;
         text-align: justify;
@@ -1383,7 +1388,7 @@
                         <div>
                             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                 {{ __('cases.details.case_details') }}</p>
-                            <div class="cms-output mt-2 text-[16px] leading-relaxed">
+                            <div class="cms-output case-details-copy mt-2">
                                 {!! $case->description_html ?? clean($case->description ??
                                 __('cases.details.no_details'), 'cases') !!}
                             </div>
@@ -1391,7 +1396,7 @@
                         <div>
                             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                 {{ __('cases.details.relief_requested') }}</p>
-                            <div class="cms-output mt-2 text-[16px] leading-relaxed">
+                            <div class="cms-output case-details-copy mt-2">
                                 {!! $reliefHtmlOut ?? __('cases.details.no_relief_specified') !!}
                             </div>
                         </div>
