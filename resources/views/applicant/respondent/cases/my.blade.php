@@ -15,7 +15,7 @@
 
         @if($cases->isEmpty())
         <div class="rounded-xl border border-dashed border-slate-200 bg-white p-6 text-center text-slate-600">
-            {{ __('No cases viewed yet.') }}
+            {{ __('cases.table.no_cases_viewed_yet') }}
         </div>
         @else
         <div class="rounded-2xl border border-slate-200 bg-white shadow-xl overflow-hidden">

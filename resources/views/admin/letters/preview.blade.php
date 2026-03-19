@@ -10,12 +10,19 @@
     <script src="{{ asset('vendor/html2pdf/html2pdf.bundle.min.js') }}"></script>
 
     <style>
-    :root {
-        /* Standard Letter Fonts */
-        font-family: 'Times New Roman', Times, serif;
-        color: #0f172a;
-        --a4-width: 210mm;
-        --a4-height: 297mm;
+    @font-face {
+        font-family: 'Abyssinica';
+        src: url('{{ asset('fonts/AbyssinicaSIL-Regular.ttf') }}') format('truetype');
+        font-style: normal;
+        font-weight: 400;
+    }
+
+     :root {
+         /* Standard Letter Fonts */
+         font-family: 'NotoEthiopic', system-ui, sans-serif;
+         color: #0f172a;
+         --a4-width: 210mm;
+         --a4-height: 297mm;
     }
 
     * {
@@ -118,9 +125,9 @@
     }
 
     /* A4 Sheet Logic */
-    .a4-sheet {
-        width: var(--a4-width);
-        height: var(--a4-height);
+     .a4-sheet {
+         width: var(--a4-width);
+         height: var(--a4-height);
         background: #fff;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         padding-top: 2mm;
@@ -129,9 +136,10 @@
         /* Strict A4 */
 
         /* Flex Column to push footer to bottom */
-        display: flex;
-        flex-direction: column;
-    }
+         display: flex;
+         flex-direction: column;
+         font-family: 'Abyssinica', 'Nyala', 'DejaVu Serif', serif;
+     }
 
     /* Letter Layout */
     .letter-header,
@@ -245,12 +253,13 @@
             /* Remove browser margins */
         }
 
-        body {
-            background: white;
-            padding: 0;
-            margin: 0;
-            -webkit-print-color-adjust: exact;
-        }
+         body {
+             background: white;
+             padding: 0;
+             margin: 0;
+             -webkit-print-color-adjust: exact;
+             font-family: 'Abyssinica', 'Nyala', 'DejaVu Serif', serif;
+         }
 
         .preview-toolbar {
             display: none !important;

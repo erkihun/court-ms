@@ -1,0 +1,43 @@
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --bg: #f4f7fb;
+    --bg-muted: #eef3f8;
+    --surface: rgba(255, 255, 255, 0.92);
+    --surface-strong: #ffffff;
+    --surface-soft: #f8fafc;
+    --text: #0f172a;
+    --text-muted: #475569;
+    --text-subtle: #64748b;
+    --border: #dbe4ee;
+    --border-strong: #cbd5e1;
+    --primary: #2563eb;
+    --primary-strong: #1d4ed8;
+    --success: #16a34a;
+    --warning: #d97706;
+    --danger: #dc2626;
+    --shadow-color: 15 23 42;
+  }
+
+  .dark {
+    color-scheme: dark;
+    --bg: #0b1220;
+    --bg-muted: #111a2a;
+    --surface: rgba(15, 23, 42, 0.9);
+    --surface-strong: #0f172a;
+    --surface-soft: #162033;
+    --text: #e2e8f0;
+    --text-muted: #cbd5e1;
+    --text-subtle: #94a3b8;
+    --border: #23314a;
+    --border-strong: #31415f;
+    --primary: #60a5fa;
+    --primary-strong: #3b82f6;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --danger: #f87171;
+    --shadow-color: 2 6 23;
+  }
+}

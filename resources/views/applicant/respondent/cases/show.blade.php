@@ -87,7 +87,7 @@ default => 'Approved',
     }
     </style>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 case-typography">
         <section class="lg:col-span-3 rounded-xl border border-slate-200 bg-white overflow-hidden shadow-lg">
             <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
                 <div class="flex items-start md:items-center gap-4">

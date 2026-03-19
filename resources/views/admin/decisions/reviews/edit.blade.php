@@ -26,7 +26,7 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Outcome</label>
                         <select name="outcome"
-                            class="mt-1 w-full px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200">
+                            class="mt-1 w-full px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
                             <option value="approve" @selected(old('outcome', $review->outcome)==='approve')>Approve</option>
                             <option value="reject" @selected(old('outcome', $review->outcome)==='reject')>Reject</option>
                             <option value="improve" @selected(old('outcome', $review->outcome)==='improve')>Improve</option>
@@ -43,7 +43,7 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Review Note</label>
                     <textarea name="review_note" rows="4"
-                        class="mt-1 w-full px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                        class="mt-1 w-full px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                         placeholder="Update review note">{{ old('review_note', $review->review_note) }}</textarea>
                     @error('review_note') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                 </div>
@@ -61,3 +61,4 @@
         </div>
     </div>
 </x-admin-layout>
+

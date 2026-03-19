@@ -25,14 +25,14 @@
         }
 
         @font-face {
-            font-family: 'Nyala';
-            src: url('{{ public_path('fonts/Nyala.ttf') }}') format('truetype');
+            font-family: 'Abyssinica';
+            src: url('{{ public_path('fonts/AbyssinicaSIL-Regular.ttf') }}') format('truetype');
             font-weight: normal;
             font-style: normal;
         }
 
         body {
-            font-family: 'Nyala', 'DejaVu Sans', Arial, sans-serif;
+            font-family: 'Abyssinica', 'Nyala', 'DejaVu Serif', serif;
             color: #0f172a;
             font-size: 12px;
             line-height: 1.6;
@@ -167,7 +167,7 @@
 
     <h1 style="margin-bottom:6px;">{{ __('Case Filing Receipt') }} / የክስ መግቢያ ደረሰኝ</h1>
     <p class="muted" style="margin-bottom:18px;">
-        {{ __('This document summarizes the information submitted for your case. Please keep a copy for your records.') }}
+        {{ __('cases.receipt.summary_notice') }}
         / ይህ ሰነድ ስለክስዎ የቀረበውን መረጃ ይዘረዝራል። እባክዎ ቅጂ ይጠብቁ።
     </p>
 
@@ -303,7 +303,7 @@
     @endif
 
     <div class="muted" style="margin-top:20px;">
-        {{ __('This receipt was generated electronically by :app.', ['app' => config('app.name', 'Court-MS')]) }}
+        {{ __('cases.receipt.generated_electronically_by', ['app' => config('app.name', 'Court-MS')]) }}
         / ይህ ደረሰኝ በኢሌክትሮኒክስ በ {{ config('app.name','Court-MS') }} ተፈጠረ።
     </div>
 </body>

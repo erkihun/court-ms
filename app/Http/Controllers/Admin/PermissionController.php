@@ -74,7 +74,7 @@ class PermissionController extends Controller
             'description_translations'=> $descriptionTranslations ?: null,
         ]);
 
-        return redirect()->route('permissions.index')->with('ok', __('Permission created.'));
+        return redirect()->route('permissions.index')->with('ok', __('permissions.flash.created'));
     }
 
     public function edit(Permission $permission)
@@ -105,7 +105,7 @@ class PermissionController extends Controller
             'description_translations'=> $descriptionTranslations ?: null,
         ]);
 
-        return redirect()->route('permissions.index')->with('ok', __('Permission updated.'));
+        return redirect()->route('permissions.index')->with('ok', __('permissions.flash.updated'));
     }
 
     public function destroy(Permission $permission)
@@ -113,7 +113,7 @@ class PermissionController extends Controller
         $permission->roles()->detach();
         $permission->delete();
 
-        return redirect()->route('permissions.index')->with('ok', __('Permission deleted.'));
+        return redirect()->route('permissions.index')->with('ok', __('permissions.flash.deleted'));
     }
 
     private function collectLocaleValues(array $values): array

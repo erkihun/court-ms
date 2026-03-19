@@ -12,7 +12,13 @@ $subject = $letter->subject ?? ($letter->template->subject_prefix ?? 'Letter');
     <title>Letter {{ $ref ?: $caseNumber }}</title>
     <style>
         @page { margin: 20mm 18mm 24mm 18mm; }
-        body { font-family: 'Times New Roman', Times, serif; color: #1f2937; font-size: 12pt; }
+        @font-face {
+            font-family: 'Abyssinica';
+            src: url('{{ public_path('fonts/AbyssinicaSIL-Regular.ttf') }}') format('truetype');
+            font-style: normal;
+            font-weight: normal;
+        }
+        body { font-family: 'Abyssinica', 'Nyala', DejaVu Serif, serif; color: #1f2937; font-size: 12pt; }
         .header img, .footer img { width: 100%; height: auto; }
         .meta { margin: 12mm 0 8mm 0; }
         .meta-row { display: flex; justify-content: space-between; font-size: 11pt; margin-bottom: 3mm; }

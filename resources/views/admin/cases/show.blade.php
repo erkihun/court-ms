@@ -57,6 +57,9 @@
     'rejected' => __('cases.review_status.rejected'),
     default => __('cases.review_status.accepted'),
     };
+    $headerPrimaryAction = 'inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-sm transition-fast';
+    $headerSecondaryAction = 'inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-fast hover:bg-slate-50';
+    $headerChip = 'inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-semibold capitalize';
 
     $letterPanelOpen = $errors->has('template_id') || $errors->has('recipient_name') || $errors->has('body');
     $defaultSection = $letterPanelOpen ? 'letters-compose' : 'case-summary';
@@ -304,6 +307,43 @@
             transform: translateY(0);
         }
     }
+
+    @media print {
+        .no-print,
+        .no-print * {
+            display: none !important;
+        }
+
+        button,
+        form,
+        input,
+        textarea,
+        select,
+        details,
+        summary {
+            display: none !important;
+        }
+
+        [x-cloak],
+        #review-modal,
+        #review-quick-form {
+            display: none !important;
+        }
+
+        .main-content-section,
+        .rounded-2xl,
+        .rounded-xl {
+            box-shadow: none !important;
+        }
+
+        *,
+        *::before,
+        *::after {
+            border: 0 !important;
+            outline: 0 !important;
+            box-shadow: none !important;
+        }
+    }
     </style>
     @php
     $assetVersion = function (string $path): string {
@@ -433,7 +473,7 @@
     </script>
     @endpush
 
-    <div x-data="{
+    <div class="enterprise-page case-typography" x-data="{
             activeSection: {{ json_encode($defaultSection) }},
             selectedFindingId: null,
             init() {
@@ -464,48 +504,53 @@
         }" x-on:open-section.window="openSection($event.detail.section)" x-init="init()">
 
         {{-- Header Card --}}
-        <div class="mb-6 p-4 rounded-2xl border border-gray-200 bg-white shadow-sm">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div class="flex items-center gap-4">
-                    <div>
-                        <div class="text-xs text-gray-600 font-medium uppercase tracking-wide">
-                            {{ __('cases.case_number') }}</div>
-                        <div class="flex items-center gap-2 mt-1">
-                            <div class="font-mono text-xl font-bold text-gray-900" id="case-no">{{ $case->case_number }}
+        <div class="enterprise-panel">
+            <div class="enterprise-panel-header border-b-0 pb-0">
+                <div class="flex w-full flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+                    <div class="min-w-0 flex-1">
+                        <div class="flex flex-wrap items-start gap-4">
+                            <div class="min-w-0">
+                                <div class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                                    {{ __('cases.case_number') }}
+                                </div>
+                                <div class="mt-2 flex flex-wrap items-center gap-2">
+                                    <div class="font-mono text-3xl font-bold tracking-tight text-slate-950" id="case-no">
+                                        {{ $case->case_number }}
+                                    </div>
+                                    <button type="button"
+                                        class="inline-flex items-center rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 transition-fast hover:bg-slate-50 active:scale-[0.98]"
+                                        x-data x-on:click="
+                                        navigator.clipboard.writeText(document.querySelector('#case-no').textContent);
+                                        $el.innerText='{{ __('cases.copied') }}';
+                                        setTimeout(()=>{$el.innerText='{{ __('cases.copy') }}';},1200);
+                                    ">{{ __('cases.copy') }}</button>
+                                </div>
                             </div>
-                            <button type="button"
-                                class="px-2.5 py-1 text-xs rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 transition-all duration-200 hover:scale-105"
-                                x-data x-on:click="
-                                navigator.clipboard.writeText(document.querySelector('#case-no').textContent);
-                                $el.innerText='{{ __('cases.copied') }}';
-                                setTimeout(()=>{$el.innerText='{{ __('cases.copy') }}';},1200);
-                            ">{{ __('cases.copy') }}</button>
+
+                            <div class="flex flex-wrap items-center gap-2 pt-1">
+                                <span class="{{ $headerChip }} {{ $statusChip($currentStatus) }} no-print">
+                                    {{ $currentStatus }}
+                                </span>
+
+                                <span class="{{ $headerChip }} {{ $reviewChip($reviewStatus) }} no-print">
+                                    {{ $reviewLabel($reviewStatus) }}
+                                </span>
+                            </div>
                         </div>
                     </div>
 
-
-                    <span
-                        class="px-3 py-1.5 rounded-full text-xs font-semibold capitalize {{ $statusChip($currentStatus) }}">
-                        {{ $currentStatus }}
-                    </span>
-
-                    <span
-                        class="px-3 py-1.5 rounded-full text-xs font-semibold capitalize {{ $reviewChip($reviewStatus) }}">
-                        {{ $reviewLabel($reviewStatus) }}
-                    </span>
-                </div>
-
-                <div class="flex flex-wrap items-center gap-2">
+                    <div class="no-print xl:max-w-[52rem]">
+                        <div class="flex flex-wrap items-center justify-start gap-2 xl:justify-end">
                     @if($canManageInspectionRequests)
                     <a href="{{ route('case-inspection-requests.create', ['case_id' => $case->id]) }}"
-                        class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 font-medium text-white shadow-sm hover:shadow transition-all duration-200">
+                        class="{{ $headerPrimaryAction }} bg-blue-600 hover:bg-blue-700">
                         {{ __('cases.show.inspection_request') }}
                     </a>
                     @endif
                     @if(in_array($reviewStatus, ['awaiting_review','returned']) && $canReview)
                     <div class="relative" x-data="{ reviewMenuOpen: false }" @click.outside="reviewMenuOpen = false">
                         <button type="button"
-                            class="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-800 font-medium text-white shadow-sm hover:shadow transition-all duration-200 inline-flex items-center gap-2"
+                            class="{{ $headerPrimaryAction }} bg-slate-700 hover:bg-slate-800"
                             @click="reviewMenuOpen = !reviewMenuOpen">
                             {{ __('cases.show.review_actions') }}
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -529,7 +574,7 @@
 
                     @if(!$caseLocked && $canAssign)
                     <a href="{{ route('cases.assign.form', $case->id) }}"
-                        class="px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700  font-medium text-white transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
+                        class="{{ $headerPrimaryAction }} bg-blue-600 hover:bg-blue-700">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -541,7 +586,7 @@
 
                     @if(!$caseLocked && $canManageBench)
                     <a href="{{ route('bench-notes.index', ['case_id' => $case->id]) }}"
-                        class="px-4 py-2.5 rounded-lg bg-yellow-500 hover:bg-yellow-600  font-medium text-white transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
+                        class="{{ $headerPrimaryAction }} bg-amber-500 hover:bg-amber-600">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -553,7 +598,7 @@
 
                     @if(!$caseLocked && $canWriteLetter)
                     <a href="#letters-compose" @click.prevent="openSection('letters-compose')"
-                        class="px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700  font-medium text-white transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
+                        class="{{ $headerPrimaryAction }} bg-emerald-600 hover:bg-emerald-700">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -565,7 +610,7 @@
 
                     @if(!$caseLocked && ($case->status ?? '') === 'closed')
                     <a href="{{ route('decisions.create', ['case_id' => $case->id]) }}"
-                        class="px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700  font-medium text-white transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
+                        class="{{ $headerPrimaryAction }} bg-blue-600 hover:bg-blue-700">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -575,7 +620,7 @@
                     @endif
 
                     <a href="{{ route('cases.index') }}"
-                        class="px-4 py-2.5 rounded-lg bg-white hover:bg-gray-50  font-medium text-gray-700 border border-gray-300 transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
+                        class="{{ $headerSecondaryAction }}">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -585,7 +630,7 @@
                     </a>
 
                     <button onclick="window.print()"
-                        class="px-4 py-2.5 rounded-lg bg-white hover:bg-gray-50  font-medium text-gray-700 border border-gray-300 transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
+                        class="{{ $headerSecondaryAction }}">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -593,6 +638,8 @@
                         </svg>
                         {{ __('cases.print') }}
                     </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -610,7 +657,7 @@
         </div>
 
         {{-- Quick Access Section --}}
-        <div class="p-4 rounded-2xl border border-gray-200 bg-white shadow-sm mb-6">
+        <div class="p-4 rounded-2xl border border-gray-200 bg-white shadow-sm mb-6 no-print">
             <div class="flex flex-wrap items-center gap-2 mb-4">
                 <div class="flex items-center gap-3">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none"
@@ -669,7 +716,7 @@
                 </button>
 
                 <button @click="openSection('letters')"
-                    class="quick-access-btn inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-indigo-200  font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 hover:border-indigo-300">
+                    class="quick-access-btn inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-blue-200  font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 hover:border-blue-300">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -681,7 +728,7 @@
         </div>
 
         {{-- Modal for return/reject note --}}
-        <div id="review-modal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-30">
+        <div id="review-modal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-30 no-print">
             <div class="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 border border-gray-200">
                 <h3 class="text-lg font-semibold text-gray-900 mb-3" id="review-modal-title">{{ __('cases.show.review_decision') }}</h3>
                 <form method="POST" action="{{ route('cases.review.update', $case->id) }}" id="review-form"
@@ -714,9 +761,9 @@
 
         {{-- Status change (admins) --}}
         @if($canEditStatus)
-        <div class="p-4 rounded-2xl border border-gray-200 bg-white shadow-sm mb-6">
+        <div class="p-4 rounded-2xl border border-gray-200 bg-white shadow-sm mb-6 no-print">
             <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24"
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -729,7 +776,7 @@
                 <div>
                     <label class="block  font-medium text-gray-700 mb-2">{{ __('cases.status.new_status') }}</label>
                     <select name="status"
-                        class="w-full px-4 py-2.5 rounded-lg bg-white text-gray-900 border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-150">
+                        class="w-full px-4 py-2.5 rounded-lg bg-white text-gray-900 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-150">
                         @foreach($statuses as $value => $label)
                         <option value="{{ $value }}" @selected($selectedStatus===$value)>{{ $label }}</option>
                         @endforeach
@@ -740,12 +787,12 @@
                     <label
                         class="block  font-medium text-gray-700 mb-2">{{ __('cases.status.note_to_timeline') }}</label>
                     <input name="note" placeholder="{{ __('cases.status.add_note_placeholder') }}"
-                        class="w-full px-4 py-2.5 rounded-lg bg-white text-gray-900 border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-150">
+                        class="w-full px-4 py-2.5 rounded-lg bg-white text-gray-900 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-150">
                     @error('note') <p class="text-red-600  mt-1">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <button
-                        class="px-5 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
+                        class="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -759,7 +806,7 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {{-- Sidebar Navigation --}}
-            <div class="lg:col-span-3">
+            <div class="lg:col-span-3 no-print">
                 <div class="p-4 rounded-2xl border border-blue-800 bg-blue-900 text-white shadow-sm sticky top-6">
                     <div class="flex items-center gap-2 mb-4">
                         <span class="text-lg font-semibold">{{ __('cases.navigation.title') }}</span>
@@ -3149,3 +3196,4 @@
 
     </div>
 </x-admin-layout>
+

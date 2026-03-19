@@ -10,7 +10,7 @@ session()->forget('acting_as_respondent');
             @csrf
             <div class="text-center space-y-1">
                 <h1 class="text-2xl font-semibold">Applicant Login</h1>
-                <p class="text-xs font-semibold uppercase tracking-wider text-indigo-600" data-panel-label>
+                <p class="text-xs font-semibold uppercase tracking-wider text-blue-600" data-panel-label>
                     {{ $initialRole === 'respondent' ? 'Respondent Login Panel' : 'Applicant Login Panel' }}
                 </p>
             </div>
@@ -61,3 +61,4 @@ session()->forget('acting_as_respondent');
         });
     </script>
 </x-applicant-layout>
+

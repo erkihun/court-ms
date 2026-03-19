@@ -1,0 +1,194 @@
+:root {
+  --motion-fast: 120ms;
+  --motion-normal: 200ms;
+  --motion-slow: 320ms;
+
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+
+  --scale-hover: 1.02;
+  --scale-press: 0.98;
+
+  --fade-in: 1;
+  --fade-out: 0;
+}
+
+@layer utilities {
+  .transition-base {
+    transition-property: color, background-color, border-color, opacity, box-shadow, transform, filter, backdrop-filter;
+    transition-duration: var(--motion-normal);
+    transition-timing-function: var(--ease-standard);
+  }
+
+  .transition-fast {
+    transition-property: color, background-color, border-color, opacity, box-shadow, transform, filter, backdrop-filter;
+    transition-duration: var(--motion-fast);
+    transition-timing-function: var(--ease-out);
+  }
+
+  .transition-slow {
+    transition-property: color, background-color, border-color, opacity, box-shadow, transform, filter, backdrop-filter;
+    transition-duration: var(--motion-slow);
+    transition-timing-function: var(--ease-standard);
+  }
+
+  .transition-opacity-fast {
+    transition-property: opacity;
+    transition-duration: var(--motion-fast);
+    transition-timing-function: var(--ease-out);
+  }
+
+  .transition-opacity-slow {
+    transition-property: opacity;
+    transition-duration: var(--motion-slow);
+    transition-timing-function: var(--ease-standard);
+  }
+
+  .transition-transform-base {
+    transition-property: transform;
+    transition-duration: var(--motion-normal);
+    transition-timing-function: var(--ease-standard);
+  }
+
+  .transition-width-slow {
+    transition-property: width;
+    transition-duration: var(--motion-slow);
+    transition-timing-function: var(--ease-standard);
+  }
+
+  .transition-padding-slow {
+    transition-property: padding;
+    transition-duration: var(--motion-slow);
+    transition-timing-function: var(--ease-standard);
+  }
+
+  .motion-enter {
+    transition-property: opacity, transform;
+    transition-duration: var(--motion-normal);
+    transition-timing-function: var(--ease-out);
+  }
+
+  .motion-enter-fast {
+    transition-property: opacity, transform;
+    transition-duration: var(--motion-fast);
+    transition-timing-function: var(--ease-out);
+  }
+
+  .motion-leave {
+    transition-property: opacity, transform;
+    transition-duration: var(--motion-fast);
+    transition-timing-function: var(--ease-in);
+  }
+
+  .motion-overlay-enter {
+    transition-property: opacity;
+    transition-duration: var(--motion-normal);
+    transition-timing-function: var(--ease-out);
+  }
+
+  .motion-overlay-leave {
+    transition-property: opacity;
+    transition-duration: var(--motion-fast);
+    transition-timing-function: var(--ease-in);
+  }
+
+  .motion-fade-start {
+    opacity: var(--fade-out);
+  }
+
+  .motion-fade-end {
+    opacity: var(--fade-in);
+  }
+
+  .motion-scale-start {
+    opacity: var(--fade-out);
+    transform: scale(0.95);
+  }
+
+  .motion-scale-end {
+    opacity: var(--fade-in);
+    transform: scale(1);
+  }
+
+  .motion-slide-up-start {
+    opacity: var(--fade-out);
+    transform: translateY(-6px);
+  }
+
+  .motion-slide-up-end {
+    opacity: var(--fade-in);
+    transform: translateY(0);
+  }
+
+  .motion-slide-inline-start {
+    opacity: var(--fade-out);
+    transform: translateX(-4px);
+  }
+
+  .motion-slide-inline-end {
+    opacity: var(--fade-in);
+    transform: translateX(0);
+  }
+
+  .motion-modal-start {
+    opacity: var(--fade-out);
+    transform: translateY(1rem) scale(0.96);
+  }
+
+  .motion-modal-end {
+    opacity: var(--fade-in);
+    transform: translateY(0) scale(1);
+  }
+
+  .page-enter {
+    animation: page-fade-in var(--motion-normal) var(--ease-standard);
+  }
+
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--surface-soft) 82%, white) 25%,
+      color-mix(in srgb, var(--surface-soft) 60%, white) 37%,
+      color-mix(in srgb, var(--surface-soft) 82%, white) 63%
+    );
+    background-size: 400px 100%;
+    animation: skeleton-shimmer 1.4s infinite;
+  }
+}
+
+@media (min-width: 640px) {
+  .motion-modal-start {
+    transform: translateY(0) scale(0.95);
+  }
+}
+
+@keyframes page-fade-in {
+  from {
+    opacity: var(--fade-out);
+  }
+
+  to {
+    opacity: var(--fade-in);
+  }
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+
+  100% {
+    background-position: 200px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

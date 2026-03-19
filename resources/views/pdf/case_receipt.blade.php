@@ -9,8 +9,15 @@
             margin: 28px 32px;
         }
 
+        @font-face {
+            font-family: 'Abyssinica';
+            src: url('{{ public_path('fonts/AbyssinicaSIL-Regular.ttf') }}') format('truetype');
+            font-style: normal;
+            font-weight: normal;
+        }
+
         body {
-            font-family: DejaVu Sans, Arial, sans-serif;
+            font-family: 'Abyssinica', 'Nyala', DejaVu Serif, serif;
             color: #0f172a;
             font-size: 12px;
         }

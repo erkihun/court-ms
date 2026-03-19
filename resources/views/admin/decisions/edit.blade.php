@@ -39,7 +39,7 @@
                         <div class="relative mt-1 z-30">
                             <select name="case_id" id="decision-case-select"
                                 class="w-full appearance-none px-3 py-2.5 rounded-lg bg-white text-gray-900 text-sm 
-                                    border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 
+                                    border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 
                                     cursor-pointer transition hover:border-gray-400">
 
                                 <option value="">{{ __('decisions.fields.select_case') }}</option>
@@ -84,7 +84,7 @@
                         <input type="date" name="decision_date"
                             value="{{ old('decision_date', optional($decision->decision_date)->format('Y-m-d')) }}"
                             class="mt-1 w-full px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300
-                                      focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200">
+                                      focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
                         @error('decision_date')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                         @enderror
@@ -139,7 +139,7 @@
                             <input type="hidden" name="judges[{{ $i }}][admin_user_id]" value="{{ $selectedJudge }}">
                             @else
                             <select name="judges[{{ $i }}][admin_user_id]"
-                                class="mt-1 w-full px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 relative z-20">
+                                class="mt-1 w-full px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 relative z-20">
                                 <option value="">Select judge</option>
                                 @foreach($judgeUsers as $admin)
                                 <option value="{{ $admin->id }}" @selected($selectedJudge==$admin->id)>{{ $admin->name }}</option>
@@ -174,7 +174,7 @@
 
                     <select name="status"
                         class="mt-1 w-full px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300
-                                   focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200">
+                                   focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
                         <option value="draft" @selected(old('status', $decision->status)==='draft')>{{ __('decisions.status.draft') }}</option>
                         <option value="active" @selected(old('status', $decision->status)==='active')>{{ __('decisions.status.active') }}</option>
                         <option value="archived" @selected(old('status', $decision->status)==='archived')>{{ __('decisions.status.archived') }}</option>
@@ -286,3 +286,4 @@
         });
     </script>
 </x-admin-layout>
+

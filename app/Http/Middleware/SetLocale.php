@@ -9,9 +9,15 @@ class SetLocale
 {
     public function handle($request, Closure $next)
     {
-        $locale = session('app_locale', config('app.locale'));
+        $locale = session('app_locale')
+            ?? $request->cookie('app_locale')
+            ?? config('app.locale');
 
-        // Normalize variants like "am_ET" → "am"
+        $allowed = config('app.locales', ['en', 'am']);
+        if (!in_array($locale, $allowed, true) && !str_starts_with((string) $locale, 'am')) {
+            $locale = config('app.fallback_locale', 'en');
+        }
+
         if (is_string($locale) && str_starts_with($locale, 'am')) {
             $locale = 'am';
         }

@@ -33,7 +33,7 @@ $bannerPath = $settings?->banner_path ?? null;
     <div class="max-w-6xl mx-auto rounded-2xl border border-slate-200 bg-white shadow-lg lawyer-register-card p-6 md:p-8">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6">
             <div class="flex items-center gap-3">
-                <div class="h-10 w-10 rounded-2xl bg-indigo-50 text-indigo-600 grid place-items-center">
+                <div class="h-10 w-10 rounded-2xl bg-blue-50 text-blue-600 grid place-items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
@@ -41,7 +41,7 @@ $bannerPath = $settings?->banner_path ?? null;
                     </svg>
                 </div>
                 <div>
-                    <p class="text-xs uppercase tracking-[0.3em] text-indigo-500">Lawyer Portal</p>
+                    <p class="text-xs uppercase tracking-[0.3em] text-blue-500">Lawyer Portal</p>
                     <h1 class="text-xl font-semibold text-slate-900">Create a lawyer account</h1>
                 </div>
             </div>
@@ -68,17 +68,17 @@ $bannerPath = $settings?->banner_path ?? null;
                 <div>
                     <label class="block text-sm font-medium text-slate-700">{{ __('auth.first_name') }}</label>
                     <input name="first_name" value="{{ old('first_name') }}" required
-                        class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700">{{ __('auth.middle_name') }}</label>
                     <input name="middle_name" value="{{ old('middle_name') }}" required
-                        class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700">{{ __('auth.last_name') }}</label>
                     <input name="last_name" value="{{ old('last_name') }}" required
-                        class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
             </div>
 
@@ -86,7 +86,7 @@ $bannerPath = $settings?->banner_path ?? null;
                 <div>
                     <label class="block text-sm font-medium text-slate-700">{{ __('auth.gender') }}</label>
                     <select name="gender"
-                        class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="">{{ __('auth.select_option') }}</option>
                         <option value="male" @selected(old('gender') === 'male')>{{ __('auth.male') }}</option>
                         <option value="female" @selected(old('gender') === 'female')>{{ __('auth.female') }}</option>
@@ -95,14 +95,14 @@ $bannerPath = $settings?->banner_path ?? null;
                 <div>
                     <label class="block text-sm font-medium text-slate-700">{{ __('auth.phone') }}</label>
                     <input name="phone" value="{{ old('phone') }}" required
-                        class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700">{{ __('auth.national_id') }}</label>
                     <input name="national_id_number" value="{{ old('national_id_number') }}" required inputmode="numeric"
                         autocomplete="off" maxlength="19" pattern="\d{4}\s\d{4}\s\d{4}\s\d{4}"
                         title="Format: XXXX XXXX XXXX XXXX (only numbers allowed)" placeholder="1234 5678 9012 3456"
-                        class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <p class="mt-1 text-xs text-slate-500">{{ __('auth.national_id_hint') }}</p>
                 </div>
             </div>
@@ -111,12 +111,12 @@ $bannerPath = $settings?->banner_path ?? null;
                 <div>
                     <label class="block text-sm font-medium text-slate-700">{{ __('auth.email') }}</label>
                     <input type="email" name="email" value="{{ old('email') }}" required
-                        class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700">{{ __('auth.address') }}</label>
                     <input name="address" value="{{ old('address') }}" required
-                        class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
             </div>
 
@@ -125,7 +125,7 @@ $bannerPath = $settings?->banner_path ?? null;
                     <label class="block text-sm font-medium text-slate-700" for="password">{{ __('auth.password') }}</label>
                     <div class="mt-1 relative">
                         <input id="password" type="password" name="password" required
-                            class="w-full rounded-lg border border-slate-300 px-3 py-2.5 pr-10 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            class="w-full rounded-lg border border-slate-300 px-3 py-2.5 pr-10 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600"
                             data-toggle-password="password" aria-label="{{ __('auth.show_password') }}" aria-pressed="false">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none"
@@ -141,7 +141,7 @@ $bannerPath = $settings?->banner_path ?? null;
                     <label class="block text-sm font-medium text-slate-700" for="password_confirmation">{{ __('auth.confirm_password') }}</label>
                     <div class="mt-1 relative">
                         <input id="password_confirmation" type="password" name="password_confirmation" required
-                            class="w-full rounded-lg border border-slate-300 px-3 py-2.5 pr-10 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            class="w-full rounded-lg border border-slate-300 px-3 py-2.5 pr-10 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <button type="button"
                             class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600"
                             data-toggle-password="password_confirmation" aria-label="{{ __('auth.show_password') }}"
@@ -160,7 +160,7 @@ $bannerPath = $settings?->banner_path ?? null;
             <div class="flex flex-col gap-3 border-t border-dashed border-slate-200 pt-4 text-sm text-slate-600">
                 <p>By clicking “Create account” you confirm that the information provided is accurate and that you accept the platform terms.</p>
                 <button
-                    class="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-1">
+                    class="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1">
                     {{ __('auth.create_account_button') }}
                 </button>
             </div>
@@ -200,3 +200,4 @@ $bannerPath = $settings?->banner_path ?? null;
         });
     </script>
 </x-guest-layout>
+

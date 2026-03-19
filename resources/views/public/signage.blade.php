@@ -105,7 +105,7 @@
 
                 <!-- Header Card -->
                 <div
-                    class="rounded-2xl bg-gradient-to-br from-indigo-900 via-indigo-800 to-blue-900 text-white shadow-2xl overflow-hidden border border-indigo-700/30">
+                    class="rounded-2xl bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 text-white shadow-2xl overflow-hidden border border-blue-700/30">
                     <div class="relative px-6 py-6 md:px-8 md:py-8">
                         <!-- Animated background pattern -->
                         <div class="absolute inset-0 opacity-10">
@@ -131,14 +131,14 @@
                                 <div>
                                     <div class="flex items-center gap-2 mb-1">
                                         <span
-                                            class="text-xs uppercase text-indigo-200/90 font-semibold">{{ __('signage.court_management') }}</span>
+                                            class="text-xs uppercase text-blue-200/90 font-semibold">{{ __('signage.court_management') }}</span>
                                         <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
                                     </div>
                                     <h1 class="text-2xl md:text-3xl font-black tracking-tight drop-shadow-lg">
                                         {{ $settings->app_name ?? config('app.name', 'Justice Portal') }}</h1>
                                     <div class="mt-3 flex flex-wrap items-center gap-2">
                                         <span
-                                            class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-medium text-indigo-100 backdrop-blur-sm">
+                                            class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-medium text-blue-100 backdrop-blur-sm">
                                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -146,7 +146,7 @@
                                             {{ \App\Support\EthiopianDate::format($displayNow, withTime: true) }}
                                         </span>
                                         <span
-                                            class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-medium text-indigo-100 backdrop-blur-sm">
+                                            class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-medium text-blue-100 backdrop-blur-sm">
                                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -161,15 +161,15 @@
                             <div class="text-right mt-4 md:mt-0">
                                 <div
                                     class="inline-block rounded-xl bg-white/10 backdrop-blur-sm p-4 border border-white/20">
-                                    <p class="text-xs uppercase  text-indigo-200/80 font-semibold mb-2">
+                                    <p class="text-xs uppercase  text-blue-200/80 font-semibold mb-2">
                                         {{ __('signage.active_cases') }}</p>
                                     <div class="flex items-baseline justify-end gap-2">
                                         <p
                                             class="text-5xl md:text-6xl font-black leading-none drop-shadow-xl tracking-tight">
                                             {{ number_format($totalCases) }}</p>
-                                        <span class="text-lg font-bold text-indigo-200">{{ __('signage.cases') }}</span>
+                                        <span class="text-lg font-bold text-blue-200">{{ __('signage.cases') }}</span>
                                     </div>
-                                    <p class="mt-2 text-xs text-indigo-200/70 font-medium">
+                                    <p class="mt-2 text-xs text-blue-200/70 font-medium">
                                         {{ __('signage.across_departments') }}</p>
                                 </div>
                             </div>
@@ -184,8 +184,8 @@
                         <div class="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-5">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-3">
-                                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50">
-                                        <svg class="h-6 w-6 text-indigo-600" viewBox="0 0 24 24" fill="none"
+                                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
+                                        <svg class="h-6 w-6 text-blue-600" viewBox="0 0 24 24" fill="none"
                                             stroke="currentColor" stroke-width="1.8">
                                             <path
                                                 d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -220,8 +220,8 @@
                                 @php
                                 $pct = $totalCases > 0 ? round(($stat->total / $totalCases) * 100) : 0;
                                 $colors = [
-                                'active' => ['bg' => 'bg-indigo-600', 'text' => 'text-indigo-700', 'border' =>
-                                'border-indigo-200', 'light' => 'bg-indigo-50'],
+                                'active' => ['bg' => 'bg-blue-600', 'text' => 'text-blue-700', 'border' =>
+                                'border-blue-200', 'light' => 'bg-blue-50'],
                                 'pending' => ['bg' => 'bg-amber-500', 'text' => 'text-amber-700', 'border' =>
                                 'border-amber-200', 'light' => 'bg-amber-50'],
                                 'closed' => ['bg' => 'bg-slate-400', 'text' => 'text-slate-700', 'border' =>
@@ -263,8 +263,8 @@
                         <div class="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-5">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-3">
-                                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50">
-                                        <svg class="h-6 w-6 text-indigo-600" viewBox="0 0 24 24" fill="none"
+                                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
+                                        <svg class="h-6 w-6 text-blue-600" viewBox="0 0 24 24" fill="none"
                                             stroke="currentColor" stroke-width="1.8">
                                             <path
                                                 d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -277,8 +277,8 @@
                                     </div>
                                 </div>
                                 <span
-                                    class="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
-                                    <span class="text-indigo-600">📊</span>
+                                    class="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                                    <span class="text-blue-600">📊</span>
                                     {{ __('signage.top_count_label', ['count' => count($categoryCounts)]) }}
                                 </span>
                             </div>
@@ -293,14 +293,14 @@
                                     class="group flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-colors">
                                     <div class="flex items-center gap-4">
                                         <div
-                                            class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-50 to-indigo-100 group-hover:from-indigo-100 group-hover:to-indigo-200 transition-all">
-                                            <span class="text-lg font-bold text-indigo-700">{{ $cat->total }}</span>
+                                            class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 group-hover:from-blue-100 group-hover:to-blue-200 transition-all">
+                                            <span class="text-lg font-bold text-blue-700">{{ $cat->total }}</span>
                                         </div>
                                         <div>
                                             <h3 class="font-semibold text-slate-900">{{ $cat->name }}</h3>
                                             <div class="mt-2 flex items-center gap-2">
                                                 <div class="h-2 w-24 rounded-full bg-slate-200 overflow-hidden">
-                                                    <div class="h-full rounded-full bg-gradient-to-r from-indigo-500 to-indigo-600 transition-all duration-700"
+                                                    <div class="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-700"
                                                         style="width: {{ $maxCategory > 0 ? round(($cat->total / $maxCategory) * 100) : 0 }}%;">
                                                     </div>
                                                 </div>
@@ -322,8 +322,8 @@
                     <div class="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-5">
                         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div class="flex items-center gap-3">
-                                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50">
-                                    <svg class="h-6 w-6 text-indigo-600" viewBox="0 0 24 24" fill="none"
+                                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
+                                    <svg class="h-6 w-6 text-blue-600" viewBox="0 0 24 24" fill="none"
                                         stroke="currentColor" stroke-width="1.8">
                                         <path
                                             d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -337,8 +337,8 @@
                             </div>
                             <div class="flex flex-wrap gap-2">
                                 <span
-                                    class="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700">
-                                    <span class="h-2 w-2 rounded-full bg-indigo-500"></span>
+                                    class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700">
+                                    <span class="h-2 w-2 rounded-full bg-blue-500"></span>
                                     {{ $todayCases->count() }} {{ __('signage.new_submissions') }}
                                 </span>
                                 <span
@@ -362,7 +362,7 @@
                                         <p class="text-sm text-slate-500 mt-0.5">{{ __('signage.live_status') }}</p>
                                     </div>
                                     <span
-                                        class="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full">{{ __('signage.today') }}</span>
+                                        class="text-xs font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">{{ __('signage.today') }}</span>
                                 </div>
                                 <div
                                     class="overflow-hidden rounded-xl border border-slate-200 max-h-[300px] overflow-y-auto scrollbar-thin">
@@ -399,7 +399,7 @@
                                                     {{ Str::limit($applicantFull, 18) }}</td>
                                                 <td class="py-3 px-4">
                                                     <span
-                                                        class="inline-flex items-center rounded-md bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700 border border-indigo-100">
+                                                        class="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 border border-blue-100">
                                                         {{ $case->caseType?->name ?? __('signage.general_case_type') }}
                                                     </span>
                                                 </td>
@@ -526,8 +526,8 @@
                     <div class="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-5">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
-                                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50">
-                                    <svg class="h-6 w-6 text-indigo-600" viewBox="0 0 24 24" fill="none"
+                                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
+                                    <svg class="h-6 w-6 text-blue-600" viewBox="0 0 24 24" fill="none"
                                         stroke="currentColor" stroke-width="1.8">
                                         <path
                                             d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -552,10 +552,10 @@
                         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                             @forelse($activeStaff as $person)
                             <div
-                                class="group flex items-center gap-4 p-4 rounded-xl border border-slate-200 bg-gradient-to-r from-white to-slate-50 hover:bg-slate-50 hover:border-indigo-200 transition-all">
+                                class="group flex items-center gap-4 p-4 rounded-xl border border-slate-200 bg-gradient-to-r from-white to-slate-50 hover:bg-slate-50 hover:border-blue-200 transition-all">
                                 <div class="relative">
                                     <div
-                                        class="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 text-white font-bold text-xl shadow-md overflow-hidden">
+                                        class="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white font-bold text-xl shadow-md overflow-hidden">
                                         @if($person->avatar_path)
                                         <img class="h-full w-full object-cover"
                                             src="{{ \Illuminate\Support\Facades\Storage::url($person->avatar_path) }}"
@@ -622,3 +622,4 @@
 </body>
 
 </html>
+

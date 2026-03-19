@@ -37,7 +37,7 @@
                     <input name="q"
                         value="{{ $search ?? '' }}"
                         placeholder="{{ __('decisions.index.title') }} / Case #"
-                        class="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500">
+                        class="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-500">
                     <button type="submit"
                         class="px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 text-sm hover:bg-gray-50">
                         {{ $searchLabel }}
@@ -176,3 +176,4 @@
         </div>
     </div>
 </x-admin-layout>
+

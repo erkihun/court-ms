@@ -10,16 +10,10 @@
 
     <style>
         @font-face {
-            font-family: 'Nyala';
+            font-family: 'Abyssinica';
             font-style: normal;
-            font-weight: 500;
-            src: url('{{ asset('fonts/Nyala.ttf') }}') format('truetype');
-        }
-        @font-face {
-            font-family: 'Nyala';
-            font-style: normal;
-            font-weight: 800;
-            src: url('{{ asset('fonts/Nyala.ttf') }}') format('truetype');
+            font-weight: 400;
+            src: url('{{ asset('fonts/AbyssinicaSIL-Regular.ttf') }}') format('truetype');
         }
 
         :root {
@@ -37,7 +31,7 @@
             margin: 0;
             background: #e5e7eb;
             min-height: 100vh;
-            font-family: 'Nyala', 'DejaVu Sans', sans-serif;
+            font-family: 'Abyssinica', 'Nyala', 'DejaVu Serif', serif;
             color: #0f172a;
         }
 

@@ -18,6 +18,11 @@ session()->forget('acting_as_respondent');
 $actingRespondent = false;
 }
 
+$isCaseTypographyRoute = request()->routeIs('applicant.cases.*')
+    || request()->routeIs('applicant.respondent.cases.*')
+    || request()->routeIs('respondent.cases.*')
+    || request()->routeIs('public.cases.*');
+
 $unseenHearings = collect();
 $unseenMsgs = collect();
 $unseenStatus = collect();
@@ -217,7 +222,7 @@ $respondentNotifList = collect();
 
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_','-',app()->getLocale()) }}">
+<html lang="{{ str_replace('_','-',app()->getLocale()) }}" x-data="themeSystem()" x-init="init()">
 
 <head>
     <meta charset="utf-8">
@@ -225,6 +230,15 @@ $respondentNotifList = collect();
     <meta name="viewport" content="width=device-width,initial-scale=1">
 
     <title>{{ $title }} | {{ $brandName }}</title>
+
+    <script>
+        (() => {
+            const theme = localStorage.getItem('theme') || 'system';
+            const dark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            document.documentElement.classList.toggle('dark', dark);
+            document.documentElement.dataset.theme = theme;
+        })();
+    </script>
 
     <style>
         [x-cloak] {
@@ -242,10 +256,10 @@ $respondentNotifList = collect();
 
 </head>
 
-<body class="min-h-screen bg-slate-50 text-slate-800">
+<body class="ui-shell min-h-screen font-ui text-[var(--text)]">
 
     {{-- Header / Nav --}}
-    <header class="sticky top-0 z-40 bg-blue-800 text-white border-b border-blue-900/60 shadow-md">
+    <header class="sticky top-0 z-40 border-b border-blue-900/50 bg-blue-900/95 text-white shadow-lg shadow-blue-950/10 backdrop-blur">
         <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
             <a href="{{ $actingRespondent ? route('respondent.dashboard') : (auth('applicant')->check() ? route('applicant.dashboard') : route('applicant.login')) }}"
                 class="flex items-center gap-2">
@@ -271,7 +285,9 @@ $respondentNotifList = collect();
                 </div>
             </a>
 
-            <nav x-data="{ open:false }" class="relative">
+            <div class="flex items-center gap-3">
+                <x-ui.theme-toggle />
+                <nav x-data="{ open:false }" class="relative">
                 {{-- Desktop --}}
                 <ul class="hidden md:flex items-center gap-4 text-sm">
                         @if(auth('applicant')->check() || $actingRespondent)
@@ -496,7 +512,7 @@ $respondentNotifList = collect();
                                 @click.stop="tab = 'messages'; open = true; if (messageCount > 0) { messageModal = true }; $dispatch('close-language-menus'); $dispatch('close-profile-menus')"
                                 class="relative inline-flex items-center gap-1.5 rounded-md border border-blue-500 px-3 py-1.5 bg-blue-700 text-blue-50 font-medium hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-800 focus:ring-orange-400"
                                 :class="tab === 'messages' ? 'bg-white text-blue-800' : ''"
-                                aria-label="{{ __('cases.messages') }}">
+                                aria-label="{{ __('cases.navigation.messages') }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none"
                                     stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"
@@ -534,7 +550,7 @@ $respondentNotifList = collect();
                             <div class="p-3">
                                 <div class="flex items-center justify-between">
                                     <div class="text-sm font-semibold text-slate-700">
-                                        <span x-show="tab === 'messages'" x-cloak>{{ __('cases.messages') }}</span>
+                                        <span x-show="tab === 'messages'" x-cloak>{{ __('cases.navigation.messages') }}</span>
                                         <span x-show="tab !== 'messages'" x-cloak>{{ __('app.Notifications') }}</span>
                                     </div>
                                     @if($hasAnyNotifications)
@@ -713,13 +729,13 @@ $respondentNotifList = collect();
 
                         {{-- Message modal --}}
                         <div x-cloak x-show="messageModal"
-                            x-transition.opacity.duration.200
+                            x-transition:enter="motion-overlay-enter" x-transition:enter-start="motion-fade-start" x-transition:enter-end="motion-fade-end" x-transition:leave="motion-overlay-leave" x-transition:leave-start="motion-fade-end" x-transition:leave-end="motion-fade-start"
                             @keydown.escape.window="messageModal=false"
                             class="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
                             <div class="absolute inset-0 bg-black/40" @click="messageModal=false"></div>
                             <div class="relative w-full max-w-lg rounded-xl border border-slate-200 bg-white shadow-2xl">
                                 <div class="flex items-center justify-between border-b border-slate-100 px-5 py-3">
-                                    <h3 class="text-sm font-semibold text-slate-900">{{ __('cases.messages') }}</h3>
+                                    <h3 class="text-sm font-semibold text-slate-900">{{ __('cases.navigation.messages') }}</h3>
                                     <button type="button" class="text-slate-400 hover:text-slate-700" @click="messageModal=false">
                                         <span class="sr-only">Close</span>
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none"
@@ -1086,15 +1102,15 @@ $respondentNotifList = collect();
                         @endif
                     </ul>
                 </div>
-            </nav>
+                </nav>
+            </div>
         </div>
     </header>
 
     {{-- Flash messages --}}
-    <div class="max-w-6xl mx-auto px-4 pt-4">
+    <div class="mx-auto max-w-6xl px-4 pt-5">
         @if(session('success'))
-        <div
-            class="mb-4 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 text-sm flex items-start gap-2">
+        <x-ui.alert type="success" class="mb-4">
             <span class="mt-0.5">
                 <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
@@ -1103,11 +1119,10 @@ $respondentNotifList = collect();
                 </svg>
             </span>
             <span>{{ session('success') }}</span>
-        </div>
+        </x-ui.alert>
         @endif
         @if(session('error'))
-        <div
-            class="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-800 px-4 py-3 text-sm flex items-start gap-2">
+        <x-ui.alert type="error" class="mb-4">
             <span class="mt-0.5">
                 <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
@@ -1116,7 +1131,7 @@ $respondentNotifList = collect();
                 </svg>
             </span>
             <span>{{ session('error') }}</span>
-        </div>
+        </x-ui.alert>
         @endif
 
         @if(!$actingRespondent)
@@ -1126,15 +1141,17 @@ $respondentNotifList = collect();
     </div>
 
     {{-- Page content --}}
-    <main class="max-w-7xl mx-auto px-4 py-8">
+    <main class="page-enter mx-auto max-w-[1600px] px-4 py-8 sm:py-10 {{ $isCaseTypographyRoute ? 'case-font-scope case-typography' : '' }}">
 
-        {{ $slot }}
+        <div class="space-y-6">
+            {{ $slot }}
+        </div>
 
     </main>
 
     @unless($hideFooter)
     {{-- Footer --}}
-    <footer class="mt-10 border-t border-slate-200 bg-white">
+    <footer class="mt-12 border-t border-slate-200/80 bg-white/90 backdrop-blur">
         <div
             class="max-w-7xl mx-auto px-4 py-5  sm:text-sm text-slate-500 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <div>
@@ -1151,3 +1168,4 @@ $respondentNotifList = collect();
 </body>
 
 </html>
+

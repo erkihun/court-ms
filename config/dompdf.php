@@ -1,5 +1,10 @@
 <?php
 
+$abyssinicaFont = resource_path('fonts/AbyssinicaSIL-Regular.ttf');
+$nyalaFont = resource_path('fonts/Nyala.ttf');
+$notoRegularFont = resource_path('fonts/NotoSansEthiopic-Regular.ttf');
+$notoBoldFont = resource_path('fonts/NotoSansEthiopic-Bold.ttf');
+
 return [
 
     /*
@@ -31,17 +36,16 @@ return [
 
     // Custom fonts
     'font_data'  => [
-        // Register Amharic-capable font
-        'notoethiopic' => [
-            'R' => resource_path('fonts/NotoSansEthiopic-Regular.ttf'),
-            'B' => resource_path('fonts/NotoSansEthiopic-Bold.ttf'),
-            // Add these if you have them:
-            // 'I'  => resource_path('fonts/NotoSansEthiopic-Italic.ttf'),
-            // 'BI' => resource_path('fonts/NotoSansEthiopic-BoldItalic.ttf'),
-        ],
-
-        // You can add more custom fonts here if you want
-        // 'customname' => [...]
+        'notoethiopic' => array_filter([
+            'R' => is_file($notoRegularFont) ? $notoRegularFont : null,
+            'B' => is_file($notoBoldFont) ? $notoBoldFont : (is_file($notoRegularFont) ? $notoRegularFont : null),
+        ]),
+        'nyala' => array_filter([
+            'R' => is_file($nyalaFont) ? $nyalaFont : null,
+        ]),
+        'abyssinica' => array_filter([
+            'R' => is_file($abyssinicaFont) ? $abyssinicaFont : null,
+        ]),
     ],
 
     /*
@@ -114,7 +118,7 @@ return [
          *
          * IMPORTANT: set this to your Amharic-capable font key.
          */
-        'default_font' => 'notoethiopic',
+        'default_font' => is_file($abyssinicaFont) ? 'abyssinica' : (is_file($nyalaFont) ? 'nyala' : 'notoethiopic'),
 
         /**
          * Image DPI setting

@@ -62,16 +62,16 @@
             @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
             <div class="mt-2">
                 <p class="text-sm text-gray-800">
-                    {{ __('Your email address is unverified.') }}
+                    {{ __('auth.profile.email_unverified') }}
 
                     <button form="send-verification" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                        {{ __('Click here to re-send the verification email.') }}
+                        {{ __('auth.profile.resend_verification_link') }}
                     </button>
                 </p>
 
                 @if (session('status') === 'verification-link-sent')
                 <p class="mt-2 font-medium text-sm text-green-600">
-                    {{ __('A new verification link has been sent to your email address.') }}
+                    {{ __('auth.profile.verification_link_sent') }}
                 </p>
                 @endif
             </div>
@@ -89,7 +89,7 @@
                 x-show="show"
                 x-transition
                 x-init="setTimeout(() => show = false, 2000)"
-                class="text-sm text-green-600">{{ __('Saved.') }}</p>
+                class="text-sm text-green-600">{{ __('auth.profile.saved') }}</p>
             @endif
         </div>
     </form>

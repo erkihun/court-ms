@@ -11,7 +11,13 @@ $ref = $letter->reference_number;
     <title>{{ $header }}</title>
     <style>
         @page { margin: 28mm 20mm 28mm 20mm; }
-        body { font-family: DejaVu Sans, Arial, sans-serif; color: #0f172a; font-size: 12pt; }
+        @font-face {
+            font-family: 'Abyssinica';
+            src: url('{{ public_path('fonts/AbyssinicaSIL-Regular.ttf') }}') format('truetype');
+            font-style: normal;
+            font-weight: normal;
+        }
+        body { font-family: 'Abyssinica', 'Nyala', DejaVu Serif, serif; color: #0f172a; font-size: 12pt; }
         h1 { font-size: 18pt; margin: 0 0 6mm 0; }
         .meta { font-size: 10pt; color: #475569; margin-bottom: 10mm; }
         .meta div { margin-bottom: 2mm; }

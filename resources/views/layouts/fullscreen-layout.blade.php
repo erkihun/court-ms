@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full" x-data="themeSystem()" x-init="init()">
 
 <head>
     <meta charset="utf-8">
@@ -19,22 +19,21 @@
         document.addEventListener('alpine:init', () => {
             Alpine.store('theme', {
                 init() {
-                    const savedTheme = localStorage.getItem('theme');
-                    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' :
-                        'light';
-                    this.theme = savedTheme || systemTheme;
+                    this.theme = localStorage.getItem('theme') || 'system';
                     this.updateTheme();
                 },
-                theme: 'light',
+                theme: 'system',
                 toggle() {
-                    this.theme = this.theme === 'light' ? 'dark' : 'light';
+                    this.theme = this.theme === 'dark' ? 'light' : 'dark';
                     localStorage.setItem('theme', this.theme);
                     this.updateTheme();
                 },
                 updateTheme() {
                     const html = document.documentElement;
                     const body = document.body;
-                    if (this.theme === 'dark') {
+                    const useDark = this.theme === 'dark'
+                        || (this.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                    if (useDark) {
                         html.classList.add('dark');
                         body.classList.add('dark', 'bg-gray-900');
                     } else {
@@ -78,10 +77,9 @@
     <!-- Apply dark mode immediately to prevent flash -->
     <script>
         (function() {
-            const savedTheme = localStorage.getItem('theme');
-            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-            const theme = savedTheme || systemTheme;
-            if (theme === 'dark') {
+            const theme = localStorage.getItem('theme') || 'system';
+            const useDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            if (useDark) {
                 document.documentElement.classList.add('dark');
                 document.body.classList.add('dark', 'bg-gray-900');
             } else {

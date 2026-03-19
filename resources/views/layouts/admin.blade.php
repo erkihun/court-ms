@@ -1,6 +1,6 @@
 @use('Laravel\Pulse\Facades\Pulse')
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="themeSystem()" x-init="init()">
 
 <head>
     <meta charset="utf-8">
@@ -8,6 +8,14 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>{{ config('app.name', 'Laravel') }}</title>
+    <script>
+        (() => {
+            const theme = localStorage.getItem('theme') || 'system';
+            const dark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            document.documentElement.classList.toggle('dark', dark);
+            document.documentElement.dataset.theme = theme;
+        })();
+    </script>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -24,7 +32,7 @@
 
 </head>
 
-<body class="font-sans antialiased text-slate-800">
+<body class="font-sans font-ui antialiased text-slate-800">
     <div class="min-h-screen bg-gray-100 text-slate-800">
         @include('layouts.navigation')
         @isset($header)

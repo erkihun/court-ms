@@ -1,129 +1,105 @@
 <x-admin-layout :title="$appeal->appeal_number">
     @section('page_header', $appeal->appeal_number)
 
-    <div class="grid md:grid-cols-3 gap-4">
-        {{-- Main card --}}
-        <div class="md:col-span-2 rounded border border-gray-200 bg-white p-4 md:p-6 space-y-3 shadow-sm">
-            <div class="text-sm text-gray-600">
-                Case: <span class="text-gray-900">{{ $appeal->case_number }}</span>
-                <span class="text-gray-500">—</span>
-                <span class="text-gray-900">{{ $appeal->case_title }}</span>
-            </div>
-
-            <div class="text-lg font-semibold text-gray-900">{{ $appeal->title }}</div>
-
-            <div class="text-[11px] uppercase tracking-wide text-gray-600">
-                Status:
-                <span class="ml-1 rounded-md border px-2 py-0.5 capitalize
-                    @class([
-                        'border-blue-300 bg-blue-100 text-blue-800' => $appeal->status==='submitted' || $appeal->status==='under_review',
-                        'border-amber-300 bg-amber-100 text-amber-800' => $appeal->status==='draft',
-                        'border-emerald-300 bg-emerald-100 text-emerald-800' => $appeal->status==='approved',
-                        'border-rose-300 bg-rose-100 text-rose-800' => $appeal->status==='rejected',
-                        'border-gray-300 bg-gray-100 text-gray-800' => $appeal->status==='closed',
-                    ])
-                ">
-                    {{ $appeal->status }}
-                </span>
-            </div>
-
-            @if(!empty($appeal->grounds))
-            <div class="prose prose-sm max-w-none text-gray-700">
-                {!! nl2br(e($appeal->grounds)) !!}
-            </div>
-            @endif
-
-            @perm('appeals.edit')
-            @if($appeal->status==='draft')
-            <form method="POST" action="{{ route('appeals.submit',$appeal->id) }}" class="mt-2 inline">
-                @csrf
-                <button
-                    class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white
-                                   hover:bg-blue-500 border border-blue-600/70 transition-colors duration-200">
-                    Submit
-                </button>
-            </form>
-
-            <a href="{{ route('appeals.edit',$appeal->id) }}"
-                class="inline-flex items-center rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-800
-                              hover:bg-gray-300 border border-gray-300 transition-colors duration-200 ml-2">
-                Edit
-            </a>
-            @endif
-            @endperm
-        </div>
-
-        {{-- Aside: documents & decision --}}
-        <aside class="rounded border border-gray-200 bg-white p-4 md:p-6 space-y-4 shadow-sm">
-            <div>
-                <div class="font-medium text-gray-900 mb-2">Documents</div>
-                <form class="flex flex-col sm:flex-row gap-2"
-                    method="POST"
-                    action="{{ route('appeals.docs.upload',$appeal->id) }}"
-                    enctype="multipart/form-data">
-                    @csrf
-                    <input name="label" placeholder="Label"
-                        class="w-full rounded-md border border-gray-300 bg-white text-gray-900 px-3 py-2
-                                  focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-500">
-                    <input type="file" name="file" required
-                        class="text-sm text-gray-700 file:mr-2 file:rounded-md file:border file:border-gray-300
-                                  file:bg-gray-100 file:text-gray-700 file:px-3 file:py-1.5">
-                    <button class="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-500 transition-colors duration-200">
-                        Upload
-                    </button>
-                </form>
-            </div>
-
-            <ul class="divide-y divide-gray-200">
-                @forelse($docs as $d)
-                <li class="py-2 flex items-center justify-between">
-                    <div class="text-sm text-gray-900">
-                        {{ $d->label ?? basename($d->path) }}
-                        <div class="text-xs text-gray-600">
-                            {{ \App\Support\EthiopianDate::format($d->created_at, withTime: true) }}
-                        </div>
+    <div class="enterprise-page">
+        <div class="grid gap-6 md:grid-cols-3">
+            <section class="enterprise-panel md:col-span-2">
+                <div class="enterprise-panel-body space-y-4">
+                    <div class="text-sm text-slate-600">
+                        Case: <span class="font-medium text-slate-900">{{ $appeal->case_number }}</span>
+                        <span class="text-slate-400">-</span>
+                        <span class="text-slate-900">{{ $appeal->case_title }}</span>
                     </div>
-                    <div class="flex gap-3">
-                        <a href="{{ route('appeals.docs.download', [$appeal->id, $d->id]) }}" class="text-blue-600 text-sm hover:text-blue-800">View</a>
-                        @perm('appeals.edit')
-                        <form method="POST" action="{{ route('appeals.docs.delete', [$appeal->id, $d->id]) }}"
-                            onsubmit="return confirm('Delete this document?')">
-                            @csrf @method('DELETE')
-                            <button class="text-red-600 text-sm hover:text-red-800">Delete</button>
+
+                    <h2 class="text-xl font-semibold tracking-tight text-slate-900">{{ $appeal->title }}</h2>
+
+                    <div>
+                        <span class="text-xs uppercase tracking-[0.18em] text-slate-500">Status</span>
+                        <span class="enterprise-pill ml-2
+                            @class([
+                                'border-blue-300 bg-blue-100 text-blue-800' => $appeal->status==='submitted' || $appeal->status==='under_review',
+                                'border-amber-300 bg-amber-100 text-amber-800' => $appeal->status==='draft',
+                                'border-emerald-300 bg-emerald-100 text-emerald-800' => $appeal->status==='approved',
+                                'border-rose-300 bg-rose-100 text-rose-800' => $appeal->status==='rejected',
+                                'border-slate-300 bg-slate-100 text-slate-800' => $appeal->status==='closed',
+                            ])">
+                            {{ $appeal->status }}
+                        </span>
+                    </div>
+
+                    @if(!empty($appeal->grounds))
+                    <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-7 text-slate-700">
+                        {!! nl2br(e($appeal->grounds)) !!}
+                    </div>
+                    @endif
+
+                    @perm('appeals.edit')
+                    @if($appeal->status==='draft')
+                    <div class="enterprise-actions">
+                        <form method="POST" action="{{ route('appeals.submit',$appeal->id) }}">
+                            @csrf
+                            <button class="btn btn-primary">Submit</button>
                         </form>
-                        @endperm
+                        <a href="{{ route('appeals.edit',$appeal->id) }}" class="btn btn-outline">Edit</a>
                     </div>
-                </li>
-                @empty
-                <li class="py-8 text-center text-sm text-gray-500 border border-dashed border-gray-300 rounded">
-                    No documents uploaded.
-                </li>
-                @endforelse
-            </ul>
+                    @endif
+                    @endperm
+                </div>
+            </section>
 
-            @perm('appeals.decide')
-            @if(in_array($appeal->status,['submitted','under_review']))
-            <div class="pt-2 border-t border-gray-200">
-                <div class="font-medium text-gray-900 mb-2">Record decision</div>
-                <form method="POST" action="{{ route('appeals.decide',$appeal->id) }}" class="space-y-2">
-                    @csrf
-                    <select name="decision"
-                        class="w-full rounded-md border border-gray-300 bg-white text-gray-900 px-3 py-2
-                                       focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-500">
-                        <option value="approved">Approve</option>
-                        <option value="rejected">Reject</option>
-                        <option value="closed">Close</option>
-                    </select>
-                    <textarea name="decision_notes" rows="3" placeholder="Notes (optional)"
-                        class="w-full rounded-md border border-gray-300 bg-white text-gray-900 px-3 py-2
-                                         focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-500"></textarea>
-                    <button class="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 transition-colors duration-200">
-                        Save decision
-                    </button>
-                </form>
-            </div>
-            @endif
-            @endperm
-        </aside>
+            <aside class="enterprise-panel">
+                <div class="enterprise-panel-body space-y-5">
+                    <div>
+                        <h3 class="text-sm font-semibold text-slate-900 mb-2">Documents</h3>
+                        <form class="space-y-2" method="POST" action="{{ route('appeals.docs.upload',$appeal->id) }}" enctype="multipart/form-data">
+                            @csrf
+                            <input name="label" placeholder="Label" class="ui-input">
+                            <input type="file" name="file" required class="enterprise-file-input">
+                            <button class="btn btn-primary w-full">Upload</button>
+                        </form>
+                    </div>
+
+                    <ul class="divide-y divide-slate-200">
+                        @forelse($docs as $d)
+                        <li class="py-3 flex items-center justify-between gap-3">
+                            <div class="text-sm text-slate-900">
+                                {{ $d->label ?? basename($d->path) }}
+                                <div class="text-xs text-slate-500">{{ \App\Support\EthiopianDate::format($d->created_at, withTime: true) }}</div>
+                            </div>
+                            <div class="enterprise-actions">
+                                <a href="{{ route('appeals.docs.download', [$appeal->id, $d->id]) }}" class="text-blue-600 text-sm hover:underline">View</a>
+                                @perm('appeals.edit')
+                                <form method="POST" action="{{ route('appeals.docs.delete', [$appeal->id, $d->id]) }}" onsubmit="return confirm('Delete this document?')">
+                                    @csrf @method('DELETE')
+                                    <button class="text-rose-600 text-sm hover:underline">Delete</button>
+                                </form>
+                                @endperm
+                            </div>
+                        </li>
+                        @empty
+                        <li class="py-8"><div class="enterprise-empty">No documents uploaded.</div></li>
+                        @endforelse
+                    </ul>
+
+                    @perm('appeals.decide')
+                    @if(in_array($appeal->status,['submitted','under_review']))
+                    <div class="pt-3 border-t border-slate-200">
+                        <h3 class="text-sm font-semibold text-slate-900 mb-2">Record Decision</h3>
+                        <form method="POST" action="{{ route('appeals.decide',$appeal->id) }}" class="space-y-2">
+                            @csrf
+                            <select name="decision" class="ui-select">
+                                <option value="approved">Approve</option>
+                                <option value="rejected">Reject</option>
+                                <option value="closed">Close</option>
+                            </select>
+                            <textarea name="decision_notes" rows="3" placeholder="Notes (optional)" class="ui-textarea"></textarea>
+                            <button class="btn btn-primary w-full">Save Decision</button>
+                        </form>
+                    </div>
+                    @endif
+                    @endperm
+                </div>
+            </aside>
+        </div>
     </div>
 </x-admin-layout>

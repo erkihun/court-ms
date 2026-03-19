@@ -64,7 +64,7 @@
         }
     </style>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-2">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-2 case-typography">
 
         {{-- CASE HEADER / ACTIONS --}}
         <section class="lg:col-span-3 rounded-xl border border-slate-200 bg-white overflow-hidden shadow-lg">
@@ -585,7 +585,7 @@
                         </p>
                     </div>
                     <span class="text-[11px] text-slate-500">
-                        {{ ($msgs ?? collect())->count() }} {{ __('cases.messages') }}
+                        {{ ($msgs ?? collect())->count() }} {{ __('cases.navigation.messages') }}
                     </span>
                 </div>
 

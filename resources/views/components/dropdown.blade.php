@@ -19,12 +19,12 @@ default => $width,
     </div>
 
     <div x-show="open"
-        x-transition:enter="transition ease-out duration-200"
-        x-transition:enter-start="opacity-0 scale-95"
-        x-transition:enter-end="opacity-100 scale-100"
-        x-transition:leave="transition ease-in duration-75"
-        x-transition:leave-start="opacity-100 scale-100"
-        x-transition:leave-end="opacity-0 scale-95"
+        x-transition:enter="motion-enter"
+        x-transition:enter-start="motion-scale-start"
+        x-transition:enter-end="motion-scale-end"
+        x-transition:leave="motion-leave"
+        x-transition:leave-start="motion-scale-end"
+        x-transition:leave-end="motion-scale-start"
         class="absolute z-50 mt-2 {{ $width }} rounded-md shadow-lg {{ $alignmentClasses }}"
         style="display: none;"
         @click="open = false">

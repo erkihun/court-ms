@@ -1,7 +1,7 @@
 @props(['title' => 'Dashboard'])
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_','-',app()->getLocale()) }}">
+<html lang="{{ str_replace('_','-',app()->getLocale()) }}" x-data="themeSystem()" x-init="init()">
 
 <head>
     <meta charset="utf-8">
@@ -38,18 +38,17 @@
     }
     @endphp
     <title>{{ $t }} | {{ $systemSettings->app_name ?? config('app.name','CMS') }}</title>
+    <script>
+        (() => {
+            const theme = localStorage.getItem('theme') || 'system';
+            const dark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            document.documentElement.classList.toggle('dark', dark);
+            document.documentElement.dataset.theme = theme;
+        })();
+    </script>
     <style>
         [x-cloak] {
             display: none !important
-        }
-
-        /* Fallbacks in case Tailwind build misses arbitrary transition props */
-        .transition-size {
-            transition: width .3s ease-in-out
-        }
-
-        .transition-padding {
-            transition: padding-left .3s ease-in-out
         }
 
         /* NEW: Icons are light blue/white in the dark sidebar for contrast */
@@ -80,7 +79,7 @@
 
 {{-- Tribunal systems use clear, high-contrast typography --}}
 
-<body x-data="layoutState()" x-init="init()" class="min-h-screen flex bg-gray-50 text-gray-800 font-sans">
+<body x-data="layoutState()" x-init="init()" class="ui-shell admin-subtle-grid min-h-screen flex font-sans font-ui text-[var(--text)]">
 
     {{-- Sidebar (mobile slide-in + desktop collapsible) --}}
     @php
@@ -121,6 +120,9 @@
     $hasAudit = Route::has('admin.audit');
     $hasReports = Route::has('reports.index');
     $hasAnnouncements = Route::has('announcements.index');
+    $isCaseTypographyRoute = request()->routeIs('cases.*')
+        || request()->routeIs('recordes.*')
+        || request()->routeIs('respondent-responses.*');
     $canManageTemplates = $hasLetterTemplates && auth()->user()?->hasPermission('templates.manage');
     $canViewLetters = $hasLetters && auth()->user()?->hasPermission('cases.edit');
     $canComposeLetters = $hasLetterComposer && auth()->user()?->hasPermission('cases.edit');
@@ -151,11 +153,11 @@
 
     <aside
         {{-- UPDATED: Deep Blue/Navy Sidebar BG (Primary Brand Color for Authority) --}}
-        class="fixed md:sticky z-40 inset-y-0 left-0
-               transform transition-transform duration-300 ease-out
+        class="fixed top-0 left-0 z-40 h-screen
+               transform transition-transform-base
                -translate-x-full md:translate-x-0
-               flex flex-col bg-[#052e4a] border-r border-blue-800
-               w-72 md:h-screen md:overflow-y-auto md:[transition-property:width] md:duration-300 md:ease-in-out transition-size"
+               flex flex-col font-sidebar bg-[linear-gradient(180deg,#0f172a_0%,#102c4d_54%,#12375f_100%)] border-r border-slate-800/80 shadow-xl shadow-slate-950/20
+               w-72 transition-width-slow"
         :class="{
             'translate-x-0': sidebar,
             'md:w-20': compact,
@@ -165,7 +167,7 @@
 
         {{-- Brand / collapse toggle row --}}
         {{-- UPDATED: Border uses darker blue --}}
-        <div class="relative flex items-center justify-center gap-2 px-4 py-5 border-b border-blue-800">
+        <div class="relative flex items-center justify-center gap-2 border-b border-white/10 bg-white/5 px-4 py-5">
             <div class="flex items-center justify-center w-full">
                 {{-- Text color is white/light blue --}}
                 <a href="{{ $hasDashboard ? route('dashboard') : url('/') }}" aria-label="{{ __('app.Dashboard') }}" class="focus-ring rounded flex flex-col items-center text-center">
@@ -178,24 +180,24 @@
                     {{-- Full name (shown when NOT compact) --}}
                     <span class="text-white text-xl font-extrabold truncate origin-left"
                         x-show="!compact"
-                        x-transition:enter="transition ease-out duration-200"
-                        x-transition:enter-start="opacity-0 -translate-x-1"
-                        x-transition:enter-end="opacity-100 translate-x-0"
-                        x-transition:leave="transition ease-in duration-150"
-                        x-transition:leave-start="opacity-100 translate-x-0"
-                        x-transition:leave-end="opacity-0 -translate-x-1">
+                        x-transition:enter="motion-enter"
+                        x-transition:enter-start="motion-slide-inline-start"
+                        x-transition:enter-end="motion-slide-inline-end"
+                        x-transition:leave="motion-leave"
+                        x-transition:leave-start="motion-slide-inline-end"
+                        x-transition:leave-end="motion-slide-inline-start">
                         {{ $systemSettings->app_name ?? config('app.name','CMS') }}
                     </span>
 
                     {{-- Short name (shown when compact) --}}
                     <span class="text-white text-xl font-extrabold truncate origin-left"
                         x-show="compact"
-                        x-transition:enter="transition ease-out duration-200"
-                        x-transition:enter-start="opacity-0 -translate-x-1"
-                        x-transition:enter-end="opacity-100 translate-x-0"
-                        x-transition:leave="transition ease-in duration-150"
-                        x-transition:leave-start="opacity-100 translate-x-0"
-                        x-transition:leave-end="opacity-0 -translate-x-1">
+                        x-transition:enter="motion-enter"
+                        x-transition:enter-start="motion-slide-inline-start"
+                        x-transition:enter-end="motion-slide-inline-end"
+                        x-transition:leave="motion-leave"
+                        x-transition:leave-start="motion-slide-inline-end"
+                        x-transition:leave-end="motion-slide-inline-start">
                         {{ $systemSettings->short_name ?? 'CMS' }}
                     </span>
                 </a>
@@ -207,7 +209,7 @@
                 class="md:hidden absolute right-3 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-9 h-9 rounded-md text-blue-300 hover:bg-blue-800 focus-ring"
                 @click="sidebar=false"
                 aria-label="{{ __('app.Close sidebar') }}">
-                <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -215,25 +217,44 @@
         </div>
 
         {{-- Nav --}}
-        <nav id="admin-nav" data-spa-nav="true" class="flex-1 p-3 space-y-1 overflow-y-auto">
+        <div id="admin-nav" data-spa-nav="true" x-data="lazyMenu()" x-init="init()" class="flex-1 overflow-y-auto">
+            <template x-if="!loaded">
+                <div class="space-y-3 px-3 py-4" aria-hidden="true">
+                    <div class="h-3 w-24 rounded bg-white/10 skeleton"></div>
+                    <div class="space-y-2">
+                        <div class="h-10 rounded-lg bg-white/8 skeleton"></div>
+                        <div class="h-10 rounded-lg bg-white/8 skeleton"></div>
+                        <div class="h-10 rounded-lg bg-white/8 skeleton"></div>
+                        <div class="h-10 rounded-lg bg-white/8 skeleton"></div>
+                    </div>
+                    <div class="h-3 w-20 rounded bg-white/10 skeleton"></div>
+                    <div class="space-y-2">
+                        <div class="h-10 rounded-lg bg-white/8 skeleton"></div>
+                        <div class="h-10 rounded-lg bg-white/8 skeleton"></div>
+                    </div>
+                </div>
+            </template>
+
+            <template x-if="loaded" :key="'menu'">
+                <nav class="space-y-1.5 px-3 py-4">
             {{-- Dashboard --}}
             @if($hasDashboard)
             {{-- UPDATED: Active state uses Primary Blue (Blue-700). Hover uses a lighter Blue-600/30 mix. --}}
             <a href="{{ route('dashboard') }}"
                 data-no-spa="true"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
-                      {{ request()->routeIs('dashboard') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
+                class="sidebar-menu-item focus-ring
+                      {{ request()->routeIs('dashboard') ? 'sidebar-menu-item-active' : 'sidebar-menu-item-inactive' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <x-heroicon-o-home class="sidebar-icon h-5 w-5" aria-hidden="true" />
+                    <x-heroicon-o-home class="sidebar-icon h-4 w-4" aria-hidden="true" />
                 </div>
-                <span class="truncate origin-left"
+                <span class="sidebar-menu-label truncate origin-left"
                     x-show="!compact"
-                    x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 -translate-x-1"
-                    x-transition:enter-end="opacity-100 translate-x-0"
-                    x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100 translate-x-0"
-                    x-transition:leave-end="opacity-0 -translate-x-1">
+                    x-transition:enter="motion-enter"
+                    x-transition:enter-start="motion-slide-inline-start"
+                    x-transition:enter-end="motion-slide-inline-end"
+                    x-transition:leave="motion-leave"
+                    x-transition:leave-start="motion-slide-inline-end"
+                    x-transition:leave-end="motion-slide-inline-start">
                     {{ __('app.Dashboard') }}
                 </span>
             </a>
@@ -244,25 +265,41 @@
             || ($hasTerms && auth()->user()?->hasPermission('settings.manage'))
             || ($hasAbout && auth()->user()?->hasPermission('about.manage'))
             || $hasAudit;
+            $showCaseOpsSection = ($hasCases && auth()->user()?->hasPermission('cases.view'))
+                || ($hasCaseInspections && ($canManageInspectionRequests || $canManageInspectionFindings))
+                || ($hasHearings && auth()->user()?->hasPermission('cases.view'))
+                || ($hasRecordes && auth()->user()?->hasPermission('cases.view'))
+                || ($hasCaseTypes && auth()->user()?->hasPermission('cases.types'))
+                || ($hasAppeals && auth()->user()?->hasPermission('appeals.view'))
+                || ($hasDecisions && auth()->user()?->hasPermission('decision.view'))
+                || $canViewReports;
+            $showPeopleSection = ($hasApplicants && auth()->user()?->hasPermission('applicants.view'))
+                || $canManageUsers || $canManagePermissions || $canManageRoles || $canManageTeams;
+            $showCommsSection = $hasNotifIndex || ($hasAnnouncements && auth()->user()?->hasPermission('announcements.manage'))
+                || $canManageTemplates || $canViewLetters || $canComposeLetters;
             @endphp
+
+            @if($showCaseOpsSection)
+            <div class="sidebar-section-label" x-show="!compact">{{ __('app.case_management') }}</div>
+            @endif
 
 
             {{-- Appeals --}}
             @if($hasAppeals && auth()->user()?->hasPermission('appeals.view'))
             <a href="{{ route('appeals.index') }}"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
-                {{ request()->routeIs('appeals.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
+                class="sidebar-menu-item focus-ring
+                {{ request()->routeIs('appeals.*') ? 'sidebar-menu-item-active' : 'sidebar-menu-item-inactive' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <x-heroicon-o-shield-check class="sidebar-icon h-5 w-5" aria-hidden="true" />
+                    <x-heroicon-o-shield-check class="sidebar-icon h-4 w-4" aria-hidden="true" />
                 </div>
-                <span class="truncate origin-left"
+                <span class="sidebar-menu-label truncate origin-left"
                     x-show="!compact"
-                    x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 -translate-x-1"
-                    x-transition:enter-end="opacity-100 translate-x-0"
-                    x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100 translate-x-0"
-                    x-transition:leave-end="opacity-0 -translate-x-1">
+                    x-transition:enter="motion-enter"
+                    x-transition:enter-start="motion-slide-inline-start"
+                    x-transition:enter-end="motion-slide-inline-end"
+                    x-transition:leave="motion-leave"
+                    x-transition:leave-start="motion-slide-inline-end"
+                    x-transition:leave-end="motion-slide-inline-start">
                     {{ __('app.Appeals') }}
                 </span>
             </a>
@@ -273,19 +310,19 @@
 
             @if($hasDecisions && auth()->user()?->hasPermission('decision.view'))
             <a href="{{ route('decisions.index') }}"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
-                {{ request()->routeIs('decisions.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
+                class="sidebar-menu-item focus-ring
+                {{ request()->routeIs('decisions.*') ? 'sidebar-menu-item-active' : 'sidebar-menu-item-inactive' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <x-heroicon-o-document-text class="sidebar-icon h-5 w-5" aria-hidden="true" />
+                    <x-heroicon-o-document-text class="sidebar-icon h-4 w-4" aria-hidden="true" />
                 </div>
-                <span class="truncate origin-left"
+                <span class="sidebar-menu-label truncate origin-left"
                     x-show="!compact"
-                    x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 -translate-x-1"
-                    x-transition:enter-end="opacity-100 translate-x-0"
-                    x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100 translate-x-0"
-                    x-transition:leave-end="opacity-0 -translate-x-1">
+                    x-transition:enter="motion-enter"
+                    x-transition:enter-start="motion-slide-inline-start"
+                    x-transition:enter-end="motion-slide-inline-end"
+                    x-transition:leave="motion-leave"
+                    x-transition:leave-start="motion-slide-inline-end"
+                    x-transition:leave-end="motion-slide-inline-start">
                     {{ __('app.Decisions') }}
                 </span>
             </a>
@@ -294,19 +331,19 @@
             {{-- Cases --}}
             @if($hasCases && auth()->user()?->hasPermission('cases.view'))
             <a href="{{ route('cases.index') }}"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
-                {{ request()->routeIs('cases.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
+                class="sidebar-menu-item focus-ring
+                {{ request()->routeIs('cases.*') ? 'sidebar-menu-item-active' : 'sidebar-menu-item-inactive' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <x-heroicon-o-briefcase class="sidebar-icon h-5 w-5" aria-hidden="true" />
+                    <x-heroicon-o-briefcase class="sidebar-icon h-4 w-4" aria-hidden="true" />
                 </div>
-                <span class="truncate origin-left"
+                <span class="sidebar-menu-label truncate origin-left"
                     x-show="!compact"
-                    x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 -translate-x-1"
-                    x-transition:enter-end="opacity-100 translate-x-0"
-                    x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100 translate-x-0"
-                    x-transition:leave-end="opacity-0 -translate-x-1">
+                    x-transition:enter="motion-enter"
+                    x-transition:enter-start="motion-slide-inline-start"
+                    x-transition:enter-end="motion-slide-inline-end"
+                    x-transition:leave="motion-leave"
+                    x-transition:leave-start="motion-slide-inline-end"
+                    x-transition:leave-end="motion-slide-inline-start">
                     {{ __('app.Cases') }}
                 </span>
             </a>
@@ -314,46 +351,47 @@
 
             {{-- Case Inspections --}}
             @if($hasCaseInspections && ($canManageInspectionRequests || $canManageInspectionFindings))
-            <div x-data="{ open: {{ $inspectionMenuOpen ? 'true' : 'false' }} }" class="space-y-1">
+            <div x-data="{ open: {{ $inspectionMenuOpen ? 'true' : 'false' }}, loaded: {{ $inspectionMenuOpen ? 'true' : 'false' }} }" class="space-y-1">
                 <button type="button"
-                    class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition focus-ring
-                    {{ $inspectionMenuOpen ? 'bg-blue-700 text-white shadow-md' : 'text-blue-100 hover:text-white hover:bg-blue-600/30' }}"
-                    @click="open=!open"
+                    class="sidebar-menu-toggle focus-ring
+                    {{ $inspectionMenuOpen ? 'sidebar-menu-item-active' : 'sidebar-menu-item-inactive' }}"
+                    @click="if (!loaded) loaded = true; open = !open"
                     aria-haspopup="true"
                     :aria-expanded="open.toString()">
                     <span class="flex items-center gap-3">
                         <div class="grid place-items-center w-6" aria-hidden="true">
-                            <x-heroicon-o-clipboard-document-check class="sidebar-icon h-5 w-5" aria-hidden="true" />
+                            <x-heroicon-o-clipboard-document-check class="sidebar-icon h-4 w-4" aria-hidden="true" />
                         </div>
-                        <span class="truncate origin-left"
+                        <span class="sidebar-menu-label truncate origin-left"
                             x-show="!compact"
-                            x-transition:enter="transition ease-out duration-200"
-                            x-transition:enter-start="opacity-0 -translate-x-1"
-                            x-transition:enter-end="opacity-100 translate-x-0"
-                            x-transition:leave="transition ease-in duration-150"
-                            x-transition:leave-start="opacity-100 translate-x-0"
-                            x-transition:leave-end="opacity-0 -translate-x-1">
-                            {{ __('app.Case Inspections') }}
+                            x-transition:enter="motion-enter"
+                            x-transition:enter-start="motion-slide-inline-start"
+                            x-transition:enter-end="motion-slide-inline-end"
+                            x-transition:leave="motion-leave"
+                            x-transition:leave-start="motion-slide-inline-end"
+                            x-transition:leave-end="motion-slide-inline-start">
+                            {{ __('app.case_inspections') }}
                         </span>
                     </span>
-                    <svg x-show="!compact" xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4 transition-transform duration-200"
+                    <svg x-show="!compact" xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4 transition-fast"
                         :class="{ 'rotate-90': open }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
                 </button>
 
-                <div x-show="open && !compact"
-                    x-transition:enter="transition ease-out duration-150"
-                    x-transition:enter-start="opacity-0 -translate-y-1"
-                    x-transition:enter-end="opacity-100 translate-y-0"
-                    x-transition:leave="transition ease-in duration-100"
-                    x-transition:leave-start="opacity-100 translate-y-0"
-                    x-transition:leave-end="opacity-0 -translate-y-1"
-                    class="pl-11 space-y-1">
+                <template x-if="loaded">
+                    <div x-show="open && !compact"
+                        x-transition:enter="motion-enter-fast"
+                        x-transition:enter-start="motion-slide-up-start"
+                        x-transition:enter-end="motion-slide-up-end"
+                        x-transition:leave="motion-leave"
+                        x-transition:leave-start="motion-slide-up-end"
+                        x-transition:leave-end="motion-slide-up-start"
+                        class="pl-11 space-y-1">
                     @if($hasCaseInspectionRequests && $canManageInspectionRequests)
                     <a href="{{ route('case-inspection-requests.index') }}"
-                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
-                        {{ $inspectionRequestsActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                        class="sidebar-submenu-item focus-ring
+                        {{ $inspectionRequestsActive ? 'sidebar-submenu-item-active' : 'sidebar-submenu-item-inactive' }}">
                         <x-heroicon-o-document-text class="sidebar-icon h-4 w-4" aria-hidden="true" />
                         <span>{{ __('case_inspections.requests.index_title') }}</span>
                     </a>
@@ -361,32 +399,33 @@
 
                     @if($hasCaseInspectionFindings && $canManageInspectionFindings)
                     <a href="{{ route('case-inspection-findings.index') }}"
-                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
-                        {{ $inspectionFindingsActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                        class="sidebar-submenu-item focus-ring
+                        {{ $inspectionFindingsActive ? 'sidebar-submenu-item-active' : 'sidebar-submenu-item-inactive' }}">
                         <x-heroicon-o-clipboard class="sidebar-icon h-4 w-4" aria-hidden="true" />
                         <span>{{ __('case_inspections.findings.index_title') }}</span>
                     </a>
                     @endif
-                </div>
+                    </div>
+                </template>
             </div>
             @endif
 
             {{-- Hearings --}}
             @if($hasHearings && auth()->user()?->hasPermission('cases.view'))
             <a href="{{ route('admin.hearings.index') }}"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
-                {{ request()->routeIs('admin.hearings.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
+                class="sidebar-menu-item focus-ring
+                {{ request()->routeIs('admin.hearings.*') ? 'sidebar-menu-item-active' : 'sidebar-menu-item-inactive' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <x-heroicon-o-calendar-days class="sidebar-icon h-5 w-5" aria-hidden="true" />
+                    <x-heroicon-o-calendar-days class="sidebar-icon h-4 w-4" aria-hidden="true" />
                 </div>
-                <span class="truncate origin-left"
+                <span class="sidebar-menu-label truncate origin-left"
                     x-show="!compact"
-                    x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 -translate-x-1"
-                    x-transition:enter-end="opacity-100 translate-x-0"
-                    x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100 translate-x-0"
-                    x-transition:leave-end="opacity-0 -translate-x-1">
+                    x-transition:enter="motion-enter"
+                    x-transition:enter-start="motion-slide-inline-start"
+                    x-transition:enter-end="motion-slide-inline-end"
+                    x-transition:leave="motion-leave"
+                    x-transition:leave-start="motion-slide-inline-end"
+                    x-transition:leave-end="motion-slide-inline-start">
                     {{ __('app.Hearings') }}
                 </span>
             </a>
@@ -395,19 +434,19 @@
             {{-- Records --}}
             @if($hasRecordes && auth()->user()?->hasPermission('cases.view'))
             <a href="{{ route('recordes.index') }}"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
-                {{ request()->routeIs('recordes.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
+                class="sidebar-menu-item focus-ring
+                {{ request()->routeIs('recordes.*') ? 'sidebar-menu-item-active' : 'sidebar-menu-item-inactive' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <x-heroicon-o-bookmark class="sidebar-icon h-5 w-5" aria-hidden="true" />
+                    <x-heroicon-o-bookmark class="sidebar-icon h-4 w-4" aria-hidden="true" />
                 </div>
-                <span class="truncate origin-left"
+                <span class="sidebar-menu-label truncate origin-left"
                     x-show="!compact"
-                    x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 -translate-x-1"
-                    x-transition:enter-end="opacity-100 translate-x-0"
-                    x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100 translate-x-0"
-                    x-transition:leave-end="opacity-0 -translate-x-1">
+                    x-transition:enter="motion-enter"
+                    x-transition:enter-start="motion-slide-inline-start"
+                    x-transition:enter-end="motion-slide-inline-end"
+                    x-transition:leave="motion-leave"
+                    x-transition:leave-start="motion-slide-inline-end"
+                    x-transition:leave-end="motion-slide-inline-start">
                     {{ __('app.Records') }}
                 </span>
             </a>
@@ -415,19 +454,19 @@
 
             @if($canViewReports)
             <a href="{{ route('reports.index') }}"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
-                {{ request()->routeIs('reports.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
+                class="sidebar-menu-item focus-ring
+                {{ request()->routeIs('reports.*') ? 'sidebar-menu-item-active' : 'sidebar-menu-item-inactive' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <x-heroicon-o-chart-bar class="sidebar-icon h-5 w-5" aria-hidden="true" />
+                    <x-heroicon-o-chart-bar class="sidebar-icon h-4 w-4" aria-hidden="true" />
                 </div>
-                <span class="truncate origin-left"
+                <span class="sidebar-menu-label truncate origin-left"
                     x-show="!compact"
-                    x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 -translate-x-1"
-                    x-transition:enter-end="opacity-100 translate-x-0"
-                    x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100 translate-x-0"
-                    x-transition:leave-end="opacity-0 -translate-x-1">
+                    x-transition:enter="motion-enter"
+                    x-transition:enter-start="motion-slide-inline-start"
+                    x-transition:enter-end="motion-slide-inline-end"
+                    x-transition:leave="motion-leave"
+                    x-transition:leave-start="motion-slide-inline-end"
+                    x-transition:leave-end="motion-slide-inline-start">
                     {{ __('app.Reports') }}
                 </span>
             </a>
@@ -436,19 +475,19 @@
             {{-- Applicants --}}
             @if($hasApplicants && auth()->user()?->hasPermission('applicants.view'))
             <a href="{{ route('applicants.index') }}"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
-                {{ $applicantsActive ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
+                class="sidebar-menu-item focus-ring
+                {{ $applicantsActive ? 'sidebar-menu-item-active' : 'sidebar-menu-item-inactive' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <x-heroicon-o-user-group class="sidebar-icon h-5 w-5" aria-hidden="true" />
+                    <x-heroicon-o-user-group class="sidebar-icon h-4 w-4" aria-hidden="true" />
                 </div>
-                <span class="truncate origin-left"
+                <span class="sidebar-menu-label truncate origin-left"
                     x-show="!compact"
-                    x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 -translate-x-1"
-                    x-transition:enter-end="opacity-100 translate-x-0"
-                    x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100 translate-x-0"
-                    x-transition:leave-end="opacity-0 -translate-x-1">
+                    x-transition:enter="motion-enter"
+                    x-transition:enter-start="motion-slide-inline-start"
+                    x-transition:enter-end="motion-slide-inline-end"
+                    x-transition:leave="motion-leave"
+                    x-transition:leave-start="motion-slide-inline-end"
+                    x-transition:leave-end="motion-slide-inline-start">
                     {{ __('app.Applicant') }}
                 </span>
             </a>
@@ -457,89 +496,94 @@
             {{-- Case Types --}}
             @if($hasCaseTypes && auth()->user()?->hasPermission('cases.types'))
             <a href="{{ route('case-types.index') }}"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
-                {{ request()->routeIs('case-types.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
+                class="sidebar-menu-item focus-ring
+                {{ request()->routeIs('case-types.*') ? 'sidebar-menu-item-active' : 'sidebar-menu-item-inactive' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <x-heroicon-o-tag class="sidebar-icon h-5 w-5" aria-hidden="true" />
+                    <x-heroicon-o-tag class="sidebar-icon h-4 w-4" aria-hidden="true" />
                 </div>
-                <span class="truncate origin-left"
+                <span class="sidebar-menu-label truncate origin-left"
                     x-show="!compact"
-                    x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 -translate-x-1"
-                    x-transition:enter-end="opacity-100 translate-x-0"
-                    x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100 translate-x-0"
-                    x-transition:leave-end="opacity-0 -translate-x-1">
-                    {{ __('app.Case Types') }}
+                    x-transition:enter="motion-enter"
+                    x-transition:enter-start="motion-slide-inline-start"
+                    x-transition:enter-end="motion-slide-inline-end"
+                    x-transition:leave="motion-leave"
+                    x-transition:leave-start="motion-slide-inline-end"
+                    x-transition:leave-end="motion-slide-inline-start">
+                    {{ __('app.case_types') }}
                 </span>
             </a>
             @endif
 
+            @if($showCommsSection)
+            <div class="sidebar-section-label" x-show="!compact">{{ __('app.communication') }}</div>
+            @endif
+
             {{-- Letters dropdown --}}
             @if($canManageTemplates || $canViewLetters || $canComposeLetters)
-            <div x-data="{ open: {{ $letterMenuOpen ? 'true' : 'false' }} }" class="space-y-1">
+            <div x-data="{ open: {{ $letterMenuOpen ? 'true' : 'false' }}, loaded: {{ $letterMenuOpen ? 'true' : 'false' }} }" class="space-y-1">
                 {{-- UPDATED: Main button active uses Primary Blue --}}
                 <button type="button"
-                    class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition focus-ring
-                    {{ $letterMenuOpen ? 'bg-blue-700 text-white shadow-md' : 'text-blue-100 hover:text-white hover:bg-blue-600/30' }}"
-                    @click="open=!open"
+                    class="sidebar-menu-toggle focus-ring
+                    {{ $letterMenuOpen ? 'sidebar-menu-item-active' : 'sidebar-menu-item-inactive' }}"
+                    @click="if (!loaded) loaded = true; open = !open"
                     aria-haspopup="true"
                     :aria-expanded="open.toString()">
                     <span class="flex items-center gap-3">
                         <div class="grid place-items-center w-6" aria-hidden="true">
-                            <x-heroicon-o-envelope class="sidebar-icon h-5 w-5" aria-hidden="true" />
+                            <x-heroicon-o-envelope class="sidebar-icon h-4 w-4" aria-hidden="true" />
                         </div>
-                        <span class="truncate origin-left"
+                        <span class="sidebar-menu-label truncate origin-left"
                             x-show="!compact"
-                            x-transition:enter="transition ease-out duration-200"
-                            x-transition:enter-start="opacity-0 -translate-x-1"
-                            x-transition:enter-end="opacity-100 translate-x-0"
-                            x-transition:leave="transition ease-in duration-150"
-                            x-transition:leave-start="opacity-100 translate-x-0"
-                            x-transition:leave-end="opacity-0 -translate-x-1">
+                            x-transition:enter="motion-enter"
+                            x-transition:enter-start="motion-slide-inline-start"
+                            x-transition:enter-end="motion-slide-inline-end"
+                            x-transition:leave="motion-leave"
+                            x-transition:leave-start="motion-slide-inline-end"
+                            x-transition:leave-end="motion-slide-inline-start">
                             {{ __('app.Letters') }}
                         </span>
                     </span>
-                    <svg x-show="!compact" xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4 transition-transform duration-200"
+                    <svg x-show="!compact" xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4 transition-fast"
                         :class="{ 'rotate-90': open }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
                 </button>
 
-                <div x-show="open && !compact"
-                    x-transition:enter="transition ease-out duration-150"
-                    x-transition:enter-start="opacity-0 -translate-y-1"
-                    x-transition:enter-end="opacity-100 translate-y-0"
-                    x-transition:leave="transition ease-in duration-100"
-                    x-transition:leave-start="opacity-100 translate-y-0"
-                    x-transition:leave-end="opacity-0 -translate-y-1"
-                    class="pl-11 space-y-1">
+                <template x-if="loaded">
+                    <div x-show="open && !compact"
+                        x-transition:enter="motion-enter-fast"
+                        x-transition:enter-start="motion-slide-up-start"
+                        x-transition:enter-end="motion-slide-up-end"
+                        x-transition:leave="motion-leave"
+                        x-transition:leave-start="motion-slide-up-end"
+                        x-transition:leave-end="motion-slide-up-start"
+                        class="pl-11 space-y-1">
                     @if($canManageTemplates)
                     {{-- UPDATED: Sub-menu active/hover uses Secondary Brand Orange for accent --}}
                     <a href="{{ route('letter-templates.index') }}"
-                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
-                        {{ $letterTemplatesActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                        class="sidebar-submenu-item focus-ring
+                        {{ $letterTemplatesActive ? 'sidebar-submenu-item-active' : 'sidebar-submenu-item-inactive' }}">
                         <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M8 4h10a2 2 0 012 2v11a2 2 0 01-2 2H8l-4 3V6a2 2 0 012-2h2z" />
                         </svg>
-                        <span>{{ __('app.Letter Templates') }}</span>
+                        <span>{{ __('app.letter_templates') }}</span>
                     </a>
                     @endif
 
                     @if($hasLetterCategories && $canManageTemplates)
                     <a href="{{ route('letter-categories.index') }}"
-                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
-                        {{ $letterCategoriesActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                        class="sidebar-submenu-item focus-ring
+                        {{ $letterCategoriesActive ? 'sidebar-submenu-item-active' : 'sidebar-submenu-item-inactive' }}">
                         <x-heroicon-o-rectangle-stack class="sidebar-icon h-4 w-4" aria-hidden="true" />
-                        <span>Letter categories</span>
+                        <span>{{ __('app.letter_categories') }}</span>
                     </a>
                     @endif
 
                     @if($canViewLetters)
                     <a href="{{ route('letters.index') }}"
-                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
-                        {{ $lettersActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                        class="sidebar-submenu-item focus-ring
+                        {{ $lettersActive ? 'sidebar-submenu-item-active' : 'sidebar-submenu-item-inactive' }}">
                         <x-heroicon-o-envelope-open class="sidebar-icon h-4 w-4" aria-hidden="true" />
                         <span>{{ __('app.Letters') }}</span>
                     </a>
@@ -547,32 +591,33 @@
 
                     @if($canComposeLetters)
                     <a href="{{ route('letters.compose') }}"
-                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
-                        {{ $composeActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                        class="sidebar-submenu-item focus-ring
+                        {{ $composeActive ? 'sidebar-submenu-item-active' : 'sidebar-submenu-item-inactive' }}">
                         <x-heroicon-o-pencil-square class="sidebar-icon h-4 w-4" aria-hidden="true" />
-                        <span>{{ __('app.Compose Letter') }}</span>
+                        <span>{{ __('app.compose_letter') }}</span>
                     </a>
                     @endif
-                </div>
+                    </div>
+                </template>
             </div>
             @endif
 
             {{-- Notifications --}}
             @if($hasNotifIndex)
             <a href="{{ route('admin.notifications.index') }}"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
-                {{ request()->routeIs('admin.notifications.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
+                class="sidebar-menu-item focus-ring
+                {{ request()->routeIs('admin.notifications.*') ? 'sidebar-menu-item-active' : 'sidebar-menu-item-inactive' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <x-heroicon-o-bell class="sidebar-icon h-5 w-5" aria-hidden="true" />
+                    <x-heroicon-o-bell class="sidebar-icon h-4 w-4" aria-hidden="true" />
                 </div>
-                <span class="truncate origin-left"
+                <span class="sidebar-menu-label truncate origin-left"
                     x-show="!compact"
-                    x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 -translate-x-1"
-                    x-transition:enter-end="opacity-100 translate-x-0"
-                    x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100 translate-x-0"
-                    x-transition:leave-end="opacity-0 -translate-x-1">
+                    x-transition:enter="motion-enter"
+                    x-transition:enter-start="motion-slide-inline-start"
+                    x-transition:enter-end="motion-slide-inline-end"
+                    x-transition:leave="motion-leave"
+                    x-transition:leave-start="motion-slide-inline-end"
+                    x-transition:leave-end="motion-slide-inline-start">
                     {{ __('app.Notifications') }}
                 </span>
             </a>
@@ -581,68 +626,73 @@
             {{-- Announcements --}}
             @if($hasAnnouncements && auth()->user()?->hasPermission('announcements.manage'))
             <a href="{{ route('announcements.index') }}"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition focus-ring
-                {{ request()->routeIs('announcements.*') ? 'bg-blue-700 text-white shadow-md' : 'hover:bg-blue-600/30 text-blue-100 hover:text-white' }}">
+                class="sidebar-menu-item focus-ring
+                {{ request()->routeIs('announcements.*') ? 'sidebar-menu-item-active' : 'sidebar-menu-item-inactive' }}">
                 <div class="grid place-items-center w-6" aria-hidden="true">
-                    <x-heroicon-o-megaphone class="sidebar-icon h-5 w-5" aria-hidden="true" />
+                    <x-heroicon-o-megaphone class="sidebar-icon h-4 w-4" aria-hidden="true" />
                 </div>
-                <span class="truncate origin-left"
+                <span class="sidebar-menu-label truncate origin-left"
                     x-show="!compact"
-                    x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 -translate-x-1"
-                    x-transition:enter-end="opacity-100 translate-x-0"
-                    x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100 translate-x-0"
-                    x-transition:leave-end="opacity-0 -translate-x-1">
+                    x-transition:enter="motion-enter"
+                    x-transition:enter-start="motion-slide-inline-start"
+                    x-transition:enter-end="motion-slide-inline-end"
+                    x-transition:leave="motion-leave"
+                    x-transition:leave-start="motion-slide-inline-end"
+                    x-transition:leave-end="motion-slide-inline-start">
                     {{ __('app.Announcements') }}
                 </span>
             </a>
             @endif
 
+            @if($showPeopleSection)
+            <div class="sidebar-section-label" x-show="!compact">{{ __('app.users_access') }}</div>
+            @endif
+
             {{-- User Control --}}
             @if($canManageUsers || $canManagePermissions || $canManageRoles)
-            <div x-data="{ open: {{ $userControlOpen ? 'true' : 'false' }} }" class="space-y-1">
+            <div x-data="{ open: {{ $userControlOpen ? 'true' : 'false' }}, loaded: {{ $userControlOpen ? 'true' : 'false' }} }" class="space-y-1">
                 {{-- UPDATED: Main button active uses Primary Blue --}}
                 <button type="button"
-                    class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition focus-ring
-                    {{ $userControlOpen ? 'bg-blue-700 text-white shadow-md' : 'text-blue-100 hover:text-white hover:bg-blue-600/30' }}"
-                    @click="open=!open"
+                    class="sidebar-menu-toggle focus-ring
+                    {{ $userControlOpen ? 'sidebar-menu-item-active' : 'sidebar-menu-item-inactive' }}"
+                    @click="if (!loaded) loaded = true; open = !open"
                     aria-haspopup="true"
                     :aria-expanded="open.toString()">
                     <span class="flex items-center gap-3">
                         <div class="grid place-items-center w-6" aria-hidden="true">
-                            <x-heroicon-o-users class="sidebar-icon h-5 w-5" aria-hidden="true" />
+                            <x-heroicon-o-users class="sidebar-icon h-4 w-4" aria-hidden="true" />
                         </div>
-                        <span class="truncate origin-left"
+                        <span class="sidebar-menu-label truncate origin-left"
                             x-show="!compact"
-                            x-transition:enter="transition ease-out duration-200"
-                            x-transition:enter-start="opacity-0 -translate-x-1"
-                            x-transition:enter-end="opacity-100 translate-x-0"
-                            x-transition:leave="transition ease-in duration-150"
-                            x-transition:leave-start="opacity-100 translate-x-0"
-                            x-transition:leave-end="opacity-0 -translate-x-1">
-                            {{ __('app.User Control') }}
+                            x-transition:enter="motion-enter"
+                            x-transition:enter-start="motion-slide-inline-start"
+                            x-transition:enter-end="motion-slide-inline-end"
+                            x-transition:leave="motion-leave"
+                            x-transition:leave-start="motion-slide-inline-end"
+                            x-transition:leave-end="motion-slide-inline-start">
+                            {{ __('app.user_control') }}
                         </span>
                     </span>
-                    <svg x-show="!compact" xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4 transition-transform duration-200"
+                    <svg x-show="!compact" xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4 transition-fast"
                         :class="{ 'rotate-90': open }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
                 </button>
 
-                <div x-show="open && !compact"
-                    x-transition:enter="transition ease-out duration-150"
-                    x-transition:enter-start="opacity-0 -translate-y-1"
-                    x-transition:enter-end="opacity-100 translate-y-0"
-                    x-transition:leave="transition ease-in duration-100"
-                    x-transition:leave-start="opacity-100 translate-y-0"
-                    x-transition:leave-end="opacity-0 -translate-y-1"
-                    class="pl-11 space-y-1">
+                <template x-if="loaded">
+                    <div x-show="open && !compact"
+                        x-transition:enter="motion-enter-fast"
+                        x-transition:enter-start="motion-slide-up-start"
+                        x-transition:enter-end="motion-slide-up-end"
+                        x-transition:leave="motion-leave"
+                        x-transition:leave-start="motion-slide-up-end"
+                        x-transition:leave-end="motion-slide-up-start"
+                        class="pl-11 space-y-1">
                     @if($canManageUsers)
                     {{-- UPDATED: Sub-menu active/hover uses Secondary Brand Orange for accent --}}
                     <a href="{{ route('users.index') }}"
-                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
-                        {{ $usersActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                        class="sidebar-submenu-item focus-ring
+                        {{ $usersActive ? 'sidebar-submenu-item-active' : 'sidebar-submenu-item-inactive' }}">
                         <x-heroicon-o-user class="sidebar-icon h-4 w-4" aria-hidden="true" />
                         <span>{{ __('app.Users') }}</span>
                     </a>
@@ -650,8 +700,8 @@
 
                     @if($canManagePermissions)
                     <a href="{{ route('permissions.index') }}"
-                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
-                        {{ $permissionsActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                        class="sidebar-submenu-item focus-ring
+                        {{ $permissionsActive ? 'sidebar-submenu-item-active' : 'sidebar-submenu-item-inactive' }}">
                         <x-heroicon-o-key class="sidebar-icon h-4 w-4" aria-hidden="true" />
                         <span>{{ __('app.Permissions') }}</span>
                     </a>
@@ -660,8 +710,8 @@
 
                     @if($canManageTeams)
                     <a href="{{ route('teams.index') }}"
-                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
-                        {{ $teamsActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                        class="sidebar-submenu-item focus-ring
+                        {{ $teamsActive ? 'sidebar-submenu-item-active' : 'sidebar-submenu-item-inactive' }}">
                         <x-heroicon-o-squares-2x2 class="sidebar-icon h-4 w-4" aria-hidden="true" />
                         <span>{{ __('app.Teams') }}</span>
                     </a>
@@ -669,58 +719,64 @@
 
                     @if($canManageRoles)
                     <a href="{{ route('roles.index') }}"
-                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
-                {{ $rolesActive ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                        class="sidebar-submenu-item focus-ring
+                {{ $rolesActive ? 'sidebar-submenu-item-active' : 'sidebar-submenu-item-inactive' }}">
                         <x-heroicon-o-check-badge class="sidebar-icon h-4 w-4" aria-hidden="true" />
                         <span>{{ __('app.Roles') }}</span>
                     </a>
                     @endif
-                </div>
+                    </div>
+                </template>
             </div>
+            @endif
+
+            @if($settingsDropdownVisible)
+            <div class="sidebar-section-label" x-show="!compact">{{ __('app.system_section') }}</div>
             @endif
 
             {{-- Settings --}}
             @if($settingsDropdownVisible)
-            <div x-data="{ open: {{ json_encode($settingsMenuOpen) }} }" class="space-y-1">
+            <div x-data="{ open: {{ json_encode($settingsMenuOpen) }}, loaded: {{ $settingsMenuOpen ? 'true' : 'false' }} }" class="space-y-1">
                 <button type="button"
-                    class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition focus-ring
-                {{ $settingsMenuOpen ? 'bg-blue-700 text-white shadow-md' : 'text-blue-100 hover:text-white hover:bg-blue-600/30' }}"
-                    @click="open = !open"
+                    class="sidebar-menu-toggle focus-ring
+                {{ $settingsMenuOpen ? 'sidebar-menu-item-active' : 'sidebar-menu-item-inactive' }}"
+                    @click="if (!loaded) loaded = true; open = !open"
                     aria-haspopup="true"
                     :aria-expanded="open.toString()">
                     <span class="flex items-center gap-3">
                         <div class="grid place-items-center w-6" aria-hidden="true">
-                            <x-heroicon-o-cog class="sidebar-icon h-5 w-5" aria-hidden="true" />
+                            <x-heroicon-o-cog class="sidebar-icon h-4 w-4" aria-hidden="true" />
                         </div>
-                        <span class="truncate origin-left"
+                        <span class="sidebar-menu-label truncate origin-left"
                             x-show="!compact"
-                            x-transition:enter="transition ease-out duration-200"
-                            x-transition:enter-start="opacity-0 -translate-x-1"
-                            x-transition:enter-end="opacity-100 translate-x-0"
-                            x-transition:leave="transition ease-in duration-150"
-                            x-transition:leave-start="opacity-100 translate-x-0"
-                            x-transition:leave-end="opacity-0 -translate-x-1">
+                            x-transition:enter="motion-enter"
+                            x-transition:enter-start="motion-slide-inline-start"
+                            x-transition:enter-end="motion-slide-inline-end"
+                            x-transition:leave="motion-leave"
+                            x-transition:leave-start="motion-slide-inline-end"
+                            x-transition:leave-end="motion-slide-inline-start">
                             {{ __('app.Settings') }}
                         </span>
                     </span>
-                    <svg x-show="!compact" xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4 transition-transform duration-200"
+                    <svg x-show="!compact" xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4 transition-fast"
                         :class="open ? 'rotate-90' : 'rotate-0'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
                 </button>
 
-                <div x-show="open && !compact"
-                    x-transition:enter="transition ease-out duration-150"
-                    x-transition:enter-start="opacity-0 -translate-y-1"
-                    x-transition:enter-end="opacity-100 translate-y-0"
-                    x-transition:leave="transition ease-in duration-100"
-                    x-transition:leave-start="opacity-100 translate-y-0"
-                    x-transition:leave-end="opacity-0 -translate-y-1"
-                    class="pl-11 space-y-1">
+                <template x-if="loaded">
+                    <div x-show="open && !compact"
+                        x-transition:enter="motion-enter-fast"
+                        x-transition:enter-start="motion-slide-up-start"
+                        x-transition:enter-end="motion-slide-up-end"
+                        x-transition:leave="motion-leave"
+                        x-transition:leave-start="motion-slide-up-end"
+                        x-transition:leave-end="motion-slide-up-start"
+                        class="pl-11 space-y-1">
                     @if($hasSystemSettings && auth()->user()?->hasPermission('settings.manage'))
                     <a href="{{ route('settings.system.edit') }}"
-                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
-                    {{ request()->routeIs('settings.system.*') ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                        class="sidebar-submenu-item focus-ring
+                    {{ request()->routeIs('settings.system.*') ? 'sidebar-submenu-item-active' : 'sidebar-submenu-item-inactive' }}">
                         <x-heroicon-o-adjustments-horizontal class="sidebar-icon h-4 w-4" aria-hidden="true" />
                         <span>{{ __('app.System_Settings') }}</span>
                     </a>
@@ -728,8 +784,8 @@
 
                     @if($hasTerms && auth()->user()?->hasPermission('settings.manage'))
                     <a href="{{ route('terms.index') }}"
-                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
-                    {{ request()->routeIs('terms.*') ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                        class="sidebar-submenu-item focus-ring
+                    {{ request()->routeIs('terms.*') ? 'sidebar-submenu-item-active' : 'sidebar-submenu-item-inactive' }}">
                         <x-heroicon-o-document-text class="sidebar-icon h-4 w-4" aria-hidden="true" />
                         <span>{{ __('app.Terms') }}</span>
                     </a>
@@ -737,8 +793,8 @@
 
                     @if($hasAbout && auth()->user()?->hasPermission('about.manage'))
                     <a href="{{ route('about.index') }}"
-                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
-                    {{ request()->routeIs('about.*') ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                        class="sidebar-submenu-item focus-ring
+                    {{ request()->routeIs('about.*') ? 'sidebar-submenu-item-active' : 'sidebar-submenu-item-inactive' }}">
                         <x-heroicon-o-information-circle class="sidebar-icon h-4 w-4" aria-hidden="true" />
                         <span>{{ __('app.About') }}</span>
                     </a>
@@ -746,39 +802,42 @@
 
                     @if($hasAudit)
                     <a href="{{ route('admin.audit') }}"
-                        class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg transition focus-ring
-                    {{ request()->routeIs('admin.audit') ? 'bg-orange-600/30 text-white' : 'text-blue-100 hover:text-white hover:bg-orange-600/10' }}">
+                        class="sidebar-submenu-item focus-ring
+                    {{ request()->routeIs('admin.audit') ? 'sidebar-submenu-item-active' : 'sidebar-submenu-item-inactive' }}">
                         <x-heroicon-o-eye class="sidebar-icon h-4 w-4" aria-hidden="true" />
                         <span>{{ __('app.System_Audit') }}</span>
                     </a>
                     @endif
-                </div>
+                    </div>
+                </template>
             </div>
             @endif
 
-        </nav>
-
-        {{-- UPDATED: Footer border and text uses dark blue/light blue --}}
-        <footer class="p-4 border-t border-blue-800 text-sm text-blue-400">
-            © {{ date('Y') }} {{ $systemSettings->app_name ?? config('app.name') }}
-        </footer>
+                </nav>
+            </template>
+        </div>
     </aside>
 
     {{-- Mobile overlay --}}
-    <div class="md:hidden fixed inset-0 bg-black/40 z-30 transition-opacity duration-300"
+    <div class="md:hidden fixed inset-0 bg-black/40 z-30 transition-opacity-slow"
         x-show="sidebar" x-cloak @click="sidebar=false"
-        x-transition:enter="transition ease-out duration-200"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
-        x-transition:leave="transition ease-in duration-150"
-        x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0"></div>
+        x-transition:enter="motion-enter"
+        x-transition:enter-start="motion-fade-start"
+        x-transition:enter-end="motion-fade-end"
+        x-transition:leave="motion-leave"
+        x-transition:leave-start="motion-fade-end"
+        x-transition:leave-end="motion-fade-start"></div>
 
     {{-- Main --}}
-    <div id="admin-panel" class="flex-1 flex flex-col md:[transition-property:padding] md:duration-300 md:ease-in-out transition-padding">
+    <div id="admin-panel"
+        class="flex min-h-screen flex-1 flex-col transition-padding-slow md:ml-64"
+        :class="{
+            'md:ml-20': compact,
+            'md:ml-64': !compact
+        }">
 
         {{-- Topbar --}}
-        <header class="relative z-50 flex items-center justify-between bg-white backdrop-blur px-3 md:px-6 py-3 border-b border-gray-200 shadow-lg">
+        <header class="sticky top-0 relative z-50 flex items-center justify-between border-b border-slate-200/80 bg-white/90 px-3 py-3 shadow-sm backdrop-blur-xl md:px-6">
             <div class="flex items-center gap-2">
                 {{-- Mobile: open sidebar --}}
                 <button type="button"
@@ -796,7 +855,7 @@
                 {{-- Desktop: collapse / expand --}}
                 <button type="button"
                     {{-- UPDATED: Icon uses Primary Brand Blue --}}
-                    class="hidden md:inline-flex items-center justify-center w-9 h-9 rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-blue-600 transition focus-ring"
+                    class="hidden md:inline-flex items-center justify-center w-9 h-9 rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-blue-600 transition-fast focus-ring"
                     @click="toggleCompact()" :aria-pressed="compact.toString()"
                     aria-label="{{ __('app.Toggle sidebar width') }}">
                     <svg x-show="!compact" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" x-cloak
@@ -811,7 +870,13 @@
                     </svg>
                 </button>
 
-                <h1 class="ml-1 md:ml-2 text-xl font-bold text-gray-900">@yield('page_header', $t)</h1>
+                <div class="ml-1 md:ml-2">
+                    <h1 class="text-xl font-semibold tracking-tight text-slate-900">@yield('page_header', $t)</h1>
+                    @php $currentRouteName = request()->route()?->getName(); @endphp
+                    @if($currentRouteName)
+                    <div class="hidden lg:block text-[11px] font-medium text-slate-500 tracking-wide">{{ str_replace('.', ' / ', $currentRouteName) }}</div>
+                    @endif
+                </div>
             </div>
 
             @php
@@ -914,16 +979,18 @@
 
             <div class="hidden md:flex flex-1 justify-center">
                 {{-- UPDATED: Date display uses Primary Brand Blue (Authority) --}}
-                <span id="top-date-display" class="text-base font-semibold text-blue-700">{{ $todayDisplay }}</span>
+                <span id="top-date-display" class="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700">{{ $todayDisplay }}</span>
             </div>
 
             <div class="flex items-center gap-3 flex-shrink-0">
+                <x-ui.theme-toggle />
+
                 {{-- Language switcher --}}
                 @auth
                 @if($hasLangSwitch)
                 <div x-data="{ open:false }" class="relative">
                     <button @click="open=!open"
-                        class="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-100 text-sm font-medium focus-ring">
+                        class="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-300 bg-white/90 shadow-sm hover:bg-slate-50 text-sm font-medium focus-ring">
                         <span class="fi fi-{{ app()->getLocale() == 'am' ? 'et' : 'us' }}"></span>
                         {{-- UPDATED: Icon uses Primary Brand Blue --}}
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
@@ -934,7 +1001,7 @@
                     </button>
 
                     <div x-cloak x-show="open" @click.outside="open=false"
-                        class="absolute right-0 mt-2 w-32 rounded-lg border bg-white shadow-xl z-50">
+                        class="absolute right-0 mt-2 w-36 rounded-xl border border-slate-200 bg-white shadow-xl z-50 overflow-hidden">
                         <div class="p-1 space-y-1">
                             {{-- UPDATED: Active state uses Secondary Brand Orange --}}
                             <a href="{{ route('language.switch', ['locale' => 'en', 'return' => url()->current()]) }}"
@@ -958,7 +1025,7 @@
                 @if($hasNotifIndex)
                 <div class="relative" x-data="{ bell:false }">
                     <button @click="bell=!bell" type="button"
-                        class="relative inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 hover:bg-gray-50 shadow-sm focus-ring"
+                        class="relative inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 hover:bg-slate-50 shadow-sm focus-ring"
                         aria-label="{{ __('app.Notifications') }}" :aria-expanded="bell.toString()">
                         {{-- UPDATED: Icon uses Primary Brand Blue --}}
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
@@ -975,12 +1042,12 @@
 
                     {{-- Dropdown --}}
                     <div x-cloak x-show="bell" @click.outside="bell=false"
-                        x-transition:enter="transition ease-out duration-150"
-                        x-transition:enter-start="opacity-0 -translate-y-1"
-                        x-transition:enter-end="opacity-100 translate-y-0"
-                        x-transition:leave="transition ease-in duration-100"
-                        x-transition:leave-start="opacity-100 translate-y-0"
-                        x-transition:leave-end="opacity-0 -translate-y-1"
+                        x-transition:enter="motion-enter-fast"
+                        x-transition:enter-start="motion-slide-up-start"
+                        x-transition:enter-end="motion-slide-up-end"
+                        x-transition:leave="motion-leave"
+                        x-transition:leave-start="motion-slide-up-end"
+                        x-transition:leave-end="motion-slide-up-start"
                         class="absolute right-0 mt-2 w-[32rem] max-w-[90vw] rounded-lg border border-gray-200 bg-white shadow-xl z-50">
                         <div class="p-3">
                             <div class="mb-2 flex items-center justify-between border-b pb-2">
@@ -1156,12 +1223,12 @@
                     </button>
 
                     <div x-cloak x-show="open" @click.outside="open=false"
-                        x-transition:enter="transition ease-out duration-150"
-                        x-transition:enter-start="opacity-0 -translate-y-1"
-                        x-transition:enter-end="opacity-100 translate-y-0"
-                        x-transition:leave="transition ease-in duration-100"
-                        x-transition:leave-start="opacity-100 translate-y-0"
-                        x-transition:leave-end="opacity-0 -translate-y-1"
+                        x-transition:enter="motion-enter-fast"
+                        x-transition:enter-start="motion-slide-up-start"
+                        x-transition:enter-end="motion-slide-up-end"
+                        x-transition:leave="motion-leave"
+                        x-transition:leave-start="motion-slide-up-end"
+                        x-transition:leave-end="motion-slide-up-start"
                         class="absolute right-0 mt-2 w-56 rounded-lg border border-gray-200 bg-white shadow-xl overflow-hidden">
                         <div class="px-4 py-2 text-xs text-gray-500 border-b border-gray-100">
                             {{ __('app.Signed in as') }} <span class="text-gray-800 font-medium">{{ $u?->email }}</span>
@@ -1169,7 +1236,7 @@
 
                         @if($hasProfileEdit)
                         <a href="{{ route('profile.edit') }}"
-                            class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition focus-ring focus:bg-gray-100">
+                            class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-fast focus-ring focus:bg-gray-100">
                             {{-- UPDATED: Icon uses Primary Brand Blue --}}
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600" fill="none"
                                 viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -1201,24 +1268,39 @@
         </header>
 
         {{-- Page content --}}
-        <main class="flex-1 p-4 md:p-8 bg-gray-50">
+        <main class="page-enter flex-1 p-4 md:p-6 xl:p-8 {{ $isCaseTypographyRoute ? 'case-font-scope case-typography' : '' }}">
             @if(session('success'))
-            <div class="mb-6 rounded-lg bg-green-50 border border-green-400 text-green-800 px-4 py-3 font-medium shadow-sm">
+            <x-ui.alert type="success" class="mb-6">
                 {{ session('success') }}
-            </div>
+            </x-ui.alert>
             @endif
             @if(session('error'))
-            <div class="mb-6 rounded-lg bg-red-50 border border-red-400 text-red-800 px-4 py-3 font-medium shadow-sm">
+            <x-ui.alert type="error" class="mb-6">
                 {{ session('error') }}
-            </div>
+            </x-ui.alert>
             @endif
 
-            {{ $slot }}
+            <div class="ui-page-admin">
+                {{ $slot }}
+            </div>
         </main>
     </div>
 
     {{-- Alpine helpers (no changes needed) --}}
     <script>
+        function lazyMenu() {
+            return {
+                loaded: false,
+                init() {
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            this.loaded = true;
+                        });
+                    });
+                }
+            }
+        }
+
         function layoutState() {
             return {
                 sidebar: false, // mobile only
@@ -1426,3 +1508,7 @@
 </body>
 
 </html>
+
+
+
+

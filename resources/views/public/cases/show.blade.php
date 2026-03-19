@@ -1,7 +1,7 @@
 <x-applicant-layout title="Case Details">
     <a href="{{ route('public.cases') }}" class="inline-block mb-4 text-sm text-blue-700 hover:underline">← Back to cases</a>
 
-    <div class="rounded-xl border bg-white p-6 md:p-8 space-y-4">
+    <div class="rounded-xl border bg-white p-6 md:p-8 space-y-4 case-typography">
         <div class="flex items-start justify-between gap-4">
             <div>
                 <div class="text-xs text-slate-500">Case #</div>

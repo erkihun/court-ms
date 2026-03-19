@@ -3,7 +3,7 @@
         <div class="text-center space-y-2">
             <h1 class="text-2xl font-bold text-gray-900">{{ __('Change Password') }}</h1>
             <p class="text-sm text-gray-600">
-                {{ __('Your account requires a password update before you can continue.') }}
+                {{ __('auth.force_password_notice') }}
             </p>
         </div>
 

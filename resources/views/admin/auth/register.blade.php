@@ -30,7 +30,7 @@
                 title="{{ __('auth.national_id_format') }}"
                 placeholder="{{ __('auth.national_id_placeholder') }}"
                 aria-describedby="national_id_help"
-                class="block mt-1 w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-gray-900" />
+                class="block mt-1 w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm text-gray-900" />
             <p id="national_id_help" class="text-xs text-gray-500 mt-1">{{ __('auth.national_id_hint') }}</p>
             <x-input-error :messages="$errors->get('national_id_number')" class="mt-2" />
         </div>
@@ -59,7 +59,7 @@
         </div>
 
         <div class="flex items-center justify-end mt-4">
-            <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('login') }}">
+            <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" href="{{ route('login') }}">
                 {{ __('Already registered?') }}
             </a>
 
@@ -98,3 +98,4 @@
         });
     </script>
 </x-guest-layout>
+
