@@ -174,6 +174,10 @@ class SecureFileController extends Controller
             return true;
         }
 
+        if (method_exists($user, 'can') && $user->can($perm)) {
+            return true;
+        }
+
         if (function_exists('userHasPermission') && userHasPermission($perm)) {
             return true;
         }
