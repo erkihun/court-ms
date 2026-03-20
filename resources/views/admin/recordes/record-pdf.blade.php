@@ -633,6 +633,8 @@
 
             @php
                 $firstEvidence = ($evidences ?? collect())->first();
+                $firstEvidenceEmbedData = data_get($firstEvidenceEmbed ?? null, 'data');
+                $firstEvidenceEmbedMime = data_get($firstEvidenceEmbed ?? null, 'mime', 'application/pdf');
                 $normalizeSignerPayload = static function ($value) {
                     if ($value instanceof \Illuminate\Support\Collection) {
                         return $value;
@@ -707,7 +709,7 @@
                             @if(!empty($firstEvidence->mime)) | {{ __('recordes.labels.mime') }} {{ $firstEvidence->mime }} @endif
                             @if(!empty($firstEvidence->size)) | {{ __('recordes.labels.size') }} {{ $firstEvidence->size }} {{ __('recordes.labels.bytes') }} @endif
                         </div>
-                        @if(!empty($firstEvidenceEmbed['data']))
+                        @if(!empty($firstEvidenceEmbedData))
                             <div class="pdf-preview">
                                 <div id="applicant-pdf-viewer" class="pdf-rendered-viewer" aria-live="polite" style="max-height:none;">
                                     <div class="loading-text">{{ __('recordes.descriptions.applicant_pdf_loading') }}</div>
@@ -763,13 +765,13 @@
                         @if(!empty($resp->description))
                             <div class="content">{{ $resp->description }}</div>
                         @endif
-                        @if(!empty($resp->pdf_embed['data']))
+                        @if(!empty(data_get($resp, 'pdf_embed.data')))
                             @php
                                 $viewerId = 'response-pdf-viewer-' . $loop->index;
                                 $responsePdfEmbeds[] = [
                                     'id' => $viewerId,
-                                    'data' => $resp->pdf_embed['data'],
-                                    'mime' => $resp->pdf_embed['mime'] ?? 'application/pdf',
+                                    'data' => data_get($resp, 'pdf_embed.data'),
+                                    'mime' => data_get($resp, 'pdf_embed.mime', 'application/pdf'),
                                     'title' => $resp->title ?? 'Response PDF',
                                 ];
                             @endphp
@@ -1149,7 +1151,7 @@
             });
         }
 
-        const applicantPdfData = @json($firstEvidenceEmbed['data'] ?? null);
+        const applicantPdfData = @json($firstEvidenceEmbedData);
         const responsePdfEmbeds = @json($responsePdfEmbeds ?? []);
 
         function renderApplicantPdfFallback(container) {
@@ -1163,7 +1165,7 @@
             iframe.className = 'fallback-pdf-frame';
             iframe.title = '{{ __('recordes.labels.applicant_initial_pdf') }}';
             iframe.scrolling = 'no';
-            iframe.src = 'data:{{ $firstEvidenceEmbed['mime'] ?? 'application/pdf' }};base64,' + applicantPdfData + '#toolbar=0&navpanes=0&scrollbar=0';
+            iframe.src = 'data:{{ $firstEvidenceEmbedMime }};base64,' + applicantPdfData + '#toolbar=0&navpanes=0&scrollbar=0';
             container.innerHTML = '';
             container.appendChild(iframe);
             scheduleFooterRender();
