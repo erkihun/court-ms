@@ -633,6 +633,22 @@
 
             @php
                 $firstEvidence = ($evidences ?? collect())->first();
+                $normalizeSignerPayload = static function ($value) {
+                    if ($value instanceof \Illuminate\Support\Collection) {
+                        return $value;
+                    }
+
+                    if (is_string($value)) {
+                        $decoded = json_decode($value, true);
+                        return collect(is_array($decoded) ? $decoded : []);
+                    }
+
+                    if (is_array($value)) {
+                        return collect($value);
+                    }
+
+                    return collect();
+                };
             @endphp
 
             @if(!empty($case->description))
@@ -854,12 +870,13 @@
 
                         $judges = $manualJudges->take(3);
 
-                        $signers = collect($note->signatures ?? [])
+                        $signers = $normalizeSignerPayload($note->signatures ?? [])
                             ->map(fn ($signer) => [
-                                'name' => $signer['name'] ?? ($signer['judge_name'] ?? __('recordes.labels.judge')),
-                                'title' => $signer['title'] ?? __('recordes.labels.judge'),
-                                'signature' => $resolveSignature($signer['signature'] ?? null),
+                                'name' => data_get($signer, 'name') ?? data_get($signer, 'judge_name') ?? __('recordes.labels.judge'),
+                                'title' => data_get($signer, 'title') ?? __('recordes.labels.judge'),
+                                'signature' => $resolveSignature(data_get($signer, 'signature')),
                             ])
+                            ->filter(fn ($signer) => !empty($signer['name']))
                             ->take(3);
 
                         if ($signers->isEmpty()) {
@@ -949,12 +966,13 @@
                             return asset('storage/' . ltrim($trimmed, '/'));
                         };
 
-                        $decisionSigners = collect($decision->signatures ?? [])
+                        $decisionSigners = $normalizeSignerPayload($decision->signatures ?? [])
                             ->map(fn ($signer) => [
-                                'name' => $signer['name'] ?? ($signer['judge_name'] ?? __('recordes.labels.judge')),
-                                'title' => $signer['title'] ?? __('recordes.labels.judge'),
-                                'signature' => $resolveDecisionSignature($signer['signature'] ?? null),
+                                'name' => data_get($signer, 'name') ?? data_get($signer, 'judge_name') ?? __('recordes.labels.judge'),
+                                'title' => data_get($signer, 'title') ?? __('recordes.labels.judge'),
+                                'signature' => $resolveDecisionSignature(data_get($signer, 'signature')),
                             ])
+                            ->filter(fn ($signer) => !empty($signer['name']))
                             ->take(3);
 
                         $decisionDate = !empty($decision->created_at) ? \Illuminate\Support\Carbon::parse($decision->created_at) : null;
