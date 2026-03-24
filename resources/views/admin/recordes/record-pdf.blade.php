@@ -1080,6 +1080,14 @@
             updatePageCounter();
         };
 
+        const cleanupPreviewArtifacts = () => {
+            document.querySelectorAll('.page-preview-footer').forEach(el => el.remove());
+            previewFooters = [];
+            if (pageCounterOverlay) {
+                pageCounterOverlay.style.display = 'none';
+            }
+        };
+
         if (pageWrapper) {
             pageWrapper.addEventListener('scroll', updatePageCounter);
         } else {
@@ -1104,7 +1112,7 @@
                 margin: 0,
                 filename,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+                html2canvas: { scale: 2, useCORS: true, scrollY: 0, willReadFrequently: true, logging: false },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak: {
                     mode: ['css', 'legacy'],
@@ -1120,6 +1128,7 @@
             }
 
             document.body.classList.add('pdf-export');
+            cleanupPreviewArtifacts();
 
             const worker = html2pdf().set(opt).from(element);
 
