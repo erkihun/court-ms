@@ -1,4 +1,4 @@
-@php
+﻿@php
     use Illuminate\Support\Carbon;
     use Illuminate\Support\Str;
     use Mews\Purifier\Facades\Purifier;
@@ -25,6 +25,13 @@
         }
 
         @font-face {
+            font-family: 'Noto Sans Ethiopic';
+            src: url('{{ public_path('fonts/NotoSansEthiopic-Regular.ttf') }}') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        @font-face {
             font-family: 'Abyssinica';
             src: url('{{ public_path('fonts/AbyssinicaSIL-Regular.ttf') }}') format('truetype');
             font-weight: normal;
@@ -32,7 +39,7 @@
         }
 
         body {
-            font-family: 'Abyssinica', 'Nyala', 'DejaVu Serif', serif;
+            font-family: 'Noto Sans Ethiopic', 'Abyssinica', 'Nyala', 'DejaVu Serif', serif;
             color: #0f172a;
             font-size: 12px;
             line-height: 1.6;
@@ -309,3 +316,4 @@
 </body>
 
 </html>
+

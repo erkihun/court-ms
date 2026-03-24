@@ -52,26 +52,7 @@ class RecordController extends Controller
             ->get()
             ->map(function ($resp) {
                 $resp->pdf_embed = null;
-                if (empty($resp->pdf_path)) {
-                    return $resp;
-                }
-
-                $content = null;
-                if (Storage::disk('private')->exists($resp->pdf_path)) {
-                    $content = Storage::disk('private')->get($resp->pdf_path);
-                } elseif (Storage::disk('public')->exists($resp->pdf_path)) {
-                    $content = Storage::disk('public')->get($resp->pdf_path);
-                } elseif (file_exists($resp->pdf_path)) {
-                    $content = @file_get_contents($resp->pdf_path);
-                }
-
-                if ($content) {
-                    $resp->pdf_embed = [
-                        'mime' => 'application/pdf',
-                        'data' => base64_encode($content),
-                    ];
-                }
-
+                $resp->download_url = $resp->id ? route('respondent-responses.download', $resp->id) : null;
                 return $resp;
             });
 
@@ -122,6 +103,11 @@ class RecordController extends Controller
         foreach ($evidences as $ev) {
             $path = $ev->file_path ?? $ev->path ?? null;
             if (!$path) {
+                continue;
+            }
+
+            $size = (int) ($ev->size ?? 0);
+            if ($size > 1500000) {
                 continue;
             }
 

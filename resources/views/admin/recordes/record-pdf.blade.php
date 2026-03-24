@@ -780,6 +780,14 @@
                                     <div class="loading-text">{{ __('recordes.descriptions.applicant_pdf_loading') }}</div>
                                 </div>
                             </div>
+                        @elseif(!empty($resp->download_url))
+                            <div class="meta">
+                                <a href="{{ $resp->download_url }}" target="_blank" rel="noreferrer">
+                                    {{ __('recordes.buttons.download_pdf') }}
+                                </a>
+                            </div>
+                        @else
+                            <div class="meta">{{ __('recordes.messages.no_files') }}</div>
                         @endif
                     </div>
                 @empty
