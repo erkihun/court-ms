@@ -18,9 +18,10 @@ session()->forget('acting_as_respondent');
 $actingRespondent = false;
 }
 
-$shellWidthClass = $actingRespondent ? 'max-w-[1800px]' : 'max-w-7xl';
-$flashWidthClass = $actingRespondent ? 'max-w-[1800px]' : 'max-w-6xl';
-$mainWidthClass = $actingRespondent ? 'max-w-[1800px]' : 'max-w-[1600px]';
+$layoutWidthClass = 'max-w-[1600px]';
+$shellWidthClass = $layoutWidthClass;
+$flashWidthClass = $layoutWidthClass;
+$mainWidthClass = $layoutWidthClass;
 
 $isCaseTypographyRoute = request()->routeIs('applicant.cases.*')
     || request()->routeIs('applicant.respondent.cases.*')
@@ -297,11 +298,20 @@ $respondentNotifList = collect();
                         @if(auth('applicant')->check() || $actingRespondent)
                         @php
                         $applicantUser = auth('applicant')->user();
-                        if ($actingRespondent) {
-                        $applicantDisplayName = $applicantUser?->full_name ?? $applicantUser?->first_name ?? __('respondent.respondent_label');
-                        } else {
-                        $applicantDisplayName = $applicantUser?->full_name ?? $applicantUser?->name ?? __('app.profile');
-                        }
+                        $extractFirstName = function (?string $value): ?string {
+                            $value = trim((string) $value);
+                            if ($value === '') {
+                                return null;
+                            }
+
+                            $parts = preg_split('/\s+/', $value);
+                            return $parts[0] ?? null;
+                        };
+
+                        $applicantDisplayName = $extractFirstName($applicantUser?->first_name)
+                            ?? $extractFirstName($applicantUser?->full_name)
+                            ?? $extractFirstName($applicantUser?->name)
+                            ?? ($actingRespondent ? __('respondent.respondent_label') : __('app.profile'));
 
                         $navBase = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md font-medium transition-colors';
                         $navIdle = 'text-blue-50 hover:bg-blue-700 hover:text-white';

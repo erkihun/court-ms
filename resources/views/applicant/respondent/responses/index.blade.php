@@ -26,7 +26,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
             <p class="font-semibold text-lg">{{ __('respondent.no_responses') }}</p>
-            <p class="text-sm">Start by creating your first response document.</p>
+            <p class="text-sm">{{ __('respondent.start_first_response') }}</p>
         </div>
         @else
         <div class="rounded-2xl border border-slate-200 bg-white shadow-xl overflow-hidden"> {{-- Better shadow for depth --}}
@@ -35,7 +35,7 @@
                     <thead class="bg-slate-50 text-slate-600 uppercase tracking-wider text-xs"> {{-- Slightly adjusted text size/tracking --}}
                         <tr>
                             <th class="px-6 py-3 text-left w-1/4 font-medium">{{ __('respondent.responses') }}</th> {{-- Added px-6 for better spacing --}}
-                            <th class="px-6 py-3 text-left w-1/6 font-medium">Review status</th>
+                            <th class="px-6 py-3 text-left w-1/6 font-medium">{{ __('respondent.review_status_label') }}</th>
                             <th class="px-6 py-3 text-left w-1/5 font-medium">{{ __('respondent.case_number_label') }}</th>
                             <th class="px-6 py-3 text-left w-1/6 font-medium">{{ __('respondent.uploaded') }}</th>
                             <th class="px-6 py-3 text-right font-medium">{{ __('app.Actions') ?? 'Actions' }}</th>
@@ -84,7 +84,7 @@
                                 <span class="{{ $respReviewClass }}">{{ $respReviewLabel }}</span>
                             </td>
                             <td class="px-6 py-4 text-slate-600">
-                                {{ $response->case_number ?: '—' }}
+                                {{ $response->case_number ?: __('cases.labels.not_available') }}
                             </td>
                             <td class="px-6 py-4 text-slate-600">
                                 {{ \App\Support\EthiopianDate::format($response->created_at) }}

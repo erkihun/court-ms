@@ -226,7 +226,7 @@ return array (
   ),
   'my_cases' => 'My Cases',
   'name' => 'Name',
-  'navigation' => 
+    'navigation' => 
   array (
     'title' => 'Navigation',
     'case_summary' => 'Case Summary',
@@ -240,6 +240,7 @@ return array (
     'letters' => 'Letters',
     'case_audits' => 'Case Audits',
     'respondent_responses' => 'Respondent Responses',
+    'response_of_response' => 'Response of Response',
   ),
   'new_case' => 'New Case',
   'new_message' => 'New message',
@@ -319,6 +320,7 @@ return array (
     'review_actions' => 'Review Actions',
     'accept' => 'Accept',
     'return' => 'Return',
+    'give_correction' => 'Give Correction',
     'reject' => 'Reject',
     'bench_note' => 'Bench note',
     'write_letter' => 'Write letter',

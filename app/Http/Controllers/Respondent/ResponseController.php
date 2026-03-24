@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\ValidationException;
+use App\Services\ResponseNotificationService;
 
 class ResponseController extends Controller
 {
@@ -44,29 +46,37 @@ class ResponseController extends Controller
             'pdf' => ['required', 'file', 'mimes:pdf', 'max:5120'],
         ]);
 
-        if (!empty($data['case_number'])) {
+        $caseNumber = $this->normalizeCaseNumber($data['case_number'] ?? null);
+
+        if ($caseNumber !== null) {
             $case = DB::table('court_cases')
                 ->select('status')
-                ->where('case_number', $data['case_number'])
+                ->where('case_number', $caseNumber)
                 ->first();
             if ($case && $case->status === 'closed') {
                 return back()
-                    ->withErrors(['case_number' => 'This case is closed; responses are not allowed.'])
+                    ->withErrors(['case_number' => __('respondent.case_closed')])
                     ->withInput();
             }
         }
 
-        $this->assertNotOwnCase($data['case_number'] ?? null, (int) $applicant->id);
+        $this->assertNotOwnCase($caseNumber, (int) $applicant->id);
+        $this->assertCaseAuthorized($caseNumber, $respondentId, false);
 
         $path = $request->file('pdf')->store('respondent/responses', 'private');
 
-        $response = RespondentResponse::create([
-            'respondent_id' => $respondentId,
-            'case_number' => $data['case_number'] ?? null,
-            'title' => $data['title'],
-            'description' => $data['description'],
-            'pdf_path' => $path,
-        ]);
+        $response = DB::transaction(function () use ($respondentId, $caseNumber, $data, $path) {
+            return RespondentResponse::create([
+                'respondent_id' => $respondentId,
+                'case_number' => $caseNumber,
+                'response_number' => $this->nextResponseNumber($caseNumber),
+                'title' => $data['title'],
+                'description' => $data['description'],
+                'pdf_path' => $path,
+            ]);
+        });
+
+        ResponseNotificationService::notifyRespondentResponseCreated($response);
 
         return redirect()->route('respondent.responses.show', $response);
     }
@@ -98,7 +108,10 @@ class ResponseController extends Controller
             'pdf' => ['nullable', 'file', 'mimes:pdf', 'max:5120'],
         ]);
 
-        $this->assertNotOwnCase($data['case_number'] ?? null, (int) $applicant->id);
+        $caseNumber = $this->normalizeCaseNumber($data['case_number'] ?? null);
+
+        $this->assertNotOwnCase($caseNumber, (int) $applicant->id);
+        $this->assertCaseAuthorized($caseNumber, $this->currentRespondentId(), false);
 
         if ($request->hasFile('pdf')) {
             Storage::disk('private')->delete($response->pdf_path);
@@ -107,12 +120,20 @@ class ResponseController extends Controller
             $response->pdf_path = $path;
         }
 
-        $response->fill([
-            'case_number' => $data['case_number'] ?? null,
-            'title' => $data['title'],
-            'description' => $data['description'],
-        ]);
-        $response->save();
+        $refreshResponseNumber = $caseNumber !== $response->case_number
+            || ($caseNumber !== null && empty($response->response_number));
+
+        DB::transaction(function () use ($response, $caseNumber, $data, $refreshResponseNumber) {
+            $response->fill([
+                'case_number' => $caseNumber,
+                'response_number' => $refreshResponseNumber
+                    ? $this->nextResponseNumber($caseNumber, (int) $response->id)
+                    : $response->response_number,
+                'title' => $data['title'],
+                'description' => $data['description'],
+            ]);
+            $response->save();
+        });
 
         return redirect()->route('respondent.responses.show', $response);
     }
@@ -186,8 +207,62 @@ class ResponseController extends Controller
             ->first();
 
         if ($case && (int) $case->applicant_id === $applicantId) {
-            abort(403, 'You cannot submit a response to your own case.');
+            abort(403, __('respondent.cannot_respond_own_case'));
         }
+    }
+
+    private function assertCaseAuthorized(?string $caseNumber, int $respondentId, bool $api): void
+    {
+        if (!$caseNumber) {
+            return;
+        }
+
+        $caseExists = DB::table('court_cases')->where('case_number', $caseNumber)->exists();
+        if (!$caseExists) {
+            $this->throwCaseNumberError(__('respondent.case_not_found'), $api);
+        }
+
+        $authorized = DB::table('respondent_case_views')
+            ->where('respondent_id', $respondentId)
+            ->where('case_number', $caseNumber)
+            ->exists();
+
+        if (!$authorized) {
+            $this->throwCaseNumberError(__('respondent.case_not_authorized'), $api);
+        }
+    }
+
+    private function throwCaseNumberError(string $message, bool $api): void
+    {
+        if ($api) {
+            throw ValidationException::withMessages(['case_number' => [$message]]);
+        }
+
+        throw ValidationException::withMessages(['case_number' => [$message]]);
+    }
+
+    private function normalizeCaseNumber(?string $caseNumber): ?string
+    {
+        if ($caseNumber === null) {
+            return null;
+        }
+
+        $normalized = trim($caseNumber);
+        return $normalized === '' ? null : $normalized;
+    }
+
+    private function nextResponseNumber(?string $caseNumber, ?int $excludeResponseId = null): ?string
+    {
+        if ($caseNumber === null) {
+            return null;
+        }
+
+        DB::table('court_cases')
+            ->where('case_number', $caseNumber)
+            ->lockForUpdate()
+            ->first();
+
+        return RespondentResponse::nextResponseNumberForCase($caseNumber, $excludeResponseId);
     }
 
     private function applicantNationalId($applicant): ?string

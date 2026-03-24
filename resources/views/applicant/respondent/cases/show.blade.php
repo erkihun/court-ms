@@ -9,6 +9,10 @@ $status === 'active' => $statusBase.' bg-blue-50 text-blue-700 border-blue-200',
 in_array($status, ['closed', 'dismissed']) => $statusBase.' bg-slate-100 text-slate-700 border-slate-200',
 default => $statusBase.' bg-slate-50 text-slate-700 border-slate-200',
 };
+$statusLabel = __('cases.status.' . $status);
+if ($statusLabel === 'cases.status.' . $status) {
+    $statusLabel = ucfirst($status);
+}
 
 $reviewStatus = $case->review_status ?? 'accepted';
 $reviewBase = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border';
@@ -19,10 +23,10 @@ $reviewClass = match ($reviewStatus) {
 default => $reviewBase.' bg-emerald-50 text-emerald-800 border-emerald-200',
 };
 $reviewLabel = match ($reviewStatus) {
-'awaiting_review' => 'Awaiting review',
-'returned' => 'Needs correction',
-'rejected' => 'Rejected',
-default => 'Approved',
+'awaiting_review' => __('cases.review_status.awaiting_review'),
+'returned' => __('cases.review_status.returned'),
+'rejected' => __('cases.review_status.rejected'),
+default => __('cases.review_status.accepted'),
 };
 @endphp
 
@@ -113,7 +117,7 @@ default => 'Approved',
 
                         <div>
                             <a href="{{ route('respondent.responses.create') }}?case_number={{ urlencode($case->case_number) }}"
-                                class="mt-1 inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-blue-200 text-xs font-medium text-blue-700 hover:bg-blue-50">
+                                class="mt-1 inline-flex items-center gap-2 rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-extrabold text-white shadow-sm transition hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                                 {{ __('respondent.give_response') }}
                             </a>
                         </div>
@@ -133,7 +137,7 @@ default => 'Approved',
                             d="M9 3h6a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6" />
                     </svg>
-                    {{ ucfirst($case->status) }}
+                    {{ $statusLabel }}
                 </div>
             </div>
         </section>
@@ -179,11 +183,11 @@ default => 'Approved',
                 <div class="grid md:grid-cols-2 gap-4 text-sm">
                     <div>
                         <div class="text-slate-500">{{ __('cases.name') }}</div>
-                        <div class="font-medium text-slate-900">{{ $case->respondent_name ?? '—' }}</div>
+                        <div class="font-medium text-slate-900">{{ $case->respondent_name ?? __('cases.not_available') }}</div>
                     </div>
                     <div>
                         <div class="text-slate-500">{{ __('cases.address') }}</div>
-                        <div class="font-medium text-slate-900">{{ $case->respondent_address ?? '—' }}</div>
+                        <div class="font-medium text-slate-900">{{ $case->respondent_address ?? __('cases.not_available') }}</div>
                     </div>
                 </div>
             </div>
@@ -220,7 +224,7 @@ default => 'Approved',
                     @foreach($docs as $d)
                     @php
                     $docPath = $d->file_path ?? $d->path ?? null;
-                    $docTitle = $d->title ?? ($d->label ?? ($docPath ? basename($docPath) : 'Document'));
+                    $docTitle = $d->title ?? ($d->label ?? ($docPath ? basename($docPath) : __('cases.document')));
                     @endphp
                     <li class="py-2 flex items-center justify-between gap-4">
                         <div class="flex-1">
@@ -276,16 +280,16 @@ default => 'Approved',
                             @foreach($witnesses as $w)
                             <tr class="hover:bg-slate-50">
                                 <td class="px-3 py-2 font-medium text-slate-900">{{ $w->full_name }}</td>
-                                <td class="px-3 py-2 text-slate-700">{{ $w->phone ?: '—' }}</td>
+                                <td class="px-3 py-2 text-slate-700">{{ $w->phone ?: __('cases.not_available') }}</td>
                                 <td class="px-3 py-2 text-slate-700">
                                     @if(!empty($w->email))
                                     <a href="mailto:{{ $w->email }}"
                                         class="text-blue-700 hover:underline">{{ $w->email }}</a>
                                     @else
-                                    <span class="text-slate-400">—</span>
+                                    <span class="text-slate-400">{{ __('cases.not_available') }}</span>
                                     @endif
                                 </td>
-                                <td class="px-3 py-2 text-slate-700">{{ $w->address ?: '—' }}</td>
+                                <td class="px-3 py-2 text-slate-700">{{ $w->address ?: __('cases.not_available') }}</td>
                             </tr>
                             @endforeach
                         </tbody>
@@ -338,7 +342,7 @@ default => 'Approved',
                                             d="M12 22s7-5.373 7-12a7 7 0 1 0-14 0c0 6.627 7 12 7 12z" />
                                         <circle cx="12" cy="10" r="2.5" stroke-width="1.5" />
                                     </svg>
-                                    <span>{{ $h->location ?: '—' }}</span>
+                                    <span>{{ $h->location ?: __('cases.not_available') }}</span>
                                 </div>
                                 @if(!empty($h->notes))
                                 <p class="mt-2 text-xs text-slate-600">{{ $h->notes }}</p>
@@ -353,12 +357,12 @@ default => 'Approved',
 
             <aside class="rounded-xl border border-slate-200 bg-white p-5 shadow-lg">
                 <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-sm font-semibold text-slate-800">Letters</h3>
+                    <h3 class="text-sm font-semibold text-slate-800">{{ __('cases.letters_section.title') }}</h3>
                     <span class="text-[11px] text-slate-500">{{ ($letters ?? collect())->count() }}</span>
                 </div>
                 @if(($letters ?? collect())->isEmpty())
                 <div class="text-slate-500 text-sm border border-dashed border-slate-300 rounded-lg p-6 text-center bg-slate-50">
-                    No letters shared for this case.
+                    {{ __('cases.letters_section.empty') }}
                 </div>
                 @else
                 <div class="space-y-3 max-h-64 overflow-y-auto pr-1">
@@ -381,21 +385,21 @@ default => 'Approved',
                             <div class="space-y-1">
                                 <div class="flex items-center gap-2">
                                     <div class="font-semibold text-slate-900">
-                                        {{ $letter->subject ?? ($letter->template_title ?? 'Letter') }}
+                                        {{ $letter->subject ?? ($letter->template_title ?? __('cases.letters_section.letter')) }}
                                     </div>
                                     <span class="text-[11px] px-2 py-0.5 rounded-full {{ $statusClass }}">
-                                        {{ ucfirst($letter->approval_status ?? 'draft') }}
+                                        {{ __('cases.letters_section.status.' . ($letter->approval_status ?? 'draft')) }}
                                     </span>
                                 </div>
                                 <div class="text-xs text-slate-600 flex flex-wrap gap-3">
-                                    <span>Ref: {{ $letter->reference_number ?: '—' }}</span>
-                                    <span>Template: {{ $letter->template_title ?: '—' }}</span>
-                                    <span>Author: {{ $letter->author_name ?: '—' }}</span>
-                                    <span>Created: {{ \App\Support\EthiopianDate::format($letter->created_at, withTime: true) }}</span>
+                                    <span>{{ __('cases.letters_section.reference') }}: {{ $letter->reference_number ?: __('cases.not_available') }}</span>
+                                    <span>{{ __('cases.letters_section.template') }}: {{ $letter->template_title ?: __('cases.not_available') }}</span>
+                                    <span>{{ __('cases.letters_section.author') }}: {{ $letter->author_name ?: __('cases.not_available') }}</span>
+                                    <span>{{ __('cases.letters_section.created') }}: {{ \App\Support\EthiopianDate::format($letter->created_at, withTime: true) }}</span>
                                 </div>
                             </div>
                             <a href="{{ $letterPreviewUrl }}" class="text-xs font-semibold text-blue-600 hover:text-blue-800 underline">
-                                View
+                                {{ __('cases.view') }}
                             </a>
                         </div>
                     </div>
@@ -407,7 +411,7 @@ default => 'Approved',
 
             <aside id="respondent-messages" class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-sm font-semibold text-slate-800">Case Audit Trail</h3>
+                    <h3 class="text-sm font-semibold text-slate-800">{{ __('cases.case_audit_trail') }}</h3>
                     <span class="text-[11px] text-slate-500">{{ ($audits ?? collect())->count() }}</span>
                 </div>
                 @if(($audits ?? collect())->isEmpty())
@@ -426,7 +430,7 @@ default => 'Approved',
                                 class="px-2 py-0.5 rounded-full border bg-white text-slate-700">{{ ucfirst(str_replace('_', ' ', $a->action)) }}</span>
                         </div>
                         <div class="text-[11px] text-slate-600 mt-1">
-                            Actor: {{ $a->actor_name ?? ($a->actor_type ?? 'system') }}
+                            {{ __('cases.audit_actor') }} {{ $a->actor_name ?? ($a->actor_type ?? __('cases.system')) }}
                             @if(!empty($a->actor_id))(#{{ $a->actor_id }})@endif
                         </div>
                         @if($meta)

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ApplicantResponseReply;
 use App\Models\Respondent;
 use App\Models\RespondentResponse;
 use Illuminate\Http\Request;
@@ -66,6 +67,7 @@ class SecureFileController extends Controller
             ->exists();
 
         if ($ownsCase) {
+            abort_if(($response->review_status ?? null) !== 'accepted', 403);
             return $this->downloadFile($response->pdf_path, basename((string) $response->pdf_path), null, $inline);
         }
 
@@ -73,6 +75,89 @@ class SecureFileController extends Controller
         abort_if(!$respondentId || (int) $response->respondent_id !== (int) $respondentId, 403);
 
         return $this->downloadFile($response->pdf_path, basename((string) $response->pdf_path), null, $inline);
+    }
+
+    public function applicantResponseReply(Request $request, int $caseId, int $responseId, ApplicantResponseReply $reply): StreamedResponse
+    {
+        $inline = $request->boolean('inline');
+
+        if ($this->staffCan('cases.view')) {
+            return $this->downloadFile($reply->pdf_path, basename((string) $reply->pdf_path), null, $inline);
+        }
+
+        $applicant = auth('applicant')->user();
+        abort_unless($applicant, 403);
+
+        $matchesTarget = DB::table('applicant_response_replies')
+            ->where('id', $reply->id)
+            ->where('case_id', $caseId)
+            ->where('respondent_response_id', $responseId)
+            ->exists();
+
+        abort_unless($matchesTarget, 404);
+
+        $applicantOwnsReply = DB::table('applicant_response_replies')
+            ->where('id', $reply->id)
+            ->where('case_id', $caseId)
+            ->where('respondent_response_id', $responseId)
+            ->where('applicant_id', $applicant->id)
+            ->exists();
+
+        if ($applicantOwnsReply) {
+            return $this->downloadFile($reply->pdf_path, basename((string) $reply->pdf_path), null, $inline);
+        }
+
+        $respondentId = Respondent::where('email', $applicant->email)->value('id');
+        if ($respondentId) {
+            $respondentAuthorized = DB::table('applicant_response_replies as arr')
+                ->join('respondent_responses as rr', 'rr.id', '=', 'arr.respondent_response_id')
+                ->join('respondent_case_views as rcv', function ($join) use ($respondentId) {
+                    $join->on('rcv.case_id', '=', 'arr.case_id')
+                        ->where('rcv.respondent_id', '=', $respondentId);
+                })
+                ->where('arr.id', $reply->id)
+                ->where('arr.case_id', $caseId)
+                ->where('arr.respondent_response_id', $responseId)
+                ->where('arr.review_status', 'accepted')
+                ->where('rr.respondent_id', $respondentId)
+                ->exists();
+
+            if ($respondentAuthorized) {
+                return $this->downloadFile($reply->pdf_path, basename((string) $reply->pdf_path), null, $inline);
+            }
+        }
+
+        abort(403);
+    }
+
+    public function respondentApplicantResponseReply(Request $request, ApplicantResponseReply $reply): StreamedResponse
+    {
+        $inline = $request->boolean('inline');
+
+        if ($this->staffCan('cases.view')) {
+            return $this->downloadFile($reply->pdf_path, basename((string) $reply->pdf_path), null, $inline);
+        }
+
+        $applicant = auth('applicant')->user();
+        abort_unless($applicant, 403);
+
+        $respondentId = Respondent::where('email', $applicant->email)->value('id');
+        abort_if(!$respondentId, 403);
+
+        $respondentAuthorized = DB::table('applicant_response_replies as arr')
+            ->join('respondent_responses as rr', 'rr.id', '=', 'arr.respondent_response_id')
+            ->join('respondent_case_views as rcv', function ($join) use ($respondentId) {
+                $join->on('rcv.case_id', '=', 'arr.case_id')
+                    ->where('rcv.respondent_id', '=', $respondentId);
+            })
+            ->where('arr.id', $reply->id)
+            ->where('arr.review_status', 'accepted')
+            ->where('rr.respondent_id', $respondentId)
+            ->exists();
+
+        abort_unless($respondentAuthorized, 403);
+
+        return $this->downloadFile($reply->pdf_path, basename((string) $reply->pdf_path), null, $inline);
     }
 
     public function appealDocument(int $appealId, int $docId): StreamedResponse

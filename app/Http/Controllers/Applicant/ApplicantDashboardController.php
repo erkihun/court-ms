@@ -26,10 +26,12 @@ class ApplicantDashboardController extends Controller
         $lettersCount = 0;
         $responsesCount = 0;
         $decisionsCount = 0;
+        $responseRepliesCount = 0;
 
         $caseLetters = collect();
         $caseResponses = collect();
         $caseDecisions = collect();
+        $responseReplies = collect();
 
         if ($caseNumbers->isNotEmpty()) {
             $lettersCount = DB::table('letters')
@@ -39,6 +41,7 @@ class ApplicantDashboardController extends Controller
 
             $responsesCount = DB::table('respondent_responses')
                 ->whereIn('case_number', $caseNumbers)
+                ->where('review_status', 'accepted')
                 ->count();
 
             $decisionsCount = DB::table('decisions')
@@ -67,6 +70,7 @@ class ApplicantDashboardController extends Controller
                 })
                 ->select('rr.id', 'rr.title', 'rr.case_number', 'rr.created_at', 'cc.id as case_id')
                 ->whereIn('rr.case_number', $caseNumbers)
+                ->where('rr.review_status', 'accepted')
                 ->orderByDesc('rr.created_at')
                 ->limit(5)
                 ->get();
@@ -79,6 +83,28 @@ class ApplicantDashboardController extends Controller
                 ->limit(5)
                 ->get();
         }
+
+        $responseRepliesCount = DB::table('applicant_response_replies')
+            ->where('applicant_id', $applicantId)
+            ->count();
+
+        $responseReplies = DB::table('applicant_response_replies as arr')
+            ->join('court_cases as cc', 'cc.id', '=', 'arr.case_id')
+            ->join('respondent_responses as rr', 'rr.id', '=', 'arr.respondent_response_id')
+            ->select(
+                'arr.id',
+                'arr.case_id',
+                'arr.respondent_response_id',
+                'arr.review_status',
+                'arr.review_note',
+                'arr.created_at',
+                'cc.case_number',
+                'rr.response_number'
+            )
+            ->where('arr.applicant_id', $applicantId)
+            ->orderByDesc('arr.created_at')
+            ->limit(5)
+            ->get();
 
         $recent = DB::table('court_cases')
             ->leftJoin('case_types', 'case_types.id', '=', 'court_cases.case_type_id')
@@ -106,9 +132,11 @@ class ApplicantDashboardController extends Controller
             'caseLetters',
             'caseResponses',
             'caseDecisions',
+            'responseReplies',
             'lettersCount',
             'responsesCount',
-            'decisionsCount'
+            'decisionsCount',
+            'responseRepliesCount'
         ));
     }
 }

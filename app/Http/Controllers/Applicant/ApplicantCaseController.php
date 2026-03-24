@@ -291,7 +291,7 @@ class ApplicantCaseController extends Controller
         } catch (\Throwable $e) {
             DB::rollBack();
             report($e);
-            return back()->withInput()->with('error', 'Failed to create case: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Failed to create case. Please try again.');
         }
     }
 
@@ -336,6 +336,7 @@ class ApplicantCaseController extends Controller
 
         $respondentResponses = DB::table('respondent_responses')
             ->where('case_number', $case->case_number)
+            ->where('review_status', 'accepted')
             ->orderByDesc('created_at')
             ->get();
 
@@ -494,11 +495,19 @@ class ApplicantCaseController extends Controller
             )
             ->where('rr.id', $responseId)
             ->where('rr.case_number', $case->case_number)
+            ->where('rr.review_status', 'accepted')
             ->first();
 
         abort_if(!$response, 404);
 
-        return view('applicant.cases.respondent-response', compact('case', 'response'));
+        $replies = DB::table('applicant_response_replies')
+            ->where('case_id', $case->id)
+            ->where('respondent_response_id', $response->id)
+            ->where('applicant_id', $aid)
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('applicant.cases.respondent-response', compact('case', 'response', 'replies'));
     }
 
     public function replyRespondentResponse(int $caseId, int $responseId)
@@ -522,6 +531,7 @@ class ApplicantCaseController extends Controller
             )
             ->where('rr.id', $responseId)
             ->where('rr.case_number', $case->case_number)
+            ->where('rr.review_status', 'accepted')
             ->first();
 
         abort_if(!$response, 404);
@@ -790,7 +800,7 @@ class ApplicantCaseController extends Controller
         } catch (\Throwable $e) {
             DB::rollBack();
             report($e);
-            return back()->withInput()->with('error', 'Failed to update case: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Failed to update case. Please try again.');
         }
     }
 

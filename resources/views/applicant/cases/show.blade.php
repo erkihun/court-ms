@@ -545,6 +545,11 @@
                                         <div class="text-xs text-slate-600">
                                             {{ __('cases.case_number') }}: {{ $response->case_number ?? $case->case_number }}
                                         </div>
+                                        @if(!empty($response->response_number))
+                                            <div class="text-xs text-slate-600 font-semibold">
+                                                {{ __('respondent.response_number_label') }}: {{ $response->response_number }}
+                                            </div>
+                                        @endif
                                     </div>
                                     <div class="text-xs text-slate-500 text-right">
                                         {{ \App\Support\EthiopianDate::format($response->created_at, withTime: true) }}

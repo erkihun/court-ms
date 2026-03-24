@@ -25,6 +25,9 @@
                 <span class="{{ $respReviewClass }}">{{ $respReviewLabel }}</span>
             </div>
             <p class="text-sm text-slate-500">{{ \App\Support\EthiopianDate::format($response->created_at, withTime: true) }}</p>
+            @if(!empty($response->response_number))
+            <p class="text-xs font-semibold text-slate-600">{{ __('respondent.response_number_label') }}: {{ $response->response_number }}</p>
+            @endif
             @if(!empty($response->case_number))
             <p class="text-xs text-slate-500">{{ __('respondent.case_number_label') }}: {{ $response->case_number }}</p>
             @endif

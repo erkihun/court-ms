@@ -16,6 +16,9 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
 use App\Models\User;
+use App\Models\RespondentResponse;
+use App\Models\ApplicantResponseReply;
+use App\Services\ResponseNotificationService;
 
 class CaseController extends Controller
 {
@@ -491,6 +494,28 @@ class CaseController extends Controller
             }, 'respondent_responses')
             : collect();
 
+        $canManageResponseReplies = Auth::user()?->hasPermission('cases.response-replies.manage') ?? false;
+
+        $applicantResponseReplies = ($canManageResponseReplies && Schema::hasTable('applicant_response_replies'))
+            ? $safeGet(function () use ($case) {
+                return DB::table('applicant_response_replies as arr')
+                    ->join('respondent_responses as rr', 'rr.id', '=', 'arr.respondent_response_id')
+                    ->leftJoin('applicants as a', 'a.id', '=', 'arr.applicant_id')
+                    ->select(
+                        'arr.*',
+                        'rr.response_number',
+                        'rr.title as respondent_response_title',
+                        'a.first_name as applicant_first_name',
+                        'a.middle_name as applicant_middle_name',
+                        'a.last_name as applicant_last_name'
+                    )
+                    ->where('arr.case_id', $case->id)
+                    ->where('rr.case_number', $case->case_number)
+                    ->orderByDesc('arr.created_at')
+                    ->get();
+            }, 'applicant_response_replies')
+            : collect();
+
         // Uploaded Files (admin + applicant)
         $files = Schema::hasTable('case_files')
             ? $safeGet(function () use ($id) {
@@ -687,6 +712,7 @@ class CaseController extends Controller
             'audits'     => $audits,
             'letters'    => $letters,
             'respondentResponses' => $respondentResponses,
+            'applicantResponseReplies' => $applicantResponseReplies,
             'letterTemplates' => $letterTemplates,
             'inspectionAssignees' => $inspectionAssignees,
             'inspectionRequests' => $inspectionRequests,
@@ -761,8 +787,8 @@ class CaseController extends Controller
      */
     public function reviewRespondentResponse(Request $request, int $responseId)
     {
-        $response = DB::table('respondent_responses')->where('id', $responseId)->first();
-        abort_if(!$response, 404, 'Respondent response not found.');
+        $response = RespondentResponse::find($responseId);
+        abort_if(!$response, 404, __('respondent.response_not_found'));
 
         $data = $request->validate([
             'decision'    => ['required', 'in:accept,return'],
@@ -773,20 +799,61 @@ class CaseController extends Controller
         $note = trim((string) ($data['review_note'] ?? ''));
 
         if ($decision === 'return' && $note === '') {
-            return back()->withErrors(['review_note' => 'Please add a note when returning a response.'])->withInput();
+            return back()->withErrors(['review_note' => __('respondent.review_note_required')])->withInput();
         }
 
         $newStatus = $decision === 'accept' ? 'accepted' : 'returned';
 
-        DB::table('respondent_responses')->where('id', $responseId)->update([
-            'review_status'       => $newStatus,
-            'review_note'         => $note !== '' ? $note : null,
+        $response->fill([
+            'review_status' => $newStatus,
+            'review_note' => $note !== '' ? $note : null,
             'reviewed_by_user_id' => Auth::id(),
-            'reviewed_at'         => now(),
-            'updated_at'          => now(),
+            'reviewed_at' => now(),
+        ])->save();
+
+        ResponseNotificationService::notifyRespondentResponseReviewed($response, $newStatus, $note);
+
+        return back()->with('success', __('respondent.response_review_updated'));
+    }
+
+    /**
+     * Admin: accept or return an applicant response-of-response.
+     */
+    public function reviewApplicantResponseReply(Request $request, int $replyId)
+    {
+        $reply = ApplicantResponseReply::find($replyId);
+        abort_if(!$reply, 404, __('respondent.response_reply_not_found'));
+
+        $data = $request->validate([
+            'decision'    => ['required', 'in:accept,return'],
+            'review_note' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        return back()->with('success', 'Respondent response review updated.');
+        $decision = $data['decision'];
+        $note = trim((string) ($data['review_note'] ?? ''));
+
+        if ($decision === 'return' && $note === '') {
+            return back()->withErrors(['review_note' => __('respondent.response_reply_note_required')])->withInput();
+        }
+
+        $newStatus = $decision === 'accept' ? 'accepted' : 'returned';
+
+        $reply->fill([
+            'review_status' => $newStatus,
+            'review_note' => $note !== '' ? $note : null,
+            'reviewed_by_user_id' => Auth::id(),
+            'reviewed_at' => now(),
+        ])->save();
+
+        $this->logCaseAudit((int) $reply->case_id, 'response_reply_reviewed', [
+            'reply_id' => $replyId,
+            'decision' => $newStatus,
+            'note' => $note !== '' ? $note : null,
+        ]);
+
+        ResponseNotificationService::notifyResponseReplyReviewed($reply, $newStatus, $note);
+
+        return back()->with('success', __('respondent.response_reply_review_updated'));
     }
 
     /**

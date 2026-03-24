@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Respondent;
 use App\Models\RespondentResponse;
+use App\Services\ResponseNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -18,7 +19,7 @@ class RespondentResponseController extends Controller
 
         $responses = RespondentResponse::where('respondent_id', $actor->id)
             ->orderByDesc('created_at')
-            ->get(['id', 'title', 'case_number', 'description', 'created_at']);
+            ->get(['id', 'title', 'case_number', 'response_number', 'description', 'created_at']);
 
         return response()->json([
             'ok' => true,
@@ -38,6 +39,7 @@ class RespondentResponseController extends Controller
                 'id' => $response->id,
                 'title' => $response->title,
                 'case_number' => $response->case_number,
+                'response_number' => $response->response_number,
                 'description' => $response->description,
                 'created_at' => $response->created_at,
             ],
@@ -56,27 +58,36 @@ class RespondentResponseController extends Controller
             'pdf' => ['required', 'file', 'mimes:pdf', 'max:5120'],
         ]);
 
-        if (!empty($data['case_number'])) {
+        $caseNumber = $this->normalizeCaseNumber($data['case_number'] ?? null);
+
+        if ($caseNumber !== null) {
             $status = DB::table('court_cases')
-                ->where('case_number', $data['case_number'])
+                ->where('case_number', $caseNumber)
                 ->value('status');
 
             if ($status === 'closed') {
                 throw ValidationException::withMessages([
-                    'case_number' => ['This case is closed; responses are not allowed.'],
+                    'case_number' => [__('respondent.case_closed')],
                 ]);
             }
         }
 
+        $this->assertCaseAuthorized($caseNumber, $actor->id, true);
+
         $path = $request->file('pdf')->store('respondent/responses', 'private');
 
-        $response = RespondentResponse::create([
-            'respondent_id' => $actor->id,
-            'case_number' => $data['case_number'] ?? null,
-            'title' => $data['title'],
-            'description' => $data['description'] ?? null,
-            'pdf_path' => $path,
-        ]);
+        $response = DB::transaction(function () use ($actor, $caseNumber, $data, $path) {
+            return RespondentResponse::create([
+                'respondent_id' => $actor->id,
+                'case_number' => $caseNumber,
+                'response_number' => $this->nextResponseNumber($caseNumber),
+                'title' => $data['title'],
+                'description' => $data['description'] ?? null,
+                'pdf_path' => $path,
+            ]);
+        });
+
+        ResponseNotificationService::notifyRespondentResponseCreated($response);
 
         return response()->json([
             'ok' => true,
@@ -84,8 +95,63 @@ class RespondentResponseController extends Controller
                 'id' => $response->id,
                 'title' => $response->title,
                 'case_number' => $response->case_number,
+                'response_number' => $response->response_number,
                 'created_at' => $response->created_at,
             ],
         ], 201);
+    }
+
+    private function assertCaseAuthorized(?string $caseNumber, int $respondentId, bool $api): void
+    {
+        if (!$caseNumber) {
+            return;
+        }
+
+        $caseExists = DB::table('court_cases')->where('case_number', $caseNumber)->exists();
+        if (!$caseExists) {
+            $this->throwCaseNumberError(__('respondent.case_not_found'), $api);
+        }
+
+        $authorized = DB::table('respondent_case_views')
+            ->where('respondent_id', $respondentId)
+            ->where('case_number', $caseNumber)
+            ->exists();
+
+        if (!$authorized) {
+            $this->throwCaseNumberError(__('respondent.case_not_authorized'), $api);
+        }
+    }
+
+    private function throwCaseNumberError(string $message, bool $api): void
+    {
+        if ($api) {
+            throw ValidationException::withMessages(['case_number' => [$message]]);
+        }
+
+        abort(403, $message);
+    }
+
+    private function normalizeCaseNumber(?string $caseNumber): ?string
+    {
+        if ($caseNumber === null) {
+            return null;
+        }
+
+        $normalized = trim($caseNumber);
+        return $normalized === '' ? null : $normalized;
+    }
+
+    private function nextResponseNumber(?string $caseNumber): ?string
+    {
+        if ($caseNumber === null) {
+            return null;
+        }
+
+        DB::table('court_cases')
+            ->where('case_number', $caseNumber)
+            ->lockForUpdate()
+            ->first();
+
+        return RespondentResponse::nextResponseNumberForCase($caseNumber);
     }
 }

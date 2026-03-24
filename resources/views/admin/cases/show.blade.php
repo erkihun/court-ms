@@ -27,6 +27,9 @@
     $canReview = function_exists('userHasPermission')
     ? userHasPermission('cases.review')
     : (auth()->user()?->can('cases.review') ?? false);
+    $canManageResponseReplies = function_exists('userHasPermission')
+    ? userHasPermission('cases.response-replies.manage')
+    : (auth()->user()?->hasPermission('cases.response-replies.manage') ?? false);
 
     $statuses = [
     'pending' => __('cases.status.pending'),
@@ -963,6 +966,19 @@
                                     </svg>
                                     {{ __('cases.navigation.respondent_responses') }}
                                 </button>
+                                @if($canManageResponseReplies)
+                                <button type="button" @click="openSection('response-of-response')" :class="activeSection === 'response-of-response'
+                                    ? 'bg-white/10 text-white shadow-sm'
+                                    : 'text-blue-100 hover:bg-white/5 hover:text-white'"
+                                    class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg font-medium leading-5 transition-all duration-150 text-left">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M8 10h8M8 14h5M6 4h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2z" />
+                                    </svg>
+                                    {{ __('cases.navigation.response_of_response') }}
+                                </button>
+                                @endif
                             </div>
                         </div>
                     </nav>
@@ -2249,6 +2265,105 @@
                         @endforelse
                     </div>
                 </section>
+                @if($canManageResponseReplies)
+                <section id="response-of-response" x-show="activeSection === 'response-of-response'"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 transform translate-y-4"
+                    x-transition:enter-end="opacity-100 transform translate-y-0"
+                    class="main-content-section p-6 rounded-2xl border border-gray-200 bg-white shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-gray-200 pb-3">
+                        <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 10h8M8 14h5M6 4h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2z" />
+                            </svg>
+                            {{ __('cases.navigation.response_of_response') }}
+                        </h3>
+                        <span class="text-xs font-medium text-gray-600 bg-gray-100 rounded-full px-2.5 py-1">
+                            {{ ($applicantResponseReplies ?? collect())->count() }}
+                        </span>
+                    </div>
+
+                    <div class="space-y-4 max-h-[85vh] overflow-auto pr-2">
+                        @forelse($applicantResponseReplies ?? [] as $reply)
+                        @php
+                        $replyReviewStatus = $reply->review_status ?? 'awaiting_review';
+                        $replyReviewNote = $reply->review_note ?? null;
+                        $replyReviewBase = 'inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium border';
+                        $replyReviewClass = match ($replyReviewStatus) {
+                            'awaiting_review' => $replyReviewBase.' bg-amber-50 text-amber-800 border-amber-200',
+                            'returned' => $replyReviewBase.' bg-yellow-50 text-yellow-800 border-yellow-200',
+                            'rejected' => $replyReviewBase.' bg-red-50 text-red-800 border-red-200',
+                            default => $replyReviewBase.' bg-emerald-50 text-emerald-800 border-emerald-200',
+                        };
+                        $replyReviewLabel = match ($replyReviewStatus) {
+                            'awaiting_review' => __('cases.review_status.awaiting_review'),
+                            'returned' => __('cases.review_status.returned'),
+                            'rejected' => __('cases.review_status.rejected'),
+                            default => __('cases.review_status.accepted'),
+                        };
+                        $applicantDisplayName = trim(($reply->applicant_first_name ?? '').' '.($reply->applicant_middle_name ?? '').' '.($reply->applicant_last_name ?? ''));
+                        @endphp
+                        <div class="rounded-2xl border border-gray-100 bg-gray-50 p-4 shadow-sm space-y-3">
+                            <div class="flex flex-wrap items-center justify-between gap-2 text-gray-500">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="font-semibold text-gray-900">{{ __('respondent.response_of_response') }}</span>
+                                    <span class="{{ $replyReviewClass }}">{{ $replyReviewLabel }}</span>
+                                </div>
+                                <span>{{ optional($reply->created_at)->toDayDateTimeString() ?? '' }}</span>
+                            </div>
+                            <div class="text-xs text-gray-600 grid gap-1 sm:grid-cols-2">
+                                <span>{{ __('cases.case_number') }}: {{ $case->case_number }}</span>
+                                <span>{{ __('respondent.response_number_label') }}: {{ $reply->response_number ?: __('cases.labels.not_available') }}</span>
+                                <span>{{ __('cases.applicant_full_name') }}: {{ $applicantDisplayName ?: __('cases.labels.not_available') }}</span>
+                            </div>
+                            <div class="cms-output text-gray-800">
+                                {{ $reply->description }}
+                            </div>
+                            @if(!empty($replyReviewNote))
+                            <div class="text-xs text-gray-600">
+                                <span class="font-semibold text-gray-700">{{ __('cases.reviewer_note') }}</span>
+                                {{ $replyReviewNote }}
+                            </div>
+                            @endif
+                            @if(!empty($reply->pdf_path))
+                            <div class="rounded-xl border border-gray-200 overflow-hidden bg-white">
+                                <iframe
+                                    src="{{ route('admin.applicant-response-replies.download', ['case' => $case->id, 'response' => $reply->respondent_response_id, 'reply' => $reply->id, 'inline' => 1]) }}#toolbar=0&navpanes=0&scrollbar=0"
+                                    loading="lazy" class="w-full" style="height:min(80vh,980px); min-height:520px;"
+                                    title="{{ __('respondent.response_of_response') }}">
+                                </iframe>
+                            </div>
+                            @endif
+                            @if(in_array($replyReviewStatus, ['awaiting_review', 'returned'], true))
+                            <form method="POST" action="{{ route('applicant-response-replies.review', $reply->id) }}" class="space-y-2">
+                                @csrf
+                                @method('PATCH')
+                                <label class="text-xs font-semibold text-gray-600">{{ __('cases.reviewer_note') }}</label>
+                                <textarea name="review_note" rows="2"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+                                    placeholder="{{ __('cases.show.add_reason_note') }}">{{ old('review_note', $replyReviewNote ?? '') }}</textarea>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <button type="submit" name="decision" value="accept"
+                                        class="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-xs font-medium text-white shadow-sm transition-all duration-200">
+                                        {{ __('cases.show.accept') }}
+                                    </button>
+                                    <button type="submit" name="decision" value="return"
+                                        class="px-3 py-1.5 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-xs font-medium text-white shadow-sm transition-all duration-200">
+                                        {{ __('cases.show.give_correction') }}
+                                    </button>
+                                </div>
+                            </form>
+                            @endif
+                        </div>
+                        @empty
+                        <div class="rounded-2xl border border-gray-200 bg-white p-4 text-gray-500">
+                            {{ __('respondent.no_applicant_response_replies') }}
+                        </div>
+                        @endforelse
+                    </div>
+                </section>
+                @endif
 
                 {{-- Messages Section --}}
                 <section id="messages" x-show="activeSection === 'messages'"

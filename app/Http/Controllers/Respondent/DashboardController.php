@@ -22,6 +22,15 @@ class DashboardController extends Controller
         $stats = [
             'cases'        => DB::table('respondent_case_views')->where('respondent_id', $respondent->id)->count(),
             'responses'    => DB::table('respondent_responses')->where('respondent_id', $respondent->id)->count(),
+            'response_replies' => DB::table('applicant_response_replies as arr')
+                ->join('respondent_responses as rr', 'rr.id', '=', 'arr.respondent_response_id')
+                ->join('respondent_case_views as rcv', function ($join) use ($respondent) {
+                    $join->on('rcv.case_id', '=', 'arr.case_id')
+                        ->where('rcv.respondent_id', '=', $respondent->id);
+                })
+                ->where('rr.respondent_id', $respondent->id)
+                ->where('arr.review_status', 'accepted')
+                ->count(),
             'notifications'=> $this->countUnseenNotifications($respondent->id),
         ];
 
@@ -54,10 +63,37 @@ class DashboardController extends Controller
             )
             ->get();
 
+        $responseReplies = DB::table('applicant_response_replies as arr')
+            ->join('respondent_responses as rr', 'rr.id', '=', 'arr.respondent_response_id')
+            ->join('court_cases as c', 'c.id', '=', 'arr.case_id')
+            ->join('respondent_case_views as rcv', function ($join) use ($respondent) {
+                $join->on('rcv.case_id', '=', 'arr.case_id')
+                    ->where('rcv.respondent_id', '=', $respondent->id);
+            })
+            ->leftJoin('applicants as a', 'a.id', '=', 'arr.applicant_id')
+            ->where('rr.respondent_id', $respondent->id)
+            ->where('arr.review_status', 'accepted')
+            ->orderByDesc('arr.created_at')
+            ->limit(5)
+            ->select(
+                'arr.id',
+                'arr.case_id',
+                'arr.respondent_response_id',
+                'arr.created_at',
+                'arr.description',
+                'c.case_number',
+                'rr.response_number',
+                'a.first_name as applicant_first_name',
+                'a.middle_name as applicant_middle_name',
+                'a.last_name as applicant_last_name'
+            )
+            ->get();
+
         return view('applicant.respondent.dashboard', [
             'stats' => $stats,
             'recentCases' => $recentCases,
             'letters' => $letters,
+            'responseReplies' => $responseReplies,
         ]);
     }
 

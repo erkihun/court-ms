@@ -8,9 +8,11 @@
     $lettersCount = $lettersCount ?? 0;
     $responsesCount = $responsesCount ?? 0;
     $decisionsCount = $decisionsCount ?? 0;
+    $responseRepliesCount = $responseRepliesCount ?? 0;
     $caseLetters = $caseLetters ?? collect();
     $caseResponses = $caseResponses ?? collect();
     $caseDecisions = $caseDecisions ?? collect();
+    $responseReplies = $responseReplies ?? collect();
     @endphp
 
     <div class="space-y-6">
@@ -186,6 +188,19 @@
                         <div class="flex items-center justify-between w-full">
                             <span>{{ __('dashboard.responses') }}</span>
                             <span class="text-[12px] px-2 py-1 rounded-full bg-white/20 border border-white/30">{{ $responsesCount }}</span>
+                        </div>
+                    </button>
+
+                    <button type="button" data-panel-target="response-replies"
+                       class="w-full group flex items-center justify-start gap-3 px-4 py-3.5 rounded-xl bg-gradient-to-r from-[#0d3b8f] to-[#1b63c3] text-white font-medium
+                              hover:from-[#0b306b] hover:to-[#1550a3] focus:outline-none focus:ring-2 focus:ring-[#0d3b8f] focus:ring-offset-2
+                              transition-all duration-200 hover:shadow-lg panel-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h8M8 14h5M6 4h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2z"/>
+                        </svg>
+                        <div class="flex items-center justify-between w-full">
+                            <span>{{ __('respondent.response_of_response') }}</span>
+                            <span class="text-[12px] px-2 py-1 rounded-full bg-white/20 border border-white/30">{{ $responseRepliesCount }}</span>
                         </div>
                     </button>
                     
@@ -393,9 +408,14 @@
                             <p class=" text-slate-500">{{ __('dashboard.letters_description') }}</p>
                         </div>
                     </div>
-                    <button type="button" data-panel-target="recent" class=" font-medium text-blue-600 hover:text-blue-800">
-                        {{ __('dashboard.recent_cases') }}
-                    </button>
+                    <div class="flex items-center gap-3">
+                        <a href="{{ route('applicant.response-replies.index') }}" class=" font-medium text-blue-600 hover:text-blue-800">
+                            {{ __('respondent.response_of_response') }}
+                        </a>
+                        <button type="button" data-panel-target="recent" class=" font-medium text-blue-600 hover:text-blue-800">
+                            {{ __('dashboard.recent_cases') }}
+                        </button>
+                    </div>
                 </div>
                 <div class="space-y-3">
                     @forelse($caseLetters as $letter)
@@ -483,6 +503,71 @@
                     @empty
                     <div class="p-4  text-slate-500 border border-dashed border-slate-200 rounded-xl">
                         {{ __('dashboard.no_responses') }}
+                    </div>
+                    @endforelse
+                </div>
+            </div>
+
+            {{-- Response Of Response Panel --}}
+            <div class="hidden" data-panel="response-replies">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-indigo-100 rounded-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h8M8 14h5M6 4h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-slate-900">{{ __('respondent.response_of_response') }}</h3>
+                            <p class=" text-slate-500">{{ __('respondent.applicant_response_replies') }}</p>
+                        </div>
+                    </div>
+                    <a href="{{ route('applicant.response-replies.index') }}" class=" font-medium text-blue-600 hover:text-blue-800">
+                        {{ __('dashboard.view_all') }}
+                    </a>
+                </div>
+                <div class="space-y-3">
+                    @forelse($responseReplies as $reply)
+                    @php
+                        $replyStatus = (string) ($reply->review_status ?? 'awaiting_review');
+                        $replyStatusClass = match ($replyStatus) {
+                            'accepted' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                            'returned' => 'bg-yellow-50 text-yellow-700 border-yellow-200',
+                            'rejected' => 'bg-red-50 text-red-700 border-red-200',
+                            default => 'bg-amber-50 text-amber-700 border-amber-200',
+                        };
+                        $replyStatusLabel = match ($replyStatus) {
+                            'accepted' => __('cases.review_status.accepted'),
+                            'returned' => __('cases.review_status.returned'),
+                            'rejected' => __('cases.review_status.rejected'),
+                            default => __('cases.review_status.awaiting_review'),
+                        };
+                    @endphp
+                    <div class="p-3 rounded-xl border border-slate-200 bg-slate-50/60">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="font-semibold text-slate-900 truncate">{{ $reply->case_number }}</div>
+                            <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold {{ $replyStatusClass }}">{{ $replyStatusLabel }}</span>
+                        </div>
+                        <div class="text-xs text-slate-500 mt-1 flex flex-wrap gap-3">
+                            <span>{{ __('respondent.response_number_label') }}: {{ $reply->response_number ?: __('cases.labels.not_available') }}</span>
+                            <span>{{ $reply->created_at ? \App\Support\EthiopianDate::format($reply->created_at, withTime: true) : '' }}</span>
+                        </div>
+                        @if(!empty($reply->review_note))
+                        <div class="mt-2 text-xs text-slate-600">
+                            <span class="font-semibold text-slate-700">{{ __('cases.reviewer_note') }}</span>
+                            {{ $reply->review_note }}
+                        </div>
+                        @endif
+                        <div class="mt-3 flex justify-end">
+                            <a href="{{ route('applicant.cases.respondentResponses.replies.show', [$reply->case_id, $reply->respondent_response_id, $reply->id]) }}"
+                                class="inline-flex items-center gap-2 rounded-lg border border-indigo-200 bg-white px-3 py-1.5  font-medium text-indigo-700 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 transition">
+                                {{ __('dashboard.view') }}
+                            </a>
+                        </div>
+                    </div>
+                    @empty
+                    <div class="p-4  text-slate-500 border border-dashed border-slate-200 rounded-xl">
+                        {{ __('respondent.no_applicant_response_replies') }}
                     </div>
                     @endforelse
                 </div>

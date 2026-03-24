@@ -10,6 +10,7 @@ use App\Models\DecisionReview;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
+use Mews\Purifier\Facades\Purifier;
 
 class DecisionController extends Controller
 {
@@ -171,7 +172,7 @@ class DecisionController extends Controller
         $payload['name'] = trim((string) ($payload['name'] ?? ''));
         $payload['case_file_number'] = trim((string) ($payload['case_file_number'] ?? ''));
         $payload['description'] = isset($payload['description']) ? strip_tags(trim($payload['description'])) : null;
-        $payload['decision_content'] = trim($payload['decision_content'] ?? '');
+        $payload['decision_content'] = Purifier::clean(trim($payload['decision_content'] ?? ''), 'cases');
         $payload['reviewing_admin_user_names'] = $payload['reviewing_admin_user_names'] ?? [];
         $payload['judges'] = $payload['judges'] ?? [];
 

@@ -9,12 +9,14 @@ use App\Http\Controllers\Applicant\ApplicantAuthController;
 use App\Http\Controllers\Applicant\ApplicantCaseController;
 use App\Http\Controllers\Applicant\ApplicantDashboardController;
 use App\Http\Controllers\Applicant\ApplicantProfileController;
+use App\Http\Controllers\Applicant\ApplicantResponseReplyController;
 use App\Http\Controllers\Applicant\ApplicantRoleSwitchController;
 use App\Http\Controllers\Applicant\ApplicantNotificationController;
 use App\Http\Controllers\Applicant\ApplicantPasswordController;
 use App\Http\Controllers\Applicant\ApplicantVerificationController;
 use App\Http\Controllers\Respondent\RespondentAuthController;
 use App\Http\Controllers\Respondent\ResponseController;
+use App\Http\Controllers\Respondent\ResponseReplyController;
 use App\Http\Controllers\Respondent\DashboardController as RespondentDashboardController;
 use App\Http\Controllers\Respondent\ProfileController;
 use App\Http\Controllers\Respondent\CaseSearchController;
@@ -122,6 +124,10 @@ Route::middleware(SetLocale::class)->group(function () {
         Route::get('/respondent/responses/{response}/edit', [ResponseController::class, 'edit'])->name('respondent.responses.edit');
         Route::patch('/respondent/responses/{response}', [ResponseController::class, 'update'])->name('respondent.responses.update');
         Route::delete('/respondent/responses/{response}', [ResponseController::class, 'destroy'])->name('respondent.responses.destroy');
+        Route::get('/respondent/response-replies', [ResponseReplyController::class, 'index'])->name('respondent.response-replies.index');
+        Route::get('/respondent/response-replies/{reply}', [ResponseReplyController::class, 'show'])->name('respondent.response-replies.show');
+        Route::get('/respondent/response-replies/{reply}/download', [SecureFileController::class, 'respondentApplicantResponseReply'])
+            ->name('respondent.response-replies.download');
         Route::get('/respondent/profile', [ProfileController::class, 'edit'])->name('respondent.profile.edit');
         Route::patch('/respondent/profile', [ProfileController::class, 'update'])->name('respondent.profile.update');
         Route::patch('/respondent/profile/password', [ProfileController::class, 'updatePassword'])->name('respondent.profile.password');
@@ -201,7 +207,14 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::post('/applicant/cases',           [ApplicantCaseController::class, 'store'])->name('applicant.cases.store');
             Route::get('/applicant/cases/{id}',       [ApplicantCaseController::class, 'show'])->name('applicant.cases.show');
             Route::get('/applicant/cases/{case}/respondent-responses/{response}', [ApplicantCaseController::class, 'showRespondentResponse'])->name('applicant.cases.respondentResponses.show');
-            Route::get('/applicant/cases/{case}/respondent-responses/{response}/reply', [ApplicantCaseController::class, 'replyRespondentResponse'])->name('applicant.cases.respondentResponses.reply');
+            Route::get('/applicant/response-replies', [ApplicantResponseReplyController::class, 'index'])->name('applicant.response-replies.index');
+            Route::get('/applicant/cases/{case}/respondent-responses/{response}/reply', [ApplicantResponseReplyController::class, 'create'])->name('applicant.cases.respondentResponses.reply');
+            Route::get('/applicant/cases/{case}/respondent-responses/{response}/replies/create', [ApplicantResponseReplyController::class, 'create'])->name('applicant.cases.respondentResponses.replies.create');
+            Route::post('/applicant/cases/{case}/respondent-responses/{response}/replies', [ApplicantResponseReplyController::class, 'store'])->name('applicant.cases.respondentResponses.replies.store');
+            Route::get('/applicant/cases/{case}/respondent-responses/{response}/replies/{reply}', [ApplicantResponseReplyController::class, 'show'])->name('applicant.cases.respondentResponses.replies.show');
+            Route::get('/applicant/cases/{case}/respondent-responses/{response}/replies/{reply}/edit', [ApplicantResponseReplyController::class, 'edit'])->name('applicant.cases.respondentResponses.replies.edit');
+            Route::patch('/applicant/cases/{case}/respondent-responses/{response}/replies/{reply}', [ApplicantResponseReplyController::class, 'update'])->name('applicant.cases.respondentResponses.replies.update');
+            Route::delete('/applicant/cases/{case}/respondent-responses/{response}/replies/{reply}', [ApplicantResponseReplyController::class, 'destroy'])->name('applicant.cases.respondentResponses.replies.destroy');
             Route::get('/applicant/cases/{id}/edit',  [ApplicantCaseController::class, 'edit'])->name('applicant.cases.edit');
             Route::patch('/applicant/cases/{id}',     [ApplicantCaseController::class, 'update'])->name('applicant.cases.update');
             Route::delete('/applicant/cases/{id}', [ApplicantCaseController::class, 'destroy'])
@@ -257,6 +270,8 @@ Route::middleware(SetLocale::class)->group(function () {
                 ->name('applicant.respondent.responses.destroy');
             Route::get('/applicant/respondent/responses/{response}/download', [SecureFileController::class, 'respondentResponse'])
                 ->name('applicant.respondent.responses.download');
+            Route::get('/applicant/cases/{case}/respondent-responses/{response}/replies/{reply}/download', [SecureFileController::class, 'applicantResponseReply'])
+                ->name('applicant.cases.respondentResponses.replies.download');
 
             // Notifications
             Route::get('/applicant/notifications',           [ApplicantNotificationController::class, 'index'])->name('applicant.notifications.index');
@@ -320,6 +335,9 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::patch('/respondent-responses/{response}/review', [CaseController::class, 'reviewRespondentResponse'])
                 ->middleware('perm:cases.review')
                 ->name('respondent-responses.review');
+            Route::patch('/applicant-response-replies/{reply}/review', [CaseController::class, 'reviewApplicantResponseReply'])
+                ->middleware('perm:cases.response-replies.manage')
+                ->name('applicant-response-replies.review');
 
             Route::get('/cases',                   [CaseController::class, 'index'])->middleware('perm:cases.view')->name('cases.index');
             Route::get('/cases/export',            [CaseController::class, 'export'])->middleware('perm:reports.export')->name('cases.export');
@@ -355,6 +373,9 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::get('/respondent-responses/{response}/download', [SecureFileController::class, 'respondentResponse'])
                 ->middleware('perm:cases.view')
                 ->name('respondent-responses.download');
+            Route::get('/cases/{case}/respondent-responses/{response}/replies/{reply}/download', [SecureFileController::class, 'applicantResponseReply'])
+                ->middleware('perm:cases.view')
+                ->name('admin.applicant-response-replies.download');
 
             // Witnesses
             Route::post('/cases/{case}/witnesses',            [CaseController::class, 'storeWitness'])->middleware('perm:cases.edit')->name('cases.witnesses.store');

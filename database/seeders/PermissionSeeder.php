@@ -64,6 +64,11 @@ class PermissionSeeder extends Seeder
                 'label' => 'Assign case to team members',
                 'description' => null,
             ],
+            [
+                'name' => 'cases.response-replies.manage',
+                'label' => 'Manage response of response',
+                'description' => null,
+            ],
 
             // Appeals
             [
