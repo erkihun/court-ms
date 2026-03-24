@@ -1113,7 +1113,6 @@
             };
 
             const btn = document.getElementById('download-pdf');
-            const btn = document.getElementById('download-pdf');
             const originalText = btn ? btn.innerText : '';
             if (btn) {
                 btn.innerText = '{{ __('recordes.messages.generating') }}';
@@ -1140,7 +1139,9 @@
                 }
             });
 
-            worker.save().finally(() => {
+            worker.save().catch((e) => {
+                console.error('html2pdf failed', e);
+            }).finally(() => {
                 if (btn) {
                     btn.innerText = originalText;
                     btn.disabled = false;
