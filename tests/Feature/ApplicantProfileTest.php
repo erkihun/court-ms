@@ -3,6 +3,29 @@
 use App\Models\Applicant;
 use Illuminate\Support\Facades\Hash;
 
+test('applicant profile page is displayed', function () {
+    $applicant = Applicant::create([
+        'first_name' => 'Abel',
+        'middle_name' => 'K',
+        'last_name' => 'Teka',
+        'gender' => 'male',
+        'position' => 'Manager',
+        'organization_name' => 'ACME',
+        'phone' => '0911000000',
+        'email' => 'abel@example.com',
+        'address' => 'Addis Ababa',
+        'national_id_number' => '1234567890123456',
+        'password' => Hash::make('password'),
+        'is_active' => true,
+        'is_lawyer' => false,
+    ]);
+
+    $this
+        ->actingAs($applicant, 'applicant')
+        ->get(route('applicant.profile.edit'))
+        ->assertOk();
+});
+
 test('applicant can update profile with an empty middle name', function () {
     $applicant = Applicant::create([
         'first_name' => 'Abel',

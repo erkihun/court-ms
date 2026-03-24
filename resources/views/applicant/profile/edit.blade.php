@@ -17,7 +17,7 @@
                         {{ __('auth.my_profile') }}
                     </h1>
                     <p class="text-xs md: text-slate-500">
-                        {{ __('auth.profile_subtitle') ?? __('auth.profile') }}
+                        {{ __('auth.fill_basic_info') }}
                     </p>
                 </div>
             </div>
@@ -53,7 +53,7 @@
             <section>
                 <div class="flex items-center gap-2 mb-3">
                     <h2 class=" font-semibold text-slate-800">
-                        {{ __('auth.profile') }}
+                        {{ __('auth.basic_information') }}
                     </h2>
                     <span class="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700">
                         {{ __('auth.profile_basic_info') ?? __('auth.basic_information') }}
