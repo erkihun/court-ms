@@ -913,7 +913,7 @@
                         @endif
                         <div class="content">{!! \Mews\Purifier\Facades\Purifier::clean($note->note ?? $note->body ?? '', 'default') !!}</div>
                         @if($signers->isNotEmpty())
-                            <div class="bench-signatures" style="display:flex;gap:20px;flex-wrap:nowrap;">
+                            <div class="bench-signatures" style="display:flex;gap:20px;flex-wrap:nowrap;justify-content:center;">
                                 @foreach($signers as $signer)
                                     <div class="bench-signature-line" style="flex:1;">
                                         <div class="bench-signature-placeholder">
@@ -1017,7 +1017,10 @@
     </div>
 
     <script>
-        document.getElementById('download-pdf').addEventListener('click', () => generatePdf());
+        const downloadBtn = document.getElementById('download-pdf');
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', () => generatePdf());
+        }
 
         const pageWrapper = document.getElementById('page-wrapper');
         const pageCounterOverlay = document.createElement('div');
@@ -1110,9 +1113,12 @@
             };
 
             const btn = document.getElementById('download-pdf');
-            const originalText = btn.innerText;
-            btn.innerText = '{{ __('recordes.messages.generating') }}';
-            btn.disabled = true;
+            const btn = document.getElementById('download-pdf');
+            const originalText = btn ? btn.innerText : '';
+            if (btn) {
+                btn.innerText = '{{ __('recordes.messages.generating') }}';
+                btn.disabled = true;
+            }
 
             document.body.classList.add('pdf-export');
 
@@ -1135,8 +1141,10 @@
             });
 
             worker.save().finally(() => {
-                btn.innerText = originalText;
-                btn.disabled = false;
+                if (btn) {
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                }
                 document.body.classList.remove('pdf-export');
                 scheduleFooterRender();
             });
