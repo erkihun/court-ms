@@ -864,36 +864,11 @@
                                 'title' => $note->judge_one_title ?? __('recordes.labels.judge'),
                                 'signature' => $resolveSignature($note->judge_one_signature ?? null),
                             ],
-                            [
-                                'name' => $note->judge_two_name ?? null,
-                                'date' => optional($note->created_at)->toDayDateTimeString() ?? '',
-                                'title' => $note->judge_two_title ?? __('recordes.labels.judge'),
-                                'signature' => $resolveSignature($note->judge_two_signature ?? null),
-                            ],
-                            [
-                                'name' => $note->judge_three_name ?? null,
-                                'date' => optional($note->created_at)->toDayDateTimeString() ?? '',
-                                'title' => $note->judge_three_title ?? __('recordes.labels.judge'),
-                                'signature' => $resolveSignature($note->judge_three_signature ?? null),
-                            ],
                         ])->filter(fn ($judge) => !empty($judge['name']));
 
-                        $judges = $manualJudges->take(3);
+                        $judges = $manualJudges->take(1);
 
-                        $signers = $normalizeSignerPayload($note->signatures ?? [])
-                            ->map(fn ($signer) => [
-                                'name' => data_get($signer, 'name') ?? data_get($signer, 'judge_name') ?? __('recordes.labels.judge'),
-                                'title' => data_get($signer, 'title') ?? __('recordes.labels.judge'),
-                                'signature' => $resolveSignature(data_get($signer, 'signature')),
-                            ])
-                            ->filter(fn ($signer) => !empty($signer['name']))
-                            ->take(3);
-
-                        if ($signers->isEmpty()) {
-                            $signers = $manualJudges->take(3);
-                        } elseif ($signers->count() < 3) {
-                            $signers = $signers->merge($manualJudges->take(3 - $signers->count()));
-                        }
+                        $signers = $manualJudges->take(1);
                     @endphp
                     <div class="card bench-note-entry">
                         @php

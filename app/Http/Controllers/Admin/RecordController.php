@@ -43,6 +43,7 @@ class RecordController extends Controller
             ->leftJoin('users as u', 'u.id', '=', 'l.user_id')
             ->select('l.*', 'u.name as author_name')
             ->where('l.case_number', $case->case_number)
+            ->where('l.approval_status', 'approved')
             ->orderByDesc('l.created_at')
             ->get();
 
