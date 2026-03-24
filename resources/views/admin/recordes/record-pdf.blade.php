@@ -904,11 +904,7 @@
                                 : $benchCreatedFormatted;
                         @endphp
                         <div class="meta" style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px;">
-                            @if($note->title)
-                                <div style="font-weight:600;">{{ $note->title }}</div>
-                            @else
-                                <div></div>
-                            @endif
+                            <div style="font-weight:600;">{{ $note->title ?? __('recordes.labels.bench_notes') }}</div>
                             <div style="text-align:right;">
                                 <strong>{{ __('recordes.labels.created') }}</strong> {{ $benchCreatedFormatted }}
                                 @if(!empty($benchCreatedEth))
