@@ -864,10 +864,22 @@
                                 'title' => $note->judge_one_title ?? __('recordes.labels.judge'),
                                 'signature' => $resolveSignature($note->judge_one_signature ?? null),
                             ],
+                            [
+                                'name' => $note->judge_two_name ?? null,
+                                'date' => optional($note->created_at)->toDayDateTimeString() ?? '',
+                                'title' => $note->judge_two_title ?? __('recordes.labels.judge'),
+                                'signature' => $resolveSignature($note->judge_two_signature ?? null),
+                            ],
+                            [
+                                'name' => $note->judge_three_name ?? null,
+                                'date' => optional($note->created_at)->toDayDateTimeString() ?? '',
+                                'title' => $note->judge_three_title ?? __('recordes.labels.judge'),
+                                'signature' => $resolveSignature($note->judge_three_signature ?? null),
+                            ],
                         ])->filter(fn ($judge) => !empty($judge['name']));
 
-                        $judges = $manualJudges->take(1);
-
+                        // Display all judge names/dates, but only render signature block for judge 1
+                        $judges = $manualJudges;
                         $signers = $manualJudges->take(1);
                     @endphp
                     <div class="card bench-note-entry">
