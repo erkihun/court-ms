@@ -1,5 +1,5 @@
 <x-applicant-layout :title="__('respondent.dashboard')" :as-respondent-nav="true">
-    <div class="max-w-6xl mx-auto space-y-6">
+    <div class="w-full max-w-[1800px] mx-auto space-y-6">
         <div class="bg-white border border-slate-200 shadow-sm rounded-2xl p-6">
             <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div>

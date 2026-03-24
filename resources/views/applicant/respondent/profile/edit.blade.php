@@ -1,5 +1,5 @@
 <x-applicant-layout :title="__('respondent.profile')" :as-respondent-nav="true">
-    <div class="max-w-6xl mx-auto bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-6">
+    <div class="w-full max-w-[1800px] mx-auto bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-6">
         <div>
             <h1 class="text-2xl font-semibold text-slate-900">{{ __('respondent.profile') }}</h1>
             <p class="text-sm text-slate-600">{{ __('respondent.profile_intro') }}</p>

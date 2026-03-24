@@ -1,5 +1,5 @@
 <x-applicant-layout title="{{ __('respondent.my_cases') }}" :as-respondent-nav="true">
-    <div class="max-w-5xl mx-auto space-y-6">
+    <div class="w-full max-w-[1800px] mx-auto space-y-6">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <p class="text-sm uppercase tracking-wide text-slate-500">{{ __('cases.navigation.title') }}</p>

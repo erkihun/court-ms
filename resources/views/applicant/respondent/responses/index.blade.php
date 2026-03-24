@@ -1,7 +1,7 @@
 @php use Illuminate\Support\Str; @endphp
 
 <x-applicant-layout title="{{ __('respondent.responses') }}" :as-respondent-nav="true">
-    <div class="max-w-6xl mx-auto space-y-8 px-4 sm:px-6 lg:px-8"> {{-- Increased max-width and added padding --}}
+    <div class="w-full max-w-[1800px] mx-auto space-y-8 px-4 sm:px-6 lg:px-8">
 
         {{-- Header Section --}}
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

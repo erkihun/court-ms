@@ -18,6 +18,10 @@ session()->forget('acting_as_respondent');
 $actingRespondent = false;
 }
 
+$shellWidthClass = $actingRespondent ? 'max-w-[1800px]' : 'max-w-7xl';
+$flashWidthClass = $actingRespondent ? 'max-w-[1800px]' : 'max-w-6xl';
+$mainWidthClass = $actingRespondent ? 'max-w-[1800px]' : 'max-w-[1600px]';
+
 $isCaseTypographyRoute = request()->routeIs('applicant.cases.*')
     || request()->routeIs('applicant.respondent.cases.*')
     || request()->routeIs('respondent.cases.*')
@@ -260,7 +264,7 @@ $respondentNotifList = collect();
 
     {{-- Header / Nav --}}
     <header class="sticky top-0 z-40 border-b border-blue-900/50 bg-blue-900/95 text-white shadow-lg shadow-blue-950/10 backdrop-blur">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div class="{{ $shellWidthClass }} mx-auto px-4 py-3 flex items-center justify-between">
             <a href="{{ $actingRespondent ? route('respondent.dashboard') : (auth('applicant')->check() ? route('applicant.dashboard') : route('applicant.login')) }}"
                 class="flex items-center gap-2">
                 <div class="flex items-center gap-2">
@@ -1108,7 +1112,7 @@ $respondentNotifList = collect();
     </header>
 
     {{-- Flash messages --}}
-    <div class="mx-auto max-w-6xl px-4 pt-5">
+    <div class="mx-auto {{ $flashWidthClass }} px-4 pt-5">
         @if(session('success'))
         <x-ui.alert type="success" class="mb-4">
             <span class="mt-0.5">
@@ -1141,7 +1145,7 @@ $respondentNotifList = collect();
     </div>
 
     {{-- Page content --}}
-    <main class="page-enter mx-auto max-w-[1600px] px-4 py-8 sm:py-10 {{ $isCaseTypographyRoute ? 'case-font-scope case-typography' : '' }}">
+    <main class="page-enter mx-auto {{ $mainWidthClass }} px-4 py-8 sm:py-10 {{ $isCaseTypographyRoute ? 'case-font-scope case-typography' : '' }}">
 
         <div class="space-y-6">
             {{ $slot }}
@@ -1153,7 +1157,7 @@ $respondentNotifList = collect();
     {{-- Footer --}}
     <footer class="mt-12 border-t border-slate-200/80 bg-white/90 backdrop-blur">
         <div
-            class="max-w-7xl mx-auto px-4 py-5  sm:text-sm text-slate-500 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            class="{{ $shellWidthClass }} mx-auto px-4 py-5  sm:text-sm text-slate-500 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <div>
                 Ac {{ date('Y') }} <span class="font-semibold text-blue-700">{{ $brandName }}</span>.
                 <span class="text-slate-500">{{ $footerText }}</span>

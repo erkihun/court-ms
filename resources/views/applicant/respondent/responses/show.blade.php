@@ -1,7 +1,7 @@
 @props(['response'])
 
 <x-applicant-layout :title="__('respondent.response_title', ['title' => $response->title])" :as-respondent-nav="true">
-    <div class="max-w-4xl mx-auto bg-white rounded-2xl border border-slate-200 shadow p-6 space-y-6">
+    <div class="w-full max-w-[1800px] mx-auto bg-white rounded-2xl border border-slate-200 shadow p-6 space-y-6">
         @php
             $respReviewStatus = $response->review_status ?? 'awaiting_review';
             $respReviewBase = 'inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium border';

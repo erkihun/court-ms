@@ -1,5 +1,5 @@
 <x-applicant-layout title="{{ __('respondent.find_case_title') }}" :as-respondent-nav="true">
-    <div class="max-w-3xl mx-auto bg-white rounded-2xl border border-slate-200 shadow p-6">
+    <div class="w-full max-w-[1800px] mx-auto bg-white rounded-2xl border border-slate-200 shadow p-6">
         <h1 class="text-xl font-semibold text-slate-900 mb-2">{{ __('respondent.find_case_title') }}</h1>
         <p class="text-sm text-slate-600 mb-6">{{ __('respondent.find_case_description') }}</p>
 
