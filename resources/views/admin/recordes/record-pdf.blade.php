@@ -1130,7 +1130,9 @@
             document.body.classList.add('pdf-export');
             cleanupPreviewArtifacts();
 
-            const worker = html2pdf().set(opt).from(element);
+            const worker = html2pdf()
+                .set(opt)
+                .from(element.cloneNode(true));
 
             worker.toPdf().get('pdf').then((pdf) => {
                 const totalPages = pdf.internal.getNumberOfPages();
