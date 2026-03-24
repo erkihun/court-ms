@@ -1031,6 +1031,7 @@
         const recordDocument = document.getElementById('record-document');
         let previewFooters = [];
         let pageHeightPx = measurePageHeightPx();
+        let exporting = false;
 
         function measurePageHeightPx() {
             const ruler = document.createElement('div');
@@ -1045,6 +1046,7 @@
         }
 
         const updatePageCounter = () => {
+            if (exporting) return;
             if (!pageWrapper || !pageCounterOverlay) return;
             const pageHeight = pageWrapper.clientHeight || pageHeightPx;
             const scrollTop = pageWrapper.scrollTop || window.scrollY;
@@ -1060,6 +1062,7 @@
         };
 
         function renderPreviewFooters() {
+            if (exporting) return;
             if (!recordDocument) return;
             previewFooters.forEach((footer) => footer.remove());
             previewFooters = [];
@@ -1127,12 +1130,26 @@
                 btn.disabled = true;
             }
 
+            exporting = true;
             document.body.classList.add('pdf-export');
             cleanupPreviewArtifacts();
 
+            // Build a detached, hidden export tree to avoid MutationObserver conflicts
+            const exportHost = document.createElement('div');
+            exportHost.id = 'record-export-root';
+            exportHost.style.position = 'fixed';
+            exportHost.style.left = '-99999px';
+            exportHost.style.top = '0';
+            exportHost.style.width = '1px';
+            exportHost.style.height = '1px';
+            const exportNode = element.cloneNode(true);
+            exportNode.id = 'record-document-export';
+            exportHost.appendChild(exportNode);
+            document.body.appendChild(exportHost);
+
             const worker = html2pdf()
                 .set(opt)
-                .from(element.cloneNode(true));
+                .from(exportNode);
 
             worker.toPdf().get('pdf').then((pdf) => {
                 const totalPages = pdf.internal.getNumberOfPages();
@@ -1153,10 +1170,12 @@
             worker.save().catch((e) => {
                 console.error('html2pdf failed', e);
             }).finally(() => {
+                exportHost.remove();
                 if (btn) {
                     btn.innerText = originalText;
                     btn.disabled = false;
                 }
+                exporting = false;
                 document.body.classList.remove('pdf-export');
                 scheduleFooterRender();
             });
