@@ -146,9 +146,9 @@
                         <input id="national_id_number" name="national_id_number"
                             value="{{ old('national_id_number', $user->national_id_number) }}"
                             required
-                            inputmode="text" autocomplete="off"
+                            inputmode="numeric" autocomplete="off"
                             maxlength="19"
-                            pattern="[A-Za-z0-9]{4}\s[A-Za-z0-9]{4}\s[A-Za-z0-9]{4}\s[A-Za-z0-9]{4}"
+                            pattern="\d{4}\s\d{4}\s\d{4}\s\d{4}"
                             title="{{ __('auth.national_id_format') }}"
                             placeholder="{{ __('auth.national_id_placeholder') }}"
                             @error('national_id_number') aria-invalid="true" @enderror

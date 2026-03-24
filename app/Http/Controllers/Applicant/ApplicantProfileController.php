@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class ApplicantProfileController extends Controller
 {
@@ -20,20 +21,29 @@ class ApplicantProfileController extends Controller
     {
         $user = $request->user('applicant');
 
+        $request->merge([
+            // Applicants store a digits-only National ID in the DB.
+            'national_id_number' => preg_replace('/\D/', '', (string) $request->input('national_id_number', '')),
+            // The applicants table now requires a non-null middle name, but an empty string is allowed.
+            'middle_name' => (string) $request->input('middle_name', ''),
+        ]);
+
         $validated = $request->validate([
             'first_name'         => ['required', 'string', 'max:100'],
             'middle_name'        => ['nullable', 'string', 'max:100'],
             'last_name'          => ['required', 'string', 'max:100'],
-            'gender'             => ['nullable', 'in:male,female'],
+            'gender'             => ['required', Rule::in(['male', 'female'])],
             'position'           => ['required', 'string', 'max:150'],
             'organization_name'  => ['required', 'string', 'max:150'],
             'phone'              => ['required', 'string', 'max:30', 'unique:applicants,phone,' . $user->id],
             'email'              => ['required', 'email', 'max:255', 'unique:applicants,email,' . $user->id],
             'address'            => ['required', 'string', 'max:255'],
-            'national_id_number' => ['required', 'string', 'max:100', 'unique:applicants,national_id_number,' . $user->id],
+            'national_id_number' => ['required', 'digits:16', 'unique:applicants,national_id_number,' . $user->id],
 
             'current_password'   => ['nullable', 'current_password:applicant'],
             'password'           => ['nullable', 'confirmed', 'min:6'],
+        ], [
+            'national_id_number.digits' => 'National ID must be exactly 16 digits.',
         ]);
 
         if (!empty($validated['password'])) {
