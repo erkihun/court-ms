@@ -52,11 +52,13 @@ class CaseController extends Controller
 
         $builder = DB::table('court_cases as c')
             ->leftJoin('case_types as ct', 'ct.id', '=', 'c.case_type_id')
+            ->leftJoin('applicants as ap', 'ap.id', '=', 'c.applicant_id')
             ->leftJoin('users as ass', 'ass.id', '=', 'c.assigned_user_id')
             ->leftJoin('users as reviewer', 'reviewer.id', '=', 'c.reviewed_by_user_id')
             ->select(
                 'c.*',
                 'ct.name as case_type',
+                DB::raw("TRIM(CONCAT(COALESCE(ap.first_name,''),' ',COALESCE(ap.middle_name,''),' ',COALESCE(ap.last_name,''))) as applicant_name"),
 
                 'ass.name as assignee_name',
                 'reviewer.name as reviewer_name'

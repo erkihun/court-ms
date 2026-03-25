@@ -84,6 +84,7 @@
                         <tr>
                             <th>{{ __('cases.table.number') }}</th>
                             <th>{{ __('cases.table.case_number') }}</th>
+                            <th>{{ __('cases.applicant_name') }}</th>
                             <th>{{ __('cases.table.type') }}</th>
                             <th>{{ __('cases.table.team') }}</th>
                             <th>{{ __('cases.table.team_member') }}</th>
@@ -98,6 +99,7 @@
                         <tr>
                             <td>{{ ($cases->firstItem() ?: 0) + $loop->index }}</td>
                             <td class="font-semibold"><a href="{{ route('cases.show', $c->id) }}" class="text-blue-700 hover:underline">{{ $c->case_number }}</a></td>
+                            <td>{{ $c->applicant_name ?? '-' }}</td>
                             <td>{{ $c->case_type }}</td>
                             <td>{{ $c->team_name ?? '-' }}</td>
                             <td>{{ $c->assignee_name ?? '-' }}</td>
@@ -143,7 +145,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="9"><div class="enterprise-empty">{{ __('cases.table.no_cases_found') }}</div></td>
+                            <td colspan="10"><div class="enterprise-empty">{{ __('cases.table.no_cases_found') }}</div></td>
                         </tr>
                         @endforelse
                     </tbody>
