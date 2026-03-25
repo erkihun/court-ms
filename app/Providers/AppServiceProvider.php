@@ -3,8 +3,11 @@
 namespace App\Providers;
 
 use App\Models\SystemSetting;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -16,6 +19,10 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        RateLimiter::for('api-ip-hourly', function (Request $request) {
+            return Limit::perHour(100)->by($request->ip() ?: 'unknown-ip');
+        });
+
         try {
             $purifierCachePath = config('purifier.cachePath');
             if ($purifierCachePath) {

@@ -10,7 +10,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/health', HealthController::class);
 
-Route::prefix('v1')->group(function () {
+Route::prefix('v1')
+    ->middleware('throttle:api-ip-hourly')
+    ->group(function () {
     Route::post('/auth/login', [AuthController::class, 'login'])
         ->middleware('throttle:5,1');
 

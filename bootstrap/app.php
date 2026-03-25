@@ -2,8 +2,12 @@
 
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Session\TokenMismatchException;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -73,5 +77,36 @@ return Application::configure(basePath: dirname(__DIR__))
 
             return redirect()->route('login')
                 ->with('error', 'Session expired. Please sign in again.');
+        });
+
+        $exceptions->render(function (\Throwable $e, $request) {
+            // Preserve default handling for common non-500 flows.
+            if ($e instanceof ValidationException || $e instanceof AuthenticationException) {
+                return null;
+            }
+
+            if ($e instanceof HttpExceptionInterface && $e->getStatusCode() < 500) {
+                return null;
+            }
+
+            Log::error('Unhandled exception', [
+                'exception' => $e,
+                'url' => $request->fullUrl(),
+                'method' => $request->method(),
+                'ip' => $request->ip(),
+                'user_id' => auth()->id(),
+            ]);
+
+            $message = 'Something went wrong. Please try again later.';
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => $message,
+                ], 500);
+            }
+
+            return response()->view('errors.generic', [
+                'message' => $message,
+            ], 500);
         });
     })->create();

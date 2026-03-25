@@ -1165,16 +1165,38 @@ $respondentNotifList = collect();
 
     @unless($hideFooter)
     {{-- Footer --}}
-    <footer class="mt-12 border-t border-slate-200/80 bg-white/90 backdrop-blur">
-        <div
-            class="{{ $shellWidthClass }} mx-auto px-4 py-5  sm:text-sm text-slate-500 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-            <div>
-                Ac {{ date('Y') }} <span class="font-semibold text-blue-700">{{ $brandName }}</span>.
-                <span class="text-slate-500">{{ $footerText }}</span>
-            </div>
-            <div class="flex items-center gap-2 text-[11px] uppercase tracking-wide text-slate-400">
-                <span class="h-1.5 w-1.5 rounded-full bg-orange-500"></span>
-                <span>{{ __('app.court_portal') }}</span>
+    @php $footerNow = now(); @endphp
+    <footer class="mt-12 border-t border-slate-200/80 bg-white/95 backdrop-blur">
+        <div class="{{ $shellWidthClass }} mx-auto px-4 py-5">
+            <div class="rounded-2xl border border-slate-200/80 bg-gradient-to-r from-white via-slate-50 to-white px-4 py-4 shadow-sm">
+                <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div class="flex items-center gap-3">
+                        <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-sm font-bold text-white">
+                            {{ \Illuminate\Support\Str::of($shortName)->substr(0, 2) }}
+                        </span>
+                        <div class="text-sm text-slate-600">
+                            <div class="font-semibold text-slate-900">{{ $brandName }}</div>
+                            <div>{{ $footerText }}</div>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 text-xs">
+                        <span class="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 font-semibold text-blue-700">
+                            <span class="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
+                            {{ __('app.court_portal') }}
+                        </span>
+                        @if($actingRespondent)
+                        <span class="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 font-semibold text-amber-700">
+                            {{ __('respondent.respondent_view') }}
+                        </span>
+                        @endif
+                        <span class="rounded-full border border-slate-200 bg-white px-3 py-1 font-medium text-slate-600">
+                            {{ \App\Support\EthiopianDate::formatDate($footerNow) }}
+                        </span>
+                        <span class="rounded-full border border-slate-200 bg-white px-3 py-1 font-medium text-slate-600">
+                            {{ \App\Support\EthiopianDate::formatTime($footerNow) }}
+                        </span>
+                    </div>
+                </div>
             </div>
         </div>
     </footer>

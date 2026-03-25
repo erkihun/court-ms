@@ -36,6 +36,11 @@
         $firstFallback = $wrappedTitleFallback[0] ?? '';
         $t = is_scalar($firstFallback) ? (string) $firstFallback : '';
     }
+
+    $brandName = $systemSettings->app_name ?? config('app.name', 'CMS');
+    $shortName = $systemSettings->short_name ?? 'CMS';
+    $footerText = $systemSettings->footer_text ?? __('app.all_rights_reserved');
+    $footerNow = now();
     @endphp
     <title>{{ $t }} | {{ $systemSettings->app_name ?? config('app.name','CMS') }}</title>
     <script>
@@ -1284,6 +1289,36 @@
                 {{ $slot }}
             </div>
         </main>
+
+        <footer class="border-t border-slate-200/80 bg-white/95 backdrop-blur">
+            <div class="px-4 py-5 md:px-6 xl:px-8">
+                <div class="rounded-2xl border border-slate-200/80 bg-gradient-to-r from-white via-slate-50 to-white px-4 py-4 shadow-sm">
+                    <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                        <div class="flex items-center gap-3">
+                            <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-sm font-bold text-white">
+                                {{ \Illuminate\Support\Str::of($shortName)->substr(0, 2) }}
+                            </span>
+                            <div class="text-sm text-slate-600">
+                                <div class="font-semibold text-slate-900">{{ $brandName }}</div>
+                                <div>{{ $footerText }}</div>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2 text-xs">
+                            <span class="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 font-semibold text-blue-700">
+                                <span class="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
+                                {{ __('app.court_portal') }}
+                            </span>
+                            <span class="rounded-full border border-slate-200 bg-white px-3 py-1 font-medium text-slate-600">
+                                {{ \App\Support\EthiopianDate::formatDate($footerNow) }}
+                            </span>
+                            <span class="rounded-full border border-slate-200 bg-white px-3 py-1 font-medium text-slate-600">
+                                {{ \App\Support\EthiopianDate::formatTime($footerNow) }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
     </div>
 
     {{-- Alpine helpers (no changes needed) --}}
@@ -1508,7 +1543,6 @@
 </body>
 
 </html>
-
 
 
 
