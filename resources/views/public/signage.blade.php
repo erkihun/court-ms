@@ -454,7 +454,7 @@
                                                         class="font-bold text-slate-800 font-mono text-sm">{{ $hearing->courtCase?->case_number ?? __('signage.case_number').' '.$hearing->case_id }}</span>
                                                 </td>
                                                 <td class="py-3 px-4 font-medium text-slate-800">
-                                                    {{ \App\Support\EthiopianDate::format($hearing->hearing_at, withTime: true) }}
+                                                    {{ \App\Support\EthiopianDate::formatDateTime($hearing->hearing_at, fallback: '-') }}
                                                 </td>
                                                 <td class="py-3 px-4">
                                                     <span
@@ -507,7 +507,7 @@
                                 <h4 class="text-sm font-semibold text-slate-900">{{ $announcement->title }}
                                 </h4>
                                 <p class="text-xs text-slate-500 mb-2">
-                                    {{ $announcement->created_at?->format('Y-m-d') }}</p>
+                                    {{ \App\Support\EthiopianDate::formatDate($announcement->created_at) }}</p>
                                 <div class="text-xs text-slate-600 text-justify space-y-1">
                                     {!! $sanitizeAnnouncementContent($announcement->content) !!}
                                 </div>
@@ -612,7 +612,7 @@
                                 </div>
                                 <div class="text-right">
                                     <p class="text-xs font-medium text-slate-500">{{ __('signage.updated') }}</p>
-                                    <p class="text-sm font-bold text-slate-900">{{ $displayNow->format('H:i:s') }}</p>
+                                    <p class="text-sm font-bold text-slate-900">{{ \App\Support\EthiopianDate::formatTime($displayNow, timeFormat: 'h:i:s A') }}</p>
                                 </div>
                             </div>
                         </div>
