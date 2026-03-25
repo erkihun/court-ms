@@ -240,7 +240,7 @@ return array (
     'letters' => 'ደብዳቤዎች',
     'case_audits' => 'የጉዳዩ የክትትል መዝገብ',
     'respondent_responses' => 'የተጠሪ መልሶች',
-    'response_of_response' => 'Response of Response',
+    'response_of_response' => 'የመልስ መልስ',
   ),
   'new_case' => 'አዲስ መዝገብ',
   'new_message' => 'አዲስ መልዕክት',
