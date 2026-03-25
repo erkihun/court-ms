@@ -57,14 +57,6 @@
                         </svg>
                         <span>{{ __('respondent.my_cases') }}</span>
                     </a>
-                    <a href="{{ route('respondent.response-replies.index') }}"
-                        class="group flex items-center gap-3 px-4 py-3.5 rounded-xl bg-gradient-to-r from-[#0d3b8f] to-[#1b63c3] text-white font-medium
-                               hover:from-[#0b306b] hover:to-[#1550a3] focus:outline-none focus:ring-2 focus:ring-[#0d3b8f] focus:ring-offset-2 transition-all duration-200 hover:shadow-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h8M8 14h5M6 4h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2z" />
-                        </svg>
-                        <span>{{ __('respondent.response_of_response') }}</span>
-                    </a>
                 </div>
                 <div class="space-y-3 pt-2">
                     <button type="button" data-panel-target="recent-cases"
