@@ -454,7 +454,12 @@
                                                         class="font-bold text-slate-800 font-mono text-sm">{{ $hearing->courtCase?->case_number ?? __('signage.case_number').' '.$hearing->case_id }}</span>
                                                 </td>
                                                 <td class="py-3 px-4 font-medium text-slate-800">
-                                                    {{ \App\Support\EthiopianDate::formatDateTime($hearing->hearing_at, fallback: '-') }}
+                                                    @php
+                                                    $hearingDateEth = \App\Support\EthiopianDate::formatDate($hearing->hearing_at, '-');
+                                                    $hearingRaw = (string) ($hearing->getRawOriginal('hearing_at') ?? '');
+                                                    $hearingTimeRaw = strlen($hearingRaw) >= 19 ? substr($hearingRaw, 11, 8) : '-';
+                                                    @endphp
+                                                    {{ $hearingDateEth }} {{ $hearingTimeRaw }}
                                                 </td>
                                                 <td class="py-3 px-4">
                                                     <span
