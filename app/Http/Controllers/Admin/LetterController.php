@@ -78,7 +78,7 @@ class LetterController extends Controller
                     ->leftJoin('applicants as a', 'a.id', '=', 'c.applicant_id')
                     ->select(
                         'c.respondent_name',
-                        DB::raw("TRIM(CONCAT(COALESCE(a.first_name,''), ' ', COALESCE(a.last_name,''))) as applicant_name")
+                        DB::raw("TRIM(CONCAT(COALESCE(a.first_name,''), ' ', COALESCE(a.middle_name,''), ' ', COALESCE(a.last_name,''))) as applicant_name")
                     )
                     ->where('c.case_number', $data['case_number'])
                     ->first();
@@ -207,7 +207,7 @@ class LetterController extends Controller
                     ->leftJoin('applicants as a', 'a.id', '=', 'c.applicant_id')
                     ->select(
                         'c.respondent_name',
-                        DB::raw("TRIM(CONCAT(COALESCE(a.first_name,''), ' ', COALESCE(a.last_name,''))) as applicant_name")
+                        DB::raw("TRIM(CONCAT(COALESCE(a.first_name,''), ' ', COALESCE(a.middle_name,''), ' ', COALESCE(a.last_name,''))) as applicant_name")
                     )
                     ->where('c.case_number', $caseNumber)
                     ->first();
