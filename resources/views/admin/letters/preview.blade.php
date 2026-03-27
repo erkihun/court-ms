@@ -17,12 +17,12 @@
         font-weight: 400;
     }
 
-     :root {
-         /* Standard Letter Fonts */
-         font-family: 'NotoEthiopic', system-ui, sans-serif;
-         color: #0f172a;
-         --a4-width: 210mm;
-         --a4-height: 297mm;
+    :root {
+        /* Standard Letter Fonts */
+        font-family: 'NotoEthiopic', system-ui, sans-serif;
+        color: #0f172a;
+        --a4-width: 210mm;
+        --a4-height: 297mm;
     }
 
     * {
@@ -125,9 +125,9 @@
     }
 
     /* A4 Sheet Logic */
-     .a4-sheet {
-         width: var(--a4-width);
-         height: var(--a4-height);
+    .a4-sheet {
+        width: var(--a4-width);
+        height: var(--a4-height);
         background: #fff;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         padding-top: 2mm;
@@ -136,10 +136,10 @@
         /* Strict A4 */
 
         /* Flex Column to push footer to bottom */
-         display: flex;
-         flex-direction: column;
-         font-family: 'Abyssinica', 'Nyala', 'DejaVu Serif', serif;
-     }
+        display: flex;
+        flex-direction: column;
+        font-family: 'Abyssinica', 'Nyala', 'DejaVu Serif', serif;
+    }
 
     /* Letter Layout */
     .letter-header,
@@ -253,13 +253,13 @@
             /* Remove browser margins */
         }
 
-         body {
-             background: white;
-             padding: 0;
-             margin: 0;
-             -webkit-print-color-adjust: exact;
-             font-family: 'Abyssinica', 'Nyala', 'DejaVu Serif', serif;
-         }
+        body {
+            background: white;
+            padding: 0;
+            margin: 0;
+            -webkit-print-color-adjust: exact;
+            font-family: 'Abyssinica', 'Nyala', 'DejaVu Serif', serif;
+        }
 
         .preview-toolbar {
             display: none !important;
@@ -310,7 +310,8 @@
     ->select(
     'c.code',
     'c.respondent_name',
-    \Illuminate\Support\Facades\DB::raw("TRIM(CONCAT(COALESCE(a.first_name,''), ' ', COALESCE(a.last_name,''))) as applicant_name")
+    \Illuminate\Support\Facades\DB::raw("TRIM(CONCAT(COALESCE(a.first_name,''), ' ', COALESCE(a.middle_name,''), ' ',
+    COALESCE(a.last_name,''))) as applicant_name")
     )
     ->where('c.case_number', $letter->case_number)
     ->first();
@@ -325,7 +326,8 @@
     $respondentLabel = mb_strtolower(trim((string) __('letters.form.deliver_respondent')));
     $parts = array_values(array_filter(array_map('trim', explode(',', mb_strtolower($recipientName)))));
     $isGenericRecipient = $recipientName !== '' && !empty($parts)
-    && collect($parts)->every(fn($p) => in_array($p, [$applicantLabel, $respondentLabel, 'applicant', 'respondent'], true));
+    && collect($parts)->every(fn($p) => in_array($p, [$applicantLabel, $respondentLabel, 'applicant', 'respondent'],
+    true));
     if ($recipientName === '' || $isGenericRecipient) {
     $recipientTargets = [];
     if ((bool) ($letter->send_to_applicant ?? false)) {
