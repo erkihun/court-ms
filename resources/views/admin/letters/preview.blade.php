@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ __('letters.titles.preview') }}</title>
+    <script src="{{ asset('vendor/html2pdf/html2pdf.bundle.min.js') }}"></script>
 
     <style>
     @font-face {
@@ -31,6 +32,11 @@
         margin: 0;
         padding: 2rem;
         min-height: 100vh;
+    }
+
+    body.pdf-export {
+        background: #fff;
+        padding: 0;
     }
 
     .page-seal-bottom {
@@ -121,6 +127,11 @@
         gap: 2rem;
     }
 
+    body.pdf-export .preview-wrapper {
+        margin-top: 0;
+        gap: 0;
+    }
+
     /* A4 Sheet Logic */
     .a4-sheet {
         width: var(--a4-width);
@@ -136,6 +147,16 @@
         display: flex;
         flex-direction: column;
         font-family: 'Abyssinica', 'Nyala', 'DejaVu Serif', serif;
+    }
+
+    body.pdf-export .a4-sheet {
+        box-shadow: none;
+        margin: 0;
+        page-break-after: always;
+    }
+
+    body.pdf-export .a4-sheet:last-child {
+        page-break-after: auto;
     }
 
     /* Letter Layout */
@@ -399,7 +420,7 @@
             <button type="button" class="btn" onclick="printLetter()">
                 Print / Save Native PDF
             </button>
-            <button type="button" class="btn btn-primary" onclick="printLetter()">
+            <button type="button" id="download-pdf" class="btn btn-primary" onclick="downloadDirectPdf()">
                 Download PDF
             </button>
         </div>
@@ -652,6 +673,74 @@
 
     function printLetter() {
         window.print();
+    }
+
+    function downloadDirectPdf() {
+        const element = document.getElementById('preview-container');
+        const btn = document.getElementById('download-pdf');
+
+        if (!element || !btn || typeof html2pdf === 'undefined') {
+            return;
+        }
+
+        const filename = @json(\Illuminate\Support\Str::slug($letter->reference_number ?: ('letter-' . $letter->id), '-') . '.pdf');
+        const originalText = btn.innerText;
+
+        btn.innerText = 'Generating PDF...';
+        btn.disabled = true;
+
+        document.body.classList.add('pdf-export');
+
+        const exportHost = document.createElement('div');
+        exportHost.id = 'letter-export-root';
+        exportHost.style.position = 'fixed';
+        exportHost.style.left = '-99999px';
+        exportHost.style.top = '0';
+        exportHost.style.width = '1px';
+        exportHost.style.height = '1px';
+
+        const exportNode = element.cloneNode(true);
+        exportNode.id = 'preview-container-export';
+        exportHost.appendChild(exportNode);
+        document.body.appendChild(exportHost);
+
+        const opt = {
+            margin: 0,
+            filename,
+            image: {
+                type: 'jpeg',
+                quality: 0.98
+            },
+            html2canvas: {
+                scale: 2,
+                useCORS: true,
+                scrollY: 0,
+                willReadFrequently: true,
+                logging: false
+            },
+            jsPDF: {
+                unit: 'mm',
+                format: 'a4',
+                orientation: 'portrait'
+            },
+            pagebreak: {
+                mode: ['css', 'legacy']
+            }
+        };
+
+        html2pdf()
+            .set(opt)
+            .from(exportNode)
+            .save()
+            .catch((error) => {
+                console.error('html2pdf failed', error);
+            })
+            .finally(() => {
+                exportHost.remove();
+                document.body.classList.remove('pdf-export');
+                btn.innerText = originalText;
+                btn.disabled = false;
+            });
     }
     </script>
 </body>
