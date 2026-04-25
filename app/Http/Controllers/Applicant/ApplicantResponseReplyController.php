@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Applicant;
 
 use App\Http\Controllers\Controller;
 use App\Models\ApplicantResponseReply;
+use App\Models\RespondentResponse;
 use App\Services\ResponseNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -78,7 +79,8 @@ class ApplicantResponseReplyController extends Controller
             'reviewed_at' => null,
         ]);
 
-        ResponseNotificationService::notifyApplicantResponseReplyCreated($reply, $response);
+        $respondentResponse = RespondentResponse::query()->findOrFail($response->id);
+        ResponseNotificationService::notifyApplicantResponseReplyCreated($reply, $respondentResponse);
 
         return redirect()->route('applicant.cases.respondentResponses.replies.show', [$case->id, $response->id, $reply->id]);
     }

@@ -6,9 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ __('letters.titles.preview') }}</title>
 
-    {{-- 1. Include html2pdf library for direct PDF download (self-hosted to avoid tracking blocks) --}}
-    <script src="{{ asset('vendor/html2pdf/html2pdf.bundle.min.js') }}"></script>
-
     <style>
     @font-face {
         font-family: 'Abyssinica';
@@ -402,7 +399,7 @@
             <button type="button" class="btn" onclick="printLetter()">
                 Print / Save Native PDF
             </button>
-            <button type="button" class="btn btn-primary" onclick="downloadDirectPDF()">
+            <button type="button" class="btn btn-primary" onclick="printLetter()">
                 Download PDF
             </button>
         </div>
@@ -648,48 +645,13 @@
             }
         }
 
-        pageCounter.innerText = `Preview: ${pageIndex} Page(s)`;
+        if (pageCounter) {
+            pageCounter.innerText = `Preview: ${pageIndex} Page(s)`;
+        }
     });
 
     function printLetter() {
         window.print();
-    }
-
-    function downloadDirectPDF() {
-        const element = document.getElementById('preview-container');
-
-        // OPTIMIZED SETTINGS FOR LETTER PDF
-        const opt = {
-            margin: 0,
-            filename: 'letter.pdf',
-            image: {
-                type: 'jpeg',
-                quality: 0.98
-            },
-            // Higher scale = sharper text
-            html2canvas: {
-                scale: 2,
-                useCORS: true,
-                scrollY: 0
-            },
-            jsPDF: {
-                unit: 'mm',
-                format: 'a4',
-                orientation: 'portrait'
-            },
-            // This setting is crucial for cutting pages correctly
-            pagebreak: {
-                mode: ['css', 'legacy']
-            }
-        };
-
-        const btn = document.querySelector('.btn-primary');
-        const originalText = btn.innerText;
-        btn.innerText = 'Generating PDF...';
-
-        html2pdf().set(opt).from(element).save().then(() => {
-            btn.innerText = originalText;
-        });
     }
     </script>
 </body>

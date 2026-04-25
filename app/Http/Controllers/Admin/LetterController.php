@@ -3,11 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\Letter;
-use App\Models\LetterTemplate;
-use App\Models\CourtCase;
 use App\Mail\LetterApprovedMail;
+use App\Models\CourtCase;
+use App\Models\LetterTemplate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -270,7 +269,7 @@ class LetterController extends Controller
         $letter->load(['template', 'author']);
 
         return view('admin.letters.preview', [
-            'letter'   => $letter,
+            'letter' => $letter,
             'template' => $letter->template,
         ]);
     }
@@ -325,7 +324,7 @@ class LetterController extends Controller
         abort_unless($authorized, 403);
 
         return view('admin.letters.preview', [
-            'letter'   => $letter,
+            'letter' => $letter,
             'template' => $letter->template,
         ]);
     }
