@@ -398,7 +398,7 @@ default => __('cases.review_status.accepted'),
                                     <span>{{ __('cases.letters_section.created') }}: {{ \App\Support\EthiopianDate::format($letter->created_at, withTime: true) }}</span>
                                 </div>
                             </div>
-                            <a href="{{ $letterPreviewUrl }}" class="text-xs font-semibold text-blue-600 hover:text-blue-800 underline">
+                            <a href="{{ $letterPreviewUrl }}" target="_blank" rel="noopener" class="text-xs font-semibold text-blue-600 hover:text-blue-800 underline">
                                 {{ __('cases.view') }}
                             </a>
                         </div>

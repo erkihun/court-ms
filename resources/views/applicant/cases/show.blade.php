@@ -509,6 +509,7 @@
                                 }
                             @endphp
                             <a href="{{ $letterPreviewUrl }}"
+                                target="_blank" rel="noopener"
                                 class="text-xs font-semibold text-blue-600 hover:text-blue-800 underline">
                                 {{ __('cases.view') }}
                             </a>

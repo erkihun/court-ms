@@ -177,6 +177,7 @@
                             }
                         @endphp
                         <a href="{{ $letterPreviewUrl }}"
+                            target="_blank" rel="noopener"
                             class="text-sm font-semibold text-blue-700 hover:underline">
                             {{ __('respondent.view_details') }}
                         </a>

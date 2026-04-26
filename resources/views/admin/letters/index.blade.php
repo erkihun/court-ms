@@ -293,7 +293,7 @@ $canApproveLetter = function_exists('userHasPermission') ? userHasPermission('le
                                 <div class="flex items-center gap-1">
                                     <!-- View Button -->
                                     <button type="button"
-                                        onclick="window.location='{{ route('letters.show', $letter) }}'"
+                                        onclick="window.open('{{ route('letters.show', $letter) }}', '_blank', 'noopener')"
                                         class="p-2.5 rounded-xl border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 hover:scale-105 transition-all duration-200 group/tooltip relative"
                                         title="{{ __('letters.actions.view') }}">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

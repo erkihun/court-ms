@@ -432,6 +432,7 @@
                         </div>
                         <div class="mt-2">
                             <a href="{{ route('letters.case-preview', $letter->id) }}"
+                               target="_blank" rel="noopener"
                                class="inline-flex items-center gap-1  font-semibold text-blue-700 hover:text-blue-900">
                                 {{ __('dashboard.view') }}
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
