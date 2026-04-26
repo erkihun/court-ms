@@ -13,18 +13,47 @@
         if (empty($path)) {
             return null;
         }
+
         $trimmed = ltrim($path);
         if (\Illuminate\Support\Str::startsWith($trimmed, ['http://', 'https://', 'data:'])) {
             return $trimmed;
         }
-        if (\Illuminate\Support\Str::startsWith($trimmed, ['/storage/', 'storage/'])) {
-            return asset(ltrim($trimmed, '/'));
-        }
-        if (\Illuminate\Support\Str::startsWith($trimmed, ['public/'])) {
-            $trimmed = substr($trimmed, 7);
+
+        $publicDiskPath = $trimmed;
+        if (\Illuminate\Support\Str::startsWith($publicDiskPath, ['/storage/', 'storage/'])) {
+            $publicDiskPath = preg_replace('#^/?storage/#', '', $publicDiskPath) ?? $publicDiskPath;
+        } elseif (\Illuminate\Support\Str::startsWith($publicDiskPath, ['public/'])) {
+            $publicDiskPath = substr($publicDiskPath, 7);
         }
 
-        return asset('storage/' . ltrim($trimmed, '/'));
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($publicDiskPath)) {
+            $absolutePath = \Illuminate\Support\Facades\Storage::disk('public')->path($publicDiskPath);
+            $mimeType = mime_content_type($absolutePath) ?: 'application/octet-stream';
+            $contents = @file_get_contents($absolutePath);
+
+            if ($contents !== false) {
+                return 'data:' . $mimeType . ';base64,' . base64_encode($contents);
+            }
+        }
+
+        $publicCandidates = [
+            public_path(ltrim($trimmed, '/')),
+            public_path('storage/' . ltrim($publicDiskPath, '/')),
+        ];
+
+        foreach ($publicCandidates as $candidate) {
+            if (!is_file($candidate)) {
+                continue;
+            }
+
+            $mimeType = mime_content_type($candidate) ?: 'application/octet-stream';
+            $contents = @file_get_contents($candidate);
+            if ($contents !== false) {
+                return 'data:' . $mimeType . ';base64,' . base64_encode($contents);
+            }
+        }
+
+        return null;
     };
 
     $headerImage = $resolvePublicUrl(optional($template)->header_image_path ?? null);

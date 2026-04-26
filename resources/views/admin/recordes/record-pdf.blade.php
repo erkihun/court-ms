@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ __('recordes.titles.pdf') }}</title>
 
-    <script src="{{ asset('vendor/html2pdf/html2pdf.bundle.min.js') }}"></script>
-
     <style>
         @font-face {
             font-family: 'Abyssinica';
@@ -675,6 +673,52 @@
 
                     return $withoutAnchors ?? $cleaned;
                 };
+                $resolveEmbeddedImageSource = static function ($path) {
+                    if (empty($path)) {
+                        return null;
+                    }
+
+                    $trimmed = ltrim((string) $path);
+                    if (\Illuminate\Support\Str::startsWith($trimmed, ['http://', 'https://', 'data:'])) {
+                        return $trimmed;
+                    }
+
+                    $publicDiskPath = $trimmed;
+                    if (\Illuminate\Support\Str::startsWith($publicDiskPath, ['/storage/', 'storage/'])) {
+                        $publicDiskPath = preg_replace('#^/?storage/#', '', $publicDiskPath) ?? $publicDiskPath;
+                    } elseif (\Illuminate\Support\Str::startsWith($publicDiskPath, ['public/'])) {
+                        $publicDiskPath = substr($publicDiskPath, 7);
+                    }
+
+                    if (\Illuminate\Support\Facades\Storage::disk('public')->exists($publicDiskPath)) {
+                        $absolutePath = \Illuminate\Support\Facades\Storage::disk('public')->path($publicDiskPath);
+                        $mimeType = mime_content_type($absolutePath) ?: 'application/octet-stream';
+                        $contents = @file_get_contents($absolutePath);
+
+                        if ($contents !== false) {
+                            return 'data:' . $mimeType . ';base64,' . base64_encode($contents);
+                        }
+                    }
+
+                    $publicCandidates = [
+                        public_path(ltrim($trimmed, '/')),
+                        public_path('storage/' . ltrim($publicDiskPath, '/')),
+                    ];
+
+                    foreach ($publicCandidates as $candidate) {
+                        if (!is_file($candidate)) {
+                            continue;
+                        }
+
+                        $mimeType = mime_content_type($candidate) ?: 'application/octet-stream';
+                        $contents = @file_get_contents($candidate);
+                        if ($contents !== false) {
+                            return 'data:' . $mimeType . ';base64,' . base64_encode($contents);
+                        }
+                    }
+
+                    return null;
+                };
             @endphp
             <div class="section">
                 <h1>{{ __('recordes.titles.record') }}</h1>
@@ -950,42 +994,24 @@
                 <h2>{{ __('recordes.labels.bench_notes') }}</h2>
                 @forelse($benchNotes ?? [] as $note)
                     @php
-                        $resolveSignature = function ($path) {
-                            if (empty($path)) {
-                                return null;
-                            }
-                            $trimmed = ltrim($path);
-                            if (\Illuminate\Support\Str::startsWith($trimmed, ['http://', 'https://', 'data:'])) {
-                                return $trimmed;
-                            }
-                            if (\Illuminate\Support\Str::startsWith($trimmed, ['/storage/', 'storage/'])) {
-                                return asset(ltrim($trimmed, '/'));
-                            }
-                            if (\Illuminate\Support\Str::startsWith($trimmed, ['public/'])) {
-                                $trimmed = substr($trimmed, 7);
-                            }
-
-                            return asset('storage/' . ltrim($trimmed, '/'));
-                        };
-
                         $manualJudges = collect([
                             [
                                 'name' => $note->judge_one_name ?? null,
                                 'date' => !empty($note->created_at) ? $formatDisplayDate($note->created_at, true) : '',
                                 'title' => $note->judge_one_title ?? __('recordes.labels.judge'),
-                                'signature' => $resolveSignature($note->judge_one_signature ?? null),
+                                'signature' => $resolveEmbeddedImageSource($note->judge_one_signature ?? null),
                             ],
                             [
                                 'name' => $note->judge_two_name ?? null,
                                 'date' => !empty($note->created_at) ? $formatDisplayDate($note->created_at, true) : '',
                                 'title' => $note->judge_two_title ?? __('recordes.labels.judge'),
-                                'signature' => $resolveSignature($note->judge_two_signature ?? null),
+                                'signature' => $resolveEmbeddedImageSource($note->judge_two_signature ?? null),
                             ],
                             [
                                 'name' => $note->judge_three_name ?? null,
                                 'date' => !empty($note->created_at) ? $formatDisplayDate($note->created_at, true) : '',
                                 'title' => $note->judge_three_title ?? __('recordes.labels.judge'),
-                                'signature' => $resolveSignature($note->judge_three_signature ?? null),
+                                'signature' => $resolveEmbeddedImageSource($note->judge_three_signature ?? null),
                             ],
                         ])->filter(fn ($judge) => !empty($judge['name']));
 
@@ -1046,29 +1072,11 @@
                 <h2>{{ __('recordes.labels.final_judgment') }}</h2>
                 @if(!empty($decision))
                     @php
-                        $resolveDecisionSignature = function ($path) {
-                            if (empty($path)) {
-                                return null;
-                            }
-                            $trimmed = ltrim($path);
-                            if (\Illuminate\Support\Str::startsWith($trimmed, ['http://', 'https://', 'data:'])) {
-                                return $trimmed;
-                            }
-                            if (\Illuminate\Support\Str::startsWith($trimmed, ['/storage/', 'storage/'])) {
-                                return asset(ltrim($trimmed, '/'));
-                            }
-                            if (\Illuminate\Support\Str::startsWith($trimmed, ['public/'])) {
-                                $trimmed = substr($trimmed, 7);
-                            }
-
-                            return asset('storage/' . ltrim($trimmed, '/'));
-                        };
-
                         $decisionSigners = $normalizeSignerPayload($decision->signatures ?? [])
                             ->map(fn ($signer) => [
                                 'name' => data_get($signer, 'name') ?? data_get($signer, 'judge_name') ?? __('recordes.labels.judge'),
                                 'title' => data_get($signer, 'title') ?? __('recordes.labels.judge'),
-                                'signature' => $resolveDecisionSignature(data_get($signer, 'signature')),
+                                'signature' => $resolveEmbeddedImageSource(data_get($signer, 'signature')),
                             ])
                             ->filter(fn ($signer) => !empty($signer['name']))
                             ->take(3);
@@ -1119,7 +1127,7 @@
         const downloadBtn = document.getElementById('download-pdf');
         const printBtn = document.getElementById('print-record');
         if (downloadBtn) {
-            downloadBtn.addEventListener('click', () => generatePdf());
+            downloadBtn.addEventListener('click', () => printRecord());
         }
         if (printBtn) {
             printBtn.addEventListener('click', () => printRecord());
@@ -1273,6 +1281,9 @@
                 return;
             }
 
+            if (downloadBtn) {
+                downloadBtn.disabled = true;
+            }
             if (printBtn) {
                 printBtn.disabled = true;
             }
@@ -1283,6 +1294,9 @@
             setTimeout(() => {
                 if (printPreparing) {
                     restoreOutputMode('print');
+                    if (downloadBtn) {
+                        downloadBtn.disabled = false;
+                    }
                     if (printBtn) {
                         printBtn.disabled = false;
                     }
@@ -1302,6 +1316,9 @@
             }
 
             restoreOutputMode('print');
+            if (downloadBtn) {
+                downloadBtn.disabled = false;
+            }
             if (printBtn) {
                 printBtn.disabled = false;
             }
@@ -1312,88 +1329,9 @@
         document.addEventListener('keydown', (event) => {
             if ((event.ctrlKey || event.metaKey) && event.key === 's') {
                 event.preventDefault();
-                generatePdf();
+                printRecord();
             }
         });
-
-        async function generatePdf() {
-            if (exporting || printPreparing) {
-                return;
-            }
-
-            const element = document.getElementById('record-document');
-            const filename = "{{ $pdfFilename ?? 'case-record.pdf' }}";
-
-            const opt = {
-                margin: [12, 14, 14, 14],
-                filename,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, scrollY: 0, willReadFrequently: true, logging: false },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
-                pagebreak: {
-                    mode: ['css', 'legacy'],
-                    before: ['.letters-section', '.letter-live-preview + .letter-live-preview', '.preview-wrapper .a4-sheet + .a4-sheet'],
-                    avoid: ['.section', '.card', '.pdf-preview', '.letter-live-preview', '.a4-sheet', '.bench-note-entry']
-                }
-            };
-
-            const btn = document.getElementById('download-pdf');
-            const originalText = btn ? btn.innerText : '';
-            if (btn) {
-                btn.innerText = '{{ __('recordes.messages.generating') }}';
-                btn.disabled = true;
-            }
-
-            await prepareOutputMode('pdf');
-
-            // Build a detached, hidden export tree to avoid MutationObserver conflicts
-            const exportHost = document.createElement('div');
-            exportHost.id = 'record-export-root';
-            exportHost.style.position = 'fixed';
-            exportHost.style.left = '-99999px';
-            exportHost.style.top = '0';
-            exportHost.style.width = '1px';
-            exportHost.style.height = '1px';
-            const exportNode = element.cloneNode(true);
-            exportNode.id = 'record-document-export';
-            exportHost.appendChild(exportNode);
-            document.body.appendChild(exportHost);
-
-            opt.html2canvas.windowWidth = exportNode.scrollWidth || exportNode.clientWidth || 1024;
-
-            const worker = html2pdf()
-                .set(opt)
-                .from(exportNode);
-
-            worker.toPdf().get('pdf').then((pdf) => {
-                const totalPages = pdf.internal.getNumberOfPages();
-                const pageWidth = pdf.internal.pageSize.getWidth();
-                const pageHeight = pdf.internal.pageSize.getHeight();
-                pdf.setFontSize(10);
-                for (let i = 1; i <= totalPages; i++) {
-                    pdf.setPage(i);
-                    pdf.text(
-                        `{{ __('recordes.labels.page') }} ${i} {{ __('recordes.labels.of') }} ${totalPages}`,
-                        pageWidth / 2,
-                        pageHeight - 10,
-                        { align: 'center' }
-                    );
-                }
-            });
-
-            worker.save().catch((e) => {
-                console.error('html2pdf failed', e);
-            }).finally(() => {
-                if (exportHost.parentNode) {
-                    exportHost.parentNode.removeChild(exportHost);
-                }
-                if (btn) {
-                    btn.innerText = originalText;
-                    btn.disabled = false;
-                }
-                restoreOutputMode('pdf');
-            });
-        }
 
         const applicantPdfData = @json($firstEvidenceEmbedData);
         const responsePdfEmbeds = @json($responsePdfEmbeds ?? []);
