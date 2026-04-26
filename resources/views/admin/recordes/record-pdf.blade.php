@@ -1,12 +1,11 @@
 <!DOCTYPE html>
-<html lang="am">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ __('recordes.titles.pdf') }}</title>
 
     <script src="{{ asset('vendor/html2pdf/html2pdf.bundle.min.js') }}"></script>
-    <script src="{{ asset('vendor/pdfjs/pdf.min.js') }}"></script>
 
     <style>
         @font-face {
@@ -18,9 +17,7 @@
 
         :root {
             --a4-width: 210mm;
-            --a9-width: 250mm;
             --a4-height: 297mm;
-             --a4-height: 297mm;
         }
 
         * {
@@ -223,7 +220,9 @@
         .pdf-preview iframe.fallback-pdf-frame {
             border: none;
             width: 100%;
-            min-height: 480px;
+            min-height: 297mm;
+            aspect-ratio: 210 / 297;
+            background: #fff;
         }
 
         .pdf-rendered-viewer canvas {
@@ -243,9 +242,18 @@
 
         .pdf-preview iframe {
             width: 100%;
-            height: 380px;
+            min-height: 297mm;
+            height: auto;
             border: none;
             background: #f8fafc;
+        }
+
+        .content a,
+        .meta a {
+            color: inherit;
+            text-decoration: none;
+            pointer-events: none;
+            cursor: default;
         }
 
         .letter-full-preview {
@@ -554,35 +562,61 @@
 
     <div class="page-wrapper" id="page-wrapper">
         <div id="record-document" class="record-page">
+            @php
+                $notAvailable = __('recordes.messages.not_available');
+                $formatDisplayDate = static function ($value, bool $withTime = false) use ($notAvailable) {
+                    if (empty($value)) {
+                        return $notAvailable;
+                    }
+
+                    try {
+                        $date = $value instanceof \Illuminate\Support\Carbon
+                            ? $value
+                            : \Illuminate\Support\Carbon::parse($value);
+                    } catch (\Throwable $e) {
+                        return $notAvailable;
+                    }
+
+                    if (class_exists(\App\Support\EthiopianDate::class)) {
+                        return \App\Support\EthiopianDate::format($date, withTime: $withTime);
+                    }
+
+                    return $withTime ? $date->toDayDateTimeString() : $date->toDateString();
+                };
+                $sanitizeRichContent = static function (?string $html): string {
+                    $cleaned = \Mews\Purifier\Facades\Purifier::clean((string) $html, 'default');
+                    $withoutWrappedAnchors = preg_replace('#<a\b[^>]*>(.*?)</a>#is', '$1', $cleaned);
+                    $withoutAnchors = preg_replace('#</?a\b[^>]*>#i', '', $withoutWrappedAnchors ?? $cleaned);
+
+                    return $withoutAnchors ?? $cleaned;
+                };
+            @endphp
             <div class="section">
                 <h1>{{ __('recordes.titles.record') }}</h1>
                 <div class="meta">
                     {{ __('recordes.labels.generated') }} 
                     @php
                         $generatedDate = now();
-                        $ethiopianGenerated = class_exists(\App\Support\EthiopianDate::class)
-                            ? \App\Support\EthiopianDate::format($generatedDate, withTime: true)
-                            : $generatedDate->toDayDateTimeString();
                     @endphp
-                    {{ $generatedDate->toDayDateTimeString() }} ({{ $ethiopianGenerated }})
+                    {{ $formatDisplayDate($generatedDate, true) }}
                     <br>
-                    {{ __('recordes.labels.case_number') }} {{ (string) ($case->case_number ?? 'N/A') }} {{ __('recordes.labels.title_pipe') }} {{ (string) ($case->title ?? '') }}
+                    {{ __('recordes.labels.case_number') }} {{ (string) ($case->case_number ?? $notAvailable) }} {{ __('recordes.labels.title_pipe') }} {{ (string) ($case->title ?? '') }}
                 </div>
 
                 <div class="card">
                     <div class="meta">
-                        {{ __('recordes.labels.status_label') }} {{ (string) ($case->status ?? 'N/A') }}
+                        {{ __('recordes.labels.status_label') }} {{ (string) ($case->status ?? $notAvailable) }}
                         @if(!empty($case->caseType?->name))
                             | {{ __('recordes.labels.type') }} {{ $case->caseType->name }}
                         @endif
-                        | {{ __('recordes.labels.opened') }} {{ optional($case->filing_date)->toDateString() ?? 'N/A' }}
-                        | {{ __('recordes.labels.closed') }} {{ $closedAt ? \Illuminate\Support\Carbon::parse($closedAt)->toDateString() : __('recordes.labels.not_closed') }}
+                        | {{ __('recordes.labels.opened') }} {{ $formatDisplayDate($case->filing_date) }}
+                        | {{ __('recordes.labels.closed') }} {{ $closedAt ? $formatDisplayDate($closedAt) : __('recordes.labels.not_closed') }}
                     </div>
 
                     <div class="meta">
-                        {{ __('recordes.labels.assigned_to') }} {{ $assignedUser->name ?? 'Unassigned' }}
+                        {{ __('recordes.labels.assigned_to') }} {{ $assignedUser->name ?? __('recordes.labels.unassigned') }}
                         @if(!empty($case->assigned_at))
-                            | {{ __('recordes.labels.last_assigned') }} {{ optional($case->assigned_at)->toDayDateTimeString() }}
+                            | {{ __('recordes.labels.last_assigned') }} {{ $formatDisplayDate($case->assigned_at, true) }}
                         @endif
                     </div>
 
@@ -598,14 +632,14 @@
                         <div class="meta">
                             {{ __('recordes.labels.applicant') }}
                             {{ trim(($case->applicant->first_name ?? '').' '.($case->applicant->middle_name ?? '').' '.($case->applicant->last_name ?? '')) }}
-                            | {{ __('recordes.labels.email') }} {{ $case->applicant->email ?? 'N/A' }}
-                            | {{ __('recordes.labels.phone') }} {{ $case->applicant->phone ?? 'N/A' }}
+                            | {{ __('recordes.labels.email') }} {{ $case->applicant->email ?? $notAvailable }}
+                            | {{ __('recordes.labels.phone') }} {{ $case->applicant->phone ?? $notAvailable }}
                         </div>
                     @endif
 
                     <div class="meta">
-                        {{ __('recordes.labels.respondent') }} {{ (string) ($case->respondent_name ?? 'N/A') }}
-                        | {{ __('recordes.labels.address') }} {{ (string) ($case->respondent_address ?? 'N/A') }}
+                        {{ __('recordes.labels.respondent') }} {{ (string) ($case->respondent_name ?? $notAvailable) }}
+                        | {{ __('recordes.labels.address') }} {{ (string) ($case->respondent_address ?? $notAvailable) }}
                     </div>
                 </div>
             </div>
@@ -613,9 +647,9 @@
             <div class="section">
                 <h2>{{ __('recordes.labels.case_submission') }}</h2>
                 <div class="meta">
-                    {{ __('recordes.labels.case_number') }} {{ (string) ($case->case_number ?? 'N/A') }} |
-                    {{ __('recordes.labels.status_label') }} {{ (string) ($case->status ?? 'N/A') }} |
-                    {{ __('recordes.labels.filed') }}: {{ optional($case->filing_date)->toDateString() ?? 'N/A' }}
+                    {{ __('recordes.labels.case_number') }} {{ (string) ($case->case_number ?? $notAvailable) }} |
+                    {{ __('recordes.labels.status_label') }} {{ (string) ($case->status ?? $notAvailable) }} |
+                    {{ __('recordes.labels.filed') }}: {{ $formatDisplayDate($case->filing_date) }}
                     @if(!empty($case->caseType?->name))
                         | {{ __('recordes.labels.type') }} {{ $case->caseType->name }}
                     @endif
@@ -625,8 +659,8 @@
                     <div class="meta">
                         {{ __('recordes.labels.applicant') }}
                         {{ trim(($case->applicant->first_name ?? '').' '.($case->applicant->middle_name ?? '').' '.($case->applicant->last_name ?? '')) }}
-                        | {{ __('recordes.labels.email') }} {{ $case->applicant->email ?? 'N/A' }}
-                        | {{ __('recordes.labels.phone') }} {{ $case->applicant->phone ?? 'N/A' }}
+                        | {{ __('recordes.labels.email') }} {{ $case->applicant->email ?? $notAvailable }}
+                        | {{ __('recordes.labels.phone') }} {{ $case->applicant->phone ?? $notAvailable }}
                     </div>
                 @endif
             </div>
@@ -656,14 +690,14 @@
             @if(!empty($case->description))
                 <div class="section">
                     <h2>{{ __('recordes.labels.case_details') }}</h2>
-                    <div class="content">{!! $case->description !!}</div>
+                    <div class="content">{!! $sanitizeRichContent($case->description) !!}</div>
                 </div>
             @endif
 
             @if(!empty($case->relief_requested))
                 <div class="section">
                 <h2>{{ __('recordes.labels.relief_requested') }}</h2>
-                    <div class="content">{!! $case->relief_requested !!}</div>
+                    <div class="content">{!! $sanitizeRichContent($case->relief_requested) !!}</div>
                 </div>
             @endif
 
@@ -673,9 +707,9 @@
                     <div class="card">
                         <div><strong>{{ $wit->full_name ?? __('recordes.labels.witness') }}</strong></div>
                         <div class="meta">
-                            {{ __('recordes.labels.phone') }} {{ $wit->phone ?? 'N/A' }} |
-                            {{ __('recordes.labels.email') }} {{ $wit->email ?? 'N/A' }} |
-                            {{ __('recordes.labels.address') }} {{ $wit->address ?? 'N/A' }}
+                            {{ __('recordes.labels.phone') }} {{ $wit->phone ?? $notAvailable }} |
+                            {{ __('recordes.labels.email') }} {{ $wit->email ?? $notAvailable }} |
+                            {{ __('recordes.labels.address') }} {{ $wit->address ?? $notAvailable }}
                         </div>
                     </div>
                 @empty
@@ -689,7 +723,7 @@
                     <div class="card">
                         <div><strong>{{ $file->label ?? __('recordes.labels.document') }}</strong></div>
                         <div class="meta">
-                            {{ optional($file->created_at)->toDayDateTimeString() }}
+                            {{ $formatDisplayDate($file->created_at, true) }}
                             @if(!empty($file->mime)) | {{ __('recordes.labels.mime') }} {{ $file->mime }} @endif
                             @if(!empty($file->size)) | {{ __('recordes.labels.size') }} {{ $file->size }} {{ __('recordes.labels.bytes') }} @endif
                         </div>
@@ -705,7 +739,7 @@
                     <div class="card">
                         <div><strong>{{ $firstEvidence->title ?? __('recordes.labels.document') }}</strong></div>
                         <div class="meta">
-                            {{ optional($firstEvidence->created_at)->toDayDateTimeString() ?? 'N/A' }}
+                            {{ $formatDisplayDate($firstEvidence->created_at, true) }}
                             @if(!empty($firstEvidence->mime)) | {{ __('recordes.labels.mime') }} {{ $firstEvidence->mime }} @endif
                             @if(!empty($firstEvidence->size)) | {{ __('recordes.labels.size') }} {{ $firstEvidence->size }} {{ __('recordes.labels.bytes') }} @endif
                         </div>
@@ -725,12 +759,12 @@
                 @forelse($evidences ?? [] as $ev)
                     <div class="card">
                         <div><strong>{{ $ev->title ?? __('recordes.labels.document') }}</strong></div>
-                        <div class="meta">{{ optional($ev->created_at)->toDayDateTimeString() }}</div>
+                        <div class="meta">{{ $formatDisplayDate($ev->created_at, true) }}</div>
                         @if(!empty($ev->description))
-                            <div class="content">{{ $ev->description }}</div>
+                            <div class="content">{!! $sanitizeRichContent($ev->description) !!}</div>
                         @endif
                         <div class="meta">
-                            {{ __('recordes.labels.type') }} {{ $ev->type ?? 'document' }}
+                            {{ __('recordes.labels.type') }} {{ $ev->type ?? __('recordes.labels.document') }}
                             @if(!empty($ev->mime)) | {{ __('recordes.labels.mime') }} {{ $ev->mime }} @endif
                             @if(!empty($ev->size)) | {{ __('recordes.labels.size') }} {{ $ev->size }} {{ __('recordes.labels.bytes') }} @endif
                         </div>
@@ -761,9 +795,9 @@
                 @forelse($respondentResponses ?? [] as $resp)
                     <div class="card">
                         <div><strong>{{ $resp->title ?? __('recordes.labels.response') }}</strong></div>
-                        <div class="meta">{{ optional($resp->created_at)->toDayDateTimeString() }}</div>
+                        <div class="meta">{{ $formatDisplayDate($resp->created_at, true) }}</div>
                         @if(!empty($resp->description))
-                            <div class="content">{{ $resp->description }}</div>
+                            <div class="content">{!! $sanitizeRichContent($resp->description) !!}</div>
                         @endif
                         @if(!empty(data_get($resp, 'pdf_embed.data')))
                             @php
@@ -772,7 +806,7 @@
                                     'id' => $viewerId,
                                     'data' => data_get($resp, 'pdf_embed.data'),
                                     'mime' => data_get($resp, 'pdf_embed.mime', 'application/pdf'),
-                                    'title' => $resp->title ?? 'Response PDF',
+                                    'title' => $resp->title ?? __('recordes.labels.response'),
                                 ];
                             @endphp
                             <div class="pdf-preview" style="margin-top:12px;">
@@ -782,9 +816,7 @@
                             </div>
                         @elseif(!empty($resp->download_url))
                             <div class="meta">
-                                <a href="{{ $resp->download_url }}" target="_blank" rel="noreferrer">
-                                    {{ __('recordes.buttons.download_pdf') }}
-                                </a>
+                                {{ __('recordes.labels.attachment') }} {{ $resp->title ?? __('recordes.labels.response') }}
                             </div>
                         @else
                             <div class="meta">{{ __('recordes.messages.no_files') }}</div>
@@ -803,30 +835,24 @@
                             ? \Illuminate\Support\Carbon::parse($hearing->hearing_at)
                             : null;
                         $hearingFormatted = $hearingMoment
-                            ? $hearingMoment->format('F j, Y g:i A')
+                            ? $formatDisplayDate($hearingMoment, true)
                             : __('recordes.labels.hearing_unknown');
-                        $hearingEthiopian = $hearingMoment
-                            ? \App\Support\EthiopianDate::format($hearingMoment, true)
-                            : null;
                     @endphp
                     <div class="card">
                         <div>
                             <strong>{{ __('recordes.labels.hearing_at') }} {{ $hearingFormatted }}</strong>
-                            @if($hearingEthiopian)
-                                <div class="meta">{{ $hearingEthiopian }}</div>
-                            @endif
                         </div>
-                        <div class="meta">{{ __('recordes.labels.location') }} {{ $hearing->location ?? 'N/A' }}</div>
+                        <div class="meta">{{ __('recordes.labels.location') }} {{ $hearing->location ?? $notAvailable }}</div>
                         @if(!empty($hearing->notes))
                             <div class="content">
                                 <strong>{{ __('recordes.labels.hearing_notes') }}</strong>
-                                {!! \Mews\Purifier\Facades\Purifier::clean($hearing->notes, 'default') !!}
+                                {!! $sanitizeRichContent($hearing->notes) !!}
                             </div>
                         @endif
                         @if(!empty($hearing->judge_notes))
                             <div class="content">
                                 <strong>{{ __('recordes.labels.judge_notes') }}</strong>
-                                {!! \Mews\Purifier\Facades\Purifier::clean($hearing->judge_notes, 'default') !!}
+                                {!! $sanitizeRichContent($hearing->judge_notes) !!}
                             </div>
                         @endif
                     </div>
@@ -860,19 +886,19 @@
                         $manualJudges = collect([
                             [
                                 'name' => $note->judge_one_name ?? null,
-                                'date' => optional($note->created_at)->toDayDateTimeString() ?? '',
+                                'date' => !empty($note->created_at) ? $formatDisplayDate($note->created_at, true) : '',
                                 'title' => $note->judge_one_title ?? __('recordes.labels.judge'),
                                 'signature' => $resolveSignature($note->judge_one_signature ?? null),
                             ],
                             [
                                 'name' => $note->judge_two_name ?? null,
-                                'date' => optional($note->created_at)->toDayDateTimeString() ?? '',
+                                'date' => !empty($note->created_at) ? $formatDisplayDate($note->created_at, true) : '',
                                 'title' => $note->judge_two_title ?? __('recordes.labels.judge'),
                                 'signature' => $resolveSignature($note->judge_two_signature ?? null),
                             ],
                             [
                                 'name' => $note->judge_three_name ?? null,
-                                'date' => optional($note->created_at)->toDayDateTimeString() ?? '',
+                                'date' => !empty($note->created_at) ? $formatDisplayDate($note->created_at, true) : '',
                                 'title' => $note->judge_three_title ?? __('recordes.labels.judge'),
                                 'signature' => $resolveSignature($note->judge_three_signature ?? null),
                             ],
@@ -885,18 +911,12 @@
                     <div class="card bench-note-entry">
                         @php
                             $benchCreated = !empty($note->created_at) ? \Illuminate\Support\Carbon::parse($note->created_at) : null;
-                            $benchCreatedFormatted = $benchCreated ? $benchCreated->toDayDateTimeString() : '';
-                            $benchCreatedEth = $benchCreated && class_exists(\App\Support\EthiopianDate::class)
-                                ? \App\Support\EthiopianDate::format($benchCreated, withTime: true)
-                                : $benchCreatedFormatted;
+                            $benchCreatedFormatted = $benchCreated ? $formatDisplayDate($benchCreated, true) : '';
                         @endphp
                         <div class="meta" style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px;">
                             <div style="font-weight:600;">{{ $note->title ?? __('recordes.labels.bench_notes') }}</div>
                             <div style="text-align:right;">
                                 <strong>{{ __('recordes.labels.created') }}</strong> {{ $benchCreatedFormatted }}
-                                @if(!empty($benchCreatedEth))
-                                    <div style="font-size:12px;color:#475569;">({{ $benchCreatedEth }})</div>
-                                @endif
                             </div>
                         </div>
                         @if($judges->isNotEmpty())
@@ -911,7 +931,7 @@
                                 @endforeach
                             </div>
                         @endif
-                        <div class="content">{!! \Mews\Purifier\Facades\Purifier::clean($note->note ?? $note->body ?? '', 'default') !!}</div>
+                        <div class="content">{!! $sanitizeRichContent($note->note ?? $note->body ?? '') !!}</div>
                         @if($signers->isNotEmpty())
                             <div class="bench-signatures" style="display:flex;gap:20px;flex-wrap:nowrap;justify-content:center;">
                                 @foreach($signers as $signer)
@@ -969,25 +989,19 @@
                             ->take(3);
 
                         $decisionDate = !empty($decision->created_at) ? \Illuminate\Support\Carbon::parse($decision->created_at) : null;
-                        $decisionDateFormatted = $decisionDate ? $decisionDate->toDayDateTimeString() : '';
-                        $decisionDateEth = $decisionDate && class_exists(\App\Support\EthiopianDate::class)
-                            ? \App\Support\EthiopianDate::format($decisionDate, withTime: true)
-                            : $decisionDateFormatted;
+                        $decisionDateFormatted = $decisionDate ? $formatDisplayDate($decisionDate, true) : '';
                     @endphp
                     <div class="card bench-note-entry">
                         <div class="meta" style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px;">
                             <div style="font-weight:600;">{{ $decision->title ?? __('recordes.labels.decision') }}</div>
                             <div style="text-align:right;">
                                 <strong>{{ __('recordes.labels.created') }}</strong> {{ $decisionDateFormatted }}
-                                @if(!empty($decisionDateEth))
-                                    <div style="font-size:12px;color:#475569;">({{ $decisionDateEth }})</div>
-                                @endif
                             </div>
                         </div>
                         @php
                             $decisionContent = $decision->decision_content ?? $decision->body ?? '';
                         @endphp
-                        <div class="content">{!! \Mews\Purifier\Facades\Purifier::clean($decisionContent, 'default') !!}</div>
+                        <div class="content">{!! $sanitizeRichContent($decisionContent) !!}</div>
                         @if($decisionSigners->isNotEmpty())
                             <div class="bench-signatures" style="display:flex;gap:20px;flex-wrap:nowrap;">
                                 @foreach($decisionSigners as $signer)
@@ -1058,7 +1072,7 @@
                 return;
             }
             pageCounterOverlay.style.display = 'block';
-            pageCounterOverlay.textContent = `Page ${currentPage} of ${totalPages}`;
+            pageCounterOverlay.textContent = `{{ __('recordes.labels.page') }} ${currentPage} {{ __('recordes.labels.of') }} ${totalPages}`;
         };
 
         function renderPreviewFooters() {
@@ -1070,7 +1084,7 @@
             for (let i = 1; i <= totalPages; i++) {
                 const footer = document.createElement('div');
                 footer.className = 'page-preview-footer';
-                footer.textContent = `Page ${i}`;
+                footer.textContent = `{{ __('recordes.labels.page') }} ${i}`;
                 footer.style.top = `${pageHeightPx * i - 30}px`;
                 recordDocument.appendChild(footer);
                 previewFooters.push(footer);
@@ -1159,7 +1173,7 @@
                 for (let i = 1; i <= totalPages; i++) {
                     pdf.setPage(i);
                     pdf.text(
-                        `Page ${i} of ${totalPages}`,
+                        `{{ __('recordes.labels.page') }} ${i} {{ __('recordes.labels.of') }} ${totalPages}`,
                         pageWidth / 2,
                         pageHeight - 10,
                         { align: 'center' }
@@ -1208,37 +1222,7 @@
                 return;
             }
 
-            if (!window.pdfjsLib) {
-                renderApplicantPdfFallback(container);
-                return;
-            }
-
-            try {
-                const pdfBytes = Uint8Array.from(atob(applicantPdfData), char => char.charCodeAt(0));
-
-                if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-                    pdfjsLib.GlobalWorkerOptions.workerSrc = "{{ asset('vendor/pdfjs/pdf.worker.min.js') }}";
-                }
-
-                const pdf = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
-
-                container.innerHTML = '';
-
-                for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-                    const page = await pdf.getPage(pageNum);
-                    const viewport = page.getViewport({ scale: 1.3 });
-                    const canvas = document.createElement('canvas');
-                    const context = canvas.getContext('2d');
-                    canvas.width = viewport.width;
-                    canvas.height = viewport.height;
-                    await page.render({ canvasContext: context, viewport }).promise;
-                    container.appendChild(canvas);
-                }
-                scheduleFooterRender();
-            } catch (error) {
-                console.error('Applicant PDF render failed', error);
-                renderApplicantPdfFallback(container);
-            }
+            renderApplicantPdfFallback(container);
         }
 
         if (applicantPdfData) {
@@ -1266,34 +1250,8 @@
                 return;
             }
 
-            if (!window.pdfjsLib) {
-                renderResponsePdfFallback(container, embed);
-                return;
-            }
-
-            try {
-                const pdfBytes = Uint8Array.from(atob(embed.data), char => char.charCodeAt(0));
-                if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-                    pdfjsLib.GlobalWorkerOptions.workerSrc = "{{ asset('vendor/pdfjs/pdf.worker.min.js') }}";
-                }
-                const pdf = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
-                container.innerHTML = '';
-                for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-                    const page = await pdf.getPage(pageNum);
-                    const viewport = page.getViewport({ scale: 1.2 });
-                    const canvas = document.createElement('canvas');
-                    const context = canvas.getContext('2d');
-                    canvas.width = viewport.width;
-                    canvas.height = viewport.height;
-                    await page.render({ canvasContext: context, viewport }).promise;
-                    container.appendChild(canvas);
-                }
-            } catch (error) {
-                console.error('Response PDF render failed', error);
-                renderResponsePdfFallback(container, embed);
-            } finally {
-                scheduleFooterRender();
-            }
+            renderResponsePdfFallback(container, embed);
+            scheduleFooterRender();
         }
 
         function renderAllResponsePdfs() {
