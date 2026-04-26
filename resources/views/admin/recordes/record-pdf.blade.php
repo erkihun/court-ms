@@ -18,6 +18,16 @@
         :root {
             --a4-width: 210mm;
             --a4-height: 297mm;
+            --print-margin-top: 12mm;
+            --print-margin-right: 14mm;
+            --print-margin-bottom: 14mm;
+            --print-margin-left: 14mm;
+            --print-content-height: calc(var(--a4-height) - var(--print-margin-top) - var(--print-margin-bottom));
+        }
+
+        @page {
+            size: A4 portrait;
+            margin: var(--print-margin-top) var(--print-margin-right) var(--print-margin-bottom) var(--print-margin-left);
         }
 
         * {
@@ -196,6 +206,24 @@
             word-break: break-word;
         }
 
+        .content p,
+        .content li,
+        .letter-preview-container p,
+        .letter-preview-container li {
+            orphans: 3;
+            widows: 3;
+        }
+
+        .content img,
+        .content table,
+        .content svg,
+        .letter-preview-container img,
+        .letter-preview-container table,
+        .letter-preview-container svg {
+            break-inside: avoid-page;
+            page-break-inside: avoid;
+        }
+
         .muted {
             font-size: 12px;
             color: #64748b;
@@ -272,8 +300,6 @@
 
         .letter-preview-container {
             margin-top: 10px;
-     
-            
         }
 
         .preview-wrapper {
@@ -531,6 +557,65 @@
             text-align: center;
         }
 
+        body.print-export-active .record-page,
+        body.pdf-export .record-page {
+            width: auto;
+            min-height: auto;
+            padding: 0;
+            box-shadow: none;
+        }
+
+        body.print-export-active .letters-section,
+        body.pdf-export .letters-section {
+            break-before: page;
+            page-break-before: always;
+        }
+
+        body.print-export-active .pdf-preview,
+        body.print-export-active .pdf-rendered-viewer,
+        body.pdf-export .pdf-preview,
+        body.pdf-export .pdf-rendered-viewer {
+            break-inside: avoid-page;
+            page-break-inside: avoid;
+        }
+
+        body.print-export-active .preview-wrapper,
+        body.pdf-export .preview-wrapper {
+            gap: 0;
+        }
+
+        body.print-export-active .letter-live-preview,
+        body.pdf-export .letter-live-preview {
+            margin-top: 0;
+            break-inside: avoid-page;
+            page-break-inside: avoid;
+        }
+
+        body.print-export-active .letter-live-preview + .letter-live-preview,
+        body.pdf-export .letter-live-preview + .letter-live-preview {
+            break-before: page;
+            page-break-before: always;
+        }
+
+        body.print-export-active .preview-wrapper .a4-sheet,
+        body.pdf-export .preview-wrapper .a4-sheet {
+            width: 100%;
+            min-height: var(--print-content-height);
+            height: var(--print-content-height);
+            margin: 0;
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
+            break-inside: avoid-page;
+            page-break-inside: avoid;
+        }
+
+        body.print-export-active .preview-wrapper .a4-sheet + .a4-sheet,
+        body.pdf-export .preview-wrapper .a4-sheet + .a4-sheet {
+            break-before: page;
+            page-break-before: always;
+        }
+
         @media print {
             body {
                 background: #fff;
@@ -546,7 +631,7 @@
                 width: auto;
                 min-height: auto;
                 box-shadow: none;
-                padding: 0 15mm;
+                padding: 0;
             }
         }
     </style>
@@ -555,7 +640,7 @@
     <div class="pdf-toolbar">
         <h1>{{ __('recordes.titles.pdf') }}</h1>
         <div class="toolbar-actions">
-            <button class="btn" onclick="window.print()">{{ __('recordes.buttons.print') }}</button>
+            <button id="print-record" class="btn">{{ __('recordes.buttons.print') }}</button>
             <button id="download-pdf" class="btn btn-primary">{{ __('recordes.buttons.download_pdf') }}</button>
         </div>
     </div>
@@ -774,7 +859,7 @@
                 @endforelse
             </div>
 
-            <div class="section">
+            <div class="section letters-section">
                 <h2>{{ __('recordes.labels.letters_section') }}</h2>
                 @php
                     $systemSettings = $systemSettings ?? \App\Models\SystemSetting::query()->first();
@@ -1032,8 +1117,12 @@
 
     <script>
         const downloadBtn = document.getElementById('download-pdf');
+        const printBtn = document.getElementById('print-record');
         if (downloadBtn) {
             downloadBtn.addEventListener('click', () => generatePdf());
+        }
+        if (printBtn) {
+            printBtn.addEventListener('click', () => printRecord());
         }
 
         const pageWrapper = document.getElementById('page-wrapper');
@@ -1046,6 +1135,7 @@
         let previewFooters = [];
         let pageHeightPx = measurePageHeightPx();
         let exporting = false;
+        let printPreparing = false;
 
         function measurePageHeightPx() {
             const ruler = document.createElement('div');
@@ -1105,12 +1195,117 @@
             }
         };
 
+        const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        async function waitForOutputAssets(root) {
+            const images = Array.from(root.querySelectorAll('img'));
+            const iframes = Array.from(root.querySelectorAll('iframe'));
+            const pending = [];
+
+            for (const image of images) {
+                if (image.complete) {
+                    continue;
+                }
+
+                pending.push(new Promise(resolve => {
+                    image.addEventListener('load', resolve, { once: true });
+                    image.addEventListener('error', resolve, { once: true });
+                }));
+            }
+
+            for (const frame of iframes) {
+                if (frame.dataset.loaded === '1') {
+                    continue;
+                }
+
+                pending.push(new Promise(resolve => {
+                    const finalize = () => {
+                        frame.dataset.loaded = '1';
+                        resolve();
+                    };
+
+                    frame.addEventListener('load', () => setTimeout(finalize, 120), { once: true });
+                    setTimeout(finalize, 1500);
+                }));
+            }
+
+            if (document.fonts?.ready) {
+                pending.push(document.fonts.ready.catch(() => undefined));
+            }
+
+            if (pending.length) {
+                await Promise.allSettled(pending);
+            }
+
+            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        }
+
+        async function prepareOutputMode(mode) {
+            cleanupPreviewArtifacts();
+            if (mode === 'print') {
+                printPreparing = true;
+                document.body.classList.add('print-export-active');
+            } else {
+                exporting = true;
+                document.body.classList.add('pdf-export');
+            }
+
+            await waitForOutputAssets(recordDocument);
+            scheduleFooterRender();
+            cleanupPreviewArtifacts();
+            await wait(80);
+        }
+
+        function restoreOutputMode(mode) {
+            if (mode === 'print') {
+                printPreparing = false;
+                document.body.classList.remove('print-export-active');
+            } else {
+                exporting = false;
+                document.body.classList.remove('pdf-export');
+            }
+
+            scheduleFooterRender();
+        }
+
+        async function printRecord() {
+            if (printPreparing || exporting) {
+                return;
+            }
+
+            if (printBtn) {
+                printBtn.disabled = true;
+            }
+
+            await prepareOutputMode('print');
+            window.print();
+
+            setTimeout(() => {
+                if (printPreparing) {
+                    restoreOutputMode('print');
+                    if (printBtn) {
+                        printBtn.disabled = false;
+                    }
+                }
+            }, 1500);
+        }
+
         if (pageWrapper) {
             pageWrapper.addEventListener('scroll', updatePageCounter);
         } else {
             window.addEventListener('scroll', updatePageCounter);
         }
         window.addEventListener('resize', scheduleFooterRender);
+        window.addEventListener('afterprint', () => {
+            if (!printPreparing) {
+                return;
+            }
+
+            restoreOutputMode('print');
+            if (printBtn) {
+                printBtn.disabled = false;
+            }
+        });
         document.addEventListener('DOMContentLoaded', scheduleFooterRender);
         scheduleFooterRender();
 
@@ -1121,19 +1316,24 @@
             }
         });
 
-        function generatePdf() {
+        async function generatePdf() {
+            if (exporting || printPreparing) {
+                return;
+            }
+
             const element = document.getElementById('record-document');
             const filename = "{{ $pdfFilename ?? 'case-record.pdf' }}";
 
             const opt = {
-                margin: 0,
+                margin: [12, 14, 14, 14],
                 filename,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true, scrollY: 0, willReadFrequently: true, logging: false },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
                 pagebreak: {
                     mode: ['css', 'legacy'],
-                    avoid: ['.section']
+                    before: ['.letters-section', '.letter-live-preview + .letter-live-preview', '.preview-wrapper .a4-sheet + .a4-sheet'],
+                    avoid: ['.section', '.card', '.pdf-preview', '.letter-live-preview', '.a4-sheet', '.bench-note-entry']
                 }
             };
 
@@ -1144,9 +1344,7 @@
                 btn.disabled = true;
             }
 
-            exporting = true;
-            document.body.classList.add('pdf-export');
-            cleanupPreviewArtifacts();
+            await prepareOutputMode('pdf');
 
             // Build a detached, hidden export tree to avoid MutationObserver conflicts
             const exportHost = document.createElement('div');
@@ -1160,6 +1358,8 @@
             exportNode.id = 'record-document-export';
             exportHost.appendChild(exportNode);
             document.body.appendChild(exportHost);
+
+            opt.html2canvas.windowWidth = exportNode.scrollWidth || exportNode.clientWidth || 1024;
 
             const worker = html2pdf()
                 .set(opt)
@@ -1184,14 +1384,14 @@
             worker.save().catch((e) => {
                 console.error('html2pdf failed', e);
             }).finally(() => {
-                exportHost.remove();
+                if (exportHost.parentNode) {
+                    exportHost.parentNode.removeChild(exportHost);
+                }
                 if (btn) {
                     btn.innerText = originalText;
                     btn.disabled = false;
                 }
-                exporting = false;
-                document.body.classList.remove('pdf-export');
-                scheduleFooterRender();
+                restoreOutputMode('pdf');
             });
         }
 
@@ -1210,6 +1410,10 @@
             iframe.title = '{{ __('recordes.labels.applicant_initial_pdf') }}';
             iframe.scrolling = 'no';
             iframe.src = 'data:{{ $firstEvidenceEmbedMime }};base64,' + applicantPdfData + '#toolbar=0&navpanes=0&scrollbar=0';
+            iframe.addEventListener('load', () => {
+                iframe.dataset.loaded = '1';
+                scheduleFooterRender();
+            }, { once: true });
             container.innerHTML = '';
             container.appendChild(iframe);
             scheduleFooterRender();
@@ -1240,6 +1444,10 @@
             iframe.title = embed.title || '{{ __('recordes.labels.respondent_responses') }}';
             iframe.scrolling = 'no';
             iframe.src = `data:${embed.mime || 'application/pdf'};base64,${embed.data}#toolbar=0&navpanes=0&scrollbar=0`;
+            iframe.addEventListener('load', () => {
+                iframe.dataset.loaded = '1';
+                scheduleFooterRender();
+            }, { once: true });
             container.innerHTML = '';
             container.appendChild(iframe);
         }
