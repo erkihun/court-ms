@@ -737,18 +737,21 @@
             .set(opt)
             .from(exportNode);
 
-        worker.toPdf().get('pdf').then((pdf) => {
-            while (pdf.internal.getNumberOfPages() > expectedPages) {
-                pdf.deletePage(pdf.internal.getNumberOfPages());
-            }
-        });
+        Promise.resolve(worker.toPdf().get('pdf'))
+            .then((pdf) => {
+                while (pdf.internal.getNumberOfPages() > expectedPages) {
+                    pdf.deletePage(pdf.internal.getNumberOfPages());
+                }
 
-        worker.save()
+                pdf.save(filename);
+            })
             .catch((error) => {
                 console.error('html2pdf failed', error);
             })
             .finally(() => {
-                exportHost.remove();
+                if (exportHost.parentNode) {
+                    exportHost.parentNode.removeChild(exportHost);
+                }
                 document.body.classList.remove('pdf-export');
                 btn.innerText = originalText;
                 btn.disabled = false;
