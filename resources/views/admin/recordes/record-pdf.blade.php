@@ -173,6 +173,27 @@
             display: none !important;
         }
 
+        body.server-pdf {
+            background: #fff;
+        }
+
+        body.server-pdf .pdf-toolbar,
+        body.server-pdf .page-preview-footer,
+        body.server-pdf .page-counter-overlay {
+            display: none !important;
+        }
+
+        body.server-pdf .page-wrapper {
+            padding: 0;
+        }
+
+        body.server-pdf .record-page {
+            width: auto;
+            min-height: auto;
+            padding: 0;
+            box-shadow: none;
+        }
+
         @media print {
             .page-preview-footer,
             .page-counter-overlay {
@@ -664,7 +685,11 @@
         }
     </style>
 </head>
-<body>
+@php
+    $serverPdfMode = (bool) ($serverPdfMode ?? false);
+@endphp
+<body class="{{ $serverPdfMode ? 'server-pdf pdf-export' : '' }}">
+    @unless($serverPdfMode)
     <div class="pdf-toolbar">
         <h1>{{ __('recordes.titles.pdf') }}</h1>
         <div class="toolbar-actions">
@@ -672,6 +697,7 @@
             <button id="download-pdf" class="btn btn-primary">{{ __('recordes.buttons.download_pdf') }}</button>
         </div>
     </div>
+    @endunless
 
     <div class="page-wrapper" id="page-wrapper">
         <div id="record-document" class="record-page">
@@ -1235,6 +1261,17 @@
 
         const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+        async function signalServerPdfReady() {
+            if (!document.body.classList.contains('server-pdf') || !recordDocument) {
+                return;
+            }
+
+            await waitForOutputAssets(recordDocument);
+            scheduleFooterRender();
+            cleanupPreviewArtifacts();
+            window.status = 'record-preview-ready';
+        }
+
         async function waitForOutputAssets(root) {
             const images = Array.from(root.querySelectorAll('img'));
             const iframes = Array.from(root.querySelectorAll('iframe'));
@@ -1444,6 +1481,16 @@
         if (responsePdfEmbeds.length) {
             window.addEventListener('load', renderAllResponsePdfs);
         }
+
+        window.addEventListener('load', () => {
+            if (!document.body.classList.contains('server-pdf')) {
+                return;
+            }
+
+            setTimeout(() => {
+                signalServerPdfReady();
+            }, 250);
+        });
 
         function initializeInlineLetterPreviews() {
             const wrappers = document.querySelectorAll('[data-letter-preview-id]');
