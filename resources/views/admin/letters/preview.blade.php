@@ -707,6 +707,7 @@
         exportNode.id = 'preview-container-export';
         exportHost.appendChild(exportNode);
         document.body.appendChild(exportHost);
+        const expectedPages = exportNode.querySelectorAll('.a4-sheet').length;
 
         const opt = {
             margin: 0,
@@ -732,10 +733,17 @@
             }
         };
 
-        html2pdf()
+        const worker = html2pdf()
             .set(opt)
-            .from(exportNode)
-            .save()
+            .from(exportNode);
+
+        worker.toPdf().get('pdf').then((pdf) => {
+            while (pdf.internal.getNumberOfPages() > expectedPages) {
+                pdf.deletePage(pdf.internal.getNumberOfPages());
+            }
+        });
+
+        worker.save()
             .catch((error) => {
                 console.error('html2pdf failed', error);
             })
