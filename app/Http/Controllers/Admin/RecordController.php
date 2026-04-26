@@ -144,26 +144,38 @@ class RecordController extends Controller
         }
 
         $data['serverPdfMode'] = true;
+        $html = view('admin.recordes.record-pdf', $data)->render();
 
-        return SnappyPdf::loadView('admin.recordes.record-pdf', $data)
-            ->setPaper('A4')
-            ->setOptions([
-                'margin-top' => 12,
-                'margin-right' => 14,
-                'margin-bottom' => 14,
-                'margin-left' => 14,
-                'encoding' => 'utf-8',
-                'enable-local-file-access' => true,
-                'enable-javascript' => true,
-                'no-stop-slow-scripts' => true,
-                'print-media-type' => true,
-                'images' => true,
-                'javascript-delay' => 1500,
-                'window-status' => 'record-preview-ready',
-                'load-error-handling' => 'ignore',
-                'load-media-error-handling' => 'ignore',
-            ])
-            ->inline($data['pdfFilename']);
+        $tempBase = tempnam(sys_get_temp_dir(), 'record_pdf_');
+        $tempHtmlPath = $tempBase . '.html';
+        @rename($tempBase, $tempHtmlPath);
+        file_put_contents($tempHtmlPath, $html);
+
+        $fileUri = 'file:///' . str_replace('\\', '/', $tempHtmlPath);
+
+        try {
+            return SnappyPdf::loadFile($fileUri)
+                ->setPaper('A4')
+                ->setOptions([
+                    'margin-top' => 12,
+                    'margin-right' => 14,
+                    'margin-bottom' => 14,
+                    'margin-left' => 14,
+                    'encoding' => 'utf-8',
+                    'enable-local-file-access' => true,
+                    'enable-javascript' => true,
+                    'no-stop-slow-scripts' => true,
+                    'print-media-type' => true,
+                    'images' => true,
+                    'javascript-delay' => 1500,
+                    'window-status' => 'record-preview-ready',
+                    'load-error-handling' => 'ignore',
+                    'load-media-error-handling' => 'ignore',
+                ])
+                ->inline($data['pdfFilename']);
+        } finally {
+            @unlink($tempHtmlPath);
+        }
     }
 
     private function recordData(CourtCase $case): array

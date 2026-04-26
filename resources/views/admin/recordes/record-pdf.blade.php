@@ -194,6 +194,12 @@
             box-shadow: none;
         }
 
+        body.server-pdf .pdf-preview,
+        body.server-pdf .page-counter-overlay,
+        body.server-pdf .page-preview-footer {
+            display: none !important;
+        }
+
         @media print {
             .page-preview-footer,
             .page-counter-overlay {
@@ -1179,6 +1185,153 @@
         </div>
     </div>
 
+    @if($serverPdfMode)
+    <script>
+        (function () {
+            function initializeInlineLetterPreviews() {
+                var wrappers = document.querySelectorAll('[data-letter-preview-id]');
+                if (!wrappers.length) {
+                    window.status = 'record-preview-ready';
+                    return;
+                }
+
+                for (var i = 0; i < wrappers.length; i++) {
+                    renderLetterPreview(wrappers[i]);
+                }
+
+                setTimeout(function () {
+                    window.status = 'record-preview-ready';
+                }, 300);
+            }
+
+            function renderLetterPreview(wrapper) {
+                var previewId = wrapper.getAttribute('data-letter-preview-id');
+                if (!previewId) {
+                    return;
+                }
+
+                var previewContainer = document.getElementById('preview-container-' + previewId);
+                var sheetTemplate = document.getElementById('sheet-template-' + previewId);
+                var rawContent = document.getElementById('raw-content-' + previewId);
+                var rawBody = document.getElementById('raw-body-content-' + previewId);
+
+                if (!previewContainer || !sheetTemplate || !rawContent || !rawBody) {
+                    return;
+                }
+
+                function splitTextNode(node) {
+                    if (node.nodeType !== 1 || ['TABLE', 'IMG', 'UL', 'OL'].indexOf(node.tagName) !== -1) {
+                        return [node.cloneNode(true)];
+                    }
+
+                    var text = node.innerText || '';
+                    var trimmedText = text.replace(/^\s+|\s+$/g, '');
+                    if (!trimmedText) {
+                        return [node.cloneNode(true)];
+                    }
+
+                    var words = trimmedText.split(/\s+/);
+                    if (words.length < 50) {
+                        return [node.cloneNode(true)];
+                    }
+
+                    var chunks = [];
+                    var currentChunk = [];
+
+                    for (var wordIndex = 0; wordIndex < words.length; wordIndex++) {
+                        currentChunk.push(words[wordIndex]);
+                        if (currentChunk.length >= 40 || wordIndex === words.length - 1) {
+                            var paragraph = document.createElement('p');
+                            paragraph.className = node.className;
+                            paragraph.style.cssText = node.style.cssText;
+                            paragraph.style.marginBottom = '0';
+                            paragraph.style.textAlign = 'justify';
+                            paragraph.innerText = currentChunk.join(' ');
+                            chunks.push(paragraph);
+                            currentChunk = [];
+                        }
+                    }
+
+                    return chunks;
+                }
+
+                function pushNodeParts(node, queue) {
+                    var parts = splitTextNode(node);
+                    for (var partIndex = 0; partIndex < parts.length; partIndex++) {
+                        queue.push(parts[partIndex]);
+                    }
+                }
+
+                function createNewPage() {
+                    var tempHost = document.createElement('div');
+                    tempHost.innerHTML = sheetTemplate.innerHTML;
+                    var sheet = tempHost.querySelector('.a4-sheet');
+                    var contentSlot = tempHost.querySelector('.content-slot');
+                    if (!sheet || !contentSlot) {
+                        return null;
+                    }
+                    previewContainer.appendChild(sheet);
+                    return { sheet: sheet, contentSlot: contentSlot };
+                }
+
+                function getAvailableHeight(sheetElement) {
+                    var header = sheetElement.querySelector('.letter-header');
+                    var footer = sheetElement.querySelector('.letter-footer');
+                    var bodyContainer = sheetElement.querySelector('.letter-body-container');
+                    if (!bodyContainer) {
+                        return sheetElement.clientHeight;
+                    }
+
+                    var style = window.getComputedStyle(bodyContainer);
+                    var padding = parseFloat(style.paddingTop || '0') + parseFloat(style.paddingBottom || '0');
+                    return sheetElement.clientHeight - header.offsetHeight - footer.offsetHeight - padding - 5;
+                }
+
+                var contentQueue = [];
+                var beforeBlocks = rawContent.querySelectorAll('.content-block[data-role="before-body"]');
+                for (var beforeIndex = 0; beforeIndex < beforeBlocks.length; beforeIndex++) {
+                    contentQueue.push(beforeBlocks[beforeIndex].cloneNode(true));
+                }
+
+                var bodyChildren = rawBody.children;
+                for (var childIndex = 0; childIndex < bodyChildren.length; childIndex++) {
+                    pushNodeParts(bodyChildren[childIndex], contentQueue);
+                }
+
+                var afterBlocks = rawContent.querySelectorAll('.content-block[data-role="after-body"]');
+                for (var afterIndex = 0; afterIndex < afterBlocks.length; afterIndex++) {
+                    contentQueue.push(afterBlocks[afterIndex].cloneNode(true));
+                }
+
+                var currentPage = createNewPage();
+                if (!currentPage) {
+                    return;
+                }
+                var maxHeight = getAvailableHeight(currentPage.sheet);
+
+                for (var queueIndex = 0; queueIndex < contentQueue.length; queueIndex++) {
+                    var cloneNode = contentQueue[queueIndex].cloneNode(true);
+                    currentPage.contentSlot.appendChild(cloneNode);
+
+                    if (currentPage.contentSlot.offsetHeight > maxHeight) {
+                        currentPage.contentSlot.removeChild(cloneNode);
+                        currentPage = createNewPage();
+                        maxHeight = getAvailableHeight(currentPage.sheet);
+                        currentPage.contentSlot.appendChild(cloneNode);
+                    }
+                }
+            }
+
+            if (document.readyState === 'complete') {
+                initializeInlineLetterPreviews();
+            } else if (window.addEventListener) {
+                window.addEventListener('load', initializeInlineLetterPreviews);
+            } else if (window.attachEvent) {
+                window.attachEvent('onload', initializeInlineLetterPreviews);
+            }
+        })();
+    </script>
+    @else
     <script>
         const downloadBtn = document.getElementById('download-pdf');
         const printBtn = document.getElementById('print-record');
@@ -1596,5 +1749,6 @@
         }
 
     </script>
+    @endif
 </body>
 </html>
