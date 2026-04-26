@@ -296,18 +296,20 @@
 
         .letter-preview-container {
             margin-top: 10px;
-            overflow-x: hidden;
-            overflow-y: hidden;
-            padding-bottom: 0;
+            overflow: visible;
+            padding-bottom: 6mm;
+            break-inside: avoid;
+            page-break-inside: avoid;
         }
 
         .preview-wrapper {
             display: flex;
             flex-direction: column;
-            align-items: stretch;
-            gap: 2rem;
+            align-items: center;
+            gap: 6mm;
             margin: 0;
-            width: 100%;
+            width: var(--a4-width);
+            max-width: 100%;
         }
 
         .a4-sheet {
@@ -341,15 +343,15 @@
         }
 
         .letter-preview-container .a4-sheet {
-            width: 100%;
-            min-width: 0;
+            width: var(--a4-width);
+            min-width: var(--a4-width);
             min-height: var(--a4-height);
             background: #fff;
             overflow: hidden;
             position: relative;
             display: flex;
             flex-direction: column;
-            flex: 1 1 auto;
+            flex: 0 0 auto;
         }
 
         .letters-section {
@@ -369,10 +371,14 @@
         }
 
         .letters-section .preview-wrapper {
-            width: 100%;
-            min-width: 0;
+            width: var(--a4-width);
+            min-width: var(--a4-width);
             max-width: 100%;
             margin: 0 auto;
+        }
+
+        .letters-section .letter-live-preview + .letter-live-preview {
+            margin-top: 10mm;
         }
 
         .letter-preview-container .letter-header img,
