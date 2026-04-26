@@ -285,11 +285,8 @@
 
         .letter-full-preview {
             margin-top: 16px;
-            border: 1px solid #dbeafe;
-            border-radius: 12px;
             padding: 18px;
             background: #fff;
-            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.1);
             page-break-inside: avoid;
         }
 
@@ -299,24 +296,24 @@
 
         .letter-preview-container {
             margin-top: 10px;
-            overflow-x: auto;
+            overflow-x: hidden;
             overflow-y: hidden;
-            padding-bottom: 4px;
+            padding-bottom: 0;
         }
 
         .preview-wrapper {
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: stretch;
             gap: 2rem;
             margin: 0;
+            width: 100%;
         }
 
         .a4-sheet {
             width: var(--a4-width);
             min-height: var(--a4-height);
             background: #fff;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             padding-top: 2mm;
             position: relative;
             overflow: hidden;
@@ -344,17 +341,15 @@
         }
 
         .letter-preview-container .a4-sheet {
-            width: var(--a4-width);
-            min-width: var(--a4-width);
+            width: 100%;
+            min-width: 0;
             min-height: var(--a4-height);
             background: #fff;
-            border-radius: 8px;
             overflow: hidden;
             position: relative;
             display: flex;
             flex-direction: column;
-            border: 1px solid #e2e8f0;
-            flex: 0 0 auto;
+            flex: 1 1 auto;
         }
 
         .letters-section {
@@ -369,13 +364,14 @@
         }
 
         .letters-section > .letter-preview-container {
-            padding-left: var(--record-horizontal-padding);
-            padding-right: var(--record-horizontal-padding);
+            padding-left: 0;
+            padding-right: 0;
         }
 
         .letters-section .preview-wrapper {
-            width: max-content;
-            min-width: var(--a4-width);
+            width: 100%;
+            min-width: 0;
+            max-width: 100%;
             margin: 0 auto;
         }
 
