@@ -16,6 +16,7 @@
         :root {
             --a4-width: 210mm;
             --a4-height: 297mm;
+            --record-horizontal-padding: 18mm;
             --print-margin-top: 12mm;
             --print-margin-right: 14mm;
             --print-margin-bottom: 14mm;
@@ -105,7 +106,7 @@
             min-height: var(--a4-height);
             background: #fff;
             box-shadow: 0 4px 6px rgba(15, 23, 42, 0.1);
-            padding: 22mm 18mm;
+            padding: 22mm var(--record-horizontal-padding);
             font-size: 14px;
             line-height: 1.7;
             position: relative;
@@ -298,6 +299,9 @@
 
         .letter-preview-container {
             margin-top: 10px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding-bottom: 4px;
         }
 
         .preview-wrapper {
@@ -340,8 +344,9 @@
         }
 
         .letter-preview-container .a4-sheet {
-            width: 100%;
-            min-height: calc(var(--a4-height) * 0.8);
+            width: var(--a4-width);
+            min-width: var(--a4-width);
+            min-height: var(--a4-height);
             background: #fff;
             border-radius: 8px;
             overflow: hidden;
@@ -349,6 +354,29 @@
             display: flex;
             flex-direction: column;
             border: 1px solid #e2e8f0;
+            flex: 0 0 auto;
+        }
+
+        .letters-section {
+            margin-left: calc(var(--record-horizontal-padding) * -1);
+            margin-right: calc(var(--record-horizontal-padding) * -1);
+        }
+
+        .letters-section > h2,
+        .letters-section > .meta {
+            padding-left: var(--record-horizontal-padding);
+            padding-right: var(--record-horizontal-padding);
+        }
+
+        .letters-section > .letter-preview-container {
+            padding-left: var(--record-horizontal-padding);
+            padding-right: var(--record-horizontal-padding);
+        }
+
+        .letters-section .preview-wrapper {
+            width: max-content;
+            min-width: var(--a4-width);
+            margin: 0 auto;
         }
 
         .letter-preview-container .letter-header img,
