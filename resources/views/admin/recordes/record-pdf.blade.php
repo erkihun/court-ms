@@ -4,13 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ __('recordes.titles.pdf') }}</title>
+    @php
+        $serverPdfMode = (bool) ($serverPdfMode ?? false);
+        $abyssinicaFontSrc = $serverPdfMode
+            ? 'file:///' . str_replace('\\', '/', public_path('fonts/AbyssinicaSIL-Regular.ttf'))
+            : asset('fonts/AbyssinicaSIL-Regular.ttf');
+    @endphp
 
     <style>
         @font-face {
             font-family: 'Abyssinica';
             font-style: normal;
             font-weight: 400;
-            src: url('{{ asset('fonts/AbyssinicaSIL-Regular.ttf') }}') format('truetype');
+            src: url('{{ $abyssinicaFontSrc }}') format('truetype');
         }
 
         :root {
@@ -691,9 +697,6 @@
         }
     </style>
 </head>
-@php
-    $serverPdfMode = (bool) ($serverPdfMode ?? false);
-@endphp
 <body class="{{ $serverPdfMode ? 'server-pdf pdf-export' : '' }}">
     @unless($serverPdfMode)
     <div class="pdf-toolbar">
