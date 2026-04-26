@@ -130,6 +130,8 @@
     body.pdf-export .preview-wrapper {
         margin-top: 0;
         gap: 0;
+        display: block;
+        width: var(--a4-width);
     }
 
     /* A4 Sheet Logic */
@@ -152,10 +154,12 @@
     body.pdf-export .a4-sheet {
         box-shadow: none;
         margin: 0;
+        break-after: page;
         page-break-after: always;
     }
 
     body.pdf-export .a4-sheet:last-child {
+        break-after: auto;
         page-break-after: auto;
     }
 
@@ -724,7 +728,7 @@
                 orientation: 'portrait'
             },
             pagebreak: {
-                mode: ['css', 'legacy']
+                mode: ['css']
             }
         };
 
