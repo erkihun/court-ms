@@ -306,7 +306,10 @@ class CaseController extends Controller
 
         return redirect()
             ->route('cases.index')
-            ->with('success', $assigning ? 'Case assigned successfully.' : 'Case unassigned.');
+            ->with('success', [
+                'key' => $assigning ? 'messages.success.assigned' : 'messages.success.unassigned',
+                'replace' => ['resource' => __('messages.resources.case')],
+            ]);
     }
 
     private function buildAssignmentScope(): array
@@ -316,7 +319,7 @@ class CaseController extends Controller
         if (!$user->hasPermission('cases.assign')) {
             throw new HttpResponseException(
                 redirect()->route('cases.index')
-                    ->with('error', 'You are not allowed to access case assignment.')
+                    ->with('error', 'messages.error.case_assignment_denied')
             );
         }
 
@@ -339,7 +342,7 @@ class CaseController extends Controller
         if (!$user->hasPermission('cases.assign.team')) {
             throw new HttpResponseException(
                 redirect()->route('cases.index')
-            ->with('error', 'Assigning to team leaders requires the cases.assign.team permission.')
+            ->with('error', 'messages.error.team_assignment_permission')
             );
         }
 
@@ -739,7 +742,7 @@ class CaseController extends Controller
         $note     = trim((string) ($data['note'] ?? ''));
 
         if (in_array($decision, ['return', 'reject'], true) && $note === '') {
-            return back()->withErrors(['note' => 'Please add a note when returning or rejecting.'])->withInput();
+            return back()->withErrors(['note' => __('messages.error.return_note_required')])->withInput();
         }
 
         $newStatus = match ($decision) {
@@ -770,7 +773,10 @@ class CaseController extends Controller
 
         $this->notifyApplicantOfReview($case, $newStatus, $note);
 
-        return back()->with('success', 'Review updated: ' . ucfirst($newStatus) . '.');
+        return back()->with('success', [
+            'key' => 'messages.success.review_updated_to',
+            'replace' => ['status' => __('messages.review_status_values.' . $newStatus)],
+        ]);
     }
 
     /**
@@ -877,7 +883,13 @@ class CaseController extends Controller
         $new = $data['status'];
 
         if ($old === $new) {
-            return back()->with('success', 'Status unchanged (already ' . $new . ').');
+            return back()->with('success', [
+                'key' => 'messages.success.unchanged',
+                'replace' => [
+                    'resource' => __('messages.resources.case'),
+                    'value' => __('cases.status.' . $new),
+                ],
+            ]);
         }
 
         DB::table('court_cases')->where('id', $id)->update([
@@ -937,7 +949,13 @@ class CaseController extends Controller
             ]);
         }
 
-        return back()->with('success', 'Case status updated to ' . ucfirst($new) . '.');
+        return back()->with('success', [
+            'key' => 'messages.success.status_updated',
+            'replace' => [
+                'resource' => __('messages.resources.case'),
+                'status' => __('cases.status.' . $new),
+            ],
+        ]);
     }
 
     /**
@@ -986,7 +1004,10 @@ class CaseController extends Controller
             'body' => mb_strimwidth($data['body'], 0, 200, '...'),
         ]);
 
-        return back()->with('success', 'Message sent to applicant.');
+        return back()->with('success', [
+            'key' => 'messages.success.sent',
+            'replace' => ['resource' => __('messages.resources.message')],
+        ]);
     }
 
     /**
@@ -1010,7 +1031,7 @@ class CaseController extends Controller
             ->exists();
         if ($alreadyExists) {
             return back()
-                ->withErrors(['hearing_at' => 'This case already has a hearing scheduled on that date.'])
+                ->withErrors(['hearing_at' => __('messages.error.hearing_duplicate_date')])
                 ->withInput();
         }
 
@@ -1050,7 +1071,10 @@ class CaseController extends Controller
             Log::warning('Hearing mail failed', ['case_id' => $case, 'error' => $e->getMessage()]);
         }
 
-        return back()->with('success', 'Hearing scheduled.');
+        return back()->with('success', [
+            'key' => 'messages.success.created',
+            'replace' => ['resource' => __('messages.resources.hearing')],
+        ]);
     }
 
     /**
@@ -1062,7 +1086,7 @@ class CaseController extends Controller
         abort_if(!$h, 404);
         $existingHearingDate = Carbon::parse($h->hearing_at)->startOfDay();
         if ($existingHearingDate->lte(Carbon::today())) {
-            return back()->with('error', 'Hearings scheduled for today or past dates cannot be edited.');
+            return back()->with('error', 'messages.error.past_hearing_edit_locked');
         }
 
         $data = $request->validate([
@@ -1079,7 +1103,7 @@ class CaseController extends Controller
             ->exists();
         if ($alreadyExists) {
             return back()
-                ->withErrors(['hearing_at' => 'This case already has a hearing scheduled on that date.'])
+                ->withErrors(['hearing_at' => __('messages.error.hearing_duplicate_date')])
                 ->withInput();
         }
 
@@ -1096,7 +1120,10 @@ class CaseController extends Controller
             'when'       => $data['hearing_at'],
         ]);
 
-        return back()->with('success', 'Hearing updated.');
+        return back()->with('success', [
+            'key' => 'messages.success.updated',
+            'replace' => ['resource' => __('messages.resources.hearing')],
+        ]);
     }
 
     /**
@@ -1108,7 +1135,7 @@ class CaseController extends Controller
         abort_if(!$row, 404);
         $existingHearingDate = Carbon::parse($row->hearing_at)->startOfDay();
         if ($existingHearingDate->lte(Carbon::today())) {
-            return back()->with('error', 'Hearings scheduled for today or past dates cannot be deleted.');
+            return back()->with('error', 'messages.error.past_hearing_delete_locked');
         }
 
         $caseId = $row->case_id;
@@ -1116,7 +1143,10 @@ class CaseController extends Controller
         if ($caseId) {
             $this->logCaseAudit($caseId, 'hearing_deleted', ['hearing_id' => $hearing]);
         }
-        return back()->with('success', 'Hearing removed.');
+        return back()->with('success', [
+            'key' => 'messages.success.removed',
+            'replace' => ['resource' => __('messages.resources.hearing')],
+        ]);
     }
 
     /**
@@ -1151,7 +1181,10 @@ class CaseController extends Controller
             'path'  => $stored,
         ]);
 
-        return back()->with('success', 'File uploaded.');
+        return back()->with('success', [
+            'key' => 'messages.success.uploaded',
+            'replace' => ['resource' => __('messages.resources.file')],
+        ]);
     }
 
     /**
@@ -1172,7 +1205,10 @@ class CaseController extends Controller
             'label'   => $row->label ?? null,
         ]);
 
-        return back()->with('success', 'File removed.');
+        return back()->with('success', [
+            'key' => 'messages.success.removed',
+            'replace' => ['resource' => __('messages.resources.file')],
+        ]);
     }
 
     /**
@@ -1256,7 +1292,10 @@ class CaseController extends Controller
             'updated_at'         => now(),
         ]);
 
-        return back()->with('success', 'Witness added.');
+        return back()->with('success', [
+            'key' => 'messages.success.created',
+            'replace' => ['resource' => __('messages.resources.witness')],
+        ]);
     }
 
     /**
@@ -1288,7 +1327,10 @@ class CaseController extends Controller
             'updated_at'         => now(),
         ]);
 
-        return back()->with('success', 'Witness updated.');
+        return back()->with('success', [
+            'key' => 'messages.success.updated',
+            'replace' => ['resource' => __('messages.resources.witness')],
+        ]);
     }
 
     /**
@@ -1301,7 +1343,10 @@ class CaseController extends Controller
             ->where('case_id', $case)
             ->delete();
 
-        return back()->with('success', 'Witness deleted.');
+        return back()->with('success', [
+            'key' => 'messages.success.deleted',
+            'replace' => ['resource' => __('messages.resources.witness')],
+        ]);
     }
 
     /**

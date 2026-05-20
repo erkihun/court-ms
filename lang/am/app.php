@@ -50,6 +50,8 @@ return array (
   'Mark all as seen' => 'ሁሉንም እንደታየ ምልክት አድርግ',
   'Seen' => 'ታይቷል',
   'View all' => 'ሁሉንም እይ',
+  'View details' => 'መመሪያ',
+  'Close details' => 'ዝርዝር ዝጋ',
   'Applicant messages' => 'የአመልካች መልእክቶች',
   'New cases' => 'አዲስ መዝገቦች',
   'Upcoming hearings' => 'የሚመጡ የችሎት ቀጠሮዎች',

@@ -56,7 +56,10 @@ class TeamController extends Controller
             $team->users()->syncWithoutDetaching([$data['team_leader_id']]);
         }
 
-        return redirect()->route('teams.index')->with('success', 'Team created.');
+        return redirect()->route('teams.index')->with('success', [
+            'key' => 'messages.success.created',
+            'replace' => ['resource' => __('messages.resources.team')],
+        ]);
     }
 
     public function update(Request $request, Team $team)
@@ -75,18 +78,24 @@ class TeamController extends Controller
             $team->users()->syncWithoutDetaching([$data['team_leader_id']]);
         }
 
-        return redirect()->route('teams.index')->with('success', 'Team updated.');
+        return redirect()->route('teams.index')->with('success', [
+            'key' => 'messages.success.updated',
+            'replace' => ['resource' => __('messages.resources.team')],
+        ]);
     }
 
     public function destroy(Team $team)
     {
         if ($team->users()->exists()) {
-            return redirect()->route('teams.index')->with('error', 'Team still has members; remove them before deleting.');
+            return redirect()->route('teams.index')->with('error', 'messages.error.team_has_members');
         }
 
         $team->delete();
 
-        return redirect()->route('teams.index')->with('success', 'Team deleted.');
+        return redirect()->route('teams.index')->with('success', [
+            'key' => 'messages.success.deleted',
+            'replace' => ['resource' => __('messages.resources.team')],
+        ]);
     }
 
     public function updateUsers(Request $request, Team $team)
@@ -114,10 +123,12 @@ class TeamController extends Controller
             $team->users()->sync($userIds);
         });
 
-        $message = 'Team membership updated.';
-        if ($leaderAdded) {
-            $message .= ' Leader ' . ($team->leader?->name ?? 'assigned leader') . ' remains on the roster.';
-        }
+        $message = $leaderAdded
+            ? [
+                'key' => 'messages.success.team_membership_updated_leader',
+                'replace' => ['leader' => $team->leader?->name ?? __('messages.resources.user')],
+            ]
+            : 'messages.success.team_membership_updated';
 
         return redirect()->route('teams.edit', $team)->with('success', $message);
     }

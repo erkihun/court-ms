@@ -75,6 +75,9 @@ class SystemSettingController extends Controller
 
         return redirect()
             ->route('settings.system.edit')
-            ->with('ok', 'System settings updated.');
+            ->with('ok', [
+                'key' => 'messages.success.updated',
+                'replace' => ['resource' => __('messages.resources.system_settings')],
+            ]);
     }
 }

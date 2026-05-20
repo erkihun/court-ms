@@ -73,7 +73,10 @@ class CaseTypeController extends Controller
 
         DB::table('case_types')->insert($row);
 
-        return redirect()->route('case-types.index')->with('success', 'Case type created.');
+        return redirect()->route('case-types.index')->with('success', [
+            'key' => 'messages.success.created',
+            'replace' => ['resource' => __('messages.resources.case_type')],
+        ]);
     }
 
     /**
@@ -121,7 +124,10 @@ class CaseTypeController extends Controller
 
         DB::table('case_types')->where('id', $id)->update($row);
 
-        return redirect()->route('case-types.index')->with('success', 'Case type updated.');
+        return redirect()->route('case-types.index')->with('success', [
+            'key' => 'messages.success.updated',
+            'replace' => ['resource' => __('messages.resources.case_type')],
+        ]);
     }
 
     /**
@@ -136,12 +142,18 @@ class CaseTypeController extends Controller
 
         $inUse = DB::table('court_cases')->where('case_type_id', $id)->count();
         if ($inUse > 0) {
-            return back()->with('error', 'Cannot delete: this case type is used by ' . $inUse . ' case(s).');
+            return back()->with('error', [
+                'key' => 'messages.error.delete_case_type_in_use',
+                'replace' => ['count' => $inUse],
+            ]);
         }
 
         DB::table('case_types')->where('id', $id)->delete();
 
-        return back()->with('success', 'Case type deleted.');
+        return back()->with('success', [
+            'key' => 'messages.success.deleted',
+            'replace' => ['resource' => __('messages.resources.case_type')],
+        ]);
     }
 
     /**

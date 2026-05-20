@@ -4,24 +4,6 @@
         <p class="mt-1 text-sm text-gray-600">We sent a 6-digit code to your email address. It expires in 10 minutes.</p>
     </div>
 
-    @if (session('info'))
-    <div class="mb-4 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
-        {{ session('info') }}
-    </div>
-    @endif
-
-    @if (session('success'))
-    <div class="mb-4 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
-        {{ session('success') }}
-    </div>
-    @endif
-
-    @if ($errors->any())
-    <div class="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-        {{ $errors->first() }}
-    </div>
-    @endif
-
     <form method="POST" action="{{ route('admin.password.otp.verify') }}">
         @csrf
 

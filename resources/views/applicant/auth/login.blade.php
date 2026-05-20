@@ -1,29 +1,23 @@
 @php
 $settings = null;
 try {
-$settings = \App\Models\SystemSetting::query()->first();
-} catch (\Throwable $e) {
-$settings = null;
-}
+    $settings = \App\Models\SystemSetting::query()->first();
+} catch (\Throwable $e) { $settings = null; }
 
-$brandName = $settings?->app_name ?? config('app.name', 'Court MS');
-$logoPath = $settings?->logo_path ?? null;
+$brandName  = $settings?->app_name ?? config('app.name', 'Court MS');
+$logoPath   = $settings?->logo_path ?? null;
+$loginAs    = old('login_as', request('login_as', 'applicant'));
 
-$loginAs = old('login_as', request('login_as', 'applicant'));
-$isRespondent = $loginAs === 'respondent';
-
-$applicantPanelLabel = __('auth.applicant_panel_label');
+$applicantPanelLabel  = __('auth.applicant_panel_label');
 $respondentPanelLabel = __('auth.respondent_panel_label');
-$panelLabel = $isRespondent ? $respondentPanelLabel : $applicantPanelLabel;
+$panelLabel           = $loginAs === 'respondent' ? $respondentPanelLabel : $applicantPanelLabel;
 
 try {
     $aboutPage = \App\Models\AboutPage::query()
         ->where('is_published', true)
         ->orderByDesc('updated_at')
         ->first();
-} catch (\Throwable $e) {
-    $aboutPage = null;
-}
+} catch (\Throwable $e) { $aboutPage = null; }
 
 session()->forget('acting_as_respondent');
 @endphp
@@ -31,308 +25,643 @@ session()->forget('acting_as_respondent');
 @extends('layouts.fullscreen-layout')
 
 @section('content')
-<div class="relative z-1 bg-white p-6 sm:p-0">
-    <div class="relative flex h-screen w-full flex-col justify-center sm:p-0 lg:flex-row">
-        <div class="absolute right-6 top-6 z-20">
-            <div x-data="{ open: false }" class="relative">
-                <button type="button" @click.stop="open = !open"
-                    class="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">
-                    <span class="fi fi-{{ app()->getLocale() == 'am' ? 'et' : 'us' }}"></span>
-                    <span>{{ __('app.Language') }}</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24"
-                        fill="none" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6" />
-                    </svg>
+<div class="al-shell" x-data="{ aboutOpen: false }">
+
+    {{-- ══════════════════════════════════════════
+         LEFT — pure white, no card box
+         ══════════════════════════════════════════ --}}
+    <div class="al-left">
+
+        {{-- Top strip --}}
+        <div class="al-topstrip">
+            <a href="/" class="al-logo-link">
+                @if($logoPath)
+                    <img src="{{ asset('storage/'.$logoPath) }}" alt="{{ $brandName }}" class="al-logo-img">
+                @else
+                    <span class="al-logo-mark">{{ strtoupper(substr($brandName,0,2)) }}</span>
+                @endif
+                <span class="al-logo-name">{{ $brandName }}</span>
+            </a>
+
+            <div class="al-top-actions">
+                <button type="button" class="al-mobile-about-btn al-mobile-about-btn-top" @click="aboutOpen = true">
+                    <span>{{ __('app.View details') }}</span>
                 </button>
 
-                <div x-cloak x-show="open" @click.outside="open = false"
-                    class="absolute right-0 mt-2 w-36 rounded-md border border-slate-200 bg-white shadow-lg">
-                    <div class="p-2 space-y-1 text-slate-700 text-sm">
-                        <a href="{{ route('language.switch', ['locale' => 'en', 'return' => url()->current()]) }}"
-                            class="flex items-center gap-2 w-full px-3 py-2 rounded hover:bg-slate-50 {{ app()->getLocale() == 'en' ? 'bg-blue-50 text-blue-700' : '' }}">
-                            <span class="fi fi-us"></span>
-                            {{ __('app.English') }}
-                        </a>
-                        <a href="{{ route('language.switch', ['locale' => 'am', 'return' => url()->current()]) }}"
-                            class="flex items-center gap-2 w-full px-3 py-2 rounded hover:bg-slate-50 {{ app()->getLocale() == 'am' ? 'bg-orange-50 text-orange-700' : '' }}">
-                            <span class="fi fi-et"></span>
-                            {{ __('app.Amharic') }}
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="flex w-full flex-1 flex-col lg:w-1/2 lg:px-16 xl:px-20">
-            <div class="mx-auto w-full max-w-md pt-10"></div>
-
-            <div class="mx-auto flex w-full max-w-md flex-1 flex-col justify-center">
-                <div class="rounded-2xl bg-white p-8 shadow-lg ring-1 ring-gray-100">
-                    <div class="mb-5 sm:mb-8">
-                        <h1 class="text-3xl font-semibold text-gray-900 sm:text-4xl">
-                            {{ __('auth.sign_in_title') }}
-                        </h1>
-                        <p class="mt-2 text-sm text-gray-500">
-                            {{ __('auth.sign_in_subtitle') }}
-                        </p>
-                        <p class="mt-3 text-xs font-semibold uppercase tracking-wider text-gray-400"
-                            data-panel-label>
-                            {{ $panelLabel }}
-                        </p>
-                    </div>
-
-                    @if (session('success'))
-                    <div
-                        class="mb-5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                        {{ session('success') }}
-                    </div>
-                    @endif
-
-                    @if ($errors->any())
-                    <div class="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                        <ul class="list-disc pl-5 space-y-1">
-                            @foreach ($errors->all() as $e)
-                            <li>{{ $e }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                    @endif
-
-                    <div>
-                        <form method="POST" action="{{ route('applicant.login.submit') }}">
-                            @csrf
-
-                            <div class="space-y-5">
-                                <div>
-                                    <label class="mb-1.5 block text-sm font-medium text-gray-700">
-                                        {{ __('auth.sign_in_as') }}<span class="text-error-500">*</span>
-                                    </label>
-                                    <div class="grid grid-cols-2 gap-3">
-                                        <button type="button" data-role="applicant"
-                                            class="role-btn {{ $loginAs === 'applicant' ? 'active' : '' }}">
-                                            {{ __('auth.role_applicant') }}
-                                        </button>
-                                        <button type="button" data-role="respondent"
-                                            class="role-btn {{ $loginAs === 'respondent' ? 'active' : '' }}">
-                                            {{ __('auth.role_respondent') }}
-                                        </button>
-                                    </div>
-                                    <input type="hidden" name="login_as" id="login_as" value="{{ $loginAs }}">
-                                </div>
-
-                                <div>
-                                    <label class="mb-1.5 block text-sm font-medium text-gray-700">
-                                        {{ __('auth.email') }}<span class="text-error-500">*</span>
-                                    </label>
-                                    <input type="email" id="email" name="email" placeholder="info@gmail.com"
-                                        value="{{ old('email') }}"
-                                        class="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 shadow-theme-xs focus:border-brand-300 focus:outline-none focus:ring-3 focus:ring-brand-500/10"
-                                        required autofocus />
-                                </div>
-
-                                <div>
-                                    <label class="mb-1.5 block text-sm font-medium text-gray-700">
-                                        {{ __('auth.password') }}<span class="text-error-500">*</span>
-                                    </label>
-                                    <div x-data="{ showPassword: false }" class="relative">
-                                        <input :type="showPassword ? 'text' : 'password'" name="password"
-                                            placeholder="Enter your password"
-                                            class="h-11 w-full rounded-lg border border-gray-300 bg-white py-2.5 pr-11 pl-4 text-sm text-gray-800 placeholder:text-gray-400 shadow-theme-xs focus:border-brand-300 focus:outline-none focus:ring-3 focus:ring-brand-500/10"
-                                            required />
-                                        <span @click="showPassword = !showPassword"
-                                            class="absolute top-1/2 right-4 z-30 -translate-y-1/2 cursor-pointer text-gray-500">
-                                            <svg x-show="!showPassword" class="fill-current" width="20" height="20"
-                                                viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path fill-rule="evenodd" clip-rule="evenodd"
-                                                    d="M10.0002 13.8619C7.23361 13.8619 4.86803 12.1372 3.92328 9.70241C4.86804 7.26761 7.23361 5.54297 10.0002 5.54297C12.7667 5.54297 15.1323 7.26762 16.0771 9.70243C15.1323 12.1372 12.7667 13.8619 10.0002 13.8619ZM10.0002 4.04297C6.48191 4.04297 3.49489 6.30917 2.4155 9.4593C2.3615 9.61687 2.3615 9.78794 2.41549 9.94552C3.49488 13.0957 6.48191 15.3619 10.0002 15.3619C13.5184 15.3619 16.5055 13.0957 17.5849 9.94555C17.6389 9.78797 17.6389 9.6169 17.5849 9.45932C16.5055 6.30919 13.5184 4.04297 10.0002 4.04297ZM9.99151 7.84413C8.96527 7.84413 8.13333 8.67606 8.13333 9.70231C8.13333 10.7286 8.96527 11.5605 9.99151 11.5605H10.0064C11.0326 11.5605 11.8646 10.7286 11.8646 9.70231C11.8646 8.67606 11.0326 7.84413 10.0064 7.84413H9.99151Z"
-                                                    fill="#98A2B3" />
-                                            </svg>
-                                            <svg x-show="showPassword" class="fill-current" width="20" height="20"
-                                                viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path fill-rule="evenodd" clip-rule="evenodd"
-                                                    d="M4.63803 3.57709C4.34513 3.2842 3.87026 3.2842 3.57737 3.57709C3.28447 3.86999 3.28447 4.34486 3.57737 4.63775L4.85323 5.91362C3.74609 6.84199 2.89363 8.06395 2.4155 9.45936C2.3615 9.61694 2.3615 9.78801 2.41549 9.94558C3.49488 13.0957 6.48191 15.3619 10.0002 15.3619C11.255 15.3619 12.4422 15.0737 13.4994 14.5598L15.3625 16.4229C15.6554 16.7158 16.1302 16.7158 16.4231 16.4229C16.716 16.13 16.716 15.6551 16.4231 15.3622L4.63803 3.57709ZM12.3608 13.4212L10.4475 11.5079C10.3061 11.5423 10.1584 11.5606 10.0064 11.5606H9.99151C8.96527 11.5606 8.13333 10.7286 8.13333 9.70237C8.13333 9.5461 8.15262 9.39434 8.18895 9.24933L5.91885 6.97923C5.03505 7.69015 4.34057 8.62704 3.92328 9.70247C4.86803 12.1373 7.23361 13.8619 10.0002 13.8619C10.8326 13.8619 11.6287 13.7058 12.3608 13.4212ZM16.0771 9.70249C15.7843 10.4569 15.3552 11.1432 14.8199 11.7311L15.8813 12.7925C16.6329 11.9813 17.2187 11.0143 17.5849 9.94561C17.6389 9.78803 17.6389 9.61696 17.5849 9.45938C16.5055 6.30925 13.5184 4.04303 10.0002 4.04303C9.13525 4.04303 8.30244 4.17999 7.52218 4.43338L8.75139 5.66259C9.1556 5.58413 9.57311 5.54303 10.0002 5.54303C12.7667 5.54303 15.1323 7.26768 16.0771 9.70249Z"
-                                                    fill="#98A2B3" />
-                                            </svg>
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div class="flex items-center justify-between">
-                                    <label
-                                        class="flex cursor-pointer items-center text-sm font-normal text-gray-700 select-none">
-                                        <input type="checkbox" name="remember"
-                                            class="mr-3 h-5 w-5 rounded-md border-[1.25px] border-gray-300 text-brand-500 focus:ring-brand-500/20">
-                                        {{ __('auth.remember_me') }}
-                                    </label>
-                                    <a href="{{ route('applicant.password.request') }}"
-                                        class="text-brand-500 hover:text-brand-600 text-sm">
-                                        {{ __('auth.forgot_password') }}
-                                    </a>
-                                </div>
-
-                                <div>
-                                    <button
-                                        class="bg-orange-500 shadow-theme-xs hover:bg-orange-600 flex w-full items-center justify-center rounded-lg px-4 py-3 text-sm font-medium text-white transition">
-                                        {{ __('auth.sign_in') }}
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-
-                        <div class="mt-5">
-                            <p class="text-center text-sm font-normal text-gray-700 sm:text-start">
-                                Don't have an account?
-                                <a href="{{ route('applicant.register') }}"
-                                    class="text-brand-500 hover:text-brand-600">
-                                    {{ __('auth.create_account') }}
-                                </a>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="auth-visual relative hidden h-full w-full min-w-0 overflow-hidden items-center lg:grid lg:w-1/2">
-            <div class="auth-grid pointer-events-none absolute inset-0"></div>
-            <div class="relative z-10 flex h-full w-full min-w-0 items-stretch justify-center px-8 py-8 overflow-hidden">
-                <div class="flex h-full w-full max-w-4xl min-w-0 flex-col items-stretch text-center">
-                    <div class="flex flex-col items-center text-center shrink-0">
-                        <a href="/" class="mb-3 inline-flex items-center gap-3">
-                        @if ($logoPath)
-                        <img src="{{ asset('storage/' . $logoPath) }}" alt="{{ $brandName }}"
-                            class="h-12 w-auto rounded-lg bg-white/10 p-2" />
-                        @else
-                        <span class="auth-brand-mark">CM</span>
-                        @endif
-                        <span class="text-2xl font-semibold text-white">{{ $brandName }}</span>
+                @if(Route::has('language.switch'))
+                <div class="al-lang-switch" aria-label="{{ __('app.Language') }}">
+                    <a href="{{ route('language.switch',['locale'=>'en','return'=>url()->current()]) }}"
+                        class="al-lang-btn {{ app()->getLocale()==='en' ? 'active' : '' }}">
+                        <span class="fi fi-us text-sm"></span>
+                        <span>EN</span>
                     </a>
-                    <p class="text-sm text-white/70">
-                        {{ __('auth.sign_in_subtitle') }}
-                    </p>
-                    </div>
-                    @if($aboutPage)
-                    <div class="mt-4 w-full flex-1 min-h-0 min-w-0 text-left">
-                        <div class="h-full w-full min-h-0 min-w-0 rounded-2xl border border-white/15 bg-gradient-to-br from-white/10 via-white/5 to-transparent p-5 shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur overflow-hidden flex flex-col">
-                            <div class="sticky top-0 z-10 -mx-5 px-5 pb-3 pt-1 backdrop-blur bg-gradient-to-b from-[#20265f]/80 via-[#20265f]/60 to-transparent">
-                                <div class="flex items-center justify-between">
-                                    <span class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-wider text-white/70">
-                                        {{ __('app.About') }}
-                                    </span>
-                                    <span class="text-[11px] text-white/40">{{ $aboutPage->updated_at?->format('M d, Y') }}</span>
-                                </div>
-                                <div class="mt-3 text-lg font-semibold text-white">
-                                    {{ $aboutPage->title }}
-                                </div>
-                            </div>
-                            <div class="mt-2 flex-1 min-h-0 overflow-y-auto pr-1 text-sm leading-6 text-white/75 break-words">
-                                {!! clean($aboutPage->body ?? '', 'cases') !!}
-                            </div>
-                        </div>
-                    </div>
-                    @endif
+                    <a href="{{ route('language.switch',['locale'=>'am','return'=>url()->current()]) }}"
+                        class="al-lang-btn {{ app()->getLocale()==='am' ? 'active' : '' }}">
+                        <span class="fi fi-et text-sm"></span>
+                        <span>አማ</span>
+                    </a>
                 </div>
+                @endif
             </div>
         </div>
 
-        <div class="fixed right-6 bottom-6 z-50">
-            <button
-                class="js-theme-toggle bg-brand-500 hover:bg-brand-600 inline-flex size-14 items-center justify-center rounded-full text-white transition-colors"
-                @click.prevent="$store.theme.toggle()">
-                <svg class="hidden fill-current dark:block" width="20" height="20" viewBox="0 0 20 20"
-                    fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd" clip-rule="evenodd"
-                        d="M9.99998 1.5415C10.4142 1.5415 10.75 1.87729 10.75 2.2915V3.5415C10.75 3.95572 10.4142 4.2915 9.99998 4.2915C9.58577 4.2915 9.24998 3.95572 9.24998 3.5415V2.2915C9.24998 1.87729 9.58577 1.5415 9.99998 1.5415ZM10.0009 6.79327C8.22978 6.79327 6.79402 8.22904 6.79402 10.0001C6.79402 11.7712 8.22978 13.207 10.0009 13.207C11.772 13.207 13.2078 11.7712 13.2078 10.0001C13.2078 8.22904 11.772 6.79327 10.0009 6.79327ZM5.29402 10.0001C5.29402 7.40061 7.40135 5.29327 10.0009 5.29327C12.6004 5.29327 14.7078 7.40061 14.7078 10.0001C14.7078 12.5997 12.6004 14.707 10.0009 14.707C7.40135 14.707 5.29402 12.5997 5.29402 10.0001ZM15.9813 5.08035C16.2742 4.78746 16.2742 4.31258 15.9813 4.01969C15.6884 3.7268 15.2135 3.7268 14.9207 4.01969L14.0368 4.90357C13.7439 5.19647 13.7439 5.67134 14.0368 5.96423C14.3297 6.25713 14.8045 6.25713 15.0974 5.96423L15.9813 5.08035ZM18.4577 10.0001C18.4577 10.4143 18.1219 10.7501 17.7077 10.7501H16.4577C16.0435 10.7501 15.7077 10.4143 15.7077 10.0001C15.7077 9.58592 16.0435 9.25013 16.4577 9.25013H17.7077C18.1219 9.25013 18.4577 9.58592 18.4577 10.0001ZM14.9207 15.9806C15.2135 16.2735 15.6884 16.2735 15.9813 15.9806C16.2742 15.6877 16.2742 15.2128 15.9813 14.9199L15.0974 14.036C14.8045 13.7431 14.3297 13.7431 14.0368 14.036C13.7439 14.3289 13.7439 14.8038 14.0368 15.0967L14.9207 15.9806ZM9.99998 15.7088C10.4142 15.7088 10.75 16.0445 10.75 16.4588V17.7088C10.75 18.123 10.4142 18.4588 9.99998 18.4588C9.58577 18.4588 9.24998 18.123 9.24998 17.7088V16.4588C9.24998 16.0445 9.58577 15.7088 9.99998 15.7088ZM5.96356 15.0972C6.25646 14.8043 6.25646 14.3295 5.96356 14.0366C5.67067 13.7437 5.1958 13.7437 4.9029 14.0366L4.01902 14.9204C3.72613 15.2133 3.72613 15.6882 4.01902 15.9811C4.31191 16.274 4.78679 16.274 5.07968 15.9811L5.96356 15.0972ZM4.29224 10.0001C4.29224 10.4143 3.95645 10.7501 3.54224 10.7501H2.29224C1.87802 10.7501 1.54224 10.4143 1.54224 10.0001C1.54224 9.58592 1.87802 9.25013 2.29224 9.25013H3.54224C3.95645 9.25013 4.29224 9.58592 4.29224 10.0001ZM4.9029 5.9637C5.1958 6.25659 5.67067 6.25659 5.96356 5.9637C6.25646 5.6708 6.25646 5.19593 5.96356 4.90303L5.07968 4.01915C4.78679 3.72626 4.31191 3.72626 4.01902 4.01915C3.72613 4.31204 3.72613 4.78692 4.01902 5.07981L4.9029 5.9637Z"
-                        fill="" />
-                </svg>
-                <svg class="fill-current dark:hidden" width="20" height="20" viewBox="0 0 20 20" fill="none"
-                    xmlns="http://www.w3.org/2000/svg">
-                    <path
-                        d="M17.4547 11.97L18.1799 12.1611C18.265 11.8383 18.1265 11.4982 17.8401 11.3266C17.5538 11.1551 17.1885 11.1934 16.944 11.4207L17.4547 11.97ZM8.0306 2.5459L8.57989 3.05657C8.80718 2.81209 8.84554 2.44682 8.67398 2.16046C8.50243 1.8741 8.16227 1.73559 7.83948 1.82066L8.0306 2.5459ZM12.9154 13.0035C9.64678 13.0035 6.99707 10.3538 6.99707 7.08524H5.49707C5.49707 11.1823 8.81835 14.5035 12.9154 14.5035V13.0035ZM16.944 11.4207C15.8869 12.4035 14.4721 13.0035 12.9154 13.0035V14.5035C14.8657 14.5035 16.6418 13.7499 17.9654 12.5193L16.944 11.4207ZM16.7295 11.7789C15.9437 14.7607 13.2277 16.9586 10.0003 16.9586V18.4586C13.9257 18.4586 17.2249 15.7853 18.1799 12.1611L16.7295 11.7789ZM10.0003 16.9586C6.15734 16.9586 3.04199 13.8433 3.04199 10.0003H1.54199C1.54199 14.6717 5.32892 18.4586 10.0003 18.4586V16.9586ZM3.04199 10.0003C3.04199 6.77289 5.23988 4.05695 8.22173 3.27114L7.83948 1.82066C4.21532 2.77574 1.54199 6.07486 1.54199 10.0003H3.04199ZM6.99707 7.08524C6.99707 5.52854 7.5971 4.11366 8.57989 3.05657L7.48132 2.03522C6.25073 3.35885 5.49707 5.13487 5.49707 7.08524H6.99707Z"
-                        fill="" />
-                </svg>
-            </button>
+        {{-- Centred form area --}}
+        <div class="al-form-area">
+            <div class="al-form-inner">
+
+                {{-- Heading --}}
+                <div class="al-heading">
+                    <h1>{{ __('auth.sign_in_title') }}</h1>
+                    <p>{{ __('auth.sign_in_subtitle') }}</p>
+                </div>
+
+                {{-- Role tabs --}}
+                <div class="al-role-tabs" role="group" aria-label="{{ __('auth.sign_in_as') }}">
+                    <button type="button" data-role="applicant"
+                        class="al-role-tab {{ $loginAs==='applicant' ? 'active' : '' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        {{ __('auth.role_applicant') }}
+                    </button>
+                    <button type="button" data-role="respondent"
+                        class="al-role-tab {{ $loginAs==='respondent' ? 'active' : '' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        {{ __('auth.role_respondent') }}
+                    </button>
+                    <span class="al-role-indicator" id="al-role-indicator"></span>
+                </div>
+                <p class="al-panel-label" data-panel-label>{{ $panelLabel }}</p>
+
+                {{-- Alerts --}}
+                @if(session('success'))
+                <div class="al-alert al-alert-ok">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span>{{ session('success') }}</span>
+                </div>
+                @endif
+                @if($errors->any())
+                <div class="al-alert al-alert-err">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 flex-shrink-0 mt-px" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <ul>@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
+                </div>
+                @endif
+
+                {{-- Form --}}
+                <form method="POST" action="{{ route('applicant.login.submit') }}" class="al-form">
+                    @csrf
+                    <input type="hidden" name="login_as" id="login_as" value="{{ $loginAs }}">
+
+                    {{-- Email --}}
+                    <div class="al-field">
+                        <label for="email" class="al-label">{{ __('auth.email') }}</label>
+                        <div class="al-input-wrap">
+                            <svg class="al-input-ico" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            <input type="email" id="email" name="email"
+                                value="{{ old('email') }}"
+                                placeholder="{{ __('auth.email_placeholder') }}"
+                                class="al-input"
+                                required autofocus autocomplete="email"/>
+                        </div>
+                    </div>
+
+                    {{-- Password --}}
+                    <div class="al-field">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label for="password" class="al-label" style="margin:0">{{ __('auth.password') }}</label>
+                            <a href="{{ route('applicant.password.request') }}" class="al-forgot">{{ __('auth.forgot_password') }}</a>
+                        </div>
+                        <div x-data="{ show:false }" class="al-input-wrap">
+                            <svg class="al-input-ico" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                            <input :type="show?'text':'password'" id="password" name="password"
+                                placeholder="{{ __('auth.password_placeholder') }}"
+                                class="al-input pr-11"
+                                required autocomplete="current-password"/>
+                            <button type="button" @click="show=!show" class="al-pw-eye" :aria-label="show?'Hide':'Show'">
+                                <svg x-show="!show" xmlns="http://www.w3.org/2000/svg" class="h-[1.05rem] w-[1.05rem]" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                <svg x-show="show"  xmlns="http://www.w3.org/2000/svg" class="h-[1.05rem] w-[1.05rem]" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Remember me --}}
+                    <label class="al-remember">
+                        <input type="checkbox" name="remember" class="al-checkbox"/>
+                        <span>{{ __('auth.remember_me') }}</span>
+                    </label>
+
+                    {{-- Submit --}}
+                    <button type="submit" class="al-submit">
+                        {{ __('auth.sign_in') }}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                    </button>
+                </form>
+
+                {{-- Register --}}
+                <p class="al-register-line">
+                    {{ __('auth.no_account',[],'') ?: "Don't have an account?" }}
+                    <a href="{{ route('applicant.register') }}">{{ __('auth.create_account') }}</a>
+                </p>
+
+            </div>
         </div>
+
+        {{-- Footer --}}
+        <p class="al-footer">&copy; {{ date('Y') }} {{ $brandName }}</p>
     </div>
+
+    {{-- ══════════════════════════════════════════
+         RIGHT — about content on dark panel
+         ══════════════════════════════════════════ --}}
+    <div class="al-right" :class="{ 'open': aboutOpen }" @keydown.escape.window="aboutOpen = false">
+        {{-- ambient glow orbs --}}
+        <div class="al-orb al-orb-1" aria-hidden="true"></div>
+        <div class="al-orb al-orb-2" aria-hidden="true"></div>
+        <div class="al-orb al-orb-3" aria-hidden="true"></div>
+
+        <button type="button" class="al-about-close" @click="aboutOpen = false" aria-label="{{ __('app.Close details') }}">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/>
+            </svg>
+        </button>
+
+        @if($aboutPage)
+        <div class="al-about">
+            {{-- title --}}
+            <h2 class="al-about-title">{{ $aboutPage->title }}</h2>
+
+            {{-- divider --}}
+            <div class="al-about-divider" aria-hidden="true"></div>
+
+            {{-- scrollable body --}}
+            <div class="al-about-body">
+                {!! clean($aboutPage->body ?? '', 'cases') !!}
+            </div>
+        </div>
+        @else
+        {{-- No about page: just show brand centered --}}
+        <div class="al-about-empty">
+            <div class="al-empty-mark">{{ strtoupper(substr($brandName,0,2)) }}</div>
+            <p class="al-empty-name">{{ $brandName }}</p>
+            <p class="al-empty-sub">{{ __('auth.sign_in_subtitle') }}</p>
+        </div>
+        @endif
+    </div>
+
 </div>
 @endsection
 
 @push('scripts')
 <script>
-    localStorage.setItem('theme', 'light');
+    localStorage.setItem('theme','light');
     document.documentElement.classList.remove('dark');
-    document.body.classList.remove('dark', 'bg-gray-900');
+    document.body.classList.remove('dark','bg-gray-900');
 
-    const panelLabel = document.querySelector('[data-panel-label]');
-    const loginAs = document.getElementById('login_as');
+    // Role tab switcher + sliding indicator
+    const loginAsInput = document.getElementById('login_as');
+    const panelLabel   = document.querySelector('[data-panel-label]');
+    const indicator    = document.getElementById('al-role-indicator');
+    const tabs         = document.querySelectorAll('.al-role-tab');
 
-    document.querySelectorAll('.role-btn').forEach(btn => {
+    function moveIndicator(tab) {
+        if (!indicator || !tab) return;
+        indicator.style.width  = tab.offsetWidth  + 'px';
+        indicator.style.left   = tab.offsetLeft   + 'px';
+    }
+
+    tabs.forEach(btn => {
         btn.addEventListener('click', () => {
-            loginAs.value = btn.dataset.role;
-
-            if (panelLabel) {
-                panelLabel.textContent = btn.dataset.role === 'respondent' ?
-                    @json($respondentPanelLabel) :
-                    @json($applicantPanelLabel);
-            }
-
-            document.querySelectorAll('.role-btn')
-                .forEach(b => b.classList.remove('active'));
+            tabs.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            loginAsInput.value = btn.dataset.role;
+            if (panelLabel) {
+                panelLabel.textContent = btn.dataset.role === 'respondent'
+                    ? @json($respondentPanelLabel)
+                    : @json($applicantPanelLabel);
+            }
+            moveIndicator(btn);
         });
     });
+
+    // Init indicator position
+    window.addEventListener('DOMContentLoaded', () => {
+        moveIndicator(document.querySelector('.al-role-tab.active'));
+    });
+    window.addEventListener('resize', () => {
+        moveIndicator(document.querySelector('.al-role-tab.active'));
+    });
 </script>
+
 <style>
-    .js-theme-toggle {
-        display: none;
-    }
+/* ── Reset body ──────────────────────────────── */
+html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
 
-    .auth-visual {
-        background: radial-gradient(circle at 20% 20%, rgba(67, 56, 202, 0.25), transparent 55%),
-            radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.2), transparent 50%),
-            #0b1340;
-    }
+/* ── Shell ───────────────────────────────────── */
+.al-shell {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+    font-family: inherit;
+}
 
-    .auth-grid {
-        background-image:
-            linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
-        background-size: 48px 48px;
-        opacity: 0.8;
-    }
+/* ══════════════════════════════════════════════
+   LEFT PANEL
+══════════════════════════════════════════════ */
+.al-left {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background: #ffffff;
+    overflow-y: auto;
+    position: relative;
+}
+@media (min-width: 1024px) {
+    .al-left { width: 460px; flex-shrink: 0; }
+}
 
-    .auth-brand-mark {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        height: 48px;
-        width: 48px;
-        border-radius: 12px;
-        background: rgba(99, 102, 241, 0.9);
-        color: #ffffff;
-        font-weight: 700;
-        letter-spacing: 0.05em;
-    }
+/* top strip */
+.al-topstrip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.375rem 2rem;
+    flex-shrink: 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+.al-top-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
 
-    .role-btn {
-        border-radius: 0.75rem;
-        font-weight: 600;
-        padding: 0.75rem;
-        background: #f3f4f6;
-        color: #111827;
-        transition: all 0.2s ease;
-    }
+.al-logo-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+.al-logo-img {
+    height: 2rem; width: 2rem;
+    border-radius: 0.5rem; object-fit: contain;
+}
+.al-logo-mark {
+    display: inline-flex; align-items: center; justify-content: center;
+    height: 2rem; width: 2rem; border-radius: 0.5rem;
+    background: linear-gradient(135deg,#ea580c,#9a3412);
+    color: #fff; font-size: 0.6875rem; font-weight: 800;
+    letter-spacing: 0.04em;
+}
+.al-logo-name {
+    font-size: 0.9rem; font-weight: 700; color: #0f172a; letter-spacing: -0.01em;
+}
 
-    .role-btn.active {
-        background: #2563eb;
-        color: #ffffff;
-    }
+/* language switch */
+.al-lang-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.1875rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.625rem;
+    background: #f8fafc;
+}
+.al-lang-btn {
+    display: inline-flex; align-items: center; gap: 0.375rem;
+    min-width: 3.25rem;
+    justify-content: center;
+    padding: 0.3125rem 0.5rem;
+    border-radius: 0.4375rem; border: 1px solid transparent;
+    color: #475569; cursor: pointer; text-decoration: none;
+    font-size: 0.75rem; font-weight: 700;
+    transition: background 120ms, border-color 120ms, color 120ms;
+}
+.al-lang-btn:hover { background: #fff; color: #0f172a; }
+.al-lang-btn.active {
+    background: #fff;
+    border-color: #fed7aa;
+    color: #c2410c;
+    box-shadow: 0 1px 3px rgb(15 23 42/0.08);
+}
 
-    .role-btn:hover {
-        background: #e5e7eb;
-    }
+/* centered form area */
+.al-form-area {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 2rem;
+}
+.al-form-inner { width: 100%; max-width: 22rem; }
 
-    .role-btn.active:hover {
-        background: #1d4ed8;
+/* heading */
+.al-heading { margin-bottom: 1.75rem; }
+.al-heading h1 {
+    font-size: 1.75rem; font-weight: 800; color: #0f172a;
+    letter-spacing: -0.03em; line-height: 1.2; margin: 0 0 0.375rem;
+}
+.al-heading p {
+    font-size: 0.875rem; color: #64748b; margin: 0; line-height: 1.5;
+}
+
+/* role tabs */
+.al-role-tabs {
+    display: flex;
+    position: relative;
+    background: #f1f5f9;
+    border-radius: 0.75rem;
+    padding: 0.25rem;
+    margin-bottom: 0.5rem;
+    gap: 0;
+}
+.al-role-tab {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    gap: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.8125rem; font-weight: 600;
+    color: #64748b; background: transparent; border: none; cursor: pointer;
+    position: relative; z-index: 1;
+    transition: color 180ms;
+}
+.al-role-tab.active { color: #0f172a; }
+.al-role-indicator {
+    position: absolute; top: 0.25rem; bottom: 0.25rem; left: 0.25rem;
+    background: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 4px rgb(0 0 0/0.12);
+    transition: left 200ms cubic-bezier(0.4,0,0.2,1), width 200ms cubic-bezier(0.4,0,0.2,1);
+    pointer-events: none;
+}
+.al-panel-label {
+    font-size: 0.6875rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    color: #ea580c; margin: 0 0 1.25rem 0.125rem;
+}
+
+/* alerts */
+.al-alert {
+    display: flex; align-items: flex-start; gap: 0.5rem;
+    border-radius: 0.625rem; padding: 0.625rem 0.875rem;
+    font-size: 0.8rem; line-height: 1.5; margin-bottom: 1rem;
+}
+.al-alert ul { margin: 0; padding: 0; list-style: none; }
+.al-alert-ok { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
+.al-alert-err { background: #fff1f2; border: 1px solid #fecdd3; color: #be123c; }
+
+/* form */
+.al-form { display: flex; flex-direction: column; gap: 1.125rem; }
+.al-field { display: flex; flex-direction: column; }
+
+.al-label {
+    font-size: 0.8125rem; font-weight: 600; color: #334155;
+    margin-bottom: 0.375rem; display: block;
+}
+.al-input-wrap { position: relative; }
+.al-input-ico {
+    position: absolute; top: 50%; left: 0.875rem;
+    transform: translateY(-50%);
+    width: 1rem; height: 1rem; color: #94a3b8; pointer-events: none;
+}
+.al-input {
+    display: block; width: 100%; height: 2.75rem;
+    padding: 0 0.875rem 0 2.625rem;
+    border-radius: 0.625rem;
+    border: 1.5px solid #e2e8f0;
+    background: #fff;
+    font-size: 0.875rem; color: #0f172a;
+    transition: border-color 150ms, box-shadow 150ms;
+    outline: none; box-sizing: border-box;
+}
+.al-input::placeholder { color: #94a3b8; }
+.al-input:hover { border-color: #cbd5e1; }
+.al-input:focus {
+    border-color: #ea580c;
+    box-shadow: 0 0 0 3px rgb(234 88 12/0.13);
+}
+.al-pw-eye {
+    position: absolute; inset-y: 0; right: 0;
+    display: flex; align-items: center; padding: 0 0.875rem;
+    color: #94a3b8; background: none; border: none; cursor: pointer;
+    transition: color 120ms;
+}
+.al-pw-eye:hover { color: #475569; }
+
+.al-forgot {
+    font-size: 0.8125rem; font-weight: 600;
+    color: #ea580c; text-decoration: none; transition: color 120ms;
+}
+.al-forgot:hover { color: #c2410c; }
+
+.al-remember {
+    display: flex; align-items: center; gap: 0.625rem;
+    cursor: pointer; user-select: none;
+    font-size: 0.8125rem; color: #475569;
+}
+.al-checkbox {
+    width: 1rem; height: 1rem;
+    border-radius: 0.3125rem; border: 1.5px solid #cbd5e1;
+    accent-color: #ea580c; cursor: pointer; flex-shrink: 0;
+}
+
+/* submit */
+.al-submit {
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    width: 100%; height: 2.875rem;
+    border-radius: 0.75rem; border: none; cursor: pointer;
+    background: linear-gradient(135deg,#ea580c 0%,#9a3412 100%);
+    color: #fff; font-size: 0.9375rem; font-weight: 700;
+    letter-spacing: 0.01em;
+    box-shadow: 0 4px 16px rgb(234 88 12/0.38);
+    transition: transform 150ms, box-shadow 150ms, opacity 150ms;
+    margin-top: 0.25rem;
+}
+.al-submit:hover {
+    opacity: 0.93;
+    box-shadow: 0 6px 22px rgb(234 88 12/0.48);
+    transform: translateY(-1px);
+}
+.al-submit:active { transform: scale(0.98); box-shadow: 0 2px 10px rgb(234 88 12/0.3); }
+
+/* register link */
+.al-register-line {
+    margin-top: 1.25rem; text-align: center;
+    font-size: 0.8125rem; color: #64748b;
+}
+.al-register-line a {
+    font-weight: 700; color: #ea580c; text-decoration: none; transition: color 120ms;
+}
+.al-register-line a:hover { color: #c2410c; }
+
+.al-mobile-about-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    min-height: 2.625rem;
+    margin-top: 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid #fed7aa;
+    background: #fff7ed;
+    color: #c2410c;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 120ms, border-color 120ms, color 120ms;
+}
+.al-mobile-about-btn-top {
+    width: auto;
+    min-height: 2.125rem;
+    margin-top: 0;
+    padding: 0 0.75rem;
+    white-space: nowrap;
+    font-size: 0.75rem;
+}
+.al-mobile-about-btn:hover {
+    background: #ffedd5;
+    border-color: #fdba74;
+    color: #9a3412;
+}
+@media (min-width: 1024px) {
+    .al-mobile-about-btn { display: none; }
+}
+
+/* footer */
+.al-footer {
+    flex-shrink: 0; text-align: center;
+    padding: 1rem 2rem 1.25rem;
+    font-size: 0.6875rem; color: #94a3b8;
+}
+
+/* ══════════════════════════════════════════════
+   RIGHT PANEL
+══════════════════════════════════════════════ */
+.al-right {
+    display: none;
+    flex: 1; position: relative; overflow: hidden;
+    background: #080e27;
+}
+.al-right.open {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: flex;
+    align-items: stretch;
+}
+@media (min-width: 1024px) {
+    .al-right {
+        display: flex;
+        align-items: stretch;
+        position: relative;
+        inset: auto;
+        z-index: auto;
     }
+}
+
+/* ambient orbs */
+.al-orb {
+    position: absolute; border-radius: 9999px;
+    filter: blur(72px); pointer-events: none;
+}
+.al-orb-1 {
+    top: -15%; left: -10%; width: 65%; height: 65%;
+    background: radial-gradient(circle, rgb(79 70 229/0.35) 0%, transparent 70%);
+}
+.al-orb-2 {
+    bottom: -15%; right: -10%; width: 60%; height: 60%;
+    background: radial-gradient(circle, rgb(234 88 12/0.28) 0%, transparent 70%);
+}
+.al-orb-3 {
+    top: 40%; left: 30%; width: 40%; height: 40%;
+    background: radial-gradient(circle, rgb(6 182 212/0.12) 0%, transparent 70%);
+}
+
+.al-about-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 20;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.625rem;
+    border: 1px solid rgb(255 255 255/0.16);
+    background: rgb(255 255 255/0.08);
+    color: rgb(255 255 255/0.82);
+    cursor: pointer;
+}
+.al-about-close:hover {
+    background: rgb(255 255 255/0.14);
+    color: #fff;
+}
+@media (min-width: 1024px) {
+    .al-about-close { display: none; }
+}
+
+/* about panel */
+.al-about {
+    position: relative; z-index: 10;
+    display: flex; flex-direction: column;
+    width: 100%; padding: 2.5rem;
+}
+@media (max-width: 1023px) {
+    .al-about {
+        padding: 4.5rem 1.5rem 1.5rem;
+    }
+}
+
+.al-about-title {
+    font-size: 1.5rem; font-weight: 800;
+    color: #fff; line-height: 1.25;
+    margin: 0 0 1rem; flex-shrink: 0;
+    letter-spacing: -0.02em;
+}
+
+.al-about-divider {
+    flex-shrink: 0; height: 1px;
+    background: linear-gradient(90deg,rgb(255 255 255/0.12),transparent);
+    margin-bottom: 1.25rem;
+}
+
+.al-about-body {
+    flex: 1; min-height: 0;
+    overflow-y: auto;
+    font-size: 0.875rem; line-height: 1.8;
+    color: rgb(255 255 255/0.6);
+    word-break: break-word;
+    padding-right: 0.25rem;
+}
+/* scrollbar */
+.al-about-body::-webkit-scrollbar { width: 4px; }
+.al-about-body::-webkit-scrollbar-track { background: transparent; }
+.al-about-body::-webkit-scrollbar-thumb { background: rgb(255 255 255/0.15); border-radius: 9999px; }
+.al-about-body::-webkit-scrollbar-thumb:hover { background: rgb(255 255 255/0.25); }
+
+/* about body typography */
+.al-about-body h1,.al-about-body h2,.al-about-body h3 {
+    color: rgb(255 255 255/0.9); font-weight: 700; margin: 1em 0 0.4em;
+}
+.al-about-body p { margin: 0 0 0.75em; }
+.al-about-body a { color: #fb923c; text-decoration: underline; }
+.al-about-body ul,.al-about-body ol { padding-left: 1.25em; margin-bottom: 0.75em; }
+
+/* empty state */
+.al-about-empty {
+    position: relative; z-index: 10;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    width: 100%; text-align: center; padding: 2rem;
+}
+.al-empty-mark {
+    width: 5rem; height: 5rem; border-radius: 1.5rem;
+    background: rgb(255 255 255/0.07);
+    border: 1px solid rgb(255 255 255/0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; font-weight: 800;
+    color: rgb(255 255 255/0.7);
+    margin-bottom: 1.25rem;
+}
+.al-empty-name {
+    font-size: 1.375rem; font-weight: 700; color: #fff; margin: 0 0 0.5rem;
+}
+.al-empty-sub { font-size: 0.875rem; color: rgb(255 255 255/0.45); margin: 0; }
 </style>
 @endpush

@@ -50,6 +50,8 @@ return array (
   'Mark all as seen' => 'Mark all as seen',
   'Seen' => 'Seen',
   'View all' => 'View all',
+  'View details' => 'Manual',
+  'Close details' => 'Close details',
   'Applicant messages' => 'Applicant messages',
   'New cases' => 'New cases',
   'Upcoming hearings' => 'Upcoming hearings',

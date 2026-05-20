@@ -9,17 +9,6 @@
     @endphp
 
     <div class="space-y-6">
-        @if(session('success'))
-        <div class="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 shadow-sm">
-            <svg class="h-5 w-5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-            <div class="flex-1">
-                {{ session('success') }}
-            </div>
-        </div>
-        @endif
-
         <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
             <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div class="space-y-2">

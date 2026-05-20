@@ -7,7 +7,7 @@
 
 @font-face {
   font-family: "Nyala";
-  src: url("/fonts/Nyala.ttf") format("truetype");
+  src: url("../fonts/Nyala.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -15,7 +15,7 @@
 
 @font-face {
   font-family: "NotoEthiopic";
-  src: url("/fonts/NotoSansEthiopic-Regular.ttf") format("truetype");
+  src: url("../fonts/NotoSansEthiopic-Regular.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -23,7 +23,7 @@
 
 @font-face {
   font-family: "Abyssinica";
-  src: url("/fonts/AbyssinicaSIL-Regular.ttf") format("truetype");
+  src: url("../fonts/AbyssinicaSIL-Regular.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;

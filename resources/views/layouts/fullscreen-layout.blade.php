@@ -79,12 +79,14 @@
         (function() {
             const theme = localStorage.getItem('theme') || 'system';
             const useDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            const body = document.body;
+
             if (useDark) {
                 document.documentElement.classList.add('dark');
-                document.body.classList.add('dark', 'bg-gray-900');
+                body?.classList.add('dark', 'bg-gray-900');
             } else {
                 document.documentElement.classList.remove('dark');
-                document.body.classList.remove('dark', 'bg-gray-900');
+                body?.classList.remove('dark', 'bg-gray-900');
             }
         })();
     </script>

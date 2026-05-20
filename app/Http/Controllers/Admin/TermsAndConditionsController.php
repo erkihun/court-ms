@@ -37,7 +37,10 @@ class TermsAndConditionsController extends Controller
 
         TermsAndCondition::create($data);
 
-        return redirect()->route('terms.index')->with('success', 'Terms created successfully.');
+        return redirect()->route('terms.index')->with('success', [
+            'key' => 'messages.success.created',
+            'replace' => ['resource' => __('messages.resources.terms')],
+        ]);
     }
 
     public function edit(TermsAndCondition $term): View
@@ -62,13 +65,19 @@ class TermsAndConditionsController extends Controller
 
         $term->update($data);
 
-        return redirect()->route('terms.index')->with('success', 'Terms updated.');
+        return redirect()->route('terms.index')->with('success', [
+            'key' => 'messages.success.updated',
+            'replace' => ['resource' => __('messages.resources.terms')],
+        ]);
     }
 
     public function destroy(TermsAndCondition $term): RedirectResponse
     {
         $term->delete();
 
-        return redirect()->route('terms.index')->with('success', 'Terms deleted.');
+        return redirect()->route('terms.index')->with('success', [
+            'key' => 'messages.success.deleted',
+            'replace' => ['resource' => __('messages.resources.terms')],
+        ]);
     }
 }

@@ -53,7 +53,10 @@ class RolesController extends Controller
 
         $role->permissions()->sync($data['permissions'] ?? []);
 
-        return redirect()->route('roles.index')->with('ok', 'Role created.');
+        return redirect()->route('roles.index')->with('ok', [
+            'key' => 'messages.success.created',
+            'replace' => ['resource' => __('messages.resources.role')],
+        ]);
     }
 
     public function edit(Role $role)
@@ -84,13 +87,19 @@ class RolesController extends Controller
 
         $role->permissions()->sync($data['permissions'] ?? []);
 
-        return redirect()->route('roles.index')->with('ok', 'Role updated.');
+        return redirect()->route('roles.index')->with('ok', [
+            'key' => 'messages.success.updated',
+            'replace' => ['resource' => __('messages.resources.role')],
+        ]);
     }
 
     public function destroy(Role $role)
     {
         $role->delete();
-        return back()->with('ok', 'Role deleted.');
+        return back()->with('ok', [
+            'key' => 'messages.success.deleted',
+            'replace' => ['resource' => __('messages.resources.role')],
+        ]);
     }
 
     private function groupPermissions(Collection $perms): Collection

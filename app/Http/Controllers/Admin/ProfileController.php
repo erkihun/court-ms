@@ -67,7 +67,10 @@ class ProfileController extends Controller
         // Persist
         $user->fill($validated)->save();
 
-        return redirect()->route('profile.edit')->with('success', 'Profile updated.');
+        return redirect()->route('profile.edit')->with('success', [
+            'key' => 'messages.success.updated',
+            'replace' => ['resource' => __('messages.resources.profile')],
+        ]);
     }
 
     /**
@@ -99,6 +102,6 @@ class ProfileController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/')->with('success', 'Your account has been deleted.');
+        return redirect('/')->with('success', 'messages.success.account_deleted');
     }
 }

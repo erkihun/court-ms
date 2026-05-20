@@ -20,13 +20,6 @@
                 {{ __('auth.email_not_verified') }}
             </p>
 
-            @if (session('status') == 'verification-link-sent')
-            <div
-                class="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 shadow-sm">
-                {{ __('auth.verify_email.link_resent_registration') }}
-            </div>
-            @endif
-
             <div class="mt-6 space-y-3">
                 <form method="POST" action="{{ route('verification.send') }}">
                     @csrf

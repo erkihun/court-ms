@@ -34,7 +34,10 @@ class LetterTemplateController extends Controller
 
         LetterTemplate::create($data);
 
-        return redirect()->route('letter-templates.index')->with('success', 'Letter template created.');
+        return redirect()->route('letter-templates.index')->with('success', [
+            'key' => 'messages.success.created',
+            'replace' => ['resource' => __('messages.resources.letter_template')],
+        ]);
     }
 
     public function edit(LetterTemplate $letterTemplate)
@@ -54,14 +57,20 @@ class LetterTemplateController extends Controller
 
         $letterTemplate->update($data);
 
-        return redirect()->route('letter-templates.index')->with('success', 'Letter template updated.');
+        return redirect()->route('letter-templates.index')->with('success', [
+            'key' => 'messages.success.updated',
+            'replace' => ['resource' => __('messages.resources.letter_template')],
+        ]);
     }
 
     public function destroy(LetterTemplate $letterTemplate)
     {
         $letterTemplate->delete();
 
-        return redirect()->route('letter-templates.index')->with('success', 'Letter template deleted.');
+        return redirect()->route('letter-templates.index')->with('success', [
+            'key' => 'messages.success.deleted',
+            'replace' => ['resource' => __('messages.resources.letter_template')],
+        ]);
     }
 
     private function validateTemplate(Request $request): array

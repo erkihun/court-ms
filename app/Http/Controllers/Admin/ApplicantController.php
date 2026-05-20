@@ -46,7 +46,11 @@ class ApplicantController extends Controller
 
         $applicant->update(['is_active' => $data['is_active']]);
 
-        $message = $applicant->is_active ? 'Applicant activated.' : 'Applicant deactivated.';
+        $message = [
+            'key' => $applicant->is_active ? 'messages.success.activated' : 'messages.success.deactivated',
+            'replace' => ['resource' => __('messages.resources.applicant')],
+        ];
+
         return back()->with('success', $message);
     }
 }

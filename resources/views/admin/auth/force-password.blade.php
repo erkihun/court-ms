@@ -7,12 +7,6 @@
             </p>
         </div>
 
-        @if (session('error'))
-        <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 shadow-sm">
-            {{ session('error') }}
-        </div>
-        @endif
-
         <div class="rounded-xl border border-gray-200 bg-white shadow-sm p-6">
             @include('admin.profile.partials.update-password-form')
         </div>

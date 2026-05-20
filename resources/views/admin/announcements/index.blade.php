@@ -13,12 +13,6 @@
             </a>
         </div>
 
-        @if(session('success'))
-            <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 shadow-sm">
-                {{ session('success') }}
-            </div>
-        @endif
-
         @if($announcements->isEmpty())
             <div class="text-center border border-dashed border-gray-300 rounded-lg p-10 text-gray-600">
                 <p class="text-lg font-semibold text-gray-900">{{ __('announcements.empty_state') }}</p>

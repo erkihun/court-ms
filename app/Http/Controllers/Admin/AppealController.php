@@ -66,7 +66,10 @@ class AppealController extends Controller
 
             return redirect()
                 ->route('appeals.show', $appealId)
-                ->with('success', 'Appeal created.');
+                ->with('success', [
+                    'key' => 'messages.success.created',
+                    'replace' => ['resource' => __('messages.resources.appeal')],
+                ]);
         });
     }
 
@@ -96,7 +99,7 @@ class AppealController extends Controller
 
         if (!in_array($appeal->status, ['draft', 'submitted'], true)) {
             return redirect()->route('appeals.show', $appealId)
-                ->with('error', 'Cannot edit at this stage.');
+                ->with('error', 'messages.error.cannot_edit_stage');
         }
 
         return view('admin.appeals.edit', compact('appeal'));
@@ -118,7 +121,10 @@ class AppealController extends Controller
             'updated_at' => now(),
         ]);
 
-        return back()->with('success', 'Updated.');
+        return back()->with('success', [
+            'key' => 'messages.success.updated',
+            'replace' => ['resource' => __('messages.resources.appeal')],
+        ]);
     }
 
     public function submit($appealId)
@@ -127,7 +133,7 @@ class AppealController extends Controller
         abort_if(!$appeal, 404);
 
         if ($appeal->status !== 'draft') {
-            return back()->with('error', 'Only drafts can be submitted.');
+            return back()->with('error', 'messages.error.only_drafts_submit');
         }
 
         DB::table('appeals')->where('id', $appealId)->update([
@@ -136,7 +142,10 @@ class AppealController extends Controller
             'updated_at'   => now(),
         ]);
 
-        return back()->with('success', 'Appeal submitted.');
+        return back()->with('success', [
+            'key' => 'messages.success.submitted',
+            'replace' => ['resource' => __('messages.resources.appeal')],
+        ]);
     }
 
     public function decide(Request $request, $appealId)
@@ -150,7 +159,7 @@ class AppealController extends Controller
         ]);
 
         if (!in_array($appeal->status, ['submitted', 'under_review'], true)) {
-            return back()->with('error', 'Not in a decidable state.');
+            return back()->with('error', 'messages.error.not_decidable');
         }
 
         DB::table('appeals')->where('id', $appealId)->update([
@@ -161,7 +170,10 @@ class AppealController extends Controller
             'updated_at'         => now(),
         ]);
 
-        return back()->with('success', 'Decision recorded.');
+        return back()->with('success', [
+            'key' => 'messages.success.recorded',
+            'replace' => ['resource' => __('messages.resources.decision')],
+        ]);
     }
 
     public function uploadDoc(Request $request, $appealId)
@@ -187,7 +199,10 @@ class AppealController extends Controller
             'updated_at' => now(),
         ]);
 
-        return back()->with('success', 'Document uploaded.');
+        return back()->with('success', [
+            'key' => 'messages.success.uploaded',
+            'replace' => ['resource' => __('messages.resources.document')],
+        ]);
     }
 
     public function deleteDoc($appealId, $docId)
@@ -206,6 +221,9 @@ class AppealController extends Controller
 
         DB::table('appeal_documents')->where('id', $docId)->delete();
 
-        return back()->with('success', 'Document removed.');
+        return back()->with('success', [
+            'key' => 'messages.success.removed',
+            'replace' => ['resource' => __('messages.resources.document')],
+        ]);
     }
 }

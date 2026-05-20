@@ -1746,12 +1746,6 @@
                                     </div>
                                     @endif
 
-                                    @if($errors->any())
-                                    <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3  text-red-700">
-                                        {{ __('letters.form.validation_notice') }}
-                                    </div>
-                                    @endif
-
                                     <div class="grid md:grid-cols-2 gap-4">
                                         <div>
                                             <label

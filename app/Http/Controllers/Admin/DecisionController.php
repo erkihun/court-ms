@@ -63,7 +63,10 @@ class DecisionController extends Controller
 
         Decision::create($data);
 
-        return redirect()->route('decisions.index')->with('success', 'Decision created.');
+        return redirect()->route('decisions.index')->with('success', [
+            'key' => 'messages.success.created',
+            'replace' => ['resource' => __('messages.resources.decision')],
+        ]);
     }
 
     public function edit(Decision $decision)
@@ -82,7 +85,10 @@ class DecisionController extends Controller
         $case = CourtCase::with('applicant')->findOrFail($payload['case_id']);
         $decision->update($this->hydrateCaseData($payload, $case));
 
-        return redirect()->route('decisions.index')->with('success', 'Decision updated.');
+        return redirect()->route('decisions.index')->with('success', [
+            'key' => 'messages.success.updated',
+            'replace' => ['resource' => __('messages.resources.decision')],
+        ]);
     }
 
     public function storeReview(Request $request, Decision $decision)
@@ -101,7 +107,10 @@ class DecisionController extends Controller
             'outcome' => $data['outcome'],
         ]);
 
-        return back()->with('success', 'Review submitted.');
+        return back()->with('success', [
+            'key' => 'messages.success.submitted',
+            'replace' => ['resource' => __('messages.resources.review')],
+        ]);
     }
 
     public function updateReview(Request $request, Decision $decision, DecisionReview $review)
@@ -120,7 +129,10 @@ class DecisionController extends Controller
             'review_note' => $data['review_note'] ?? null,
         ]);
 
-        return redirect()->route('decisions.show', $decision)->with('success', 'Review updated.');
+        return redirect()->route('decisions.show', $decision)->with('success', [
+            'key' => 'messages.success.updated',
+            'replace' => ['resource' => __('messages.resources.review')],
+        ]);
     }
 
     public function destroyReview(Decision $decision, DecisionReview $review)
@@ -131,7 +143,10 @@ class DecisionController extends Controller
 
         $review->delete();
 
-        return back()->with('success', 'Review deleted.');
+        return back()->with('success', [
+            'key' => 'messages.success.deleted',
+            'replace' => ['resource' => __('messages.resources.review')],
+        ]);
     }
 
     public function editReview(Decision $decision, DecisionReview $review)
@@ -146,7 +161,10 @@ class DecisionController extends Controller
     {
         $this->ensureMiddleJudge($decision);
         $decision->delete();
-        return back()->with('success', 'Decision deleted.');
+        return back()->with('success', [
+            'key' => 'messages.success.deleted',
+            'replace' => ['resource' => __('messages.resources.decision')],
+        ]);
     }
 
     private function rules(): array

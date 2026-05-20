@@ -91,7 +91,10 @@ class BenchNoteController extends Controller
 
         return redirect()
             ->route('bench-notes.index', ['case_id' => $benchNote->case_id])
-            ->with('success', 'Bench note created.');
+            ->with('success', [
+                'key' => 'messages.success.created',
+                'replace' => ['resource' => __('messages.resources.bench_note')],
+            ]);
     }
 
     public function show(BenchNote $benchNote)
@@ -167,7 +170,10 @@ class BenchNoteController extends Controller
 
         return redirect()
             ->route('bench-notes.index', ['case_id' => $benchNote->case_id])
-            ->with('success', 'Bench note updated.');
+            ->with('success', [
+                'key' => 'messages.success.updated',
+                'replace' => ['resource' => __('messages.resources.bench_note')],
+            ]);
     }
 
     public function destroy(BenchNote $benchNote)
@@ -177,7 +183,10 @@ class BenchNoteController extends Controller
 
         return redirect()
             ->route('bench-notes.index', ['case_id' => $caseId])
-            ->with('success', 'Bench note deleted.');
+            ->with('success', [
+                'key' => 'messages.success.deleted',
+                'replace' => ['resource' => __('messages.resources.bench_note')],
+            ]);
     }
 
     private function sanitizeNote(?string $html): string

@@ -13,10 +13,6 @@
             <a href="{{ route('roles.create') }}" class="btn btn-primary">{{ __('roles.index.new_role') }}</a>
         </div>
 
-        @if(session('ok'))
-        <div class="ui-alert ui-alert-success">{{ session('ok') }}</div>
-        @endif
-
         <div class="ui-table-wrap">
             <div class="ui-table-scroll">
                 <table class="ui-table">

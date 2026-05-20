@@ -58,7 +58,7 @@ class LetterController extends Controller
             $case = CourtCase::where('case_number', $data['case_number'])->first();
             if ($case && ($case->status === 'closed')) {
                 return back()
-                    ->withErrors(['case_number' => 'This case is closed; you cannot write a letter for it.'])
+                    ->withErrors(['case_number' => __('messages.error.closed_case_letter_locked')])
                     ->withInput();
             }
         }
@@ -157,7 +157,10 @@ class LetterController extends Controller
             ]);
         });
 
-        return redirect()->route('letters.show', $letter)->with('success', 'Letter created.');
+        return redirect()->route('letters.show', $letter)->with('success', [
+            'key' => 'messages.success.created',
+            'replace' => ['resource' => __('messages.resources.letter')],
+        ]);
     }
 
     public function edit(Letter $letter)
@@ -170,7 +173,7 @@ class LetterController extends Controller
     public function update(Request $request, Letter $letter)
     {
         if ($letter->approval_status === 'approved') {
-            return back()->with('error', 'Approved letters cannot be updated.');
+            return back()->with('error', 'messages.error.approved_letter_update_locked');
         }
 
         $data = $request->validate([
@@ -257,18 +260,24 @@ class LetterController extends Controller
             'approved_by_title'  => $data['approved_by_title'] ?? null,
         ]);
 
-        return redirect()->route('letters.show', $letter)->with('success', 'Letter updated.');
+        return redirect()->route('letters.show', $letter)->with('success', [
+            'key' => 'messages.success.updated',
+            'replace' => ['resource' => __('messages.resources.letter')],
+        ]);
     }
 
     public function destroy(Letter $letter)
     {
         if ($letter->approval_status === 'approved') {
-            return back()->with('error', 'Approved letters cannot be deleted.');
+            return back()->with('error', 'messages.error.approved_letter_delete_locked');
         }
 
         $letter->delete();
 
-        return redirect()->route('letters.index')->with('success', 'Letter deleted.');
+        return redirect()->route('letters.index')->with('success', [
+            'key' => 'messages.success.deleted',
+            'replace' => ['resource' => __('messages.resources.letter')],
+        ]);
     }
 
     public function show(Letter $letter)
@@ -355,7 +364,10 @@ class LetterController extends Controller
             $this->createSystemCaseMessage($letter, $user?->id);
         }
 
-        return redirect()->route('letters.index')->with('success', "Letter {$data['status']}.");
+        return redirect()->route('letters.index')->with('success', [
+            'key' => 'messages.success.letter_status',
+            'replace' => ['status' => __('messages.letter_status_values.' . $data['status'])],
+        ]);
     }
 
     /**

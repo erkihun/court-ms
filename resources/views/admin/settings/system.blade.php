@@ -7,27 +7,6 @@
             <p class="enterprise-subtitle">Manage platform identity, branding assets, and public contact information.</p>
         </div>
 
-        @if(session('ok'))
-        <div class="ui-alert ui-alert-success">
-            <x-heroicon-o-check-circle class="h-5 w-5 mt-0.5 shrink-0" />
-            <div>{{ session('ok') }}</div>
-        </div>
-        @endif
-
-        @if($errors->any())
-        <div class="ui-alert ui-alert-error">
-            <x-heroicon-o-exclamation-circle class="h-5 w-5 mt-0.5 shrink-0" />
-            <div>
-                <div class="font-semibold mb-1">Please correct the following:</div>
-                <ul class="list-disc list-inside space-y-0.5 text-xs">
-                    @foreach($errors->all() as $err)
-                    <li>{{ $err }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        </div>
-        @endif
-
         <form method="POST" action="{{ route('settings.system.update') }}" enctype="multipart/form-data" class="enterprise-panel">
             @csrf
 

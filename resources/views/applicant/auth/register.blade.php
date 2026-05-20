@@ -178,11 +178,11 @@ $noText = 'No';
                                 </label>
                                 <input name="national_id_number" value="{{ old('national_id_number') }}" required
                                     inputmode="numeric" autocomplete="off" maxlength="19" pattern="\d{4}\s\d{4}\s\d{4}\s\d{4}"
-                                    title="Format: XXXX XXXX XXXX XXXX (only numbers allowed)"
-                                    placeholder="1234 5678 9012 3456"
+                                    title="{{ __('auth.national_id_hint') }}"
+                                    placeholder="{{ __('auth.national_id_placeholder') }}"
                                     class="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 shadow-theme-xs focus:border-brand-300 focus:outline-none focus:ring-3 focus:ring-brand-500/10">
                                 <p class="mt-1 text-xs text-gray-500">
-                                    Format: XXXX XXXX XXXX XXXX (only numbers allowed)
+                                    {{ __('auth.national_id_hint') }}
                                 </p>
                             </div>
                         </div>

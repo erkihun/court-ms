@@ -1,20 +1,6 @@
 <x-admin-layout title="Profile">
     @section('page_header','Profile')
 
-    {{-- Flash messages --}}
-    @if(session('success'))
-    <div class="mb-4 rounded bg-green-100 border border-green-200 text-green-700 px-3 py-2">
-        {{ session('success') }}
-    </div>
-    @endif
-    @if($errors->any())
-    <div class="mb-4 rounded bg-red-100 border border-red-200 text-red-700 px-3 py-2">
-        <ul class="list-disc ml-5">
-            @foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach
-        </ul>
-    </div>
-    @endif
-
     <form method="POST" action="{{ route('profile.update') }}" enctype="multipart/form-data" class="grid md:grid-cols-3 gap-6">
         @csrf
         @method('PATCH')

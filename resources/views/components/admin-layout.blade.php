@@ -85,6 +85,7 @@
 {{-- Tribunal systems use clear, high-contrast typography --}}
 
 <body x-data="layoutState()" x-init="init()" class="ui-shell admin-subtle-grid min-h-screen flex font-sans font-ui text-[var(--text)]">
+    @include('partials.admin-toasts')
 
     {{-- Sidebar (mobile slide-in + desktop collapsible) --}}
     @php
@@ -1400,17 +1401,6 @@
 
         {{-- Page content --}}
         <main class="page-enter flex-1 p-4 md:p-6 xl:p-8 {{ $isCaseTypographyRoute ? 'case-font-scope case-typography' : '' }}">
-            @if(session('success'))
-            <x-ui.alert type="success" class="mb-6">
-                {{ session('success') }}
-            </x-ui.alert>
-            @endif
-            @if(session('error'))
-            <x-ui.alert type="error" class="mb-6">
-                {{ session('error') }}
-            </x-ui.alert>
-            @endif
-
             <div class="ui-page-admin">
                 {{ $slot }}
             </div>
@@ -1669,6 +1659,5 @@
 </body>
 
 </html>
-
 
 

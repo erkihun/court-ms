@@ -1,18 +1,6 @@
 <x-admin-layout title="{{ __('Case Types') }}">
     @section('page_header', __('Case Types'))
 
-    {{-- Session Alerts (Improved styling) --}}
-    @if (session('success'))
-    <x-ui.alert type="success" class="mb-4" role="alert">
-        {{ session('success') }}
-    </x-ui.alert>
-    @endif
-    @if (session('error'))
-    <x-ui.alert type="error" class="mb-4" role="alert">
-        {{ session('error') }}
-    </x-ui.alert>
-    @endif
-
     {{-- Search and Action Bar (Modern Card) --}}
     <x-ui.filter-bar class="mb-6">
         <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3">

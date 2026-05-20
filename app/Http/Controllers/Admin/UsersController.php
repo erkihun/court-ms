@@ -127,14 +127,14 @@ class UsersController extends Controller
 
         try {
             Password::broker()->sendResetLink(['email' => $user->email]);
-            $message = 'User created. A password reset link was sent.';
+            $message = 'messages.success.user_created_reset_sent';
         } catch (\Throwable $e) {
             Log::warning('Failed sending user reset link', [
                 'user_id' => $user->id,
                 'email' => $user->email,
                 'error' => $e->getMessage(),
             ]);
-            $message = 'User created. Ask the user to reset their password.';
+            $message = 'messages.success.user_created_reset_manual';
         }
 
         return redirect()->route('users.index')->with('success', $message);
@@ -247,7 +247,10 @@ class UsersController extends Controller
             $user->roles()->sync($data['roles'] ?? []);
         }
 
-        return redirect()->route('users.index')->with('success', 'User updated.');
+        return redirect()->route('users.index')->with('success', [
+            'key' => 'messages.success.updated',
+            'replace' => ['resource' => __('messages.resources.user')],
+        ]);
     }
 
     /** Destroy (policy: delete) */
@@ -262,6 +265,9 @@ class UsersController extends Controller
 
         $user->delete();
 
-        return redirect()->route('users.index')->with('success', 'User deleted.');
+        return redirect()->route('users.index')->with('success', [
+            'key' => 'messages.success.deleted',
+            'replace' => ['resource' => __('messages.resources.user')],
+        ]);
     }
 }

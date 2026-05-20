@@ -2,12 +2,6 @@
 <x-admin-layout title="{{ __('teams.page_header.edit') }}">
     @section('page_header', __('teams.page_header.edit'))
 
-    @if(session('success'))
-    <div class="mb-4 rounded-md bg-green-100 border border-green-300 text-green-800 px-4 py-2">
-        {{ session('success') }}
-    </div>
-    @endif
-
     <div class="mb-6 flex items-center justify-between">
         <p class="text-sm text-gray-500">{{ __('teams.descriptions.edit_notice') }}</p>
         <a href="{{ route('teams.index') }}"

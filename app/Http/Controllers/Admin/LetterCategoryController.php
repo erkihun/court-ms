@@ -33,7 +33,10 @@ class LetterCategoryController extends Controller
 
         return redirect()
             ->route('letter-categories.index')
-            ->with('success', 'Letter category created.');
+            ->with('success', [
+                'key' => 'messages.success.created',
+                'replace' => ['resource' => __('messages.resources.letter_category')],
+            ]);
     }
 
     public function edit(LetterCategory $letterCategory)
@@ -51,7 +54,10 @@ class LetterCategoryController extends Controller
 
         return redirect()
             ->route('letter-categories.index')
-            ->with('success', 'Letter category updated.');
+            ->with('success', [
+                'key' => 'messages.success.updated',
+                'replace' => ['resource' => __('messages.resources.letter_category')],
+            ]);
     }
 
     public function destroy(LetterCategory $letterCategory)
@@ -60,7 +66,10 @@ class LetterCategoryController extends Controller
 
         return redirect()
             ->route('letter-categories.index')
-            ->with('success', 'Letter category deleted.');
+            ->with('success', [
+                'key' => 'messages.success.deleted',
+                'replace' => ['resource' => __('messages.resources.letter_category')],
+            ]);
     }
 
     private function validateCategory(Request $request, ?int $ignoreId = null): array

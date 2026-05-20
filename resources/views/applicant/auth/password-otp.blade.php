@@ -51,7 +51,7 @@
                         autocomplete="one-time-code"
                         maxlength="6"
                         pattern="\d{6}"
-                        placeholder="000000"
+                        placeholder="{{ __('auth.otp_placeholder') }}"
                         autofocus
                         class="w-full rounded-lg border border-slate-300 px-4 py-3 text-center text-2xl font-mono tracking-[0.5em] text-slate-900
                                focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400

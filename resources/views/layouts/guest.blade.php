@@ -30,6 +30,8 @@
 @endphp
 
 <body class="font-sans antialiased text-[var(--text)]">
+    @include('partials.admin-toasts')
+
     @if($variant === 'split-auth')
         <div class="guest-container min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.18),_transparent_32%),radial-gradient(circle_at_bottom_right,_rgba(249,115,22,0.14),_transparent_26%),linear-gradient(180deg,#e2e8f0_0%,#f8fafc_35%,#e2e8f0_100%)] dark:bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.14),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(249,115,22,0.12),_transparent_30%),linear-gradient(180deg,#020617_0%,#0f172a_100%)]">
             {{ $slot }}

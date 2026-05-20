@@ -20,10 +20,6 @@
             </div>
         </x-ui.filter-bar>
 
-        @if(session('ok'))
-        <x-ui.alert type="success">{{ session('ok') }}</x-ui.alert>
-        @endif
-
         <x-ui.table>
             <x-slot name="head">
                 <tr>
