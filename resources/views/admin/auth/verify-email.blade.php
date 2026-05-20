@@ -8,13 +8,13 @@
                     ✉️
                 </div>
                 <div>
-                    <p class="text-sm uppercase tracking-wider text-blue-600">Email verification</p>
+                    <p class="text-sm uppercase tracking-wider text-blue-600">{{ __('auth.email_verification_label') }}</p>
 
                 </div>
             </div>
 
             <p class="text-sm text-gray-700">
-                {{ __('Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn\'t receive the email, we will gladly send you another.') }}
+                {{ __('auth.email_verification_description') }}
             </p>
             <p class="mt-3 text-sm font-medium text-red-600">
                 {{ __('auth.email_not_verified') }}

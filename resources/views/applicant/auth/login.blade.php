@@ -157,7 +157,7 @@ session()->forget('acting_as_respondent');
 
                 {{-- Register --}}
                 <p class="al-register-line">
-                    {{ __('auth.no_account',[],'') ?: "Don't have an account?" }}
+                    {{ __('auth.no_account') }}
                     <a href="{{ route('applicant.register') }}">{{ __('auth.create_account') }}</a>
                 </p>
 

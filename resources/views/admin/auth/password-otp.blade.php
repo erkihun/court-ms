@@ -1,14 +1,14 @@
 <x-guest-layout>
     <div class="mb-4">
-        <h2 class="text-lg font-semibold text-gray-800">Enter Reset Code</h2>
-        <p class="mt-1 text-sm text-gray-600">We sent a 6-digit code to your email address. It expires in 10 minutes.</p>
+        <h2 class="text-lg font-semibold text-gray-800">{{ __('auth.password_otp_title') }}</h2>
+        <p class="mt-1 text-sm text-gray-600">{{ __('auth.password_otp_description') }}</p>
     </div>
 
     <form method="POST" action="{{ route('admin.password.otp.verify') }}">
         @csrf
 
         <div>
-            <x-input-label for="code" value="Verification Code" />
+            <x-input-label for="code" :value="__('auth.verification_code')" />
             <input
                 id="code"
                 type="text"
@@ -28,19 +28,19 @@
             <form method="POST" action="{{ route('admin.password.otp.resend') }}" class="inline">
                 @csrf
                 <button type="submit" class="text-sm text-indigo-600 hover:text-indigo-800 underline">
-                    Resend Code
+                    {{ __('auth.resend_code') }}
                 </button>
             </form>
 
             <x-primary-button>
-                Verify Code
+                {{ __('auth.verify_code') }}
             </x-primary-button>
         </div>
     </form>
 
     <div class="mt-4 text-sm text-center">
         <a href="{{ route('password.request') }}" class="text-gray-500 hover:text-gray-700">
-            Use a different email
+            {{ __('auth.use_different_email') }}
         </a>
     </div>
 </x-guest-layout>

@@ -49,7 +49,7 @@ $bannerPath = $settings?->banner_path ?? null;
                     @endif
 
                     <div class="space-y-1 text-white">
-                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-blue-100/80">Administrative Access</p>
+                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-blue-100/80">{{ __('auth.admin_access_label') }}</p>
                         <h1 class="text-xl font-semibold">{{ $brandName }}</h1>
                     </div>
                 </div>
@@ -57,29 +57,29 @@ $bannerPath = $settings?->banner_path ?? null;
                 <div class="max-w-xl space-y-8 text-white">
                     <div class="space-y-4">
                         <p class="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-blue-50/90 backdrop-blur">
-                            Court Case Management System
+                            {{ __('auth.admin_system_label') }}
                         </p>
                         <div class="space-y-3">
                             <h2 class="max-w-lg text-4xl font-semibold leading-tight tracking-tight">
-                                Secure administrative access for court operations and judicial workflows.
+                                {{ __('auth.admin_login_headline') }}
                             </h2>
                             <p class="max-w-lg text-base leading-7 text-slate-200/88">
-                                Manage cases, hearings, appeals, notifications, and system settings in a structured enterprise workspace designed for high-trust institutions.
+                                {{ __('auth.admin_login_intro') }}
                             </p>
                         </div>
                     </div>
 
                     <div class="grid gap-4 sm:grid-cols-2">
                         <div class="rounded-2xl border border-white/12 bg-white/10 p-5 backdrop-blur">
-                            <div class="text-sm font-semibold text-white">Operational clarity</div>
+                            <div class="text-sm font-semibold text-white">{{ __('auth.operational_clarity_title') }}</div>
                             <p class="mt-2 text-sm leading-6 text-slate-200/82">
-                                Review filings, assignments, and hearing schedules from one controlled admin surface.
+                                {{ __('auth.operational_clarity_body') }}
                             </p>
                         </div>
                         <div class="rounded-2xl border border-white/12 bg-white/10 p-5 backdrop-blur">
-                            <div class="text-sm font-semibold text-white">Trusted access</div>
+                            <div class="text-sm font-semibold text-white">{{ __('auth.trusted_access_title') }}</div>
                             <p class="mt-2 text-sm leading-6 text-slate-200/82">
-                                Sign in with your authorized administrator account to continue securely.
+                                {{ __('auth.trusted_access_body') }}
                             </p>
                         </div>
                     </div>
@@ -106,15 +106,15 @@ $bannerPath = $settings?->banner_path ?? null;
                         @endif
 
                         <div>
-                            <div class="text-xs font-semibold uppercase tracking-[0.2em] text-blue-600 dark:text-blue-300">Admin Portal</div>
+                            <div class="text-xs font-semibold uppercase tracking-[0.2em] text-blue-600 dark:text-blue-300">{{ __('auth.admin_portal') }}</div>
                             <div class="text-lg font-semibold text-slate-900 dark:text-slate-100">{{ $brandName }}</div>
                         </div>
                     </div>
 
                     <div class="space-y-2">
-                        <h2 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Sign in</h2>
+                        <h2 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">{{ __('auth.login_title') }}</h2>
                         <p class="text-sm leading-6 text-slate-600 dark:text-slate-400">
-                            Use your administrator credentials to access the court management dashboard.
+                            {{ __('auth.admin_login_subtitle') }}
                         </p>
                     </div>
 
@@ -122,7 +122,7 @@ $bannerPath = $settings?->banner_path ?? null;
                         @csrf
 
                         <div class="space-y-2">
-                            <label for="email" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Email</label>
+                            <label for="email" class="block text-sm font-medium text-slate-600 dark:text-slate-300">{{ __('auth.email') }}</label>
                             <input
                                 id="email"
                                 name="email"
@@ -137,10 +137,10 @@ $bannerPath = $settings?->banner_path ?? null;
 
                         <div class="space-y-2">
                             <div class="flex items-center justify-between gap-3">
-                                <label for="password" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Password</label>
+                                <label for="password" class="block text-sm font-medium text-slate-600 dark:text-slate-300">{{ __('auth.password') }}</label>
                                 @if (Route::has('password.request'))
                                     <a href="{{ route('password.request') }}" class="text-sm font-medium text-blue-700 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-200">
-                                        Forgot password?
+                                        {{ __('auth.forgot_password') }}
                                     </a>
                                 @endif
                             </div>
@@ -158,7 +158,7 @@ $bannerPath = $settings?->banner_path ?? null;
                                     type="button"
                                     id="toggle-password"
                                     class="absolute right-3 top-1/2 inline-flex -translate-y-1/2 items-center justify-center rounded-md p-1 text-slate-500 transition-fast hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                                    aria-label="Show password"
+                                    aria-label="{{ __('auth.show_password') }}"
                                     aria-pressed="false"
                                 >
                                     <svg id="eye-open" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -180,7 +180,7 @@ $bannerPath = $settings?->banner_path ?? null;
                                     name="remember"
                                     class="h-4 w-4 rounded border-slate-300 text-blue-700 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900"
                                 >
-                                <span>Remember me</span>
+                                <span>{{ __('auth.remember_me') }}</span>
                             </label>
                         </div>
 
@@ -188,7 +188,7 @@ $bannerPath = $settings?->banner_path ?? null;
                             type="submit"
                             class="inline-flex w-full items-center justify-center rounded-xl bg-blue-700 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-900/15 transition-fast hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-950"
                         >
-                            Log in
+                            {{ __('auth.sign_in') }}
                         </button>
                     </form>
                 </div>
@@ -211,7 +211,9 @@ $bannerPath = $settings?->banner_path ?? null;
                 eyeOpen.classList.toggle('hidden', !isHidden);
                 eyeClosed.classList.toggle('hidden', isHidden);
                 toggle.setAttribute('aria-pressed', String(isHidden));
-                toggle.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+                const showPasswordLabel = @js(__('auth.show_password'));
+                const hidePasswordLabel = @js(__('auth.hide_password'));
+                toggle.setAttribute('aria-label', isHidden ? hidePasswordLabel : showPasswordLabel);
             });
         })();
     </script>

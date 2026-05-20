@@ -20,17 +20,8 @@ try {
 }
 
 $lawyerQuestionText = __('auth.lawyer_question');
-if ($lawyerQuestionText === 'auth.lawyer_question') {
-$lawyerQuestionText = 'Are you a lawyer?';
-}
 $yesText = __('auth.yes');
-if ($yesText === 'auth.yes') {
-$yesText = 'Yes';
-}
 $noText = __('auth.no');
-if ($noText === 'auth.no') {
-$noText = 'No';
-}
 @endphp
 
 @extends('layouts.fullscreen-layout')

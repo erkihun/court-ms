@@ -8,6 +8,7 @@ use App\Notifications\PasswordResetOtp;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Str;
 
@@ -38,11 +39,29 @@ class ApplicantPasswordController extends Controller
                 'applicant_pwd_otp_expires' => now()->addMinutes(10)->timestamp,
             ]);
 
-            $applicant->notify(new PasswordResetOtp($otp));
+            try {
+                $applicant->notify(new PasswordResetOtp($otp));
+            } catch (\Throwable $e) {
+                session()->forget([
+                    'applicant_pwd_otp_email',
+                    'applicant_pwd_otp_code',
+                    'applicant_pwd_otp_expires',
+                ]);
+
+                Log::warning('Applicant password reset OTP email failed', [
+                    'applicant_id' => $applicant->id,
+                    'email' => $applicant->email,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return back()
+                    ->withInput($request->only('email'))
+                    ->with('error', __('auth.reset_code_send_failed'));
+            }
         }
 
         return redirect()->route('applicant.password.otp.show')
-            ->with('info', 'If that email exists, a 6-digit reset code has been sent.');
+            ->with('info', __('auth.reset_code_sent_if_exists'));
     }
 
     // ── Step 3: show OTP entry form ────────────────────────────────────────────
@@ -68,15 +87,15 @@ class ApplicantPasswordController extends Controller
 
         if (!$email || !$storedHash || !$expiresAt) {
             return redirect()->route('applicant.password.request')
-                ->withErrors(['code' => 'Session expired. Please start again.']);
+                ->withErrors(['code' => __('auth.password_reset_session_expired')]);
         }
 
         if (now()->timestamp > $expiresAt) {
-            return back()->withErrors(['code' => 'This code has expired. Please request a new one.']);
+            return back()->withErrors(['code' => __('auth.password_reset_code_expired')]);
         }
 
         if (!hash_equals($storedHash, hash('sha256', $request->input('code')))) {
-            return back()->withErrors(['code' => 'Invalid code. Please try again.']);
+            return back()->withErrors(['code' => __('auth.password_reset_code_invalid')]);
         }
 
         // OTP verified — store the email for the next step, clear OTP data
@@ -107,10 +126,27 @@ class ApplicantPasswordController extends Controller
                 'applicant_pwd_otp_expires' => now()->addMinutes(10)->timestamp,
             ]);
 
-            $applicant->notify(new PasswordResetOtp($otp));
+            try {
+                $applicant->notify(new PasswordResetOtp($otp));
+            } catch (\Throwable $e) {
+                session()->forget([
+                    'applicant_pwd_otp_email',
+                    'applicant_pwd_otp_code',
+                    'applicant_pwd_otp_expires',
+                ]);
+
+                Log::warning('Applicant password reset OTP resend failed', [
+                    'applicant_id' => $applicant->id,
+                    'email' => $applicant->email,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return redirect()->route('applicant.password.request')
+                    ->with('error', __('auth.reset_code_send_failed'));
+            }
         }
 
-        return back()->with('success', 'A new code has been sent to your email.');
+        return back()->with('success', __('auth.reset_code_resent'));
     }
 
     // ── Step 5: show new password form ────────────────────────────────────────
@@ -132,7 +168,7 @@ class ApplicantPasswordController extends Controller
 
         if (!$email) {
             return redirect()->route('applicant.password.request')
-                ->withErrors(['email' => 'Session expired. Please start again.']);
+                ->withErrors(['email' => __('auth.password_reset_session_expired')]);
         }
 
         $request->validate([
@@ -144,7 +180,7 @@ class ApplicantPasswordController extends Controller
         if (!$applicant) {
             session()->forget('applicant_pwd_verified_email');
             return redirect()->route('applicant.password.request')
-                ->withErrors(['email' => 'Account not found or has been deactivated.']);
+                ->withErrors(['email' => __('auth.account_not_found_or_deactivated')]);
         }
 
         $applicant->forceFill([
@@ -160,6 +196,6 @@ class ApplicantPasswordController extends Controller
         $request->session()->regenerate();
 
         return redirect()->route('applicant.dashboard')
-            ->with('success', 'Password reset successfully. You are now signed in.');
+            ->with('success', __('auth.password_reset_success_signed_in'));
     }
 }
