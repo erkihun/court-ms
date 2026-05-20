@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\CourtCase;
 use App\Models\Team;
 use App\Models\User;
-use Barryvdh\Snappy\Facades\SnappyPdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -132,50 +131,13 @@ class RecordController extends Controller
         return view('admin.recordes.record', $data);
     }
 
-    public function pdf(Request $request, CourtCase $case)
+    public function pdf(CourtCase $case)
     {
         $data = $this->recordData($case);
         $safeCase = Str::of($case->case_number ?? $case->id)->replace(['/', '\\'], '-')->slug('-');
         $data['pdfFilename'] = 'case-record-' . ($safeCase ?: $case->id) . '.pdf';
-        $data['serverPdfMode'] = false;
 
-        if ($request->boolean('html_preview')) {
-            return view('admin.recordes.record-pdf', $data);
-        }
-
-        $data['serverPdfMode'] = true;
-        $html = view('admin.recordes.record-pdf', $data)->render();
-
-        $tempBase = tempnam(sys_get_temp_dir(), 'record_pdf_');
-        $tempHtmlPath = $tempBase . '.html';
-        @rename($tempBase, $tempHtmlPath);
-        file_put_contents($tempHtmlPath, $html);
-
-        $fileUri = 'file:///' . str_replace('\\', '/', $tempHtmlPath);
-
-        try {
-            return SnappyPdf::loadFile($fileUri)
-                ->setPaper('A4')
-                ->setOptions([
-                    'margin-top' => 12,
-                    'margin-right' => 14,
-                    'margin-bottom' => 14,
-                    'margin-left' => 14,
-                    'encoding' => 'utf-8',
-                    'enable-local-file-access' => true,
-                    'enable-javascript' => true,
-                    'no-stop-slow-scripts' => true,
-                    'print-media-type' => true,
-                    'images' => true,
-                    'javascript-delay' => 1500,
-                    'window-status' => 'record-preview-ready',
-                    'load-error-handling' => 'ignore',
-                    'load-media-error-handling' => 'ignore',
-                ])
-                ->inline($data['pdfFilename']);
-        } finally {
-            @unlink($tempHtmlPath);
-        }
+        return view('admin.recordes.record-pdf', $data);
     }
 
     private function recordData(CourtCase $case): array

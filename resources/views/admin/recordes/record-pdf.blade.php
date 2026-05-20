@@ -1,38 +1,26 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="am">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ __('recordes.titles.pdf') }}</title>
-    @php
-        $serverPdfMode = (bool) ($serverPdfMode ?? false);
-        $abyssinicaFontSrc = $serverPdfMode
-            ? 'file:///' . str_replace('\\', '/', public_path('fonts/AbyssinicaSIL-Regular.ttf'))
-            : asset('fonts/AbyssinicaSIL-Regular.ttf');
-    @endphp
+
+    <script src="{{ asset('vendor/html2pdf/html2pdf.bundle.min.js') }}"></script>
+    <script src="{{ asset('vendor/pdfjs/pdf.min.js') }}"></script>
 
     <style>
         @font-face {
             font-family: 'Abyssinica';
             font-style: normal;
             font-weight: 400;
-            src: url('{{ $abyssinicaFontSrc }}') format('truetype');
+            src: url('{{ asset('fonts/AbyssinicaSIL-Regular.ttf') }}') format('truetype');
         }
 
         :root {
             --a4-width: 210mm;
+            --a9-width: 250mm;
             --a4-height: 297mm;
-            --record-horizontal-padding: 18mm;
-            --print-margin-top: 12mm;
-            --print-margin-right: 14mm;
-            --print-margin-bottom: 14mm;
-            --print-margin-left: 14mm;
-            --print-content-height: calc(var(--a4-height) - var(--print-margin-top) - var(--print-margin-bottom));
-        }
-
-        @page {
-            size: A4 portrait;
-            margin: var(--print-margin-top) var(--print-margin-right) var(--print-margin-bottom) var(--print-margin-left);
+             --a4-height: 297mm;
         }
 
         * {
@@ -112,7 +100,7 @@
             min-height: var(--a4-height);
             background: #fff;
             box-shadow: 0 4px 6px rgba(15, 23, 42, 0.1);
-            padding: 22mm var(--record-horizontal-padding);
+            padding: 22mm 18mm;
             font-size: 14px;
             line-height: 1.7;
             position: relative;
@@ -179,33 +167,6 @@
             display: none !important;
         }
 
-        body.server-pdf {
-            background: #fff;
-        }
-
-        body.server-pdf .pdf-toolbar,
-        body.server-pdf .page-preview-footer,
-        body.server-pdf .page-counter-overlay {
-            display: none !important;
-        }
-
-        body.server-pdf .page-wrapper {
-            padding: 0;
-        }
-
-        body.server-pdf .record-page {
-            width: auto;
-            min-height: auto;
-            padding: 0;
-            box-shadow: none;
-        }
-
-        body.server-pdf .pdf-preview,
-        body.server-pdf .page-counter-overlay,
-        body.server-pdf .page-preview-footer {
-            display: none !important;
-        }
-
         @media print {
             .page-preview-footer,
             .page-counter-overlay {
@@ -238,24 +199,6 @@
             word-break: break-word;
         }
 
-        .content p,
-        .content li,
-        .letter-preview-container p,
-        .letter-preview-container li {
-            orphans: 3;
-            widows: 3;
-        }
-
-        .content img,
-        .content table,
-        .content svg,
-        .letter-preview-container img,
-        .letter-preview-container table,
-        .letter-preview-container svg {
-            break-inside: avoid-page;
-            page-break-inside: avoid;
-        }
-
         .muted {
             font-size: 12px;
             color: #64748b;
@@ -280,9 +223,7 @@
         .pdf-preview iframe.fallback-pdf-frame {
             border: none;
             width: 100%;
-            min-height: 297mm;
-            aspect-ratio: 210 / 297;
-            background: #fff;
+            min-height: 480px;
         }
 
         .pdf-rendered-viewer canvas {
@@ -302,24 +243,18 @@
 
         .pdf-preview iframe {
             width: 100%;
-            min-height: 297mm;
-            height: auto;
+            height: 380px;
             border: none;
             background: #f8fafc;
         }
 
-        .content a,
-        .meta a {
-            color: inherit;
-            text-decoration: none;
-            pointer-events: none;
-            cursor: default;
-        }
-
         .letter-full-preview {
             margin-top: 16px;
+            border: 1px solid #dbeafe;
+            border-radius: 12px;
             padding: 18px;
             background: #fff;
+            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.1);
             page-break-inside: avoid;
         }
 
@@ -329,26 +264,23 @@
 
         .letter-preview-container {
             margin-top: 10px;
-            overflow: visible;
-            padding-bottom: 6mm;
-            break-inside: avoid;
-            page-break-inside: avoid;
+     
+            
         }
 
         .preview-wrapper {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 6mm;
+            gap: 2rem;
             margin: 0;
-            width: var(--a4-width);
-            max-width: 100%;
         }
 
         .a4-sheet {
             width: var(--a4-width);
             min-height: var(--a4-height);
             background: #fff;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             padding-top: 2mm;
             position: relative;
             overflow: hidden;
@@ -376,42 +308,15 @@
         }
 
         .letter-preview-container .a4-sheet {
-            width: var(--a4-width);
-            min-width: var(--a4-width);
-            min-height: var(--a4-height);
+            width: 100%;
+            min-height: calc(var(--a4-height) * 0.8);
             background: #fff;
+            border-radius: 8px;
             overflow: hidden;
             position: relative;
             display: flex;
             flex-direction: column;
-            flex: 0 0 auto;
-        }
-
-        .letters-section {
-            margin-left: calc(var(--record-horizontal-padding) * -1);
-            margin-right: calc(var(--record-horizontal-padding) * -1);
-        }
-
-        .letters-section > h2,
-        .letters-section > .meta {
-            padding-left: var(--record-horizontal-padding);
-            padding-right: var(--record-horizontal-padding);
-        }
-
-        .letters-section > .letter-preview-container {
-            padding-left: 0;
-            padding-right: 0;
-        }
-
-        .letters-section .preview-wrapper {
-            width: var(--a4-width);
-            min-width: var(--a4-width);
-            max-width: 100%;
-            margin: 0 auto;
-        }
-
-        .letters-section .letter-live-preview + .letter-live-preview {
-            margin-top: 10mm;
+            border: 1px solid #e2e8f0;
         }
 
         .letter-preview-container .letter-header img,
@@ -618,65 +523,6 @@
             text-align: center;
         }
 
-        body.print-export-active .record-page,
-        body.pdf-export .record-page {
-            width: auto;
-            min-height: auto;
-            padding: 0;
-            box-shadow: none;
-        }
-
-        body.print-export-active .letters-section,
-        body.pdf-export .letters-section {
-            break-before: page;
-            page-break-before: always;
-        }
-
-        body.print-export-active .pdf-preview,
-        body.print-export-active .pdf-rendered-viewer,
-        body.pdf-export .pdf-preview,
-        body.pdf-export .pdf-rendered-viewer {
-            break-inside: avoid-page;
-            page-break-inside: avoid;
-        }
-
-        body.print-export-active .preview-wrapper,
-        body.pdf-export .preview-wrapper {
-            gap: 0;
-        }
-
-        body.print-export-active .letter-live-preview,
-        body.pdf-export .letter-live-preview {
-            margin-top: 0;
-            break-inside: avoid-page;
-            page-break-inside: avoid;
-        }
-
-        body.print-export-active .letter-live-preview + .letter-live-preview,
-        body.pdf-export .letter-live-preview + .letter-live-preview {
-            break-before: page;
-            page-break-before: always;
-        }
-
-        body.print-export-active .preview-wrapper .a4-sheet,
-        body.pdf-export .preview-wrapper .a4-sheet {
-            width: 100%;
-            min-height: var(--print-content-height);
-            height: var(--print-content-height);
-            margin: 0;
-            border: none;
-            border-radius: 0;
-            box-shadow: none;
-            break-inside: avoid-page;
-            page-break-inside: avoid;
-        }
-
-        body.print-export-active .preview-wrapper .a4-sheet + .a4-sheet,
-        body.pdf-export .preview-wrapper .a4-sheet + .a4-sheet {
-            break-before: page;
-            page-break-before: always;
-        }
-
         @media print {
             body {
                 background: #fff;
@@ -692,125 +538,51 @@
                 width: auto;
                 min-height: auto;
                 box-shadow: none;
-                padding: 0;
+                padding: 0 15mm;
             }
         }
     </style>
 </head>
-<body class="{{ $serverPdfMode ? 'server-pdf pdf-export' : '' }}">
-    @unless($serverPdfMode)
+<body>
     <div class="pdf-toolbar">
         <h1>{{ __('recordes.titles.pdf') }}</h1>
         <div class="toolbar-actions">
-            <button id="print-record" class="btn">{{ __('recordes.buttons.print') }}</button>
+            <button class="btn" onclick="window.print()">{{ __('recordes.buttons.print') }}</button>
             <button id="download-pdf" class="btn btn-primary">{{ __('recordes.buttons.download_pdf') }}</button>
         </div>
     </div>
-    @endunless
 
     <div class="page-wrapper" id="page-wrapper">
         <div id="record-document" class="record-page">
-            @php
-                $notAvailable = __('recordes.messages.not_available');
-                $formatDisplayDate = static function ($value, bool $withTime = false) use ($notAvailable) {
-                    if (empty($value)) {
-                        return $notAvailable;
-                    }
-
-                    try {
-                        $date = $value instanceof \Illuminate\Support\Carbon
-                            ? $value
-                            : \Illuminate\Support\Carbon::parse($value);
-                    } catch (\Throwable $e) {
-                        return $notAvailable;
-                    }
-
-                    if (class_exists(\App\Support\EthiopianDate::class)) {
-                        return \App\Support\EthiopianDate::format($date, withTime: $withTime);
-                    }
-
-                    return $withTime ? $date->toDayDateTimeString() : $date->toDateString();
-                };
-                $sanitizeRichContent = static function (?string $html): string {
-                    $cleaned = \Mews\Purifier\Facades\Purifier::clean((string) $html, 'default');
-                    $withoutWrappedAnchors = preg_replace('#<a\b[^>]*>(.*?)</a>#is', '$1', $cleaned);
-                    $withoutAnchors = preg_replace('#</?a\b[^>]*>#i', '', $withoutWrappedAnchors ?? $cleaned);
-
-                    return $withoutAnchors ?? $cleaned;
-                };
-                $resolveEmbeddedImageSource = static function ($path) {
-                    if (empty($path)) {
-                        return null;
-                    }
-
-                    $trimmed = ltrim((string) $path);
-                    if (\Illuminate\Support\Str::startsWith($trimmed, ['http://', 'https://', 'data:'])) {
-                        return $trimmed;
-                    }
-
-                    $publicDiskPath = $trimmed;
-                    if (\Illuminate\Support\Str::startsWith($publicDiskPath, ['/storage/', 'storage/'])) {
-                        $publicDiskPath = preg_replace('#^/?storage/#', '', $publicDiskPath) ?? $publicDiskPath;
-                    } elseif (\Illuminate\Support\Str::startsWith($publicDiskPath, ['public/'])) {
-                        $publicDiskPath = substr($publicDiskPath, 7);
-                    }
-
-                    if (\Illuminate\Support\Facades\Storage::disk('public')->exists($publicDiskPath)) {
-                        $absolutePath = \Illuminate\Support\Facades\Storage::disk('public')->path($publicDiskPath);
-                        $mimeType = mime_content_type($absolutePath) ?: 'application/octet-stream';
-                        $contents = @file_get_contents($absolutePath);
-
-                        if ($contents !== false) {
-                            return 'data:' . $mimeType . ';base64,' . base64_encode($contents);
-                        }
-                    }
-
-                    $publicCandidates = [
-                        public_path(ltrim($trimmed, '/')),
-                        public_path('storage/' . ltrim($publicDiskPath, '/')),
-                    ];
-
-                    foreach ($publicCandidates as $candidate) {
-                        if (!is_file($candidate)) {
-                            continue;
-                        }
-
-                        $mimeType = mime_content_type($candidate) ?: 'application/octet-stream';
-                        $contents = @file_get_contents($candidate);
-                        if ($contents !== false) {
-                            return 'data:' . $mimeType . ';base64,' . base64_encode($contents);
-                        }
-                    }
-
-                    return null;
-                };
-            @endphp
             <div class="section">
                 <h1>{{ __('recordes.titles.record') }}</h1>
                 <div class="meta">
                     {{ __('recordes.labels.generated') }} 
                     @php
                         $generatedDate = now();
+                        $ethiopianGenerated = class_exists(\App\Support\EthiopianDate::class)
+                            ? \App\Support\EthiopianDate::format($generatedDate, withTime: true)
+                            : $generatedDate->toDayDateTimeString();
                     @endphp
-                    {{ $formatDisplayDate($generatedDate, true) }}
+                    {{ $generatedDate->toDayDateTimeString() }} ({{ $ethiopianGenerated }})
                     <br>
-                    {{ __('recordes.labels.case_number') }} {{ (string) ($case->case_number ?? $notAvailable) }} {{ __('recordes.labels.title_pipe') }} {{ (string) ($case->title ?? '') }}
+                    {{ __('recordes.labels.case_number') }} {{ (string) ($case->case_number ?? 'N/A') }} {{ __('recordes.labels.title_pipe') }} {{ (string) ($case->title ?? '') }}
                 </div>
 
                 <div class="card">
                     <div class="meta">
-                        {{ __('recordes.labels.status_label') }} {{ (string) ($case->status ?? $notAvailable) }}
+                        {{ __('recordes.labels.status_label') }} {{ (string) ($case->status ?? 'N/A') }}
                         @if(!empty($case->caseType?->name))
                             | {{ __('recordes.labels.type') }} {{ $case->caseType->name }}
                         @endif
-                        | {{ __('recordes.labels.opened') }} {{ $formatDisplayDate($case->filing_date) }}
-                        | {{ __('recordes.labels.closed') }} {{ $closedAt ? $formatDisplayDate($closedAt) : __('recordes.labels.not_closed') }}
+                        | {{ __('recordes.labels.opened') }} {{ optional($case->filing_date)->toDateString() ?? 'N/A' }}
+                        | {{ __('recordes.labels.closed') }} {{ $closedAt ? \Illuminate\Support\Carbon::parse($closedAt)->toDateString() : __('recordes.labels.not_closed') }}
                     </div>
 
                     <div class="meta">
-                        {{ __('recordes.labels.assigned_to') }} {{ $assignedUser->name ?? __('recordes.labels.unassigned') }}
+                        {{ __('recordes.labels.assigned_to') }} {{ $assignedUser->name ?? 'Unassigned' }}
                         @if(!empty($case->assigned_at))
-                            | {{ __('recordes.labels.last_assigned') }} {{ $formatDisplayDate($case->assigned_at, true) }}
+                            | {{ __('recordes.labels.last_assigned') }} {{ optional($case->assigned_at)->toDayDateTimeString() }}
                         @endif
                     </div>
 
@@ -826,14 +598,14 @@
                         <div class="meta">
                             {{ __('recordes.labels.applicant') }}
                             {{ trim(($case->applicant->first_name ?? '').' '.($case->applicant->middle_name ?? '').' '.($case->applicant->last_name ?? '')) }}
-                            | {{ __('recordes.labels.email') }} {{ $case->applicant->email ?? $notAvailable }}
-                            | {{ __('recordes.labels.phone') }} {{ $case->applicant->phone ?? $notAvailable }}
+                            | {{ __('recordes.labels.email') }} {{ $case->applicant->email ?? 'N/A' }}
+                            | {{ __('recordes.labels.phone') }} {{ $case->applicant->phone ?? 'N/A' }}
                         </div>
                     @endif
 
                     <div class="meta">
-                        {{ __('recordes.labels.respondent') }} {{ (string) ($case->respondent_name ?? $notAvailable) }}
-                        | {{ __('recordes.labels.address') }} {{ (string) ($case->respondent_address ?? $notAvailable) }}
+                        {{ __('recordes.labels.respondent') }} {{ (string) ($case->respondent_name ?? 'N/A') }}
+                        | {{ __('recordes.labels.address') }} {{ (string) ($case->respondent_address ?? 'N/A') }}
                     </div>
                 </div>
             </div>
@@ -841,9 +613,9 @@
             <div class="section">
                 <h2>{{ __('recordes.labels.case_submission') }}</h2>
                 <div class="meta">
-                    {{ __('recordes.labels.case_number') }} {{ (string) ($case->case_number ?? $notAvailable) }} |
-                    {{ __('recordes.labels.status_label') }} {{ (string) ($case->status ?? $notAvailable) }} |
-                    {{ __('recordes.labels.filed') }}: {{ $formatDisplayDate($case->filing_date) }}
+                    {{ __('recordes.labels.case_number') }} {{ (string) ($case->case_number ?? 'N/A') }} |
+                    {{ __('recordes.labels.status_label') }} {{ (string) ($case->status ?? 'N/A') }} |
+                    {{ __('recordes.labels.filed') }}: {{ optional($case->filing_date)->toDateString() ?? 'N/A' }}
                     @if(!empty($case->caseType?->name))
                         | {{ __('recordes.labels.type') }} {{ $case->caseType->name }}
                     @endif
@@ -853,8 +625,8 @@
                     <div class="meta">
                         {{ __('recordes.labels.applicant') }}
                         {{ trim(($case->applicant->first_name ?? '').' '.($case->applicant->middle_name ?? '').' '.($case->applicant->last_name ?? '')) }}
-                        | {{ __('recordes.labels.email') }} {{ $case->applicant->email ?? $notAvailable }}
-                        | {{ __('recordes.labels.phone') }} {{ $case->applicant->phone ?? $notAvailable }}
+                        | {{ __('recordes.labels.email') }} {{ $case->applicant->email ?? 'N/A' }}
+                        | {{ __('recordes.labels.phone') }} {{ $case->applicant->phone ?? 'N/A' }}
                     </div>
                 @endif
             </div>
@@ -884,14 +656,14 @@
             @if(!empty($case->description))
                 <div class="section">
                     <h2>{{ __('recordes.labels.case_details') }}</h2>
-                    <div class="content">{!! $sanitizeRichContent($case->description) !!}</div>
+                    <div class="content">{!! $case->description !!}</div>
                 </div>
             @endif
 
             @if(!empty($case->relief_requested))
                 <div class="section">
                 <h2>{{ __('recordes.labels.relief_requested') }}</h2>
-                    <div class="content">{!! $sanitizeRichContent($case->relief_requested) !!}</div>
+                    <div class="content">{!! $case->relief_requested !!}</div>
                 </div>
             @endif
 
@@ -901,9 +673,9 @@
                     <div class="card">
                         <div><strong>{{ $wit->full_name ?? __('recordes.labels.witness') }}</strong></div>
                         <div class="meta">
-                            {{ __('recordes.labels.phone') }} {{ $wit->phone ?? $notAvailable }} |
-                            {{ __('recordes.labels.email') }} {{ $wit->email ?? $notAvailable }} |
-                            {{ __('recordes.labels.address') }} {{ $wit->address ?? $notAvailable }}
+                            {{ __('recordes.labels.phone') }} {{ $wit->phone ?? 'N/A' }} |
+                            {{ __('recordes.labels.email') }} {{ $wit->email ?? 'N/A' }} |
+                            {{ __('recordes.labels.address') }} {{ $wit->address ?? 'N/A' }}
                         </div>
                     </div>
                 @empty
@@ -917,7 +689,7 @@
                     <div class="card">
                         <div><strong>{{ $file->label ?? __('recordes.labels.document') }}</strong></div>
                         <div class="meta">
-                            {{ $formatDisplayDate($file->created_at, true) }}
+                            {{ optional($file->created_at)->toDayDateTimeString() }}
                             @if(!empty($file->mime)) | {{ __('recordes.labels.mime') }} {{ $file->mime }} @endif
                             @if(!empty($file->size)) | {{ __('recordes.labels.size') }} {{ $file->size }} {{ __('recordes.labels.bytes') }} @endif
                         </div>
@@ -933,7 +705,7 @@
                     <div class="card">
                         <div><strong>{{ $firstEvidence->title ?? __('recordes.labels.document') }}</strong></div>
                         <div class="meta">
-                            {{ $formatDisplayDate($firstEvidence->created_at, true) }}
+                            {{ optional($firstEvidence->created_at)->toDayDateTimeString() ?? 'N/A' }}
                             @if(!empty($firstEvidence->mime)) | {{ __('recordes.labels.mime') }} {{ $firstEvidence->mime }} @endif
                             @if(!empty($firstEvidence->size)) | {{ __('recordes.labels.size') }} {{ $firstEvidence->size }} {{ __('recordes.labels.bytes') }} @endif
                         </div>
@@ -953,12 +725,12 @@
                 @forelse($evidences ?? [] as $ev)
                     <div class="card">
                         <div><strong>{{ $ev->title ?? __('recordes.labels.document') }}</strong></div>
-                        <div class="meta">{{ $formatDisplayDate($ev->created_at, true) }}</div>
+                        <div class="meta">{{ optional($ev->created_at)->toDayDateTimeString() }}</div>
                         @if(!empty($ev->description))
-                            <div class="content">{!! $sanitizeRichContent($ev->description) !!}</div>
+                            <div class="content">{{ $ev->description }}</div>
                         @endif
                         <div class="meta">
-                            {{ __('recordes.labels.type') }} {{ $ev->type ?? __('recordes.labels.document') }}
+                            {{ __('recordes.labels.type') }} {{ $ev->type ?? 'document' }}
                             @if(!empty($ev->mime)) | {{ __('recordes.labels.mime') }} {{ $ev->mime }} @endif
                             @if(!empty($ev->size)) | {{ __('recordes.labels.size') }} {{ $ev->size }} {{ __('recordes.labels.bytes') }} @endif
                         </div>
@@ -968,7 +740,7 @@
                 @endforelse
             </div>
 
-            <div class="section letters-section">
+            <div class="section">
                 <h2>{{ __('recordes.labels.letters_section') }}</h2>
                 @php
                     $systemSettings = $systemSettings ?? \App\Models\SystemSetting::query()->first();
@@ -989,9 +761,9 @@
                 @forelse($respondentResponses ?? [] as $resp)
                     <div class="card">
                         <div><strong>{{ $resp->title ?? __('recordes.labels.response') }}</strong></div>
-                        <div class="meta">{{ $formatDisplayDate($resp->created_at, true) }}</div>
+                        <div class="meta">{{ optional($resp->created_at)->toDayDateTimeString() }}</div>
                         @if(!empty($resp->description))
-                            <div class="content">{!! $sanitizeRichContent($resp->description) !!}</div>
+                            <div class="content">{{ $resp->description }}</div>
                         @endif
                         @if(!empty(data_get($resp, 'pdf_embed.data')))
                             @php
@@ -1000,7 +772,7 @@
                                     'id' => $viewerId,
                                     'data' => data_get($resp, 'pdf_embed.data'),
                                     'mime' => data_get($resp, 'pdf_embed.mime', 'application/pdf'),
-                                    'title' => $resp->title ?? __('recordes.labels.response'),
+                                    'title' => $resp->title ?? 'Response PDF',
                                 ];
                             @endphp
                             <div class="pdf-preview" style="margin-top:12px;">
@@ -1010,7 +782,9 @@
                             </div>
                         @elseif(!empty($resp->download_url))
                             <div class="meta">
-                                {{ __('recordes.labels.attachment') }} {{ $resp->title ?? __('recordes.labels.response') }}
+                                <a href="{{ $resp->download_url }}" target="_blank" rel="noreferrer">
+                                    {{ __('recordes.buttons.download_pdf') }}
+                                </a>
                             </div>
                         @else
                             <div class="meta">{{ __('recordes.messages.no_files') }}</div>
@@ -1029,24 +803,30 @@
                             ? \Illuminate\Support\Carbon::parse($hearing->hearing_at)
                             : null;
                         $hearingFormatted = $hearingMoment
-                            ? $formatDisplayDate($hearingMoment, true)
+                            ? $hearingMoment->format('F j, Y g:i A')
                             : __('recordes.labels.hearing_unknown');
+                        $hearingEthiopian = $hearingMoment
+                            ? \App\Support\EthiopianDate::format($hearingMoment, true)
+                            : null;
                     @endphp
                     <div class="card">
                         <div>
                             <strong>{{ __('recordes.labels.hearing_at') }} {{ $hearingFormatted }}</strong>
+                            @if($hearingEthiopian)
+                                <div class="meta">{{ $hearingEthiopian }}</div>
+                            @endif
                         </div>
-                        <div class="meta">{{ __('recordes.labels.location') }} {{ $hearing->location ?? $notAvailable }}</div>
+                        <div class="meta">{{ __('recordes.labels.location') }} {{ $hearing->location ?? 'N/A' }}</div>
                         @if(!empty($hearing->notes))
                             <div class="content">
                                 <strong>{{ __('recordes.labels.hearing_notes') }}</strong>
-                                {!! $sanitizeRichContent($hearing->notes) !!}
+                                {!! \Mews\Purifier\Facades\Purifier::clean($hearing->notes, 'default') !!}
                             </div>
                         @endif
                         @if(!empty($hearing->judge_notes))
                             <div class="content">
                                 <strong>{{ __('recordes.labels.judge_notes') }}</strong>
-                                {!! $sanitizeRichContent($hearing->judge_notes) !!}
+                                {!! \Mews\Purifier\Facades\Purifier::clean($hearing->judge_notes, 'default') !!}
                             </div>
                         @endif
                     </div>
@@ -1059,24 +839,42 @@
                 <h2>{{ __('recordes.labels.bench_notes') }}</h2>
                 @forelse($benchNotes ?? [] as $note)
                     @php
+                        $resolveSignature = function ($path) {
+                            if (empty($path)) {
+                                return null;
+                            }
+                            $trimmed = ltrim($path);
+                            if (\Illuminate\Support\Str::startsWith($trimmed, ['http://', 'https://', 'data:'])) {
+                                return $trimmed;
+                            }
+                            if (\Illuminate\Support\Str::startsWith($trimmed, ['/storage/', 'storage/'])) {
+                                return asset(ltrim($trimmed, '/'));
+                            }
+                            if (\Illuminate\Support\Str::startsWith($trimmed, ['public/'])) {
+                                $trimmed = substr($trimmed, 7);
+                            }
+
+                            return asset('storage/' . ltrim($trimmed, '/'));
+                        };
+
                         $manualJudges = collect([
                             [
                                 'name' => $note->judge_one_name ?? null,
-                                'date' => !empty($note->created_at) ? $formatDisplayDate($note->created_at, true) : '',
+                                'date' => optional($note->created_at)->toDayDateTimeString() ?? '',
                                 'title' => $note->judge_one_title ?? __('recordes.labels.judge'),
-                                'signature' => $resolveEmbeddedImageSource($note->judge_one_signature ?? null),
+                                'signature' => $resolveSignature($note->judge_one_signature ?? null),
                             ],
                             [
                                 'name' => $note->judge_two_name ?? null,
-                                'date' => !empty($note->created_at) ? $formatDisplayDate($note->created_at, true) : '',
+                                'date' => optional($note->created_at)->toDayDateTimeString() ?? '',
                                 'title' => $note->judge_two_title ?? __('recordes.labels.judge'),
-                                'signature' => $resolveEmbeddedImageSource($note->judge_two_signature ?? null),
+                                'signature' => $resolveSignature($note->judge_two_signature ?? null),
                             ],
                             [
                                 'name' => $note->judge_three_name ?? null,
-                                'date' => !empty($note->created_at) ? $formatDisplayDate($note->created_at, true) : '',
+                                'date' => optional($note->created_at)->toDayDateTimeString() ?? '',
                                 'title' => $note->judge_three_title ?? __('recordes.labels.judge'),
-                                'signature' => $resolveEmbeddedImageSource($note->judge_three_signature ?? null),
+                                'signature' => $resolveSignature($note->judge_three_signature ?? null),
                             ],
                         ])->filter(fn ($judge) => !empty($judge['name']));
 
@@ -1087,12 +885,18 @@
                     <div class="card bench-note-entry">
                         @php
                             $benchCreated = !empty($note->created_at) ? \Illuminate\Support\Carbon::parse($note->created_at) : null;
-                            $benchCreatedFormatted = $benchCreated ? $formatDisplayDate($benchCreated, true) : '';
+                            $benchCreatedFormatted = $benchCreated ? $benchCreated->toDayDateTimeString() : '';
+                            $benchCreatedEth = $benchCreated && class_exists(\App\Support\EthiopianDate::class)
+                                ? \App\Support\EthiopianDate::format($benchCreated, withTime: true)
+                                : $benchCreatedFormatted;
                         @endphp
                         <div class="meta" style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px;">
                             <div style="font-weight:600;">{{ $note->title ?? __('recordes.labels.bench_notes') }}</div>
                             <div style="text-align:right;">
                                 <strong>{{ __('recordes.labels.created') }}</strong> {{ $benchCreatedFormatted }}
+                                @if(!empty($benchCreatedEth))
+                                    <div style="font-size:12px;color:#475569;">({{ $benchCreatedEth }})</div>
+                                @endif
                             </div>
                         </div>
                         @if($judges->isNotEmpty())
@@ -1107,7 +911,7 @@
                                 @endforeach
                             </div>
                         @endif
-                        <div class="content">{!! $sanitizeRichContent($note->note ?? $note->body ?? '') !!}</div>
+                        <div class="content">{!! \Mews\Purifier\Facades\Purifier::clean($note->note ?? $note->body ?? '', 'default') !!}</div>
                         @if($signers->isNotEmpty())
                             <div class="bench-signatures" style="display:flex;gap:20px;flex-wrap:nowrap;justify-content:center;">
                                 @foreach($signers as $signer)
@@ -1137,29 +941,53 @@
                 <h2>{{ __('recordes.labels.final_judgment') }}</h2>
                 @if(!empty($decision))
                     @php
+                        $resolveDecisionSignature = function ($path) {
+                            if (empty($path)) {
+                                return null;
+                            }
+                            $trimmed = ltrim($path);
+                            if (\Illuminate\Support\Str::startsWith($trimmed, ['http://', 'https://', 'data:'])) {
+                                return $trimmed;
+                            }
+                            if (\Illuminate\Support\Str::startsWith($trimmed, ['/storage/', 'storage/'])) {
+                                return asset(ltrim($trimmed, '/'));
+                            }
+                            if (\Illuminate\Support\Str::startsWith($trimmed, ['public/'])) {
+                                $trimmed = substr($trimmed, 7);
+                            }
+
+                            return asset('storage/' . ltrim($trimmed, '/'));
+                        };
+
                         $decisionSigners = $normalizeSignerPayload($decision->signatures ?? [])
                             ->map(fn ($signer) => [
                                 'name' => data_get($signer, 'name') ?? data_get($signer, 'judge_name') ?? __('recordes.labels.judge'),
                                 'title' => data_get($signer, 'title') ?? __('recordes.labels.judge'),
-                                'signature' => $resolveEmbeddedImageSource(data_get($signer, 'signature')),
+                                'signature' => $resolveDecisionSignature(data_get($signer, 'signature')),
                             ])
                             ->filter(fn ($signer) => !empty($signer['name']))
                             ->take(3);
 
                         $decisionDate = !empty($decision->created_at) ? \Illuminate\Support\Carbon::parse($decision->created_at) : null;
-                        $decisionDateFormatted = $decisionDate ? $formatDisplayDate($decisionDate, true) : '';
+                        $decisionDateFormatted = $decisionDate ? $decisionDate->toDayDateTimeString() : '';
+                        $decisionDateEth = $decisionDate && class_exists(\App\Support\EthiopianDate::class)
+                            ? \App\Support\EthiopianDate::format($decisionDate, withTime: true)
+                            : $decisionDateFormatted;
                     @endphp
                     <div class="card bench-note-entry">
                         <div class="meta" style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px;">
                             <div style="font-weight:600;">{{ $decision->title ?? __('recordes.labels.decision') }}</div>
                             <div style="text-align:right;">
                                 <strong>{{ __('recordes.labels.created') }}</strong> {{ $decisionDateFormatted }}
+                                @if(!empty($decisionDateEth))
+                                    <div style="font-size:12px;color:#475569;">({{ $decisionDateEth }})</div>
+                                @endif
                             </div>
                         </div>
                         @php
                             $decisionContent = $decision->decision_content ?? $decision->body ?? '';
                         @endphp
-                        <div class="content">{!! $sanitizeRichContent($decisionContent) !!}</div>
+                        <div class="content">{!! \Mews\Purifier\Facades\Purifier::clean($decisionContent, 'default') !!}</div>
                         @if($decisionSigners->isNotEmpty())
                             <div class="bench-signatures" style="display:flex;gap:20px;flex-wrap:nowrap;">
                                 @foreach($decisionSigners as $signer)
@@ -1188,161 +1016,10 @@
         </div>
     </div>
 
-    @if($serverPdfMode)
-    <script>
-        (function () {
-            function initializeInlineLetterPreviews() {
-                var wrappers = document.querySelectorAll('[data-letter-preview-id]');
-                if (!wrappers.length) {
-                    window.status = 'record-preview-ready';
-                    return;
-                }
-
-                for (var i = 0; i < wrappers.length; i++) {
-                    renderLetterPreview(wrappers[i]);
-                }
-
-                setTimeout(function () {
-                    window.status = 'record-preview-ready';
-                }, 300);
-            }
-
-            function renderLetterPreview(wrapper) {
-                var previewId = wrapper.getAttribute('data-letter-preview-id');
-                if (!previewId) {
-                    return;
-                }
-
-                var previewContainer = document.getElementById('preview-container-' + previewId);
-                var sheetTemplate = document.getElementById('sheet-template-' + previewId);
-                var rawContent = document.getElementById('raw-content-' + previewId);
-                var rawBody = document.getElementById('raw-body-content-' + previewId);
-
-                if (!previewContainer || !sheetTemplate || !rawContent || !rawBody) {
-                    return;
-                }
-
-                function splitTextNode(node) {
-                    if (node.nodeType !== 1 || ['TABLE', 'IMG', 'UL', 'OL'].indexOf(node.tagName) !== -1) {
-                        return [node.cloneNode(true)];
-                    }
-
-                    var text = node.innerText || '';
-                    var trimmedText = text.replace(/^\s+|\s+$/g, '');
-                    if (!trimmedText) {
-                        return [node.cloneNode(true)];
-                    }
-
-                    var words = trimmedText.split(/\s+/);
-                    if (words.length < 50) {
-                        return [node.cloneNode(true)];
-                    }
-
-                    var chunks = [];
-                    var currentChunk = [];
-
-                    for (var wordIndex = 0; wordIndex < words.length; wordIndex++) {
-                        currentChunk.push(words[wordIndex]);
-                        if (currentChunk.length >= 40 || wordIndex === words.length - 1) {
-                            var paragraph = document.createElement('p');
-                            paragraph.className = node.className;
-                            paragraph.style.cssText = node.style.cssText;
-                            paragraph.style.marginBottom = '0';
-                            paragraph.style.textAlign = 'justify';
-                            paragraph.innerText = currentChunk.join(' ');
-                            chunks.push(paragraph);
-                            currentChunk = [];
-                        }
-                    }
-
-                    return chunks;
-                }
-
-                function pushNodeParts(node, queue) {
-                    var parts = splitTextNode(node);
-                    for (var partIndex = 0; partIndex < parts.length; partIndex++) {
-                        queue.push(parts[partIndex]);
-                    }
-                }
-
-                function createNewPage() {
-                    var tempHost = document.createElement('div');
-                    tempHost.innerHTML = sheetTemplate.innerHTML;
-                    var sheet = tempHost.querySelector('.a4-sheet');
-                    var contentSlot = tempHost.querySelector('.content-slot');
-                    if (!sheet || !contentSlot) {
-                        return null;
-                    }
-                    previewContainer.appendChild(sheet);
-                    return { sheet: sheet, contentSlot: contentSlot };
-                }
-
-                function getAvailableHeight(sheetElement) {
-                    var header = sheetElement.querySelector('.letter-header');
-                    var footer = sheetElement.querySelector('.letter-footer');
-                    var bodyContainer = sheetElement.querySelector('.letter-body-container');
-                    if (!bodyContainer) {
-                        return sheetElement.clientHeight;
-                    }
-
-                    var style = window.getComputedStyle(bodyContainer);
-                    var padding = parseFloat(style.paddingTop || '0') + parseFloat(style.paddingBottom || '0');
-                    return sheetElement.clientHeight - header.offsetHeight - footer.offsetHeight - padding - 5;
-                }
-
-                var contentQueue = [];
-                var beforeBlocks = rawContent.querySelectorAll('.content-block[data-role="before-body"]');
-                for (var beforeIndex = 0; beforeIndex < beforeBlocks.length; beforeIndex++) {
-                    contentQueue.push(beforeBlocks[beforeIndex].cloneNode(true));
-                }
-
-                var bodyChildren = rawBody.children;
-                for (var childIndex = 0; childIndex < bodyChildren.length; childIndex++) {
-                    pushNodeParts(bodyChildren[childIndex], contentQueue);
-                }
-
-                var afterBlocks = rawContent.querySelectorAll('.content-block[data-role="after-body"]');
-                for (var afterIndex = 0; afterIndex < afterBlocks.length; afterIndex++) {
-                    contentQueue.push(afterBlocks[afterIndex].cloneNode(true));
-                }
-
-                var currentPage = createNewPage();
-                if (!currentPage) {
-                    return;
-                }
-                var maxHeight = getAvailableHeight(currentPage.sheet);
-
-                for (var queueIndex = 0; queueIndex < contentQueue.length; queueIndex++) {
-                    var cloneNode = contentQueue[queueIndex].cloneNode(true);
-                    currentPage.contentSlot.appendChild(cloneNode);
-
-                    if (currentPage.contentSlot.offsetHeight > maxHeight) {
-                        currentPage.contentSlot.removeChild(cloneNode);
-                        currentPage = createNewPage();
-                        maxHeight = getAvailableHeight(currentPage.sheet);
-                        currentPage.contentSlot.appendChild(cloneNode);
-                    }
-                }
-            }
-
-            if (document.readyState === 'complete') {
-                initializeInlineLetterPreviews();
-            } else if (window.addEventListener) {
-                window.addEventListener('load', initializeInlineLetterPreviews);
-            } else if (window.attachEvent) {
-                window.attachEvent('onload', initializeInlineLetterPreviews);
-            }
-        })();
-    </script>
-    @else
     <script>
         const downloadBtn = document.getElementById('download-pdf');
-        const printBtn = document.getElementById('print-record');
         if (downloadBtn) {
-            downloadBtn.addEventListener('click', () => printRecord());
-        }
-        if (printBtn) {
-            printBtn.addEventListener('click', () => printRecord());
+            downloadBtn.addEventListener('click', () => generatePdf());
         }
 
         const pageWrapper = document.getElementById('page-wrapper');
@@ -1355,7 +1032,6 @@
         let previewFooters = [];
         let pageHeightPx = measurePageHeightPx();
         let exporting = false;
-        let printPreparing = false;
 
         function measurePageHeightPx() {
             const ruler = document.createElement('div');
@@ -1382,7 +1058,7 @@
                 return;
             }
             pageCounterOverlay.style.display = 'block';
-            pageCounterOverlay.textContent = `{{ __('recordes.labels.page') }} ${currentPage} {{ __('recordes.labels.of') }} ${totalPages}`;
+            pageCounterOverlay.textContent = `Page ${currentPage} of ${totalPages}`;
         };
 
         function renderPreviewFooters() {
@@ -1394,7 +1070,7 @@
             for (let i = 1; i <= totalPages; i++) {
                 const footer = document.createElement('div');
                 footer.className = 'page-preview-footer';
-                footer.textContent = `{{ __('recordes.labels.page') }} ${i}`;
+                footer.textContent = `Page ${i}`;
                 footer.style.top = `${pageHeightPx * i - 30}px`;
                 recordDocument.appendChild(footer);
                 previewFooters.push(footer);
@@ -1415,146 +1091,95 @@
             }
         };
 
-        const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-        async function signalServerPdfReady() {
-            if (!document.body.classList.contains('server-pdf') || !recordDocument) {
-                return;
-            }
-
-            await waitForOutputAssets(recordDocument);
-            scheduleFooterRender();
-            cleanupPreviewArtifacts();
-            window.status = 'record-preview-ready';
-        }
-
-        async function waitForOutputAssets(root) {
-            const images = Array.from(root.querySelectorAll('img'));
-            const iframes = Array.from(root.querySelectorAll('iframe'));
-            const pending = [];
-
-            for (const image of images) {
-                if (image.complete) {
-                    continue;
-                }
-
-                pending.push(new Promise(resolve => {
-                    image.addEventListener('load', resolve, { once: true });
-                    image.addEventListener('error', resolve, { once: true });
-                }));
-            }
-
-            for (const frame of iframes) {
-                if (frame.dataset.loaded === '1') {
-                    continue;
-                }
-
-                pending.push(new Promise(resolve => {
-                    const finalize = () => {
-                        frame.dataset.loaded = '1';
-                        resolve();
-                    };
-
-                    frame.addEventListener('load', () => setTimeout(finalize, 120), { once: true });
-                    setTimeout(finalize, 1500);
-                }));
-            }
-
-            if (document.fonts?.ready) {
-                pending.push(document.fonts.ready.catch(() => undefined));
-            }
-
-            if (pending.length) {
-                await Promise.allSettled(pending);
-            }
-
-            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-        }
-
-        async function prepareOutputMode(mode) {
-            cleanupPreviewArtifacts();
-            if (mode === 'print') {
-                printPreparing = true;
-                document.body.classList.add('print-export-active');
-            } else {
-                exporting = true;
-                document.body.classList.add('pdf-export');
-            }
-
-            await waitForOutputAssets(recordDocument);
-            scheduleFooterRender();
-            cleanupPreviewArtifacts();
-            await wait(80);
-        }
-
-        function restoreOutputMode(mode) {
-            if (mode === 'print') {
-                printPreparing = false;
-                document.body.classList.remove('print-export-active');
-            } else {
-                exporting = false;
-                document.body.classList.remove('pdf-export');
-            }
-
-            scheduleFooterRender();
-        }
-
-        async function printRecord() {
-            if (printPreparing || exporting) {
-                return;
-            }
-
-            if (downloadBtn) {
-                downloadBtn.disabled = true;
-            }
-            if (printBtn) {
-                printBtn.disabled = true;
-            }
-
-            await prepareOutputMode('print');
-            window.print();
-
-            setTimeout(() => {
-                if (printPreparing) {
-                    restoreOutputMode('print');
-                    if (downloadBtn) {
-                        downloadBtn.disabled = false;
-                    }
-                    if (printBtn) {
-                        printBtn.disabled = false;
-                    }
-                }
-            }, 1500);
-        }
-
         if (pageWrapper) {
             pageWrapper.addEventListener('scroll', updatePageCounter);
         } else {
             window.addEventListener('scroll', updatePageCounter);
         }
         window.addEventListener('resize', scheduleFooterRender);
-        window.addEventListener('afterprint', () => {
-            if (!printPreparing) {
-                return;
-            }
-
-            restoreOutputMode('print');
-            if (downloadBtn) {
-                downloadBtn.disabled = false;
-            }
-            if (printBtn) {
-                printBtn.disabled = false;
-            }
-        });
         document.addEventListener('DOMContentLoaded', scheduleFooterRender);
         scheduleFooterRender();
 
         document.addEventListener('keydown', (event) => {
             if ((event.ctrlKey || event.metaKey) && event.key === 's') {
                 event.preventDefault();
-                printRecord();
+                generatePdf();
             }
         });
+
+        function generatePdf() {
+            const element = document.getElementById('record-document');
+            const filename = "{{ $pdfFilename ?? 'case-record.pdf' }}";
+
+            const opt = {
+                margin: 0,
+                filename,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, scrollY: 0, willReadFrequently: true, logging: false },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: {
+                    mode: ['css', 'legacy'],
+                    avoid: ['.section']
+                }
+            };
+
+            const btn = document.getElementById('download-pdf');
+            const originalText = btn ? btn.innerText : '';
+            if (btn) {
+                btn.innerText = '{{ __('recordes.messages.generating') }}';
+                btn.disabled = true;
+            }
+
+            exporting = true;
+            document.body.classList.add('pdf-export');
+            cleanupPreviewArtifacts();
+
+            // Build a detached, hidden export tree to avoid MutationObserver conflicts
+            const exportHost = document.createElement('div');
+            exportHost.id = 'record-export-root';
+            exportHost.style.position = 'fixed';
+            exportHost.style.left = '-99999px';
+            exportHost.style.top = '0';
+            exportHost.style.width = '1px';
+            exportHost.style.height = '1px';
+            const exportNode = element.cloneNode(true);
+            exportNode.id = 'record-document-export';
+            exportHost.appendChild(exportNode);
+            document.body.appendChild(exportHost);
+
+            const worker = html2pdf()
+                .set(opt)
+                .from(exportNode);
+
+            worker.toPdf().get('pdf').then((pdf) => {
+                const totalPages = pdf.internal.getNumberOfPages();
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                pdf.setFontSize(10);
+                for (let i = 1; i <= totalPages; i++) {
+                    pdf.setPage(i);
+                    pdf.text(
+                        `Page ${i} of ${totalPages}`,
+                        pageWidth / 2,
+                        pageHeight - 10,
+                        { align: 'center' }
+                    );
+                }
+            });
+
+            worker.save().catch((e) => {
+                console.error('html2pdf failed', e);
+            }).finally(() => {
+                exportHost.remove();
+                if (btn) {
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                }
+                exporting = false;
+                document.body.classList.remove('pdf-export');
+                scheduleFooterRender();
+            });
+        }
 
         const applicantPdfData = @json($firstEvidenceEmbedData);
         const responsePdfEmbeds = @json($responsePdfEmbeds ?? []);
@@ -1571,10 +1196,6 @@
             iframe.title = '{{ __('recordes.labels.applicant_initial_pdf') }}';
             iframe.scrolling = 'no';
             iframe.src = 'data:{{ $firstEvidenceEmbedMime }};base64,' + applicantPdfData + '#toolbar=0&navpanes=0&scrollbar=0';
-            iframe.addEventListener('load', () => {
-                iframe.dataset.loaded = '1';
-                scheduleFooterRender();
-            }, { once: true });
             container.innerHTML = '';
             container.appendChild(iframe);
             scheduleFooterRender();
@@ -1587,7 +1208,37 @@
                 return;
             }
 
-            renderApplicantPdfFallback(container);
+            if (!window.pdfjsLib) {
+                renderApplicantPdfFallback(container);
+                return;
+            }
+
+            try {
+                const pdfBytes = Uint8Array.from(atob(applicantPdfData), char => char.charCodeAt(0));
+
+                if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = "{{ asset('vendor/pdfjs/pdf.worker.min.js') }}";
+                }
+
+                const pdf = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
+
+                container.innerHTML = '';
+
+                for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                    const page = await pdf.getPage(pageNum);
+                    const viewport = page.getViewport({ scale: 1.3 });
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+                    await page.render({ canvasContext: context, viewport }).promise;
+                    container.appendChild(canvas);
+                }
+                scheduleFooterRender();
+            } catch (error) {
+                console.error('Applicant PDF render failed', error);
+                renderApplicantPdfFallback(container);
+            }
         }
 
         if (applicantPdfData) {
@@ -1605,10 +1256,6 @@
             iframe.title = embed.title || '{{ __('recordes.labels.respondent_responses') }}';
             iframe.scrolling = 'no';
             iframe.src = `data:${embed.mime || 'application/pdf'};base64,${embed.data}#toolbar=0&navpanes=0&scrollbar=0`;
-            iframe.addEventListener('load', () => {
-                iframe.dataset.loaded = '1';
-                scheduleFooterRender();
-            }, { once: true });
             container.innerHTML = '';
             container.appendChild(iframe);
         }
@@ -1619,8 +1266,34 @@
                 return;
             }
 
-            renderResponsePdfFallback(container, embed);
-            scheduleFooterRender();
+            if (!window.pdfjsLib) {
+                renderResponsePdfFallback(container, embed);
+                return;
+            }
+
+            try {
+                const pdfBytes = Uint8Array.from(atob(embed.data), char => char.charCodeAt(0));
+                if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = "{{ asset('vendor/pdfjs/pdf.worker.min.js') }}";
+                }
+                const pdf = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
+                container.innerHTML = '';
+                for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                    const page = await pdf.getPage(pageNum);
+                    const viewport = page.getViewport({ scale: 1.2 });
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+                    await page.render({ canvasContext: context, viewport }).promise;
+                    container.appendChild(canvas);
+                }
+            } catch (error) {
+                console.error('Response PDF render failed', error);
+                renderResponsePdfFallback(container, embed);
+            } finally {
+                scheduleFooterRender();
+            }
         }
 
         function renderAllResponsePdfs() {
@@ -1637,16 +1310,6 @@
         if (responsePdfEmbeds.length) {
             window.addEventListener('load', renderAllResponsePdfs);
         }
-
-        window.addEventListener('load', () => {
-            if (!document.body.classList.contains('server-pdf')) {
-                return;
-            }
-
-            setTimeout(() => {
-                signalServerPdfReady();
-            }, 250);
-        });
 
         function initializeInlineLetterPreviews() {
             const wrappers = document.querySelectorAll('[data-letter-preview-id]');
@@ -1752,6 +1415,5 @@
         }
 
     </script>
-    @endif
 </body>
 </html>
