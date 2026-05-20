@@ -89,7 +89,20 @@ class CaseSearchController extends Controller
         abort_if(!$case, 404);
 
         if (!$this->hasCaseAccess($case->id)) {
-            abort_if(!$this->caseCodeMatches($case, $caseCode), 404);
+            $hasDbAccess = false;
+            if (auth('applicant')->check()) {
+                $applicant = auth('applicant')->user();
+                $respondent = Respondent::where('email', $applicant->email)->first();
+                if ($respondent) {
+                    $hasDbAccess = DB::table('respondent_case_views')
+                        ->where('respondent_id', $respondent->id)
+                        ->where('case_id', $case->id)
+                        ->exists();
+                }
+            }
+            if (!$hasDbAccess) {
+                abort_if(!$this->caseCodeMatches($case, $caseCode), 404);
+            }
             $this->grantCaseAccess($case->id);
         }
 

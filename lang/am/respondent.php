@@ -17,7 +17,7 @@ return array (
   'dashboard' => 'ዳሽቦርድ',
   'dashboard_title' => 'የተከሳሽ ዳሽቦርድ',
   'delete' => 'ሰርዝ',
-  'description_label' => 'መግለጫ',
+  'description_label' => 'ዋና ይዘት',
   'download' => 'አውርድ',
   'edit_response' => 'ያስተካክሉ',
   'email' => 'ኢሜል',

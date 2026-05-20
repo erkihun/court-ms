@@ -17,7 +17,7 @@ return array (
   'dashboard' => 'Dashboard',
   'dashboard_title' => 'Respondent Dashboard',
   'delete' => 'Delete',
-  'description_label' => 'Description',
+  'description_label' => 'Main Content',
   'download' => 'Download',
   'edit_response' => 'Edit',
   'email' => 'Email',

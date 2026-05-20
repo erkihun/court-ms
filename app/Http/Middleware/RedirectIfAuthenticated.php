@@ -17,8 +17,8 @@ class RedirectIfAuthenticated
 
         foreach ($guards as $guard) {
             if (Auth::guard($guard)->check()) {
-                // If already signed in as applicant, honor login_as flag for respondent dashboard
-                if ($guard === 'applicant' || $guard === null) {
+                // Applicant guard: redirect to applicant/respondent dashboard
+                if ($guard === 'applicant') {
                     if ($request->query('login_as') === 'respondent') {
                         if (!$request->session()->get('acting_as_respondent')) {
                             $request->session()->regenerate();
@@ -30,7 +30,12 @@ class RedirectIfAuthenticated
                     return redirect()->route('applicant.dashboard');
                 }
 
-                // Fallback: default dashboard for other guards
+                // Admin (web) guard or default guard: redirect to admin dashboard
+                if ($guard === null || $guard === 'web') {
+                    return redirect()->route('dashboard');
+                }
+
+                // Any other guard: go to admin dashboard as fallback
                 return redirect()->route('dashboard');
             }
         }

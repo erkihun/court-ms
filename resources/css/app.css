@@ -904,6 +904,55 @@
   }
 }
 
+  /* ── Applicant / Respondent portal nav ─────────────────── */
+  .ap-navlink {
+    @apply inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-white/75 transition-colors hover:bg-white/10 hover:text-white;
+  }
+  .ap-navlink-active { @apply bg-white/15 text-white; }
+  .ap-navlink-orange {
+    @apply inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-semibold bg-orange-500 text-white hover:bg-orange-600 transition-colors;
+  }
+  .ap-navlink-cta {
+    @apply inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold bg-orange-500 text-white hover:bg-orange-600 transition-colors;
+  }
+  .ap-icon-btn {
+    @apply relative inline-flex items-center justify-center h-9 w-9 rounded-lg text-white/75 hover:bg-white/10 hover:text-white transition-colors;
+  }
+  .ap-badge {
+    @apply absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-orange-500 px-1 text-[10px] font-bold text-white leading-none;
+  }
+  .ap-lang-switch {
+    @apply inline-flex items-center gap-0.5 rounded-lg p-0.5;
+    background: rgb(255 255 255 / 0.1);
+  }
+  .ap-lang-opt {
+    @apply inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-bold text-white/65 transition-colors hover:text-white;
+  }
+  .ap-lang-opt.active {
+    @apply bg-white text-[#0c1445];
+  }
+  .ap-profile-btn {
+    @apply inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition-colors;
+  }
+  .ap-profile-btn-active { @apply bg-white/15 text-white; }
+  .ap-mobile-link {
+    @apply flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition-colors w-full;
+  }
+  .ap-mobile-link-active { @apply text-white bg-white/15; }
+  .ap-mobile-section {
+    @apply text-[10px] font-bold uppercase tracking-widest text-white/40 px-3 py-2;
+  }
+  .ap-notif-dropdown {
+    @apply absolute right-0 z-50 mt-2 w-[28rem] max-w-[93vw] rounded-xl border border-slate-200 bg-white shadow-2xl;
+  }
+  .ap-profile-dropdown {
+    @apply absolute right-0 z-50 mt-2 w-52 rounded-xl border border-slate-100 bg-white shadow-2xl py-1;
+  }
+  .ap-dropdown-item {
+    @apply flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors w-full;
+  }
+  .ap-dropdown-divider { @apply my-1 border-t border-slate-100; }
+
 @media print {
   body,
   .print-font,

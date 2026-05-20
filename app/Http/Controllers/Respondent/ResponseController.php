@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
 use App\Services\ResponseNotificationService;
+use Mews\Purifier\Facades\Purifier;
 
 class ResponseController extends Controller
 {
@@ -42,7 +43,7 @@ class ResponseController extends Controller
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'case_number' => ['nullable', 'string', 'max:64'],
+            'case_number' => ['required', 'string', 'max:64'],
             'pdf' => ['required', 'file', 'mimes:pdf', 'max:5120'],
         ]);
 
@@ -65,13 +66,15 @@ class ResponseController extends Controller
 
         $path = $request->file('pdf')->store('respondent/responses', 'private');
 
-        $response = DB::transaction(function () use ($respondentId, $caseNumber, $data, $path) {
+        $descHtml = $this->cleanHtml($data['description'] ?? '');
+
+        $response = DB::transaction(function () use ($respondentId, $caseNumber, $data, $path, $descHtml) {
             return RespondentResponse::create([
                 'respondent_id' => $respondentId,
                 'case_number' => $caseNumber,
                 'response_number' => $this->nextResponseNumber($caseNumber),
                 'title' => $data['title'],
-                'description' => $data['description'],
+                'description' => $descHtml ?: null,
                 'pdf_path' => $path,
             ]);
         });
@@ -123,14 +126,16 @@ class ResponseController extends Controller
         $refreshResponseNumber = $caseNumber !== $response->case_number
             || ($caseNumber !== null && empty($response->response_number));
 
-        DB::transaction(function () use ($response, $caseNumber, $data, $refreshResponseNumber) {
+        $descHtml = $this->cleanHtml($data['description'] ?? '');
+
+        DB::transaction(function () use ($response, $caseNumber, $data, $refreshResponseNumber, $descHtml) {
             $response->fill([
                 'case_number' => $caseNumber,
                 'response_number' => $refreshResponseNumber
                     ? $this->nextResponseNumber($caseNumber, (int) $response->id)
                     : $response->response_number,
                 'title' => $data['title'],
-                'description' => $data['description'],
+                'description' => $descHtml ?: null,
             ]);
             $response->save();
         });
@@ -272,5 +277,17 @@ class ResponseController extends Controller
             return null;
         }
         return substr($digits, 0, 16);
+    }
+
+    private function cleanHtml(?string $html): string
+    {
+        $s = (string) ($html ?? '');
+        if ($s === '') {
+            return '';
+        }
+        if (str_contains($s, '&lt;') || str_contains($s, '&gt;')) {
+            $s = htmlspecialchars_decode($s, ENT_QUOTES);
+        }
+        return Purifier::clean($s, 'cases');
     }
 }

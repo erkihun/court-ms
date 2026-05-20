@@ -264,143 +264,117 @@ $respondentNotifList = collect();
 <body class="ui-shell min-h-screen font-ui text-[var(--text)]">
 
     {{-- Header / Nav --}}
-    <header class="sticky top-0 z-40 border-b border-blue-900/50 bg-blue-900/95 text-white shadow-lg shadow-blue-950/10 backdrop-blur">
-        <div class="{{ $shellWidthClass }} mx-auto px-4 py-3 flex items-center justify-between">
+    <header x-data="{ mobileOpen: false }" class="sticky top-0 z-40 border-b border-white/10 bg-[#0c1445] text-white">
+        <div class="{{ $shellWidthClass }} mx-auto px-4 flex h-14 items-center justify-between gap-3">
+
+            {{-- ── Brand ──────────────────────────────────────────────── --}}
             <a href="{{ $actingRespondent ? route('respondent.dashboard') : (auth('applicant')->check() ? route('applicant.dashboard') : route('applicant.login')) }}"
-                class="flex items-center gap-2">
-                <div class="flex items-center gap-2">
-                    @if($logoPath)
-                    <div class=" rounded-lg flex items-center justify-center ">
-                        <img src="{{ asset('storage/'.$logoPath) }}" alt="{{ $brandName }}"
-                            class="h-9 w-auto object-contain">
-                    </div>
-                    @else
-                    <div
-                        class="h-9 w-9 rounded-lg bg-blue-900/60 flex items-center justify-center border border-blue-700/80  font-semibold uppercase tracking-wide">
-                        {{ \Illuminate\Support\Str::of($shortName)->substr(0,2) }}
-                    </div>
-                    @endif
-
-                    <div class="flex flex-col leading-tight">
-                        <span class="font-semibold text-base md:text-lg">
-                            {{ $brandName }}<br>{{ $shortName }}
-                        </span>
-
-                    </div>
-                </div>
+               class="flex items-center gap-2.5 flex-shrink-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+                @if($logoPath)
+                <img src="{{ asset('storage/'.$logoPath) }}" alt="{{ $brandName }}" class="h-8 w-auto object-contain">
+                @else
+                <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 border border-white/20 text-xs font-bold uppercase tracking-wide flex-shrink-0">
+                    {{ \Illuminate\Support\Str::of($shortName)->substr(0,2) }}
+                </span>
+                @endif
+                <span class="font-bold text-sm text-white/90 hidden sm:block truncate max-w-[200px] leading-tight">{{ $brandName }}</span>
             </a>
 
-            <div class="flex items-center gap-3">
+            {{-- ── Right zone ─────────────────────────────────────────── --}}
+            <div class="flex items-center gap-1.5">
                 <x-ui.theme-toggle />
-                <nav x-data="{ open:false }" class="relative">
-                {{-- Desktop --}}
-                <ul class="hidden md:flex items-center gap-4 text-sm">
-                        @if(auth('applicant')->check() || $actingRespondent)
-                        @php
-                        $applicantUser = auth('applicant')->user();
-                        $extractFirstName = function (?string $value): ?string {
-                            $value = trim((string) $value);
-                            if ($value === '') {
-                                return null;
-                            }
 
-                            $parts = preg_split('/\s+/', $value);
-                            return $parts[0] ?? null;
-                        };
+                {{-- ── Desktop Nav (md+) ──────────────────────────────── --}}
+                <nav class="hidden md:flex items-center gap-0.5">
+                    @if(auth('applicant')->check() || $actingRespondent)
+                    @php
+                    $applicantUser = auth('applicant')->user();
+                    $extractFirstName = function (?string $value): ?string {
+                        $value = trim((string) $value);
+                        if ($value === '') { return null; }
+                        $parts = preg_split('/\s+/', $value);
+                        return $parts[0] ?? null;
+                    };
+                    $applicantDisplayName = $extractFirstName($applicantUser?->first_name)
+                        ?? $extractFirstName($applicantUser?->full_name)
+                        ?? $extractFirstName($applicantUser?->name)
+                        ?? ($actingRespondent ? __('respondent.respondent_label') : __('app.profile'));
+                    @endphp
 
-                        $applicantDisplayName = $extractFirstName($applicantUser?->first_name)
-                            ?? $extractFirstName($applicantUser?->full_name)
-                            ?? $extractFirstName($applicantUser?->name)
-                            ?? ($actingRespondent ? __('respondent.respondent_label') : __('app.profile'));
+                    @if($actingRespondent)
+                    {{-- Respondent nav links --}}
+                    <a href="{{ route('respondent.dashboard') }}"
+                       class="ap-navlink {{ request()->routeIs('respondent.dashboard') ? 'ap-navlink-active' : '' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                        </svg>
+                        {{ __('respondent.dashboard') }}
+                    </a>
+                    <a href="{{ route('respondent.case.search') }}"
+                       class="ap-navlink {{ request()->routeIs('respondent.case.search') ? 'ap-navlink-active' : '' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5a6 6 0 110 12 6 6 0 010-12zm5 11 5 5"/>
+                        </svg>
+                        {{ __('respondent.find_case') }}
+                    </a>
+                    <a href="{{ route('respondent.cases.my') }}"
+                       class="ap-navlink {{ request()->routeIs('respondent.cases.*') ? 'ap-navlink-active' : '' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h10M4 18h6"/>
+                        </svg>
+                        {{ __('respondent.my_cases') }}
+                    </a>
+                    <a href="{{ route('respondent.responses.index') }}"
+                       class="ap-navlink {{ request()->routeIs('respondent.responses.*') ? 'ap-navlink-active' : '' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5h14M5 12h14M5 19h7"/>
+                        </svg>
+                        {{ __('respondent.my_responses') }}
+                    </a>
+                    @else
+                    {{-- Applicant nav links --}}
+                    <a href="{{ route('applicant.dashboard') }}"
+                       class="ap-navlink {{ request()->routeIs('applicant.dashboard') ? 'ap-navlink-active' : '' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                        </svg>
+                        {{ __('app.home') }}
+                    </a>
+                    <a href="{{ route('applicant.cases.index') }}"
+                       class="ap-navlink {{ request()->routeIs('applicant.cases.*') ? 'ap-navlink-active' : '' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h10M4 18h6"/>
+                        </svg>
+                        {{ __('app.my_cases') }}
+                    </a>
+                    @endif
 
-                        $navBase = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md font-medium transition-colors';
-                        $navIdle = 'text-blue-50 hover:bg-blue-700 hover:text-white';
-                        $navActive = 'bg-white text-blue-800 rounded-md';
-                        $navDangerActive = 'bg-orange-500 text-white rounded-md';
-                        @endphp
+                    {{-- Language pill (no dropdown) --}}
+                    <div class="ap-lang-switch mx-1" aria-label="{{ __('app.Language') }}">
+                        <a href="{{ route('language.switch', ['locale' => 'en', 'return' => url()->current()]) }}"
+                           class="ap-lang-opt {{ app()->getLocale() === 'en' ? 'active' : '' }}">
+                            <span class="fi fi-us text-xs"></span> EN
+                        </a>
+                        <a href="{{ route('language.switch', ['locale' => 'am', 'return' => url()->current()]) }}"
+                           class="ap-lang-opt {{ app()->getLocale() === 'am' ? 'active' : '' }}">
+                            <span class="fi fi-et text-xs"></span> አማ
+                        </a>
+                    </div>
 
-                        @if($actingRespondent)
-                    <li>
-                        <a href="{{ route('respondent.dashboard') }}"
-                            class="{{ $navBase }} {{ request()->routeIs('respondent.dashboard') ? $navActive : $navIdle }}">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                            </svg>
-                            {{ __('respondent.dashboard') }}
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('respondent.case.search') }}"
-                            class="{{ $navBase }} {{ request()->routeIs('respondent.case.search') ? $navActive : $navIdle }}">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M11 5a6 6 0 110 12 6 6 0 010-12zm5 11 5 5" />
-                            </svg>
-                            {{ __('respondent.find_case') }}
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('respondent.cases.my') }}"
-                            class="{{ $navBase }} {{ request()->routeIs('respondent.cases.*') ? $navActive : $navIdle }}">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h10M4 18h6" />
-                            </svg>
-                            {{ __('respondent.my_cases') }}
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('respondent.responses.index') }}"
-                            class="{{ $navBase }} {{ request()->routeIs('respondent.responses.*') ? $navActive : $navIdle }}">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5h14M5 12h14M5 19h7" />
-                            </svg>
-                            {{ __('respondent.my_responses') }}
-                        </a>
-                    </li>
-                    {{-- Language (respondent) --}}
-                    <li x-data="{ open: false }" class="relative z-[60]" @close-language-menus.window="open = false">
-                        <button @click.stop="open = !open; $dispatch('close-notification-menus'); $dispatch('close-profile-menus')"
-                            class="{{ $navBase }} {{ $navIdle }} border border-white/30 bg-white/10">
-                            <span class="fi fi-{{ app()->getLocale() == 'am' ? 'et' : 'us' }}"></span>
-                            <span>{{ __('app.Language') }}</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6" />
-                            </svg>
-                        </button>
-                        <div x-cloak x-show="open" @click.outside="open = false"
-                            class="absolute right-0 mt-2 w-36 rounded-md border border-slate-200 bg-white shadow-lg z-[60]">
-                            <div class="p-2 space-y-1 text-slate-700 text-sm">
-                                <a href="{{ route('language.switch', ['locale' => 'en', 'return' => url()->current()]) }}"
-                                    class="flex items-center gap-2 w-full px-3 py-2 rounded hover:bg-slate-50 {{ app()->getLocale() == 'en' ? 'bg-blue-50 text-blue-700' : '' }}">
-                                    <span class="fi fi-us"></span>
-                                    {{ __('app.English') }}
-                                </a>
-                                <a href="{{ route('language.switch', ['locale' => 'am', 'return' => url()->current()]) }}"
-                                    class="flex items-center gap-2 w-full px-3 py-2 rounded hover:bg-slate-50 {{ app()->getLocale() == 'am' ? 'bg-orange-50 text-orange-700' : '' }}">
-                                    <span class="fi fi-et"></span>
-                                    {{ __('app.Amharic') }}
-                                </a>
-                            </div>
-                        </div>
-                    </li>
-                    {{-- Notifications (respondent) --}}
-                    <li x-data="{ open: false }" class="relative z-[60]" @close-notification-menus.window="open = false">
-                        <button @click.stop="open = !open; $dispatch('close-language-menus'); $dispatch('close-profile-menus')"
-                            class="relative inline-flex items-center gap-2 px-3 py-2 rounded-md border border-blue-700 bg-blue-700/80 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-800 focus:ring-white">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                                    d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 1 1-6 0h6z" />
+                    @if($actingRespondent)
+                    {{-- Respondent notifications --}}
+                    <div x-data="{ open: false }" class="relative" @close-notification-menus.window="open = false">
+                        <button type="button"
+                            @click.stop="open = !open; $dispatch('close-profile-menus')"
+                            class="ap-icon-btn" aria-label="{{ __('respondent.notifications') }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 1 1-6 0h6z"/>
                             </svg>
                             @if(($respondentNotifCount ?? 0) > 0)
-                            <span class="inline-flex items-center justify-center rounded-md bg-orange-500 px-2 py-0.5 text-[11px] font-semibold text-white">
-                                {{ $respondentNotifCount }}
-                            </span>
+                            <span class="ap-badge">{{ $respondentNotifCount > 9 ? '9+' : $respondentNotifCount }}</span>
                             @endif
                         </button>
-                        <div x-cloak x-show="open" @click.outside="open=false"
-                            class="absolute right-0 mt-2 w-80 rounded-xl border border-slate-200 bg-white shadow-lg text-slate-800 z-50">
+                        <div x-cloak x-show="open" @click.outside="open=false" class="ap-notif-dropdown" style="width:20rem">
                             <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
                                 <div>
                                     <div class="text-xs uppercase tracking-wide text-slate-500">{{ __('respondent.notifications') }}</div>
@@ -426,141 +400,68 @@ $respondentNotifList = collect();
                                             <div class="text-[11px] text-slate-400 mt-1">{{ optional($item->at)->diffForHumans() }}</div>
                                         </div>
                                         <div class="flex flex-col gap-2 items-end">
-                                            <a href="{{ route('respondent.cases.show', $item->case_number) }}"
-                                                class="text-xs font-semibold text-blue-700 hover:underline">
+                                            <a href="{{ route('respondent.cases.show', $item->case_number) }}" class="text-xs font-semibold text-blue-700 hover:underline">
                                                 {{ __('respondent.view_case_details') }}
                                             </a>
                                             <form method="POST" action="{{ route('respondent.notifications.markOne') }}">
                                                 @csrf
                                                 <input type="hidden" name="type" value="{{ $item->notif_type ?? 'respondent_view' }}">
                                                 <input type="hidden" name="sourceId" value="{{ $item->id }}">
-                                                <button class="text-[11px] text-slate-500 hover:text-blue-700" type="submit">
-                                                    {{ __('respondent.mark_as_read') ?? 'Mark read' }}
-                                                </button>
+                                                <button class="text-[11px] text-slate-500 hover:text-blue-700" type="submit">{{ __('respondent.mark_as_read') ?? 'Mark read' }}</button>
                                             </form>
                                         </div>
                                     </div>
                                 </div>
                                 @empty
-                                <div class="px-4 py-4 text-sm text-slate-500">
-                                    {{ __('respondent.no_notifications') }}
-                                </div>
+                                <div class="px-4 py-4 text-sm text-slate-500">{{ __('respondent.no_notifications') }}</div>
                                 @endforelse
                             </div>
                         </div>
-                    </li>
-                    <li>
-                        <form method="POST" action="{{ route('respondent.switchToApplicant') }}">
-                            @csrf
-                            <button type="submit"
-                                class="{{ $navBase }} {{ $navIdle }} bg-orange-500 text-white hover:bg-orange-600 border border-orange-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M17 17l4-4-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                </svg>
-                                {{ __('app.switch_to_applicant') }}
-                            </button>
-                        </form>
-                    </li>
-                    @else
-                    <li>
-                        <a href="{{ route('applicant.dashboard') }}"
-                            class="{{ $navBase }} {{ request()->routeIs('applicant.dashboard') ? $navActive : $navIdle }}">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                            </svg>
-                            {{ __('app.home') }}
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('applicant.cases.index') }}"
-                            class="{{ $navBase }} {{ request()->routeIs('applicant.cases.*') ? $navActive : $navIdle }}">
+                    </div>
+
+                    {{-- Switch to applicant --}}
+                    <form method="POST" action="{{ route('respondent.switchToApplicant') }}">
+                        @csrf
+                        <button type="submit" class="ap-navlink-orange">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 6h16M4 10h16M4 14h10M4 18h6" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17l4-4-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                             </svg>
-                            {{ __('app.my_cases') }}
-                        </a>
-                    </li>
-                    {{-- Language Switcher (applicant) --}}
-                    <li x-data="{ open: false }" class="relative z-[60]" @close-language-menus.window="open = false">
-                        <button @click.stop="open = !open; $dispatch('close-notification-menus'); $dispatch('close-profile-menus')"
-                            class="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-blue-600 bg-blue-700  font-medium hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-800 focus:ring-orange-400">
-                            <span class="fi fi-{{ app()->getLocale() == 'am' ? 'et' : 'us' }}"></span>
-                            <span>{{ __('app.Language') }}</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 9l6 6 6-6" />
-                            </svg>
+                            {{ __('app.switch_to_applicant') }}
                         </button>
+                    </form>
+                    @else
 
-                        <div x-cloak x-show="open" @click.outside="open = false"
-                            class="absolute right-0 mt-2 w-36 rounded-md border border-slate-200 bg-white shadow-lg z-[60]">
-                            <div class="p-2 space-y-1 text-slate-700 text-sm">
-                                <a href="{{ route('language.switch', ['locale' => 'en', 'return' => url()->current()]) }}"
-                                    class="flex items-center gap-2 w-full px-3 py-2 rounded hover:bg-slate-50 {{ app()->getLocale() == 'en' ? 'bg-blue-50 text-blue-700' : '' }}">
-                                    <span class="fi fi-us"></span>
-                                    {{ __('app.English') }}
-                                </a>
-                                <a href="{{ route('language.switch', ['locale' => 'am', 'return' => url()->current()]) }}"
-                                    class="flex items-center gap-2 w-full px-3 py-2 rounded hover:bg-slate-50 {{ app()->getLocale() == 'am' ? 'bg-orange-50 text-orange-700' : '' }}">
-                                    <span class="fi fi-et"></span>
-                                    {{ __('app.Amharic') }}
-                                </a>
-                            </div>
-                        </div>
-                    </li>
-                    @endif
-                    @endif
-
-
-                    @if(!$actingRespondent && auth('applicant')->check())
-                    {{-- Notifications (desktop) --}}
-                    <li x-data="{ open:false, tab:'notifications', messageModal:false, messageCount: {{ (int) $messageNotificationCount }} }" class="relative" @close-notification-menus.window="open = false">
-                        <div class="flex items-center gap-2">
+                    @if(auth('applicant')->check())
+                    {{-- Applicant notifications (msg + bell) --}}
+                    <div x-data="{ open:false, tab:'notifications', messageModal:false, messageCount: {{ (int) $messageNotificationCount }} }"
+                         class="relative" @close-notification-menus.window="open = false">
+                        <div class="flex items-center gap-0.5">
                             <button type="button"
-                                @click.stop="tab = 'messages'; open = true; if (messageCount > 0) { messageModal = true }; $dispatch('close-language-menus'); $dispatch('close-profile-menus')"
-                                class="relative inline-flex items-center gap-1.5 rounded-md border border-blue-500 px-3 py-1.5 bg-blue-700 text-blue-50 font-medium hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-800 focus:ring-orange-400"
-                                :class="tab === 'messages' ? 'bg-white text-blue-800' : ''"
+                                @click.stop="tab = 'messages'; open = true; if (messageCount > 0) { messageModal = true }; $dispatch('close-profile-menus')"
+                                class="ap-icon-btn" :class="tab === 'messages' && open ? 'bg-white/15 text-white' : ''"
                                 aria-label="{{ __('cases.navigation.messages') }}">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"
-                                        d="M7 8h10M7 12h4m-4 4h6m2-8h3a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-6l-4 3v-3H7a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z" />
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 8h10M7 12h4m-4 4h6m2-8h3a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-6l-4 3v-3H7a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/>
                                 </svg>
                                 @if($messageNotificationCount > 0)
-                                <span
-                                    class="absolute -top-1 -right-1 grid h-5 min-w-[20px] place-items-center rounded-full bg-orange-500 px-1 text-[11px] font-semibold text-white">
-                                    {{ $messageNotificationCount > 9 ? '9+' : $messageNotificationCount }}
-                                </span>
+                                <span class="ap-badge">{{ $messageNotificationCount > 9 ? '9+' : $messageNotificationCount }}</span>
                                 @endif
                             </button>
                             <button type="button"
-                                @click.stop="if (tab === 'notifications') { open = !open } else { tab = 'notifications'; open = true }; $dispatch('close-language-menus'); $dispatch('close-profile-menus')"
-                                    class="relative inline-flex items-center gap-1.5 rounded-md border border-blue-500 px-3 py-1.5 bg-blue-700 text-blue-50 font-medium hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-800 focus:ring-orange-400"
-                                :class="tab === 'notifications' ? 'bg-white text-blue-800' : ''"
+                                @click.stop="if (tab === 'notifications') { open = !open } else { tab = 'notifications'; open = true }; $dispatch('close-profile-menus')"
+                                class="ap-icon-btn" :class="tab === 'notifications' && open ? 'bg-white/15 text-white' : ''"
                                 aria-label="{{ __('app.Notifications') }}">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"
-                                        d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 1 1-6 0h6z" />
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 1 1-6 0h6z"/>
                                 </svg>
                                 @if($notificationCount > 0)
-                                <span
-                                    class="absolute -top-1 -right-1 grid h-5 min-w-[20px] place-items-center rounded-full bg-orange-500 px-1 text-[11px] font-semibold text-white">
-                                    {{ $notificationCount > 9 ? '9+' : $notificationCount }}
-                                </span>
+                                <span class="ap-badge">{{ $notificationCount > 9 ? '9+' : $notificationCount }}</span>
                                 @endif
                             </button>
                         </div>
 
-                        {{-- Dropdown --}}
-                        <div x-cloak x-show="open" @click.outside="open=false"
-                            class="absolute right-0 z-50 mt-2 w-[28rem] max-w-[90vw] rounded-md border border-slate-200 bg-white shadow-xl">
+                        {{-- Notification dropdown --}}
+                        <div x-cloak x-show="open" @click.outside="open=false" class="ap-notif-dropdown">
                             <div class="p-3">
                                 <div class="flex items-center justify-between">
                                     <div class="text-sm font-semibold text-slate-700">
@@ -570,44 +471,29 @@ $respondentNotifList = collect();
                                     @if($hasAnyNotifications)
                                     <form method="POST" action="{{ route('applicant.notifications.markAll') }}">
                                         @csrf
-                                        <button class="text-xs text-slate-700 px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">
-                                            {{ __('app.Mark all as seen') }}
-                                        </button>
+                                        <button class="text-xs text-slate-700 px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">{{ __('app.Mark all as seen') }}</button>
                                     </form>
                                     @endif
                                 </div>
 
                                 <div class="mt-3 space-y-2" x-show="tab === 'messages'" x-cloak>
                                     @if($unseenMsgs->isEmpty())
-                                    <div class="text-sm text-slate-500">
-                                        {{ __('cases.messages_section.no_messages') }}
-                                    </div>
+                                    <div class="text-sm text-slate-500">{{ __('cases.messages_section.no_messages') }}</div>
                                     @else
                                     <ul class="divide-y">
                                         @foreach($unseenMsgs as $m)
                                         @php
                                         $legacyApplicantUpdate = 'Applicant updated the case details. Please review the submission.';
-                                        $displayBody = trim((string) $m->body) === $legacyApplicantUpdate
-                                            ? __('cases.notifications.applicant_updated_submission')
-                                            : (string) $m->body;
+                                        $displayBody = trim((string) $m->body) === $legacyApplicantUpdate ? __('cases.notifications.applicant_updated_submission') : (string) $m->body;
                                         @endphp
                                         <li class="py-2 flex items-center justify-between gap-3">
-                                            <a href="{{ route('applicant.cases.show', $m->case_id) }}"
-                                                class="text-sm flex-1">
+                                            <a href="{{ route('applicant.cases.show', $m->case_id) }}" class="text-sm flex-1">
                                                 <div class="font-medium text-slate-800">{{ $m->case_number }}</div>
-                                                <div class="text-xs text-slate-500">
-                                                    {{ \Illuminate\Support\Str::limit($displayBody, 80) }}
-                                                    <span class="text-slate-400">·</span>
-                                                    {{ \Illuminate\Support\Carbon::parse($m->created_at)->diffForHumans() }}
-                                                </div>
+                                                <div class="text-xs text-slate-500">{{ \Illuminate\Support\Str::limit($displayBody, 80) }} <span class="text-slate-400">·</span> {{ \Illuminate\Support\Carbon::parse($m->created_at)->diffForHumans() }}</div>
                                             </a>
-                                            <form method="POST"
-                                                action="{{ route('applicant.notifications.markOne', ['type'=>'message','sourceId'=>$m->id]) }}">
+                                            <form method="POST" action="{{ route('applicant.notifications.markOne', ['type'=>'message','sourceId'=>$m->id]) }}">
                                                 @csrf
-                                                <button
-                                                    class="text-xs text-slate-700 px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">
-                                                    {{ __('app.Seen') }}
-                                                </button>
+                                                <button class="text-xs text-slate-700 px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">{{ __('app.Seen') }}</button>
                                             </form>
                                         </li>
                                         @endforeach
@@ -617,112 +503,68 @@ $respondentNotifList = collect();
 
                                 <div class="mt-3 space-y-3" x-show="tab === 'notifications'" x-cloak>
                                     @if(!$hasOtherNotifications)
-                                    <div class="text-sm text-slate-500">
-                                        {{ __('app.youre_all_caught_up') }}
-                                    </div>
+                                    <div class="text-sm text-slate-500">{{ __('app.youre_all_caught_up') }}</div>
                                     @else
                                     @if($unseenHearings->isNotEmpty())
                                     <div>
                                         <div class="mb-1 flex items-center justify-between">
                                             <div class="text-xs font-medium text-slate-500">{{ __('app.Hearing') }}</div>
-                                            <span class="text-[11px] rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">
-                                                {{ $unseenHearings->count() }}
-                                            </span>
+                                            <span class="text-[11px] rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">{{ $unseenHearings->count() }}</span>
                                         </div>
                                         <ul class="divide-y">
                                             @foreach($unseenHearings as $h)
                                             <li class="py-2 flex items-center justify-between gap-3">
-                                                <a href="{{ route('applicant.cases.show', $h->case_id) }}"
-                                                    class="text-sm flex-1">
-                                                    <div class="font-medium text-slate-800">
-                                                        {{ $h->case_number }}
-                                                        <span class="text-slate-400">·</span>
-                                                        {{ \App\Support\EthiopianDate::format($h->hearing_at, withTime: true) }}
-                                                    </div>
-                                                    <div class="text-xs text-slate-500">
-                                                        {{ $h->type ?: __('app.Hearing') }}
-                                                        @if($h->location)
-                                                        <span class="text-slate-400">·</span> {{ $h->location }}
-                                                        @endif
-                                                    </div>
+                                                <a href="{{ route('applicant.cases.show', $h->case_id) }}" class="text-sm flex-1">
+                                                    <div class="font-medium text-slate-800">{{ $h->case_number }} <span class="text-slate-400">·</span> {{ \App\Support\EthiopianDate::format($h->hearing_at, withTime: true) }}</div>
+                                                    <div class="text-xs text-slate-500">{{ $h->type ?: __('app.Hearing') }}@if($h->location) <span class="text-slate-400">·</span> {{ $h->location }}@endif</div>
                                                 </a>
-                                                <form method="POST"
-                                                    action="{{ route('applicant.notifications.markOne', ['type'=>'hearing','sourceId'=>$h->id]) }}">
+                                                <form method="POST" action="{{ route('applicant.notifications.markOne', ['type'=>'hearing','sourceId'=>$h->id]) }}">
                                                     @csrf
-                                                    <button
-                                                        class="text-xs text-slate-700 px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">
-                                                        {{ __('app.Seen') }}
-                                                    </button>
+                                                    <button class="text-xs text-slate-700 px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">{{ __('app.Seen') }}</button>
                                                 </form>
                                             </li>
                                             @endforeach
                                         </ul>
                                     </div>
                                     @endif
-
                                     @if($respondentViews->isNotEmpty())
                                     <div>
                                         <div class="mb-1 flex items-center justify-between">
                                             <div class="text-xs font-medium text-slate-500">{{ __('app.admin_notifications.respondent_views') }}</div>
-                                            <span class="text-[11px] rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">
-                                                {{ $respondentViews->count() }}
-                                            </span>
+                                            <span class="text-[11px] rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">{{ $respondentViews->count() }}</span>
                                         </div>
                                         <ul class="divide-y">
                                             @foreach($respondentViews as $v)
                                             <li class="py-2 flex items-center justify-between gap-3">
-                                                <a href="{{ route('applicant.cases.show', $v->case_id) }}"
-                                                    class="text-sm flex-1">
+                                                <a href="{{ route('applicant.cases.show', $v->case_id) }}" class="text-sm flex-1">
                                                     <div class="font-medium text-slate-800">{{ $v->case_number }}</div>
-                                                    <div class="text-xs text-slate-500">
-                                                        {{ $v->respondent_name ?: __('app.admin_notifications.respondent_default') }}
-                                                        <span class="text-slate-400">·</span>
-                                                        {{ \Illuminate\Support\Carbon::parse($v->viewed_at)->diffForHumans() }}
-                                                    </div>
+                                                    <div class="text-xs text-slate-500">{{ $v->respondent_name ?: __('app.admin_notifications.respondent_default') }} <span class="text-slate-400">·</span> {{ \Illuminate\Support\Carbon::parse($v->viewed_at)->diffForHumans() }}</div>
                                                 </a>
-                                                <form method="POST"
-                                                    action="{{ route('applicant.notifications.markOne', ['type'=>'respondent_view','sourceId'=>$v->id]) }}">
+                                                <form method="POST" action="{{ route('applicant.notifications.markOne', ['type'=>'respondent_view','sourceId'=>$v->id]) }}">
                                                     @csrf
-                                                    <button
-                                                        class="text-xs text-slate-700 px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">
-                                                        {{ __('app.Seen') }}
-                                                    </button>
+                                                    <button class="text-xs text-slate-700 px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">{{ __('app.Seen') }}</button>
                                                 </form>
                                             </li>
                                             @endforeach
                                         </ul>
                                     </div>
                                     @endif
-
                                     @if($unseenStatus->isNotEmpty())
                                     <div>
                                         <div class="mb-1 flex items-center justify-between">
                                             <div class="text-xs font-medium text-slate-500">{{ __('app.admin_notifications.status_updates') }}</div>
-                                            <span class="text-[11px] rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">
-                                                {{ $unseenStatus->count() }}
-                                            </span>
+                                            <span class="text-[11px] rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">{{ $unseenStatus->count() }}</span>
                                         </div>
                                         <ul class="divide-y">
                                             @foreach($unseenStatus as $s)
                                             <li class="py-2 flex items-center justify-between gap-3">
-                                                <a href="{{ route('applicant.cases.show', $s->case_id) }}"
-                                                    class="text-sm flex-1">
+                                                <a href="{{ route('applicant.cases.show', $s->case_id) }}" class="text-sm flex-1">
                                                     <div class="font-medium text-slate-800">{{ $s->case_number }}</div>
-                                                    <div class="text-xs text-slate-500">
-                                                        {{ ucfirst($s->from_status) }}
-                                                        <span class="text-slate-400">·</span>
-                                                        <strong>{{ ucfirst($s->to_status) }}</strong>
-                                                        <span class="text-slate-400">·</span>
-                                                        {{ \Illuminate\Support\Carbon::parse($s->created_at)->diffForHumans() }}
-                                                    </div>
+                                                    <div class="text-xs text-slate-500">{{ ucfirst($s->from_status) }} <span class="text-slate-400">·</span> <strong>{{ ucfirst($s->to_status) }}</strong> <span class="text-slate-400">·</span> {{ \Illuminate\Support\Carbon::parse($s->created_at)->diffForHumans() }}</div>
                                                 </a>
-                                                <form method="POST"
-                                                    action="{{ route('applicant.notifications.markOne', ['type'=>'status','sourceId'=>$s->id]) }}">
+                                                <form method="POST" action="{{ route('applicant.notifications.markOne', ['type'=>'status','sourceId'=>$s->id]) }}">
                                                     @csrf
-                                                    <button
-                                                        class="text-xs text-slate-700 px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">
-                                                        {{ __('app.Seen') }}
-                                                    </button>
+                                                    <button class="text-xs text-slate-700 px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">{{ __('app.Seen') }}</button>
                                                 </form>
                                             </li>
                                             @endforeach
@@ -733,17 +575,16 @@ $respondentNotifList = collect();
                                 </div>
 
                                 <div class="mt-3 border-t pt-2 flex items-center justify-between">
-                                    <a href="{{ route('applicant.notifications.index') }}"
-                                        class="text-xs text-slate-600 hover:text-slate-800">{{ __('app.View all') }}</a>
-                                    <a href="{{ route('applicant.notifications.settings') }}"
-                                        class="text-xs text-slate-600 hover:text-slate-800">{{ __('app.Settings') }}</a>
+                                    <a href="{{ route('applicant.notifications.index') }}" class="text-xs text-slate-600 hover:text-slate-800">{{ __('app.View all') }}</a>
+                                    <a href="{{ route('applicant.notifications.settings') }}" class="text-xs text-slate-600 hover:text-slate-800">{{ __('app.Settings') }}</a>
                                 </div>
                             </div>
                         </div>
 
                         {{-- Message modal --}}
                         <div x-cloak x-show="messageModal"
-                            x-transition:enter="motion-overlay-enter" x-transition:enter-start="motion-fade-start" x-transition:enter-end="motion-fade-end" x-transition:leave="motion-overlay-leave" x-transition:leave-start="motion-fade-end" x-transition:leave-end="motion-fade-start"
+                            x-transition:enter="motion-overlay-enter" x-transition:enter-start="motion-fade-start" x-transition:enter-end="motion-fade-end"
+                            x-transition:leave="motion-overlay-leave" x-transition:leave-start="motion-fade-end" x-transition:leave-end="motion-fade-start"
                             @keydown.escape.window="messageModal=false"
                             class="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
                             <div class="absolute inset-0 bg-black/40" @click="messageModal=false"></div>
@@ -751,48 +592,28 @@ $respondentNotifList = collect();
                                 <div class="flex items-center justify-between border-b border-slate-100 px-5 py-3">
                                     <h3 class="text-sm font-semibold text-slate-900">{{ __('cases.navigation.messages') }}</h3>
                                     <button type="button" class="text-slate-400 hover:text-slate-700" @click="messageModal=false">
-                                        <span class="sr-only">Close</span>
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                     </button>
                                 </div>
                                 <div class="max-h-96 overflow-auto p-5 space-y-3">
                                     @if($unseenMsgs->isEmpty())
-                                    <div class="text-sm text-slate-500">
-                                        {{ __('cases.messages_section.no_messages') }}
-                                    </div>
+                                    <div class="text-sm text-slate-500">{{ __('cases.messages_section.no_messages') }}</div>
                                     @else
                                     <ul class="divide-y">
                                         @foreach($unseenMsgs as $m)
                                         @php
                                         $legacyApplicantUpdate = 'Applicant updated the case details. Please review the submission.';
-                                        $displayBody = trim((string) $m->body) === $legacyApplicantUpdate
-                                            ? __('cases.notifications.applicant_updated_submission')
-                                            : (string) $m->body;
+                                        $displayBody = trim((string) $m->body) === $legacyApplicantUpdate ? __('cases.notifications.applicant_updated_submission') : (string) $m->body;
                                         @endphp
                                         <li class="py-2">
                                             <div class="flex items-start gap-3">
                                                 <div class="flex-1">
-                                                    <a href="{{ route('applicant.cases.show', $m->case_id) }}"
-                                                        class="text-sm font-semibold text-slate-900 hover:text-blue-600">
-                                                        {{ $m->case_number }}
-                                                    </a>
-                                                    <p class="text-xs text-slate-500 mt-0.5">
-                                                        {{ \Illuminate\Support\Str::limit($displayBody, 90) }}
-                                                        <span class="text-slate-400">·</span>
-                                                        {{ \Illuminate\Support\Carbon::parse($m->created_at)->diffForHumans() }}
-                                                    </p>
+                                                    <a href="{{ route('applicant.cases.show', $m->case_id) }}" class="text-sm font-semibold text-slate-900 hover:text-blue-600">{{ $m->case_number }}</a>
+                                                    <p class="text-xs text-slate-500 mt-0.5">{{ \Illuminate\Support\Str::limit($displayBody, 90) }} <span class="text-slate-400">·</span> {{ \Illuminate\Support\Carbon::parse($m->created_at)->diffForHumans() }}</p>
                                                 </div>
-                                                <form method="POST"
-                                                    action="{{ route('applicant.notifications.markOne', ['type'=>'message','sourceId'=>$m->id]) }}">
+                                                <form method="POST" action="{{ route('applicant.notifications.markOne', ['type'=>'message','sourceId'=>$m->id]) }}">
                                                     @csrf
-                                                    <button
-                                                        class="text-xs text-slate-700 px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">
-                                                        {{ __('app.Seen') }}
-                                                    </button>
+                                                    <button class="text-xs text-slate-700 px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">{{ __('app.Seen') }}</button>
                                                 </form>
                                             </div>
                                         </li>
@@ -802,321 +623,248 @@ $respondentNotifList = collect();
                                 </div>
                             </div>
                         </div>
-                    </li>
-                    @endif
+                    </div>
 
-                    {{-- Switch to respondent (desktop) --}}
-                    @if(!$actingRespondent && auth('applicant')->check())
-                    <li>
-                        <form method="POST" action="{{ route('applicant.switchToRespondent') }}">
-                            @csrf
-                            <button type="submit"
-                                class="{{ $navBase }} {{ $navIdle }} bg-orange-500 text-white hover:bg-orange-600 border border-orange-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M17 17l4-4-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                </svg>
-                                {{ __('app.switch_to_respondent') }}
-                            </button>
-                        </form>
-                    </li>
-                    @endif
+                    {{-- Switch to respondent --}}
+                    <form method="POST" action="{{ route('applicant.switchToRespondent') }}">
+                        @csrf
+                        <button type="submit" class="ap-navlink-orange">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17l4-4-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                            </svg>
+                            {{ __('app.switch_to_respondent') }}
+                        </button>
+                    </form>
+                    @endif {{-- end auth('applicant')->check() --}}
+                    @endif {{-- end $actingRespondent else --}}
 
-                    {{-- Applicant menu --}}
-                    @if(auth('applicant')->check() || $actingRespondent)
-                    <li x-data="{ open: false }" class="relative" @close-profile-menus.window="open = false">
-                        <button @click.stop="open = !open; $dispatch('close-language-menus'); $dispatch('close-notification-menus')" type="button"
-                            class="{{ $navBase }} {{ $navIdle }} whitespace-nowrap"
-                            :class="{ 'bg-white text-blue-800': open }">
-                            <span class="truncate">{{ $applicantDisplayName }}</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 9l6 6 6-6" />
+                    {{-- Profile dropdown --}}
+                    <div x-data="{ open: false }" class="relative ml-0.5" @close-profile-menus.window="open = false">
+                        <button @click.stop="open = !open; $dispatch('close-notification-menus')" type="button"
+                            class="ap-profile-btn" :class="{ 'ap-profile-btn-active': open }">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                            <span class="truncate max-w-[100px]">{{ $applicantDisplayName }}</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"/>
                             </svg>
                         </button>
-                        <div x-cloak x-show="open" @click.outside="open = false"
-                            class="absolute right-0 z-50 mt-2 w-48 rounded-md border border-slate-200 bg-white shadow-xl">
+                        <div x-cloak x-show="open" @click.outside="open = false" class="ap-profile-dropdown">
                             @if($actingRespondent)
-                            <a href="{{ route('respondent.profile.edit') }}"
-                                class="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
+                            <a href="{{ route('respondent.profile.edit') }}" class="ap-dropdown-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                                 {{ __('respondent.profile') }}
                             </a>
+                            <div class="ap-dropdown-divider"></div>
                             <form method="POST" action="{{ route('respondent.logout') }}">
                                 @csrf
-                                <button type="submit"
-                                    class="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                    </svg>
+                                <button type="submit" class="ap-dropdown-item text-rose-600 hover:bg-rose-50">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                                     {{ __('app.logout') }}
                                 </button>
                             </form>
                             @else
-                            <a href="{{ route('applicant.profile.edit') }}"
-                                class="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
+                            <a href="{{ route('applicant.profile.edit') }}" class="ap-dropdown-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                                 {{ __('app.profile') }}
                             </a>
+                            <div class="ap-dropdown-divider"></div>
                             <form method="POST" action="{{ route('applicant.logout') }}">
                                 @csrf
-                                <button type="submit"
-                                    class="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                    </svg>
+                                <button type="submit" class="ap-dropdown-item text-rose-600 hover:bg-rose-50">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                                     {{ __('app.logout') }}
                                 </button>
                             </form>
                             @endif
                         </div>
+                    </div>
+
+                    @else
+                    {{-- Guest --}}
+                    <div class="ap-lang-switch mx-1" aria-label="{{ __('app.Language') }}">
+                        <a href="{{ route('language.switch', ['locale' => 'en', 'return' => url()->current()]) }}"
+                           class="ap-lang-opt {{ app()->getLocale() === 'en' ? 'active' : '' }}">
+                            <span class="fi fi-us text-xs"></span> EN
+                        </a>
+                        <a href="{{ route('language.switch', ['locale' => 'am', 'return' => url()->current()]) }}"
+                           class="ap-lang-opt {{ app()->getLocale() === 'am' ? 'active' : '' }}">
+                            <span class="fi fi-et text-xs"></span> አማ
+                        </a>
+                    </div>
+                    <a href="{{ route('applicant.register') }}" class="ap-navlink-cta">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                        </svg>
+                        {{ __('app.register') }}
+                    </a>
+                    <a href="{{ route('applicant.login') }}" class="ap-navlink">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                        </svg>
+                        {{ __('app.login') }}
+                    </a>
+                    @endif
+                </nav>
+
+                {{-- ── Hamburger (mobile only) ─────────────────────── --}}
+                <button @click="mobileOpen = !mobileOpen"
+                    class="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-lg text-white/80 hover:bg-white/10 hover:text-white transition-colors"
+                    aria-label="{{ __('app.menu') }}" :aria-expanded="mobileOpen">
+                    <svg x-show="!mobileOpen" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                    <svg x-show="mobileOpen" x-cloak xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        {{-- ── Mobile panel (full-width, below bar) ──────────────── --}}
+        <div x-cloak x-show="mobileOpen" @click.outside="mobileOpen = false"
+             class="md:hidden border-t border-white/10 bg-[#0c1445] overflow-hidden">
+            <div class="{{ $shellWidthClass }} mx-auto px-4 py-3 max-h-[80vh] overflow-y-auto">
+                <ul class="space-y-0.5">
+
+                    {{-- Language --}}
+                    @unless($actingRespondent)
+                    <li class="pb-2 mb-1 border-b border-white/10">
+                        <div class="ap-mobile-section">{{ __('app.language') }}</div>
+                        <div class="flex gap-2 px-1">
+                            <a href="{{ route('language.switch', ['locale' => 'en', 'return' => url()->current()]) }}"
+                               class="flex-1 text-center rounded-lg py-2 text-sm font-bold transition-colors {{ app()->getLocale() == 'en' ? 'bg-white text-[#0c1445]' : 'bg-white/10 text-white/75 hover:bg-white/15 hover:text-white' }}">
+                                <span class="fi fi-us mr-1 text-xs"></span> English
+                            </a>
+                            <a href="{{ route('language.switch', ['locale' => 'am', 'return' => url()->current()]) }}"
+                               class="flex-1 text-center rounded-lg py-2 text-sm font-bold transition-colors {{ app()->getLocale() == 'am' ? 'bg-orange-500 text-white' : 'bg-white/10 text-white/75 hover:bg-white/15 hover:text-white' }}">
+                                <span class="fi fi-et mr-1 text-xs"></span> አማርኛ
+                            </a>
+                        </div>
+                    </li>
+                    @endunless
+
+                    @if(auth('applicant')->check() || $actingRespondent)
+
+                    @if($actingRespondent)
+                    {{-- Respondent mobile links --}}
+                    <li>
+                        <a href="{{ route('respondent.dashboard') }}" class="ap-mobile-link {{ request()->routeIs('respondent.dashboard') ? 'ap-mobile-link-active' : '' }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                            {{ __('respondent.dashboard') }}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('respondent.case.search') }}" class="ap-mobile-link {{ request()->routeIs('respondent.case.search') ? 'ap-mobile-link-active' : '' }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5a6 6 0 110 12 6 6 0 010-12zm5 11 5 5"/></svg>
+                            {{ __('respondent.find_case') }}
+                        </a>
+                    </li>
+                    <li class="pt-1 mt-1 border-t border-white/10">
+                        <form method="POST" action="{{ route('respondent.switchToApplicant') }}">
+                            @csrf
+                            <button class="ap-mobile-link text-orange-300 hover:text-orange-200 hover:bg-orange-500/20">{{ __('app.switch_to_applicant') }}</button>
+                        </form>
+                    </li>
+                    <li class="pt-1 mt-1 border-t border-white/10">
+                        <div class="ap-mobile-section">{{ $applicantDisplayName }}</div>
+                        <a href="{{ route('respondent.profile.edit') }}" class="ap-mobile-link">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                            {{ __('respondent.profile') }}
+                        </a>
+                        <form method="POST" action="{{ route('respondent.logout') }}">
+                            @csrf
+                            <button class="ap-mobile-link text-rose-300 hover:text-rose-200 hover:bg-rose-500/20">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                                {{ __('app.logout') }}
+                            </button>
+                        </form>
                     </li>
                     @else
+                    {{-- Applicant mobile links --}}
                     <li>
-                        <a href="{{ route('applicant.register') }}"
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full  font-semibold bg-orange-500 text-white hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-800 focus:ring-orange-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                            </svg>
+                        <a href="{{ route('applicant.dashboard') }}" class="ap-mobile-link {{ request()->routeIs('applicant.dashboard') ? 'ap-mobile-link-active' : '' }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                            {{ __('app.home') }}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('applicant.cases.index') }}" class="ap-mobile-link {{ request()->routeIs('applicant.cases.*') ? 'ap-mobile-link-active' : '' }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+                            {{ __('app.my_cases') }}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('applicant.cases.create') }}" class="ap-mobile-link {{ request()->routeIs('applicant.cases.create') ? 'ap-mobile-link-active' : '' }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            {{ __('app.new_case') }}
+                        </a>
+                    </li>
+
+                    {{-- Mobile notifications --}}
+                    @if(auth('applicant')->check())
+                    <li x-data="{ bell: false }" class="border-t border-white/10 pt-1 mt-1">
+                        <button @click.stop="bell = !bell"
+                            class="ap-mobile-link justify-between">
+                            <span class="flex items-center gap-2.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 1 1-6 0h6z"/></svg>
+                                {{ __('app.notifications') }}
+                            </span>
+                            @if($notificationCount > 0)
+                            <span class="ml-auto inline-flex items-center justify-center rounded-full bg-orange-500 px-2 py-0.5 text-[10px] font-bold text-white">{{ $notificationCount > 9 ? '9+' : $notificationCount }}</span>
+                            @endif
+                        </button>
+                        <div x-cloak x-show="bell" class="mx-1 mb-2">
+                            <div class="rounded-xl border border-white/10 bg-white/5 max-h-64 overflow-auto">
+                                @include('partials.applicant-notifications')
+                            </div>
+                        </div>
+                    </li>
+                    @endif
+
+                    <li class="border-t border-white/10 pt-1 mt-1">
+                        <form method="POST" action="{{ route('applicant.switchToRespondent') }}">
+                            @csrf
+                            <button class="ap-mobile-link text-orange-300 hover:text-orange-200 hover:bg-orange-500/20">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17l4-4-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                                {{ __('app.switch_to_respondent') }}
+                            </button>
+                        </form>
+                    </li>
+                    <li class="border-t border-white/10 pt-1 mt-1">
+                        <div class="ap-mobile-section">{{ $applicantDisplayName }}</div>
+                        <a href="{{ route('applicant.profile.edit') }}" class="ap-mobile-link {{ request()->routeIs('applicant.profile.*') ? 'ap-mobile-link-active' : '' }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                            {{ __('app.profile') }}
+                        </a>
+                        <form method="POST" action="{{ route('applicant.logout') }}">
+                            @csrf
+                            <button class="ap-mobile-link text-rose-300 hover:text-rose-200 hover:bg-rose-500/20">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                                {{ __('app.logout') }}
+                            </button>
+                        </form>
+                    </li>
+                    @endif
+
+                    @else
+                    {{-- Guest mobile --}}
+                    <li>
+                        <a href="{{ route('applicant.register') }}" class="ap-mobile-link">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
                             {{ __('app.register') }}
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('applicant.login') }}"
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full  font-semibold border border-white/60 text-white hover:bg-blue-700">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                            </svg>
+                        <a href="{{ route('applicant.login') }}" class="ap-mobile-link">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
                             {{ __('app.login') }}
                         </a>
                     </li>
-                    <li class="flex items-center gap-2">
-                        <a href="{{ route('language.switch', ['locale' => 'en', 'return' => url()->current()]) }}"
-                            class="px-3 py-1 rounded-full border text-xs {{ app()->getLocale() === 'en' ? 'border-blue-200 bg-white text-blue-700' : 'border-white/60 text-white hover:bg-blue-700' }}">
-                            EN
-                        </a>
-                        <a href="{{ route('language.switch', ['locale' => 'am', 'return' => url()->current()]) }}"
-                            class="px-3 py-1 rounded-full border text-xs {{ app()->getLocale() === 'am' ? 'border-blue-200 bg-white text-blue-700' : 'border-white/60 text-white hover:bg-blue-700' }}">
-                            አማ
-                        </a>
-                    </li>
                     @endif
+
                 </ul>
-
-                {{-- Mobile trigger --}}
-                <button @click="open = !open"
-                    class="md:hidden inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-blue-600 bg-blue-700  font-medium hover:bg-blue-600"
-                    aria-label="{{ __('app.menu') }}" aria-haspopup="true" :aria-expanded="open">
-                    {{ __('app.menu') }}
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"
-                            d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                </button>
-
-                {{-- Mobile menu --}}
-                <div x-cloak x-show="open" @click.outside="open=false"
-                    class="md:hidden absolute right-0 mt-2 w-64 rounded-md border border-slate-200 bg-white shadow-xl text-slate-700">
-                    <ul class="py-2 text-sm">
-
-                        <li>
-                            <a href="{{ route('applicant.dashboard') }}"
-                                class="flex items-center gap-2 px-4 py-2 hover:bg-slate-50 {{ request()->routeIs('applicant.dashboard') ? 'text-blue-700 font-medium' : '' }}">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                                </svg>
-                                {{ __('app.home') }}
-                            </a>
-                        </li>
-
-                        {{-- Mobile language switcher (hidden when acting as respondent) --}}
-                        @unless($actingRespondent)
-                        <li class="border-b border-slate-100 pb-2 mb-2">
-                            <div class="px-4 pt-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                                {{ __('app.language') }}
-                            </div>
-                            <div class="px-4 pb-1 flex gap-2">
-                                <a href="{{ route('language.switch', ['locale' => 'en', 'return' => url()->current()]) }}"
-                                    class="w-1/2 text-center rounded-full border px-3 py-1.5 text-sm font-medium {{ app()->getLocale() == 'en' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-50 border-slate-200' }}">
-                                    English
-                                </a>
-                                <a href="{{ route('language.switch', ['locale' => 'am', 'return' => url()->current()]) }}"
-                                    class="w-1/2 text-center rounded-full border px-3 py-1.5 text-sm font-medium {{ app()->getLocale() == 'am' ? 'bg-orange-500 text-white border-orange-500' : 'bg-slate-50 border-slate-200' }}">
-                                    አማርኛ
-                                </a>
-                            </div>
-                        </li>
-                        @endunless
-
-                        @if(auth('applicant')->check() || $actingRespondent)
-                        @if($actingRespondent)
-                        <li>
-                            <a href="{{ route('respondent.dashboard') }}"
-                                class="flex items-center gap-2 px-4 py-2 hover:bg-slate-50 {{ request()->routeIs('respondent.dashboard') ? 'text-blue-700 font-medium' : '' }}">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                                </svg>
-                                {{ __('respondent.dashboard') }}
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('respondent.case.search') }}"
-                                class="flex items-center gap-2 px-4 py-2 hover:bg-slate-50 {{ request()->routeIs('respondent.case.search') ? 'text-blue-700 font-medium' : '' }}">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M11 5a6 6 0 110 12 6 6 0 010-12zm5 11 5 5" />
-                                </svg>
-                                {{ __('respondent.find_case') }}
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('applicant.dashboard') }}"
-                                class="flex items-center gap-2 px-4 py-2 hover:bg-slate-50 text-orange-600 font-semibold">
-                                {{ __('app.switch_to_applicant') }}
-                            </a>
-                        </li>
-                        <li class="border-t border-slate-100 mt-2 pt-2 space-y-1">
-                            <div class="px-4 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                                {{ $applicantDisplayName }}
-                            </div>
-                            <a href="{{ route('respondent.profile.edit') }}"
-                                class="flex items-center gap-2 px-4 py-2 hover:bg-slate-50">
-                                {{ __('respondent.profile') }}
-                            </a>
-                            <form method="POST" action="{{ route('respondent.logout') }}">
-                                @csrf
-                                <button
-                                    class="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-slate-50 text-slate-700">
-                                    {{ __('app.logout') }}
-                                </button>
-                            </form>
-                        </li>
-                        @else
-                        <li>
-                            <a href="{{ route('applicant.cases.create') }}"
-                                class="flex items-center gap-2 px-4 py-2 hover:bg-slate-50 {{ request()->routeIs('applicant.cases.create') ? 'text-orange-600 font-medium' : '' }}">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 4v16m8-8H4" />
-                                </svg>
-                                {{ __('app.new_case') }}
-                            </a>
-                        </li>
-                        <li>
-                            <form method="POST" action="{{ route('respondent.switchToApplicant') }}">
-                                @csrf
-                                <button
-                                    class="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-blue-50 text-blue-700">
-                                    {{ __('app.switch_to_applicant') }}
-                                </button>
-                            </form>
-                        </li>
-
-                        {{-- Mobile: notifications (inline list) --}}
-                        @if(!$actingRespondent && auth('applicant')->check())
-                        <li x-data="{ bell:false }" class="relative">
-                            <button @click.stop="bell=!bell"
-                                class="flex w-full items-center justify-between px-4 py-2 hover:bg-slate-50">
-                                <div class="flex items-center gap-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"
-                                            d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 1 1-6 0h6z" />
-                                    </svg>
-                                    {{ __('app.notifications') }}
-                                </div>
-                                @if($notificationCount > 0)
-                                <span
-                                    class="ml-2 inline-flex items-center justify-center rounded-full bg-orange-500 px-2 py-0.5 text-[11px] font-semibold text-white">
-                                    {{ $notificationCount > 9 ? '9+' : $notificationCount }}
-                                </span>
-                                @endif
-                            </button>
-                            <div x-cloak x-show="bell" class="px-2 pb-2">
-                                <div class="rounded-md border border-slate-200 bg-white max-h-80 overflow-auto">
-                                    @include('partials.applicant-notifications')
-                                </div>
-                            </div>
-                        </li>
-                        @endif
-
-                        <li class="border-t border-slate-100 mt-2 pt-2 space-y-1">
-                            <div class="px-4 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                                {{ $applicantDisplayName }}
-                            </div>
-                            <a href="{{ route('applicant.profile.edit') }}"
-                                class="flex items-center gap-2 px-4 py-2 hover:bg-slate-50 {{ request()->routeIs('applicant.profile.*') ? 'text-blue-700 font-medium' : '' }}">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                                {{ __('app.profile') }}
-                            </a>
-                            <form method="POST" action="{{ route('applicant.logout') }}">
-                                @csrf
-                                <button
-                                    class="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-slate-50 text-slate-700">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                    </svg>
-                                    {{ __('app.logout') }}
-                                </button>
-                            </form>
-                        </li>
-                        @endif
-                        @else
-                        <li>
-                            <a href="{{ route('applicant.register') }}"
-                                class="flex items-center gap-2 px-4 py-2 hover:bg-slate-50">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                                </svg>
-                                {{ __('app.register') }}
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('applicant.login') }}"
-                                class="flex items-center gap-2 px-4 py-2 hover:bg-slate-50">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                                </svg>
-                                {{ __('app.login') }}
-                            </a>
-                        </li>
-                        @endif
-                    </ul>
-                </div>
-                </nav>
             </div>
         </div>
     </header>
@@ -1201,6 +949,7 @@ $respondentNotifList = collect();
         </div>
     </footer>
     @endunless
+    @stack('scripts')
 </body>
 
 </html>

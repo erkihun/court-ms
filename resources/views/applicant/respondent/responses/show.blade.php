@@ -33,10 +33,14 @@
             @endif
         </div>
 
-        <div class="space-y-2 text-sm text-slate-700">
+        @if(!empty($response->description))
+        <div class="space-y-2">
             <h2 class="text-base font-semibold text-slate-800">{{ __('respondent.description_label') }}</h2>
-            <p>{{ $response->description }}</p>
+            <div class="prose prose-sm max-w-none text-slate-700 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-slate-300 [&_td]:p-2 [&_th]:border [&_th]:border-slate-300 [&_th]:p-2 [&_th]:bg-slate-50">
+                {!! $response->description !!}
+            </div>
         </div>
+        @endif
 
         @if(!empty($response->review_note) && ($response->review_status ?? 'awaiting_review') !== 'accepted')
         <div class="text-sm text-slate-700">

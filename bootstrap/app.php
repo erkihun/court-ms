@@ -20,10 +20,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         // Add/keep your other aliases here too
         $middleware->alias([
+            'guest'                 => \App\Http\Middleware\RedirectIfAuthenticated::class,
             'force.password.change' => \App\Http\Middleware\ForcePasswordChange::class,
-            'admin.only' => \App\Http\Middleware\AdminOnly::class,
-            'perm' => \App\Http\Middleware\RequirePermission::class,
-            'use.guard' => \App\Http\Middleware\UseGuard::class,
+            'admin.only'            => \App\Http\Middleware\AdminOnly::class,
+            'perm'                  => \App\Http\Middleware\RequirePermission::class,
+            'use.guard'             => \App\Http\Middleware\UseGuard::class,
         ]);
 
         $middleware->prependToGroup('web', \App\Http\Middleware\SetSessionCookieForGuard::class);
