@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
+use Mews\Purifier\Facades\Purifier;
 
 class LetterController extends Controller
 {
@@ -64,9 +65,12 @@ class LetterController extends Controller
 
         $data['send_to_applicant'] = $sendToApplicant;
         $data['send_to_respondent'] = $sendToRespondent;
-        $data['body'] = $this->applyTemplatePlaceholders(
-            (string) ($data['body'] ?? ''),
-            $data['case_number'] ?? null
+        $data['body'] = Purifier::clean(
+            $this->applyTemplatePlaceholders(
+                (string) ($data['body'] ?? ''),
+                $data['case_number'] ?? null
+            ),
+            'default'
         );
         $recipientName = trim((string) ($data['recipient_name'] ?? ''));
         if ($recipientName === '') {
@@ -226,9 +230,12 @@ class LetterController extends Controller
         $resolvedCaseNumber = array_key_exists('case_number', $data)
             ? (trim((string) ($data['case_number'] ?? '')) ?: null)
             : ($letter->case_number ?: null);
-        $data['body'] = $this->applyTemplatePlaceholders(
-            (string) ($data['body'] ?? ''),
-            $resolvedCaseNumber
+        $data['body'] = Purifier::clean(
+            $this->applyTemplatePlaceholders(
+                (string) ($data['body'] ?? ''),
+                $resolvedCaseNumber
+            ),
+            'default'
         );
 
         $letter->load('template');

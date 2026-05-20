@@ -166,21 +166,29 @@ class DashboardController extends Controller
         $values = [];
 
         if ($useDaily) {
+            $rows = DB::table('court_cases')
+                ->selectRaw("DATE(created_at) as day, COUNT(*) as cnt")
+                ->whereBetween('created_at', [$start, $end])
+                ->groupBy('day')
+                ->pluck('cnt', 'day');
+
             $cursor = $start->copy();
             while ($cursor->lte($end)) {
                 $labels[] = $cursor->format('M d');
-                $values[] = DB::table('court_cases')
-                    ->whereDate('created_at', $cursor->toDateString())
-                    ->count();
+                $values[] = (int) ($rows[$cursor->toDateString()] ?? 0);
                 $cursor->addDay();
             }
         } else {
+            $rows = DB::table('court_cases')
+                ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as ym, COUNT(*) as cnt")
+                ->whereBetween('created_at', [$start, $end])
+                ->groupBy('ym')
+                ->pluck('cnt', 'ym');
+
             $cursor = $start->copy()->startOfMonth();
             while ($cursor->lte($end)) {
                 $labels[] = $cursor->format('M Y');
-                $values[] = DB::table('court_cases')
-                    ->whereBetween('created_at', [$cursor->copy()->startOfMonth(), $cursor->copy()->endOfMonth()])
-                    ->count();
+                $values[] = (int) ($rows[$cursor->format('Y-m')] ?? 0);
                 $cursor->addMonth();
             }
         }

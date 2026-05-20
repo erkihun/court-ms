@@ -171,52 +171,39 @@
         aria-label="{{ __('app.Sidebar') }}">
 
         {{-- Brand / collapse toggle row --}}
-        {{-- UPDATED: Border uses darker blue --}}
-        <div class="relative flex items-center justify-center gap-2 border-b border-white/10 bg-white/5 px-4 py-5">
-            <div class="flex items-center justify-center w-full">
-                {{-- Text color is white/light blue --}}
-                <a href="{{ $hasDashboard ? route('dashboard') : url('/') }}" aria-label="{{ __('app.Dashboard') }}" class="focus-ring rounded flex flex-col items-center text-center">
-                    @if(!empty($systemSettings?->logo_path))
-                    <img
-                        src="{{ asset('storage/'.$systemSettings->logo_path) }}"
-                        alt="{{ $systemSettings->app_name ?? config('app.name','CMS') }}"
-                        class="h-10 w-auto object-contain">
-                    @endif
-                    {{-- Full name (shown when NOT compact) --}}
-                    <span class="text-white text-xl font-extrabold truncate origin-left"
-                        x-show="!compact"
-                        x-transition:enter="motion-enter"
-                        x-transition:enter-start="motion-slide-inline-start"
-                        x-transition:enter-end="motion-slide-inline-end"
-                        x-transition:leave="motion-leave"
-                        x-transition:leave-start="motion-slide-inline-end"
-                        x-transition:leave-end="motion-slide-inline-start">
-                        {{ $systemSettings->app_name ?? config('app.name','CMS') }}
-                    </span>
+        <div class="flex items-center gap-3 border-b border-white/10 bg-white/5 px-3 py-4">
+            {{-- Logo / initial badge --}}
+            <a href="{{ $hasDashboard ? route('dashboard') : url('/') }}" aria-label="{{ __('app.Dashboard') }}" class="focus-ring rounded flex-shrink-0">
+                @if(!empty($systemSettings?->logo_path))
+                <img src="{{ asset('storage/'.$systemSettings->logo_path) }}"
+                    alt="{{ $systemSettings->app_name ?? config('app.name','CMS') }}"
+                    class="h-9 w-9 rounded-lg object-contain">
+                @else
+                <div class="h-9 w-9 rounded-lg bg-blue-500/20 border border-blue-400/30 grid place-items-center flex-shrink-0">
+                    <span class="text-base font-extrabold text-blue-200">{{ strtoupper(substr($systemSettings->short_name ?? config('app.name','C'), 0, 1)) }}</span>
+                </div>
+                @endif
+            </a>
 
-                    {{-- Short name (shown when compact) --}}
-                    <span class="text-white text-xl font-extrabold truncate origin-left"
-                        x-show="compact"
-                        x-transition:enter="motion-enter"
-                        x-transition:enter-start="motion-slide-inline-start"
-                        x-transition:enter-end="motion-slide-inline-end"
-                        x-transition:leave="motion-leave"
-                        x-transition:leave-start="motion-slide-inline-end"
-                        x-transition:leave-end="motion-slide-inline-start">
-                        {{ $systemSettings->short_name ?? 'CMS' }}
-                    </span>
-                </a>
+            {{-- App name (hidden in compact mode) --}}
+            <div class="flex-1 min-w-0" x-show="!compact"
+                x-transition:enter="motion-enter"
+                x-transition:enter-start="motion-slide-inline-start"
+                x-transition:enter-end="motion-slide-inline-end"
+                x-transition:leave="motion-leave"
+                x-transition:leave-start="motion-slide-inline-end"
+                x-transition:leave-end="motion-slide-inline-start">
+                <div class="text-white text-sm font-extrabold truncate leading-tight">{{ $systemSettings->app_name ?? config('app.name','CMS') }}</div>
+                <div class="text-blue-300/60 text-[10px] font-medium tracking-wide truncate">Admin Panel</div>
             </div>
 
-            {{-- Close on mobile --}}
-            {{-- UPDATED: Hover uses darker blue --}}
+            {{-- Mobile close button --}}
             <button type="button"
-                class="md:hidden absolute right-3 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-9 h-9 rounded-md text-blue-300 hover:bg-blue-800 focus-ring"
+                class="md:hidden flex-shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-lg text-blue-300/70 hover:text-blue-100 hover:bg-white/10 transition-colors duration-150 focus-ring"
                 @click="sidebar=false"
                 aria-label="{{ __('app.Close sidebar') }}">
-                <svg xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M6 18L18 6M6 6l12 12" />
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
             </button>
         </div>
@@ -821,6 +808,58 @@
                 </nav>
             </template>
         </div>
+
+        {{-- User profile card --}}
+        @php $__sidebarUser = auth()->user(); @endphp
+        @if($__sidebarUser)
+        <div class="sidebar-user-card">
+            <div class="flex items-center gap-3" :class="compact ? 'justify-center' : ''">
+                {{-- Avatar --}}
+                @if(!empty($__sidebarUser->avatar_path))
+                <img src="{{ asset('storage/'.$__sidebarUser->avatar_path) }}"
+                    class="h-9 w-9 rounded-full object-cover ring-2 ring-white/10 flex-shrink-0"
+                    alt="{{ $__sidebarUser->name }}">
+                @else
+                <div class="h-9 w-9 rounded-full bg-blue-500/20 border border-blue-400/30 flex-shrink-0 grid place-items-center">
+                    <span class="text-sm font-bold text-blue-200">{{ strtoupper(substr($__sidebarUser->name ?? 'A', 0, 1)) }}</span>
+                </div>
+                @endif
+
+                {{-- Name + role --}}
+                <div class="flex-1 min-w-0" x-show="!compact"
+                    x-transition:enter="motion-enter"
+                    x-transition:enter-start="motion-slide-inline-start"
+                    x-transition:enter-end="motion-slide-inline-end"
+                    x-transition:leave="motion-leave"
+                    x-transition:leave-start="motion-slide-inline-end"
+                    x-transition:leave-end="motion-slide-inline-start">
+                    <div class="text-[13px] font-semibold text-white truncate">{{ $__sidebarUser->name ?? 'Admin' }}</div>
+                    <div class="text-[11px] text-blue-300/70 truncate capitalize">{{ $__sidebarUser->user_type ?? 'Administrator' }}</div>
+                </div>
+
+                {{-- Logout --}}
+                <div x-show="!compact"
+                    x-transition:enter="motion-enter"
+                    x-transition:enter-start="motion-slide-inline-start"
+                    x-transition:enter-end="motion-slide-inline-end"
+                    x-transition:leave="motion-leave"
+                    x-transition:leave-start="motion-slide-inline-end"
+                    x-transition:leave-end="motion-slide-inline-start">
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit"
+                            class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-blue-300/60 hover:text-rose-300 hover:bg-rose-500/10 transition-colors duration-150 focus-ring"
+                            title="{{ __('app.Logout') }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        @endif
     </aside>
 
     {{-- Mobile overlay --}}
@@ -841,211 +880,237 @@
             'md:ml-64': !compact
         }">
 
-        {{-- Topbar --}}
-        <header class="sticky top-0 relative z-50 flex items-center justify-between border-b border-slate-200/80 bg-white/90 px-3 py-3 shadow-sm backdrop-blur-xl md:px-6">
-            <div class="flex items-center gap-2">
-                {{-- Mobile: open sidebar --}}
-                <button type="button"
-                    {{-- UPDATED: Icon uses Primary Brand Blue --}}
-                    class="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-blue-600 focus-ring"
-                    @click="sidebar=true"
-                    aria-label="{{ __('app.Open sidebar') }}">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
-                        viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                </button>
+        {{-- ══════════════════════════════════════════════════════
+             Top Navigation Bar
+             ══════════════════════════════════════════════════════ --}}
+        @php
+        use Illuminate\Support\Str;
+        use Illuminate\Support\Carbon;
 
-                {{-- Desktop: collapse / expand --}}
-                <button type="button"
-                    {{-- UPDATED: Icon uses Primary Brand Blue --}}
-                    class="hidden md:inline-flex items-center justify-center w-9 h-9 rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-blue-600 transition-fast focus-ring"
-                    @click="toggleCompact()" :aria-pressed="compact.toString()"
-                    aria-label="{{ __('app.Toggle sidebar width') }}">
-                    <svg x-show="!compact" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" x-cloak
-                        viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M20 12H4m6 6l-6-6 6-6" />
-                    </svg>
-                    <svg x-show="compact" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" x-cloak
-                        viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 12h16m-6-6l6 6-6 6" />
-                    </svg>
-                </button>
+        $uid = auth()->id();
+        $now = Carbon::now();
+        $todayDisplay = $now->translatedFormat('l') . ', ' . \App\Support\EthiopianDate::format($now);
+        $cut14 = (clone $now)->subDays(14);
+        $in14  = (clone $now)->addDays(14);
 
-                <div class="ml-1 md:ml-2">
-                    <h1 class="text-xl font-semibold tracking-tight text-slate-900">@yield('page_header', $t)</h1>
-                    @php $currentRouteName = request()->route()?->getName(); @endphp
-                    @if($currentRouteName)
-                    <div class="hidden lg:block text-[11px] font-medium text-slate-500 tracking-wide">{{ str_replace('.', ' / ', $currentRouteName) }}</div>
-                    @endif
-                </div>
-            </div>
+        $adminUnseenMsgs       = collect();
+        $adminUnseenCases      = collect();
+        $adminUpcomingHearings = collect();
+        $adminRespondentViews  = collect();
 
-            @php
-            use Illuminate\Support\Str;
-            use Illuminate\Support\Carbon;
-
-            $uid = auth()->id();
-
-            // stable timestamps for queries
-            $now = Carbon::now();
-            $todayDisplay = $now->translatedFormat('l') . ', ' . \App\Support\EthiopianDate::format($now);
-            $cut14 = (clone $now)->subDays(14);
-            $in14 = (clone $now)->addDays(14);
-
-            // defaults
-            $adminUnseenMsgs = collect();
-            $adminUnseenCases = collect();
-            $adminUpcomingHearings = collect();
-            $adminRespondentViews = collect();
-
-            if ($uid) {
+        if ($uid) {
             $adminUnseenMsgs = \DB::table('case_messages as m')
-            ->join('court_cases as c', 'c.id', '=', 'm.case_id')
-            ->select('m.id','m.body','m.created_at','c.case_number','c.id as case_id')
-            ->whereNotNull('m.sender_applicant_id')
-            ->where('m.created_at', '>=', $cut14)
-            ->whereNotExists(function($q) use ($uid) {
-            $q->from('admin_notification_reads as nr')
-            ->whereColumn('nr.source_id', 'm.id')
-            ->where('nr.type', 'message')
-            ->where('nr.user_id', $uid);
-            })
-            ->orderByDesc('m.created_at')
-            ->limit(5)
-            ->get();
+                ->join('court_cases as c', 'c.id', '=', 'm.case_id')
+                ->select('m.id','m.body','m.created_at','c.case_number','c.id as case_id')
+                ->whereNotNull('m.sender_applicant_id')
+                ->where('m.created_at', '>=', $cut14)
+                ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
+                    ->whereColumn('nr.source_id', 'm.id')
+                    ->where('nr.type', 'message')
+                    ->where('nr.user_id', $uid))
+                ->orderByDesc('m.created_at')->limit(5)->get();
 
             $adminUnseenCases = \DB::table('court_cases as c')
-            ->select('c.id','c.case_number','c.title','c.created_at')
-            ->where('c.status', 'pending')
-            ->whereNull('c.assigned_user_id')
-            ->where('c.created_at', '>=', $cut14)
-            ->whereNotExists(function($q) use ($uid) {
-            $q->from('admin_notification_reads as nr')
-            ->whereColumn('nr.source_id', 'c.id')
-            ->where('nr.type', 'case')
-            ->where('nr.user_id', $uid);
-            })
-            ->orderByDesc('c.created_at')
-            ->limit(5)
-            ->get();
+                ->select('c.id','c.case_number','c.title','c.created_at')
+                ->where('c.status', 'pending')
+                ->whereNull('c.assigned_user_id')
+                ->where('c.created_at', '>=', $cut14)
+                ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
+                    ->whereColumn('nr.source_id', 'c.id')
+                    ->where('nr.type', 'case')
+                    ->where('nr.user_id', $uid))
+                ->orderByDesc('c.created_at')->limit(5)->get();
 
             $adminUpcomingHearings = \DB::table('case_hearings as h')
-            ->join('court_cases as c', 'c.id', '=', 'h.case_id')
-            ->select('h.id','h.hearing_at','c.id as case_id','c.case_number')
-            ->where('c.assigned_user_id', $uid)
-            ->whereBetween('h.hearing_at', [$now, $in14])
-            ->whereNotExists(function($q) use ($uid) {
-            $q->from('admin_notification_reads as nr')
-            ->whereColumn('nr.source_id', 'h.id')
-            ->where('nr.type', 'hearing')
-            ->where('nr.user_id', $uid);
-            })
-            ->orderBy('h.hearing_at')
-            ->limit(5)
-            ->get();
+                ->join('court_cases as c', 'c.id', '=', 'h.case_id')
+                ->select('h.id','h.hearing_at','c.id as case_id','c.case_number')
+                ->where('c.assigned_user_id', $uid)
+                ->whereBetween('h.hearing_at', [$now, $in14])
+                ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
+                    ->whereColumn('nr.source_id', 'h.id')
+                    ->where('nr.type', 'hearing')
+                    ->where('nr.user_id', $uid))
+                ->orderBy('h.hearing_at')->limit(5)->get();
 
             $adminRespondentViews = \DB::table('respondent_case_views as v')
-            ->join('court_cases as c', 'c.id', '=', 'v.case_id')
-            ->join('respondents as r', 'r.id', '=', 'v.respondent_id')
-            ->select(
-            'v.id',
-            'v.viewed_at',
-            'v.case_id',
-            'c.case_number',
-            \DB::raw(
-            (\DB::getDriverName() === 'sqlite')
-            ? "TRIM(COALESCE(r.first_name,'') || ' ' || COALESCE(r.middle_name,'') || ' ' || COALESCE(r.last_name,'')) as respondent_name"
-            : "TRIM(CONCAT_WS(' ', r.first_name, r.middle_name, r.last_name)) as respondent_name"
-            )
-            )
-            ->where(function($q) use ($uid) {
-            $q->where('c.assigned_user_id', $uid)
-            ->orWhereNull('c.assigned_user_id');
-            })
-            ->where('v.viewed_at', '>=', $cut14)
-            ->whereNotExists(function($q) use ($uid) {
-            $q->from('admin_notification_reads as nr')
-            ->whereColumn('nr.source_id', 'v.id')
-            ->where('nr.type', 'respondent_view')
-            ->where('nr.user_id', $uid);
-            })
-            ->orderByDesc('v.viewed_at')
-            ->limit(5)
-            ->get();
-            }
+                ->join('court_cases as c', 'c.id', '=', 'v.case_id')
+                ->join('respondents as r', 'r.id', '=', 'v.respondent_id')
+                ->select('v.id','v.viewed_at','v.case_id','c.case_number',
+                    \DB::raw((\DB::getDriverName() === 'sqlite')
+                        ? "TRIM(COALESCE(r.first_name,'') || ' ' || COALESCE(r.middle_name,'') || ' ' || COALESCE(r.last_name,'')) as respondent_name"
+                        : "TRIM(CONCAT_WS(' ', r.first_name, r.middle_name, r.last_name)) as respondent_name"))
+                ->where(fn($q) => $q->where('c.assigned_user_id', $uid)->orWhereNull('c.assigned_user_id'))
+                ->where('v.viewed_at', '>=', $cut14)
+                ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
+                    ->whereColumn('nr.source_id', 'v.id')
+                    ->where('nr.type', 'respondent_view')
+                    ->where('nr.user_id', $uid))
+                ->orderByDesc('v.viewed_at')->limit(5)->get();
+        }
 
-            $__adminNotifCount = $adminUnseenMsgs->count() + $adminUnseenCases->count() + $adminUpcomingHearings->count() + ($adminRespondentViews->count() ?? 0);
-            $u = auth()->user();
-            @endphp
+        $__adminNotifCount = $adminUnseenMsgs->count()
+            + $adminUnseenCases->count()
+            + $adminUpcomingHearings->count()
+            + $adminRespondentViews->count();
 
-            <div class="hidden md:flex flex-1 justify-center">
-                {{-- UPDATED: Date display uses Primary Brand Blue (Authority) --}}
-                <span id="top-date-display" class="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700">{{ $todayDisplay }}</span>
+        $u = auth()->user();
+
+        // Breadcrumb from route name
+        $currentRouteName = request()->route()?->getName() ?? '';
+        $breadcrumbParts  = array_filter(explode('.', $currentRouteName));
+        @endphp
+
+        <header class="topnav-root" role="banner">
+
+            {{-- ── LEFT: sidebar toggle + breadcrumb ── --}}
+            <div class="flex items-center gap-2 min-w-0 flex-1">
+
+                {{-- Mobile: open sidebar --}}
+                <button type="button" class="topnav-icon-btn md:hidden" @click="sidebar=true"
+                    aria-label="{{ __('app.Open sidebar') }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-[1.1rem] w-[1.1rem]" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+
+                {{-- Desktop: collapse / expand sidebar --}}
+                <button type="button" class="topnav-icon-btn hidden md:inline-flex"
+                    @click="toggleCompact()" :aria-pressed="compact.toString()"
+                    aria-label="{{ __('app.Toggle sidebar width') }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-[1.1rem] w-[1.1rem]" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h16"/>
+                    </svg>
+                </button>
+
+                {{-- Divider --}}
+                <span class="hidden md:block h-5 w-px bg-slate-200 dark:bg-slate-700 flex-shrink-0 mx-1" aria-hidden="true"></span>
+
+                {{-- Breadcrumb --}}
+                <nav class="topnav-breadcrumb hidden md:flex" aria-label="Breadcrumb">
+                    @if(count($breadcrumbParts) > 1)
+                        @foreach($breadcrumbParts as $i => $part)
+                            @if($i > 0)
+                            <span class="topnav-breadcrumb-sep" aria-hidden="true">/</span>
+                            @endif
+                            <span class="topnav-breadcrumb-item">{{ Str::headline($part) }}</span>
+                        @endforeach
+                    @else
+                        <span class="topnav-breadcrumb-item">@yield('page_header', $t)</span>
+                    @endif
+                </nav>
+
+                {{-- Mobile: just page title --}}
+                <span class="md:hidden text-[14px] font-semibold text-slate-800 dark:text-slate-100 truncate">
+                    @yield('page_header', $t)
+                </span>
             </div>
 
-            <div class="flex items-center gap-3 flex-shrink-0">
+            {{-- ── CENTER: global search ── --}}
+            <div class="hidden md:flex flex-shrink-0 w-64 lg:w-80">
+                @if($hasCases)
+                <a href="{{ route('cases.index') }}"
+                    class="topnav-search group"
+                    title="{{ __('app.Search cases') }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <span class="flex-1 truncate">{{ __('app.Search cases') }}…</span>
+                    <kbd class="hidden lg:inline-flex items-center gap-0.5 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-1.5 py-0.5 text-[10px] font-mono text-slate-400 dark:text-slate-500 flex-shrink-0">
+                        <span class="text-[11px]">⌘</span>K
+                    </kbd>
+                </a>
+                @else
+                <button type="button" class="topnav-search cursor-default" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <span class="flex-1">{{ __('app.Search') }}…</span>
+                    <kbd class="hidden lg:inline-flex items-center gap-0.5 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-1.5 py-0.5 text-[10px] font-mono text-slate-400 flex-shrink-0">⌘K</kbd>
+                </button>
+                @endif
+            </div>
+
+            {{-- ── RIGHT: utilities ── --}}
+            <div class="flex items-center gap-1 flex-shrink-0">
+
+                {{-- Date chip (md+) --}}
+                <span class="hidden lg:inline-flex items-center gap-1.5 rounded-lg border border-blue-100 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-950/40 px-2.5 py-1 text-[11.5px] font-semibold text-blue-700 dark:text-blue-300 mr-1 flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    {{ $todayDisplay }}
+                </span>
+
+                {{-- Theme toggle --}}
                 <x-ui.theme-toggle />
 
-                {{-- Language switcher --}}
                 @auth
+                {{-- Language switcher --}}
                 @if($hasLangSwitch)
-                <div x-data="{ open:false }" class="relative">
-                    <button @click="open=!open"
-                        class="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-300 bg-white/90 shadow-sm hover:bg-slate-50 text-sm font-medium focus-ring">
-                        <span class="fi fi-{{ app()->getLocale() == 'am' ? 'et' : 'us' }}"></span>
-                        {{-- UPDATED: Icon uses Primary Brand Blue --}}
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 5h16M4 10h16M10 15h10M4 20h10" />
-                        </svg>
-                        <span class="text-sm">{{ __('app.Language') }}</span>
+                <div x-data="{ open:false }" class="relative hidden sm:block">
+                    <button type="button" @click="open=!open"
+                        class="topnav-icon-btn"
+                        :aria-expanded="open.toString()"
+                        aria-label="{{ __('app.Language') }}"
+                        title="{{ __('app.Language') }}">
+                        <span class="fi fi-{{ app()->getLocale() === 'am' ? 'et' : 'us' }} text-base leading-none"></span>
                     </button>
 
                     <div x-cloak x-show="open" @click.outside="open=false"
-                        class="absolute right-0 mt-2 w-36 rounded-xl border border-slate-200 bg-white shadow-xl z-50 overflow-hidden">
-                        <div class="p-1 space-y-1">
-                            {{-- UPDATED: Active state uses Secondary Brand Orange --}}
-                            <a href="{{ route('language.switch', ['locale' => 'en', 'return' => url()->current()]) }}"
-                                class="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-gray-100 rounded-md transition
-                                {{ app()->getLocale() == 'en' ? 'bg-orange-50 text-orange-700 font-semibold' : 'text-gray-700' }}">
-                                <span class="fi fi-us"></span>
-                                {{ __('app.English') }}
-                            </a>
-                            <a href="{{ route('language.switch', ['locale' => 'am', 'return' => url()->current()]) }}"
-                                class="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-gray-100 rounded-md transition
-                                {{ app()->getLocale() == 'am' ? 'bg-orange-50 text-orange-700 font-semibold' : 'text-gray-700' }}">
-                                <span class="fi fi-et"></span>
-                                {{ __('app.Amharic') }}
-                            </a>
-                        </div>
+                        x-transition:enter="motion-enter-fast"
+                        x-transition:enter-start="motion-slide-up-start"
+                        x-transition:enter-end="motion-slide-up-end"
+                        x-transition:leave="motion-leave"
+                        x-transition:leave-start="motion-slide-up-end"
+                        x-transition:leave-end="motion-slide-up-start"
+                        class="topnav-dropdown w-40 p-1.5 space-y-0.5">
+                        <a href="{{ route('language.switch', ['locale' => 'en', 'return' => url()->current()]) }}"
+                            class="flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-[13px] font-medium transition-colors duration-100
+                            {{ app()->getLocale() === 'en'
+                                ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300'
+                                : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800' }}">
+                            <span class="fi fi-us text-sm"></span>
+                            {{ __('app.English') }}
+                            @if(app()->getLocale() === 'en')
+                            <svg xmlns="http://www.w3.org/2000/svg" class="ml-auto h-3 w-3 text-blue-600 dark:text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                            @endif
+                        </a>
+                        <a href="{{ route('language.switch', ['locale' => 'am', 'return' => url()->current()]) }}"
+                            class="flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-[13px] font-medium transition-colors duration-100
+                            {{ app()->getLocale() === 'am'
+                                ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300'
+                                : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800' }}">
+                            <span class="fi fi-et text-sm"></span>
+                            {{ __('app.Amharic') }}
+                            @if(app()->getLocale() === 'am')
+                            <svg xmlns="http://www.w3.org/2000/svg" class="ml-auto h-3 w-3 text-blue-600 dark:text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                            @endif
+                        </a>
                     </div>
                 </div>
                 @endif
 
-                {{-- Admin Notifications bell --}}
+                {{-- Notification bell --}}
                 @if($hasNotifIndex)
                 <div class="relative" x-data="{ bell:false }">
-                    <button @click="bell=!bell" type="button"
-                        class="relative inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 hover:bg-slate-50 shadow-sm focus-ring"
+                    <button type="button" class="topnav-icon-btn relative" @click="bell=!bell"
                         aria-label="{{ __('app.Notifications') }}" :aria-expanded="bell.toString()">
-                        {{-- UPDATED: Icon uses Primary Brand Blue --}}
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"
-                                d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 1 1-6 0h6z" />
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-[1.1rem] w-[1.1rem]" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"
+                                d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 11-6 0h6z"/>
                         </svg>
                         @if($__adminNotifCount > 0)
-                        {{-- Kept Red for alerts (standard practice for notifications) --}}
-                        <span class="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 grid h-5 min-w-[20px] place-items-center rounded-full bg-red-600 px-1 text-[11px] font-bold text-white shadow-md">
-                            {{ $__adminNotifCount > 99 ? '99+' : $__adminNotifCount }}
-                        </span>
+                            @if($__adminNotifCount <= 9)
+                            <span class="topnav-notif-dot" aria-hidden="true"></span>
+                            @else
+                            <span class="topnav-notif-badge" aria-label="{{ $__adminNotifCount }} notifications">
+                                {{ $__adminNotifCount > 99 ? '99+' : $__adminNotifCount }}
+                            </span>
+                            @endif
                         @endif
                     </button>
 
-                    {{-- Dropdown --}}
+                    {{-- Notification dropdown --}}
                     <div x-cloak x-show="bell" @click.outside="bell=false"
                         x-transition:enter="motion-enter-fast"
                         x-transition:enter-start="motion-slide-up-start"
@@ -1053,50 +1118,71 @@
                         x-transition:leave="motion-leave"
                         x-transition:leave-start="motion-slide-up-end"
                         x-transition:leave-end="motion-slide-up-start"
-                        class="absolute right-0 mt-2 w-[32rem] max-w-[90vw] rounded-lg border border-gray-200 bg-white shadow-xl z-50">
-                        <div class="p-3">
-                            <div class="mb-2 flex items-center justify-between border-b pb-2">
-                                <div class="text-base font-bold text-gray-800">{{ __('app.Notifications') }} ({{ $__adminNotifCount }})</div>
-                                @if($__adminNotifCount > 0 && $hasNotifMarkAll)
-                                <form method="POST" action="{{ route('admin.notifications.markAll') }}">
-                                    @csrf
-                                    <button type="submit" class="text-xs px-2 py-1 rounded-md border border-gray-300 bg-white hover:bg-gray-100 text-gray-600 focus-ring">
-                                        {{ __('app.Mark all as seen') }}
-                                    </button>
-                                </form>
+                        class="topnav-dropdown w-[30rem] max-w-[92vw]"
+                        role="dialog" aria-label="{{ __('app.Notifications') }}">
+
+                        {{-- Header --}}
+                        <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+                            <div class="flex items-center gap-2">
+                                <span class="text-[13.5px] font-bold text-slate-800 dark:text-slate-100">{{ __('app.Notifications') }}</span>
+                                @if($__adminNotifCount > 0)
+                                <span class="inline-flex items-center justify-center h-5 min-w-[1.25rem] rounded-full bg-blue-100 dark:bg-blue-900/60 px-1.5 text-[10.5px] font-bold text-blue-700 dark:text-blue-300">
+                                    {{ $__adminNotifCount }}
+                                </span>
                                 @endif
                             </div>
+                            @if($__adminNotifCount > 0 && $hasNotifMarkAll)
+                            <form method="POST" action="{{ route('admin.notifications.markAll') }}">
+                                @csrf
+                                <button type="submit"
+                                    class="text-[11.5px] font-medium text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-150 focus-ring rounded">
+                                    {{ __('app.Mark all as seen') }}
+                                </button>
+                            </form>
+                            @endif
+                        </div>
 
+                        {{-- Body --}}
+                        <div class="max-h-[26rem] overflow-y-auto overscroll-contain px-2 py-2 space-y-3">
                             @if($__adminNotifCount === 0)
-                            <div class="text-sm text-gray-500 py-4 text-center">{{ __('app.youre_all_caught_up') }} 🎉</div>
+                            <div class="flex flex-col items-center gap-2 py-8 text-slate-400 dark:text-slate-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 opacity-40" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"
+                                        d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 11-6 0h6z"/>
+                                </svg>
+                                <span class="text-[13px]">{{ __('app.youre_all_caught_up') }}</span>
+                            </div>
                             @else
+
                             {{-- Applicant messages --}}
                             @if($adminUnseenMsgs->isNotEmpty())
-                            <div class="mt-3">
-                                {{-- UPDATED: Notification headers use Primary Brand Blue --}}
-                                <div class="text-sm font-bold text-blue-700 mb-1">{{ __('app.Applicant messages') }}</div>
-                                <ul class="divide-y divide-gray-100">
+                            <div>
+                                <div class="px-2 mb-1 text-[10.5px] font-bold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
+                                    {{ __('app.Applicant messages') }}
+                                </div>
+                                <ul class="space-y-0.5">
                                     @foreach($adminUnseenMsgs as $m)
                                     @php
-                                    $legacyApplicantUpdate = 'Applicant updated the case details. Please review the submission.';
-                                    $displayBody = trim((string) $m->body) === $legacyApplicantUpdate
-                                        ? __('cases.notifications.applicant_updated_submission')
-                                        : (string) $m->body;
+                                        $legacyApplicantUpdate = 'Applicant updated the case details. Please review the submission.';
+                                        $displayBody = trim((string) $m->body) === $legacyApplicantUpdate
+                                            ? __('cases.notifications.applicant_updated_submission')
+                                            : (string) $m->body;
                                     @endphp
-                                    <li class="py-2 flex items-center justify-between hover:bg-gray-50 rounded-md px-1">
-                                        <a href="{{ $hasCases ? route('cases.show', $m->case_id) : '#' }}" class="text-sm flex-1 mr-4">
-                                            <div class="font-medium text-gray-900 truncate">{{ $m->case_number }}</div>
-                                            <div class="text-xs text-gray-600">
-                                                {{ Str::limit($displayBody, 80) }}
-                                                · {{ \Illuminate\Support\Carbon::parse($m->created_at)->diffForHumans() }}
-                                            </div>
+                                    <li class="topnav-notif-row">
+                                        <div class="flex-shrink-0 h-7 w-7 rounded-full bg-blue-100 dark:bg-blue-900/50 grid place-items-center mt-0.5">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-4 4-1-4z"/></svg>
+                                        </div>
+                                        <a href="{{ $hasCases ? route('cases.show', $m->case_id) : '#' }}" class="flex-1 min-w-0">
+                                            <div class="text-[12.5px] font-semibold text-slate-800 dark:text-slate-100 truncate">{{ $m->case_number }}</div>
+                                            <div class="text-[11.5px] text-slate-500 dark:text-slate-400 truncate">{{ Str::limit($displayBody, 70) }}</div>
+                                            <div class="text-[10.5px] text-slate-400 dark:text-slate-500 mt-0.5">{{ \Illuminate\Support\Carbon::parse($m->created_at)->diffForHumans() }}</div>
                                         </a>
                                         @if($hasNotifMarkOne)
-                                        <form method="POST" action="{{ route('admin.notifications.markOne') }}">
+                                        <form method="POST" action="{{ route('admin.notifications.markOne') }}" class="flex-shrink-0">
                                             @csrf
                                             <input type="hidden" name="type" value="message">
                                             <input type="hidden" name="sourceId" value="{{ $m->id }}">
-                                            <button type="submit" class="flex-shrink-0 text-xs px-2 py-1 rounded-md border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 focus-ring">{{ __('app.Seen') }}</button>
+                                            <button type="submit" class="text-[11px] px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 font-medium transition-colors focus-ring">{{ __('app.Seen') }}</button>
                                         </form>
                                         @endif
                                     </li>
@@ -1107,25 +1193,27 @@
 
                             {{-- New cases --}}
                             @if($adminUnseenCases->isNotEmpty())
-                            <div class="mt-3">
-                                {{-- UPDATED: Notification headers use Primary Brand Blue --}}
-                                <div class="text-sm font-bold text-blue-700 mb-1">{{ __('app.New cases') }}</div>
-                                <ul class="divide-y divide-gray-100">
+                            <div>
+                                <div class="px-2 mb-1 text-[10.5px] font-bold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
+                                    {{ __('app.New cases') }}
+                                </div>
+                                <ul class="space-y-0.5">
                                     @foreach($adminUnseenCases as $c)
-                                    <li class="py-2 flex items-center justify-between hover:bg-gray-50 rounded-md px-1">
-                                        <a href="{{ $hasCases ? route('cases.show', $c->id) : '#' }}" class="text-sm flex-1 mr-4">
-                                            <div class="font-medium text-gray-900 truncate">{{ $c->case_number }}</div>
-                                            <div class="text-xs text-gray-600">
-                                                {{ Str::limit($c->title, 80) }}
-                                                · {{ \Illuminate\Support\Carbon::parse($c->created_at)->diffForHumans() }}
-                                            </div>
+                                    <li class="topnav-notif-row">
+                                        <div class="flex-shrink-0 h-7 w-7 rounded-full bg-emerald-100 dark:bg-emerald-900/40 grid place-items-center mt-0.5">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                        </div>
+                                        <a href="{{ $hasCases ? route('cases.show', $c->id) : '#' }}" class="flex-1 min-w-0">
+                                            <div class="text-[12.5px] font-semibold text-slate-800 dark:text-slate-100 truncate">{{ $c->case_number }}</div>
+                                            <div class="text-[11.5px] text-slate-500 dark:text-slate-400 truncate">{{ Str::limit($c->title, 70) }}</div>
+                                            <div class="text-[10.5px] text-slate-400 dark:text-slate-500 mt-0.5">{{ \Illuminate\Support\Carbon::parse($c->created_at)->diffForHumans() }}</div>
                                         </a>
                                         @if($hasNotifMarkOne)
-                                        <form method="POST" action="{{ route('admin.notifications.markOne') }}">
+                                        <form method="POST" action="{{ route('admin.notifications.markOne') }}" class="flex-shrink-0">
                                             @csrf
                                             <input type="hidden" name="type" value="case">
                                             <input type="hidden" name="sourceId" value="{{ $c->id }}">
-                                            <button type="submit" class="flex-shrink-0 text-xs px-2 py-1 rounded-md border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 focus-ring">{{ __('app.Seen') }}</button>
+                                            <button type="submit" class="text-[11px] px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 font-medium transition-colors focus-ring">{{ __('app.Seen') }}</button>
                                         </form>
                                         @endif
                                     </li>
@@ -1136,59 +1224,59 @@
 
                             {{-- Upcoming hearings --}}
                             @if($adminUpcomingHearings->isNotEmpty())
-                            <div class="mt-3">
-                                {{-- UPDATED: Notification headers use Primary Brand Blue --}}
-                                <div class="text-sm font-bold text-blue-700 mb-1">{{ __('app.Upcoming hearings') }}</div>
-                                <ul class="divide-y divide-gray-100">
+                            <div>
+                                <div class="px-2 mb-1 text-[10.5px] font-bold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
+                                    {{ __('app.Upcoming hearings') }}
+                                </div>
+                                <ul class="space-y-0.5">
                                     @foreach($adminUpcomingHearings as $h)
-                                    <li class="py-2 flex items-center justify-between hover:bg-gray-50 rounded-md px-1">
-                                        <a href="{{ $hasCases ? route('cases.show', $h->case_id) : '#' }}" class="text-sm flex-1 mr-4">
-                                            <div class="font-medium text-gray-900 truncate">
-                                                {{ $h->case_number }} —
-                                                {{ \App\Support\EthiopianDate::format($h->hearing_at, withTime: true) }}
-                                            </div>
-                                            <div class="text-xs text-gray-600">
-                                                {{ optional($h)->type ?: 'Hearing' }} · {{ optional($h)->location ?: '—' }}
-                                            </div>
+                                    <li class="topnav-notif-row">
+                                        <div class="flex-shrink-0 h-7 w-7 rounded-full bg-amber-100 dark:bg-amber-900/40 grid place-items-center mt-0.5">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                        </div>
+                                        <a href="{{ $hasCases ? route('cases.show', $h->case_id) : '#' }}" class="flex-1 min-w-0">
+                                            <div class="text-[12.5px] font-semibold text-slate-800 dark:text-slate-100 truncate">{{ $h->case_number }}</div>
+                                            <div class="text-[11.5px] text-slate-500 dark:text-slate-400">{{ \App\Support\EthiopianDate::format($h->hearing_at, withTime: true) }}</div>
                                         </a>
                                         @if($hasNotifMarkOne)
-                                        <form method="POST" action="{{ route('admin.notifications.markOne') }}">
+                                        <form method="POST" action="{{ route('admin.notifications.markOne') }}" class="flex-shrink-0">
                                             @csrf
                                             <input type="hidden" name="type" value="hearing">
                                             <input type="hidden" name="sourceId" value="{{ $h->id }}">
-                                            <button type="submit" class="flex-shrink-0 text-xs px-2 py-1 rounded-md border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 focus-ring">
-                                                {{ __('app.Seen') }}
-                                            </button>
+                                            <button type="submit" class="text-[11px] px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 font-medium transition-colors focus-ring">{{ __('app.Seen') }}</button>
                                         </form>
                                         @endif
                                     </li>
                                     @endforeach
-
                                 </ul>
                             </div>
                             @endif
 
                             {{-- Respondent views --}}
                             @if($adminRespondentViews->isNotEmpty())
-                            <div class="mt-3">
-                                {{-- UPDATED: Notification headers use Primary Brand Blue --}}
-                                <div class="text-xs font-bold text-blue-700 mb-1">{{ __('app.admin_notifications.respondent_views') }}</div>
-                                <ul class="divide-y divide-gray-100">
+                            <div>
+                                <div class="px-2 mb-1 text-[10.5px] font-bold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
+                                    {{ __('app.admin_notifications.respondent_views') }}
+                                </div>
+                                <ul class="space-y-0.5">
                                     @foreach($adminRespondentViews as $v)
-                                    <li class="py-2 flex items-center justify-between hover:bg-gray-50 rounded-md px-1">
-                                        <a href="{{ $hasCases ? route('cases.show', $v->case_id) : '#' }}" class="text-sm flex-1 mr-4">
-                                            <div class="font-medium text-gray-900 truncate">{{ $v->case_number }}</div>
-                                            <div class="text-xs text-gray-600">
+                                    <li class="topnav-notif-row">
+                                        <div class="flex-shrink-0 h-7 w-7 rounded-full bg-purple-100 dark:bg-purple-900/40 grid place-items-center mt-0.5">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                        </div>
+                                        <a href="{{ $hasCases ? route('cases.show', $v->case_id) : '#' }}" class="flex-1 min-w-0">
+                                            <div class="text-[12.5px] font-semibold text-slate-800 dark:text-slate-100 truncate">{{ $v->case_number }}</div>
+                                            <div class="text-[11.5px] text-slate-500 dark:text-slate-400 truncate">
                                                 {{ __('app.admin_notifications.respondent_viewed_case', ['name' => ($v->respondent_name ?: __('app.admin_notifications.respondent_default'))]) }}
-                                                · {{ \Illuminate\Support\Carbon::parse($v->viewed_at)->diffForHumans() }}
                                             </div>
+                                            <div class="text-[10.5px] text-slate-400 dark:text-slate-500 mt-0.5">{{ \Illuminate\Support\Carbon::parse($v->viewed_at)->diffForHumans() }}</div>
                                         </a>
                                         @if($hasNotifMarkOne)
-                                        <form method="POST" action="{{ route('admin.notifications.markOne') }}">
+                                        <form method="POST" action="{{ route('admin.notifications.markOne') }}" class="flex-shrink-0">
                                             @csrf
                                             <input type="hidden" name="type" value="respondent_view">
                                             <input type="hidden" name="sourceId" value="{{ $v->id }}">
-                                            <button type="submit" class="flex-shrink-0 text-xs px-2 py-1 rounded-md border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 focus-ring">{{ __('app.Seen') }}</button>
+                                            <button type="submit" class="text-[11px] px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 font-medium transition-colors focus-ring">{{ __('app.Seen') }}</button>
                                         </form>
                                         @endif
                                     </li>
@@ -1197,34 +1285,45 @@
                             </div>
                             @endif
 
-                            <div class="mt-3 flex items-center justify-end border-t pt-2">
-                                <a href="{{ route('admin.notifications.index') }}"
-                                    class="text-sm px-3 py-1.5 rounded-md border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 font-medium focus-ring">
-                                    {{ __('app.View all') }}
-                                </a>
-                            </div>
-                            @endif
+                            @endif {{-- /$__adminNotifCount === 0 --}}
                         </div>
+
+                        {{-- Footer --}}
+                        @if($hasNotifIndex)
+                        <div class="border-t border-slate-100 dark:border-slate-800 px-4 py-2.5">
+                            <a href="{{ route('admin.notifications.index') }}"
+                                class="flex items-center justify-center gap-1.5 text-[12.5px] font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors focus-ring rounded">
+                                {{ __('app.View all') }}
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            </a>
+                        </div>
+                        @endif
                     </div>
                 </div>
                 @endif
-                @endauth
 
-                {{-- Profile / Logout --}}
-                @php $u = auth()->user(); @endphp
+                {{-- Divider --}}
+                <span class="h-5 w-px bg-slate-200 dark:bg-slate-700 flex-shrink-0 mx-0.5" aria-hidden="true"></span>
+
+                {{-- Profile dropdown --}}
                 <div x-data="{ open:false }" class="relative">
-                    <button @click="open=!open" class="flex items-center gap-3 rounded-full px-3 py-1.5 hover:bg-gray-100 focus-ring"
+                    <button type="button" @click="open=!open"
+                        class="topnav-profile-btn"
                         aria-haspopup="menu" :aria-expanded="open.toString()">
-                        <span class="text-sm text-gray-700 hidden sm:inline font-medium">{{ __('app.hi_name', ['name' => $u->name ?? 'Admin']) }}</span>
-
                         @if($u?->avatar_url)
-                        <img src="{{ $u->avatar_url }}" class="w-8 h-8 rounded-full object-cover" alt="{{ __('app.Avatar') }}">
+                        <img src="{{ $u->avatar_url }}" class="h-8 w-8 rounded-full object-cover ring-2 ring-slate-200 dark:ring-slate-700 flex-shrink-0" alt="{{ __('app.Avatar') }}">
                         @else
-                        {{-- UPDATED: Avatar fallback uses Secondary Brand Orange --}}
-                        <div class="w-8 h-8 rounded-full bg-orange-600 grid place-items-center font-bold text-white text-sm" aria-hidden="true">
-                            {{ strtoupper(substr($u->name ?? 'A',0,1)) }}
+                        <div class="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 grid place-items-center font-bold text-white text-[13px] flex-shrink-0 ring-2 ring-blue-200 dark:ring-blue-900" aria-hidden="true">
+                            {{ strtoupper(substr($u->name ?? 'A', 0, 1)) }}
                         </div>
                         @endif
+                        <div class="hidden sm:block min-w-0 text-left">
+                            <div class="text-[12.5px] font-semibold text-slate-800 dark:text-slate-100 truncate max-w-[7rem]">{{ $u->name ?? 'Admin' }}</div>
+                            <div class="text-[10.5px] text-slate-400 dark:text-slate-500 truncate max-w-[7rem] capitalize">{{ $u->user_type ?? 'Administrator' }}</div>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="hidden sm:block h-3.5 w-3.5 text-slate-400 dark:text-slate-500 transition-transform duration-200 flex-shrink-0" :class="open ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
                     </button>
 
                     <div x-cloak x-show="open" @click.outside="open=false"
@@ -1234,42 +1333,69 @@
                         x-transition:leave="motion-leave"
                         x-transition:leave-start="motion-slide-up-end"
                         x-transition:leave-end="motion-slide-up-start"
-                        class="absolute right-0 mt-2 w-56 rounded-lg border border-gray-200 bg-white shadow-xl overflow-hidden">
-                        <div class="px-4 py-2 text-xs text-gray-500 border-b border-gray-100">
-                            {{ __('app.Signed in as') }} <span class="text-gray-800 font-medium">{{ $u?->email }}</span>
+                        class="topnav-dropdown w-60"
+                        role="menu">
+
+                        {{-- Identity header --}}
+                        <div class="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+                            @if($u?->avatar_url)
+                            <img src="{{ $u->avatar_url }}" class="h-9 w-9 rounded-full object-cover ring-2 ring-slate-200 dark:ring-slate-700 flex-shrink-0" alt="">
+                            @else
+                            <div class="h-9 w-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 grid place-items-center font-bold text-white text-sm flex-shrink-0">
+                                {{ strtoupper(substr($u->name ?? 'A', 0, 1)) }}
+                            </div>
+                            @endif
+                            <div class="min-w-0">
+                                <div class="text-[13px] font-semibold text-slate-800 dark:text-slate-100 truncate">{{ $u->name ?? 'Admin' }}</div>
+                                <div class="text-[11px] text-slate-400 dark:text-slate-500 truncate">{{ $u?->email }}</div>
+                            </div>
                         </div>
 
-                        @if($hasProfileEdit)
-                        <a href="{{ route('profile.edit') }}"
-                            class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-fast focus-ring focus:bg-gray-100">
-                            {{-- UPDATED: Icon uses Primary Brand Blue --}}
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                            {{ __('app.Profile') }}
-                        </a>
-                        @endif
+                        {{-- Menu items --}}
+                        <div class="p-1.5 space-y-0.5" role="none">
+                            @if($hasProfileEdit)
+                            <a href="{{ route('profile.edit') }}" role="menuitem"
+                                class="flex items-center gap-3 w-full rounded-lg px-3 py-2 text-[13px] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-100 focus-ring">
+                                <span class="h-6 w-6 rounded-md bg-blue-50 dark:bg-blue-950/50 grid place-items-center flex-shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                </span>
+                                {{ __('app.Profile') }}
+                            </a>
+                            @endif
+
+                            {{-- Language switcher (mobile fallback inside profile menu) --}}
+                            @if($hasLangSwitch)
+                            <div class="sm:hidden">
+                                <a href="{{ route('language.switch', ['locale' => app()->getLocale() === 'am' ? 'en' : 'am', 'return' => url()->current()]) }}"
+                                    class="flex items-center gap-3 w-full rounded-lg px-3 py-2 text-[13px] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-100 focus-ring">
+                                    <span class="h-6 w-6 rounded-md bg-slate-100 dark:bg-slate-800 grid place-items-center flex-shrink-0">
+                                        <span class="fi fi-{{ app()->getLocale() === 'am' ? 'us' : 'et' }} text-sm"></span>
+                                    </span>
+                                    {{ app()->getLocale() === 'am' ? __('app.English') : __('app.Amharic') }}
+                                </a>
+                            </div>
+                            @endif
+                        </div>
 
                         @if($hasLogout)
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button type="submit"
-                                class="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition border-t border-gray-100 focus-ring focus:bg-gray-100">
-                                {{-- UPDATED: Icon uses Primary Brand Blue --}}
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                </svg>
-                                {{ __('app.Logout') }}
-                            </button>
-                        </form>
+                        <div class="border-t border-slate-100 dark:border-slate-800 p-1.5">
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit" role="menuitem"
+                                    class="flex items-center gap-3 w-full rounded-lg px-3 py-2 text-[13px] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors duration-100 focus-ring">
+                                    <span class="h-6 w-6 rounded-md bg-rose-50 dark:bg-rose-950/40 grid place-items-center flex-shrink-0">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-rose-500 dark:text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                                    </span>
+                                    {{ __('app.Logout') }}
+                                </button>
+                            </form>
+                        </div>
                         @endif
                     </div>
                 </div>
+                @endauth
             </div>
+
         </header>
 
         {{-- Page content --}}

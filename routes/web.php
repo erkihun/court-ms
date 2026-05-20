@@ -170,10 +170,19 @@ Route::middleware(SetLocale::class)->group(function () {
         Route::post('/applicant/register', [ApplicantAuthController::class, 'register'])->name('applicant.register.submit');
         Route::get('/applicant/login',  [ApplicantAuthController::class, 'showLogin'])->name('applicant.login');
         Route::post('/applicant/login', [ApplicantAuthController::class, 'login'])->name('applicant.login.submit');
-        Route::get('/applicant/forgot-password',        [ApplicantPasswordController::class, 'showLinkRequestForm'])->name('applicant.password.request');
-        Route::post('/applicant/forgot-password',       [ApplicantPasswordController::class, 'sendResetLinkEmail'])->name('applicant.password.email');
-        Route::get('/applicant/reset-password/{token}', [ApplicantPasswordController::class, 'showResetForm'])->name('applicant.password.reset');
-        Route::post('/applicant/reset-password',        [ApplicantPasswordController::class, 'reset'])->name('applicant.password.update');
+        // Password reset — OTP flow
+        Route::get('/applicant/forgot-password',           [ApplicantPasswordController::class, 'showLinkRequestForm'])->name('applicant.password.request');
+        Route::post('/applicant/forgot-password',          [ApplicantPasswordController::class, 'sendResetLinkEmail'])->name('applicant.password.email');
+        Route::get('/applicant/password-otp',              [ApplicantPasswordController::class, 'showOtpForm'])->name('applicant.password.otp.show');
+        Route::post('/applicant/password-otp',             [ApplicantPasswordController::class, 'verifyOtp'])->name('applicant.password.otp.verify');
+        Route::post('/applicant/password-otp/resend',      [ApplicantPasswordController::class, 'resendOtp'])->name('applicant.password.otp.resend');
+        Route::get('/applicant/new-password',              [ApplicantPasswordController::class, 'showNewPasswordForm'])->name('applicant.password.new.show');
+        Route::post('/applicant/new-password',             [ApplicantPasswordController::class, 'updatePassword'])->name('applicant.password.new.update');
+
+        // OTP email verification (after registration, before login)
+        Route::get('/applicant/verify-otp',         [ApplicantVerificationController::class, 'showOtp'])->name('applicant.verify-otp.show');
+        Route::post('/applicant/verify-otp',        [ApplicantVerificationController::class, 'verifyOtp'])->name('applicant.verify-otp.submit');
+        Route::post('/applicant/verify-otp/resend', [ApplicantVerificationController::class, 'resendOtp'])->name('applicant.verify-otp.resend');
     });
 
     /*
@@ -191,7 +200,7 @@ Route::middleware(SetLocale::class)->group(function () {
         Route::get('/applicant/email/verify/{id}/{hash}', [ApplicantVerificationController::class, 'verify'])
             ->middleware(['signed', 'throttle:6,1'])->name('applicant.verification.verify');
 
-        Route::middleware([])->group(function () {
+        Route::middleware(['verified:applicant.verification.notice'])->group(function () {
             // Dashboard
             Route::get('/applicant/dashboard', [ApplicantDashboardController::class, 'index'])->name('applicant.dashboard');
 

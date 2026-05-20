@@ -150,17 +150,6 @@ class CaseSearchController extends Controller
             ->orderByDesc('l.created_at')
             ->get();
 
-        $witnesses = DB::table('case_witnesses')
-            ->where('case_id', $caseId)
-            ->orderBy('id')
-            ->get();
-
-        $audits = DB::table('case_audits')
-            ->where('case_id', $caseId)
-            ->orderByDesc('id')
-            ->limit(200)
-            ->get();
-
         return view('applicant.respondent.cases.show', compact(
             'case',
             'timeline',
@@ -168,10 +157,8 @@ class CaseSearchController extends Controller
             'files',
             'msgs',
             'hearings',
-            'docs',
-            'witnesses',
-            'audits'
-        ));
+            'docs'
+        ) + ['witnesses' => collect(), 'audits' => collect()]);
     }
 
     private function handleRespondentCaseView(object $case): void
@@ -327,7 +314,7 @@ class CaseSearchController extends Controller
                 'national_id'       => $this->applicantNationalId($applicant),
                 'phone'             => $phone,
                 'email'             => $applicant->email,
-                'password'          => $applicant->password,
+                'password'          => \Illuminate\Support\Str::random(32),
             ]);
         } else {
             $dirty = false;

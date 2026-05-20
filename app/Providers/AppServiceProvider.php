@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\SystemSetting;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\RateLimiter;
@@ -51,7 +52,7 @@ class AppServiceProvider extends ServiceProvider
 
             try {
                 if (Schema::hasTable('system_settings')) {
-                    $found = SystemSetting::query()->first();
+                    $found = Cache::remember('system_settings', 3600, fn() => SystemSetting::query()->first());
                     if ($found) {
                         $settings = $found;
                     }
@@ -67,7 +68,7 @@ class AppServiceProvider extends ServiceProvider
             $systemSettings = null;
             try {
                 if (Schema::hasTable('system_settings')) {
-                    $systemSettings = SystemSetting::query()->first();
+                    $systemSettings = Cache::remember('system_settings', 3600, fn() => SystemSetting::query()->first());
                 }
             } catch (\Throwable $e) {
                 $systemSettings = null;
@@ -85,44 +86,46 @@ class AppServiceProvider extends ServiceProvider
                 try {
                     $has = fn($table) => Schema::hasTable($table);
                     if ($has('court_cases') && $has('case_hearings') && $has('case_messages') && $has('case_status_logs') && $has('notification_reads')) {
-                        $unseenHearings = DB::table('case_hearings as h')
-                            ->join('court_cases as c', 'c.id', '=', 'h.case_id')
-                            ->where('c.applicant_id', $aid)
-                            ->whereBetween('h.hearing_at', [now()->subDay(), now()->addDays(60)])
-                            ->whereNotExists(function ($q) use ($aid) {
-                                $q->from('notification_reads as nr')
-                                    ->whereColumn('nr.source_id', 'h.id')
-                                    ->where('nr.type', 'hearing')
-                                    ->where('nr.applicant_id', $aid);
-                            })
-                            ->count();
+                        $notificationCount = Cache::remember("notif_count_{$aid}", 60, function () use ($aid) {
+                            $unseenHearings = DB::table('case_hearings as h')
+                                ->join('court_cases as c', 'c.id', '=', 'h.case_id')
+                                ->where('c.applicant_id', $aid)
+                                ->whereBetween('h.hearing_at', [now()->subDay(), now()->addDays(60)])
+                                ->whereNotExists(function ($q) use ($aid) {
+                                    $q->from('notification_reads as nr')
+                                        ->whereColumn('nr.source_id', 'h.id')
+                                        ->where('nr.type', 'hearing')
+                                        ->where('nr.applicant_id', $aid);
+                                })
+                                ->count();
 
-                        $unseenMsgs = DB::table('case_messages as m')
-                            ->join('court_cases as c', 'c.id', '=', 'm.case_id')
-                            ->whereNotNull('m.sender_user_id')
-                            ->where('c.applicant_id', $aid)
-                            ->where('m.created_at', '>=', now()->subDays(14))
-                            ->whereNotExists(function ($q) use ($aid) {
-                                $q->from('notification_reads as nr')
-                                    ->whereColumn('nr.source_id', 'm.id')
-                                    ->where('nr.type', 'message')
-                                    ->where('nr.applicant_id', $aid);
-                            })
-                            ->count();
+                            $unseenMsgs = DB::table('case_messages as m')
+                                ->join('court_cases as c', 'c.id', '=', 'm.case_id')
+                                ->whereNotNull('m.sender_user_id')
+                                ->where('c.applicant_id', $aid)
+                                ->where('m.created_at', '>=', now()->subDays(14))
+                                ->whereNotExists(function ($q) use ($aid) {
+                                    $q->from('notification_reads as nr')
+                                        ->whereColumn('nr.source_id', 'm.id')
+                                        ->where('nr.type', 'message')
+                                        ->where('nr.applicant_id', $aid);
+                                })
+                                ->count();
 
-                        $unseenStatus = DB::table('case_status_logs as l')
-                            ->join('court_cases as c', 'c.id', '=', 'l.case_id')
-                            ->where('c.applicant_id', $aid)
-                            ->where('l.created_at', '>=', now()->subDays(14))
-                            ->whereNotExists(function ($q) use ($aid) {
-                                $q->from('notification_reads as nr')
-                                    ->whereColumn('nr.source_id', 'l.id')
-                                    ->where('nr.type', 'status')
-                                    ->where('nr.applicant_id', $aid);
-                            })
-                            ->count();
+                            $unseenStatus = DB::table('case_status_logs as l')
+                                ->join('court_cases as c', 'c.id', '=', 'l.case_id')
+                                ->where('c.applicant_id', $aid)
+                                ->where('l.created_at', '>=', now()->subDays(14))
+                                ->whereNotExists(function ($q) use ($aid) {
+                                    $q->from('notification_reads as nr')
+                                        ->whereColumn('nr.source_id', 'l.id')
+                                        ->where('nr.type', 'status')
+                                        ->where('nr.applicant_id', $aid);
+                                })
+                                ->count();
 
-                        $notificationCount = $unseenHearings + $unseenMsgs + $unseenStatus;
+                            return $unseenHearings + $unseenMsgs + $unseenStatus;
+                        });
                     }
                 } catch (\Throwable $e) {
                     $notificationCount = 0;
@@ -145,7 +148,7 @@ class AppServiceProvider extends ServiceProvider
             $systemSettings = null;
             try {
                 if (Schema::hasTable('system_settings')) {
-                    $systemSettings = SystemSetting::query()->first();
+                    $systemSettings = Cache::remember('system_settings', 3600, fn() => SystemSetting::query()->first());
                 }
             } catch (\Throwable $e) {
                 $systemSettings = null;

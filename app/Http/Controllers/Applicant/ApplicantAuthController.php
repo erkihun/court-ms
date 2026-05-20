@@ -54,13 +54,21 @@ class ApplicantAuthController extends Controller
             'password' => Hash::make($data['password']),
             'is_active' => true,
             'is_lawyer' => (bool) $data['is_lawyer'],
-            'email_verified_at' => now(),
+            // email_verified_at intentionally not set — OTP flow will set it
         ]);
 
-        Auth::guard('applicant')->login($applicant);
-        $request->session()->regenerate();
+        $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
-        return redirect()->route('applicant.dashboard')->with('success', 'Welcome! Your account has been created.');
+        session([
+            'pending_applicant_id' => $applicant->id,
+            'otp_code'             => hash('sha256', $otp),
+            'otp_expires_at'       => now()->addMinutes(10)->timestamp,
+        ]);
+
+        $applicant->notify(new \App\Notifications\ApplicantEmailOtp($otp));
+
+        return redirect()->route('applicant.verify-otp.show')
+            ->with('info', 'A 6-digit verification code has been sent to ' . $applicant->email . '.');
     }
 
     public function showLogin()

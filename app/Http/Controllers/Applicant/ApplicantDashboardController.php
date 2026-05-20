@@ -12,10 +12,20 @@ class ApplicantDashboardController extends Controller
     {
         $applicantId = auth('applicant')->id();
 
-        $total   = DB::table('court_cases')->where('applicant_id', $applicantId)->count();
-        $pending = DB::table('court_cases')->where('applicant_id', $applicantId)->where('status', 'pending')->count();
-        $active  = DB::table('court_cases')->where('applicant_id', $applicantId)->where('status', 'active')->count();
-        $closed  = DB::table('court_cases')->where('applicant_id', $applicantId)->whereIn('status', ['closed', 'dismissed'])->count();
+        $counts = DB::table('court_cases')
+            ->where('applicant_id', $applicantId)
+            ->selectRaw("
+                COUNT(*) as total,
+                SUM(status = 'pending') as pending,
+                SUM(status = 'active') as active,
+                SUM(status IN ('closed', 'dismissed')) as closed
+            ")
+            ->first();
+
+        $total   = (int) ($counts->total ?? 0);
+        $pending = (int) ($counts->pending ?? 0);
+        $active  = (int) ($counts->active ?? 0);
+        $closed  = (int) ($counts->closed ?? 0);
 
         $caseNumbers = DB::table('court_cases')
             ->where('applicant_id', $applicantId)

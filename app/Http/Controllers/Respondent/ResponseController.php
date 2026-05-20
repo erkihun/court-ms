@@ -177,8 +177,7 @@ class ResponseController extends Controller
                 'national_id'       => $this->applicantNationalId($applicant),
                 'phone'             => $phone,
                 'email'             => $applicant->email,
-                // Use the applicant's hashed password to keep credentials aligned.
-                'password'          => $applicant->password,
+                'password'          => \Illuminate\Support\Str::random(32),
             ]);
         } else {
             $dirty = false;
