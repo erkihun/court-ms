@@ -10,6 +10,6 @@ class VerifyCsrfToken extends Middleware
      * URIs that should be excluded from CSRF verification.
      */
     protected $except = [
-        // e.g. 'webhook/*'
+        'applicant/logout',
     ];
 }
