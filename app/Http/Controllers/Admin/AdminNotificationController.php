@@ -4,11 +4,53 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class AdminNotificationController extends Controller
 {
+    public function count(): JsonResponse
+    {
+        $uid = auth()->id();
+        if (!$uid) return response()->json(['count' => 0]);
+
+        $count  = DB::table('case_messages as m')
+            ->whereNotNull('m.sender_applicant_id')
+            ->where('m.created_at', '>=', now()->subDays(14))
+            ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
+                ->whereColumn('nr.source_id', 'm.id')->where('nr.type', 'message')->where('nr.user_id', $uid))
+            ->count();
+
+        $count += DB::table('court_cases as c')
+            ->where('c.status', 'pending')->whereNull('c.assigned_user_id')
+            ->where('c.created_at', '>=', now()->subDays(14))
+            ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
+                ->whereColumn('nr.source_id', 'c.id')->where('nr.type', 'case')->where('nr.user_id', $uid))
+            ->count();
+
+        $count += DB::table('case_hearings as h')
+            ->join('court_cases as c', 'c.id', '=', 'h.case_id')
+            ->where('c.assigned_user_id', $uid)
+            ->whereBetween('h.hearing_at', [now(), now()->addDays(14)])
+            ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
+                ->whereColumn('nr.source_id', 'h.id')->where('nr.type', 'hearing')->where('nr.user_id', $uid))
+            ->count();
+
+        $count += DB::table('respondent_case_views as v')
+            ->join('court_cases as c', 'c.id', '=', 'v.case_id')
+            ->where(function ($q) use ($uid) {
+                $q->where('c.assigned_user_id', $uid)
+                    ->orWhereNull('c.assigned_user_id');
+            })
+            ->where('v.viewed_at', '>=', now()->subDays(14))
+            ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
+                ->whereColumn('nr.source_id', 'v.id')->where('nr.type', 'respondent_view')->where('nr.user_id', $uid))
+            ->count();
+
+        return response()->json(['count' => $count]);
+    }
+
     public function index(Request $request)
     {
         $uid = auth()->id();

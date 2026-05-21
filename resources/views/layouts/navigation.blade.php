@@ -1,19 +1,18 @@
 <nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
     @php
     $uid = auth()->id();
-    $now = now();
 
     // 1) Unseen applicant messages (last 14 days)
     $adminUnseenMsgs = \DB::table('case_messages as m')
     ->join('court_cases as c', 'c.id', '=', 'm.case_id')
     ->select('m.id','m.body','m.created_at','c.case_number','c.id as case_id')
     ->whereNotNull('m.sender_applicant_id')
-    ->where('m.created_at', '>=', $now->subDays(14))
+    ->where('m.created_at', '>=', now()->subDays(14))
     ->whereNotExists(function($q) use ($uid) {
-    $q->from('admin_notification_reads as nr')
-    ->whereColumn('nr.source_id', 'm.id')
-    ->where('nr.type', 'message')
-    ->where('nr.user_id', $uid);
+        $q->from('admin_notification_reads as nr')
+        ->whereColumn('nr.source_id', 'm.id')
+        ->where('nr.type', 'message')
+        ->where('nr.user_id', $uid);
     })
     ->orderByDesc('m.created_at')
     ->limit(5)
@@ -24,12 +23,12 @@
     ->select('c.id','c.case_number','c.title','c.created_at')
     ->where('c.status', 'pending')
     ->whereNull('c.assigned_user_id')
-    ->where('c.created_at', '>=', $now->copy()->subDays(14))
+    ->where('c.created_at', '>=', now()->subDays(14))
     ->whereNotExists(function($q) use ($uid) {
-    $q->from('admin_notification_reads as nr')
-    ->whereColumn('nr.source_id', 'c.id')
-    ->where('nr.type', 'case')
-    ->where('nr.user_id', $uid);
+        $q->from('admin_notification_reads as nr')
+        ->whereColumn('nr.source_id', 'c.id')
+        ->where('nr.type', 'case')
+        ->where('nr.user_id', $uid);
     })
     ->orderByDesc('c.created_at')
     ->limit(5)
@@ -40,12 +39,12 @@
     ->join('court_cases as c', 'c.id', '=', 'h.case_id')
     ->select('h.id','h.hearing_at','c.id as case_id','c.case_number')
     ->where('c.assigned_user_id', $uid)
-    ->whereBetween('h.hearing_at', [$now, $now->copy()->addDays(14)])
+    ->whereBetween('h.hearing_at', [now(), now()->addDays(14)])
     ->whereNotExists(function($q) use ($uid) {
-    $q->from('admin_notification_reads as nr')
-    ->whereColumn('nr.source_id', 'h.id')
-    ->where('nr.type', 'hearing')
-    ->where('nr.user_id', $uid);
+        $q->from('admin_notification_reads as nr')
+        ->whereColumn('nr.source_id', 'h.id')
+        ->where('nr.type', 'hearing')
+        ->where('nr.user_id', $uid);
     })
     ->orderBy('h.hearing_at')
     ->limit(5)
@@ -85,7 +84,24 @@
 
             <div class="hidden sm:flex sm:items-center sm:ms-6 gap-4">
                 {{-- Admin Notifications Bell --}}
-                <div class="relative" x-data="{ bell:false }">
+                <div class="relative" x-data="{ bell: false }"
+                     x-init="
+                        setInterval(async function() {
+                            try {
+                                const r = await fetch('{{ route('admin.notifications.count') }}', { headers:{'X-Requested-With':'XMLHttpRequest'} });
+                                if (!r.ok) return;
+                                const d = await r.json();
+                                const badge = document.getElementById('admin-notif-badge');
+                                if (!badge) return;
+                                if (d.count > 0) {
+                                    badge.textContent = d.count > 9 ? '9+' : d.count;
+                                    badge.classList.remove('hidden');
+                                } else {
+                                    badge.classList.add('hidden');
+                                }
+                            } catch(e) {}
+                        }, 30000)
+                     ">
                     <button @click="bell = !bell"
                         class="relative inline-flex items-center justify-center rounded-md border px-2.5 py-1.5 hover:bg-gray-50">
                         {{-- bell icon --}}
@@ -93,11 +109,11 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"
                                 d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 1 1-6 0h6z" />
                         </svg>
-                        @if($__adminNotifCount > 0)
-                        <span class="absolute -top-1 -right-1 grid h-5 min-w-[20px] place-items-center rounded-full bg-red-600 px-1 text-[11px] font-semibold text-white">
+                        {{-- Badge --}}
+                        <span id="admin-notif-badge"
+                              class="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white ring-2 ring-white {{ $__adminNotifCount > 0 ? '' : 'hidden' }}">
                             {{ $__adminNotifCount > 9 ? '9+' : $__adminNotifCount }}
                         </span>
-                        @endif
                     </button>
 
                     {{-- Dropdown --}}
@@ -181,7 +197,7 @@
                                                 {{ $h->case_number }} â€” {{ \App\Support\EthiopianDate::format($h->hearing_at, withTime: true) }}
                                             </div>
                                             <div class="text-xs text-slate-500">
-                                                {{ $h->type ?: __('app.Hearing') }} · {{ $h->location ?: '—' }}
+                                                {{ $h->type ?: __('app.Hearing') }} ï¿½ {{ $h->location ?: 'ï¿½' }}
                                             </div>
                                         </a>
                                         <form method="POST" action="{{ route('admin.notifications.markOne') }}">

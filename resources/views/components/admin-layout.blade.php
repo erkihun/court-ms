@@ -124,6 +124,7 @@
     $hasLetterComposer = Route::has('letters.compose');
     $hasLetters = Route::has('letters.index');
     $hasAudit = Route::has('admin.audit');
+    $hasLandingManager = Route::has('admin.landing.index');
     $hasReports = Route::has('reports.index');
     $hasAnnouncements = Route::has('announcements.index');
     $isCaseTypographyRoute = request()->routeIs('cases.*')
@@ -153,7 +154,8 @@
     $settingsMenuOpen = request()->routeIs('settings.system.*')
         || request()->routeIs('terms.*')
         || request()->routeIs('about.*')
-        || request()->routeIs('admin.audit');
+        || request()->routeIs('admin.audit')
+        || request()->routeIs('admin.landing.*');
     $canViewReports = $hasReports && auth()->user()?->hasPermission('reports.view');
     @endphp
 
@@ -793,6 +795,15 @@
                     </a>
                     @endif
 
+                    @if($hasLandingManager)
+                    <a href="{{ route('admin.landing.index') }}"
+                        class="sidebar-submenu-item focus-ring
+                    {{ request()->routeIs('admin.landing.*') ? 'sidebar-submenu-item-active' : 'sidebar-submenu-item-inactive' }}">
+                        <x-heroicon-o-home class="sidebar-icon h-4 w-4" aria-hidden="true" />
+                        <span>Landing Page</span>
+                    </a>
+                    @endif
+
                     @if($hasAudit)
                     <a href="{{ route('admin.audit') }}"
                         class="sidebar-submenu-item focus-ring
@@ -898,6 +909,10 @@
         $adminUnseenCases      = collect();
         $adminUpcomingHearings = collect();
         $adminRespondentViews  = collect();
+        $adminUnseenMsgCount = 0;
+        $adminUnseenCaseCount = 0;
+        $adminUpcomingHearingCount = 0;
+        $adminRespondentViewCount = 0;
 
         if ($uid) {
             $adminUnseenMsgs = \DB::table('case_messages as m')
@@ -911,6 +926,15 @@
                     ->where('nr.user_id', $uid))
                 ->orderByDesc('m.created_at')->limit(5)->get();
 
+            $adminUnseenMsgCount = \DB::table('case_messages as m')
+                ->whereNotNull('m.sender_applicant_id')
+                ->where('m.created_at', '>=', $cut14)
+                ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
+                    ->whereColumn('nr.source_id', 'm.id')
+                    ->where('nr.type', 'message')
+                    ->where('nr.user_id', $uid))
+                ->count();
+
             $adminUnseenCases = \DB::table('court_cases as c')
                 ->select('c.id','c.case_number','c.title','c.created_at')
                 ->where('c.status', 'pending')
@@ -922,6 +946,16 @@
                     ->where('nr.user_id', $uid))
                 ->orderByDesc('c.created_at')->limit(5)->get();
 
+            $adminUnseenCaseCount = \DB::table('court_cases as c')
+                ->where('c.status', 'pending')
+                ->whereNull('c.assigned_user_id')
+                ->where('c.created_at', '>=', $cut14)
+                ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
+                    ->whereColumn('nr.source_id', 'c.id')
+                    ->where('nr.type', 'case')
+                    ->where('nr.user_id', $uid))
+                ->count();
+
             $adminUpcomingHearings = \DB::table('case_hearings as h')
                 ->join('court_cases as c', 'c.id', '=', 'h.case_id')
                 ->select('h.id','h.hearing_at','c.id as case_id','c.case_number')
@@ -932,6 +966,16 @@
                     ->where('nr.type', 'hearing')
                     ->where('nr.user_id', $uid))
                 ->orderBy('h.hearing_at')->limit(5)->get();
+
+            $adminUpcomingHearingCount = \DB::table('case_hearings as h')
+                ->join('court_cases as c', 'c.id', '=', 'h.case_id')
+                ->where('c.assigned_user_id', $uid)
+                ->whereBetween('h.hearing_at', [$now, $in14])
+                ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
+                    ->whereColumn('nr.source_id', 'h.id')
+                    ->where('nr.type', 'hearing')
+                    ->where('nr.user_id', $uid))
+                ->count();
 
             $adminRespondentViews = \DB::table('respondent_case_views as v')
                 ->join('court_cases as c', 'c.id', '=', 'v.case_id')
@@ -947,12 +991,23 @@
                     ->where('nr.type', 'respondent_view')
                     ->where('nr.user_id', $uid))
                 ->orderByDesc('v.viewed_at')->limit(5)->get();
+
+            $adminRespondentViewCount = \DB::table('respondent_case_views as v')
+                ->join('court_cases as c', 'c.id', '=', 'v.case_id')
+                ->join('respondents as r', 'r.id', '=', 'v.respondent_id')
+                ->where(fn($q) => $q->where('c.assigned_user_id', $uid)->orWhereNull('c.assigned_user_id'))
+                ->where('v.viewed_at', '>=', $cut14)
+                ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
+                    ->whereColumn('nr.source_id', 'v.id')
+                    ->where('nr.type', 'respondent_view')
+                    ->where('nr.user_id', $uid))
+                ->count();
         }
 
-        $__adminNotifCount = $adminUnseenMsgs->count()
-            + $adminUnseenCases->count()
-            + $adminUpcomingHearings->count()
-            + $adminRespondentViews->count();
+        $__adminNotifCount = $adminUnseenMsgCount
+            + $adminUnseenCaseCount
+            + $adminUpcomingHearingCount
+            + $adminRespondentViewCount;
 
         $u = auth()->user();
 
@@ -1048,52 +1103,37 @@
                 @auth
                 {{-- Language switcher --}}
                 @if($hasLangSwitch)
-                <div x-data="{ open:false }" class="relative hidden sm:block">
-                    <button type="button" @click="open=!open"
-                        class="topnav-icon-btn"
-                        :aria-expanded="open.toString()"
-                        aria-label="{{ __('app.Language') }}"
-                        title="{{ __('app.Language') }}">
-                        <span class="fi fi-{{ app()->getLocale() === 'am' ? 'et' : 'us' }} text-base leading-none"></span>
-                    </button>
-
-                    <div x-cloak x-show="open" @click.outside="open=false"
-                        x-transition:enter="motion-enter-fast"
-                        x-transition:enter-start="motion-slide-up-start"
-                        x-transition:enter-end="motion-slide-up-end"
-                        x-transition:leave="motion-leave"
-                        x-transition:leave-start="motion-slide-up-end"
-                        x-transition:leave-end="motion-slide-up-start"
-                        class="topnav-dropdown w-40 p-1.5 space-y-0.5">
-                        <a href="{{ route('language.switch', ['locale' => 'en', 'return' => url()->current()]) }}"
-                            class="flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-[13px] font-medium transition-colors duration-100
-                            {{ app()->getLocale() === 'en'
-                                ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300'
-                                : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800' }}">
-                            <span class="fi fi-us text-sm"></span>
-                            {{ __('app.English') }}
-                            @if(app()->getLocale() === 'en')
-                            <svg xmlns="http://www.w3.org/2000/svg" class="ml-auto h-3 w-3 text-blue-600 dark:text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                            @endif
-                        </a>
-                        <a href="{{ route('language.switch', ['locale' => 'am', 'return' => url()->current()]) }}"
-                            class="flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-[13px] font-medium transition-colors duration-100
-                            {{ app()->getLocale() === 'am'
-                                ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300'
-                                : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800' }}">
-                            <span class="fi fi-et text-sm"></span>
-                            {{ __('app.Amharic') }}
-                            @if(app()->getLocale() === 'am')
-                            <svg xmlns="http://www.w3.org/2000/svg" class="ml-auto h-3 w-3 text-blue-600 dark:text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                            @endif
-                        </a>
-                    </div>
+                <div class="hidden sm:flex items-center gap-0.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 p-0.5" role="group" aria-label="{{ __('app.Language') }}">
+                    <a href="{{ route('language.switch', ['locale' => 'en', 'return' => url()->current()]) }}"
+                        class="rounded-md px-2.5 py-1 text-xs font-semibold transition-all duration-150
+                        {{ app()->getLocale() === 'en'
+                            ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200' }}">
+                        EN
+                    </a>
+                    <a href="{{ route('language.switch', ['locale' => 'am', 'return' => url()->current()]) }}"
+                        class="rounded-md px-2.5 py-1 text-xs font-semibold transition-all duration-150
+                        {{ app()->getLocale() === 'am'
+                            ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200' }}">
+                        AM
+                    </a>
                 </div>
                 @endif
 
                 {{-- Notification bell --}}
                 @if($hasNotifIndex)
-                <div class="relative" x-data="{ bell:false }">
+                <div class="relative"
+                    x-data="{ bell:false }"
+                    data-admin-notification-root
+                    data-count-url="{{ Route::has('admin.notifications.count') ? route('admin.notifications.count') : '' }}"
+                    data-initial-count="{{ $__adminNotifCount }}"
+                    data-title="{{ __('app.admin_notifications.new_unread_title') }}"
+                    data-singular="{{ __('app.admin_notifications.new_unread_singular') }}"
+                    data-plural="{{ __('app.admin_notifications.new_unread_plural') }}"
+                    data-brand="{{ $brandName }}"
+                    data-logo-url="{{ !empty($systemSettings?->logo_path) ? asset('storage/'.$systemSettings->logo_path) : '' }}"
+                    data-initials="{{ \Illuminate\Support\Str::of(strip_tags($shortName))->substr(0, 2)->upper() }}">
                     <button type="button" class="topnav-icon-btn relative" @click="bell=!bell"
                         aria-label="{{ __('app.Notifications') }}" :aria-expanded="bell.toString()">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-[1.1rem] w-[1.1rem]" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
@@ -1101,13 +1141,9 @@
                                 d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 11-6 0h6z"/>
                         </svg>
                         @if($__adminNotifCount > 0)
-                            @if($__adminNotifCount <= 9)
-                            <span class="topnav-notif-dot" aria-hidden="true"></span>
-                            @else
-                            <span class="topnav-notif-badge" aria-label="{{ $__adminNotifCount }} notifications">
+                            <span class="topnav-notif-badge" data-admin-notification-badge aria-label="{{ $__adminNotifCount }} {{ __('app.Notifications') }}">
                                 {{ $__adminNotifCount > 99 ? '99+' : $__adminNotifCount }}
                             </span>
-                            @endif
                         @endif
                     </button>
 
@@ -1300,6 +1336,9 @@
                         </div>
                         @endif
                     </div>
+                    <div data-admin-notification-toast-region
+                        class="pointer-events-none fixed bottom-5 right-5 z-[1100] flex w-[min(94vw,26rem)] flex-col gap-3 sm:bottom-6 sm:right-6"
+                        style="top:auto!important;left:auto!important;right:1.5rem!important;bottom:1.5rem!important;transform:none!important;"></div>
                 </div>
                 @endif
 
@@ -1366,14 +1405,24 @@
 
                             {{-- Language switcher (mobile fallback inside profile menu) --}}
                             @if($hasLangSwitch)
-                            <div class="sm:hidden">
-                                <a href="{{ route('language.switch', ['locale' => app()->getLocale() === 'am' ? 'en' : 'am', 'return' => url()->current()]) }}"
-                                    class="flex items-center gap-3 w-full rounded-lg px-3 py-2 text-[13px] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-100 focus-ring">
-                                    <span class="h-6 w-6 rounded-md bg-slate-100 dark:bg-slate-800 grid place-items-center flex-shrink-0">
-                                        <span class="fi fi-{{ app()->getLocale() === 'am' ? 'us' : 'et' }} text-sm"></span>
-                                    </span>
-                                    {{ app()->getLocale() === 'am' ? __('app.English') : __('app.Amharic') }}
-                                </a>
+                            <div class="sm:hidden px-3 py-2">
+                                <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">{{ __('app.Language') }}</p>
+                                <div class="flex items-center gap-0.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 p-0.5 w-fit" role="group">
+                                    <a href="{{ route('language.switch', ['locale' => 'en', 'return' => url()->current()]) }}"
+                                        class="rounded-md px-3 py-1.5 text-xs font-semibold transition-all duration-150
+                                        {{ app()->getLocale() === 'en'
+                                            ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200' }}">
+                                        EN
+                                    </a>
+                                    <a href="{{ route('language.switch', ['locale' => 'am', 'return' => url()->current()]) }}"
+                                        class="rounded-md px-3 py-1.5 text-xs font-semibold transition-all duration-150
+                                        {{ app()->getLocale() === 'am'
+                                            ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200' }}">
+                                        AM
+                                    </a>
+                                </div>
                             </div>
                             @endif
                         </div>
@@ -1654,10 +1703,221 @@
         })();
     </script>
     @endif
+    @if($hasNotifIndex)
+    <script>
+        (function() {
+            const root = document.querySelector('[data-admin-notification-root]');
+            if (!root || !root.dataset.countUrl) {
+                return;
+            }
+
+            if (window.__adminNotificationPoller?.stop) {
+                window.__adminNotificationPoller.stop();
+            }
+
+            let currentCount = Number.parseInt(root.dataset.initialCount || '0', 10) || 0;
+            let pollTimer = null;
+
+            const toastRegion = root.querySelector('[data-admin-notification-toast-region]');
+            const bellButton = root.querySelector('.topnav-icon-btn');
+            const title = root.dataset.title || 'New notification';
+            const singular = root.dataset.singular || '1 new unread notification';
+            const plural = root.dataset.plural || ':count new unread notifications';
+            const brand = root.dataset.brand || '';
+            const logoUrl = root.dataset.logoUrl || '';
+            const initials = root.dataset.initials || 'CM';
+
+            const formatCount = (count) => count > 99 ? '99+' : String(count);
+            const messageFor = (delta) => delta === 1 ? singular : plural.replace(':count', String(delta));
+            const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;',
+            })[char]);
+
+            if (toastRegion && toastRegion.parentElement !== document.body) {
+                document.body.appendChild(toastRegion);
+                Object.assign(toastRegion.style, {
+                    top: 'auto',
+                    left: 'auto',
+                    right: '1.5rem',
+                    bottom: '1.5rem',
+                    transform: 'none',
+                });
+            }
+
+            const updateBadge = (count) => {
+                let badge = root.querySelector('[data-admin-notification-badge]');
+
+                if (count < 1) {
+                    badge?.remove();
+                    return;
+                }
+
+                if (!badge && bellButton) {
+                    badge = document.createElement('span');
+                    badge.className = 'topnav-notif-badge';
+                    badge.dataset.adminNotificationBadge = '';
+                    bellButton.appendChild(badge);
+                }
+
+                if (badge) {
+                    badge.textContent = formatCount(count);
+                    badge.setAttribute('aria-label', `${count} {{ __('app.Notifications') }}`);
+                }
+            };
+
+            const removeToast = (toast) => {
+                toast.classList.add('translate-y-8', 'opacity-0', 'scale-95');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                window.setTimeout(() => toast.remove(), 220);
+            };
+
+            const logoMarkup = () => {
+                if (logoUrl) {
+                    return `<img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(brand)}" class="max-h-11 max-w-14 object-contain">`;
+                }
+
+                return `<div class="grid h-11 w-11 place-items-center rounded-2xl bg-slate-900 text-xs font-black uppercase tracking-wide text-white shadow-lg shadow-slate-900/20 dark:bg-white dark:text-slate-950">${escapeHtml(initials)}</div>`;
+            };
+
+            const playNotificationSound = () => {
+                try {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (!AudioContext) {
+                        return;
+                    }
+
+                    const audioContext = window.__caseNotificationAudioContext || new AudioContext();
+                    window.__caseNotificationAudioContext = audioContext;
+
+                    if (audioContext.state === 'suspended') {
+                        audioContext.resume().catch(() => {});
+                    }
+
+                    const now = audioContext.currentTime;
+                    const gain = audioContext.createGain();
+                    const firstTone = audioContext.createOscillator();
+                    const secondTone = audioContext.createOscillator();
+
+                    gain.gain.setValueAtTime(0.0001, now);
+                    gain.gain.exponentialRampToValueAtTime(0.12, now + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
+                    gain.connect(audioContext.destination);
+
+                    firstTone.type = 'sine';
+                    firstTone.frequency.setValueAtTime(740, now);
+                    firstTone.connect(gain);
+                    firstTone.start(now);
+                    firstTone.stop(now + 0.16);
+
+                    secondTone.type = 'sine';
+                    secondTone.frequency.setValueAtTime(980, now + 0.18);
+                    secondTone.connect(gain);
+                    secondTone.start(now + 0.18);
+                    secondTone.stop(now + 0.42);
+                } catch (error) {
+                    return;
+                }
+            };
+
+            const showToast = (delta) => {
+                if (!toastRegion || delta < 1) {
+                    return;
+                }
+
+                playNotificationSound();
+
+                const toast = document.createElement('div');
+                toast.className = [
+                    'pointer-events-auto relative overflow-hidden rounded-[1.35rem] border border-blue-200/90',
+                    'bg-white/[0.96] p-0 text-slate-900 shadow-2xl shadow-slate-950/[0.18]',
+                    'ring-1 ring-white/70 backdrop-blur-xl transition duration-300 ease-out translate-y-10 scale-95 opacity-0',
+                    'dark:border-blue-400/25 dark:bg-slate-950/[0.96] dark:text-slate-100 dark:ring-white/10'
+                ].join(' ');
+                toast.innerHTML = `
+                    <span class="absolute inset-x-0 bottom-0 h-1 bg-blue-600"></span>
+                    <div class="flex items-stretch">
+                        <div class="flex w-20 flex-shrink-0 items-center justify-center border-r border-slate-200/70 bg-slate-50/80 px-3 dark:border-slate-800 dark:bg-slate-900/80">
+                            ${logoMarkup()}
+                        </div>
+                        <div class="min-w-0 flex-1 px-4 py-3.5">
+                            <div class="flex items-start gap-3 pr-8">
+                                <span class="mt-0.5 inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm shadow-blue-600/25">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-4 4-1-4z"/>
+                                    </svg>
+                                </span>
+                                <span class="min-w-0 flex-1">
+                                    <span class="block text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">${escapeHtml(brand)}</span>
+                                    <span class="mt-0.5 block text-sm font-semibold leading-5 text-slate-900 dark:text-slate-100">${escapeHtml(title)}</span>
+                                    <span class="mt-1 block text-xs leading-5 text-slate-500 dark:text-slate-400">${escapeHtml(messageFor(delta))}</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="absolute right-3 top-3 grid h-7 w-7 place-items-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/40 dark:hover:bg-slate-800 dark:hover:text-slate-100" aria-label="{{ __('app.Close details') }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                `;
+
+                toast.querySelector('button')?.addEventListener('click', () => removeToast(toast));
+                toastRegion.prepend(toast);
+                window.requestAnimationFrame(() => {
+                    toast.classList.remove('translate-y-10', 'scale-95', 'opacity-0');
+                    toast.classList.add('translate-y-0', 'opacity-100');
+                });
+                window.setTimeout(() => removeToast(toast), 10000);
+            };
+
+            const poll = async () => {
+                try {
+                    const response = await fetch(root.dataset.countUrl, {
+                        headers: {
+                            Accept: 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        credentials: 'same-origin',
+                    });
+
+                    if (!response.ok) {
+                        return;
+                    }
+
+                    const data = await response.json();
+                    const nextCount = Number.parseInt(data.count || '0', 10) || 0;
+                    const delta = nextCount - currentCount;
+
+                    updateBadge(nextCount);
+                    if (delta > 0) {
+                        showToast(delta);
+                    }
+
+                    currentCount = nextCount;
+                } catch (error) {
+                    return;
+                }
+            };
+
+            pollTimer = window.setInterval(poll, 20000);
+            window.setTimeout(poll, 3500);
+
+            window.__adminNotificationPoller = {
+                stop() {
+                    if (pollTimer) {
+                        window.clearInterval(pollTimer);
+                    }
+                },
+            };
+        })();
+    </script>
+    @endif
     @livewireScripts
     @stack('scripts')
 </body>
 
 </html>
-
-

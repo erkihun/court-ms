@@ -1,7 +1,9 @@
 <?php
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Route;
 
 // Applicant-facing controllers
@@ -47,12 +49,19 @@ use App\Http\Controllers\Admin\TermsAndConditionsController;
 use App\Http\Controllers\Admin\RecordController;
 use App\Http\Controllers\Admin\HearingController;
 use App\Http\Controllers\Admin\AboutController;
+use App\Http\Controllers\Admin\LandingPageController;
 use App\Http\Controllers\Admin\CaseInspectionRequestController;
 use App\Http\Controllers\Admin\CaseInspectionFindingController;
 use App\Http\Controllers\Admin\AnnouncementController;
 
 // Localization middleware
 use App\Http\Middleware\SetLocale;
+use App\Models\HomeFaq;
+use App\Models\HomeResource;
+use App\Models\HomeService;
+use App\Models\HomeSetting;
+use App\Models\HomeSlide;
+use App\Models\HomeTimelineStep;
 use App\Http\Controllers\TermsDisplayController;
 use App\Http\Controllers\PublicSignageController;
 use App\Http\Controllers\SecureFileController;
@@ -74,26 +83,68 @@ Route::middleware(SetLocale::class)->group(function () {
     Route::get('/language/{locale}', [LanguageController::class, 'switch'])->name('language.switch');
 
     Route::get('/home', function () {
-        $totalCases      = DB::table('court_cases')->count();
-        $pendingCases    = DB::table('court_cases')->where('status', 'pending')->count();
-        $resolvedCases   = DB::table('court_cases')->whereIn('status', ['closed', 'dismissed'])->count();
-        $openCases       = max($totalCases - $resolvedCases, 0);
+        $totalCases       = DB::table('court_cases')->count();
+        $pendingCases     = DB::table('court_cases')->where('status', 'pending')->count();
+        $resolvedCases    = DB::table('court_cases')->whereIn('status', ['closed', 'dismissed'])->count();
+        $openCases        = max($totalCases - $resolvedCases, 0);
         $upcomingHearings = DB::table('case_hearings')
             ->whereBetween('hearing_at', [now(), now()->addDays(30)])
             ->count();
-        $recentCases     = DB::table('court_cases')
+        $hearingsThisWeek = DB::table('case_hearings')
+            ->whereBetween('hearing_at', [now()->startOfWeek(), now()->endOfWeek()])
+            ->count();
+        $recentCases      = DB::table('court_cases')
             ->select('case_number', 'title', 'status', 'created_at')
             ->orderByDesc('created_at')
-            ->limit(4)
+            ->limit(6)
             ->get();
 
-        return view('home', compact('totalCases', 'pendingCases', 'resolvedCases', 'openCases', 'upcomingHearings', 'recentCases'));
+        // Admin-managed landing content
+        $dbSlides = Cache::remember('home_slides', 3600,
+            fn() => Schema::hasTable('home_slides') ? HomeSlide::active()->get() : collect()
+        );
+        $dbFaqs = Cache::remember('home_faqs', 3600,
+            fn() => Schema::hasTable('home_faqs') ? HomeFaq::active()->get() : collect()
+        );
+        $dbServices = Cache::remember('home_services', 3600,
+            fn() => Schema::hasTable('home_services') ? HomeService::active()->get() : collect()
+        );
+        $dbTimeline = Cache::remember('home_timeline', 3600,
+            fn() => Schema::hasTable('home_timeline_steps') ? HomeTimelineStep::active()->get() : collect()
+        );
+        $dbResources = Cache::remember('home_resources', 3600,
+            fn() => Schema::hasTable('home_resources') ? HomeResource::active()->get() : collect()
+        );
+        $dbSections = Cache::remember('home_settings', 3600, function () {
+            if (!Schema::hasTable('home_settings')) return [];
+            $keys = ['metrics', 'process', 'services', 'cases', 'resources', 'cta'];
+            $out  = [];
+            foreach ($keys as $k) {
+                $out[$k] = HomeSetting::getJson("section.{$k}");
+            }
+            return $out;
+        });
+        $dbFooter = Cache::remember('home_footer', 3600,
+            fn() => Schema::hasTable('home_settings') ? HomeSetting::getJson('footer.settings') : null
+        );
+
+        return view('home', compact(
+            'totalCases', 'pendingCases', 'resolvedCases', 'openCases',
+            'upcomingHearings', 'hearingsThisWeek', 'recentCases',
+            'dbSlides', 'dbFaqs', 'dbSections', 'dbServices', 'dbTimeline', 'dbResources', 'dbFooter'
+        ));
     })->name('landing.home');
 
     if (app()->environment('local')) {
         Route::get('/debug-locale', fn() => 'locale=' . app()->getLocale());
     }
     Route::get('/', fn() => redirect()->route('applicant.login'))->name('root');
+    Route::get('/resources', function () {
+        $resources = Cache::remember('home_resources', 3600,
+            fn() => Schema::hasTable('home_resources') ? HomeResource::active()->get() : collect()
+        );
+        return view('public.resources', compact('resources'));
+    })->name('public.resources');
     Route::get('/terms', [TermsDisplayController::class, 'show'])->name('public.terms');
     Route::get('/signage', [PublicSignageController::class, 'show'])
         ->middleware(['throttle:30,1'])
@@ -193,8 +244,10 @@ Route::middleware(SetLocale::class)->group(function () {
     Route::middleware(['auth:applicant', \App\Http\Middleware\UseGuard::class . ':applicant'])->group(function () {
         Route::post('/applicant/logout', [ApplicantAuthController::class, 'logout'])->name('applicant.logout');
 
-        // Email verification
+        // Email verification (OTP-based)
         Route::get('/applicant/email/verify', [ApplicantVerificationController::class, 'notice'])->name('applicant.verification.notice');
+        Route::post('/applicant/email/verify', [ApplicantVerificationController::class, 'verifyEmailOtp'])
+            ->middleware('throttle:10,1')->name('applicant.verification.verify-otp');
         Route::post('/applicant/email/verification-notification', [ApplicantVerificationController::class, 'send'])
             ->middleware('throttle:6,1')->name('applicant.verification.send');
         Route::get('/applicant/email/verify/{id}/{hash}', [ApplicantVerificationController::class, 'verify'])
@@ -329,6 +382,35 @@ Route::middleware(SetLocale::class)->group(function () {
 
             Route::post('/settings/system', [SystemSettingController::class, 'update'])
                 ->name('settings.system.update');
+
+            // Landing page manager
+            Route::get('/landing', [LandingPageController::class, 'index'])->name('admin.landing.index');
+            Route::post('/landing/slides', [LandingPageController::class, 'storeSlide'])->name('admin.landing.slides.store');
+            Route::put('/landing/slides/{slide}/update', [LandingPageController::class, 'updateSlide'])->name('admin.landing.slides.update');
+            Route::delete('/landing/slides/{slide}', [LandingPageController::class, 'destroySlide'])->name('admin.landing.slides.destroy');
+            Route::patch('/landing/slides/{slide}/toggle', [LandingPageController::class, 'toggleSlide'])->name('admin.landing.slides.toggle');
+            Route::post('/landing/slides/reorder', [LandingPageController::class, 'reorderSlides'])->name('admin.landing.slides.reorder');
+            Route::post('/landing/faqs', [LandingPageController::class, 'storeFaq'])->name('admin.landing.faqs.store');
+            Route::put('/landing/faqs/{faq}/update', [LandingPageController::class, 'updateFaq'])->name('admin.landing.faqs.update');
+            Route::delete('/landing/faqs/{faq}', [LandingPageController::class, 'destroyFaq'])->name('admin.landing.faqs.destroy');
+            Route::patch('/landing/faqs/{faq}/toggle', [LandingPageController::class, 'toggleFaq'])->name('admin.landing.faqs.toggle');
+            Route::put('/landing/sections', [LandingPageController::class, 'updateSections'])->name('admin.landing.sections.update');
+            Route::post('/landing/services', [LandingPageController::class, 'storeService'])->name('admin.landing.services.store');
+            Route::put('/landing/services/{service}/update', [LandingPageController::class, 'updateService'])->name('admin.landing.services.update');
+            Route::delete('/landing/services/{service}', [LandingPageController::class, 'destroyService'])->name('admin.landing.services.destroy');
+            Route::patch('/landing/services/{service}/toggle', [LandingPageController::class, 'toggleService'])->name('admin.landing.services.toggle');
+            // Timeline steps
+            Route::post('/landing/steps', [LandingPageController::class, 'storeStep'])->name('admin.landing.steps.store');
+            Route::put('/landing/steps/{step}/update', [LandingPageController::class, 'updateStep'])->name('admin.landing.steps.update');
+            Route::delete('/landing/steps/{step}', [LandingPageController::class, 'destroyStep'])->name('admin.landing.steps.destroy');
+            Route::patch('/landing/steps/{step}/toggle', [LandingPageController::class, 'toggleStep'])->name('admin.landing.steps.toggle');
+            // Resources
+            Route::post('/landing/resources', [LandingPageController::class, 'storeResource'])->name('admin.landing.resources.store');
+            Route::put('/landing/resources/{resource}/update', [LandingPageController::class, 'updateResource'])->name('admin.landing.resources.update');
+            Route::delete('/landing/resources/{resource}', [LandingPageController::class, 'destroyResource'])->name('admin.landing.resources.destroy');
+            Route::patch('/landing/resources/{resource}/toggle', [LandingPageController::class, 'toggleResource'])->name('admin.landing.resources.toggle');
+            // Footer settings
+            Route::put('/landing/footer', [LandingPageController::class, 'updateFooter'])->name('admin.landing.footer.update');
 
             // System audit (read-only view)
             Route::get('/audit', [\App\Http\Controllers\Admin\AuditController::class, 'index'])
@@ -512,6 +594,7 @@ Route::middleware(SetLocale::class)->group(function () {
 
             // Admin notifications (matches admin layout links)
             Route::get('/notifications',           [AdminNotificationController::class, 'index'])->name('admin.notifications.index');
+            Route::get('/notifications/count',     [AdminNotificationController::class, 'count'])->name('admin.notifications.count');
             Route::post('/notifications/mark-one', [AdminNotificationController::class, 'markOne'])->name('admin.notifications.markOne');
             Route::post('/notifications/mark-all', [AdminNotificationController::class, 'markAll'])->name('admin.notifications.markAll');
 

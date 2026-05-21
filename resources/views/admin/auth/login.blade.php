@@ -12,7 +12,7 @@ $faviconPath = $settings?->favicon_path ?? null;
 $bannerPath = $settings?->banner_path ?? null;
 @endphp
 
-<x-guest-layout variant="split-auth">
+<x-guest-layout variant="split-auth" :show-toasts="false">
     @if($faviconPath)
         @push('head')
             <link rel="icon" href="{{ asset('storage/'.$faviconPath) }}">
@@ -117,6 +117,28 @@ $bannerPath = $settings?->banner_path ?? null;
                             {{ __('auth.admin_login_subtitle') }}
                         </p>
                     </div>
+
+                    @if(session('error') || $errors->any())
+                    <div class="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
+                        <div class="flex items-start gap-2.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-4 w-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/>
+                            </svg>
+                            <div class="min-w-0">
+                                @if(session('error'))
+                                <p class="font-semibold">{{ session('error') }}</p>
+                                @endif
+                                @if($errors->any())
+                                <ul class="space-y-1 {{ session('error') ? 'mt-1.5' : '' }}">
+                                    @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    @endif
 
                     <form method="POST" action="{{ route('login') }}" class="mt-8 space-y-5">
                         @csrf

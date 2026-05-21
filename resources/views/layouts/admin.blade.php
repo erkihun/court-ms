@@ -15,6 +15,35 @@
             document.documentElement.classList.toggle('dark', dark);
             document.documentElement.dataset.theme = theme;
         })();
+
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('toasts', {
+                items: [],
+                _id: 0,
+
+                initFromServer(serverToasts) {
+                    serverToasts.forEach((t, i) => {
+                        const id = ++this._id;
+                        this.items.push({ id, message: t.message, type: t.type, details: t.details || [], show: true });
+                        setTimeout(() => this.dismiss(id), 4500 + i * 400);
+                    });
+                },
+
+                add(message, type = 'success', duration = 4500) {
+                    const id = ++this._id;
+                    this.items.push({ id, message, type, details: [], show: true });
+                    setTimeout(() => this.dismiss(id), duration);
+                },
+
+                dismiss(id) {
+                    const item = this.items.find(t => t.id === id);
+                    if (item) item.show = false;
+                    setTimeout(() => { this.items = this.items.filter(t => t.id !== id); }, 350);
+                }
+            });
+
+            window.toast = (msg, type, dur) => Alpine.store('toasts').add(msg, type, dur);
+        });
     </script>
 
     <!-- Fonts -->
@@ -47,6 +76,8 @@
             {{ $slot }}
         </main>
     </div>
+
+    @include('partials.admin-toasts')
 </body>
 
 

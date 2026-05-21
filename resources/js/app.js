@@ -5,6 +5,49 @@ window.Chart = Chart;
 
 import Alpine from 'alpinejs';
 
+const registerToastStore = (alpine) => {
+    if (alpine.store('toasts')) {
+        return;
+    }
+
+    alpine.store('toasts', {
+        items: [],
+        _id: 0,
+
+        initFromServer(serverToasts = []) {
+            serverToasts.forEach((toast, index) => {
+                const id = ++this._id;
+                this.items.push({
+                    id,
+                    message: toast.message,
+                    type: toast.type || 'success',
+                    details: toast.details || [],
+                    show: true,
+                });
+                setTimeout(() => this.dismiss(id), 4500 + index * 400);
+            });
+        },
+
+        add(message, type = 'success', duration = 4500) {
+            const id = ++this._id;
+            this.items.push({ id, message, type, details: [], show: true });
+            setTimeout(() => this.dismiss(id), duration);
+        },
+
+        dismiss(id) {
+            const item = this.items.find((toast) => toast.id === id);
+            if (item) {
+                item.show = false;
+            }
+            setTimeout(() => {
+                this.items = this.items.filter((toast) => toast.id !== id);
+            }, 350);
+        },
+    });
+
+    window.toast = (message, type, duration) => alpine.store('toasts').add(message, type, duration);
+};
+
 window.themeSystem = function themeSystem() {
     return {
         mode: localStorage.getItem('theme') || 'system',
@@ -45,5 +88,8 @@ window.themeSystem = function themeSystem() {
 if (!window.Alpine) {
     window.Alpine = Alpine;
     Alpine.data('themeSystem', window.themeSystem);
+    registerToastStore(Alpine);
     Alpine.start();
+} else {
+    registerToastStore(window.Alpine);
 }

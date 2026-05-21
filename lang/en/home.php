@@ -14,6 +14,7 @@ return [
         'more' => 'More',
         'announcements' => 'Announcements',
         'faq' => 'FAQ',
+        'resources' => 'Resources',
         'agency_label' => 'Administrative Tribunal',
     ],
 
@@ -159,19 +160,19 @@ return [
                 'title' => 'Case Initiation & Filing',
                 'description' => 'Digital submission of petitions with automated validation and instant case number generation',
                 'meta' => 'Automated intake process',
-                'duration' => '1-3 days',
+                'duration' => '30 min',
             ],
             'case_assignment' => [
                 'title' => 'Case Assessment & Assignment',
                 'description' => 'Registry review, jurisdiction verification, and assignment to appropriate tribunal bench',
                 'meta' => 'Bench assignment',
-                'duration' => '2-5 days',
+                'duration' => '1 hour',
             ],
             'evidence_submission' => [
                 'title' => 'Evidence Submission & Hearings',
                 'description' => 'Digital evidence upload, witness statements, and scheduled virtual/in-person hearings',
                 'meta' => 'Hearing management',
-                'duration' => '14-30 days',
+                'duration' => '30 min',
             ],
             'adjudication' => [
                 'title' => 'Adjudication & Decision',

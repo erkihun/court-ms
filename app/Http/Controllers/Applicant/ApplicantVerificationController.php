@@ -13,7 +13,18 @@ use Illuminate\Support\Facades\Log;
 
 class ApplicantVerificationController extends Controller
 {
-    /** Show the “verify your email” notice. */
+    /** Generate a fresh OTP, store hash in session, return the plain code. */
+    private function generateOtp(int $ttlMinutes = 10): string
+    {
+        $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        session([
+            'email_otp'            => hash('sha256', $otp),
+            'email_otp_expires_at' => now()->addMinutes($ttlMinutes)->timestamp,
+        ]);
+        return $otp;
+    }
+
+    /** Show the OTP form, auto-sending a code if none is already pending. */
     public function notice(Request $request)
     {
         /** @var Applicant|null $user */
@@ -25,10 +36,21 @@ class ApplicantVerificationController extends Controller
         if ($user->hasVerifiedEmail()) {
             return redirect()->route('applicant.dashboard')->with('success', 'Email already verified.');
         }
-        return view('applicant.auth.verify');
+
+        // Only send a new OTP when there is no unexpired one already in session
+        if (!session('email_otp') || now()->timestamp > session('email_otp_expires_at', 0)) {
+            try {
+                $otp = $this->generateOtp();
+                $user->notify(new ApplicantEmailOtp($otp));
+            } catch (\Throwable $e) {
+                Log::error('[VerifyEmail] OTP send failed: ' . $e->getMessage());
+            }
+        }
+
+        return view('applicant.auth.email-verify-otp');
     }
 
-    /** Resend verification link. */
+    /** Resend a fresh OTP code to the authenticated applicant. */
     public function send(Request $request)
     {
         /** @var Applicant|null $user */
@@ -42,22 +64,61 @@ class ApplicantVerificationController extends Controller
         }
 
         try {
-            $user->sendEmailVerificationNotification();
-            return back()->with('success', 'Verification link sent.');
+            $otp = $this->generateOtp();
+            $user->notify(new ApplicantEmailOtp($otp));
+            return back()->with('success', 'A new verification code has been sent to your email.');
         } catch (\Throwable $e) {
-            Log::error('[VerifyEmail] resend failed: ' . $e->getMessage());
-            return back()->with('success', 'Could not send email. Please try again later.');
+            Log::error('[VerifyEmail] OTP resend failed: ' . $e->getMessage());
+            return back()->withErrors(['code' => 'Could not send the code. Please try again.']);
         }
     }
 
-    /** Handle the signed verification link. */
+    /** Verify the OTP submitted from the email-verify form. */
+    public function verifyEmailOtp(Request $request)
+    {
+        $request->validate(['code' => ['required', 'digits:6']]);
+
+        /** @var Applicant|null $user */
+        $user = $request->user('applicant');
+
+        if (!$user) {
+            return redirect()->route('applicant.login');
+        }
+        if ($user->hasVerifiedEmail()) {
+            return redirect()->route('applicant.dashboard');
+        }
+
+        $storedHash = session('email_otp');
+        $expiresAt  = session('email_otp_expires_at');
+
+        if (!$storedHash || !$expiresAt) {
+            return redirect()->route('applicant.verification.notice')
+                ->withErrors(['code' => 'No active code found. A new one has been sent.']);
+        }
+
+        if (now()->timestamp > $expiresAt) {
+            return back()->withErrors(['code' => 'This code has expired. Please request a new one.']);
+        }
+
+        if (!hash_equals($storedHash, hash('sha256', $request->input('code')))) {
+            return back()->withErrors(['code' => 'Invalid verification code. Please try again.']);
+        }
+
+        $user->email_verified_at = now();
+        $user->save();
+
+        session()->forget(['email_otp', 'email_otp_expires_at']);
+
+        return redirect()->route('applicant.dashboard')->with('success', 'Email verified successfully!');
+    }
+
+    /** Handle the signed verification link (kept for backward compatibility). */
     public function verify(EmailVerificationRequest $request)
     {
-        // Ensure the applicant guard is in context for downstream usage
         Auth::shouldUse('applicant');
 
         if ($request->user() && !$request->user()->hasVerifiedEmail()) {
-            $request->fulfill(); // sets email_verified_at + fires event
+            $request->fulfill();
         }
 
         return redirect()->route('applicant.dashboard')->with('success', 'Email verified successfully.');

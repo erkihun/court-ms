@@ -143,6 +143,29 @@ class AppServiceProvider extends ServiceProvider
             ]);
         });
 
+        // Share branding with the public landing page (home.blade.php)
+        View::composer('home', function ($view) {
+            $systemSettings = null;
+            try {
+                if (Schema::hasTable('system_settings')) {
+                    $systemSettings = Cache::remember('system_settings', 3600, fn() => SystemSetting::query()->first());
+                }
+            } catch (\Throwable $e) {
+                $systemSettings = null;
+            }
+
+            $brandName = $systemSettings?->app_name ?? config('app.name', __('app.court_ms'));
+            $shortName = $systemSettings?->short_name ?: $brandName;
+            $logoPath  = $systemSettings?->logo_path ?? null;
+
+            $view->with('publicLayout', [
+                'systemSettings' => $systemSettings,
+                'brandName'      => $brandName,
+                'shortName'      => $shortName,
+                'logoPath'       => $logoPath,
+            ]);
+        });
+
         // Share branding with respondent layout (no notifications needed)
         View::composer('components.respondant-layout', function ($view) {
             $systemSettings = null;

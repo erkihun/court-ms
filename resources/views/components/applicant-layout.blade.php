@@ -869,33 +869,10 @@ $respondentNotifList = collect();
         </div>
     </header>
 
-    {{-- Flash messages --}}
-    <div class="mx-auto {{ $flashWidthClass }} px-4 pt-5">
-        @if(session('success'))
-        <x-ui.alert type="success" class="mb-4">
-            <span class="mt-0.5">
-                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-            </span>
-            <span>{{ session('success') }}</span>
-        </x-ui.alert>
-        @endif
-        @if(session('error'))
-        <x-ui.alert type="error" class="mb-4">
-            <span class="mt-0.5">
-                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                        d="M12 9v3m0 3h.01M12 5a7 7 0 100 14 7 7 0 000-14z" />
-                </svg>
-            </span>
-            <span>{{ session('error') }}</span>
-        </x-ui.alert>
-        @endif
+    @include('partials.admin-toasts')
 
+    {{-- Page notices --}}
+    <div class="mx-auto {{ $flashWidthClass }} px-4 pt-5">
         @if(!$actingRespondent)
         {{-- Email verification notice --}}
         @includeIf('applicant.partials.email-unverified')
@@ -953,4 +930,3 @@ $respondentNotifList = collect();
 </body>
 
 </html>
-
