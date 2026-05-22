@@ -1,6 +1,7 @@
 {{-- resources/views/admin/decisions/index.blade.php --}}
 <x-admin-layout title="{{ __('decisions.index.title') }}">
     @section('page_header', __('decisions.index.title'))
+    @include('admin.decisions.partials.font-style')
 
     @php
     $canCreateDecision = function_exists('userHasPermission')
@@ -18,7 +19,7 @@
         : ($decisions?->count() ?? 0);
     @endphp
 
-    <div class="space-y-4">
+    <div class="decision-ethiopic-font space-y-4">
         <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div class="flex items-center gap-2 flex-wrap">
                 <span class="text-sm text-gray-600">{{ __('decisions.index.showing') }}</span>

@@ -1,8 +1,9 @@
 {{-- resources/views/admin/decisions/edit.blade.php --}}
 <x-admin-layout title="{{ __('decisions.edit.title') }}">
     @section('page_header', __('decisions.edit.title'))
+    @include('admin.decisions.partials.font-style')
 
-    <div class="max-w-7xl mx-auto space-y-6">
+    <div class="decision-ethiopic-font max-w-7xl mx-auto space-y-6">
         <!-- Header -->
         <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 flex items-start justify-between gap-4">
             <div>
@@ -233,7 +234,7 @@
                     }
                     table { width: 100%; border-collapse: collapse }
                     td, th { border: 1px solid #ddd; padding: 4px }
-                    body { font-size: 14px; line-height: 1.5 }
+                    body { font-family: "Nyala", "Noto Sans Ethiopic", "Noto Sans", sans-serif; font-size: 14px; line-height: 1.5 }
                 `,
                 resize: false,
                 statusbar: true

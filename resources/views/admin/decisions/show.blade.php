@@ -1,8 +1,116 @@
 {{-- resources/views/admin/decisions/show.blade.php --}} 
 <x-admin-layout title="{{ $decision->name ?? __('decisions.show.title') }}"> 
     @section('page_header', $decision->name ?? __('decisions.show.title')) 
+    @include('admin.decisions.partials.font-style')
 
-    <div class="max-w-6xl mx-auto space-y-6">
+    @push('styles')
+        <style>
+            .decision-document-shell {
+                background: linear-gradient(180deg, rgba(248, 250, 252, 0.96), #fff);
+            }
+
+            .decision-document-content {
+                color: #111827;
+                font-family: "Nyala", "Noto Sans Ethiopic", "Noto Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                font-size: 0.98rem;
+                line-height: 1.85;
+                overflow-wrap: anywhere;
+            }
+
+            .decision-document-content > *:first-child {
+                margin-top: 0;
+            }
+
+            .decision-document-content > *:last-child {
+                margin-bottom: 0;
+            }
+
+            .decision-document-content p,
+            .decision-document-content div {
+                margin: 0 0 0.95rem;
+                text-align: justify;
+                text-justify: inter-word;
+            }
+
+            .decision-document-content h1,
+            .decision-document-content h2,
+            .decision-document-content h3,
+            .decision-document-content h4 {
+                margin: 1.25rem 0 0.65rem;
+                color: #0f172a;
+                font-weight: 800;
+                line-height: 1.35;
+            }
+
+            .decision-document-content h1 {
+                font-size: 1.35rem;
+            }
+
+            .decision-document-content h2 {
+                font-size: 1.2rem;
+            }
+
+            .decision-document-content h3 {
+                font-size: 1.08rem;
+            }
+
+            .decision-document-content ul,
+            .decision-document-content ol {
+                margin: 0.75rem 0 1rem 1.5rem;
+                padding-left: 1rem;
+            }
+
+            .decision-document-content ul {
+                list-style: disc;
+            }
+
+            .decision-document-content ol {
+                list-style: decimal;
+            }
+
+            .decision-document-content li {
+                margin: 0.35rem 0;
+                padding-left: 0.15rem;
+            }
+
+            .decision-document-content table {
+                width: 100%;
+                min-width: 42rem;
+                margin: 1rem 0;
+                border-collapse: collapse;
+                font-size: 0.92rem;
+            }
+
+            .decision-document-content th,
+            .decision-document-content td {
+                border: 1px solid #dbe3ef;
+                padding: 0.65rem 0.75rem;
+                vertical-align: top;
+            }
+
+            .decision-document-content th {
+                background: #f1f5f9;
+                color: #0f172a;
+                font-weight: 700;
+            }
+
+            .decision-document-content blockquote {
+                margin: 1rem 0;
+                border-left: 4px solid #10b981;
+                background: #ecfdf5;
+                padding: 0.85rem 1rem;
+                color: #065f46;
+            }
+
+            .decision-document-content img {
+                max-width: 100%;
+                height: auto;
+                border-radius: 0.5rem;
+            }
+        </style>
+    @endpush
+
+    <div class="decision-ethiopic-font max-w-6xl mx-auto space-y-6">
         <!-- Header -->
         <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 flex items-start justify-between gap-4">
             <div class="space-y-1">
@@ -167,15 +275,24 @@
         </div>
 
         <!-- Decision Content -->
-        <div>
-            <h2 class="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3" />
-                </svg>
-                Final Decision / ውሳኔ
-            </h2>
-            <div class="prose max-w-none border border-gray-200 rounded-lg p-4 bg-white">
-                {!! $decision->decision_content !!}
+        <div class="overflow-hidden rounded-xl border border-emerald-100 bg-white shadow-sm">
+            <div class="flex items-center justify-between gap-3 border-b border-emerald-100 bg-emerald-50/70 px-5 py-4">
+                <h2 class="flex items-center gap-2 text-base font-bold text-gray-950">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3" />
+                    </svg>
+                    {{ __('decisions.fields.decision_content') }}
+                </h2>
+                <span class="hidden rounded-full border border-emerald-200 bg-white px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-emerald-700 sm:inline-flex">
+                    {{ __('decisions.status.' . ($decision->status ?? 'draft')) }}
+                </span>
+            </div>
+            <div class="decision-document-shell px-4 py-5 sm:px-6">
+                <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white p-4 shadow-inner sm:p-6">
+                    <div class="decision-document-content">
+                        {!! $decision->decision_content !!}
+                    </div>
+                </div>
             </div>
         </div>
 

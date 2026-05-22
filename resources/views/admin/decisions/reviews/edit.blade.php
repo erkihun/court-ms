@@ -1,8 +1,9 @@
 {{-- resources/views/admin/decisions/reviews/edit.blade.php --}}
 <x-admin-layout title="Edit Review">
     @section('page_header', 'Edit Review')
+    @include('admin.decisions.partials.font-style')
 
-    <div class="max-w-3xl mx-auto space-y-6">
+    <div class="decision-ethiopic-font max-w-3xl mx-auto space-y-6">
         <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 flex items-start justify-between gap-4">
             <div>
                 <h1 class="text-xl font-semibold text-gray-900">Edit Review</h1>
