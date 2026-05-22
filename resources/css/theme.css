@@ -19,6 +19,10 @@
     --warning: #d97706;
     --danger: #dc2626;
     --shadow-color: 15 23 42;
+    /* accent – default blue (RGB triplets for use with / opacity) */
+    --ac: 37 99 235;
+    --ac-light: 59 130 246;
+    --ac-text: 219 234 254;
   }
 
   .dark {
@@ -39,5 +43,32 @@
     --warning: #f59e0b;
     --danger: #f87171;
     --shadow-color: 2 6 23;
+  }
+
+  /* ── Accent palettes (set on <html data-accent="…">) ──────── */
+  [data-accent="blue"], :root {
+    --ac: 37 99 235;
+    --ac-light: 96 165 250;
+    --ac-text: 219 234 254;
+  }
+  [data-accent="teal"] {
+    --ac: 13 148 136;
+    --ac-light: 45 212 191;
+    --ac-text: 204 251 241;
+  }
+  [data-accent="violet"] {
+    --ac: 124 58 237;
+    --ac-light: 167 139 250;
+    --ac-text: 237 233 254;
+  }
+  [data-accent="emerald"] {
+    --ac: 5 150 105;
+    --ac-light: 52 211 153;
+    --ac-text: 209 250 229;
+  }
+  [data-accent="rose"] {
+    --ac: 225 29 72;
+    --ac-light: 251 113 133;
+    --ac-text: 254 228 230;
   }
 }

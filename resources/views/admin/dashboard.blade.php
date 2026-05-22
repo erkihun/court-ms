@@ -52,15 +52,15 @@
     @push('styles')
     <style>
         .dashboard-modern {
-            --dash-border: rgba(226, 232, 240, 0.9);
-            --dash-muted: #64748b;
-            --dash-strong: #0f172a;
+            --dash-border: var(--border);
+            --dash-muted: var(--text-subtle);
+            --dash-strong: var(--text);
         }
 
         .dash-panel {
             border: 1px solid var(--dash-border);
             border-radius: 1rem;
-            background: rgba(255, 255, 255, 0.96);
+            background: var(--surface-strong);
             box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
         }
 
@@ -82,7 +82,7 @@
             overflow: hidden;
             border: 1px solid var(--dash-border);
             border-radius: 1rem;
-            background: #fff;
+            background: var(--surface-strong);
             padding: 1.1rem;
             box-shadow: 0 16px 36px rgba(15, 23, 42, 0.055);
             transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
@@ -104,15 +104,15 @@
         .dash-action {
             border: 1px solid var(--dash-border);
             border-radius: 0.85rem;
-            background: #f8fafc;
+            background: var(--surface-soft);
             padding: 0.85rem;
             transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
         }
 
         .dash-action:hover {
             transform: translateY(-1px);
-            border-color: #bfdbfe;
-            background: #eff6ff;
+            border-color: rgb(var(--ac) / 0.4);
+            background: rgb(var(--ac) / 0.08);
         }
 
         .dash-workload-row {
@@ -128,13 +128,13 @@
             height: 0.45rem;
             overflow: hidden;
             border-radius: 999px;
-            background: #e2e8f0;
+            background: var(--border);
         }
 
         .dash-progress-fill {
             height: 100%;
             border-radius: inherit;
-            background: #2563eb;
+            background: rgb(var(--ac));
         }
 
         .dash-member-strip {
@@ -148,7 +148,7 @@
             scroll-snap-align: start;
             border: 1px solid var(--dash-border);
             border-radius: 0.9rem;
-            background: #f8fafc;
+            background: var(--surface-soft);
             padding: 0.9rem;
         }
 
@@ -160,25 +160,20 @@
         .skeleton {
             position: relative;
             overflow: hidden;
-            background: #F3F4F6;
+            background: var(--border);
         }
 
         .skeleton::after {
             content: "";
             position: absolute;
             inset: 0;
-            background: linear-gradient(90deg, rgba(243, 244, 246, 0) 0%, rgba(229, 231, 235, .9) 50%, rgba(243, 244, 246, 0) 100%);
+            background: linear-gradient(90deg, transparent 0%, var(--border-strong) 50%, transparent 100%);
             animation: shimmer 1.35s infinite;
         }
 
         @keyframes shimmer {
-            0% {
-                transform: translateX(-100%);
-            }
-
-            100% {
-                transform: translateX(100%);
-            }
+            0%  { transform: translateX(-100%); }
+            100%{ transform: translateX(100%); }
         }
     </style>
     @endpush

@@ -20,6 +20,7 @@ return array (
   'Applicant' => 'አመልካች',
   'Case Types' => 'የመዝገብ አይነቶች',
   'case_types' => 'የመዝገብ አይነቶች',
+  'performance_evaluations' => 'የአፈጻጸም ግምገማ',
   'Notifications' => 'ማሳወቂያዎች',
   'Announcements' => 'ማስታወቂያዎች',
   'Users' => 'ተጠቃሚዎች',

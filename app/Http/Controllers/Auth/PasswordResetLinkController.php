@@ -13,7 +13,10 @@ class PasswordResetLinkController extends Controller
 
     public function create()
     {
-        return view('admin.auth.forgot-password');
+        return response()
+            ->view('admin.auth.forgot-password')
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->header('Pragma', 'no-cache');
     }
 
     // ── Step 2: send OTP ───────────────────────────────────────────────────────
@@ -48,7 +51,10 @@ class PasswordResetLinkController extends Controller
             return redirect()->route('password.request');
         }
 
-        return view('admin.auth.password-otp');
+        return response()
+            ->view('admin.auth.password-otp')
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->header('Pragma', 'no-cache');
     }
 
     // ── Step 4: verify OTP ─────────────────────────────────────────────────────

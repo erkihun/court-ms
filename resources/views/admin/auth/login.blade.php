@@ -219,6 +219,13 @@ $bannerPath = $settings?->banner_path ?? null;
     </div>
 
     <script>
+        // Reload when browser restores this page from the back-forward cache (BFCache).
+        // BFCache ignores Cache-Control: no-store and serves a frozen snapshot with a
+        // stale CSRF token, causing 419 on the next login attempt after logout.
+        window.addEventListener('pageshow', function (e) {
+            if (e.persisted) window.location.reload();
+        });
+
         (function() {
             const input = document.getElementById('password');
             const toggle = document.getElementById('toggle-password');

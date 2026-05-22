@@ -51,9 +51,11 @@ const registerToastStore = (alpine) => {
 window.themeSystem = function themeSystem() {
     return {
         mode: localStorage.getItem('theme') || 'system',
+        accent: localStorage.getItem('accent') || 'blue',
         media: window.matchMedia('(prefers-color-scheme: dark)'),
         init() {
             this.apply();
+            this.applyAccent();
 
             const sync = () => {
                 if (this.mode === 'system') {
@@ -74,13 +76,24 @@ window.themeSystem = function themeSystem() {
             document.documentElement.classList.toggle('dark', shouldUseDark);
             document.documentElement.dataset.theme = this.mode;
         },
+        applyAccent() {
+            document.documentElement.dataset.accent = this.accent;
+        },
         set(mode) {
             this.mode = mode;
             localStorage.setItem('theme', mode);
             this.apply();
         },
+        setAccent(accent) {
+            this.accent = accent;
+            localStorage.setItem('accent', accent);
+            this.applyAccent();
+        },
         isActive(mode) {
             return this.mode === mode;
+        },
+        isAccent(accent) {
+            return this.accent === accent;
         },
     };
 };

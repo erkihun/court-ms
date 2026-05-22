@@ -20,6 +20,7 @@ return array (
   'Applicant' => 'Applicant',
   'Case Types' => 'Case Types',
   'case_types' => 'Case Types',
+  'performance_evaluations' => 'Performance Evaluations',
   'Notifications' => 'Notifications',
   'Announcements' => 'Announcements',
   'Users' => 'Users',

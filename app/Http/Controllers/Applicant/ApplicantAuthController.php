@@ -17,7 +17,10 @@ class ApplicantAuthController extends Controller
 {
     public function showRegister()
     {
-        return view('applicant.auth.register');
+        return response()
+            ->view('applicant.auth.register')
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->header('Pragma', 'no-cache');
     }
 
     public function register(Request $request)
@@ -76,7 +79,10 @@ class ApplicantAuthController extends Controller
         // Always reset acting-as flag on login screen
         session()->forget('acting_as_respondent');
         $asRespondentNav = request('login_as') === 'respondent';
-        return view('applicant.auth.login', compact('asRespondentNav'));
+        return response()
+            ->view('applicant.auth.login', compact('asRespondentNav'))
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->header('Pragma', 'no-cache');
     }
 
     public function login(Request $request)

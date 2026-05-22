@@ -20,7 +20,10 @@ class NewPasswordController extends Controller
             return redirect()->route('password.request');
         }
 
-        return view('admin.auth.reset-password');
+        return response()
+            ->view('admin.auth.reset-password')
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->header('Pragma', 'no-cache');
     }
 
     // ── Step 6: save new password ─────────────────────────────────────────────

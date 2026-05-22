@@ -49,6 +49,7 @@
             const dark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
             document.documentElement.classList.toggle('dark', dark);
             document.documentElement.dataset.theme = theme;
+            document.documentElement.dataset.accent = localStorage.getItem('accent') || 'blue';
         })();
     </script>
     <style>
@@ -127,6 +128,7 @@
     $hasLandingManager = Route::has('admin.landing.index');
     $hasReports = Route::has('reports.index');
     $hasAnnouncements = Route::has('announcements.index');
+    $hasPerformanceEvaluations = Route::has('performance-evaluations.index');
     $isCaseTypographyRoute = request()->routeIs('cases.*')
         || request()->routeIs('recordes.*')
         || request()->routeIs('respondent-responses.*');
@@ -463,6 +465,27 @@
                     x-transition:leave-start="motion-slide-inline-end"
                     x-transition:leave-end="motion-slide-inline-start">
                     {{ __('app.Reports') }}
+                </span>
+            </a>
+            @endif
+
+            {{-- Performance Evaluations --}}
+            @if($hasPerformanceEvaluations)
+            <a href="{{ route('performance-evaluations.index') }}"
+                class="sidebar-menu-item focus-ring
+                {{ request()->routeIs('performance-evaluations.*') ? 'sidebar-menu-item-active' : 'sidebar-menu-item-inactive' }}">
+                <div class="grid place-items-center w-6" aria-hidden="true">
+                    <x-heroicon-o-chart-bar-square class="sidebar-icon h-4 w-4" aria-hidden="true" />
+                </div>
+                <span class="sidebar-menu-label truncate origin-left"
+                    x-show="!compact"
+                    x-transition:enter="motion-enter"
+                    x-transition:enter-start="motion-slide-inline-start"
+                    x-transition:enter-end="motion-slide-inline-end"
+                    x-transition:leave="motion-leave"
+                    x-transition:leave-start="motion-slide-inline-end"
+                    x-transition:leave-end="motion-slide-inline-start">
+                    {{ __('app.performance_evaluations') }}
                 </span>
             </a>
             @endif

@@ -343,7 +343,9 @@
   }
 
   .ui-stat {
-    @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm;
+    background: var(--surface-strong);
+    border-color: var(--border);
+    @apply rounded-2xl border p-5 shadow-sm;
   }
 
   .admin-hero {
@@ -358,7 +360,10 @@
   }
 
   .admin-toolbar-chip {
-    @apply inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600 shadow-sm;
+    background: var(--surface-strong);
+    border-color: var(--border);
+    color: var(--text-muted);
+    @apply inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] shadow-sm;
   }
 
   .admin-form-shell {
@@ -378,14 +383,23 @@
   }
 
   .admin-panel-muted {
-    @apply rounded-2xl border border-slate-200 bg-slate-50/80 p-5 shadow-sm;
+    background: var(--surface-soft);
+    border-color: var(--border);
+    @apply rounded-2xl border p-5 shadow-sm;
   }
 
   .admin-checkbox-card {
-    @apply flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 text-slate-700 hover:border-blue-200 hover:bg-blue-50/40;
+    background: var(--surface-strong);
+    border-color: var(--border);
+    color: var(--text-muted);
+    @apply flex items-center gap-3 rounded-xl border px-3 py-3;
     transition-property: border-color, background-color, box-shadow, transform;
     transition-duration: var(--motion-fast);
     transition-timing-function: var(--ease-out);
+  }
+  .admin-checkbox-card:hover {
+    border-color: rgb(var(--ac) / 0.5);
+    background: rgb(var(--ac) / 0.06);
   }
 
   .admin-header-actions {
@@ -570,7 +584,7 @@
 
   /* Active: full-pill highlight + gradient accent bar on left edge */
   .sidebar-menu-item-active {
-    background: rgb(234 88 12 / 0.22);
+    background: rgb(var(--ac) / 0.22);
     color: #fff;
     font-weight: 600;
   }
@@ -583,7 +597,7 @@
     transform: translateY(-50%);
     width: 3px;
     height: 18px;
-    background: linear-gradient(180deg, #fdba74 0%, #ea580c 100%);
+    background: linear-gradient(180deg, rgb(var(--ac-light)) 0%, rgb(var(--ac)) 100%);
     border-radius: 0 3px 3px 0;
   }
 
@@ -609,8 +623,8 @@
   }
 
   .sidebar-submenu-item-active {
-    background: rgb(234 88 12 / 0.18);
-    color: rgb(253 186 116);
+    background: rgb(var(--ac) / 0.18);
+    color: rgb(var(--ac-text));
     font-weight: 600;
   }
 
@@ -622,7 +636,7 @@
     transform: translateY(-50%);
     width: 2px;
     height: 14px;
-    background: #ea580c;
+    background: rgb(var(--ac-light));
     border-radius: 0 2px 2px 0;
   }
 
@@ -961,3 +975,85 @@
     font-family: var(--font-pdf) !important;
   }
 }
+
+/* ── Global dark-mode overrides ─────────────────────────────────────────────
+   These patch hardcoded Tailwind classes used across views that predate
+   the CSS-variable theme system. Applied only when .dark is on <html>.
+   Flat (non-nested) selectors for PostCSS compatibility.
+   ──────────────────────────────────────────────────────────────────────── */
+
+/* Surfaces */
+.dark .bg-white                            { background-color: var(--surface-strong) !important; }
+.dark .bg-gray-50, .dark .bg-slate-50, .dark .bg-zinc-50   { background-color: var(--surface-soft) !important; }
+.dark .bg-gray-100, .dark .bg-slate-100, .dark .bg-zinc-100 { background-color: var(--bg-muted) !important; }
+.dark .bg-gray-200, .dark .bg-slate-200   { background-color: var(--border) !important; }
+
+/* Borders */
+.dark .border-gray-100, .dark .border-slate-100 { border-color: var(--border) !important; }
+.dark .border-gray-200, .dark .border-slate-200 { border-color: var(--border) !important; }
+.dark .border-gray-300, .dark .border-slate-300 { border-color: var(--border-strong) !important; }
+
+/* Text */
+.dark .text-gray-900, .dark .text-slate-900, .dark .text-zinc-900 { color: var(--text) !important; }
+.dark .text-gray-800, .dark .text-slate-800, .dark .text-zinc-800 { color: var(--text) !important; }
+.dark .text-gray-700, .dark .text-slate-700, .dark .text-zinc-700 { color: var(--text-muted) !important; }
+.dark .text-gray-600, .dark .text-slate-600, .dark .text-zinc-600 { color: var(--text-muted) !important; }
+.dark .text-gray-500, .dark .text-slate-500, .dark .text-zinc-500 { color: var(--text-subtle) !important; }
+.dark .text-gray-400, .dark .text-slate-400                        { color: var(--text-subtle) !important; }
+
+/* Form inputs */
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+.dark select,
+.dark textarea {
+  background-color: var(--surface-strong) !important;
+  color: var(--text) !important;
+  border-color: var(--border-strong) !important;
+}
+.dark input::placeholder, .dark textarea::placeholder { color: var(--text-subtle) !important; }
+
+/* Hover states */
+.dark .hover\:bg-gray-50:hover, .dark .hover\:bg-slate-50:hover { background-color: var(--bg-muted) !important; }
+.dark .hover\:bg-gray-100:hover, .dark .hover\:bg-slate-100:hover { background-color: var(--border) !important; }
+
+/* Divide lines */
+.dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
+.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]),
+.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+.dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-color: var(--border) !important; }
+
+/* Applicant portal dropdowns */
+.dark .ap-notif-dropdown, .dark .ap-profile-dropdown {
+  background-color: var(--surface-strong) !important;
+  border-color: var(--border) !important;
+}
+.dark .ap-dropdown-item             { color: var(--text-muted) !important; }
+.dark .ap-dropdown-item:hover       { background-color: var(--bg-muted) !important; }
+.dark .ap-dropdown-divider          { border-color: var(--border) !important; }
+
+/* Status / badge chips — soften the light tints */
+.dark .ui-badge-blue, .dark .bg-blue-50     { background-color: rgb(37 99 235 / 0.15) !important; }
+.dark .ui-badge-emerald, .dark .bg-emerald-50 { background-color: rgb(5 150 105 / 0.15) !important; }
+.dark .ui-badge-amber, .dark .bg-amber-50   { background-color: rgb(217 119 6 / 0.15) !important; }
+.dark .ui-badge-rose, .dark .bg-rose-50     { background-color: rgb(225 29 72 / 0.15) !important; }
+.dark .ui-badge-slate                       { background-color: var(--surface-soft) !important; }
+.dark .bg-orange-50                         { background-color: rgb(234 88 12 / 0.15) !important; }
+
+.dark .text-blue-800                        { color: #93c5fd !important; }
+.dark .text-emerald-700, .dark .text-emerald-800 { color: #6ee7b7 !important; }
+.dark .text-amber-800                       { color: #fcd34d !important; }
+.dark .text-orange-800                      { color: #fdba74 !important; }
+.dark .text-rose-700, .dark .text-rose-800  { color: #fca5a5 !important; }
+
+.dark .border-blue-200                      { border-color: rgb(37 99 235 / 0.3) !important; }
+.dark .border-emerald-200                   { border-color: rgb(5 150 105 / 0.3) !important; }
+.dark .border-amber-200                     { border-color: rgb(217 119 6 / 0.3) !important; }
+.dark .border-orange-200                    { border-color: rgb(234 88 12 / 0.3) !important; }
+.dark .border-rose-200                      { border-color: rgb(225 29 72 / 0.3) !important; }
+
+/* Alert overrides */
+.dark .ui-alert-success { background-color: rgb(5 150 105 / 0.15) !important; border-color: rgb(5 150 105 / 0.3) !important; color: #6ee7b7 !important; }
+.dark .ui-alert-error   { background-color: rgb(225 29 72 / 0.15) !important;  border-color: rgb(225 29 72 / 0.3) !important;  color: #fca5a5 !important; }
+.dark .ui-alert-info    { background-color: rgb(37 99 235 / 0.15) !important;  border-color: rgb(37 99 235 / 0.3) !important;  color: #93c5fd !important; }
+
+/* Theme swatch ring-offset in dark mode */
+.dark .ring-offset-2 { --tw-ring-offset-color: var(--surface-strong); }

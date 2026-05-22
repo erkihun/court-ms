@@ -50,6 +50,7 @@ use App\Http\Controllers\Admin\RecordController;
 use App\Http\Controllers\Admin\HearingController;
 use App\Http\Controllers\Admin\AboutController;
 use App\Http\Controllers\Admin\LandingPageController;
+use App\Http\Controllers\Admin\PerformanceEvaluationController;
 use App\Http\Controllers\Admin\CaseInspectionRequestController;
 use App\Http\Controllers\Admin\CaseInspectionFindingController;
 use App\Http\Controllers\Admin\AnnouncementController;
@@ -592,7 +593,17 @@ Route::middleware(SetLocale::class)->group(function () {
                 ->name('appeals.docs.download');
             Route::delete('/appeals/{appeal}/documents/{doc}', [AppealController::class, 'deleteDoc'])->middleware('perm:appeals.edit')->name('appeals.docs.delete');
 
-// Admin notifications (matches admin layout links)
+            // Performance Evaluations
+            Route::get('/performance-evaluations',                              [PerformanceEvaluationController::class, 'index'])->name('performance-evaluations.index');
+            Route::get('/performance-evaluations/create',                       [PerformanceEvaluationController::class, 'create'])->name('performance-evaluations.create');
+            Route::post('/performance-evaluations',                             [PerformanceEvaluationController::class, 'store'])->name('performance-evaluations.store');
+            Route::get('/performance-evaluations/{performanceEvaluation}',      [PerformanceEvaluationController::class, 'show'])->name('performance-evaluations.show');
+            Route::get('/performance-evaluations/{performanceEvaluation}/edit', [PerformanceEvaluationController::class, 'edit'])->name('performance-evaluations.edit');
+            Route::patch('/performance-evaluations/{performanceEvaluation}',    [PerformanceEvaluationController::class, 'update'])->name('performance-evaluations.update');
+            Route::delete('/performance-evaluations/{performanceEvaluation}',   [PerformanceEvaluationController::class, 'destroy'])->name('performance-evaluations.destroy');
+            Route::post('/performance-evaluations/{performanceEvaluation}/review', [PerformanceEvaluationController::class, 'review'])->name('performance-evaluations.review');
+
+            // Admin notifications (matches admin layout links)
             Route::get('/notifications',           [AdminNotificationController::class, 'index'])->name('admin.notifications.index');
             Route::get('/notifications/count',     [AdminNotificationController::class, 'count'])->name('admin.notifications.count');
             Route::post('/notifications/mark-one', [AdminNotificationController::class, 'markOne'])->name('admin.notifications.markOne');
