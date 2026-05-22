@@ -86,7 +86,6 @@
 
 <body x-data="layoutState()" x-init="init()" class="ui-shell admin-subtle-grid min-h-screen flex font-sans font-ui text-[var(--text)]">
     @include('partials.admin-toasts')
-    @include('partials.admin-lock-screen')
 
     {{-- Sidebar (mobile slide-in + desktop collapsible) --}}
     @php
