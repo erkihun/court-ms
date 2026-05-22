@@ -57,6 +57,11 @@ return array (
   'Upcoming hearings' => 'የሚመጡ የችሎት ቀጠሮዎች',
   'Hearing' => 'ችሎት',
   'youre_all_caught_up' => 'ሁሉንም አይተዋል።',
+  'Session locked' => 'ክፍለ ጊዜ ተቆልፏል',
+  'Enter password to unlock' => 'ለመክፈት የይለፍ ቃል ያስገቡ',
+  'Incorrect password. Please try again.' => 'የይለፍ ቃሉ ትክክል አይደለም። እንደገና ይሞክሩ።',
+  'Unlock' => 'ክፈት',
+  'Session was locked after 20 minutes of inactivity' => 'ለ20 ደቂቃ ሳይሰሩ ሲቆዩ ክፍለ ጊዜ ይቆለፋል',
   'admin_notifications' => 
   array (
     'your_notifications' => 'የእርስዎ ማሳወቂያዎች',

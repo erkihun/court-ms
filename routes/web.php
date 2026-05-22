@@ -592,7 +592,7 @@ Route::middleware(SetLocale::class)->group(function () {
                 ->name('appeals.docs.download');
             Route::delete('/appeals/{appeal}/documents/{doc}', [AppealController::class, 'deleteDoc'])->middleware('perm:appeals.edit')->name('appeals.docs.delete');
 
-            // Admin notifications (matches admin layout links)
+// Admin notifications (matches admin layout links)
             Route::get('/notifications',           [AdminNotificationController::class, 'index'])->name('admin.notifications.index');
             Route::get('/notifications/count',     [AdminNotificationController::class, 'count'])->name('admin.notifications.count');
             Route::post('/notifications/mark-one', [AdminNotificationController::class, 'markOne'])->name('admin.notifications.markOne');

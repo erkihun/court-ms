@@ -57,6 +57,11 @@ return array (
   'Upcoming hearings' => 'Upcoming hearings',
   'Hearing' => 'Hearing',
   'youre_all_caught_up' => 'You\'re all caught up.',
+  'Session locked' => 'Session locked',
+  'Enter password to unlock' => 'Enter password to unlock',
+  'Incorrect password. Please try again.' => 'Incorrect password. Please try again.',
+  'Unlock' => 'Unlock',
+  'Session was locked after 20 minutes of inactivity' => 'Session was locked after 20 minutes of inactivity',
   'admin_notifications' => 
   array (
     'your_notifications' => 'Your notifications',

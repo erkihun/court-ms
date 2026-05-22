@@ -349,7 +349,9 @@
             $name = $user->name ?? 'User';
             $initials = strtoupper(mb_substr($name, 0, 2));
             $status = $user->status ?? 'inactive';
-            $avatar = !empty($user->avatar_path) ? asset('storage/'.$user->avatar_path) : null;
+            $avatar = (!empty($user->avatar_path) && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->avatar_path))
+                ? asset('storage/'.$user->avatar_path)
+                : null;
             @endphp
             <li class="py-3 flex items-center justify-between">
                 <div class="flex items-center gap-3 min-w-0">

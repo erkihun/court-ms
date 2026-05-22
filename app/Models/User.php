@@ -117,17 +117,23 @@ class User extends Authenticatable implements MustVerifyEmailContract, Auditable
      */
     public function getAvatarUrlAttribute(): ?string
     {
-        return $this->avatar_path ? Storage::url($this->avatar_path) : null;
+        return $this->avatar_path && Storage::disk('public')->exists($this->avatar_path)
+            ? Storage::url($this->avatar_path)
+            : null;
     }
 
     public function getSignatureUrlAttribute(): ?string
     {
-        return $this->signature_path ? Storage::url($this->signature_path) : null;
+        return $this->signature_path && Storage::disk('public')->exists($this->signature_path)
+            ? Storage::url($this->signature_path)
+            : null;
     }
 
     public function getStampUrlAttribute(): ?string
     {
-        return $this->stamp_path ? Storage::url($this->stamp_path) : null;
+        return $this->stamp_path && Storage::disk('public')->exists($this->stamp_path)
+            ? Storage::url($this->stamp_path)
+            : null;
     }
 
     /**

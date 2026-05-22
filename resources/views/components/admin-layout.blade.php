@@ -86,6 +86,7 @@
 
 <body x-data="layoutState()" x-init="init()" class="ui-shell admin-subtle-grid min-h-screen flex font-sans font-ui text-[var(--text)]">
     @include('partials.admin-toasts')
+    @include('partials.admin-lock-screen')
 
     {{-- Sidebar (mobile slide-in + desktop collapsible) --}}
     @php
@@ -914,8 +915,63 @@
         $adminUpcomingHearingCount = 0;
         $adminRespondentViewCount = 0;
 
-        if ($uid) {
-            $adminUnseenMsgs = \DB::table('case_messages as m')
+        $adminNotificationUser = auth()->user();
+        $canSeeAdminCaseNotifications = $adminNotificationUser?->hasPermission('cases.view') ?? false;
+        $adminNotificationMemberScopeIds = [];
+        $adminNotificationLeaderTeamId = null;
+        $adminNotificationIsTeamMember = false;
+        $adminNotificationIsLeader = false;
+        $adminNotificationCanAssignTeams = false;
+
+        if ($uid && $canSeeAdminCaseNotifications) {
+            $adminNotificationIsLeader = $adminNotificationUser?->hasPermission('cases.assign.member') ?? false;
+            $adminNotificationCanAssignTeams = $adminNotificationUser?->hasPermission('cases.assign.team') ?? false;
+
+            if ($adminNotificationIsLeader && !$adminNotificationCanAssignTeams) {
+                $adminNotificationLeaderTeam = \App\Models\Team::with(['users' => fn ($q) => $q->where('status', 'active')->orderBy('name')])
+                    ->where('team_leader_id', $uid)
+                    ->first();
+                $adminNotificationMemberScopeIds = collect([$uid])
+                    ->merge($adminNotificationLeaderTeam?->users?->pluck('id') ?? collect())
+                    ->filter()
+                    ->unique()
+                    ->values()
+                    ->all();
+                $adminNotificationLeaderTeamId = $adminNotificationLeaderTeam?->id;
+            }
+
+            $adminNotificationIsTeamMember = \DB::table('team_user')->where('user_id', $uid)->exists();
+        }
+
+        $applyAdminCaseNotificationScope = function ($query, string $caseAlias = 'c') use (
+            $uid,
+            $adminNotificationMemberScopeIds,
+            $adminNotificationLeaderTeamId,
+            $adminNotificationIsTeamMember,
+            $adminNotificationIsLeader,
+            $adminNotificationCanAssignTeams
+        ) {
+            if (!empty($adminNotificationMemberScopeIds)) {
+                return $query->where(function ($q) use ($caseAlias, $adminNotificationMemberScopeIds, $adminNotificationLeaderTeamId) {
+                    $q->whereIn("{$caseAlias}.assigned_user_id", $adminNotificationMemberScopeIds);
+                    if ($adminNotificationLeaderTeamId) {
+                        $q->orWhere("{$caseAlias}.assigned_team_id", $adminNotificationLeaderTeamId);
+                    }
+                });
+            }
+
+            if ($adminNotificationIsTeamMember && !$adminNotificationIsLeader && !$adminNotificationCanAssignTeams) {
+                return $query->where(function ($q) use ($caseAlias, $uid) {
+                    $q->where("{$caseAlias}.assigned_member_user_id", $uid)
+                        ->orWhere("{$caseAlias}.assigned_user_id", $uid);
+                });
+            }
+
+            return $query;
+        };
+
+        if ($uid && $canSeeAdminCaseNotifications) {
+            $adminUnseenMsgs = $applyAdminCaseNotificationScope(\DB::table('case_messages as m')
                 ->join('court_cases as c', 'c.id', '=', 'm.case_id')
                 ->select('m.id','m.body','m.created_at','c.case_number','c.id as case_id')
                 ->whereNotNull('m.sender_applicant_id')
@@ -923,19 +979,20 @@
                 ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
                     ->whereColumn('nr.source_id', 'm.id')
                     ->where('nr.type', 'message')
-                    ->where('nr.user_id', $uid))
+                    ->where('nr.user_id', $uid)))
                 ->orderByDesc('m.created_at')->limit(5)->get();
 
-            $adminUnseenMsgCount = \DB::table('case_messages as m')
+            $adminUnseenMsgCount = $applyAdminCaseNotificationScope(\DB::table('case_messages as m')
+                ->join('court_cases as c', 'c.id', '=', 'm.case_id')
                 ->whereNotNull('m.sender_applicant_id')
                 ->where('m.created_at', '>=', $cut14)
                 ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
                     ->whereColumn('nr.source_id', 'm.id')
                     ->where('nr.type', 'message')
-                    ->where('nr.user_id', $uid))
+                    ->where('nr.user_id', $uid)))
                 ->count();
 
-            $adminUnseenCases = \DB::table('court_cases as c')
+            $adminUnseenCases = $applyAdminCaseNotificationScope(\DB::table('court_cases as c')
                 ->select('c.id','c.case_number','c.title','c.created_at')
                 ->where('c.status', 'pending')
                 ->whereNull('c.assigned_user_id')
@@ -943,20 +1000,20 @@
                 ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
                     ->whereColumn('nr.source_id', 'c.id')
                     ->where('nr.type', 'case')
-                    ->where('nr.user_id', $uid))
+                    ->where('nr.user_id', $uid)))
                 ->orderByDesc('c.created_at')->limit(5)->get();
 
-            $adminUnseenCaseCount = \DB::table('court_cases as c')
+            $adminUnseenCaseCount = $applyAdminCaseNotificationScope(\DB::table('court_cases as c')
                 ->where('c.status', 'pending')
                 ->whereNull('c.assigned_user_id')
                 ->where('c.created_at', '>=', $cut14)
                 ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
                     ->whereColumn('nr.source_id', 'c.id')
                     ->where('nr.type', 'case')
-                    ->where('nr.user_id', $uid))
+                    ->where('nr.user_id', $uid)))
                 ->count();
 
-            $adminUpcomingHearings = \DB::table('case_hearings as h')
+            $adminUpcomingHearings = $applyAdminCaseNotificationScope(\DB::table('case_hearings as h')
                 ->join('court_cases as c', 'c.id', '=', 'h.case_id')
                 ->select('h.id','h.hearing_at','c.id as case_id','c.case_number')
                 ->where('c.assigned_user_id', $uid)
@@ -964,20 +1021,20 @@
                 ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
                     ->whereColumn('nr.source_id', 'h.id')
                     ->where('nr.type', 'hearing')
-                    ->where('nr.user_id', $uid))
+                    ->where('nr.user_id', $uid)))
                 ->orderBy('h.hearing_at')->limit(5)->get();
 
-            $adminUpcomingHearingCount = \DB::table('case_hearings as h')
+            $adminUpcomingHearingCount = $applyAdminCaseNotificationScope(\DB::table('case_hearings as h')
                 ->join('court_cases as c', 'c.id', '=', 'h.case_id')
                 ->where('c.assigned_user_id', $uid)
                 ->whereBetween('h.hearing_at', [$now, $in14])
                 ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
                     ->whereColumn('nr.source_id', 'h.id')
                     ->where('nr.type', 'hearing')
-                    ->where('nr.user_id', $uid))
+                    ->where('nr.user_id', $uid)))
                 ->count();
 
-            $adminRespondentViews = \DB::table('respondent_case_views as v')
+            $adminRespondentViews = $applyAdminCaseNotificationScope(\DB::table('respondent_case_views as v')
                 ->join('court_cases as c', 'c.id', '=', 'v.case_id')
                 ->join('respondents as r', 'r.id', '=', 'v.respondent_id')
                 ->select('v.id','v.viewed_at','v.case_id','c.case_number',
@@ -989,10 +1046,10 @@
                 ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
                     ->whereColumn('nr.source_id', 'v.id')
                     ->where('nr.type', 'respondent_view')
-                    ->where('nr.user_id', $uid))
+                    ->where('nr.user_id', $uid)))
                 ->orderByDesc('v.viewed_at')->limit(5)->get();
 
-            $adminRespondentViewCount = \DB::table('respondent_case_views as v')
+            $adminRespondentViewCount = $applyAdminCaseNotificationScope(\DB::table('respondent_case_views as v')
                 ->join('court_cases as c', 'c.id', '=', 'v.case_id')
                 ->join('respondents as r', 'r.id', '=', 'v.respondent_id')
                 ->where(fn($q) => $q->where('c.assigned_user_id', $uid)->orWhereNull('c.assigned_user_id'))
@@ -1000,7 +1057,7 @@
                 ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
                     ->whereColumn('nr.source_id', 'v.id')
                     ->where('nr.type', 'respondent_view')
-                    ->where('nr.user_id', $uid))
+                    ->where('nr.user_id', $uid)))
                 ->count();
         }
 
