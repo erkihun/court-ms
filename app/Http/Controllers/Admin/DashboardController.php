@@ -32,12 +32,69 @@ class DashboardController extends Controller
             ->orderBy('ym')
             ->get();
 
-        // recent users
-        $recentUsers = DB::table('users')
-            ->select('id', 'name', 'email', 'avatar_path', 'status', 'created_at')
-            ->orderByDesc('created_at')
-            ->limit(5)
+        $teamCaseCounts = DB::table('teams as t')
+            ->leftJoin('court_cases as c', 'c.assigned_team_id', '=', 't.id')
+            ->select('t.id', 't.name', DB::raw('COUNT(c.id) as cases_count'))
+            ->groupBy('t.id', 't.name')
+            ->orderByDesc('cases_count')
+            ->orderBy('t.name')
             ->get();
+
+        $memberCaseCounts = DB::table('team_user as tu')
+            ->join('users as u', 'u.id', '=', 'tu.user_id')
+            ->leftJoin('teams as t', 't.id', '=', 'tu.team_id')
+            ->leftJoin('court_cases as c', function ($join) {
+                $join->on('c.assigned_member_user_id', '=', 'u.id')
+                    ->orOn(function ($query) {
+                        $query->on('c.assigned_user_id', '=', 'u.id')
+                            ->whereNull('c.assigned_member_user_id');
+                    });
+            })
+            ->select(
+                'u.id',
+                'u.name',
+                'u.email',
+                'u.status',
+                'u.avatar_path',
+                't.name as team_name',
+                DB::raw('COUNT(DISTINCT c.id) as cases_count')
+            )
+            ->groupBy('u.id', 'u.name', 'u.email', 'u.status', 'u.avatar_path', 't.name')
+            ->orderByDesc('cases_count')
+            ->orderBy('u.name')
+            ->get();
+
+        $memberCaseTypeCounts = DB::table('team_user as tu')
+            ->join('users as u', 'u.id', '=', 'tu.user_id')
+            ->join('court_cases as c', function ($join) {
+                $join->on('c.assigned_member_user_id', '=', 'u.id')
+                    ->orOn(function ($query) {
+                        $query->on('c.assigned_user_id', '=', 'u.id')
+                            ->whereNull('c.assigned_member_user_id');
+                    });
+            })
+            ->leftJoin('case_types as ct', 'ct.id', '=', 'c.case_type_id')
+            ->select(
+                'u.id as user_id',
+                DB::raw("COALESCE(ct.name, '__unknown__') as case_type"),
+                DB::raw('COUNT(DISTINCT c.id) as cases_count')
+            )
+            ->groupBy('u.id', 'case_type')
+            ->orderByDesc('cases_count')
+            ->get()
+            ->groupBy('user_id');
+
+        $memberCaseCounts = $memberCaseCounts->map(function ($member) use ($memberCaseTypeCounts) {
+            $member->case_type_counts = $memberCaseTypeCounts
+                ->get($member->id, collect())
+                ->map(fn ($row) => [
+                    'label' => $row->case_type,
+                    'count' => (int) $row->cases_count,
+                ])
+                ->values();
+
+            return $member;
+        });
 
         // applicant gender counts
         $genderCounts = DB::table('applicants')
@@ -75,7 +132,8 @@ class DashboardController extends Controller
             'recent'         => $recent,
             'labels'         => $labels,
             'values'         => $values,
-            'recentUsers'    => $recentUsers,
+            'teamCaseCounts' => $teamCaseCounts,
+            'memberCaseCounts' => $memberCaseCounts,
             'genderCounts'   => $genderCounts,
             'caseTypeCounts' => $caseTypeCounts,
         ]);
@@ -155,11 +213,78 @@ class DashboardController extends Controller
             ->limit(8)
             ->get();
 
-        $recentUsers = DB::table('users')
-            ->select('id', 'name', 'email', 'status', 'avatar_path', 'updated_at')
-            ->orderByDesc('updated_at')
-            ->limit(8)
+        $teamCaseCounts = DB::table('teams as t')
+            ->leftJoin('court_cases as c', function ($join) use ($start, $end) {
+                $join->on('c.assigned_team_id', '=', 't.id')
+                    ->whereBetween('c.created_at', [$start, $end]);
+            })
+            ->select('t.id', 't.name', DB::raw('COUNT(c.id) as cases_count'))
+            ->groupBy('t.id', 't.name')
+            ->orderByDesc('cases_count')
+            ->orderBy('t.name')
             ->get();
+
+        $memberCaseCounts = DB::table('team_user as tu')
+            ->join('users as u', 'u.id', '=', 'tu.user_id')
+            ->leftJoin('teams as t', 't.id', '=', 'tu.team_id')
+            ->leftJoin('court_cases as c', function ($join) use ($start, $end) {
+                $join->whereBetween('c.created_at', [$start, $end])
+                    ->where(function ($query) {
+                        $query->whereColumn('c.assigned_member_user_id', 'u.id')
+                            ->orWhere(function ($inner) {
+                                $inner->whereColumn('c.assigned_user_id', 'u.id')
+                                    ->whereNull('c.assigned_member_user_id');
+                            });
+                    });
+            })
+            ->select(
+                'u.id',
+                'u.name',
+                'u.email',
+                'u.status',
+                'u.avatar_path',
+                't.name as team_name',
+                DB::raw('COUNT(DISTINCT c.id) as cases_count')
+            )
+            ->groupBy('u.id', 'u.name', 'u.email', 'u.status', 'u.avatar_path', 't.name')
+            ->orderByDesc('cases_count')
+            ->orderBy('u.name')
+            ->get();
+
+        $memberCaseTypeCounts = DB::table('team_user as tu')
+            ->join('users as u', 'u.id', '=', 'tu.user_id')
+            ->join('court_cases as c', function ($join) use ($start, $end) {
+                $join->whereBetween('c.created_at', [$start, $end])
+                    ->where(function ($query) {
+                        $query->whereColumn('c.assigned_member_user_id', 'u.id')
+                            ->orWhere(function ($inner) {
+                                $inner->whereColumn('c.assigned_user_id', 'u.id')
+                                    ->whereNull('c.assigned_member_user_id');
+                            });
+                    });
+            })
+            ->leftJoin('case_types as ct', 'ct.id', '=', 'c.case_type_id')
+            ->select(
+                'u.id as user_id',
+                DB::raw("COALESCE(ct.name, '__unknown__') as case_type"),
+                DB::raw('COUNT(DISTINCT c.id) as cases_count')
+            )
+            ->groupBy('u.id', 'case_type')
+            ->orderByDesc('cases_count')
+            ->get()
+            ->groupBy('user_id');
+
+        $memberCaseCounts = $memberCaseCounts->map(function ($member) use ($memberCaseTypeCounts) {
+            $member->case_type_counts = $memberCaseTypeCounts
+                ->get($member->id, collect())
+                ->map(fn ($row) => [
+                    'label' => $row->case_type,
+                    'count' => (int) $row->cases_count,
+                ])
+                ->values();
+
+            return $member;
+        });
 
         $useDaily = $end->diffInDays($start) <= 45;
         $labels = [];
@@ -232,7 +357,8 @@ class DashboardController extends Controller
                 'activeUsers'   => $activeUsers,
             ],
             'recent'      => $recent,
-            'recentUsers' => $recentUsers,
+            'teamCaseCounts' => $teamCaseCounts,
+            'memberCaseCounts' => $memberCaseCounts,
             'charts' => [
                 'line' => [
                     'labels' => $labels,

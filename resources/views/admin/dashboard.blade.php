@@ -10,12 +10,15 @@
     $activeCases = $activeCases ?? 0;
 
     $recent = collect($recent ?? []);
-    $recentUsers = collect($recentUsers ?? []);
+    $teamCaseCounts = collect($teamCaseCounts ?? []);
+    $memberCaseCounts = collect($memberCaseCounts ?? []);
 
     $labels = $labels ?? [];
     $values = $values ?? [];
     $genderCounts = $genderCounts ?? [];
     $caseTypeCounts = $caseTypeCounts ?? [];
+    $maxTeamCases = max((int) $teamCaseCounts->max('cases_count'), 1);
+    $maxMemberCases = max((int) $memberCaseCounts->max('cases_count'), 1);
 
     // Status chip helper (consistent across the app)
     $statusChip = function (string $s) {
@@ -48,6 +51,111 @@
 
     @push('styles')
     <style>
+        .dashboard-modern {
+            --dash-border: rgba(226, 232, 240, 0.9);
+            --dash-muted: #64748b;
+            --dash-strong: #0f172a;
+        }
+
+        .dash-panel {
+            border: 1px solid var(--dash-border);
+            border-radius: 1rem;
+            background: rgba(255, 255, 255, 0.96);
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
+        }
+
+        .dash-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            border-bottom: 1px solid var(--dash-border);
+            padding: 1rem 1.25rem;
+        }
+
+        .dash-panel-body {
+            padding: 1.25rem;
+        }
+
+        .dash-kpi {
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--dash-border);
+            border-radius: 1rem;
+            background: #fff;
+            padding: 1.1rem;
+            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.055);
+            transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+        }
+
+        .dash-kpi:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 22px 44px rgba(15, 23, 42, 0.08);
+        }
+
+        .dash-kpi-icon {
+            display: grid;
+            height: 2.75rem;
+            width: 2.75rem;
+            place-items: center;
+            border-radius: 0.85rem;
+        }
+
+        .dash-action {
+            border: 1px solid var(--dash-border);
+            border-radius: 0.85rem;
+            background: #f8fafc;
+            padding: 0.85rem;
+            transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+        }
+
+        .dash-action:hover {
+            transform: translateY(-1px);
+            border-color: #bfdbfe;
+            background: #eff6ff;
+        }
+
+        .dash-workload-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 1rem;
+            align-items: center;
+            padding: 0.85rem 0;
+        }
+
+        .dash-progress-track {
+            margin-top: 0.5rem;
+            height: 0.45rem;
+            overflow: hidden;
+            border-radius: 999px;
+            background: #e2e8f0;
+        }
+
+        .dash-progress-fill {
+            height: 100%;
+            border-radius: inherit;
+            background: #2563eb;
+        }
+
+        .dash-member-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+            gap: 0.9rem;
+        }
+
+        .dash-member-card {
+            min-width: 0;
+            scroll-snap-align: start;
+            border: 1px solid var(--dash-border);
+            border-radius: 0.9rem;
+            background: #f8fafc;
+            padding: 0.9rem;
+        }
+
+        .dash-chart-frame {
+            height: 18rem;
+        }
+
         /* Tiny skeleton for first paint */
         .skeleton {
             position: relative;
@@ -75,6 +183,7 @@
     </style>
     @endpush
 
+    <div class="dashboard-modern space-y-6">
     <div class="enterprise-header">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
@@ -85,142 +194,194 @@
         </div>
     </div>
 
-    {{-- KPI cards (UPDATED: Clean, easy-to-read style) --}}
-    <div class="enterprise-stat-grid">
-
-        {{-- Total cases (Primary Blue) --}}
-        {{-- Design: Light blue background, strong blue icon, dark text --}}
-        <div class="enterprise-stat-card border-blue-100">
-            <div class="flex items-start justify-between">
-                <div class="p-3 rounded-full bg-blue-100/70 text-blue-600 shadow-sm">
+    {{-- KPI cards --}}
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="dash-kpi">
+            <div class="flex items-start justify-between gap-3">
+                <div class="dash-kpi-icon bg-blue-50 text-blue-600">
                     <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M3 7h18M3 12h18M3 17h18" />
                     </svg>
                 </div>
+                <span class="rounded-full bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700">{{ __('dashboard.all_time') }}</span>
             </div>
-            <p id="kpi-total-cases" class="text-4xl font-extrabold text-blue-700 mt-4">{{ number_format($totalCases) }}</p>
-            <h2 class="text-sm uppercase tracking-wider font-semibold text-gray-500 mt-1">{{ __('dashboard.total_cases') }}</h2>
+            <p id="kpi-total-cases" class="mt-5 text-4xl font-extrabold tracking-tight text-slate-950">{{ number_format($totalCases) }}</p>
+            <h2 class="mt-1 text-sm font-semibold text-slate-500">{{ __('dashboard.total_cases') }}</h2>
         </div>
 
-        {{-- Pending (Brand Orange - High Attention) --}}
-        {{-- Design: Light orange background, strong orange icon, dark text --}}
-        <div class="enterprise-stat-card border-orange-100">
-            <div class="flex items-start justify-between">
-                <div class="p-3 rounded-full bg-orange-100/70 text-orange-600 shadow-sm">
+        <div class="dash-kpi">
+            <div class="flex items-start justify-between gap-3">
+                <div class="dash-kpi-icon bg-orange-50 text-orange-600">
                     <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2" />
                     </svg>
                 </div>
+                <span class="rounded-full bg-orange-50 px-2 py-1 text-[11px] font-semibold text-orange-700">{{ __('dashboard.pending') }}</span>
             </div>
-            <p id="kpi-pending-cases" class="text-4xl font-extrabold mt-4 text-orange-700">{{ number_format($pendingCases) }}</p>
-            <h2 class="text-sm uppercase tracking-wider font-semibold text-gray-500 mt-1">{{ __('dashboard.pending') }}</h2>
+            <p id="kpi-pending-cases" class="mt-5 text-4xl font-extrabold tracking-tight text-slate-950">{{ number_format($pendingCases) }}</p>
+            <h2 class="mt-1 text-sm font-semibold text-slate-500">{{ __('dashboard.pending') }}</h2>
         </div>
 
-        {{-- Active cases (Teal) --}}
-        <div class="enterprise-stat-card border-cyan-100">
-            <div class="flex items-start justify-between">
-                <div class="p-3 rounded-full bg-cyan-100/70 text-cyan-600 shadow-sm">
+        <div class="dash-kpi">
+            <div class="flex items-start justify-between gap-3">
+                <div class="dash-kpi-icon bg-cyan-50 text-cyan-600">
                     <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                 </div>
+                <span class="rounded-full bg-cyan-50 px-2 py-1 text-[11px] font-semibold text-cyan-700">{{ __('dashboard.active') }}</span>
             </div>
-            <p id="kpi-active-cases" class="text-4xl font-extrabold mt-4 text-cyan-700">{{ number_format($activeCases) }}</p>
-            <h2 class="text-sm uppercase tracking-wider font-semibold text-gray-500 mt-1">{{ __('dashboard.active_cases_label') }}</h2>
+            <p id="kpi-active-cases" class="mt-5 text-4xl font-extrabold tracking-tight text-slate-950">{{ number_format($activeCases) }}</p>
+            <h2 class="mt-1 text-sm font-semibold text-slate-500">{{ __('dashboard.active_cases_label') }}</h2>
         </div>
 
-        {{-- Resolved (Emerald Green - Success) --}}
-        {{-- Design: Light green background, strong green icon, dark text --}}
-        <div class="enterprise-stat-card border-emerald-100">
-            <div class="flex items-start justify-between">
-                <div class="p-3 rounded-full bg-emerald-100/70 text-emerald-600 shadow-sm">
+        <div class="dash-kpi">
+            <div class="flex items-start justify-between gap-3">
+                <div class="dash-kpi-icon bg-emerald-50 text-emerald-600">
                     <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                 </div>
+                <span class="rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700">{{ __('dashboard.resolved') }}</span>
             </div>
-            <p id="kpi-resolved-cases" class="text-4xl font-extrabold mt-4 text-emerald-700">{{ number_format($resolvedCases) }}</p>
-            <h2 class="text-sm uppercase tracking-wider font-semibold text-gray-500 mt-1">{{ __('dashboard.resolved') }}</h2>
+            <p id="kpi-resolved-cases" class="mt-5 text-4xl font-extrabold tracking-tight text-slate-950">{{ number_format($resolvedCases) }}</p>
+            <h2 class="mt-1 text-sm font-semibold text-slate-500">{{ __('dashboard.resolved_cases_label') }}</h2>
         </div>
-
     </div>
 
-    @php
-    $canOpenCases = \Illuminate\Support\Facades\Route::has('cases.index') && (auth()->user()?->hasPermission('cases.view') ?? false);
-    $canOpenAppeals = \Illuminate\Support\Facades\Route::has('appeals.index') && (auth()->user()?->hasPermission('appeals.view') ?? false);
-    $canOpenUsers = \Illuminate\Support\Facades\Route::has('users.index') && (auth()->user()?->hasPermission('users.manage') ?? false);
-    $canOpenHearings = \Illuminate\Support\Facades\Route::has('admin.hearings.index') && (auth()->user()?->hasPermission('cases.view') ?? false);
-    @endphp
+    <section class="dash-panel">
+        <div class="dash-panel-header">
+            <div>
+                <h3 class="text-sm font-semibold text-gray-900">{{ __('dashboard.cases_by_member') }}</h3>
+                <p class="text-[12px] text-gray-500">{{ __('dashboard.assigned_cases_by_member') }}</p>
+            </div>
+            <span class="rounded-full border border-cyan-100 bg-cyan-50 px-2.5 py-1 text-[11px] font-semibold text-cyan-700">
+                {{ number_format($memberCaseCounts->sum('cases_count')) }}
+            </span>
+        </div>
+
+        <div class="dash-panel-body">
+            <div class="dash-member-strip">
+                @forelse($memberCaseCounts as $member)
+                @php
+                $memberPercent = min(100, ((int) $member->cases_count / $maxMemberCases) * 100);
+                $statusBadge = ($member->status ?? null) === 'active'
+                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                : 'bg-gray-50 text-gray-700 border border-gray-200';
+                @endphp
+                <article class="dash-member-card">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            @if($member->avatar_path)
+                            <img src="{{ asset('storage/' . $member->avatar_path) }}"
+                                 alt="{{ $member->name }}"
+                                 class="h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-white shadow-sm">
+                            @else
+                            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-700 ring-2 ring-white shadow-sm">
+                                {{ strtoupper(substr($member->name, 0, 1)) }}
+                            </div>
+                            @endif
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-bold text-gray-900">{{ $member->name }}</p>
+                                <p class="truncate text-[12px] text-gray-500">{{ $member->team_name ?: __('dashboard.no_team') }}</p>
+                            </div>
+                        </div>
+                        <span class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold {{ $statusBadge }}">
+                            {{ ucfirst($member->status ?? 'inactive') }}
+                        </span>
+                    </div>
+
+                    <div class="mt-3 flex items-end justify-between gap-3">
+                        <div>
+                            <p class="text-2xl font-extrabold text-slate-950">{{ number_format((int) $member->cases_count) }}</p>
+                            <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">{{ __('app.Cases') }}</p>
+                        </div>
+                    </div>
+
+                    @if(($member->case_type_counts ?? collect())->isNotEmpty())
+                    <div class="mt-3 flex flex-wrap gap-1.5">
+                        @foreach($member->case_type_counts as $caseType)
+                        @php
+                            $caseTypeLabel = ($caseType['label'] ?? '') === '__unknown__'
+                                ? __('dashboard.unknown_case_type')
+                                : ($caseType['label'] ?? __('dashboard.unknown_case_type'));
+                        @endphp
+                        <span class="inline-flex min-w-0 items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+                            <span class="max-w-[8rem] truncate">{{ $caseTypeLabel }}</span>
+                            <span class="text-slate-900">{{ number_format((int) ($caseType['count'] ?? 0)) }}</span>
+                        </span>
+                        @endforeach
+                    </div>
+                    @endif
+
+                    <div class="dash-progress-track">
+                        <div class="dash-progress-fill" style="width: {{ $memberPercent }}%"></div>
+                    </div>
+                </article>
+                @empty
+                <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+                    {{ __('dashboard.no_member_case_counts') }}
+                </div>
+                @endforelse
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="dash-panel">
+            <div class="dash-panel-header">
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-900">{{ __('dashboard.cases_by_team') }}</h3>
+                    <p class="text-[12px] text-gray-500">{{ __('dashboard.assigned_cases_by_team') }}</p>
+                </div>
+                <span class="rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
+                    {{ number_format($teamCaseCounts->sum('cases_count')) }}
+                </span>
+            </div>
+
+            <div class="dash-panel-body">
+            <ul class="divide-y divide-gray-100">
+                @forelse($teamCaseCounts as $team)
+                @php $teamPercent = min(100, ((int) $team->cases_count / $maxTeamCases) * 100); @endphp
+                <li class="dash-workload-row">
+                    <div class="min-w-0">
+                        <p class="truncate text-sm font-semibold text-gray-900">{{ $team->name }}</p>
+                        <p class="text-[12px] text-gray-500">{{ __('dashboard.team') }}</p>
+                        <div class="dash-progress-track">
+                            <div class="dash-progress-fill bg-emerald-500" style="width: {{ $teamPercent }}%"></div>
+                        </div>
+                    </div>
+                    <span class="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                        {{ number_format((int) $team->cases_count) }}
+                    </span>
+                </li>
+                @empty
+                <li class="py-8 text-center text-gray-500">{{ __('dashboard.no_team_case_counts') }}</li>
+                @endforelse
+            </ul>
+            </div>
+        </div>
+    </section>
 
     <div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <x-ui.card class="enterprise-panel xl:col-span-2" padding="none">
-            <x-slot name="header">
-                <h3 class="text-sm font-semibold text-slate-900">{{ __('dashboard.quick_actions') }}</h3>
-                <span class="text-xs text-slate-500">{{ __('dashboard.common_admin_workflows') }}</span>
-            </x-slot>
-            <div class="enterprise-panel-body">
-                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    @if($canOpenCases)
-                    <a href="{{ route('cases.index') }}" class="admin-panel-muted hover:border-blue-200 hover:bg-blue-50/40 transition">
-                        <div class="text-xs uppercase tracking-[0.16em] text-slate-500">{{ __('app.Cases') }}</div>
-                        <div class="mt-1 text-sm font-semibold text-slate-900">{{ __('dashboard.review_queue') }}</div>
-                    </a>
-                    @endif
-                    @if($canOpenAppeals)
-                    <a href="{{ route('appeals.index') }}" class="admin-panel-muted hover:border-blue-200 hover:bg-blue-50/40 transition">
-                        <div class="text-xs uppercase tracking-[0.16em] text-slate-500">{{ __('app.Appeals') }}</div>
-                        <div class="mt-1 text-sm font-semibold text-slate-900">{{ __('dashboard.track_decisions') }}</div>
-                    </a>
-                    @endif
-                    @if($canOpenHearings)
-                    <a href="{{ route('admin.hearings.index') }}" class="admin-panel-muted hover:border-blue-200 hover:bg-blue-50/40 transition">
-                        <div class="text-xs uppercase tracking-[0.16em] text-slate-500">{{ __('app.Hearings') }}</div>
-                        <div class="mt-1 text-sm font-semibold text-slate-900">{{ __('dashboard.upcoming_schedule') }}</div>
-                    </a>
-                    @endif
-                    @if($canOpenUsers)
-                    <a href="{{ route('users.index') }}" class="admin-panel-muted hover:border-blue-200 hover:bg-blue-50/40 transition">
-                        <div class="text-xs uppercase tracking-[0.16em] text-slate-500">{{ __('app.Users') }}</div>
-                        <div class="mt-1 text-sm font-semibold text-slate-900">{{ __('dashboard.access_control') }}</div>
-                    </a>
-                    @endif
-                </div>
+    {{-- Recent cases --}}
+    <section class="dash-panel xl:col-span-2">
+        <div class="dash-panel-header">
+            <div>
+                <h3 class="text-sm font-semibold text-gray-900">{{ __('dashboard.recent_cases') }}</h3>
+                <p class="mt-0.5 text-xs text-slate-500">{{ __('dashboard.recent_cases_description') }}</p>
             </div>
-        </x-ui.card>
-
-        <x-ui.card class="enterprise-panel" padding="none">
-            <x-slot name="header">
-                <h3 class="text-sm font-semibold text-slate-900">{{ __('dashboard.operational_alerts') }}</h3>
-            </x-slot>
-            <div class="enterprise-panel-body space-y-3">
-                <x-ui.alert type="warning" class="rounded-xl px-3 py-2">
-                    {{ __('dashboard.pending_cases_label') }}: <span class="font-semibold">{{ number_format($pendingCases) }}</span>
-                </x-ui.alert>
-                <x-ui.alert type="info" class="rounded-xl px-3 py-2">
-                    {{ __('dashboard.active_cases_label') }}: <span class="font-semibold">{{ number_format($activeCases) }}</span>
-                </x-ui.alert>
-                <x-ui.alert type="success" class="rounded-xl px-3 py-2">
-                    {{ __('dashboard.resolved_cases_label') }}: <span class="font-semibold">{{ number_format($resolvedCases) }}</span>
-                </x-ui.alert>
-            </div>
-        </x-ui.card>
-    </div>
-
-    {{-- Recent cases (Rest of the dashboard remains the same as previous update) --}}
-    <div class="enterprise-panel">
-        <div class="enterprise-panel-body">
-        <div class="flex items-center justify-between mb-2">
-            <h3 class="text-sm font-semibold text-gray-900">{{ __('dashboard.recent_cases') }}</h3>
             <a href="{{ route('cases.index') }}"
                 class="text-xs text-blue-700 hover:text-blue-800 hover:underline">{{ __('dashboard.view_all') }}</a>
         </div>
 
-        <ul class="divide-y divide-gray-200">
-            @forelse($recent->take(3) as $case)
+        <div class="dash-panel-body">
+        <ul class="divide-y divide-gray-100">
+            @forelse($recent->take(5) as $case)
             @php $status = (string)($case->status ?? ''); @endphp
-            <li class="py-3 flex items-center justify-between">
+            <li class="flex items-center justify-between gap-4 py-3">
                 <div class="min-w-0">
-                    <div class="font-medium text-gray-900 truncate">
+                    <div class="truncate font-semibold text-gray-900">
                         <a href="{{ route('cases.show',$case->id) }}" class="hover:underline">
                             {{ $case->case_number }}
                         </a>
@@ -238,16 +399,37 @@
             @endforelse
         </ul>
         </div>
+    </section>
+
+    <section class="dash-panel">
+        <div class="dash-panel-header">
+            <h3 class="text-sm font-semibold text-slate-900">{{ __('dashboard.case_workload') }}</h3>
+        </div>
+        <div class="dash-panel-body space-y-3">
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('dashboard.cases_by_team') }}</div>
+                <div class="mt-1 text-2xl font-extrabold text-slate-950">{{ number_format($teamCaseCounts->sum('cases_count')) }}</div>
+            </div>
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('dashboard.cases_by_member') }}</div>
+                <div class="mt-1 text-2xl font-extrabold text-slate-950">{{ number_format($memberCaseCounts->sum('cases_count')) }}</div>
+            </div>
+        </div>
+    </section>
     </div>
 
-    <div class="flex flex-col gap-6 xl:flex-row">
+    <div class="grid grid-cols-1 gap-6 xl:grid-cols-5">
         {{-- Line chart --}}
-        <div class="ui-card ui-card-body xl:w-[60%]">
-            <div class="flex items-center justify-between mb-3">
-                <h3 class="text-sm font-semibold text-gray-900">{{ __('dashboard.new_cases_per_month') }}</h3>
+        <section class="dash-panel xl:col-span-3">
+            <div class="dash-panel-header">
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-900">{{ __('dashboard.new_cases_per_month') }}</h3>
+                    <p class="mt-0.5 text-xs text-slate-500">{{ __('dashboard.case_activity') }}</p>
+                </div>
                 <span class="text-[11px] text-gray-500">{{ __('dashboard.last_6_months') }}</span>
             </div>
-            <div class="{{ empty($values) ? 'skeleton h-40 rounded-lg' : '' }}">
+            <div class="dash-panel-body">
+            <div class="dash-chart-frame {{ empty($values) ? 'skeleton rounded-lg' : '' }}">
                 <canvas id="casesChart"
                     data-labels='@json(array_values($labels))'
                     data-values='@json(array_values($values))'
@@ -256,15 +438,17 @@
                     aria-label="{{ __('dashboard.new_cases_per_month') }}"
                     role="img"></canvas>
             </div>
-        </div>
+            </div>
+        </section>
 
         {{-- Gender pie --}}
-        <div class="ui-card ui-card-body xl:w-[40%]">
-            <div class="flex items-center justify-between mb-3">
+        <section class="dash-panel xl:col-span-2">
+            <div class="dash-panel-header">
                 <h3 class="text-sm font-semibold text-gray-900">{{ __('dashboard.applicants_by_gender') }}</h3>
                 <span class="text-[11px] text-gray-500">{{ __('dashboard.last_30_days') }}</span>
             </div>
-            <div class="mx-auto max-w-[360px] {{ empty($genderCounts) ? 'skeleton h-40 rounded-lg' : '' }}">
+            <div class="dash-panel-body">
+            <div class="dash-chart-frame mx-auto max-w-[360px] {{ empty($genderCounts) ? 'skeleton rounded-lg' : '' }}">
                 <canvas id="genderChart"
                     data-labels='@json(array_keys($genderCounts))'
                     data-values='@json(array_values($genderCounts))'
@@ -272,18 +456,22 @@
                     aria-label="{{ __('dashboard.applicants_by_gender') }}"
                     role="img"></canvas>
             </div>
-        </div>
+            </div>
+        </section>
     </div>
 
     {{-- Cases by type --}}
-    <div>
-        <div class="ui-card ui-card-body">
-            <div class="flex items-center justify-between mb-3">
-                <h3 class="text-sm font-semibold text-gray-900">{{ __('dashboard.cases_by_type') }}</h3>
+    <section class="dash-panel">
+            <div class="dash-panel-header">
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-900">{{ __('dashboard.cases_by_type') }}</h3>
+                    <p class="mt-0.5 text-xs text-slate-500">{{ __('dashboard.case_type_distribution') }}</p>
+                </div>
                 <a href="{{ route('cases.index') }}"
                     class="text-[11px] text-blue-700 hover:text-blue-800 hover:underline">{{ __('dashboard.view_report') }}</a>
             </div>
-            <div class="{{ empty($caseTypeCounts) ? 'skeleton h-44 rounded-lg' : '' }}">
+            <div class="dash-panel-body">
+            <div class="h-64 {{ empty($caseTypeCounts) ? 'skeleton rounded-lg' : '' }}">
                 <canvas id="caseTypeChart"
                     data-labels='@json(array_keys($caseTypeCounts))'
                     data-values='@json(array_values($caseTypeCounts))'
@@ -291,12 +479,16 @@
                     aria-label="{{ __('dashboard.cases_by_type') }}"
                     role="img"></canvas>
             </div>
-        </div>
-    </div>
+            </div>
+    </section>
 
     {{-- System health --}}
+    <section>
+        <div class="mb-3 flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-slate-900">{{ __('dashboard.service_health') }}</h3>
+        </div>
     <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div class="ui-stat">
+        <div class="dash-panel p-4">
             <div class="flex items-center justify-between">
                 <h4 class="text-sm font-semibold text-gray-900">{{ __('dashboard.system_uptime') }}</h4>
                 <svg class="h-4 w-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -307,7 +499,7 @@
             <p class="text-2xl font-bold text-emerald-600">99.9%</p>
         </div>
 
-        <div class="ui-stat">
+        <div class="dash-panel p-4">
             <div class="flex items-center justify-between">
                 <h4 class="text-sm font-semibold text-gray-900">{{ __('dashboard.queue_status') }}</h4>
                 <svg class="h-4 w-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -318,7 +510,7 @@
             <p class="text-2xl font-bold text-blue-600">12</p>
         </div>
 
-        <div class="ui-stat">
+        <div class="dash-panel p-4">
             <div class="flex items-center justify-between">
                 <h4 class="text-sm font-semibold text-gray-900">{{ __('dashboard.notifications_service') }}</h4>
                 <svg class="h-4 w-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -331,55 +523,7 @@
             </x-ui.badge>
         </div>
     </div>
-
-    {{-- Recent users --}}
-    <div class="ui-card ui-card-body">
-        <div class="flex items-center justify-between">
-            <div>
-                <h3 class="text-sm font-semibold text-gray-900">{{ __('dashboard.recent_users') }}</h3>
-                <p class="text-[12px] text-gray-500">{{ __('dashboard.latest_staff_activity') }}</p>
-            </div>
-            <a href="{{ route('users.index') }}"
-                class="text-[11px] text-blue-700 hover:text-blue-800 hover:underline">{{ __('dashboard.view_all') }}</a>
-        </div>
-
-        <ul class="divide-y divide-gray-100 mt-3">
-            @forelse($recentUsers as $user)
-            @php
-            $name = $user->name ?? 'User';
-            $initials = strtoupper(mb_substr($name, 0, 2));
-            $status = $user->status ?? 'inactive';
-            $avatar = (!empty($user->avatar_path) && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->avatar_path))
-                ? asset('storage/'.$user->avatar_path)
-                : null;
-            @endphp
-            <li class="py-3 flex items-center justify-between">
-                <div class="flex items-center gap-3 min-w-0">
-                    @if($avatar)
-                    <img src="{{ $avatar }}" alt="{{ $name }}" class="w-10 h-10 rounded-full object-cover ring-2 ring-white">
-                    @else
-                    <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-semibold grid place-items-center ring-2 ring-white">
-                        {{ $initials }}
-                    </div>
-                    @endif
-                    <div class="min-w-0">
-                        <p class="text-sm font-medium text-gray-900 truncate">{{ $name }}</p>
-                        <p class="text-[12px] text-gray-500 truncate">{{ $user->email }}</p>
-                    </div>
-                </div>
-                @php
-                $statusBadge = $status === 'active'
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                : 'bg-gray-50 text-gray-700 border border-gray-200';
-                @endphp
-                <span class="text-[11px] {{ $statusBadge }}">
-                    {{ ucfirst($status) }}
-                </span>
-            </li>
-            @empty
-            <li class="py-8 text-center text-gray-500">{{ __('dashboard.no_recent_users') }}</li>
-            @endforelse
-        </ul>
+    </section>
     </div>
 
     @push('scripts')
