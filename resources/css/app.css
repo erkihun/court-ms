@@ -36,6 +36,18 @@
     --font-pdf: "Abyssinica", "Nyala", "DejaVu Serif", serif;
   }
 
+  /* Amharic locale: Abyssinica SIL end-to-end for every element */
+  html[lang="am"] {
+    --font-ui: "Abyssinica", "NotoEthiopic", sans-serif;
+    --font-case: "Abyssinica", "Nyala", serif;
+    --font-pdf: "Abyssinica", "Nyala", serif;
+  }
+
+  html[lang="am"],
+  html[lang="am"] * {
+    font-family: "Abyssinica", "NotoEthiopic", sans-serif !important;
+  }
+
   html {
     @apply scroll-smooth;
   }
@@ -420,7 +432,7 @@
     background: var(--surface-strong);
     border-color: var(--border);
     box-shadow: 0 10px 25px -18px rgb(var(--shadow-color) / 0.55);
-    @apply relative overflow-hidden rounded-[1.75rem] border px-5 py-5 sm:px-6 sm:py-6;
+    @apply relative overflow-hidden rounded-xl border px-5 py-4 sm:px-6 sm:py-5;
   }
 
   .enterprise-header::before {
