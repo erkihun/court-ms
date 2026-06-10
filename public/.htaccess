@@ -23,3 +23,59 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# ── Gzip / Deflate compression ───────────────────────────────────────────────
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css
+    AddOutputFilterByType DEFLATE text/javascript application/javascript application/x-javascript
+    AddOutputFilterByType DEFLATE application/json application/xml application/xhtml+xml
+    AddOutputFilterByType DEFLATE image/svg+xml font/ttf font/otf font/woff font/woff2
+    # Do not compress already-compressed formats
+    SetEnvIfNoCase Request_URI \.(?:gif|jpe?g|png|webp|ico|gz|zip|bz2|rar)$ no-gzip dont-vary
+</IfModule>
+
+# ── Browser caching for versioned Vite assets (hashed filenames) ─────────────
+<IfModule mod_expires.c>
+    ExpiresActive On
+
+    # Vite build outputs: content-hashed filenames — cache 1 year
+    <FilesMatch "\.[0-9a-f]{8,}\.(css|js)$">
+        ExpiresDefault "access plus 1 year"
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+
+    # Fonts — rarely change, cache 1 year
+    <FilesMatch "\.(woff2?|ttf|otf|eot)$">
+        ExpiresDefault "access plus 1 year"
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+
+    # Images — cache 30 days
+    <FilesMatch "\.(gif|jpe?g|png|webp|svg|ico)$">
+        ExpiresDefault "access plus 30 days"
+        Header set Cache-Control "public, max-age=2592000"
+    </FilesMatch>
+
+    # HTML / PHP responses — no cache (always fresh)
+    <FilesMatch "\.(html|php)$">
+        ExpiresDefault "access plus 0 seconds"
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+    </FilesMatch>
+</IfModule>
+
+# ── Security headers (free performance wins — reduce round-trips) ─────────────
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # Remove X-Powered-By to reduce header payload and avoid fingerprinting
+    Header unset X-Powered-By
+    Header always unset X-Powered-By
+</IfModule>
+
+# ── Keep-Alive ────────────────────────────────────────────────────────────────
+<IfModule mod_headers.c>
+    Header set Connection keep-alive
+</IfModule>

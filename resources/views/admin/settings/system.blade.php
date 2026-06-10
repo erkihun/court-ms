@@ -1,4 +1,4 @@
-<x-admin-layout title="System Settings">
+<x-admin-layout title="{{ __('settings.title') }}">
 <style>
 /* ── Settings design tokens ─────────────────────────────── */
 .ss-wrap { max-width:100%; }
@@ -133,18 +133,18 @@
     <div class="ss-header">
         <div class="flex items-center justify-between flex-wrap gap-3">
             <div>
-                <h1 class="ss-title">System Settings</h1>
-                <p class="ss-subtitle">Manage platform identity, localization, security, appearance and notification channels.</p>
+                <h1 class="ss-title">{{ __('settings.title') }}</h1>
+                <p class="ss-subtitle">{{ __('settings.subtitle') }}</p>
             </div>
             @if($s->maintenance_mode)
                 <span class="ss-badge ss-badge-warn">
                     <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
-                    Maintenance Mode ON
+                    {{ __('settings.maintenance_on') }}
                 </span>
             @else
                 <span class="ss-badge ss-badge-ok">
                     <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"/></svg>
-                    System Online
+                    {{ __('settings.system_online') }}
                 </span>
             @endif
         </div>
@@ -160,13 +160,13 @@
     <div class="ss-tabs">
         @php
         $tabs = [
-            ['key'=>'general',      'label'=>'General',       'icon'=>'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z'],
-            ['key'=>'branding',     'label'=>'Branding',      'icon'=>'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'],
-            ['key'=>'localization', 'label'=>'Localization',  'icon'=>'M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129'],
-            ['key'=>'security',     'label'=>'Security',      'icon'=>'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z'],
-            ['key'=>'appearance',   'label'=>'Appearance',    'icon'=>'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01'],
-            ['key'=>'notifications','label'=>'Notifications', 'icon'=>'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9'],
-            ['key'=>'api',          'label'=>'API & Access',  'icon'=>'M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'],
+            ['key'=>'general',      'label'=>__('settings.tab_general'),       'icon'=>'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z'],
+            ['key'=>'branding',     'label'=>__('settings.tab_branding'),      'icon'=>'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'],
+            ['key'=>'localization', 'label'=>__('settings.tab_localization'),  'icon'=>'M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129'],
+            ['key'=>'security',     'label'=>__('settings.tab_security'),      'icon'=>'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z'],
+            ['key'=>'appearance',   'label'=>__('settings.tab_appearance'),    'icon'=>'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01'],
+            ['key'=>'notifications','label'=>__('settings.tab_notifications'), 'icon'=>'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9'],
+            ['key'=>'api',          'label'=>__('settings.tab_api'),           'icon'=>'M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'],
         ];
         @endphp
         @foreach($tabs as $t)
@@ -192,36 +192,36 @@
         <div class="ss-card">
             <div class="ss-card-title">
                 <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg></div>
-                Platform Identity
+                {{ __('settings.platform_identity') }}
             </div>
             <div class="grid md:grid-cols-2 gap-4">
                 <div>
-                    <label class="ss-label">System Name <span class="text-rose-500">*</span></label>
+                    <label class="ss-label">{{ __('settings.app_name') }} <span class="text-rose-500">*</span></label>
                     <input name="app_name" value="{{ old('app_name', $s->app_name) }}" required class="ss-input">
-                    <p class="ss-hint">Appears in page titles, emails and PDF headers.</p>
+                    <p class="ss-hint">{{ __('settings.app_name_hint') }}</p>
                 </div>
                 <div>
-                    <label class="ss-label">Short Name / Abbreviation</label>
+                    <label class="ss-label">{{ __('settings.short_name') }}</label>
                     <input name="short_name" value="{{ old('short_name', $s->short_name) }}" class="ss-input" placeholder="e.g. CMS">
                 </div>
                 <div>
-                    <label class="ss-label">Welcome Message</label>
+                    <label class="ss-label">{{ __('settings.welcome_message') }}</label>
                     <input name="welcome_message" value="{{ old('welcome_message', $s->welcome_message) }}" class="ss-input" placeholder="Welcome to the court portal">
                 </div>
                 <div>
-                    <label class="ss-label">Website URL</label>
+                    <label class="ss-label">{{ __('settings.website_url') }}</label>
                     <input type="url" name="website_url" value="{{ old('website_url', $s->website_url) }}" class="ss-input" placeholder="https://court.gov.et">
                 </div>
                 <div class="md:col-span-2">
-                    <label class="ss-label">Physical Address</label>
+                    <label class="ss-label">{{ __('settings.address') }}</label>
                     <input name="address" value="{{ old('address', $s->address) }}" class="ss-input" placeholder="Bole Sub-city, Addis Ababa, Ethiopia">
                 </div>
                 <div class="md:col-span-2">
-                    <label class="ss-label">About the Court / System</label>
+                    <label class="ss-label">{{ __('settings.about') }}</label>
                     <textarea name="about" rows="3" class="ss-textarea">{{ old('about', $s->about) }}</textarea>
                 </div>
                 <div class="md:col-span-2">
-                    <label class="ss-label">Footer Text</label>
+                    <label class="ss-label">{{ __('settings.footer_text') }}</label>
                     <input name="footer_text" value="{{ old('footer_text', $s->footer_text) }}" class="ss-input" placeholder="© {{ date('Y') }} Federal Court. All rights reserved.">
                 </div>
             </div>
@@ -230,15 +230,15 @@
         <div class="ss-card">
             <div class="ss-card-title">
                 <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg></div>
-                Contact Information
+                {{ __('settings.contact_information') }}
             </div>
             <div class="grid md:grid-cols-2 gap-4">
                 <div>
-                    <label class="ss-label">Contact Email</label>
+                    <label class="ss-label">{{ __('settings.contact_email') }}</label>
                     <input type="email" name="contact_email" value="{{ old('contact_email', $s->contact_email) }}" class="ss-input" placeholder="info@court.gov.et">
                 </div>
                 <div>
-                    <label class="ss-label">Contact Phone</label>
+                    <label class="ss-label">{{ __('settings.contact_phone') }}</label>
                     <input name="contact_phone" value="{{ old('contact_phone', $s->contact_phone) }}" class="ss-input" placeholder="+251 11 ...">
                 </div>
             </div>
@@ -252,17 +252,17 @@
         <div class="ss-card">
             <div class="ss-card-title">
                 <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div>
-                Visual Assets
-                <span class="ml-auto text-[.68rem] text-[var(--text-subtle)] font-normal">Leave empty to keep current file</span>
+                {{ __('settings.visual_assets') }}
+                <span class="ml-auto text-[.68rem] text-[var(--text-subtle)] font-normal">{{ __('settings.keep_current_file') }}</span>
             </div>
 
             <div class="mb-4">
-                <label class="ss-label mb-1.5">Header Banner</label>
+                <label class="ss-label mb-1.5">{{ __('settings.header_banner') }}</label>
                 <div class="ss-upload">
                     <input type="file" name="banner" accept=".png,.jpg,.jpeg,.webp">
                     <svg class="ss-upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                    <p class="ss-upload-text">Click to upload banner</p>
-                    <p class="ss-upload-hint">PNG / JPG / WEBP · max 3 MB · recommended 1200×300 px</p>
+                    <p class="ss-upload-text">{{ __('settings.upload_banner') }}</p>
+                    <p class="ss-upload-hint">{{ __('settings.banner_hint') }}</p>
                 </div>
                 @if($s->banner_path)
                 <div class="mt-2 rounded-lg border border-[var(--border)] overflow-hidden">
@@ -272,17 +272,20 @@
             </div>
 
             <div class="grid sm:grid-cols-3 gap-4">
-                @foreach([
-                    ['name'=>'logo',    'label'=>'Logo',          'hint'=>'PNG/SVG · max 2 MB',        'accept'=>'.png,.jpg,.jpeg,.svg,.webp', 'path'=>$s->logo_path,    'h'=>'h-12'],
-                    ['name'=>'favicon', 'label'=>'Favicon',       'hint'=>'PNG or ICO · max 512 KB · 32×32', 'accept'=>'.png,.ico',                'path'=>$s->favicon_path, 'h'=>'h-8 w-8'],
-                    ['name'=>'seal',    'label'=>'Official Seal', 'hint'=>'PNG only · max 1 MB · square',     'accept'=>'.png',                     'path'=>$s->seal_path,    'h'=>'h-14 w-14'],
-                ] as $asset)
+                @php
+                $assets = [
+                    ['name'=>'logo',    'label'=>__('settings.logo'),          'hint'=>__('settings.logo_hint'),    'accept'=>'.png,.jpg,.jpeg,.svg,.webp', 'path'=>$s->logo_path,    'h'=>'h-12'],
+                    ['name'=>'favicon', 'label'=>__('settings.favicon'),       'hint'=>__('settings.favicon_hint'), 'accept'=>'.png,.ico',                  'path'=>$s->favicon_path, 'h'=>'h-8 w-8'],
+                    ['name'=>'seal',    'label'=>__('settings.official_seal'), 'hint'=>__('settings.seal_hint'),    'accept'=>'.png',                        'path'=>$s->seal_path,    'h'=>'h-14 w-14'],
+                ];
+                @endphp
+                @foreach($assets as $asset)
                 <div>
                     <label class="ss-label mb-1.5">{{ $asset['label'] }}</label>
                     <div class="ss-upload">
                         <input type="file" name="{{ $asset['name'] }}" accept="{{ $asset['accept'] }}">
                         <svg class="ss-upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"/></svg>
-                        <p class="ss-upload-text">Upload {{ strtolower($asset['label']) }}</p>
+                        <p class="ss-upload-text">{{ __('settings.upload_label', ['name' => strtolower($asset['label'])]) }}</p>
                         <p class="ss-upload-hint">{{ $asset['hint'] }}</p>
                     </div>
                     @if($asset['path'])
@@ -303,7 +306,7 @@
         <div class="ss-card">
             <div class="ss-card-title">
                 <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg></div>
-                Default Language
+                {{ __('settings.default_language') }}
             </div>
             @php
             $currentLocale = old('default_locale', $s->default_locale ?? 'en');
@@ -321,7 +324,7 @@
                             <span class="text-lg leading-none">{{ $localeFlags[$code] ?? '🌐' }}</span>
                             <span class="font-bold text-xs text-[var(--text)]">{{ $localeNames[$code] ?? $code }}</span>
                             @if($currentLocale===$code)
-                            <span class="ml-auto text-[.65rem] font-bold px-1.5 py-0.5 rounded-full bg-[rgb(var(--ac))] text-white">Active</span>
+                            <span class="ml-auto text-[.65rem] font-bold px-1.5 py-0.5 rounded-full bg-[rgb(var(--ac))] text-white">{{ __('settings.active') }}</span>
                             @endif
                         </div>
                         <p class="text-[.68rem] text-[var(--text-subtle)] leading-relaxed">{{ $localeSamples[$code] ?? '' }}</p>
@@ -332,8 +335,8 @@
             <hr class="ss-divider">
             <div class="ss-toggle-row">
                 <div class="ss-toggle-info">
-                    <span class="ss-toggle-name">Show Language Switcher in Top Bar</span>
-                    <span class="ss-toggle-desc">Displays the EN / AM toggle in the admin topnav. Hide if you use only one language.</span>
+                    <span class="ss-toggle-name">{{ __('settings.show_lang_switcher') }}</span>
+                    <span class="ss-toggle-desc">{{ __('settings.show_lang_switcher_desc') }}</span>
                 </div>
                 <label class="ss-sw">
                     <input type="checkbox" name="show_language_switcher" value="1" @checked(old('show_language_switcher',$s->show_language_switcher??true))>
@@ -345,11 +348,11 @@
         <div class="ss-card">
             <div class="ss-card-title">
                 <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064"/></svg></div>
-                Region & Formats
+                {{ __('settings.region_formats') }}
             </div>
             <div class="grid md:grid-cols-2 gap-4">
                 <div>
-                    <label class="ss-label">Timezone</label>
+                    <label class="ss-label">{{ __('settings.timezone') }}</label>
                     <select name="timezone" class="ss-select">
                         @foreach($timezones as $tz)
                         <option value="{{ $tz }}" @selected(old('timezone',$s->timezone??'Africa/Addis_Ababa')===$tz)>{{ $tz }}</option>
@@ -357,7 +360,7 @@
                     </select>
                 </div>
                 <div>
-                    <label class="ss-label">Date Format</label>
+                    <label class="ss-label">{{ __('settings.date_format') }}</label>
                     <select name="date_format" class="ss-select">
                         @foreach(['Y-m-d'=>'2026-06-11 (ISO)','d/m/Y'=>'11/06/2026','m/d/Y'=>'06/11/2026','d-m-Y'=>'11-06-2026','F j, Y'=>'June 11, 2026'] as $v=>$l)
                         <option value="{{ $v }}" @selected(old('date_format',$s->date_format??'Y-m-d')===$v)>{{ $l }}</option>
@@ -365,18 +368,18 @@
                     </select>
                 </div>
                 <div>
-                    <label class="ss-label">Time Format</label>
+                    <label class="ss-label">{{ __('settings.time_format') }}</label>
                     <select name="time_format" class="ss-select">
-                        <option value="H:i"   @selected(old('time_format',$s->time_format??'H:i')==='H:i')>24-hour (14:30)</option>
-                        <option value="h:i A" @selected(old('time_format',$s->time_format)==='h:i A')>12-hour (02:30 PM)</option>
+                        <option value="H:i"   @selected(old('time_format',$s->time_format??'H:i')==='H:i')>{{ __('settings.time_24') }}</option>
+                        <option value="h:i A" @selected(old('time_format',$s->time_format)==='h:i A')>{{ __('settings.time_12') }}</option>
                     </select>
                 </div>
             </div>
             <hr class="ss-divider">
             <div class="ss-toggle-row">
                 <div class="ss-toggle-info">
-                    <span class="ss-toggle-name">Use Ethiopian Calendar (ዘመን)</span>
-                    <span class="ss-toggle-desc">Displays dates in the Ethiopian Ge'ez calendar format throughout the system.</span>
+                    <span class="ss-toggle-name">{{ __('settings.ethiopian_calendar') }}</span>
+                    <span class="ss-toggle-desc">{{ __('settings.ethiopian_calendar_desc') }}</span>
                 </div>
                 <label class="ss-sw">
                     <input type="checkbox" name="use_ethiopian_calendar" value="1" @checked(old('use_ethiopian_calendar',$s->use_ethiopian_calendar??false))>
@@ -393,14 +396,17 @@
         <div class="ss-card">
             <div class="ss-card-title">
                 <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg></div>
-                Access Controls
+                {{ __('settings.access_controls') }}
             </div>
             <div class="space-y-2">
-                @foreach([
-                    ['name'=>'maintenance_mode',  'checked'=>$s->maintenance_mode??false,   'label'=>'Maintenance Mode',             'desc'=>'Blocks public portal. Admin panel stays accessible.'],
-                    ['name'=>'registration_open', 'checked'=>$s->registration_open??true,   'label'=>'Open Applicant Registration',  'desc'=>'Allow new applicants and lawyers to self-register.'],
-                    ['name'=>'force_https',       'checked'=>$s->force_https??false,         'label'=>'Force HTTPS',                  'desc'=>'Redirect all HTTP requests to HTTPS. Ensure a valid TLS certificate is in place.'],
-                ] as $tg)
+                @php
+                $accessToggles = [
+                    ['name'=>'maintenance_mode',  'checked'=>$s->maintenance_mode??false,   'label'=>__('settings.maintenance_mode'),   'desc'=>__('settings.maintenance_mode_desc')],
+                    ['name'=>'registration_open', 'checked'=>$s->registration_open??true,   'label'=>__('settings.registration_open'),  'desc'=>__('settings.registration_open_desc')],
+                    ['name'=>'force_https',       'checked'=>$s->force_https??false,         'label'=>__('settings.force_https'),        'desc'=>__('settings.force_https_desc')],
+                ];
+                @endphp
+                @foreach($accessToggles as $tg)
                 <div class="ss-toggle-row">
                     <div class="ss-toggle-info">
                         <span class="ss-toggle-name">{{ $tg['label'] }}</span>
@@ -418,29 +424,29 @@
         <div class="ss-card">
             <div class="ss-card-title">
                 <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
-                Session & Lockout
+                {{ __('settings.session_lockout') }}
             </div>
             <div class="grid md:grid-cols-3 gap-4">
                 <div>
-                    <label class="ss-label">Session Lifetime</label>
+                    <label class="ss-label">{{ __('settings.session_lifetime') }}</label>
                     <div class="ss-input-group">
                         <input type="number" name="session_lifetime" min="5" max="43200" value="{{ old('session_lifetime',$s->session_lifetime??120) }}">
-                        <span class="ss-input-group-addon">min</span>
+                        <span class="ss-input-group-addon">{{ __('settings.unit_min') }}</span>
                     </div>
-                    <p class="ss-hint">Idle sessions expire after this period.</p>
+                    <p class="ss-hint">{{ __('settings.session_lifetime_hint') }}</p>
                 </div>
                 <div>
-                    <label class="ss-label">Max Login Attempts</label>
+                    <label class="ss-label">{{ __('settings.max_login_attempts') }}</label>
                     <div class="ss-input-group">
                         <input type="number" name="login_max_attempts" min="1" max="100" value="{{ old('login_max_attempts',$s->login_max_attempts??5) }}">
-                        <span class="ss-input-group-addon">tries</span>
+                        <span class="ss-input-group-addon">{{ __('settings.unit_tries') }}</span>
                     </div>
                 </div>
                 <div>
-                    <label class="ss-label">Lockout Duration</label>
+                    <label class="ss-label">{{ __('settings.lockout_duration') }}</label>
                     <div class="ss-input-group">
                         <input type="number" name="lockout_minutes" min="1" max="1440" value="{{ old('lockout_minutes',$s->lockout_minutes??15) }}">
-                        <span class="ss-input-group-addon">min</span>
+                        <span class="ss-input-group-addon">{{ __('settings.unit_min') }}</span>
                     </div>
                 </div>
             </div>
@@ -449,21 +455,24 @@
         <div class="ss-card">
             <div class="ss-card-title">
                 <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg></div>
-                Password Policy
+                {{ __('settings.password_policy') }}
             </div>
             <div class="mb-4">
-                <label class="ss-label">Minimum Length</label>
+                <label class="ss-label">{{ __('settings.password_min_length') }}</label>
                 <div class="ss-input-group" style="max-width:180px;">
                     <input type="number" name="password_min_length" min="6" max="128" value="{{ old('password_min_length',$s->password_min_length??8) }}">
-                    <span class="ss-input-group-addon">characters</span>
+                    <span class="ss-input-group-addon">{{ __('settings.unit_characters') }}</span>
                 </div>
             </div>
             <div class="space-y-2">
-                @foreach([
-                    ['name'=>'password_require_uppercase','checked'=>$s->password_require_uppercase??true, 'label'=>'Require Uppercase Letter','desc'=>'Must contain at least one A–Z.'],
-                    ['name'=>'password_require_number',   'checked'=>$s->password_require_number??true,   'label'=>'Require Number',           'desc'=>'Must contain at least one digit 0–9.'],
-                    ['name'=>'password_require_symbol',   'checked'=>$s->password_require_symbol??false,  'label'=>'Require Special Symbol',   'desc'=>'Must contain at least one symbol (!, @, #…).'],
-                ] as $tg)
+                @php
+                $pwToggles = [
+                    ['name'=>'password_require_uppercase','checked'=>$s->password_require_uppercase??true, 'label'=>__('settings.require_uppercase'),'desc'=>__('settings.require_uppercase_desc')],
+                    ['name'=>'password_require_number',   'checked'=>$s->password_require_number??true,   'label'=>__('settings.require_number'),   'desc'=>__('settings.require_number_desc')],
+                    ['name'=>'password_require_symbol',   'checked'=>$s->password_require_symbol??false,  'label'=>__('settings.require_symbol'),   'desc'=>__('settings.require_symbol_desc')],
+                ];
+                @endphp
+                @foreach($pwToggles as $tg)
                 <div class="ss-toggle-row">
                     <div class="ss-toggle-info">
                         <span class="ss-toggle-name">{{ $tg['label'] }}</span>
@@ -486,19 +495,25 @@
         <div class="ss-card">
             <div class="ss-card-title">
                 <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg></div>
-                Accent Colour Palette
+                {{ __('settings.accent_palette') }}
             </div>
-            <p class="ss-hint mb-3">System-wide default. Users can override in their profile.</p>
+            <p class="ss-hint mb-3">{{ __('settings.accent_palette_hint') }}</p>
             @php
-            $palettes=['blue'=>['Ocean Blue','#3b82f6'],'teal'=>['Teal','#14b8a6'],'violet'=>['Violet','#8b5cf6'],'emerald'=>['Emerald','#10b981'],'rose'=>['Rose','#f43f5e']];
+            $palettes=[
+                'blue'    =>['label'=>__('settings.palette_blue'),    'hex'=>'#3b82f6'],
+                'teal'    =>['label'=>__('settings.palette_teal'),    'hex'=>'#14b8a6'],
+                'violet'  =>['label'=>__('settings.palette_violet'),  'hex'=>'#8b5cf6'],
+                'emerald' =>['label'=>__('settings.palette_emerald'), 'hex'=>'#10b981'],
+                'rose'    =>['label'=>__('settings.palette_rose'),    'hex'=>'#f43f5e'],
+            ];
             $cp=old('accent_palette',$s->accent_palette??'blue');
             @endphp
             <div class="ss-palette">
-                @foreach($palettes as $key=>[$lbl,$hex])
+                @foreach($palettes as $key=>$p)
                 <label class="ss-swatch">
                     <input type="radio" name="accent_palette" value="{{ $key }}" @checked($cp===$key)>
-                    <div class="ss-swatch-box" style="color:{{ $hex }};background:{{ $hex }}18;">
-                        <span class="ss-swatch-dot" style="background:{{ $hex }};"></span>{{ $lbl }}
+                    <div class="ss-swatch-box" style="color:{{ $p['hex'] }};background:{{ $p['hex'] }}18;">
+                        <span class="ss-swatch-dot" style="background:{{ $p['hex'] }};"></span>{{ $p['label'] }}
                     </div>
                 </label>
                 @endforeach
@@ -508,16 +523,20 @@
         <div class="ss-card">
             <div class="ss-card-title">
                 <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg></div>
-                Default Theme Mode
+                {{ __('settings.default_theme') }}
             </div>
             @php $ct=old('default_theme',$s->default_theme??'system'); @endphp
             <div class="ss-theme-grid">
-                @foreach(['light'=>['Light','linear-gradient(135deg,#f8fafc 50%,#e2e8f0 100%)','1px solid #e2e8f0'],'dark'=>['Dark','linear-gradient(135deg,#1e293b 50%,#0f172a 100%)','none'],'system'=>['Follow OS','linear-gradient(135deg,#f8fafc 0%,#f8fafc 50%,#1e293b 50%,#0f172a 100%)','1px solid #e2e8f0']] as $v=>[$lbl,$bg,$brd])
+                @foreach([
+                    'light'  =>['label'=>__('settings.theme_light'),  'bg'=>'linear-gradient(135deg,#f8fafc 50%,#e2e8f0 100%)','brd'=>'1px solid #e2e8f0'],
+                    'dark'   =>['label'=>__('settings.theme_dark'),   'bg'=>'linear-gradient(135deg,#1e293b 50%,#0f172a 100%)', 'brd'=>'none'],
+                    'system' =>['label'=>__('settings.theme_system'), 'bg'=>'linear-gradient(135deg,#f8fafc 0%,#f8fafc 50%,#1e293b 50%,#0f172a 100%)','brd'=>'1px solid #e2e8f0'],
+                ] as $v=>$th)
                 <label class="ss-theme-card">
                     <input type="radio" name="default_theme" value="{{ $v }}" @checked($ct===$v)>
                     <div class="ss-theme-box">
-                        <div class="ss-theme-preview" style="background:{{ $bg }};border:{{ $brd }};"></div>
-                        <p class="ss-theme-label">{{ $lbl }}</p>
+                        <div class="ss-theme-preview" style="background:{{ $th['bg'] }};border:{{ $th['brd'] }};"></div>
+                        <p class="ss-theme-label">{{ $th['label'] }}</p>
                     </div>
                 </label>
                 @endforeach
@@ -527,12 +546,12 @@
         <div class="ss-card">
             <div class="ss-card-title">
                 <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg></div>
-                Display Options
+                {{ __('settings.display_options') }}
             </div>
             <div class="ss-toggle-row">
                 <div class="ss-toggle-info">
-                    <span class="ss-toggle-name">Show Banner on Login Page</span>
-                    <span class="ss-toggle-desc">Displays the header banner on the applicant and admin login screens.</span>
+                    <span class="ss-toggle-name">{{ __('settings.show_banner_login') }}</span>
+                    <span class="ss-toggle-desc">{{ __('settings.show_banner_login_desc') }}</span>
                 </div>
                 <label class="ss-sw">
                     <input type="checkbox" name="show_banner_on_login" value="1" @checked(old('show_banner_on_login',$s->show_banner_on_login??true))>
@@ -544,10 +563,10 @@
         <div class="ss-card">
             <div class="ss-card-title">
                 <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg></div>
-                Custom CSS
-                <span class="ml-auto text-[.66rem] font-normal px-2 py-0.5 rounded-full border border-[var(--border)] text-[var(--text-subtle)]">Advanced</span>
+                {{ __('settings.custom_css') }}
+                <span class="ml-auto text-[.66rem] font-normal px-2 py-0.5 rounded-full border border-[var(--border)] text-[var(--text-subtle)]">{{ __('settings.custom_css_badge') }}</span>
             </div>
-            <p class="ss-hint mb-2">Injected into every admin page. Use CSS variables to override theme tokens.</p>
+            <p class="ss-hint mb-2">{{ __('settings.custom_css_hint') }}</p>
             <textarea name="custom_css" rows="7" class="ss-textarea" style="font-family:monospace;font-size:.78rem;"
                       placeholder=":root { --ac: 37 99 235; }">{{ old('custom_css',$s->custom_css) }}</textarea>
         </div>
@@ -563,7 +582,7 @@
                 <div class="ss-card-icon" style="background:rgb(59 130 246/.1);color:rgb(59 130 246);">
                     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                 </div>
-                Email — SMTP
+                {{ __('settings.email_smtp') }}
                 <div class="ml-auto">
                     <label class="ss-sw">
                         <input type="checkbox" name="mail_enabled" value="1" @checked(old('mail_enabled',$s->mail_enabled??false))>
@@ -574,18 +593,18 @@
 
             <div class="grid md:grid-cols-2 gap-4">
                 <div>
-                    <label class="ss-label">SMTP Host</label>
+                    <label class="ss-label">{{ __('settings.smtp_host') }}</label>
                     <input name="mail_host" value="{{ old('mail_host',$s->mail_host??'smtp.gmail.com') }}" class="ss-input" placeholder="smtp.gmail.com">
                 </div>
                 <div>
-                    <label class="ss-label">Port</label>
+                    <label class="ss-label">{{ __('settings.smtp_port') }}</label>
                     <div class="ss-input-group">
                         <input type="number" name="mail_port" min="1" max="65535" value="{{ old('mail_port',$s->mail_port??587) }}">
                         <span class="ss-input-group-addon">TCP</span>
                     </div>
                 </div>
                 <div>
-                    <label class="ss-label">Encryption</label>
+                    <label class="ss-label">{{ __('settings.encryption') }}</label>
                     <select name="mail_encryption" class="ss-select">
                         @foreach(['tls'=>'TLS (587)','ssl'=>'SSL (465)','starttls'=>'STARTTLS','none'=>'None (plain)'] as $v=>$l)
                         <option value="{{ $v }}" @selected(old('mail_encryption',$s->mail_encryption??'tls')===$v)>{{ $l }}</option>
@@ -593,19 +612,19 @@
                     </select>
                 </div>
                 <div>
-                    <label class="ss-label">Mailer Driver</label>
+                    <label class="ss-label">{{ __('settings.mailer_driver') }}</label>
                     <select name="mail_mailer" class="ss-select">
                         <option value="smtp"     @selected(old('mail_mailer',$s->mail_mailer??'smtp')==='smtp')>SMTP</option>
                         <option value="sendmail" @selected(old('mail_mailer',$s->mail_mailer)==='sendmail')>Sendmail</option>
-                        <option value="log"      @selected(old('mail_mailer',$s->mail_mailer)==='log')>Log (debug only)</option>
+                        <option value="log"      @selected(old('mail_mailer',$s->mail_mailer)==='log')>{{ __('settings.log_debug') }}</option>
                     </select>
                 </div>
                 <div>
-                    <label class="ss-label">Username</label>
+                    <label class="ss-label">{{ __('settings.mail_username') }}</label>
                     <input name="mail_username" value="{{ old('mail_username',$s->mail_username) }}" class="ss-input" placeholder="your@gmail.com" autocomplete="off">
                 </div>
                 <div>
-                    <label class="ss-label">Password / App Key</label>
+                    <label class="ss-label">{{ __('settings.mail_password') }}</label>
                     <div class="ss-pw-wrap" x-data="{show:false}">
                         <input :type="show?'text':'password'" name="mail_password"
                                value="{{ old('mail_password',$s->mail_password) }}"
@@ -615,14 +634,14 @@
                             <svg x-show="show" x-cloak class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
                         </button>
                     </div>
-                    <p class="ss-hint">For Gmail use an App Password (16-char), not your account password.</p>
+                    <p class="ss-hint">{{ __('settings.mail_password_hint') }}</p>
                 </div>
                 <div>
-                    <label class="ss-label">From Address</label>
+                    <label class="ss-label">{{ __('settings.from_address') }}</label>
                     <input type="email" name="mail_from_address" value="{{ old('mail_from_address',$s->mail_from_address??$s->contact_email) }}" class="ss-input" placeholder="noreply@court.gov.et">
                 </div>
                 <div>
-                    <label class="ss-label">From Name</label>
+                    <label class="ss-label">{{ __('settings.from_name') }}</label>
                     <input name="mail_from_name" value="{{ old('mail_from_name',$s->mail_from_name??$s->app_name) }}" class="ss-input" placeholder="{{ $s->app_name ?? config('app.name') }}">
                 </div>
             </div>
@@ -634,7 +653,7 @@
                 <div class="ss-card-icon" style="background:rgb(0 136 204/.12);color:rgb(0 136 204);">
                     <svg viewBox="0 0 24 24" fill="currentColor" class="w-3.5 h-3.5"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/></svg>
                 </div>
-                Telegram Bot
+                {{ __('settings.telegram_bot') }}
                 <div class="ml-auto">
                     <label class="ss-sw">
                         <input type="checkbox" name="telegram_enabled" value="1" @checked(old('telegram_enabled',$s->telegram_enabled??false))>
@@ -642,10 +661,10 @@
                     </label>
                 </div>
             </div>
-            <p class="ss-hint mb-4">Create a bot via <strong>@BotFather</strong> on Telegram to get a token, then add the bot to your notification channel and copy the Chat ID.</p>
+            <p class="ss-hint mb-4">{{ __('settings.telegram_hint') }}</p>
             <div class="grid md:grid-cols-2 gap-4">
                 <div>
-                    <label class="ss-label">Bot Token</label>
+                    <label class="ss-label">{{ __('settings.bot_token') }}</label>
                     <div class="ss-pw-wrap" x-data="{show:false}">
                         <input :type="show?'text':'password'" name="telegram_bot_token"
                                value="{{ old('telegram_bot_token',$s->telegram_bot_token) }}"
@@ -655,12 +674,12 @@
                             <svg x-show="show" x-cloak class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
                         </button>
                     </div>
-                    <p class="ss-hint">Format: <code class="font-mono bg-[var(--surface-soft)] px-1 rounded">BOT_ID:SECRET_KEY</code></p>
+                    <p class="ss-hint">{{ __('settings.bot_token_hint') }}</p>
                 </div>
                 <div>
-                    <label class="ss-label">Default Chat ID</label>
+                    <label class="ss-label">{{ __('settings.default_chat_id') }}</label>
                     <input name="telegram_default_chat_id" value="{{ old('telegram_default_chat_id',$s->telegram_default_chat_id) }}" class="ss-input" placeholder="-100xxxxxxxxxx or @channelname">
-                    <p class="ss-hint">Group / channel Chat ID for system notifications. Use a negative number for groups.</p>
+                    <p class="ss-hint">{{ __('settings.default_chat_id_hint') }}</p>
                 </div>
             </div>
         </div>
@@ -671,7 +690,7 @@
                 <div class="ss-card-icon" style="background:rgb(16 185 129/.12);color:rgb(5 150 105);">
                     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                 </div>
-                SMS Gateway
+                {{ __('settings.sms_gateway') }}
                 <div class="ml-auto">
                     <label class="ss-sw">
                         <input type="checkbox" name="sms_enabled" value="1" @checked(old('sms_enabled',$s->sms_enabled??false))>
@@ -682,21 +701,21 @@
 
             <div class="grid md:grid-cols-2 gap-4">
                 <div>
-                    <label class="ss-label">Provider Name</label>
+                    <label class="ss-label">{{ __('settings.sms_provider') }}</label>
                     <input name="sms_provider"
                            value="{{ old('sms_provider',$s->sms_provider) }}"
                            class="ss-input" placeholder="e.g. Infobip, Twilio, EthioTelecom, AfricasTalking…">
-                    <p class="ss-hint">Free-text — enter any provider name for your records.</p>
+                    <p class="ss-hint">{{ __('settings.sms_provider_hint') }}</p>
                 </div>
                 <div>
-                    <label class="ss-label">API Base URL</label>
+                    <label class="ss-label">{{ __('settings.sms_base_url') }}</label>
                     <input type="url" name="sms_base_url"
                            value="{{ old('sms_base_url',$s->sms_base_url) }}"
                            class="ss-input" placeholder="https://api.yourprovider.com/v1">
-                    <p class="ss-hint">The REST endpoint root your integration code will call.</p>
+                    <p class="ss-hint">{{ __('settings.sms_base_url_hint') }}</p>
                 </div>
                 <div>
-                    <label class="ss-label">API Key / Account SID</label>
+                    <label class="ss-label">{{ __('settings.sms_api_key') }}</label>
                     <div class="ss-pw-wrap" x-data="{show:false}">
                         <input :type="show?'text':'password'" name="sms_api_key"
                                value="{{ old('sms_api_key',$s->sms_api_key) }}"
@@ -708,7 +727,7 @@
                     </div>
                 </div>
                 <div>
-                    <label class="ss-label">API Secret / Auth Token</label>
+                    <label class="ss-label">{{ __('settings.sms_api_secret') }}</label>
                     <div class="ss-pw-wrap" x-data="{show:false}">
                         <input :type="show?'text':'password'" name="sms_api_secret"
                                value="{{ old('sms_api_secret',$s->sms_api_secret) }}"
@@ -720,9 +739,9 @@
                     </div>
                 </div>
                 <div class="md:col-span-2">
-                    <label class="ss-label">Sender ID / From Number</label>
+                    <label class="ss-label">{{ __('settings.sms_sender_id') }}</label>
                     <input name="sms_sender_id" value="{{ old('sms_sender_id',$s->sms_sender_id) }}" class="ss-input" placeholder="CourtMS or +251912345678">
-                    <p class="ss-hint">Alphanumeric sender name (max 11 chars) or E.164 phone number, depending on what your provider supports.</p>
+                    <p class="ss-hint">{{ __('settings.sms_sender_id_hint') }}</p>
                 </div>
             </div>
         </div>
@@ -735,12 +754,12 @@
         <div class="ss-card">
             <div class="ss-card-title">
                 <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div>
-                REST API
+                {{ __('settings.rest_api') }}
             </div>
             <div class="ss-toggle-row mb-4">
                 <div class="ss-toggle-info">
-                    <span class="ss-toggle-name">Enable REST API</span>
-                    <span class="ss-toggle-desc">Allow external systems to query case data via Sanctum-authenticated API endpoints.</span>
+                    <span class="ss-toggle-name">{{ __('settings.enable_api') }}</span>
+                    <span class="ss-toggle-desc">{{ __('settings.enable_api_desc') }}</span>
                 </div>
                 <label class="ss-sw">
                     <input type="checkbox" name="api_enabled" value="1" @checked(old('api_enabled',$s->api_enabled??false))>
@@ -748,32 +767,32 @@
                 </label>
             </div>
             <div style="max-width:220px;">
-                <label class="ss-label">Rate Limit (per minute)</label>
+                <label class="ss-label">{{ __('settings.rate_limit') }}</label>
                 <div class="ss-input-group">
                     <input type="number" name="api_rate_limit" min="1" max="10000" value="{{ old('api_rate_limit',$s->api_rate_limit??60) }}">
-                    <span class="ss-input-group-addon">req/min</span>
+                    <span class="ss-input-group-addon">{{ __('settings.unit_req_min') }}</span>
                 </div>
-                <p class="ss-hint">Applied per authenticated API token.</p>
+                <p class="ss-hint">{{ __('settings.rate_limit_hint') }}</p>
             </div>
         </div>
 
         <div class="ss-card">
             <div class="ss-card-title">
                 <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
-                System Information
+                {{ __('settings.system_information') }}
             </div>
             <div class="grid sm:grid-cols-2 gap-2">
                 @foreach([
-                    'Laravel'       => app()->version(),
-                    'PHP'           => PHP_VERSION,
-                    'Environment'   => app()->environment(),
-                    'Debug Mode'    => config('app.debug') ? 'Enabled' : 'Disabled',
-                    'Cache Driver'  => config('cache.default'),
-                    'Session Driver'=> config('session.driver'),
-                    'Queue Driver'  => config('queue.default'),
-                    'DB Connection' => config('database.default'),
-                    'Timezone'      => config('app.timezone'),
-                    'Server Time'   => now()->format('Y-m-d H:i:s T'),
+                    __('settings.info_laravel')    => app()->version(),
+                    __('settings.info_php')        => PHP_VERSION,
+                    __('settings.info_environment')=> app()->environment(),
+                    __('settings.info_debug')      => config('app.debug') ? __('settings.info_enabled') : __('settings.info_disabled'),
+                    __('settings.info_cache')      => config('cache.default'),
+                    __('settings.info_session')    => config('session.driver'),
+                    __('settings.info_queue')      => config('queue.default'),
+                    __('settings.info_db')         => config('database.default'),
+                    __('settings.info_timezone')   => config('app.timezone'),
+                    __('settings.info_server_time')=> now()->format('Y-m-d H:i:s T'),
                 ] as $k=>$v)
                 <div class="ss-info-row">
                     <span class="ss-info-key">{{ $k }}</span>
@@ -786,14 +805,14 @@
         <div class="ss-card">
             <div class="ss-card-title">
                 <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg></div>
-                Cache Management
+                {{ __('settings.cache_management') }}
             </div>
-            <p class="ss-hint mb-3">Settings cache is cleared automatically on save. Use this to manually flush application and view caches.</p>
+            <p class="ss-hint mb-3">{{ __('settings.cache_hint') }}</p>
             <button type="submit" form="ss-clear-cache-form"
-                    onclick="return confirm('Clear all application caches?')"
+                    onclick="return confirm('{{ __('settings.clear_caches_confirm') }}')"
                     class="cs-btn-secondary text-xs px-4 py-2">
                 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                Clear All Caches
+                {{ __('settings.clear_caches') }}
             </button>
         </div>
     </div>
@@ -802,24 +821,24 @@
     <div class="ss-bar">
         <span class="ss-bar-hint">
             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            Changes apply immediately. Cache cleared automatically on save.
+            {{ __('settings.save_hint') }}
         </span>
         <div class="flex items-center gap-2.5">
             <a href="{{ route('settings.system.edit') }}" class="cs-btn-secondary text-xs px-4 py-2"
-               :class="saving && 'pointer-events-none opacity-50'">Discard</a>
+               :class="saving && 'pointer-events-none opacity-50'">{{ __('settings.discard') }}</a>
             <button type="submit" :disabled="saving"
                     class="cs-btn-primary text-xs px-5 py-2 min-w-[130px] justify-center disabled:opacity-60 disabled:cursor-not-allowed"
                     style="background:linear-gradient(135deg,rgb(var(--ac)) 0%,rgb(var(--ac-light,var(--ac))) 100%);">
                 <span x-show="!saving" class="flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                    Save Settings
+                    {{ __('settings.save_settings') }}
                 </span>
                 <span x-show="saving" x-cloak class="flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
                     </svg>
-                    Saving…
+                    {{ __('settings.saving') }}
                 </span>
             </button>
         </div>

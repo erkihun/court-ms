@@ -8,6 +8,7 @@ use App\Models\Team;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class AdminNotificationController extends Controller
@@ -18,43 +19,47 @@ class AdminNotificationController extends Controller
         if (!$uid) return response()->json(['count' => 0]);
         if (!$this->canSeeCaseNotifications()) return response()->json(['count' => 0]);
 
-        $count  = $this->applyCaseAccessScope(
-            DB::table('case_messages as m')
-                ->join('court_cases as c', 'c.id', '=', 'm.case_id')
-                ->whereNotNull('m.sender_applicant_id')
-                ->where('m.created_at', '>=', now()->subDays(14))
-                ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
-                    ->whereColumn('nr.source_id', 'm.id')->where('nr.type', 'message')->where('nr.user_id', $uid))
-        )->count();
+        // Cache per user for 2 minutes — invalidated on markOne / markAll
+        $count = Cache::remember("admin_notif_count_{$uid}", 120, function () use ($uid) {
+            $c  = $this->applyCaseAccessScope(
+                DB::table('case_messages as m')
+                    ->join('court_cases as c', 'c.id', '=', 'm.case_id')
+                    ->whereNotNull('m.sender_applicant_id')
+                    ->where('m.created_at', '>=', now()->subDays(14))
+                    ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
+                        ->whereColumn('nr.source_id', 'm.id')->where('nr.type', 'message')->where('nr.user_id', $uid))
+            )->count();
 
-        $count += $this->applyCaseAccessScope(
-            DB::table('court_cases as c')
-                ->where('c.status', 'pending')->whereNull('c.assigned_user_id')
-                ->where('c.created_at', '>=', now()->subDays(14))
-                ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
-                    ->whereColumn('nr.source_id', 'c.id')->where('nr.type', 'case')->where('nr.user_id', $uid))
-        )->count();
+            $c += $this->applyCaseAccessScope(
+                DB::table('court_cases as c')
+                    ->where('c.status', 'pending')->whereNull('c.assigned_user_id')
+                    ->where('c.created_at', '>=', now()->subDays(14))
+                    ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
+                        ->whereColumn('nr.source_id', 'c.id')->where('nr.type', 'case')->where('nr.user_id', $uid))
+            )->count();
 
-        $count += $this->applyCaseAccessScope(
-            DB::table('case_hearings as h')
-                ->join('court_cases as c', 'c.id', '=', 'h.case_id')
-                ->where('c.assigned_user_id', $uid)
-                ->whereBetween('h.hearing_at', [now(), now()->addDays(14)])
-                ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
-                    ->whereColumn('nr.source_id', 'h.id')->where('nr.type', 'hearing')->where('nr.user_id', $uid))
-        )->count();
+            $c += $this->applyCaseAccessScope(
+                DB::table('case_hearings as h')
+                    ->join('court_cases as c', 'c.id', '=', 'h.case_id')
+                    ->where('c.assigned_user_id', $uid)
+                    ->whereBetween('h.hearing_at', [now(), now()->addDays(14)])
+                    ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
+                        ->whereColumn('nr.source_id', 'h.id')->where('nr.type', 'hearing')->where('nr.user_id', $uid))
+            )->count();
 
-        $count += $this->applyCaseAccessScope(
-            DB::table('respondent_case_views as v')
-                ->join('court_cases as c', 'c.id', '=', 'v.case_id')
-                ->where(function ($q) use ($uid) {
-                    $q->where('c.assigned_user_id', $uid)
-                        ->orWhereNull('c.assigned_user_id');
-                })
-                ->where('v.viewed_at', '>=', now()->subDays(14))
-                ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
-                    ->whereColumn('nr.source_id', 'v.id')->where('nr.type', 'respondent_view')->where('nr.user_id', $uid))
-        )->count();
+            $c += $this->applyCaseAccessScope(
+                DB::table('respondent_case_views as v')
+                    ->join('court_cases as c', 'c.id', '=', 'v.case_id')
+                    ->where(function ($q) use ($uid) {
+                        $q->where('c.assigned_user_id', $uid)->orWhereNull('c.assigned_user_id');
+                    })
+                    ->where('v.viewed_at', '>=', now()->subDays(14))
+                    ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
+                        ->whereColumn('nr.source_id', 'v.id')->where('nr.type', 'respondent_view')->where('nr.user_id', $uid))
+            )->count();
+
+            return $c;
+        });
 
         return response()->json(['count' => $count]);
     }
@@ -161,6 +166,8 @@ class AdminNotificationController extends Controller
             ['seen_at' => now(), 'updated_at' => now(), 'created_at' => now()]
         );
 
+        Cache::forget("admin_notif_count_{$uid}");
+
         return back()->with('success', __('app.admin_notifications.marked_as_seen'));
     }
 
@@ -240,6 +247,8 @@ class AdminNotificationController extends Controller
                 ['seen_at', 'updated_at']
             );
         }
+
+        Cache::forget("admin_notif_count_{$uid}");
 
         return back()->with('success', __('app.admin_notifications.all_marked_as_seen'));
     }
