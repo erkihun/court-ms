@@ -354,9 +354,15 @@
 
   .admin-subtle-grid {
     background-image:
-      linear-gradient(rgba(148,163,184,0.12) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(148,163,184,0.12) 1px, transparent 1px);
-    background-size: 28px 28px;
+      linear-gradient(rgba(148,163,184,0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148,163,184,0.07) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  .dark .admin-subtle-grid {
+    background-image:
+      linear-gradient(rgba(51,65,85,0.25) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(51,65,85,0.25) 1px, transparent 1px);
   }
 
   .admin-toolbar-chip {
@@ -538,55 +544,67 @@
 
   /* ── Sidebar section dividers ───────────────────────────── */
   .sidebar-section-label {
-    @apply mb-1.5 mt-5 px-3 text-[10px] font-bold uppercase tracking-[0.22em];
-    color: rgb(148 163 184 / 0.6);
-    line-height: 1.45;
-    padding-top: 1rem;
-    border-top: 1px solid rgb(255 255 255 / 0.06);
+    padding: 0.875rem 0.875rem 0.35rem;
+    margin-top: 0.25rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: rgb(148 163 184 / 0.45);
+    line-height: 1.4;
+    border-top: 1px solid rgb(255 255 255 / 0.05);
   }
 
   /* ── Primary nav items ───────────────────────────────────── */
   .sidebar-menu-item,
   .sidebar-menu-toggle {
-    @apply rounded-xl px-3 py-2.5 text-[13.5px] font-medium;
+    border-radius: 0.625rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
     position: relative;
     align-items: center;
-    line-height: 1.45;
-    transition-property: background-color, color, transform;
-    transition-duration: 160ms;
+    line-height: 1.4;
+    transition-property: background-color, color, box-shadow;
+    transition-duration: 140ms;
     transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    will-change: background-color, transform;
   }
 
   .sidebar-menu-item {
-    @apply flex items-center gap-3;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
   }
 
   .sidebar-menu-toggle {
-    @apply flex w-full items-center justify-between gap-3;
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.625rem;
   }
 
   .sidebar-menu-item-inactive {
-    color: rgb(203 213 225 / 0.82);
+    color: rgb(148 163 184 / 0.75);
   }
 
   .sidebar-menu-item-inactive:hover {
-    background: rgb(255 255 255 / 0.09);
-    color: #fff;
-    transform: translateX(2px);
+    background: rgb(255 255 255 / 0.07);
+    color: rgb(226 232 240);
   }
 
   .sidebar-menu-item-inactive:active,
   .sidebar-menu-toggle:active,
   .sidebar-submenu-item:active {
-    transform: scale(0.97);
+    transform: scale(0.98);
   }
 
-  /* Active: full-pill highlight + gradient accent bar on left edge */
+  /* Active: glassy pill with accent glow */
   .sidebar-menu-item-active {
-    background: rgb(var(--ac) / 0.22);
+    background: rgb(var(--ac) / 0.18);
     color: #fff;
     font-weight: 600;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 0 0 1px rgb(var(--ac) / 0.22);
   }
 
   .sidebar-menu-item-active::before {
@@ -596,34 +614,39 @@
     top: 50%;
     transform: translateY(-50%);
     width: 3px;
-    height: 18px;
+    height: 16px;
     background: linear-gradient(180deg, rgb(var(--ac-light)) 0%, rgb(var(--ac)) 100%);
     border-radius: 0 3px 3px 0;
+    box-shadow: 0 0 8px rgb(var(--ac) / 0.6);
   }
 
   /* ── Sub-menu items ──────────────────────────────────────── */
   .sidebar-submenu-item {
-    @apply flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-medium;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 0.5rem;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 500;
     position: relative;
-    line-height: 1.45;
-    transition-property: background-color, color, transform;
-    transition-duration: 160ms;
+    line-height: 1.4;
+    transition-property: background-color, color;
+    transition-duration: 130ms;
     transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    will-change: background-color, transform;
   }
 
   .sidebar-submenu-item-inactive {
-    color: rgb(203 213 225 / 0.72);
+    color: rgb(148 163 184 / 0.65);
   }
 
   .sidebar-submenu-item-inactive:hover {
-    background: rgb(255 255 255 / 0.07);
-    color: #fff;
-    transform: translateX(2px);
+    background: rgb(255 255 255 / 0.06);
+    color: rgb(203 213 225);
   }
 
   .sidebar-submenu-item-active {
-    background: rgb(var(--ac) / 0.18);
+    background: rgb(var(--ac) / 0.15);
     color: rgb(var(--ac-text));
     font-weight: 600;
   }
@@ -635,36 +658,23 @@
     top: 50%;
     transform: translateY(-50%);
     width: 2px;
-    height: 14px;
+    height: 12px;
     background: rgb(var(--ac-light));
     border-radius: 0 2px 2px 0;
+    box-shadow: 0 0 6px rgb(var(--ac-light) / 0.5);
   }
 
   .sidebar-menu-label {
-    line-height: 1.45;
-  }
-
-  .sidebar-footer-chip {
-    @apply rounded-md border px-2.5 py-1.5 text-[10px] font-medium normal-case tracking-normal;
-    border-color: rgb(59 130 246 / 0.35);
-    background: rgb(15 23 42 / 0.32);
-    color: rgb(219 234 254 / 0.96);
-    transition-property: background-color, border-color, color;
-    transition-duration: var(--motion-fast);
-    transition-timing-function: var(--ease-out);
-  }
-
-  .sidebar-footer-chip:hover {
-    background: rgb(30 64 175 / 0.28);
-    color: #fff;
+    line-height: 1.4;
   }
 
   /* ── Sidebar user profile card (bottom of sidebar) ─────── */
   .sidebar-user-card {
     flex-shrink: 0;
-    border-top: 1px solid rgb(255 255 255 / 0.08);
-    background: rgb(0 0 0 / 0.14);
+    border-top: 1px solid rgb(255 255 255 / 0.07);
+    background: rgb(0 0 0 / 0.18);
     padding: 0.75rem;
+    backdrop-filter: blur(8px);
   }
 
   .enterprise-focus-outline {
@@ -680,30 +690,50 @@
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
-    padding: 0 1rem;
-    height: 3.5rem;
-    background: rgb(255 255 255 / 0.95);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border-bottom: 1px solid rgb(226 232 240 / 0.7);
-    box-shadow: 0 1px 3px rgb(0 0 0 / 0.05), 0 1px 0 rgb(0 0 0 / 0.03);
+    padding: 0 1.25rem;
+    height: 3.75rem;
+    background: rgb(255 255 255 / 0.97);
+    backdrop-filter: blur(24px) saturate(200%);
+    -webkit-backdrop-filter: blur(24px) saturate(200%);
+    border-bottom: 1px solid rgb(226 232 240 / 0.8);
+    box-shadow: 0 1px 0 rgb(0 0 0 / 0.04), 0 2px 8px -2px rgb(0 0 0 / 0.04);
+  }
+
+  /* Accent underline strip on topnav */
+  .topnav-root::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg,
+      rgb(var(--ac)) 0%,
+      rgb(var(--ac-light)) 50%,
+      transparent 100%);
+    opacity: 0.35;
+    pointer-events: none;
   }
 
   .dark .topnav-root {
-    background: rgb(15 23 42 / 0.95);
-    border-bottom-color: rgb(51 65 85 / 0.6);
-    box-shadow: 0 1px 3px rgb(0 0 0 / 0.25), 0 1px 0 rgb(0 0 0 / 0.15);
+    background: rgb(11 18 32 / 0.97);
+    border-bottom-color: rgb(35 49 74 / 0.9);
+    box-shadow: 0 1px 0 rgb(0 0 0 / 0.3), 0 2px 8px -2px rgb(0 0 0 / 0.2);
   }
 
-  /* Icon-only action button (sidebar toggle, theme, etc.) */
+  /* Icon-only action button */
   .topnav-icon-btn {
-    @apply inline-flex items-center justify-center rounded-lg transition-colors duration-150;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
     width: 2.125rem;
     height: 2.125rem;
     color: rgb(100 116 139);
     flex-shrink: 0;
     outline: 2px solid transparent;
     outline-offset: 2px;
+    transition: background-color 130ms, color 130ms;
   }
 
   .topnav-icon-btn:focus-visible {
@@ -717,12 +747,12 @@
   }
 
   .dark .topnav-icon-btn {
-    color: rgb(148 163 184);
+    color: rgb(100 116 139);
   }
 
   .dark .topnav-icon-btn:hover {
-    background: rgb(30 41 59);
-    color: rgb(226 232 240);
+    background: rgb(22 32 51);
+    color: rgb(203 213 225);
   }
 
   /* Search bar trigger */
@@ -731,16 +761,16 @@
     align-items: center;
     gap: 0.5rem;
     height: 2.125rem;
-    padding: 0 0.875rem;
-    border-radius: 0.625rem;
-    border: 1px solid rgb(226 232 240);
+    padding: 0 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgb(219 226 235);
     background: rgb(248 250 252);
     color: rgb(148 163 184);
     font-size: 0.8125rem;
-    font-weight: 450;
+    font-weight: 400;
     letter-spacing: 0.01em;
     cursor: pointer;
-    transition: border-color 150ms, background 150ms, box-shadow 150ms;
+    transition: border-color 140ms, background 140ms, box-shadow 140ms;
     white-space: nowrap;
     min-width: 0;
     width: 100%;
@@ -748,30 +778,30 @@
   }
 
   .topnav-search:hover {
-    border-color: rgb(148 163 184);
+    border-color: rgb(var(--ac) / 0.35);
     background: rgb(255 255 255);
-    box-shadow: 0 0 0 3px rgb(59 130 246 / 0.08);
+    box-shadow: 0 0 0 3px rgb(var(--ac) / 0.07);
     color: rgb(71 85 105);
   }
 
   .topnav-search:focus-visible {
-    outline: 2px solid #2563eb;
+    outline: 2px solid rgb(var(--ac));
     outline-offset: 2px;
-    border-color: #3b82f6;
+    border-color: rgb(var(--ac) / 0.6);
     background: rgb(255 255 255);
   }
 
   .dark .topnav-search {
-    background: rgb(30 41 59);
-    border-color: rgb(51 65 85);
-    color: rgb(100 116 139);
+    background: rgb(22 32 51);
+    border-color: rgb(35 49 74);
+    color: rgb(71 85 105);
   }
 
   .dark .topnav-search:hover {
-    border-color: rgb(71 85 105);
-    background: rgb(30 41 59);
+    border-color: rgb(var(--ac) / 0.3);
+    background: rgb(22 32 51);
     color: rgb(148 163 184);
-    box-shadow: 0 0 0 3px rgb(59 130 246 / 0.12);
+    box-shadow: 0 0 0 3px rgb(var(--ac) / 0.1);
   }
 
   /* Breadcrumb */
@@ -792,12 +822,12 @@
   }
 
   .dark .topnav-breadcrumb-sep {
-    color: rgb(71 85 105);
+    color: rgb(51 65 85);
   }
 
   .topnav-breadcrumb-item {
     color: rgb(148 163 184);
-    font-weight: 450;
+    font-weight: 400;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -808,73 +838,56 @@
   .topnav-breadcrumb-item:last-child {
     color: rgb(15 23 42);
     font-weight: 600;
-    max-width: 12rem;
+    max-width: 14rem;
   }
 
   .dark .topnav-breadcrumb-item {
-    color: rgb(71 85 105);
+    color: rgb(51 65 85);
   }
 
   .dark .topnav-breadcrumb-item:last-child {
     color: rgb(226 232 240);
   }
 
-  /* Notification badge pulse dot */
-  .topnav-notif-dot {
-    position: absolute;
-    top: 0.25rem;
-    right: 0.25rem;
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 9999px;
-    background: rgb(239 68 68);
-    border: 2px solid white;
-    animation: notif-pulse 2s ease-in-out infinite;
-  }
-
-  .dark .topnav-notif-dot {
-    border-color: rgb(15 23 42);
-  }
-
+  /* Notification badge */
   .topnav-notif-badge {
     position: absolute;
-    top: -0.25rem;
-    right: -0.375rem;
-    min-width: 1.125rem;
-    height: 1.125rem;
-    padding: 0 0.25rem;
+    top: -0.2rem;
+    right: -0.35rem;
+    min-width: 1.0625rem;
+    height: 1.0625rem;
+    padding: 0 0.2rem;
     border-radius: 9999px;
     background: rgb(220 38 38);
     border: 2px solid white;
-    font-size: 0.625rem;
+    font-size: 0.5625rem;
     font-weight: 700;
     color: white;
     display: grid;
     place-items: center;
     line-height: 1;
+    box-shadow: 0 0 0 1px rgb(220 38 38 / 0.25);
   }
 
   .dark .topnav-notif-badge {
-    border-color: rgb(15 23 42);
-  }
-
-  @keyframes notif-pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50%       { opacity: 0.6; transform: scale(0.85); }
+    border-color: rgb(11 18 32);
   }
 
   /* Profile trigger */
   .topnav-profile-btn {
-    @apply inline-flex items-center gap-2 rounded-xl px-2 py-1.5 transition-colors duration-150;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 0.625rem;
+    padding: 0.3125rem 0.5rem;
     outline: 2px solid transparent;
     outline-offset: 2px;
+    transition: background-color 130ms;
   }
 
   .topnav-profile-btn:focus-visible {
     outline: 2px solid #2563eb;
     outline-offset: 2px;
-    flex-shrink: 0;
-    max-width: 12rem;
   }
 
   .topnav-profile-btn:hover {
@@ -882,31 +895,38 @@
   }
 
   .dark .topnav-profile-btn:hover {
-    background: rgb(30 41 59);
+    background: rgb(22 32 51);
   }
 
   /* Dropdown panel shared */
   .topnav-dropdown {
     position: absolute;
     right: 0;
-    top: calc(100% + 0.5rem);
-    z-index: 50;
-    border-radius: 0.875rem;
+    top: calc(100% + 0.375rem);
+    z-index: 60;
+    border-radius: 0.75rem;
     border: 1px solid rgb(226 232 240);
-    background: white;
-    box-shadow: 0 10px 40px -4px rgb(0 0 0 / 0.12), 0 4px 16px -4px rgb(0 0 0 / 0.08);
+    background: rgba(255 255 255 / 0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 16px 48px -8px rgb(0 0 0 / 0.14), 0 0 0 1px rgb(0 0 0 / 0.03);
     overflow: hidden;
   }
 
   .dark .topnav-dropdown {
-    background: rgb(15 23 42);
-    border-color: rgb(51 65 85);
-    box-shadow: 0 10px 40px -4px rgb(0 0 0 / 0.5), 0 4px 16px -4px rgb(0 0 0 / 0.3);
+    background: rgb(15 23 42 / 0.98);
+    border-color: rgb(35 49 74);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 16px 48px -8px rgb(0 0 0 / 0.5);
   }
 
   /* Notification item row */
   .topnav-notif-row {
-    @apply flex items-start gap-3 rounded-lg px-2 py-2 transition-colors duration-100;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.5rem;
+    transition: background-color 100ms;
   }
 
   .topnav-notif-row:hover {
@@ -914,7 +934,7 @@
   }
 
   .dark .topnav-notif-row:hover {
-    background: rgb(30 41 59);
+    background: rgb(22 32 51);
   }
 }
 
@@ -1057,3 +1077,29 @@
 
 /* Theme swatch ring-offset in dark mode */
 .dark .ring-offset-2 { --tw-ring-offset-color: var(--surface-strong); }
+
+/* ── Case show page ────────────────────────────────────────────────────── */
+/* .main-content-section uses CSS vars directly now; these ensure any
+   border-gray-200 headings/rows inside it are also dark-mode friendly. */
+.main-content-section {
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+}
+.main-content-section h3,
+.main-content-section h4,
+.main-content-section h5 {
+  color: var(--text);
+}
+.main-content-section .border-b {
+  border-color: var(--border);
+}
+/* Case sidebar nav: active accent pill */
+.case-nav-btn-active {
+  background-color: rgb(var(--ac) / 0.1);
+  color: rgb(var(--ac));
+  font-weight: 600;
+}
+/* letters compose: notice banner */
+.dark .bg-yellow-50  { background-color: rgb(217 119 6 / 0.12) !important; }
+.dark .text-yellow-800 { color: #fcd34d !important; }
+.dark .border-yellow-200 { border-color: rgb(217 119 6 / 0.3) !important; }

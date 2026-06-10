@@ -1,108 +1,834 @@
 <x-admin-layout title="System Settings">
-    @section('page_header','System Settings')
+<style>
+/* ── Settings design tokens ─────────────────────────────── */
+.ss-wrap { max-width:100%; }
+.ss-header { padding:1.5rem 0 1.125rem; border-bottom:1px solid var(--border); margin-bottom:1.5rem; }
+.ss-title { font-size:1.25rem; font-weight:700; color:var(--text); letter-spacing:-.02em; }
+.ss-subtitle { font-size:.8125rem; color:var(--text-subtle); margin-top:.2rem; }
 
-    <div class="enterprise-page mx-auto max-w-6xl">
-        <div class="enterprise-header">
-            <h1 class="enterprise-title">System Settings</h1>
-            <p class="enterprise-subtitle">Manage platform identity, branding assets, and public contact information.</p>
+/* Tab strip */
+.ss-tabs { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:1.5rem; overflow-x:auto; scrollbar-width:none; }
+.ss-tabs::-webkit-scrollbar { display:none; }
+.ss-tab { display:inline-flex; align-items:center; gap:.4rem; padding:.6rem .9rem; font-size:.8rem; font-weight:500;
+          color:var(--text-subtle); border-bottom:2px solid transparent; margin-bottom:-1px;
+          cursor:pointer; white-space:nowrap; transition:color .15s,border-color .15s;
+          background:none; border-top:none; border-left:none; border-right:none; }
+.ss-tab:hover { color:var(--text); }
+.ss-tab.active { color:rgb(var(--ac)); border-bottom-color:rgb(var(--ac)); font-weight:600; }
+.ss-tab svg { width:.9rem; height:.9rem; flex-shrink:0; }
+
+/* Cards */
+.ss-card { background:var(--surface-strong); border:1px solid var(--border); border-radius:.875rem; padding:1.375rem; margin-bottom:1rem; }
+.ss-card-title { font-size:.8125rem; font-weight:700; color:var(--text); margin-bottom:1rem; display:flex; align-items:center; gap:.5rem; }
+.ss-card-icon { display:grid; place-items:center; width:1.625rem; height:1.625rem; border-radius:.4rem; background:rgb(var(--ac)/.1); color:rgb(var(--ac)); flex-shrink:0; }
+.ss-card-icon svg { width:.8rem; height:.8rem; }
+.ss-divider { border:none; border-top:1px solid var(--border); margin:1rem 0; }
+
+/* Field label + hint */
+.ss-label { display:block; font-size:.775rem; font-weight:600; color:var(--text-muted); margin-bottom:.3rem; }
+.ss-hint  { font-size:.7rem; color:var(--text-subtle); margin-top:.25rem; line-height:1.4; }
+
+/* Inputs */
+.ss-input, .ss-select, .ss-textarea {
+    width:100%; padding:.45rem .7rem; border-radius:.5rem;
+    border:1px solid var(--border); background:var(--surface-soft);
+    color:var(--text); font-size:.8125rem;
+    transition:border-color .15s, box-shadow .15s;
+}
+.ss-input:focus, .ss-select:focus, .ss-textarea:focus {
+    outline:none; border-color:rgb(var(--ac)/.55);
+    box-shadow:0 0 0 3px rgb(var(--ac)/.1);
+}
+.ss-textarea { resize:vertical; }
+
+/* Input with addon unit */
+.ss-input-group { display:flex; border:1px solid var(--border); border-radius:.5rem; overflow:hidden; background:var(--surface-soft); }
+.ss-input-group:focus-within { border-color:rgb(var(--ac)/.55); box-shadow:0 0 0 3px rgb(var(--ac)/.1); }
+.ss-input-group input { flex:1; padding:.45rem .7rem; border:none; background:transparent; color:var(--text); font-size:.8125rem; min-width:0; outline:none; }
+.ss-input-group-addon { padding:.45rem .7rem; font-size:.73rem; font-weight:600; color:var(--text-subtle);
+                        background:var(--surface-strong); border-left:1px solid var(--border);
+                        white-space:nowrap; display:flex; align-items:center; }
+.ss-input-group-prefix { border-left:none; border-right:1px solid var(--border); }
+
+/* Password reveal */
+.ss-pw-wrap { position:relative; }
+.ss-pw-wrap .ss-input { padding-right:2.5rem; }
+.ss-pw-toggle { position:absolute; right:.6rem; top:50%; transform:translateY(-50%);
+                background:none; border:none; cursor:pointer; color:var(--text-subtle);
+                padding:.15rem; line-height:0; }
+.ss-pw-toggle:hover { color:var(--text); }
+
+/* Toggle rows */
+.ss-toggle-row { display:flex; align-items:center; justify-content:space-between; gap:1rem;
+                 padding:.7rem .875rem; border-radius:.5rem;
+                 border:1px solid var(--border); background:var(--surface-soft); }
+.ss-toggle-row + .ss-toggle-row { margin-top:.5rem; }
+.ss-toggle-info { flex:1; min-width:0; }
+.ss-toggle-name { font-size:.8125rem; font-weight:600; color:var(--text); display:block; }
+.ss-toggle-desc { font-size:.7rem; color:var(--text-subtle); margin-top:.1rem; }
+.ss-sw { position:relative; width:2.5rem; height:1.3rem; flex-shrink:0; }
+.ss-sw input { opacity:0; width:0; height:0; position:absolute; }
+.ss-sw-track { position:absolute; inset:0; border-radius:999px; background:var(--border-strong); transition:background .2s; cursor:pointer; }
+.ss-sw input:checked ~ .ss-sw-track { background:rgb(var(--ac)); }
+.ss-sw-thumb { position:absolute; top:.17rem; left:.17rem; width:.96rem; height:.96rem; border-radius:50%;
+               background:#fff; transition:transform .2s; pointer-events:none; box-shadow:0 1px 3px rgba(0,0,0,.25); }
+.ss-sw input:checked ~ .ss-sw-track .ss-sw-thumb { transform:translateX(1.2rem); }
+
+/* Status badge */
+.ss-badge { display:inline-flex; align-items:center; gap:.3rem; padding:.2rem .55rem; border-radius:999px; font-size:.68rem; font-weight:700; }
+.ss-badge-ok   { background:rgb(16 185 129/.1); color:rgb(4 120 87); border:1px solid rgb(16 185 129/.2); }
+.ss-badge-warn { background:rgb(245 158 11/.1); color:rgb(146 64 14); border:1px solid rgb(245 158 11/.2); }
+
+/* Info grid (system info) */
+.ss-info-row { display:flex; align-items:center; justify-content:space-between;
+               padding:.45rem .75rem; border-radius:.4rem;
+               background:var(--surface-soft); border:1px solid var(--border); }
+.ss-info-key { font-size:.75rem; color:var(--text-subtle); }
+.ss-info-val { font-size:.75rem; font-weight:600; color:var(--text); font-family:monospace; }
+
+/* Palette swatches */
+.ss-palette { display:flex; flex-wrap:wrap; gap:.5rem; }
+.ss-swatch { position:relative; }
+.ss-swatch input { position:absolute; opacity:0; width:0; height:0; }
+.ss-swatch-box { display:flex; align-items:center; gap:.4rem; padding:.35rem .65rem; border-radius:.4rem;
+                 border:2px solid transparent; cursor:pointer; font-size:.75rem; font-weight:600;
+                 transition:border-color .15s,box-shadow .15s; user-select:none; }
+.ss-swatch input:checked ~ .ss-swatch-box { border-color:currentColor; box-shadow:0 0 0 3px rgba(0,0,0,.07); }
+.ss-swatch-dot { width:.625rem; height:.625rem; border-radius:50%; }
+
+/* Theme cards */
+.ss-theme-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.625rem; }
+.ss-theme-card { position:relative; }
+.ss-theme-card input { position:absolute; opacity:0; width:0; height:0; }
+.ss-theme-box { border:2px solid var(--border); border-radius:.625rem; padding:.75rem; cursor:pointer;
+                transition:border-color .15s,box-shadow .15s; text-align:center; }
+.ss-theme-card input:checked ~ .ss-theme-box { border-color:rgb(var(--ac)); box-shadow:0 0 0 3px rgb(var(--ac)/.12); }
+.ss-theme-preview { height:2.5rem; border-radius:.375rem; margin-bottom:.5rem; }
+.ss-theme-label { font-size:.75rem; font-weight:600; color:var(--text-muted); }
+
+/* Upload zones */
+.ss-upload { border:1.5px dashed var(--border); border-radius:.625rem; padding:1rem; text-align:center;
+             cursor:pointer; background:var(--surface-soft); position:relative;
+             transition:border-color .15s,background .15s; }
+.ss-upload:hover { border-color:rgb(var(--ac)/.45); background:rgb(var(--ac)/.04); }
+.ss-upload input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+.ss-upload-icon { width:1.75rem; height:1.75rem; margin:0 auto .375rem; color:var(--text-subtle); }
+.ss-upload-text { font-size:.73rem; color:var(--text-muted); }
+.ss-upload-hint { font-size:.67rem; color:var(--text-subtle); margin-top:.2rem; }
+
+/* Sticky save bar */
+.ss-bar { position:sticky; bottom:0; z-index:40; margin-top:1.5rem;
+          background:var(--surface-strong); border-top:1px solid var(--border);
+          padding:.75rem 0; display:flex; align-items:center; justify-content:space-between;
+          gap:1rem; backdrop-filter:blur(10px); }
+.ss-bar-hint { font-size:.73rem; color:var(--text-subtle); display:flex; align-items:center; gap:.35rem; }
+</style>
+
+@php $s = $settings; @endphp
+
+<div class="ss-wrap px-5 pb-20"
+     x-data="{ tab: '{{ request('tab','general') }}', saving: false }">
+
+    {{-- Page header --}}
+    <div class="ss-header">
+        <div class="flex items-center justify-between flex-wrap gap-3">
+            <div>
+                <h1 class="ss-title">System Settings</h1>
+                <p class="ss-subtitle">Manage platform identity, localization, security, appearance and notification channels.</p>
+            </div>
+            @if($s->maintenance_mode)
+                <span class="ss-badge ss-badge-warn">
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                    Maintenance Mode ON
+                </span>
+            @else
+                <span class="ss-badge ss-badge-ok">
+                    <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"/></svg>
+                    System Online
+                </span>
+            @endif
+        </div>
+    </div>
+
+    @if($errors->any())
+    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700 space-y-0.5">
+        @foreach($errors->all() as $e)<p>• {{ $e }}</p>@endforeach
+    </div>
+    @endif
+
+    {{-- Tab strip --}}
+    <div class="ss-tabs">
+        @php
+        $tabs = [
+            ['key'=>'general',      'label'=>'General',       'icon'=>'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z'],
+            ['key'=>'branding',     'label'=>'Branding',      'icon'=>'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'],
+            ['key'=>'localization', 'label'=>'Localization',  'icon'=>'M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129'],
+            ['key'=>'security',     'label'=>'Security',      'icon'=>'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z'],
+            ['key'=>'appearance',   'label'=>'Appearance',    'icon'=>'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01'],
+            ['key'=>'notifications','label'=>'Notifications', 'icon'=>'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9'],
+            ['key'=>'api',          'label'=>'API & Access',  'icon'=>'M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'],
+        ];
+        @endphp
+        @foreach($tabs as $t)
+        <button type="button" @click="tab='{{ $t['key'] }}'"
+                :class="tab==='{{ $t['key'] }}' && 'active'" class="ss-tab">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $t['icon'] }}"/>
+            </svg>
+            {{ $t['label'] }}
+        </button>
+        @endforeach
+    </div>
+
+    {{-- ════════════════════════════════════════════════════════ --}}
+    <form method="POST" action="{{ route('settings.system.update') }}"
+          enctype="multipart/form-data" @submit="saving=true">
+    @csrf
+
+    {{-- ── TAB: GENERAL ────────────────────────────────────── --}}
+    <div x-show="tab==='general'" x-transition:enter="transition ease-out duration-150"
+         x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
+
+        <div class="ss-card">
+            <div class="ss-card-title">
+                <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg></div>
+                Platform Identity
+            </div>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <label class="ss-label">System Name <span class="text-rose-500">*</span></label>
+                    <input name="app_name" value="{{ old('app_name', $s->app_name) }}" required class="ss-input">
+                    <p class="ss-hint">Appears in page titles, emails and PDF headers.</p>
+                </div>
+                <div>
+                    <label class="ss-label">Short Name / Abbreviation</label>
+                    <input name="short_name" value="{{ old('short_name', $s->short_name) }}" class="ss-input" placeholder="e.g. CMS">
+                </div>
+                <div>
+                    <label class="ss-label">Welcome Message</label>
+                    <input name="welcome_message" value="{{ old('welcome_message', $s->welcome_message) }}" class="ss-input" placeholder="Welcome to the court portal">
+                </div>
+                <div>
+                    <label class="ss-label">Website URL</label>
+                    <input type="url" name="website_url" value="{{ old('website_url', $s->website_url) }}" class="ss-input" placeholder="https://court.gov.et">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="ss-label">Physical Address</label>
+                    <input name="address" value="{{ old('address', $s->address) }}" class="ss-input" placeholder="Bole Sub-city, Addis Ababa, Ethiopia">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="ss-label">About the Court / System</label>
+                    <textarea name="about" rows="3" class="ss-textarea">{{ old('about', $s->about) }}</textarea>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="ss-label">Footer Text</label>
+                    <input name="footer_text" value="{{ old('footer_text', $s->footer_text) }}" class="ss-input" placeholder="© {{ date('Y') }} Federal Court. All rights reserved.">
+                </div>
+            </div>
         </div>
 
-        <form method="POST" action="{{ route('settings.system.update') }}" enctype="multipart/form-data" class="enterprise-panel">
-            @csrf
+        <div class="ss-card">
+            <div class="ss-card-title">
+                <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg></div>
+                Contact Information
+            </div>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <label class="ss-label">Contact Email</label>
+                    <input type="email" name="contact_email" value="{{ old('contact_email', $s->contact_email) }}" class="ss-input" placeholder="info@court.gov.et">
+                </div>
+                <div>
+                    <label class="ss-label">Contact Phone</label>
+                    <input name="contact_phone" value="{{ old('contact_phone', $s->contact_phone) }}" class="ss-input" placeholder="+251 11 ...">
+                </div>
+            </div>
+        </div>
+    </div>
 
-            <div class="enterprise-panel-body space-y-8">
-                <section class="space-y-4">
-                    <h2 class="text-lg font-semibold text-slate-900">General</h2>
-                    <div class="grid md:grid-cols-2 gap-5">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700">System Name <span class="text-rose-500">*</span></label>
-                            <input name="app_name" value="{{ old('app_name', $settings->app_name) }}" required class="ui-input mt-1">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700">Short Name</label>
-                            <input name="short_name" value="{{ old('short_name', $settings->short_name) }}" class="ui-input mt-1">
-                        </div>
+    {{-- ── TAB: BRANDING ───────────────────────────────────── --}}
+    <div x-show="tab==='branding'" x-cloak x-transition:enter="transition ease-out duration-150"
+         x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
+
+        <div class="ss-card">
+            <div class="ss-card-title">
+                <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div>
+                Visual Assets
+                <span class="ml-auto text-[.68rem] text-[var(--text-subtle)] font-normal">Leave empty to keep current file</span>
+            </div>
+
+            <div class="mb-4">
+                <label class="ss-label mb-1.5">Header Banner</label>
+                <div class="ss-upload">
+                    <input type="file" name="banner" accept=".png,.jpg,.jpeg,.webp">
+                    <svg class="ss-upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    <p class="ss-upload-text">Click to upload banner</p>
+                    <p class="ss-upload-hint">PNG / JPG / WEBP · max 3 MB · recommended 1200×300 px</p>
+                </div>
+                @if($s->banner_path)
+                <div class="mt-2 rounded-lg border border-[var(--border)] overflow-hidden">
+                    <img src="{{ asset('storage/'.$s->banner_path) }}" class="w-full max-h-28 object-cover">
+                </div>
+                @endif
+            </div>
+
+            <div class="grid sm:grid-cols-3 gap-4">
+                @foreach([
+                    ['name'=>'logo',    'label'=>'Logo',          'hint'=>'PNG/SVG · max 2 MB',        'accept'=>'.png,.jpg,.jpeg,.svg,.webp', 'path'=>$s->logo_path,    'h'=>'h-12'],
+                    ['name'=>'favicon', 'label'=>'Favicon',       'hint'=>'PNG or ICO · max 512 KB · 32×32', 'accept'=>'.png,.ico',                'path'=>$s->favicon_path, 'h'=>'h-8 w-8'],
+                    ['name'=>'seal',    'label'=>'Official Seal', 'hint'=>'PNG only · max 1 MB · square',     'accept'=>'.png',                     'path'=>$s->seal_path,    'h'=>'h-14 w-14'],
+                ] as $asset)
+                <div>
+                    <label class="ss-label mb-1.5">{{ $asset['label'] }}</label>
+                    <div class="ss-upload">
+                        <input type="file" name="{{ $asset['name'] }}" accept="{{ $asset['accept'] }}">
+                        <svg class="ss-upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"/></svg>
+                        <p class="ss-upload-text">Upload {{ strtolower($asset['label']) }}</p>
+                        <p class="ss-upload-hint">{{ $asset['hint'] }}</p>
                     </div>
+                    @if($asset['path'])
+                    <div class="mt-2 flex items-center justify-center h-14 rounded-lg border border-[var(--border)] bg-[var(--surface-soft)]">
+                        <img src="{{ asset('storage/'.$asset['path']) }}" class="{{ $asset['h'] }} object-contain">
+                    </div>
+                    @endif
+                </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
 
-                    <label class="admin-checkbox-card">
-                        <input type="checkbox" name="maintenance_mode" value="1" class="ui-checkbox"
-                            @checked(old('maintenance_mode', $settings->maintenance_mode))>
-                        <span>
-                            <span class="font-medium text-slate-800">Enable maintenance mode</span>
-                            <span class="block text-xs text-slate-500">Shows a maintenance message to public users.</span>
-                        </span>
-                    </label>
-                </section>
+    {{-- ── TAB: LOCALIZATION ───────────────────────────────── --}}
+    <div x-show="tab==='localization'" x-cloak x-transition:enter="transition ease-out duration-150"
+         x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
 
-                <section class="space-y-4 border-t border-slate-200 pt-7">
-                    <h2 class="text-lg font-semibold text-slate-900">Branding</h2>
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div class="admin-panel-muted space-y-2">
-                            <label class="block text-sm font-medium text-slate-700">Banner</label>
-                            <input type="file" name="banner" class="enterprise-file-input">
-                            <p class="text-xs text-slate-500">Wide header image (max 3MB)</p>
-                            @if($settings->banner_path)
-                            <div class="rounded-xl border border-slate-200 bg-white p-2">
-                                <img src="{{ asset('storage/'.$settings->banner_path) }}" class="w-full max-h-40 object-cover rounded-lg">
-                            </div>
+        <div class="ss-card">
+            <div class="ss-card-title">
+                <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg></div>
+                Default Language
+            </div>
+            @php
+            $currentLocale = old('default_locale', $s->default_locale ?? 'en');
+            $localeFlags   = ['en'=>'🇬🇧','am'=>'🇪🇹'];
+            $localeSamples = ['en'=>'Hello, welcome to the portal.','am'=>'ወደ ፖርታሉ እንኳን ደህና መጡ።'];
+            @endphp
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+                @foreach($locales as $code)
+                <label class="relative cursor-pointer select-none">
+                    <input type="radio" name="default_locale" value="{{ $code }}" @checked($currentLocale===$code) class="sr-only peer">
+                    <div class="rounded-lg border-2 p-3.5 transition-all duration-150
+                                peer-checked:border-[rgb(var(--ac))] peer-checked:bg-[rgb(var(--ac)/0.05)] peer-checked:shadow-sm
+                                border-[var(--border)] bg-[var(--surface-soft)] hover:border-[rgb(var(--ac)/0.35)]">
+                        <div class="flex items-center gap-2 mb-1.5">
+                            <span class="text-lg leading-none">{{ $localeFlags[$code] ?? '🌐' }}</span>
+                            <span class="font-bold text-xs text-[var(--text)]">{{ $localeNames[$code] ?? $code }}</span>
+                            @if($currentLocale===$code)
+                            <span class="ml-auto text-[.65rem] font-bold px-1.5 py-0.5 rounded-full bg-[rgb(var(--ac))] text-white">Active</span>
                             @endif
                         </div>
-
-                        <div class="grid gap-4 sm:grid-cols-3">
-                            <div class="admin-panel-muted">
-                                <label class="block text-sm font-medium text-slate-700 mb-2">Logo</label>
-                                <input type="file" name="logo" class="enterprise-file-input">
-                                @if($settings->logo_path)
-                                <div class="mt-3 border border-slate-200 bg-white rounded-xl p-3"><img src="{{ asset('storage/'.$settings->logo_path) }}" class="h-12 object-contain"></div>
-                                @endif
-                            </div>
-
-                            <div class="admin-panel-muted">
-                                <label class="block text-sm font-medium text-slate-700 mb-2">Favicon</label>
-                                <input type="file" name="favicon" class="enterprise-file-input">
-                                @if($settings->favicon_path)
-                                <div class="mt-3 border border-slate-200 bg-white rounded-xl p-3"><img src="{{ asset('storage/'.$settings->favicon_path) }}" class="h-8 w-8 object-contain"></div>
-                                @endif
-                            </div>
-
-                            <div class="admin-panel-muted">
-                                <label class="block text-sm font-medium text-slate-700 mb-2">Official Seal</label>
-                                <input type="file" name="seal" class="enterprise-file-input">
-                                @if($settings->seal_path)
-                                <div class="mt-3 border border-slate-200 bg-white rounded-xl p-3"><img src="{{ asset('storage/'.$settings->seal_path) }}" class="h-14 w-14 object-contain"></div>
-                                @endif
-                            </div>
-                        </div>
+                        <p class="text-[.68rem] text-[var(--text-subtle)] leading-relaxed">{{ $localeSamples[$code] ?? '' }}</p>
                     </div>
-                </section>
-
-                <section class="space-y-4 border-t border-slate-200 pt-7">
-                    <h2 class="text-lg font-semibold text-slate-900">About</h2>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700">About the System / Court</label>
-                        <textarea name="about" rows="5" class="ui-textarea mt-1">{{ old('about', $settings->about) }}</textarea>
-                    </div>
-                </section>
-
-                <section class="space-y-4 border-t border-slate-200 pt-7">
-                    <h2 class="text-lg font-semibold text-slate-900">Contact Information</h2>
-                    <div class="grid md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700">Contact Email</label>
-                            <input type="email" name="contact_email" value="{{ old('contact_email', $settings->contact_email) }}" class="ui-input mt-1">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700">Contact Phone</label>
-                            <input name="contact_phone" value="{{ old('contact_phone', $settings->contact_phone) }}" class="ui-input mt-1">
-                        </div>
-                    </div>
-                </section>
+                </label>
+                @endforeach
             </div>
-
-            <div class="enterprise-panel-header">
-                <span class="text-xs uppercase tracking-[0.16em] text-slate-500">Changes apply after save</span>
-                <button class="btn btn-primary">Save Settings</button>
+            <hr class="ss-divider">
+            <div class="ss-toggle-row">
+                <div class="ss-toggle-info">
+                    <span class="ss-toggle-name">Show Language Switcher in Top Bar</span>
+                    <span class="ss-toggle-desc">Displays the EN / AM toggle in the admin topnav. Hide if you use only one language.</span>
+                </div>
+                <label class="ss-sw">
+                    <input type="checkbox" name="show_language_switcher" value="1" @checked(old('show_language_switcher',$s->show_language_switcher??true))>
+                    <div class="ss-sw-track"><div class="ss-sw-thumb"></div></div>
+                </label>
             </div>
-        </form>
+        </div>
+
+        <div class="ss-card">
+            <div class="ss-card-title">
+                <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064"/></svg></div>
+                Region & Formats
+            </div>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <label class="ss-label">Timezone</label>
+                    <select name="timezone" class="ss-select">
+                        @foreach($timezones as $tz)
+                        <option value="{{ $tz }}" @selected(old('timezone',$s->timezone??'Africa/Addis_Ababa')===$tz)>{{ $tz }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="ss-label">Date Format</label>
+                    <select name="date_format" class="ss-select">
+                        @foreach(['Y-m-d'=>'2026-06-11 (ISO)','d/m/Y'=>'11/06/2026','m/d/Y'=>'06/11/2026','d-m-Y'=>'11-06-2026','F j, Y'=>'June 11, 2026'] as $v=>$l)
+                        <option value="{{ $v }}" @selected(old('date_format',$s->date_format??'Y-m-d')===$v)>{{ $l }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="ss-label">Time Format</label>
+                    <select name="time_format" class="ss-select">
+                        <option value="H:i"   @selected(old('time_format',$s->time_format??'H:i')==='H:i')>24-hour (14:30)</option>
+                        <option value="h:i A" @selected(old('time_format',$s->time_format)==='h:i A')>12-hour (02:30 PM)</option>
+                    </select>
+                </div>
+            </div>
+            <hr class="ss-divider">
+            <div class="ss-toggle-row">
+                <div class="ss-toggle-info">
+                    <span class="ss-toggle-name">Use Ethiopian Calendar (ዘመን)</span>
+                    <span class="ss-toggle-desc">Displays dates in the Ethiopian Ge'ez calendar format throughout the system.</span>
+                </div>
+                <label class="ss-sw">
+                    <input type="checkbox" name="use_ethiopian_calendar" value="1" @checked(old('use_ethiopian_calendar',$s->use_ethiopian_calendar??false))>
+                    <div class="ss-sw-track"><div class="ss-sw-thumb"></div></div>
+                </label>
+            </div>
+        </div>
     </div>
+
+    {{-- ── TAB: SECURITY ───────────────────────────────────── --}}
+    <div x-show="tab==='security'" x-cloak x-transition:enter="transition ease-out duration-150"
+         x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
+
+        <div class="ss-card">
+            <div class="ss-card-title">
+                <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg></div>
+                Access Controls
+            </div>
+            <div class="space-y-2">
+                @foreach([
+                    ['name'=>'maintenance_mode',  'checked'=>$s->maintenance_mode??false,   'label'=>'Maintenance Mode',             'desc'=>'Blocks public portal. Admin panel stays accessible.'],
+                    ['name'=>'registration_open', 'checked'=>$s->registration_open??true,   'label'=>'Open Applicant Registration',  'desc'=>'Allow new applicants and lawyers to self-register.'],
+                    ['name'=>'force_https',       'checked'=>$s->force_https??false,         'label'=>'Force HTTPS',                  'desc'=>'Redirect all HTTP requests to HTTPS. Ensure a valid TLS certificate is in place.'],
+                ] as $tg)
+                <div class="ss-toggle-row">
+                    <div class="ss-toggle-info">
+                        <span class="ss-toggle-name">{{ $tg['label'] }}</span>
+                        <span class="ss-toggle-desc">{{ $tg['desc'] }}</span>
+                    </div>
+                    <label class="ss-sw">
+                        <input type="checkbox" name="{{ $tg['name'] }}" value="1" @checked(old($tg['name'],$tg['checked']))>
+                        <div class="ss-sw-track"><div class="ss-sw-thumb"></div></div>
+                    </label>
+                </div>
+                @endforeach
+            </div>
+        </div>
+
+        <div class="ss-card">
+            <div class="ss-card-title">
+                <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+                Session & Lockout
+            </div>
+            <div class="grid md:grid-cols-3 gap-4">
+                <div>
+                    <label class="ss-label">Session Lifetime</label>
+                    <div class="ss-input-group">
+                        <input type="number" name="session_lifetime" min="5" max="43200" value="{{ old('session_lifetime',$s->session_lifetime??120) }}">
+                        <span class="ss-input-group-addon">min</span>
+                    </div>
+                    <p class="ss-hint">Idle sessions expire after this period.</p>
+                </div>
+                <div>
+                    <label class="ss-label">Max Login Attempts</label>
+                    <div class="ss-input-group">
+                        <input type="number" name="login_max_attempts" min="1" max="100" value="{{ old('login_max_attempts',$s->login_max_attempts??5) }}">
+                        <span class="ss-input-group-addon">tries</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="ss-label">Lockout Duration</label>
+                    <div class="ss-input-group">
+                        <input type="number" name="lockout_minutes" min="1" max="1440" value="{{ old('lockout_minutes',$s->lockout_minutes??15) }}">
+                        <span class="ss-input-group-addon">min</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ss-card">
+            <div class="ss-card-title">
+                <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg></div>
+                Password Policy
+            </div>
+            <div class="mb-4">
+                <label class="ss-label">Minimum Length</label>
+                <div class="ss-input-group" style="max-width:180px;">
+                    <input type="number" name="password_min_length" min="6" max="128" value="{{ old('password_min_length',$s->password_min_length??8) }}">
+                    <span class="ss-input-group-addon">characters</span>
+                </div>
+            </div>
+            <div class="space-y-2">
+                @foreach([
+                    ['name'=>'password_require_uppercase','checked'=>$s->password_require_uppercase??true, 'label'=>'Require Uppercase Letter','desc'=>'Must contain at least one A–Z.'],
+                    ['name'=>'password_require_number',   'checked'=>$s->password_require_number??true,   'label'=>'Require Number',           'desc'=>'Must contain at least one digit 0–9.'],
+                    ['name'=>'password_require_symbol',   'checked'=>$s->password_require_symbol??false,  'label'=>'Require Special Symbol',   'desc'=>'Must contain at least one symbol (!, @, #…).'],
+                ] as $tg)
+                <div class="ss-toggle-row">
+                    <div class="ss-toggle-info">
+                        <span class="ss-toggle-name">{{ $tg['label'] }}</span>
+                        <span class="ss-toggle-desc">{{ $tg['desc'] }}</span>
+                    </div>
+                    <label class="ss-sw">
+                        <input type="checkbox" name="{{ $tg['name'] }}" value="1" @checked(old($tg['name'],$tg['checked']))>
+                        <div class="ss-sw-track"><div class="ss-sw-thumb"></div></div>
+                    </label>
+                </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+
+    {{-- ── TAB: APPEARANCE ─────────────────────────────────── --}}
+    <div x-show="tab==='appearance'" x-cloak x-transition:enter="transition ease-out duration-150"
+         x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
+
+        <div class="ss-card">
+            <div class="ss-card-title">
+                <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg></div>
+                Accent Colour Palette
+            </div>
+            <p class="ss-hint mb-3">System-wide default. Users can override in their profile.</p>
+            @php
+            $palettes=['blue'=>['Ocean Blue','#3b82f6'],'teal'=>['Teal','#14b8a6'],'violet'=>['Violet','#8b5cf6'],'emerald'=>['Emerald','#10b981'],'rose'=>['Rose','#f43f5e']];
+            $cp=old('accent_palette',$s->accent_palette??'blue');
+            @endphp
+            <div class="ss-palette">
+                @foreach($palettes as $key=>[$lbl,$hex])
+                <label class="ss-swatch">
+                    <input type="radio" name="accent_palette" value="{{ $key }}" @checked($cp===$key)>
+                    <div class="ss-swatch-box" style="color:{{ $hex }};background:{{ $hex }}18;">
+                        <span class="ss-swatch-dot" style="background:{{ $hex }};"></span>{{ $lbl }}
+                    </div>
+                </label>
+                @endforeach
+            </div>
+        </div>
+
+        <div class="ss-card">
+            <div class="ss-card-title">
+                <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg></div>
+                Default Theme Mode
+            </div>
+            @php $ct=old('default_theme',$s->default_theme??'system'); @endphp
+            <div class="ss-theme-grid">
+                @foreach(['light'=>['Light','linear-gradient(135deg,#f8fafc 50%,#e2e8f0 100%)','1px solid #e2e8f0'],'dark'=>['Dark','linear-gradient(135deg,#1e293b 50%,#0f172a 100%)','none'],'system'=>['Follow OS','linear-gradient(135deg,#f8fafc 0%,#f8fafc 50%,#1e293b 50%,#0f172a 100%)','1px solid #e2e8f0']] as $v=>[$lbl,$bg,$brd])
+                <label class="ss-theme-card">
+                    <input type="radio" name="default_theme" value="{{ $v }}" @checked($ct===$v)>
+                    <div class="ss-theme-box">
+                        <div class="ss-theme-preview" style="background:{{ $bg }};border:{{ $brd }};"></div>
+                        <p class="ss-theme-label">{{ $lbl }}</p>
+                    </div>
+                </label>
+                @endforeach
+            </div>
+        </div>
+
+        <div class="ss-card">
+            <div class="ss-card-title">
+                <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg></div>
+                Display Options
+            </div>
+            <div class="ss-toggle-row">
+                <div class="ss-toggle-info">
+                    <span class="ss-toggle-name">Show Banner on Login Page</span>
+                    <span class="ss-toggle-desc">Displays the header banner on the applicant and admin login screens.</span>
+                </div>
+                <label class="ss-sw">
+                    <input type="checkbox" name="show_banner_on_login" value="1" @checked(old('show_banner_on_login',$s->show_banner_on_login??true))>
+                    <div class="ss-sw-track"><div class="ss-sw-thumb"></div></div>
+                </label>
+            </div>
+        </div>
+
+        <div class="ss-card">
+            <div class="ss-card-title">
+                <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg></div>
+                Custom CSS
+                <span class="ml-auto text-[.66rem] font-normal px-2 py-0.5 rounded-full border border-[var(--border)] text-[var(--text-subtle)]">Advanced</span>
+            </div>
+            <p class="ss-hint mb-2">Injected into every admin page. Use CSS variables to override theme tokens.</p>
+            <textarea name="custom_css" rows="7" class="ss-textarea" style="font-family:monospace;font-size:.78rem;"
+                      placeholder=":root { --ac: 37 99 235; }">{{ old('custom_css',$s->custom_css) }}</textarea>
+        </div>
+    </div>
+
+    {{-- ── TAB: NOTIFICATIONS ──────────────────────────────── --}}
+    <div x-show="tab==='notifications'" x-cloak x-transition:enter="transition ease-out duration-150"
+         x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
+
+        {{-- ── Email (SMTP) ── --}}
+        <div class="ss-card">
+            <div class="ss-card-title">
+                <div class="ss-card-icon" style="background:rgb(59 130 246/.1);color:rgb(59 130 246);">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                </div>
+                Email — SMTP
+                <div class="ml-auto">
+                    <label class="ss-sw">
+                        <input type="checkbox" name="mail_enabled" value="1" @checked(old('mail_enabled',$s->mail_enabled??false))>
+                        <div class="ss-sw-track"><div class="ss-sw-thumb"></div></div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <label class="ss-label">SMTP Host</label>
+                    <input name="mail_host" value="{{ old('mail_host',$s->mail_host??'smtp.gmail.com') }}" class="ss-input" placeholder="smtp.gmail.com">
+                </div>
+                <div>
+                    <label class="ss-label">Port</label>
+                    <div class="ss-input-group">
+                        <input type="number" name="mail_port" min="1" max="65535" value="{{ old('mail_port',$s->mail_port??587) }}">
+                        <span class="ss-input-group-addon">TCP</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="ss-label">Encryption</label>
+                    <select name="mail_encryption" class="ss-select">
+                        @foreach(['tls'=>'TLS (587)','ssl'=>'SSL (465)','starttls'=>'STARTTLS','none'=>'None (plain)'] as $v=>$l)
+                        <option value="{{ $v }}" @selected(old('mail_encryption',$s->mail_encryption??'tls')===$v)>{{ $l }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="ss-label">Mailer Driver</label>
+                    <select name="mail_mailer" class="ss-select">
+                        <option value="smtp"     @selected(old('mail_mailer',$s->mail_mailer??'smtp')==='smtp')>SMTP</option>
+                        <option value="sendmail" @selected(old('mail_mailer',$s->mail_mailer)==='sendmail')>Sendmail</option>
+                        <option value="log"      @selected(old('mail_mailer',$s->mail_mailer)==='log')>Log (debug only)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="ss-label">Username</label>
+                    <input name="mail_username" value="{{ old('mail_username',$s->mail_username) }}" class="ss-input" placeholder="your@gmail.com" autocomplete="off">
+                </div>
+                <div>
+                    <label class="ss-label">Password / App Key</label>
+                    <div class="ss-pw-wrap" x-data="{show:false}">
+                        <input :type="show?'text':'password'" name="mail_password"
+                               value="{{ old('mail_password',$s->mail_password) }}"
+                               class="ss-input" placeholder="••••••••••••" autocomplete="new-password">
+                        <button type="button" class="ss-pw-toggle" @click="show=!show" :title="show?'Hide':'Show'">
+                            <svg x-show="!show" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            <svg x-show="show" x-cloak class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+                        </button>
+                    </div>
+                    <p class="ss-hint">For Gmail use an App Password (16-char), not your account password.</p>
+                </div>
+                <div>
+                    <label class="ss-label">From Address</label>
+                    <input type="email" name="mail_from_address" value="{{ old('mail_from_address',$s->mail_from_address??$s->contact_email) }}" class="ss-input" placeholder="noreply@court.gov.et">
+                </div>
+                <div>
+                    <label class="ss-label">From Name</label>
+                    <input name="mail_from_name" value="{{ old('mail_from_name',$s->mail_from_name??$s->app_name) }}" class="ss-input" placeholder="{{ $s->app_name ?? config('app.name') }}">
+                </div>
+            </div>
+        </div>
+
+        {{-- ── Telegram ── --}}
+        <div class="ss-card">
+            <div class="ss-card-title">
+                <div class="ss-card-icon" style="background:rgb(0 136 204/.12);color:rgb(0 136 204);">
+                    <svg viewBox="0 0 24 24" fill="currentColor" class="w-3.5 h-3.5"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/></svg>
+                </div>
+                Telegram Bot
+                <div class="ml-auto">
+                    <label class="ss-sw">
+                        <input type="checkbox" name="telegram_enabled" value="1" @checked(old('telegram_enabled',$s->telegram_enabled??false))>
+                        <div class="ss-sw-track"><div class="ss-sw-thumb"></div></div>
+                    </label>
+                </div>
+            </div>
+            <p class="ss-hint mb-4">Create a bot via <strong>@BotFather</strong> on Telegram to get a token, then add the bot to your notification channel and copy the Chat ID.</p>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <label class="ss-label">Bot Token</label>
+                    <div class="ss-pw-wrap" x-data="{show:false}">
+                        <input :type="show?'text':'password'" name="telegram_bot_token"
+                               value="{{ old('telegram_bot_token',$s->telegram_bot_token) }}"
+                               class="ss-input" placeholder="123456789:AABBccDDee..." autocomplete="off">
+                        <button type="button" class="ss-pw-toggle" @click="show=!show">
+                            <svg x-show="!show" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            <svg x-show="show" x-cloak class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+                        </button>
+                    </div>
+                    <p class="ss-hint">Format: <code class="font-mono bg-[var(--surface-soft)] px-1 rounded">BOT_ID:SECRET_KEY</code></p>
+                </div>
+                <div>
+                    <label class="ss-label">Default Chat ID</label>
+                    <input name="telegram_default_chat_id" value="{{ old('telegram_default_chat_id',$s->telegram_default_chat_id) }}" class="ss-input" placeholder="-100xxxxxxxxxx or @channelname">
+                    <p class="ss-hint">Group / channel Chat ID for system notifications. Use a negative number for groups.</p>
+                </div>
+            </div>
+        </div>
+
+        {{-- ── SMS ── --}}
+        <div class="ss-card">
+            <div class="ss-card-title">
+                <div class="ss-card-icon" style="background:rgb(16 185 129/.12);color:rgb(5 150 105);">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                </div>
+                SMS Gateway
+                <div class="ml-auto">
+                    <label class="ss-sw">
+                        <input type="checkbox" name="sms_enabled" value="1" @checked(old('sms_enabled',$s->sms_enabled??false))>
+                        <div class="ss-sw-track"><div class="ss-sw-thumb"></div></div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <label class="ss-label">Provider Name</label>
+                    <input name="sms_provider"
+                           value="{{ old('sms_provider',$s->sms_provider) }}"
+                           class="ss-input" placeholder="e.g. Infobip, Twilio, EthioTelecom, AfricasTalking…">
+                    <p class="ss-hint">Free-text — enter any provider name for your records.</p>
+                </div>
+                <div>
+                    <label class="ss-label">API Base URL</label>
+                    <input type="url" name="sms_base_url"
+                           value="{{ old('sms_base_url',$s->sms_base_url) }}"
+                           class="ss-input" placeholder="https://api.yourprovider.com/v1">
+                    <p class="ss-hint">The REST endpoint root your integration code will call.</p>
+                </div>
+                <div>
+                    <label class="ss-label">API Key / Account SID</label>
+                    <div class="ss-pw-wrap" x-data="{show:false}">
+                        <input :type="show?'text':'password'" name="sms_api_key"
+                               value="{{ old('sms_api_key',$s->sms_api_key) }}"
+                               class="ss-input" placeholder="API key or Account SID" autocomplete="off">
+                        <button type="button" class="ss-pw-toggle" @click="show=!show">
+                            <svg x-show="!show" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            <svg x-show="show" x-cloak class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="ss-label">API Secret / Auth Token</label>
+                    <div class="ss-pw-wrap" x-data="{show:false}">
+                        <input :type="show?'text':'password'" name="sms_api_secret"
+                               value="{{ old('sms_api_secret',$s->sms_api_secret) }}"
+                               class="ss-input" placeholder="API secret or auth token" autocomplete="off">
+                        <button type="button" class="ss-pw-toggle" @click="show=!show">
+                            <svg x-show="!show" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            <svg x-show="show" x-cloak class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="ss-label">Sender ID / From Number</label>
+                    <input name="sms_sender_id" value="{{ old('sms_sender_id',$s->sms_sender_id) }}" class="ss-input" placeholder="CourtMS or +251912345678">
+                    <p class="ss-hint">Alphanumeric sender name (max 11 chars) or E.164 phone number, depending on what your provider supports.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- ── TAB: API & ACCESS ───────────────────────────────── --}}
+    <div x-show="tab==='api'" x-cloak x-transition:enter="transition ease-out duration-150"
+         x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
+
+        <div class="ss-card">
+            <div class="ss-card-title">
+                <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div>
+                REST API
+            </div>
+            <div class="ss-toggle-row mb-4">
+                <div class="ss-toggle-info">
+                    <span class="ss-toggle-name">Enable REST API</span>
+                    <span class="ss-toggle-desc">Allow external systems to query case data via Sanctum-authenticated API endpoints.</span>
+                </div>
+                <label class="ss-sw">
+                    <input type="checkbox" name="api_enabled" value="1" @checked(old('api_enabled',$s->api_enabled??false))>
+                    <div class="ss-sw-track"><div class="ss-sw-thumb"></div></div>
+                </label>
+            </div>
+            <div style="max-width:220px;">
+                <label class="ss-label">Rate Limit (per minute)</label>
+                <div class="ss-input-group">
+                    <input type="number" name="api_rate_limit" min="1" max="10000" value="{{ old('api_rate_limit',$s->api_rate_limit??60) }}">
+                    <span class="ss-input-group-addon">req/min</span>
+                </div>
+                <p class="ss-hint">Applied per authenticated API token.</p>
+            </div>
+        </div>
+
+        <div class="ss-card">
+            <div class="ss-card-title">
+                <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+                System Information
+            </div>
+            <div class="grid sm:grid-cols-2 gap-2">
+                @foreach([
+                    'Laravel'       => app()->version(),
+                    'PHP'           => PHP_VERSION,
+                    'Environment'   => app()->environment(),
+                    'Debug Mode'    => config('app.debug') ? 'Enabled' : 'Disabled',
+                    'Cache Driver'  => config('cache.default'),
+                    'Session Driver'=> config('session.driver'),
+                    'Queue Driver'  => config('queue.default'),
+                    'DB Connection' => config('database.default'),
+                    'Timezone'      => config('app.timezone'),
+                    'Server Time'   => now()->format('Y-m-d H:i:s T'),
+                ] as $k=>$v)
+                <div class="ss-info-row">
+                    <span class="ss-info-key">{{ $k }}</span>
+                    <span class="ss-info-val">{{ $v }}</span>
+                </div>
+                @endforeach
+            </div>
+        </div>
+
+        <div class="ss-card">
+            <div class="ss-card-title">
+                <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg></div>
+                Cache Management
+            </div>
+            <p class="ss-hint mb-3">Settings cache is cleared automatically on save. Use this to manually flush application and view caches.</p>
+            <button type="submit" form="ss-clear-cache-form"
+                    onclick="return confirm('Clear all application caches?')"
+                    class="cs-btn-secondary text-xs px-4 py-2">
+                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                Clear All Caches
+            </button>
+        </div>
+    </div>
+
+    {{-- ── Sticky save bar ─────────────────────────────────── --}}
+    <div class="ss-bar">
+        <span class="ss-bar-hint">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Changes apply immediately. Cache cleared automatically on save.
+        </span>
+        <div class="flex items-center gap-2.5">
+            <a href="{{ route('settings.system.edit') }}" class="cs-btn-secondary text-xs px-4 py-2"
+               :class="saving && 'pointer-events-none opacity-50'">Discard</a>
+            <button type="submit" :disabled="saving"
+                    class="cs-btn-primary text-xs px-5 py-2 min-w-[130px] justify-center disabled:opacity-60 disabled:cursor-not-allowed"
+                    style="background:linear-gradient(135deg,rgb(var(--ac)) 0%,rgb(var(--ac-light,var(--ac))) 100%);">
+                <span x-show="!saving" class="flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                    Save Settings
+                </span>
+                <span x-show="saving" x-cloak class="flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                    </svg>
+                    Saving…
+                </span>
+            </button>
+        </div>
+    </div>
+
+    </form>
+
+    {{-- Standalone clear-cache form (outside main form — no nesting) --}}
+    <form id="ss-clear-cache-form" method="POST" action="{{ route('settings.system.clearCache') }}">@csrf</form>
+
+</div>
 </x-admin-layout>

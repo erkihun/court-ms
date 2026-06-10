@@ -57,6 +57,71 @@
             display: none !important
         }
 
+        /* ── Page-load progress bar ─────────────────────────────── */
+        #spa-progress {
+            position: fixed;
+            top: 0; left: 0;
+            width: 0%;
+            height: 3px;
+            z-index: 9999;
+            background: linear-gradient(90deg, rgb(var(--ac)) 0%, rgb(var(--ac-light,var(--ac))) 100%);
+            border-radius: 0 3px 3px 0;
+            opacity: 0;
+            transition: width .22s ease, opacity .18s ease;
+            pointer-events: none;
+            box-shadow: 0 0 10px 1px rgb(var(--ac)/.45);
+        }
+        #spa-progress.is-running {
+            opacity: 1;
+        }
+        #spa-progress.is-done {
+            width: 100% !important;
+            opacity: 0;
+            transition: width .18s ease, opacity .35s ease .05s;
+        }
+
+        /* ── Full-screen court loader overlay ──────────────────── */
+        #spa-loader {
+            position: fixed;
+            inset: 0;
+            z-index: 9998;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,.38);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .2s ease;
+        }
+        #spa-loader.is-visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .spa-loader-wrap {
+            position: relative;
+            width: 88px;
+            height: 88px;
+        }
+        /* The single combined SVG — ring + icon together, no separate elements */
+        .spa-loader-wrap svg {
+            display: block;
+            width: 88px;
+            height: 88px;
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
+        }
+        .spa-loader-arc {
+            transform-origin: 44px 44px;
+            animation: courtSpin 1.1s linear infinite;
+        }
+        @keyframes courtSpin {
+            to { transform: rotate(360deg); }
+        }
+
         /* NEW: Icons are light blue/white in the dark sidebar for contrast */
         .sidebar-icon {
             color: #dbeafe !important;
@@ -86,6 +151,39 @@
 {{-- Tribunal systems use clear, high-contrast typography --}}
 
 <body x-data="layoutState()" x-init="init()" class="ui-shell admin-subtle-grid min-h-screen flex font-sans font-ui text-[var(--text)]">
+    {{-- Top progress bar — driven by spaProgress() below --}}
+    <div id="spa-progress" role="progressbar" aria-hidden="true"></div>
+
+    {{-- Court loader overlay: single SVG — ring track + spinning arc + scales icon --}}
+    <div id="spa-loader" aria-hidden="true">
+        <div class="spa-loader-wrap">
+            <svg viewBox="0 0 88 88" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {{-- Track circle --}}
+                <circle cx="44" cy="44" r="40" stroke="rgba(255,255,255,0.13)" stroke-width="3.5"/>
+                {{-- Spinning arc group --}}
+                <g class="spa-loader-arc">
+                    <circle cx="44" cy="44" r="40" stroke="rgb(var(--ac,59,130,246))" stroke-width="3.5"
+                            stroke-linecap="round" stroke-dasharray="62 190" opacity=".95"/>
+                </g>
+                {{-- Scales of justice icon, centered at 44,44, scaled from 24x24 viewBox --}}
+                <g transform="translate(20,20) scale(1.833)" stroke="white" stroke-width="1.5"
+                   stroke-linecap="round" stroke-linejoin="round" fill="none"
+                   filter="url(#iconShadow)">
+                    <defs>
+                        <filter id="iconShadow" x="-20%" y="-20%" width="140%" height="140%">
+                            <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="rgba(0,0,0,0.5)"/>
+                        </filter>
+                    </defs>
+                    <line x1="12" y1="3" x2="12" y2="21"/>
+                    <path d="M3 6l9-3 9 3"/>
+                    <path d="M6 6l-3 7a4 4 0 008 0L6 6z"/>
+                    <path d="M18 6l-3 7a4 4 0 008 0L18 6z"/>
+                    <line x1="5" y1="21" x2="19" y2="21"/>
+                </g>
+            </svg>
+        </div>
+    </div>
+
     @include('partials.admin-toasts')
 
     {{-- Sidebar (mobile slide-in + desktop collapsible) --}}
@@ -162,30 +260,32 @@
     @endphp
 
     <aside
-        {{-- UPDATED: Deep Blue/Navy Sidebar BG (Primary Brand Color for Authority) --}}
         class="fixed top-0 left-0 z-40 h-screen
                transform transition-transform-base
                -translate-x-full md:translate-x-0
-               flex flex-col font-sidebar bg-[linear-gradient(180deg,#0f172a_0%,#102c4d_54%,#12375f_100%)] border-r border-slate-800/80 shadow-xl shadow-slate-950/20
+               flex flex-col font-sidebar
+               bg-[#0c1527]
+               border-r border-white/[0.06] shadow-[1px_0_0_0_rgba(255,255,255,0.04),4px_0_24px_-4px_rgba(0,0,0,0.45)]
                w-72 transition-width-slow"
         :class="{
             'translate-x-0': sidebar,
-            'md:w-20': compact,
+            'md:w-[4.5rem]': compact,
             'md:w-64': !compact
         }"
         aria-label="{{ __('app.Sidebar') }}">
 
         {{-- Brand / collapse toggle row --}}
-        <div class="flex items-center gap-3 border-b border-white/10 bg-white/5 px-3 py-4">
+        <div class="flex items-center gap-2.5 px-3 py-3.5 border-b border-white/[0.07]"
+             :class="compact ? 'justify-center' : ''">
             {{-- Logo / initial badge --}}
-            <a href="{{ $hasDashboard ? route('dashboard') : url('/') }}" aria-label="{{ __('app.Dashboard') }}" class="focus-ring rounded flex-shrink-0">
+            <a href="{{ $hasDashboard ? route('dashboard') : url('/') }}" aria-label="{{ __('app.Dashboard') }}" class="focus-ring rounded-lg flex-shrink-0">
                 @if(!empty($systemSettings?->logo_path))
                 <img src="{{ asset('storage/'.$systemSettings->logo_path) }}"
                     alt="{{ $systemSettings->app_name ?? config('app.name','CMS') }}"
-                    class="h-9 w-9 rounded-lg object-contain">
+                    class="h-8 w-8 rounded-lg object-contain ring-1 ring-white/10">
                 @else
-                <div class="h-9 w-9 rounded-lg bg-blue-500/20 border border-blue-400/30 grid place-items-center flex-shrink-0">
-                    <span class="text-base font-extrabold text-blue-200">{{ strtoupper(substr($systemSettings->short_name ?? config('app.name','C'), 0, 1)) }}</span>
+                <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 grid place-items-center flex-shrink-0 ring-1 ring-blue-400/30 shadow-lg shadow-blue-900/40">
+                    <span class="text-sm font-black text-white">{{ strtoupper(substr($systemSettings->short_name ?? config('app.name','C'), 0, 1)) }}</span>
                 </div>
                 @endif
             </a>
@@ -198,13 +298,13 @@
                 x-transition:leave="motion-leave"
                 x-transition:leave-start="motion-slide-inline-end"
                 x-transition:leave-end="motion-slide-inline-start">
-                <div class="text-white text-sm font-extrabold truncate leading-tight">{{ $systemSettings->app_name ?? config('app.name','CMS') }}</div>
-                <div class="text-blue-300/60 text-[10px] font-medium tracking-wide truncate">Admin Panel</div>
+                <div class="text-white text-[13px] font-bold truncate leading-tight tracking-tight">{{ $systemSettings->app_name ?? config('app.name','CMS') }}</div>
+                <div class="text-slate-500 text-[10px] font-medium tracking-wide truncate mt-px uppercase">Admin Portal</div>
             </div>
 
             {{-- Mobile close button --}}
             <button type="button"
-                class="md:hidden flex-shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-lg text-blue-300/70 hover:text-blue-100 hover:bg-white/10 transition-colors duration-150 focus-ring"
+                class="md:hidden flex-shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-md text-slate-500 hover:text-slate-200 hover:bg-white/8 transition-colors duration-150 focus-ring"
                 @click="sidebar=false"
                 aria-label="{{ __('app.Close sidebar') }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -214,26 +314,8 @@
         </div>
 
         {{-- Nav --}}
-        <div id="admin-nav" data-spa-nav="true" x-data="lazyMenu()" x-init="init()" class="flex-1 overflow-y-auto">
-            <template x-if="!loaded">
-                <div class="space-y-3 px-3 py-4" aria-hidden="true">
-                    <div class="h-3 w-24 rounded bg-white/10 skeleton"></div>
-                    <div class="space-y-2">
-                        <div class="h-10 rounded-lg bg-white/8 skeleton"></div>
-                        <div class="h-10 rounded-lg bg-white/8 skeleton"></div>
-                        <div class="h-10 rounded-lg bg-white/8 skeleton"></div>
-                        <div class="h-10 rounded-lg bg-white/8 skeleton"></div>
-                    </div>
-                    <div class="h-3 w-20 rounded bg-white/10 skeleton"></div>
-                    <div class="space-y-2">
-                        <div class="h-10 rounded-lg bg-white/8 skeleton"></div>
-                        <div class="h-10 rounded-lg bg-white/8 skeleton"></div>
-                    </div>
-                </div>
-            </template>
-
-            <template x-if="loaded" :key="'menu'">
-                <nav class="space-y-1.5 px-3 py-4">
+        <div id="admin-nav" data-spa-nav="true" class="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin">
+                <nav class="space-y-0.5 px-2.5 py-3">
             {{-- Dashboard --}}
             @if($hasDashboard)
             {{-- UPDATED: Active state uses Primary Blue (Blue-700). Hover uses a lighter Blue-600/30 mix. --}}
@@ -841,22 +923,21 @@
             @endif
 
                 </nav>
-            </template>
         </div>
 
         {{-- User profile card --}}
         @php $__sidebarUser = auth()->user(); @endphp
         @if($__sidebarUser)
         <div class="sidebar-user-card">
-            <div class="flex items-center gap-3" :class="compact ? 'justify-center' : ''">
+            <div class="flex items-center gap-2.5" :class="compact ? 'justify-center' : ''">
                 {{-- Avatar --}}
                 @if(!empty($__sidebarUser->avatar_path))
                 <img src="{{ asset('storage/'.$__sidebarUser->avatar_path) }}"
-                    class="h-9 w-9 rounded-full object-cover ring-2 ring-white/10 flex-shrink-0"
+                    class="h-8 w-8 rounded-full object-cover ring-2 ring-white/10 flex-shrink-0 shadow-md"
                     alt="{{ $__sidebarUser->name }}">
                 @else
-                <div class="h-9 w-9 rounded-full bg-blue-500/20 border border-blue-400/30 flex-shrink-0 grid place-items-center">
-                    <span class="text-sm font-bold text-blue-200">{{ strtoupper(substr($__sidebarUser->name ?? 'A', 0, 1)) }}</span>
+                <div class="h-8 w-8 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 ring-1 ring-white/10 flex-shrink-0 grid place-items-center shadow-md">
+                    <span class="text-xs font-bold text-slate-200">{{ strtoupper(substr($__sidebarUser->name ?? 'A', 0, 1)) }}</span>
                 </div>
                 @endif
 
@@ -868,8 +949,8 @@
                     x-transition:leave="motion-leave"
                     x-transition:leave-start="motion-slide-inline-end"
                     x-transition:leave-end="motion-slide-inline-start">
-                    <div class="text-[13px] font-semibold text-white truncate">{{ $__sidebarUser->name ?? 'Admin' }}</div>
-                    <div class="text-[11px] text-blue-300/70 truncate capitalize">{{ $__sidebarUser->user_type ?? 'Administrator' }}</div>
+                    <div class="text-[12.5px] font-semibold text-slate-200 truncate leading-tight">{{ $__sidebarUser->name ?? 'Admin' }}</div>
+                    <div class="text-[10.5px] text-slate-500 truncate capitalize mt-px">{{ $__sidebarUser->user_type ?? 'Administrator' }}</div>
                 </div>
 
                 {{-- Logout --}}
@@ -883,9 +964,9 @@
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit"
-                            class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-blue-300/60 hover:text-rose-300 hover:bg-rose-500/10 transition-colors duration-150 focus-ring"
+                            class="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:text-rose-400 hover:bg-rose-500/10 transition-colors duration-150 focus-ring"
                             title="{{ __('app.Logout') }}">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                             </svg>
@@ -911,7 +992,7 @@
     <div id="admin-panel"
         class="flex min-h-screen flex-1 flex-col transition-padding-slow md:ml-64"
         :class="{
-            'md:ml-20': compact,
+            'md:ml-[4.5rem]': compact,
             'md:ml-64': !compact
         }">
 
@@ -1169,8 +1250,8 @@
             <div class="flex items-center gap-1 flex-shrink-0">
 
                 {{-- Date chip (md+) --}}
-                <span class="hidden lg:inline-flex items-center gap-1.5 rounded-lg border border-blue-100 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-950/40 px-2.5 py-1 text-[11.5px] font-semibold text-blue-700 dark:text-blue-300 mr-1 flex-shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                <span class="hidden lg:inline-flex items-center gap-1.5 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 px-2.5 py-1 text-[11px] font-medium text-slate-500 dark:text-slate-400 mr-0.5 flex-shrink-0 select-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 flex-shrink-0 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                     </svg>
                     {{ $todayDisplay }}
@@ -1180,8 +1261,8 @@
                 <x-ui.theme-toggle />
 
                 @auth
-                {{-- Language switcher --}}
-                @if($hasLangSwitch)
+                {{-- Language switcher — visibility controlled by system settings --}}
+                @if($hasLangSwitch && ($systemSettings?->show_language_switcher ?? true))
                 <div class="hidden sm:flex items-center gap-0.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 p-0.5" role="group" aria-label="{{ __('app.Language') }}">
                     <a href="{{ route('language.switch', ['locale' => 'en', 'return' => url()->current()]) }}"
                         class="rounded-md px-2.5 py-1 text-xs font-semibold transition-all duration-150
@@ -1483,7 +1564,7 @@
                             @endif
 
                             {{-- Language switcher (mobile fallback inside profile menu) --}}
-                            @if($hasLangSwitch)
+                            @if($hasLangSwitch && ($systemSettings?->show_language_switcher ?? true))
                             <div class="sm:hidden px-3 py-2">
                                 <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">{{ __('app.Language') }}</p>
                                 <div class="flex items-center gap-0.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 p-0.5 w-fit" role="group">
@@ -1528,62 +1609,48 @@
         </header>
 
         {{-- Page content --}}
-        <main class="page-enter flex-1 p-4 md:p-6 xl:p-8 {{ $isCaseTypographyRoute ? 'case-font-scope case-typography' : '' }}">
+        <main class="page-enter flex-1 p-4 md:p-5 xl:p-7 {{ $isCaseTypographyRoute ? 'case-font-scope case-typography' : '' }}">
             <div class="ui-page-admin">
                 {{ $slot }}
             </div>
         </main>
 
-        <footer class="border-t border-slate-200/80 bg-white/95 backdrop-blur">
-            <div class="px-4 py-5 md:px-6 xl:px-8">
-                <div class="rounded-2xl border border-slate-200/80 bg-gradient-to-r from-white via-slate-50 to-white px-4 py-4 shadow-sm">
-                    <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                        <div class="flex items-center gap-3">
-                            <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-sm font-bold text-white">
-                                {{ \Illuminate\Support\Str::of($shortName)->substr(0, 2) }}
-                            </span>
-                            <div class="text-sm text-slate-600">
-                                <div class="font-semibold text-slate-900">{{ $brandName }}</div>
-                                <div>{{ $footerText }}</div>
-                            </div>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-2 text-xs">
-                            <span class="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 font-semibold text-blue-700">
-                                <span class="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
-                                {{ __('app.court_portal') }}
-                            </span>
-                            <span class="rounded-full border border-slate-200 bg-white px-3 py-1 font-medium text-slate-600">
-                                {{ \App\Support\EthiopianDate::formatDate($footerNow) }}
-                            </span>
-                            <span class="rounded-full border border-slate-200 bg-white px-3 py-1 font-medium text-slate-600">
-                                {{ \App\Support\EthiopianDate::formatTime($footerNow) }}
-                            </span>
-                        </div>
+        <footer class="border-t border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm">
+            <div class="px-4 md:px-6 xl:px-8 py-3">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-2.5">
+                        <span class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600/90 text-[11px] font-bold text-white flex-shrink-0">
+                            {{ \Illuminate\Support\Str::of($shortName)->substr(0, 2) }}
+                        </span>
+                        <span class="text-[12px] text-slate-500 dark:text-slate-500">
+                            <span class="font-semibold text-slate-700 dark:text-slate-400">{{ $brandName }}</span>
+                            <span class="mx-1.5 opacity-30">·</span>
+                            {{ $footerText }}
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-1.5 text-[11px]">
+                        <span class="inline-flex items-center gap-1 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 px-2 py-0.5 font-medium text-slate-500 dark:text-slate-500">
+                            <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 flex-shrink-0"></span>
+                            {{ __('app.court_portal') }}
+                        </span>
+                        <span class="rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 px-2 py-0.5 font-medium text-slate-400 dark:text-slate-600">
+                            {{ \App\Support\EthiopianDate::formatDate($footerNow) }}
+                        </span>
+                        <span class="rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 px-2 py-0.5 font-medium text-slate-400 dark:text-slate-600 tabular-nums">
+                            {{ \App\Support\EthiopianDate::formatTime($footerNow) }}
+                        </span>
                     </div>
                 </div>
             </div>
         </footer>
     </div>
 
-    {{-- Alpine helpers (no changes needed) --}}
+    {{-- Alpine helpers --}}
     <script>
-        function lazyMenu() {
-            return {
-                loaded: false,
-                init() {
-                    requestAnimationFrame(() => {
-                        requestAnimationFrame(() => {
-                            this.loaded = true;
-                        });
-                    });
-                }
-            }
-        }
-
         function layoutState() {
             return {
-                sidebar: false, // mobile only
-                compact: false, // desktop collapse state (persisted)
+                sidebar: false,
+                compact: false,
                 init() {
                     try {
                         const saved = localStorage.getItem('admin_sidebar_compact');
@@ -1600,6 +1667,60 @@
                 }
             }
         }
+    </script>
+    <script>
+        /* ── Thin progress bar controller ───────────────────────── */
+        window.spaProgress = (() => {
+            const bar    = document.getElementById('spa-progress');
+            const loader = document.getElementById('spa-loader');
+            let timer = null;
+            let width = 0;
+            let loaderTimer = null;
+
+            const set = (w) => {
+                if (!bar) return;
+                width = w;
+                bar.style.width = w + '%';
+            };
+
+            const start = () => {
+                if (!bar) return;
+                clearTimeout(timer);
+                clearTimeout(loaderTimer);
+                width = 0;
+                bar.style.transition = 'width .22s ease, opacity .18s ease';
+                bar.style.width = '0%';
+                bar.classList.remove('is-done');
+                bar.classList.add('is-running');
+                // Show loader overlay after 120ms (skip it for instant loads)
+                loaderTimer = setTimeout(() => {
+                    loader?.classList.add('is-visible');
+                }, 120);
+                // Trickle up to ~85% then stall
+                const trickle = () => {
+                    if (width < 30)      set(width + 10 + Math.random() * 8);
+                    else if (width < 60) set(width + 4  + Math.random() * 5);
+                    else if (width < 80) set(width + 2  + Math.random() * 3);
+                    else if (width < 85) set(width + 0.5);
+                    else return;
+                    timer = setTimeout(trickle, 220 + Math.random() * 180);
+                };
+                timer = setTimeout(trickle, 80);
+            };
+
+            const done = () => {
+                if (!bar) return;
+                clearTimeout(timer);
+                clearTimeout(loaderTimer);
+                bar.style.transition = 'width .18s ease, opacity .35s ease .05s';
+                bar.classList.add('is-done');
+                bar.classList.remove('is-running');
+                loader?.classList.remove('is-visible');
+                setTimeout(() => { bar.style.width = '0%'; bar.classList.remove('is-done'); }, 500);
+            };
+
+            return { start, done };
+        })();
     </script>
     <script>
         (() => {
@@ -1651,12 +1772,19 @@
             const swapNav = (doc) => {
                 const incomingNav = doc.querySelector('[data-spa-nav]');
                 if (!incomingNav || !nav) return;
-                nav.innerHTML = incomingNav.innerHTML;
+                // Only replace if active-state markers actually changed — avoids
+                // unnecessary DOM churn (flash) on every SPA navigation.
+                const incomingHtml = incomingNav.innerHTML;
+                if (nav.innerHTML !== incomingHtml) {
+                    nav.innerHTML = incomingHtml;
+                }
             };
 
             const navigate = async (url, push = true) => {
                 const panel = document.querySelector(panelSelector);
                 panel?.setAttribute('aria-busy', 'true');
+                panel?.classList.add('is-loading');
+                window.spaProgress?.start();
 
                 try {
                     const response = await fetch(url, {
@@ -1698,6 +1826,8 @@
                     window.location.href = url;
                 } finally {
                     document.querySelector(panelSelector)?.removeAttribute('aria-busy');
+                    document.querySelector(panelSelector)?.classList.remove('is-loading');
+                    window.spaProgress?.done();
                 }
             };
 
@@ -1725,6 +1855,18 @@
             history.replaceState({
                 url: window.location.href
             }, '', window.location.href);
+        })();
+    </script>
+    <script>
+        /* Hard page-load: run progress bar from 0 → done on DOMContentLoaded */
+        (() => {
+            window.spaProgress?.start();
+            const finish = () => window.spaProgress?.done();
+            if (document.readyState === 'complete' || document.readyState === 'interactive') {
+                finish();
+            } else {
+                document.addEventListener('DOMContentLoaded', finish, { once: true });
+            }
         })();
     </script>
     @if(app()->getLocale() === 'am')

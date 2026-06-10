@@ -384,6 +384,9 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::post('/settings/system', [SystemSettingController::class, 'update'])
                 ->name('settings.system.update');
 
+            Route::post('/settings/system/clear-cache', [SystemSettingController::class, 'clearCache'])
+                ->name('settings.system.clearCache');
+
             // Landing page manager
             Route::get('/landing', [LandingPageController::class, 'index'])->name('admin.landing.index');
             Route::post('/landing/slides', [LandingPageController::class, 'storeSlide'])->name('admin.landing.slides.store');
