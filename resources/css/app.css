@@ -677,6 +677,8 @@
   }
 
   .sidebar-menu-label {
+    /* base menu font is 0.8125rem (13px); bumped by 1.5px → 14.5px */
+    font-size: 14.5px;
     line-height: 1.4;
   }
 

@@ -8,13 +8,13 @@
                 <label class="block text-sm font-medium text-slate-700" for="case_number">{{ __('respondent.case_number_label') }}</label>
                 <input id="case_number" name="case_number" value="{{ old('case_number', $caseNumber) }}"
                     class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
-                    placeholder="e.g. CMS-2024-0001" autocomplete="off">
+                    placeholder="{{ __('respondent.case_number_placeholder') }}" autocomplete="off">
             </div>
             <div>
-                <label class="block text-sm font-medium text-slate-700" for="case_code">Case access code</label>
+                <label class="block text-sm font-medium text-slate-700" for="case_code">{{ __('respondent.case_access_code_label') }}</label>
                 <input id="case_code" name="case_code" value="{{ old('case_code', $caseCode ?? '') }}"
                     class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
-                    placeholder="Enter case access code" autocomplete="off">
+                    placeholder="{{ __('respondent.case_access_code_placeholder') }}" autocomplete="off">
             </div>
             <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-blue-700 text-white text-sm font-semibold hover:bg-blue-800">
                 {{ __('respondent.search') }}
@@ -47,7 +47,7 @@
         @else
             <div class="rounded-xl border border-red-100 bg-red-50 p-4">
                         <div class="text-sm font-semibold text-red-700">
-                            {{ $codeError ? 'Case not found or invalid access code.' : __('respondent.no_matching_case') }}
+                            {{ $codeError ? __('respondent.case_invalid_access') : __('respondent.no_matching_case') }}
                         </div>
             </div>
             @endif

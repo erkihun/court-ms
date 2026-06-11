@@ -361,12 +361,13 @@
             resize: false,
             statusbar: true,
 
-            setup(editor) {
-                // Ensure initial content shows as justified on init
-                editor.on('init', () => {
-                    editor.execCommand('JustifyFull');
-                });
-            }
+            // Don't auto-focus an editor on load (kept the page jumping to the
+            // relief field). Editors only take focus when the user clicks them.
+            auto_focus: false,
+
+            // Justified text is enforced via forced_root_block_attrs +
+            // content_style above, so no execCommand('JustifyFull') is needed on
+            // init — that call focused the editor and scrolled the page down to it.
         };
 
         // CASE DETAILS — taller
