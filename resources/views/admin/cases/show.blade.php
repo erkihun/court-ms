@@ -499,9 +499,9 @@
         }" x-on:open-section.window="openSection($event.detail.section)" x-init="init()">
 
         {{-- Header Card --}}
-        <div class="rounded-2xl border border-[var(--border)] bg-[var(--surface-strong)] shadow-sm overflow-hidden mb-5">
+        <div class="rounded-2xl border border-[var(--border)] bg-[var(--surface-strong)] shadow-sm mb-5">
             {{-- Top accent stripe --}}
-            <div class="h-1 w-full" style="background: linear-gradient(90deg, rgb(var(--ac)) 0%, rgb(var(--ac-light)) 100%)"></div>
+            <div class="h-1 w-full rounded-t-2xl" style="background: linear-gradient(90deg, rgb(var(--ac)) 0%, rgb(var(--ac-light)) 100%)"></div>
 
             <div class="px-5 py-5">
                 <div class="flex w-full flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
