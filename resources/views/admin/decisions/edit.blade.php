@@ -82,10 +82,7 @@
                         <label class="block text-sm font-medium text-gray-700">
                             {{ __('decisions.fields.decision_date') }}
                         </label>
-                        <input type="date" name="decision_date"
-                            value="{{ old('decision_date', optional($decision->decision_date)->format('Y-m-d')) }}"
-                            class="mt-1 w-full px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300
-                                      focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                        <x-eth-date-input name="decision_date" :value="old('decision_date', optional($decision->decision_date)->format('Y-m-d'))" class="mt-1" />
                         @error('decision_date')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                         @enderror

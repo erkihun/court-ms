@@ -79,7 +79,7 @@ $respondentMessages = (clone $base)->limit(6)->get();
             @foreach($respondentMessages as $msg)
             <li class="px-3 py-2">
                 <div class="text-[10px] text-slate-500">
-                    {{ $msg->case_number }} · {{ \Illuminate\Support\Carbon::parse($msg->created_at)->diffForHumans() }}
+                    {{ $msg->case_number }} · {{ \App\Support\EthiopianDate::smartRelative($msg->created_at) }}
                 </div>
                 <div class="text-slate-900 font-medium">
                     {{ $msg->admin_name ?: __('respondent.court_staff') }}

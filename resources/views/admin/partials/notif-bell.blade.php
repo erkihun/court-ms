@@ -103,7 +103,7 @@ $__adminNotifCount = $adminUnseenMsgs->count() + $adminUnseenCases->count() + $a
                             <div class="font-medium text-slate-100">{{ $m->case_number }}</div>
                             <div class="text-xs text-slate-400">
                                 {{ \Illuminate\Support\Str::limit($displayBody, 80) }}
-                                · {{ \Illuminate\Support\Carbon::parse($m->created_at)->diffForHumans() }}
+                                · {{ \App\Support\EthiopianDate::smartRelative($m->created_at) }}
                             </div>
                         </a>
                         <form method="POST" action="{{ route('admin.notifications.markOne') }}">
@@ -129,7 +129,7 @@ $__adminNotifCount = $adminUnseenMsgs->count() + $adminUnseenCases->count() + $a
                             <div class="font-medium text-slate-100">{{ $c->case_number }}</div>
                             <div class="text-xs text-slate-400">
                                 {{ \Illuminate\Support\Str::limit($c->title, 80) }}
-                                · {{ \Illuminate\Support\Carbon::parse($c->created_at)->diffForHumans() }}
+                                · {{ \App\Support\EthiopianDate::smartRelative($c->created_at) }}
                             </div>
                         </a>
                         <form method="POST" action="{{ route('admin.notifications.markOne') }}">

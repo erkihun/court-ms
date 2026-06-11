@@ -118,7 +118,7 @@
                                 </span>
                             </td>
                             <td class="p-3 align-top text-xs text-gray-500">
-                                {{ $decision->updated_at ? $decision->updated_at->diffForHumans() : '—' }}
+                                {{ \App\Support\EthiopianDate::smartRelative($decision->updated_at) }}
                             </td>
                             @php
                             $middleJudgeId = $decision->panel_judges[1]['admin_user_id'] ?? null;

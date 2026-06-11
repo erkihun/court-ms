@@ -1,6 +1,8 @@
 <?php
 
 return array (
+  'certify_appeal' => 'I certify the validity of my appeal in accordance with F/S/S/No. 92.',
+  'certify_evidence' => 'I certify that the evidence I have presented is true in accordance with F.S./S.H./No. 92.',
   'add_document' => 'Add Document',
   'add_to_calendar' => 'Add to calendar',
   'add_witness' => 'Add Witness',

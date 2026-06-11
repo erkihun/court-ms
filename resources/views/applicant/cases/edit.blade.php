@@ -112,15 +112,11 @@
                             <label class="block  font-medium text-slate-700 mb-1">
                                 {{ __('cases.labels.filing_date') }} <span class="text-red-600">*</span>
                             </label>
-                            <input
-                                type="date"
+                            <x-eth-date-input
                                 name="filing_date"
-                                value="{{ old('filing_date', $case->filing_date) }}"
+                                :value="old('filing_date', $case->filing_date)"
                                 required
-                                class="w-full rounded-lg border border-slate-300 px-3 py-2.5  text-slate-900
-                                       focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
-                                       disabled:bg-slate-100 disabled:text-slate-500"
-                                :disabled="!canEdit" {{ $editable ? '' : 'disabled' }}>
+                                disabled-when="{{ $editable ? '!canEdit' : 'true' }}" />
                             @error('filing_date')
                             <div class="text-xs text-red-600 mt-1">{{ $message }}</div>
                             @enderror

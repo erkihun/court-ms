@@ -87,7 +87,7 @@ $canViewCategories = function_exists('userHasPermission')
                                     {{ $placeholderDisplay }}
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-gray-500">{{ optional($template->updated_at)->diffForHumans() }}</td>
+                            <td class="px-4 py-3 text-gray-500">{{ \App\Support\EthiopianDate::smartRelative($template->updated_at) }}</td>
                             <td class="px-4 py-3">
                                 <div class="flex justify-end gap-2">
                                     @if($canUpdateTemplate)

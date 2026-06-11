@@ -56,7 +56,7 @@
                             @endif
                         </td>
                         <td class="px-5 py-4 text-sm text-gray-600">
-                            {{ $about->updated_at?->format('Y-m-d H:i') }}
+                            {{ \App\Support\EthiopianDate::smartFormat($about->updated_at, true, '', 'h:i A', 'Y-m-d') }}
                         </td>
                         <td class="px-5 py-4 text-sm text-right">
                             <div class="inline-flex items-center gap-2">

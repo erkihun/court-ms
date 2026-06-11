@@ -68,15 +68,15 @@
                         </h1>
                         <p class="text-sm text-slate-600 mt-1">
                             {{ __('recordes.labels.filed') }}:
-                            {{ optional($case->filing_date)->toFormattedDateString() ?? '—' }}
+                            {{ \App\Support\EthiopianDate::smartFormat($case->filing_date, false, '—') }}
                             @if(!empty($case->first_hearing_date))
                                 &middot; {{ __('recordes.labels.hearing_at') }}:
-                                {{ \Illuminate\Support\Carbon::parse($case->first_hearing_date)->toFormattedDateString() }}
+                                {{ \App\Support\EthiopianDate::smartFormat($case->first_hearing_date) }}
                             @endif
                         </p>
                     </div>
                     <div class="text-right text-xs text-slate-500">
-                        {{ __('recordes.labels.generated') }} {{ now()->toDayDateTimeString() }}<br>
+                        {{ __('recordes.labels.generated') }} {{ \App\Support\EthiopianDate::smartFormat(now(), true, '') }}<br>
                         {{ __('recordes.labels.applicant') }}
                         {{ $case->applicant->name ?? ($case->applicant_name ?? 'N/A') }}
                     </div>
@@ -107,7 +107,7 @@
                     <div class="rounded-lg border border-slate-200 p-4 text-sm text-slate-700 space-y-2">
                         <div class="flex items-start justify-between">
                             <p class="font-semibold">{{ $note->title ?? __('recordes.labels.note') }}</p>
-                            <span class="text-xs text-slate-500">{{ optional($note->created_at)->toDayDateTimeString() }}</span>
+                            <span class="text-xs text-slate-500">{{ \App\Support\EthiopianDate::smartFormat($note->created_at, true, '') }}</span>
                         </div>
                         <div class="prose max-w-none text-sm text-slate-800">
                             {!! $sanitize($note->note ?? $note->body ?? '') !!}
@@ -141,11 +141,11 @@
                         </div>
                         <div>
                             <dt class="text-xs uppercase tracking-wide text-slate-500">{{ __('recordes.labels.filed') }}</dt>
-                            <dd class="font-medium text-slate-900">{{ optional($case->filing_date)->toFormattedDateString() ?? '—' }}</dd>
+                            <dd class="font-medium text-slate-900">{{ \App\Support\EthiopianDate::smartFormat($case->filing_date, false, '—') }}</dd>
                         </div>
                         <div>
                             <dt class="text-xs uppercase tracking-wide text-slate-500">{{ __('recordes.labels.hearing_at') }}</dt>
-                            <dd class="font-medium text-slate-900">{{ optional($case->first_hearing_date)->toFormattedDateString() ?? '—' }}</dd>
+                            <dd class="font-medium text-slate-900">{{ \App\Support\EthiopianDate::smartFormat($case->first_hearing_date, false, '—') }}</dd>
                         </div>
                     </dl>
                 </div>
@@ -174,7 +174,7 @@
                             <div class="rounded-lg border border-slate-200 p-3 text-sm text-slate-700 flex justify-between">
                                 <div>
                                     <p class="font-semibold">{{ $document->label ?? $document->title ?? __('recordes.labels.document') }}</p>
-                                    <p class="text-xs text-slate-500">{{ optional($document->created_at)->toDayDateTimeString() }}</p>
+                                    <p class="text-xs text-slate-500">{{ \App\Support\EthiopianDate::smartFormat($document->created_at, true, '') }}</p>
                                 </div>
                                 @if(!empty($document->path ?? $document->file_path))
                                     <span class="text-xs text-slate-500">{{ $document->path ?? $document->file_path }}</span>
@@ -217,7 +217,7 @@
                                     {{ __('recordes.labels.case_number') }} {{ $resp->case_number ?? $case->case_number ?? __('recordes.messages.not_available') }}
                                 </p>
                             </div>
-                            <span class="text-xs text-slate-500">{{ optional($resp->created_at)->toDayDateTimeString() }}</span>
+                            <span class="text-xs text-slate-500">{{ \App\Support\EthiopianDate::smartFormat($resp->created_at, true, '') }}</span>
                         </div>
                         @if(!empty($resp->description))
                             <p>{{ \Illuminate\Support\Str::limit(strip_tags($resp->description), 260) }}</p>
@@ -251,7 +251,7 @@
                                     {{ __('recordes.labels.author') }} {{ $letter->author_name ?? __('recordes.messages.not_available') }}
                                 </p>
                             </div>
-                            <span class="text-xs text-slate-500">{{ optional($letter->created_at)->toDayDateTimeString() }}</span>
+                            <span class="text-xs text-slate-500">{{ \App\Support\EthiopianDate::smartFormat($letter->created_at, true, '') }}</span>
                         </div>
                         @if(!empty($letter->body))
                             <div class="prose max-w-none mt-2">
@@ -273,7 +273,7 @@
                 @forelse($hearings ?? [] as $hearing)
                     @php
                         $hearingMoment = !empty($hearing->hearing_at) ? \Illuminate\Support\Carbon::parse($hearing->hearing_at) : null;
-                        $hearingFormatted = $hearingMoment ? $hearingMoment->format('F j, Y g:i A') : __('recordes.labels.hearing_unknown');
+                        $hearingFormatted = $hearingMoment ? \App\Support\EthiopianDate::smartFormat($hearingMoment, true, '', 'h:i A', 'F j, Y') : __('recordes.labels.hearing_unknown');
                     @endphp
                     <div class="border border-slate-200 rounded-lg p-4 text-sm text-slate-700 space-y-2">
                         <div class="flex items-start justify-between gap-3">
@@ -299,7 +299,7 @@
             <section id="section-final-decision" class="record-section hidden bg-white shadow rounded-xl border border-slate-200 p-6 space-y-4">
                 <header class="flex items-center justify-between">
                     <h2 class="text-lg font-semibold text-slate-900">{{ __('recordes.labels.final_judgment') }}</h2>
-                    <span class="text-xs text-slate-500">{{ $decision ? __('recordes.labels.created') . ' ' . optional($decision->created_at)->toDayDateTimeString() : __('recordes.messages.no_decision') }}</span>
+                    <span class="text-xs text-slate-500">{{ $decision ? __('recordes.labels.created') . ' ' . \App\Support\EthiopianDate::smartFormat($decision->created_at, true, '') : __('recordes.messages.no_decision') }}</span>
                 </header>
                 @if(!empty($decision))
                     <div class="border border-slate-200 rounded-lg p-4 text-sm text-slate-700 space-y-2">
@@ -327,7 +327,7 @@
                         <div class="rounded-lg border border-slate-200 p-4 text-sm text-slate-700 flex justify-between">
                             <div>
                                 <p class="font-semibold">{{ $file->label ?? __('recordes.labels.document') }}</p>
-                                <p class="text-xs text-slate-500">{{ optional($file->created_at)->toDayDateTimeString() }}</p>
+                                <p class="text-xs text-slate-500">{{ \App\Support\EthiopianDate::smartFormat($file->created_at, true, '') }}</p>
                             </div>
                             @if(!empty($file->path))
                                 <span class="text-xs text-slate-500">{{ $file->path }}</span>
@@ -343,7 +343,7 @@
                     @forelse($evidences ?? [] as $ev)
                         <div class="rounded-lg border border-slate-200 p-4 text-sm text-slate-700">
                             <p class="font-semibold">{{ $ev->title ?? __('recordes.labels.document') }}</p>
-                            <p class="text-xs text-slate-500">{{ optional($ev->created_at)->toDayDateTimeString() }}</p>
+                            <p class="text-xs text-slate-500">{{ \App\Support\EthiopianDate::smartFormat($ev->created_at, true, '') }}</p>
                             @if(!empty($ev->description))
                                 <p class="mt-1">{{ $ev->description }}</p>
                             @endif

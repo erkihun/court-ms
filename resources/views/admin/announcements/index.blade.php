@@ -41,10 +41,10 @@
                             <tr>
                                 <td class="px-4 py-3">
                                     <div class="font-semibold text-gray-900">{{ $announcement->title }}</div>
-                                    <div class="text-xs text-gray-500">{{ $announcement->created_at?->format('Y-m-d H:i') }}</div>
+                                    <div class="text-xs text-gray-500">{{ \App\Support\EthiopianDate::smartFormat($announcement->created_at, true, '', 'h:i A', 'Y-m-d') }}</div>
                                 </td>
-                                <td class="px-4 py-3 text-gray-600">{{ $announcement->created_at?->format('Y-m-d') }}</td>
-                                <td class="px-4 py-3 text-gray-600">{{ $announcement->updated_at?->format('Y-m-d') }}</td>
+                                <td class="px-4 py-3 text-gray-600">{{ \App\Support\EthiopianDate::smartFormat($announcement->created_at) }}</td>
+                                <td class="px-4 py-3 text-gray-600">{{ \App\Support\EthiopianDate::smartFormat($announcement->updated_at) }}</td>
                                 <td class="px-4 py-3">
                                     @php
                                         $statusKey = $announcement->status ?? 'active';

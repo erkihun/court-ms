@@ -107,7 +107,7 @@
 
                         <div class="pt-3 border-t border-white/5 flex items-center justify-between gap-2">
                             @if($res->published_at)
-                            <span class="text-xs text-slate-500">{{ $res->published_at->format('d M Y') }}</span>
+                            <span class="text-xs text-slate-500">{{ \App\Support\EthiopianDate::smartFormat($res->published_at, false, '') }}</span>
                             @else
                             <span></span>
                             @endif

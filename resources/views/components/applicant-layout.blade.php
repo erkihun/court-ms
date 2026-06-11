@@ -264,20 +264,24 @@ $respondentNotifList = collect();
 <body class="ui-shell min-h-screen font-ui text-[var(--text)]">
 
     {{-- Header / Nav --}}
-    <header x-data="{ mobileOpen: false }" class="sticky top-0 z-40 border-b border-white/10 bg-[#0c1445] text-white">
+    <header x-data="{ mobileOpen: false }"
+            class="sticky top-0 z-40 border-b backdrop-blur-md"
+            style="border-color: var(--border); background: color-mix(in srgb, var(--surface-strong) 88%, transparent);">
         <div class="{{ $shellWidthClass }} mx-auto px-4 flex h-14 items-center justify-between gap-3">
 
             {{-- ── Brand ──────────────────────────────────────────────── --}}
             <a href="{{ $actingRespondent ? route('respondent.dashboard') : (auth('applicant')->check() ? route('applicant.dashboard') : route('applicant.login')) }}"
-               class="flex items-center gap-2.5 flex-shrink-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+               class="flex items-center gap-2.5 flex-shrink-0 rounded-lg focus:outline-none focus-visible:ring-2"
+               style="--tw-ring-color: rgb(var(--ac) / 0.4);">
                 @if($logoPath)
                 <img src="{{ asset('storage/'.$logoPath) }}" alt="{{ $brandName }}" class="h-8 w-auto object-contain">
                 @else
-                <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 border border-white/20 text-xs font-bold uppercase tracking-wide flex-shrink-0">
+                <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold uppercase tracking-wide flex-shrink-0 text-white"
+                      style="background: rgb(var(--ac));">
                     {{ \Illuminate\Support\Str::of($shortName)->substr(0,2) }}
                 </span>
                 @endif
-                <span class="font-bold text-sm text-white/90 hidden sm:block truncate max-w-[200px] leading-tight">{{ $brandName }}</span>
+                <span class="font-bold text-sm hidden sm:block truncate max-w-[200px] leading-tight" style="color: var(--text);">{{ $brandName }}</span>
             </a>
 
             {{-- ── Right zone ─────────────────────────────────────────── --}}
@@ -319,15 +323,17 @@ $respondentNotifList = collect();
                     </a>
                     <a href="{{ route('respondent.cases.my') }}"
                        class="ap-navlink {{ request()->routeIs('respondent.cases.*') ? 'ap-navlink-active' : '' }}">
+                        {{-- My Cases (briefcase) --}}
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h10M4 18h6"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7h-3V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2H4a2 2 0 00-2 2v9a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2zM9 5h6v2H9V5z"/>
                         </svg>
                         {{ __('respondent.my_cases') }}
                     </a>
                     <a href="{{ route('respondent.responses.index') }}"
                        class="ap-navlink {{ request()->routeIs('respondent.responses.*') ? 'ap-navlink-active' : '' }}">
+                        {{-- My Responses (reply bubble) --}}
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5h14M5 12h14M5 19h7"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h11a4 4 0 014 4v0a4 4 0 01-4 4H7l-4 3V10zm0 0l4-4"/>
                         </svg>
                         {{ __('respondent.my_responses') }}
                     </a>
@@ -335,17 +341,27 @@ $respondentNotifList = collect();
                     {{-- Applicant nav links --}}
                     <a href="{{ route('applicant.dashboard') }}"
                        class="ap-navlink {{ request()->routeIs('applicant.dashboard') ? 'ap-navlink-active' : '' }}">
+                        {{-- Home --}}
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                         </svg>
                         {{ __('app.home') }}
                     </a>
                     <a href="{{ route('applicant.cases.index') }}"
-                       class="ap-navlink {{ request()->routeIs('applicant.cases.*') ? 'ap-navlink-active' : '' }}">
+                       class="ap-navlink {{ request()->routeIs('applicant.cases.index') || request()->routeIs('applicant.cases.show') || request()->routeIs('applicant.cases.edit') ? 'ap-navlink-active' : '' }}">
+                        {{-- My Cases (briefcase) --}}
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h10M4 18h6"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7h-3V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2H4a2 2 0 00-2 2v9a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2zM9 5h6v2H9V5z"/>
                         </svg>
                         {{ __('app.my_cases') }}
+                    </a>
+                    <a href="{{ route('applicant.cases.create') }}"
+                       class="ap-navlink {{ request()->routeIs('applicant.cases.create') ? 'ap-navlink-active' : '' }}">
+                        {{-- New Case (document plus) --}}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6M7 3h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z"/>
+                        </svg>
+                        {{ __('app.new_case') }}
                     </a>
                     @endif
 
@@ -367,8 +383,9 @@ $respondentNotifList = collect();
                         <button type="button"
                             @click.stop="open = !open; $dispatch('close-profile-menus')"
                             class="ap-icon-btn" aria-label="{{ __('respondent.notifications') }}">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 1 1-6 0h6z"/>
+                            {{-- Notifications (bell) --}}
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/>
                             </svg>
                             @if(($respondentNotifCount ?? 0) > 0)
                             <span class="ap-badge">{{ $respondentNotifCount > 9 ? '9+' : $respondentNotifCount }}</span>
@@ -397,7 +414,7 @@ $respondentNotifList = collect();
                                             </div>
                                             <div class="font-semibold text-slate-900">{{ $item->case_number ?? '—' }}</div>
                                             <div class="text-xs text-slate-500">{{ $item->title ?? __('respondent.view_case_details') }}</div>
-                                            <div class="text-[11px] text-slate-400 mt-1">{{ optional($item->at)->diffForHumans() }}</div>
+                                            <div class="text-[11px] text-slate-400 mt-1">{{ \App\Support\EthiopianDate::smartRelative($item->at) }}</div>
                                         </div>
                                         <div class="flex flex-col gap-2 items-end">
                                             <a href="{{ route('respondent.cases.show', $item->case_number) }}" class="text-xs font-semibold text-blue-700 hover:underline">
@@ -438,10 +455,11 @@ $respondentNotifList = collect();
                         <div class="flex items-center gap-0.5">
                             <button type="button"
                                 @click.stop="tab = 'messages'; open = true; if (messageCount > 0) { messageModal = true }; $dispatch('close-profile-menus')"
-                                class="ap-icon-btn" :class="tab === 'messages' && open ? 'bg-white/15 text-white' : ''"
+                                class="ap-icon-btn" :class="tab === 'messages' && open ? 'ap-icon-btn-active' : ''"
                                 aria-label="{{ __('cases.navigation.messages') }}">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 8h10M7 12h4m-4 4h6m2-8h3a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-6l-4 3v-3H7a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/>
+                                {{-- Messages (chat bubble) --}}
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
                                 </svg>
                                 @if($messageNotificationCount > 0)
                                 <span class="ap-badge">{{ $messageNotificationCount > 9 ? '9+' : $messageNotificationCount }}</span>
@@ -449,10 +467,11 @@ $respondentNotifList = collect();
                             </button>
                             <button type="button"
                                 @click.stop="if (tab === 'notifications') { open = !open } else { tab = 'notifications'; open = true }; $dispatch('close-profile-menus')"
-                                class="ap-icon-btn" :class="tab === 'notifications' && open ? 'bg-white/15 text-white' : ''"
+                                class="ap-icon-btn" :class="tab === 'notifications' && open ? 'ap-icon-btn-active' : ''"
                                 aria-label="{{ __('app.Notifications') }}">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 1 1-6 0h6z"/>
+                                {{-- Notifications (bell) --}}
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/>
                                 </svg>
                                 @if($notificationCount > 0)
                                 <span class="ap-badge">{{ $notificationCount > 9 ? '9+' : $notificationCount }}</span>
@@ -489,7 +508,7 @@ $respondentNotifList = collect();
                                         <li class="py-2 flex items-center justify-between gap-3">
                                             <a href="{{ route('applicant.cases.show', $m->case_id) }}" class="text-sm flex-1">
                                                 <div class="font-medium text-slate-800">{{ $m->case_number }}</div>
-                                                <div class="text-xs text-slate-500">{{ \Illuminate\Support\Str::limit($displayBody, 80) }} <span class="text-slate-400">·</span> {{ \Illuminate\Support\Carbon::parse($m->created_at)->diffForHumans() }}</div>
+                                                <div class="text-xs text-slate-500">{{ \Illuminate\Support\Str::limit($displayBody, 80) }} <span class="text-slate-400">·</span> {{ \App\Support\EthiopianDate::smartRelative($m->created_at) }}</div>
                                             </a>
                                             <form method="POST" action="{{ route('applicant.notifications.markOne', ['type'=>'message','sourceId'=>$m->id]) }}">
                                                 @csrf
@@ -538,7 +557,7 @@ $respondentNotifList = collect();
                                             <li class="py-2 flex items-center justify-between gap-3">
                                                 <a href="{{ route('applicant.cases.show', $v->case_id) }}" class="text-sm flex-1">
                                                     <div class="font-medium text-slate-800">{{ $v->case_number }}</div>
-                                                    <div class="text-xs text-slate-500">{{ $v->respondent_name ?: __('app.admin_notifications.respondent_default') }} <span class="text-slate-400">·</span> {{ \Illuminate\Support\Carbon::parse($v->viewed_at)->diffForHumans() }}</div>
+                                                    <div class="text-xs text-slate-500">{{ $v->respondent_name ?: __('app.admin_notifications.respondent_default') }} <span class="text-slate-400">·</span> {{ \App\Support\EthiopianDate::smartRelative($v->viewed_at) }}</div>
                                                 </a>
                                                 <form method="POST" action="{{ route('applicant.notifications.markOne', ['type'=>'respondent_view','sourceId'=>$v->id]) }}">
                                                     @csrf
@@ -560,7 +579,7 @@ $respondentNotifList = collect();
                                             <li class="py-2 flex items-center justify-between gap-3">
                                                 <a href="{{ route('applicant.cases.show', $s->case_id) }}" class="text-sm flex-1">
                                                     <div class="font-medium text-slate-800">{{ $s->case_number }}</div>
-                                                    <div class="text-xs text-slate-500">{{ ucfirst($s->from_status) }} <span class="text-slate-400">·</span> <strong>{{ ucfirst($s->to_status) }}</strong> <span class="text-slate-400">·</span> {{ \Illuminate\Support\Carbon::parse($s->created_at)->diffForHumans() }}</div>
+                                                    <div class="text-xs text-slate-500">{{ ucfirst($s->from_status) }} <span class="text-slate-400">·</span> <strong>{{ ucfirst($s->to_status) }}</strong> <span class="text-slate-400">·</span> {{ \App\Support\EthiopianDate::smartRelative($s->created_at) }}</div>
                                                 </a>
                                                 <form method="POST" action="{{ route('applicant.notifications.markOne', ['type'=>'status','sourceId'=>$s->id]) }}">
                                                     @csrf
@@ -609,7 +628,7 @@ $respondentNotifList = collect();
                                             <div class="flex items-start gap-3">
                                                 <div class="flex-1">
                                                     <a href="{{ route('applicant.cases.show', $m->case_id) }}" class="text-sm font-semibold text-slate-900 hover:text-blue-600">{{ $m->case_number }}</a>
-                                                    <p class="text-xs text-slate-500 mt-0.5">{{ \Illuminate\Support\Str::limit($displayBody, 90) }} <span class="text-slate-400">·</span> {{ \Illuminate\Support\Carbon::parse($m->created_at)->diffForHumans() }}</p>
+                                                    <p class="text-xs text-slate-500 mt-0.5">{{ \Illuminate\Support\Str::limit($displayBody, 90) }} <span class="text-slate-400">·</span> {{ \App\Support\EthiopianDate::smartRelative($m->created_at) }}</p>
                                                 </div>
                                                 <form method="POST" action="{{ route('applicant.notifications.markOne', ['type'=>'message','sourceId'=>$m->id]) }}">
                                                     @csrf
@@ -710,7 +729,7 @@ $respondentNotifList = collect();
 
                 {{-- ── Hamburger (mobile only) ─────────────────────── --}}
                 <button @click="mobileOpen = !mobileOpen"
-                    class="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-lg text-white/80 hover:bg-white/10 hover:text-white transition-colors"
+                    class="ap-icon-btn md:hidden"
                     aria-label="{{ __('app.menu') }}" :aria-expanded="mobileOpen">
                     <svg x-show="!mobileOpen" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
@@ -724,21 +743,22 @@ $respondentNotifList = collect();
 
         {{-- ── Mobile panel (full-width, below bar) ──────────────── --}}
         <div x-cloak x-show="mobileOpen" @click.outside="mobileOpen = false"
-             class="md:hidden border-t border-white/10 bg-[#0c1445] overflow-hidden">
+             class="md:hidden border-t overflow-hidden"
+             style="border-color: var(--border); background: var(--surface-strong);">
             <div class="{{ $shellWidthClass }} mx-auto px-4 py-3 max-h-[80vh] overflow-y-auto">
                 <ul class="space-y-0.5">
 
                     {{-- Language --}}
                     @unless($actingRespondent)
-                    <li class="pb-2 mb-1 border-b border-white/10">
+                    <li class="pb-2 mb-1 border-b" style="border-color: var(--border);">
                         <div class="ap-mobile-section">{{ __('app.language') }}</div>
                         <div class="flex gap-2 px-1">
                             <a href="{{ route('language.switch', ['locale' => 'en', 'return' => url()->current()]) }}"
-                               class="flex-1 text-center rounded-lg py-2 text-sm font-bold transition-colors {{ app()->getLocale() == 'en' ? 'bg-white text-[#0c1445]' : 'bg-white/10 text-white/75 hover:bg-white/15 hover:text-white' }}">
+                               class="ap-mobile-lang {{ app()->getLocale() == 'en' ? 'ap-mobile-lang-active' : '' }}">
                                 <span class="fi fi-us mr-1 text-xs"></span> English
                             </a>
                             <a href="{{ route('language.switch', ['locale' => 'am', 'return' => url()->current()]) }}"
-                               class="flex-1 text-center rounded-lg py-2 text-sm font-bold transition-colors {{ app()->getLocale() == 'am' ? 'bg-orange-500 text-white' : 'bg-white/10 text-white/75 hover:bg-white/15 hover:text-white' }}">
+                               class="ap-mobile-lang {{ app()->getLocale() == 'am' ? 'ap-mobile-lang-active' : '' }}">
                                 <span class="fi fi-et mr-1 text-xs"></span> አማርኛ
                             </a>
                         </div>
@@ -757,14 +777,29 @@ $respondentNotifList = collect();
                     </li>
                     <li>
                         <a href="{{ route('respondent.case.search') }}" class="ap-mobile-link {{ request()->routeIs('respondent.case.search') ? 'ap-mobile-link-active' : '' }}">
+                            {{-- Find Case (search) --}}
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5a6 6 0 110 12 6 6 0 010-12zm5 11 5 5"/></svg>
                             {{ __('respondent.find_case') }}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('respondent.cases.my') }}" class="ap-mobile-link {{ request()->routeIs('respondent.cases.*') ? 'ap-mobile-link-active' : '' }}">
+                            {{-- My Cases (briefcase) --}}
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7h-3V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2H4a2 2 0 00-2 2v9a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2zM9 5h6v2H9V5z"/></svg>
+                            {{ __('respondent.my_cases') }}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('respondent.responses.index') }}" class="ap-mobile-link {{ request()->routeIs('respondent.responses.*') ? 'ap-mobile-link-active' : '' }}">
+                            {{-- My Responses (reply bubble) --}}
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h11a4 4 0 014 4v0a4 4 0 01-4 4H7l-4 3V10zm0 0l4-4"/></svg>
+                            {{ __('respondent.my_responses') }}
                         </a>
                     </li>
                     <li class="pt-1 mt-1 border-t border-white/10">
                         <form method="POST" action="{{ route('respondent.switchToApplicant') }}">
                             @csrf
-                            <button class="ap-mobile-link text-orange-300 hover:text-orange-200 hover:bg-orange-500/20">{{ __('app.switch_to_applicant') }}</button>
+                            <button class="ap-mobile-link ap-mobile-link-warn">{{ __('app.switch_to_applicant') }}</button>
                         </form>
                     </li>
                     <li class="pt-1 mt-1 border-t border-white/10">
@@ -775,7 +810,7 @@ $respondentNotifList = collect();
                         </a>
                         <form method="POST" action="{{ route('respondent.logout') }}">
                             @csrf
-                            <button class="ap-mobile-link text-rose-300 hover:text-rose-200 hover:bg-rose-500/20">
+                            <button class="ap-mobile-link ap-mobile-link-danger">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                                 {{ __('app.logout') }}
                             </button>
@@ -790,14 +825,16 @@ $respondentNotifList = collect();
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('applicant.cases.index') }}" class="ap-mobile-link {{ request()->routeIs('applicant.cases.*') ? 'ap-mobile-link-active' : '' }}">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+                        <a href="{{ route('applicant.cases.index') }}" class="ap-mobile-link {{ request()->routeIs('applicant.cases.index') || request()->routeIs('applicant.cases.show') || request()->routeIs('applicant.cases.edit') ? 'ap-mobile-link-active' : '' }}">
+                            {{-- My Cases (briefcase) --}}
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7h-3V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2H4a2 2 0 00-2 2v9a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2zM9 5h6v2H9V5z"/></svg>
                             {{ __('app.my_cases') }}
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('applicant.cases.create') }}" class="ap-mobile-link {{ request()->routeIs('applicant.cases.create') ? 'ap-mobile-link-active' : '' }}">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            {{-- New Case (document plus) --}}
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6M7 3h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
                             {{ __('app.new_case') }}
                         </a>
                     </li>
@@ -808,7 +845,7 @@ $respondentNotifList = collect();
                         <button @click.stop="bell = !bell"
                             class="ap-mobile-link justify-between">
                             <span class="flex items-center gap-2.5">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 1 1-6 0h6z"/></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                                 {{ __('app.notifications') }}
                             </span>
                             @if($notificationCount > 0)
@@ -826,7 +863,7 @@ $respondentNotifList = collect();
                     <li class="border-t border-white/10 pt-1 mt-1">
                         <form method="POST" action="{{ route('applicant.switchToRespondent') }}">
                             @csrf
-                            <button class="ap-mobile-link text-orange-300 hover:text-orange-200 hover:bg-orange-500/20">
+                            <button class="ap-mobile-link ap-mobile-link-warn">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17l4-4-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                                 {{ __('app.switch_to_respondent') }}
                             </button>
@@ -840,7 +877,7 @@ $respondentNotifList = collect();
                         </a>
                         <form method="POST" action="{{ route('applicant.logout') }}">
                             @csrf
-                            <button class="ap-mobile-link text-rose-300 hover:text-rose-200 hover:bg-rose-500/20">
+                            <button class="ap-mobile-link ap-mobile-link-danger">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                                 {{ __('app.logout') }}
                             </button>
@@ -891,33 +928,35 @@ $respondentNotifList = collect();
     @unless($hideFooter)
     {{-- Footer --}}
     @php $footerNow = now(); @endphp
-    <footer class="mt-12 border-t border-slate-200/80 bg-white/95 backdrop-blur">
+    <footer class="mt-12 border-t backdrop-blur" style="border-color: var(--border); background: color-mix(in srgb, var(--surface-strong) 95%, transparent);">
         <div class="{{ $shellWidthClass }} mx-auto px-4 py-5">
-            <div class="rounded-2xl border border-slate-200/80 bg-gradient-to-r from-white via-slate-50 to-white px-4 py-4 shadow-sm">
+            <div class="rounded-2xl border px-4 py-4 shadow-sm" style="border-color: var(--border); background: var(--surface);">
                 <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <div class="flex items-center gap-3">
-                        <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-sm font-bold text-white">
+                        <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-sm font-bold text-white" style="background: rgb(var(--ac));">
                             {{ \Illuminate\Support\Str::of($shortName)->substr(0, 2) }}
                         </span>
-                        <div class="text-sm text-slate-600">
-                            <div class="font-semibold text-slate-900">{{ $brandName }}</div>
+                        <div class="text-sm" style="color: var(--text-muted);">
+                            <div class="font-semibold" style="color: var(--text);">{{ $brandName }}</div>
                             <div>{{ $footerText }}</div>
                         </div>
                     </div>
                     <div class="flex flex-wrap items-center gap-2 text-xs">
-                        <span class="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 font-semibold text-blue-700">
-                            <span class="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
+                        <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-semibold"
+                              style="background: rgb(var(--ac) / 0.12); color: rgb(var(--ac)); border: 1px solid rgb(var(--ac) / 0.25);">
+                            <span class="h-1.5 w-1.5 rounded-full" style="background: rgb(var(--ac));"></span>
                             {{ __('app.court_portal') }}
                         </span>
                         @if($actingRespondent)
-                        <span class="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 font-semibold text-amber-700">
+                        <span class="rounded-full px-3 py-1 font-semibold"
+                              style="background: color-mix(in srgb, var(--warning) 14%, transparent); color: var(--warning); border: 1px solid color-mix(in srgb, var(--warning) 30%, transparent);">
                             {{ __('respondent.respondent_view') }}
                         </span>
                         @endif
-                        <span class="rounded-full border border-slate-200 bg-white px-3 py-1 font-medium text-slate-600">
+                        <span class="rounded-full px-3 py-1 font-medium" style="background: var(--surface-strong); border: 1px solid var(--border); color: var(--text-muted);">
                             {{ \App\Support\EthiopianDate::formatDate($footerNow) }}
                         </span>
-                        <span class="rounded-full border border-slate-200 bg-white px-3 py-1 font-medium text-slate-600">
+                        <span class="rounded-full px-3 py-1 font-medium" style="background: var(--surface-strong); border: 1px solid var(--border); color: var(--text-muted);">
                             {{ \App\Support\EthiopianDate::formatTime($footerNow) }}
                         </span>
                     </div>

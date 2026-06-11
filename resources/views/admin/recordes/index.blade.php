@@ -56,11 +56,11 @@
                     <div class="grid grid-cols-2 gap-3 lg:col-span-2">
                         <div>
                             <label for="filter-from" class="mb-1 block text-xs font-medium text-slate-700">{{ __('cases.filters.from') }}</label>
-                            <input id="filter-from" type="date" name="from" value="{{ optional($from)->format('Y-m-d') }}" class="ui-input">
+                            <x-eth-date-input id="filter-from" name="from" :value="$from" class="w-full" />
                         </div>
                         <div>
                             <label for="filter-to" class="mb-1 block text-xs font-medium text-slate-700">{{ __('cases.filters.to') }}</label>
-                            <input id="filter-to" type="date" name="to" value="{{ optional($to)->format('Y-m-d') }}" class="ui-input">
+                            <x-eth-date-input id="filter-to" name="to" :value="$to" class="w-full" />
                         </div>
                     </div>
                 </div>

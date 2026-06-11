@@ -81,7 +81,7 @@
                         {{ \Illuminate\Support\Str::limit($msgBodyLocalized, 80) }}
                         @endif
                         <span class="text-slate-400 mx-1">·</span>
-                        {{ \Illuminate\Support\Carbon::parse($m->created_at)->diffForHumans() }}
+                        {{ \App\Support\EthiopianDate::smartRelative($m->created_at) }}
                     </div>
                 </div>
                 <form method="POST" action="{{ route('applicant.notifications.markOne') }}">
@@ -119,7 +119,7 @@
                     <div class="text-xs text-slate-500">
                         {{ __('app.admin_notifications.respondent_viewed_case', ['name' => ($v->respondent_name ?: __('app.admin_notifications.respondent_default'))]) }}
                         <span class="text-slate-400 mx-1">·</span>
-                        {{ \Illuminate\Support\Carbon::parse($v->viewed_at)->diffForHumans() }}
+                        {{ \App\Support\EthiopianDate::smartRelative($v->viewed_at) }}
                     </div>
                 </a>
                 <form method="POST" action="{{ route('applicant.notifications.markOne') }}">
@@ -155,7 +155,7 @@
                     <div class="text-xs text-slate-500">
                         {{ ucfirst($s->from_status) }} → <strong>{{ ucfirst($s->to_status) }}</strong>
                         <span class="text-slate-400 mx-1">·</span>
-                        {{ \Illuminate\Support\Carbon::parse($s->created_at)->diffForHumans() }}
+                        {{ \App\Support\EthiopianDate::smartRelative($s->created_at) }}
                     </div>
                 </a>
                 <form method="POST" action="{{ route('applicant.notifications.markOne') }}">

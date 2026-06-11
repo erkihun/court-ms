@@ -571,12 +571,21 @@
                             </button>
                             <div x-show="reviewMenuOpen" x-cloak
                                 class="absolute right-0 top-full mt-1.5 w-44 rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] shadow-xl z-30 py-1.5 overflow-hidden">
-                                <button type="button" class="w-full text-left px-3.5 py-2 text-sm text-emerald-600 hover:bg-[var(--surface-soft)] transition-colors"
-                                    @click="reviewMenuOpen=false; submitReviewDecision('accept')">{{ __('cases.show.accept') }}</button>
-                                <button type="button" class="w-full text-left px-3.5 py-2 text-sm text-amber-600 hover:bg-[var(--surface-soft)] transition-colors"
-                                    @click="reviewMenuOpen=false; openReviewModal('return')">{{ __('cases.show.return') }}</button>
-                                <button type="button" class="w-full text-left px-3.5 py-2 text-sm text-red-600 hover:bg-[var(--surface-soft)] transition-colors"
-                                    @click="reviewMenuOpen=false; openReviewModal('reject')">{{ __('cases.show.reject') }}</button>
+                                <button type="button" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-emerald-600 hover:bg-[var(--surface-soft)] transition-colors"
+                                    @click="reviewMenuOpen=false; submitReviewDecision('accept')">
+                                    <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                    {{ __('cases.show.accept') }}
+                                </button>
+                                <button type="button" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-amber-600 hover:bg-[var(--surface-soft)] transition-colors"
+                                    @click="reviewMenuOpen=false; openReviewModal('return')">
+                                    <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+                                    {{ __('cases.show.return') }}
+                                </button>
+                                <button type="button" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-red-600 hover:bg-[var(--surface-soft)] transition-colors"
+                                    @click="reviewMenuOpen=false; openReviewModal('reject')">
+                                    <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    {{ __('cases.show.reject') }}
+                                </button>
                             </div>
                         </div>
                         @endif
@@ -974,7 +983,7 @@
                                     @foreach($hearings as $hearing)
                                     <div>
                                         <div class="font-semibold text-gray-900">
-                                            {{ \Illuminate\Support\Carbon::parse($hearing->hearing_at)->format('F j, Y g:i A') ?? '—' }}
+                                            {{ \App\Support\EthiopianDate::smartFormat($hearing->hearing_at, true, '—', 'h:i A', 'F j, Y') }}
                                         </div>
                                         <div class="text-xs text-gray-600">
                                             {{ __('cases.case_number') }} {{ $case->case_number }}
@@ -1179,7 +1188,7 @@
                             <tbody class="divide-y divide-gray-100">
                                 @foreach(($inspectionRequests ?? collect()) as $req)
                                 <tr class="hover:bg-gray-50">
-                                    <td class="px-3 py-2 text-gray-700">{{ \Illuminate\Support\Carbon::parse($req->request_date)->format('Y-m-d') }}</td>
+                                    <td class="px-3 py-2 text-gray-700">{{ \App\Support\EthiopianDate::smartFormat($req->request_date) }}</td>
                                     <td class="px-3 py-2 text-gray-900">{{ $req->subject }}</td>
                                     <td class="px-3 py-2 text-gray-700">{{ __('case_inspections.status.' . $req->status) }}</td>
                                     <td class="px-3 py-2 text-gray-700">{{ $req->assigned_inspector_name ?? __('case_inspections.common.no_data') }}</td>
@@ -1232,7 +1241,7 @@
                             <tbody class="divide-y divide-gray-100">
                                 @foreach(($inspectionFindings ?? collect()) as $finding)
                                 <tr class="hover:bg-gray-50">
-                                    <td class="px-3 py-2 text-gray-700">{{ \Illuminate\Support\Carbon::parse($finding->finding_date)->format('Y-m-d') }}</td>
+                                    <td class="px-3 py-2 text-gray-700">{{ \App\Support\EthiopianDate::smartFormat($finding->finding_date) }}</td>
                                     <td class="px-3 py-2 text-gray-900">
                                         {{ $finding->title }}
                                         @if(!empty($finding->accepted_at))
@@ -1256,7 +1265,7 @@
                                     <td colspan="6" class="px-4 py-3">
                                         <div class="rounded-lg border border-gray-200 bg-white p-4 space-y-3">
                                             <div class="grid md:grid-cols-3 gap-3 text-sm">
-                                                <div><span class="text-gray-500">{{ __('case_inspections.findings.labels.finding_date') }}:</span> <span class="text-gray-900">{{ \Illuminate\Support\Carbon::parse($finding->finding_date)->format('Y-m-d') }}</span></div>
+                                                <div><span class="text-gray-500">{{ __('case_inspections.findings.labels.finding_date') }}:</span> <span class="text-gray-900">{{ \App\Support\EthiopianDate::smartFormat($finding->finding_date) }}</span></div>
                                                 <div><span class="text-gray-500">{{ __('case_inspections.findings.labels.severity') }}:</span> <span class="text-gray-900">{{ __('case_inspections.severity.' . $finding->severity) }}</span></div>
                                                 <div><span class="text-gray-500">{{ __('case_inspections.findings.labels.recorded_by') }}:</span> <span class="text-gray-900">{{ $finding->recorded_by_name ?? __('case_inspections.common.no_data') }}</span></div>
                                                 <div>
@@ -2137,7 +2146,7 @@
                                         {{ $respReviewLabel }}
                                     </span>
                                 </div>
-                                <span>{{ optional($resp->created_at)->toDayDateTimeString() ?? '' }}</span>
+                                <span>{{ \App\Support\EthiopianDate::smartFormat($resp->created_at, true, '') }}</span>
                             </div>
                             <div class="text-xs text-gray-600">
                                 {{ __('cases.case_number') }}: {{ $resp->case_number ?? $case->case_number }}
@@ -2248,7 +2257,7 @@
                                     <span class="font-semibold text-gray-900">{{ __('respondent.response_of_response') }}</span>
                                     <span class="{{ $replyReviewClass }}">{{ $replyReviewLabel }}</span>
                                 </div>
-                                <span>{{ optional($reply->created_at)->toDayDateTimeString() ?? '' }}</span>
+                                <span>{{ \App\Support\EthiopianDate::smartFormat($reply->created_at, true, '') }}</span>
                             </div>
                             <div class="text-xs text-gray-600 grid gap-1 sm:grid-cols-2">
                                 <span>{{ __('cases.case_number') }}: {{ $case->case_number }}</span>

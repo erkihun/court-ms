@@ -109,7 +109,7 @@
                                     {{ __('terms.status_draft') }}
                                 </div>
                                 <div class="text-xs text-gray-500 mt-1">
-                                    Last edited {{ $term->updated_at->diffForHumans() }}
+                                    Last edited {{ \App\Support\EthiopianDate::smartRelative($term->updated_at) }}
                                 </div>
                                 @endif
                             </td>

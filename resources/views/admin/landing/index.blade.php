@@ -665,7 +665,7 @@
                             @if($res->is_featured)<span class="rounded-full bg-amber-100 text-amber-700 px-2 py-0.5 text-[10px] font-semibold">Featured</span>@endif
                             @if(!$res->is_active)<span class="rounded-full bg-slate-100 text-slate-500 px-2 py-0.5 text-[10px] font-semibold">Hidden</span>@endif
                             @if($res->published_at && $res->published_at->isFuture())
-                            <span class="rounded-full bg-blue-100 text-blue-600 px-2 py-0.5 text-[10px] font-semibold">Scheduled {{ $res->published_at->format('d M') }}</span>
+                            <span class="rounded-full bg-blue-100 text-blue-600 px-2 py-0.5 text-[10px] font-semibold">Scheduled {{ \App\Support\EthiopianDate::smartFormat($res->published_at, false, '', 'h:i A', 'd M') }}</span>
                             @endif
                         </div>
                         <p class="text-sm font-semibold text-slate-900 truncate">{{ $res->title }}</p>

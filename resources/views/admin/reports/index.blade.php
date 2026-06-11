@@ -48,15 +48,11 @@
             <form method="GET" class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div>
                     <label class="block text-xs font-semibold text-slate-500">{{ __('reports.filter.start') }}</label>
-                    <input type="date" name="start_date"
-                        value="{{ old('start_date', $filterParams['start_date'] ?? '') }}"
-                        class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+                    <x-eth-date-input name="start_date" :value="old('start_date', $filterParams['start_date'] ?? '')" class="mt-1" />
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-500">{{ __('reports.filter.end') }}</label>
-                    <input type="date" name="end_date"
-                        value="{{ old('end_date', $filterParams['end_date'] ?? '') }}"
-                        class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+                    <x-eth-date-input name="end_date" :value="old('end_date', $filterParams['end_date'] ?? '')" class="mt-1" />
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-500">{{ __('reports.filter.status') }}</label>
@@ -298,7 +294,7 @@
                         <p class="text-xs text-slate-500">{{ $case->title }}</p>
                         <div class="flex items-center justify-between text-[11px] text-slate-400">
                             <span>{{ $case->applicant?->full_name ?? __('reports.unknown') }}</span>
-                            <span>{{ optional($case->created_at)->diffForHumans() }}</span>
+                            <span>{{ \App\Support\EthiopianDate::smartRelative($case->created_at) }}</span>
                         </div>
                     </a>
                     @empty
@@ -327,7 +323,7 @@
                         <p class="text-xs text-slate-500">{{ $appeal->case_number }}</p>
                         <div class="flex items-center justify-between text-[11px] text-slate-400">
                             <span>{{ $appeal->title }}</span>
-                            <span>{{ \Illuminate\Support\Carbon::parse($appeal->created_at)->diffForHumans() }}</span>
+                            <span>{{ \App\Support\EthiopianDate::smartRelative($appeal->created_at) }}</span>
                         </div>
                     </a>
                     @empty

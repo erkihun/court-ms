@@ -139,7 +139,7 @@ $hasAny = $newCases->isNotEmpty() || $msgs->isNotEmpty() || $status->isNotEmpty(
                     <div class="font-medium text-slate-800">{{ $m->case_number }}</div>
                     <div class="text-xs text-slate-500">
                         {{ \Illuminate\Support\Str::limit($displayBody, 80) }}
-                        · {{ \Illuminate\Support\Carbon::parse($m->created_at)->diffForHumans() }}
+                        · {{ \App\Support\EthiopianDate::smartRelative($m->created_at) }}
                     </div>
                 </a>
                 <form method="POST" action="{{ route('admin.notifications.markOne') }}">
@@ -165,7 +165,7 @@ $hasAny = $newCases->isNotEmpty() || $msgs->isNotEmpty() || $status->isNotEmpty(
                     <div class="font-medium text-slate-800">{{ $s->case_number }}</div>
                     <div class="text-xs text-slate-500">
                         {{ __('app.admin_notifications.status_changed', ['from' => ucfirst($s->from_status), 'to' => ucfirst($s->to_status)]) }}
-                        · {{ \Illuminate\Support\Carbon::parse($s->created_at)->diffForHumans() }}
+                        · {{ \App\Support\EthiopianDate::smartRelative($s->created_at) }}
                     </div>
                 </a>
                 <form method="POST" action="{{ route('admin.notifications.markOne') }}">
@@ -218,7 +218,7 @@ $hasAny = $newCases->isNotEmpty() || $msgs->isNotEmpty() || $status->isNotEmpty(
                     <div class="text-xs text-slate-500">
                         {{ __('app.admin_notifications.respondent_viewed_case', ['name' => ($v->respondent_name ?: __('app.admin_notifications.respondent_default'))]) }}
                         <span class="text-slate-400">·</span>
-                        {{ \Illuminate\Support\Carbon::parse($v->viewed_at)->diffForHumans() }}
+                        {{ \App\Support\EthiopianDate::smartRelative($v->viewed_at) }}
                     </div>
                 </a>
                 <form method="POST" action="{{ route('admin.notifications.markOne') }}">

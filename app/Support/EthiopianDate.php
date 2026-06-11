@@ -60,6 +60,53 @@ class EthiopianDate
         return static::format($value, false, $fallback);
     }
 
+    /**
+     * Locale-aware format: Ethiopian calendar when locale is 'am', Gregorian otherwise.
+     */
+    public static function smartFormat(
+        DateTimeInterface|string|null $value,
+        bool $withTime = false,
+        string $fallback = '—',
+        string $timeFormat = 'h:i A',
+        string $gregFormat = 'd M Y'
+    ): string {
+        if (\Illuminate\Support\Facades\App::getLocale() === 'am') {
+            return static::format($value, $withTime, $fallback, $timeFormat);
+        }
+
+        $date = static::toCarbon($value);
+        if (!$date) {
+            return $fallback;
+        }
+
+        $out = $date->format($gregFormat);
+        if ($withTime) {
+            $out .= ' ' . $date->format('h:i A');
+        }
+
+        return $out;
+    }
+
+    /**
+     * Locale-aware relative time: "X days ago" style, always Gregorian-relative.
+     * Returns Ethiopian absolute date when locale is 'am'.
+     */
+    public static function smartRelative(
+        DateTimeInterface|string|null $value,
+        string $fallback = '—'
+    ): string {
+        $date = static::toCarbon($value);
+        if (!$date) {
+            return $fallback;
+        }
+
+        if (\Illuminate\Support\Facades\App::getLocale() === 'am') {
+            return static::format($value, false, $fallback);
+        }
+
+        return $date->diffForHumans();
+    }
+
     public static function formatDateTime(
         DateTimeInterface|string|null $value,
         string $fallback = '',

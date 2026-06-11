@@ -100,7 +100,7 @@
                     </div>
                 </td>
                 <td class="px-4 py-3 text-gray-600">
-                    {{ $ev->period_start->format('M d') }} – {{ $ev->period_end->format('M d, Y') }}
+                    {{ \App\Support\EthiopianDate::smartFormat($ev->period_start, false, '—', 'h:i A', 'M d') }} – {{ \App\Support\EthiopianDate::smartFormat($ev->period_end, false, '—', 'h:i A', 'M d, Y') }}
                 </td>
                 <td class="px-4 py-3">
                     <span class="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600">
@@ -116,7 +116,7 @@
                     </span>
                 </td>
                 <td class="px-4 py-3 text-gray-600">{{ $ev->evaluator?->name ?? '—' }}</td>
-                <td class="px-4 py-3 text-gray-500 text-xs">{{ $ev->created_at->format('M d, Y') }}</td>
+                <td class="px-4 py-3 text-gray-500 text-xs">{{ \App\Support\EthiopianDate::smartFormat($ev->created_at, false, '—', 'h:i A', 'M d, Y') }}</td>
                 <td class="px-4 py-3">
                     <div class="flex items-center justify-end gap-2">
                         <a href="{{ route('performance-evaluations.show', $ev) }}"

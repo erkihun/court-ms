@@ -52,7 +52,7 @@
                 <div>
                     <h2 class="text-xl font-bold text-gray-900">{{ $ev->evaluatedUser?->name ?? '—' }}</h2>
                     <p class="text-sm text-gray-500">
-                        {{ $ev->period_start->format('M d, Y') }} – {{ $ev->period_end->format('M d, Y') }}
+                        {{ \App\Support\EthiopianDate::smartFormat($ev->period_start, false, '—', 'h:i A', 'M d, Y') }} – {{ \App\Support\EthiopianDate::smartFormat($ev->period_end, false, '—', 'h:i A', 'M d, Y') }}
                         &nbsp;·&nbsp;
                         <span class="capitalize">{{ $ev->period_type }}</span>
                     </p>
@@ -83,10 +83,10 @@
         {{-- Meta --}}
         <div class="mt-4 grid grid-cols-2 gap-2 text-xs text-gray-500 sm:grid-cols-4">
             <div><span class="font-medium text-gray-700">Evaluator</span><br>{{ $ev->evaluator?->name ?? '—' }}</div>
-            <div><span class="font-medium text-gray-700">Created</span><br>{{ $ev->created_at->format('M d, Y') }}</div>
+            <div><span class="font-medium text-gray-700">Created</span><br>{{ \App\Support\EthiopianDate::smartFormat($ev->created_at, false, '—', 'h:i A', 'M d, Y') }}</div>
             @if($ev->reviewer)
             <div><span class="font-medium text-gray-700">Reviewed by</span><br>{{ $ev->reviewer->name }}</div>
-            <div><span class="font-medium text-gray-700">Reviewed at</span><br>{{ $ev->reviewed_at?->format('M d, Y') }}</div>
+            <div><span class="font-medium text-gray-700">Reviewed at</span><br>{{ \App\Support\EthiopianDate::smartFormat($ev->reviewed_at, false, '—', 'h:i A', 'M d, Y') }}</div>
             @endif
         </div>
 

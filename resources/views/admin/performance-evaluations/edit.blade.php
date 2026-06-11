@@ -6,7 +6,7 @@
     <div class="flex items-center justify-between">
         <div>
             <h2 class="text-lg font-bold text-gray-900">Edit Evaluation</h2>
-            <p class="text-sm text-gray-500">{{ $evaluation->evaluatedUser?->name }} &middot; {{ $evaluation->period_start->format('M d') }} – {{ $evaluation->period_end->format('M d, Y') }}</p>
+            <p class="text-sm text-gray-500">{{ $evaluation->evaluatedUser?->name }} &middot; {{ \App\Support\EthiopianDate::smartFormat($evaluation->period_start, false, '—', 'h:i A', 'M d') }} – {{ \App\Support\EthiopianDate::smartFormat($evaluation->period_end, false, '—', 'h:i A', 'M d, Y') }}</p>
         </div>
         <a href="{{ route('performance-evaluations.show', $evaluation) }}"
            class="text-sm text-gray-500 hover:text-gray-700">← Back</a>
@@ -44,14 +44,12 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Period Start</label>
-                    <input type="date" name="period_start" value="{{ old('period_start', $evaluation->period_start->format('Y-m-d')) }}"
-                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500" required>
+                    <x-eth-date-input name="period_start" :value="old('period_start', $evaluation->period_start->format('Y-m-d'))" required />
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Period End</label>
-                    <input type="date" name="period_end" value="{{ old('period_end', $evaluation->period_end->format('Y-m-d')) }}"
-                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500" required>
+                    <x-eth-date-input name="period_end" :value="old('period_end', $evaluation->period_end->format('Y-m-d'))" required />
                 </div>
 
                 <div class="sm:col-span-2">

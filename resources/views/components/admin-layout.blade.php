@@ -1372,7 +1372,7 @@
                                         <a href="{{ $hasCases ? route('cases.show', $m->case_id) : '#' }}" class="flex-1 min-w-0">
                                             <div class="text-[12.5px] font-semibold text-slate-800 dark:text-slate-100 truncate">{{ $m->case_number }}</div>
                                             <div class="text-[11.5px] text-slate-500 dark:text-slate-400 truncate">{{ Str::limit($displayBody, 70) }}</div>
-                                            <div class="text-[10.5px] text-slate-400 dark:text-slate-500 mt-0.5">{{ \Illuminate\Support\Carbon::parse($m->created_at)->diffForHumans() }}</div>
+                                            <div class="text-[10.5px] text-slate-400 dark:text-slate-500 mt-0.5">{{ \App\Support\EthiopianDate::smartRelative($m->created_at) }}</div>
                                         </a>
                                         @if($hasNotifMarkOne)
                                         <form method="POST" action="{{ route('admin.notifications.markOne') }}" class="flex-shrink-0">
@@ -1403,7 +1403,7 @@
                                         <a href="{{ $hasCases ? route('cases.show', $c->id) : '#' }}" class="flex-1 min-w-0">
                                             <div class="text-[12.5px] font-semibold text-slate-800 dark:text-slate-100 truncate">{{ $c->case_number }}</div>
                                             <div class="text-[11.5px] text-slate-500 dark:text-slate-400 truncate">{{ Str::limit($c->title, 70) }}</div>
-                                            <div class="text-[10.5px] text-slate-400 dark:text-slate-500 mt-0.5">{{ \Illuminate\Support\Carbon::parse($c->created_at)->diffForHumans() }}</div>
+                                            <div class="text-[10.5px] text-slate-400 dark:text-slate-500 mt-0.5">{{ \App\Support\EthiopianDate::smartRelative($c->created_at) }}</div>
                                         </a>
                                         @if($hasNotifMarkOne)
                                         <form method="POST" action="{{ route('admin.notifications.markOne') }}" class="flex-shrink-0">
@@ -1466,7 +1466,7 @@
                                             <div class="text-[11.5px] text-slate-500 dark:text-slate-400 truncate">
                                                 {{ __('app.admin_notifications.respondent_viewed_case', ['name' => ($v->respondent_name ?: __('app.admin_notifications.respondent_default'))]) }}
                                             </div>
-                                            <div class="text-[10.5px] text-slate-400 dark:text-slate-500 mt-0.5">{{ \Illuminate\Support\Carbon::parse($v->viewed_at)->diffForHumans() }}</div>
+                                            <div class="text-[10.5px] text-slate-400 dark:text-slate-500 mt-0.5">{{ \App\Support\EthiopianDate::smartRelative($v->viewed_at) }}</div>
                                         </a>
                                         @if($hasNotifMarkOne)
                                         <form method="POST" action="{{ route('admin.notifications.markOne') }}" class="flex-shrink-0">

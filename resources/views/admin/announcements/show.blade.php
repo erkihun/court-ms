@@ -4,7 +4,7 @@
     <div class="p-6 bg-white rounded-xl border border-gray-200 space-y-6">
         <div class="flex flex-col gap-2">
             <h1 class="text-2xl font-bold text-gray-900">{{ $announcement->title }}</h1>
-            <p class="text-sm text-gray-500">{{ $announcement->created_at?->format('Y-m-d H:i') }}</p>
+            <p class="text-sm text-gray-500">{{ \App\Support\EthiopianDate::smartFormat($announcement->created_at, true, '', 'h:i A', 'Y-m-d') }}</p>
         </div>
 
         <div class="prose max-w-none text-gray-800">

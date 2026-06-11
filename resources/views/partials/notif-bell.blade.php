@@ -164,7 +164,7 @@ $items = $msgs->unionAll($hrs)->unionAll($sts)->unionAll($views)->orderBy('creat
                 <div class="block px-3 py-2">
                 @endif
                     <div class="text-xs text-slate-500">
-                        {{ \Illuminate\Support\Carbon::parse($n->created_at)->diffForHumans() }}
+                        {{ \App\Support\EthiopianDate::smartRelative($n->created_at) }}
                         → <span class="uppercase">{{ $n->type }}</span>
                     </div>
                     <div class="text-sm text-slate-800">

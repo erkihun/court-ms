@@ -658,7 +658,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" d="{{ $metric['icon'] }}"/>
                                 </svg>
                             </div>
-                            <span class="rounded-full bg-white/8 px-2.5 py-0.5 text-xs font-medium text-slate-400">{{ now()->format('M Y') }}</span>
+                            <span class="rounded-full bg-white/8 px-2.5 py-0.5 text-xs font-medium text-slate-400">{{ \App\Support\EthiopianDate::smartFormat(now(), false, '', 'h:i A', 'M Y') }}</span>
                         </div>
                         <p class="text-3xl font-bold text-white">{{ $metric['value'] }}</p>
                         <p class="mt-1 text-sm font-semibold text-slate-200">{{ $metric['label'] }}</p>
@@ -668,7 +668,7 @@
                 </div>
 
                 <p class="mt-6 text-center text-xs text-slate-600">
-                    {{ __('home.metrics.last_updated') }}: {{ now()->format('d M Y, H:i') }}
+                    {{ __('home.metrics.last_updated') }}: {{ \App\Support\EthiopianDate::smartFormat(now(), true, '', 'h:i A', 'd M Y') }}
                 </p>
             </div>
         </section>
@@ -879,7 +879,7 @@
                             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
-                            {{ __('home.cases.filed_prefix') }} {{ optional($case->created_at)->diffForHumans() }}
+                            {{ __('home.cases.filed_prefix') }} {{ \App\Support\EthiopianDate::smartRelative($case->created_at, '') }}
                         </div>
                     </article>
                     @endforeach
@@ -969,7 +969,7 @@
                             @endif
                             <div class="mt-auto pt-3 border-t border-white/5 flex items-center justify-between">
                                 @if($res->published_at)
-                                <span class="text-[10px] text-slate-500">{{ $res->published_at->format('d M Y') }}</span>
+                                <span class="text-[10px] text-slate-500">{{ \App\Support\EthiopianDate::smartFormat($res->published_at, false, '') }}</span>
                                 @endif
                                 @if($res->isDownloadable() && $res->file_path)
                                 <a href="{{ asset('storage/' . $res->file_path) }}" target="_blank" download

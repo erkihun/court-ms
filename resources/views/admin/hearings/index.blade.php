@@ -24,8 +24,7 @@
                     </div>
                     <div class="flex-1 min-w-0">
                         <label class="sr-only" for="hearing_date">Hearing date</label>
-                        <input id="hearing_date" type="date" name="hearing_date" value="{{ old('hearing_date', $hearingDate) }}"
-                            class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+                        <x-eth-date-input id="hearing_date" name="hearing_date" :value="old('hearing_date', $hearingDate)" />
                     </div>
                     <div class="flex items-center gap-2">
                         <button type="submit" class="inline-flex items-center rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring focus:ring-blue-200">

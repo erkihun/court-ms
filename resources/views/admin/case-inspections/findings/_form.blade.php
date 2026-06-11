@@ -16,8 +16,7 @@
     <div class="grid md:grid-cols-2 gap-4">
         <div>
             <label class="block text-sm font-medium text-gray-700">{{ __('case_inspections.findings.form.finding_date') }}</label>
-            <input type="date" name="finding_date" value="{{ old('finding_date', optional($finding->finding_date ?? null)->format('Y-m-d') ?? now()->format('Y-m-d')) }}"
-                class="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+            <x-eth-date-input name="finding_date" :value="old('finding_date', optional($finding->finding_date ?? null)->format('Y-m-d') ?? now()->format('Y-m-d'))" class="mt-1" required />
             @error('finding_date')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
         </div>
         <div>

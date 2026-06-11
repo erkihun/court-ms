@@ -340,7 +340,7 @@
                         {{ $review->review_note ?: '—' }}
                     </div>
                     <div class="text-xs text-gray-500">
-                        {{ $review->updated_at ? $review->updated_at->diffForHumans() : '—' }}
+                        {{ \App\Support\EthiopianDate::smartRelative($review->updated_at) }}
                     </div>
 
                     @if($isOwner && !$reviewLocked)

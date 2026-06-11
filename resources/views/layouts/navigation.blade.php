@@ -144,7 +144,7 @@
                                             <div class="font-medium text-slate-800">{{ $m->case_number }}</div>
                                             <div class="text-xs text-slate-500">
                                                 {{ \Illuminate\Support\Str::limit($m->body, 80) }}
-                                                · {{ \Illuminate\Support\Carbon::parse($m->created_at)->diffForHumans() }}
+                                                · {{ \App\Support\EthiopianDate::smartRelative($m->created_at) }}
                                             </div>
                                         </a>
                                         <form method="POST" action="{{ route('admin.notifications.markOne') }}">
@@ -170,7 +170,7 @@
                                             <div class="font-medium text-slate-800">{{ $c->case_number }}</div>
                                             <div class="text-xs text-slate-500">
                                                 {{ \Illuminate\Support\Str::limit($c->title, 80) }}
-                                                · {{ \Illuminate\Support\Carbon::parse($c->created_at)->diffForHumans() }}
+                                                · {{ \App\Support\EthiopianDate::smartRelative($c->created_at) }}
                                             </div>
                                         </a>
                                         <form method="POST" action="{{ route('admin.notifications.markOne') }}">

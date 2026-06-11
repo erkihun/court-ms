@@ -1,6 +1,8 @@
 <?php
 
 return array (
+  'certify_appeal' => 'ያቀረብኩት አቤቱታ በፍ/ብ/ሥ/ሥ/ሕ/ቁ 92 መሠረት እውነት መሆኑን አረጋግጣለሁ',
+  'certify_evidence' => 'ያቀርብሁት ማስረጃ በፍ/ብ/ሥ/ሥ/ሕ/ቁ ትክክለኛ መሆኑን አረጋግጣለሁ',
   'add_document' => 'ሰነድ ጨምር',
   'add_to_calendar' => 'ካሌንደር ላይ አደርግልኘ',
   'add_witness' => 'ምስክር ጨምር',

@@ -67,7 +67,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700">Date of Birth</label>
-                        <input name="date_of_birth" type="date" value="{{ old('date_of_birth',$user->date_of_birth?->format('Y-m-d')) }}" class="ui-input mt-1">
+                        <x-eth-date-input name="date_of_birth" :value="old('date_of_birth', $user->date_of_birth?->format('Y-m-d'))" class="mt-1" />
                         @error('date_of_birth') <p class="text-rose-600 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                 </div>

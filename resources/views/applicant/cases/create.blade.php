@@ -134,6 +134,24 @@
             </div>
         </section>
 
+        {{-- Terms & Conditions --}}
+        @if(!empty($activeTerms))
+        <section class="rounded-xl border border-slate-200 bg-slate-50/80 p-4 md:p-5 space-y-3">
+            <div class="rounded-lg border border-slate-200 bg-white p-4 text-slate-800 whitespace-pre-line leading-relaxed tiny-content">
+                {!! clean(nl2br(e($activeTerms->body)), 'cases') !!}
+            </div>
+            <label class="flex items-start gap-2  text-slate-700">
+                <input type="checkbox" name="accept_terms" value="1"
+                    class="mt-1 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                    {{ old('accept_terms') ? 'checked' : '' }} required>
+                <span>{{ __('terms.applicant_checkbox') }}</span>
+            </label>
+            @error('accept_terms')
+            <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+            @enderror
+        </section>
+        @endif
+
         {{-- Case details (Word-like editor) --}}
         <section class="space-y-2">
             <div class="flex items-center justify-between gap-2">
@@ -165,7 +183,7 @@
                 <input type="checkbox" name="certify_appeal" value="1"
                     class="mt-1 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
                     {{ old('certify_appeal') ? 'checked' : '' }} required>
-                <span>I certify the validity of my appeal in accordance with F/S/S/No. 92.</span>
+                <span>{{ __('cases.certify_appeal') }}</span>
             </label>
             @error('certify_appeal')
             <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
@@ -261,67 +279,11 @@
             <input type="checkbox" name="certify_evidence" value="1"
                 class="mt-1 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
                 {{ old('certify_evidence') ? 'checked' : '' }} required>
-            <span>I certify that the evidence I have presented is true in accordance with F.S./S.H./No. 92.</span>
+            <span>{{ __('cases.certify_evidence') }}</span>
         </label>
         @error('certify_evidence')
         <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
         @enderror
-
-        @if(!empty($activeTerms))
-        <section x-data="{ showTerms: false }"
-            class="rounded-xl border border-slate-200 bg-slate-50/80 p-4 md:p-5 space-y-3 relative">
-            <div>
-                <h3 class=" font-semibold text-slate-800">
-                    {{ __('terms.applicant_card_title') }}
-                </h3>
-                <p class="text-xs text-slate-600 mt-1">
-                    {{ __('terms.applicant_card_help') }}
-                    <button type="button" @click="showTerms = true" class="text-blue-600 hover:underline font-medium">
-                        {{ __('terms.applicant_view_full') }}
-                    </button>
-                </p>
-            </div>
-            <label class="flex items-start gap-2  text-slate-700">
-                <input type="checkbox" name="accept_terms" value="1"
-                    class="mt-1 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
-                    {{ old('accept_terms') ? 'checked' : '' }} required>
-                <span>{{ __('terms.applicant_checkbox') }}</span>
-            </label>
-            @error('accept_terms')
-            <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
-            @enderror
-
-            <template x-if="showTerms">
-                <div x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-                    @keydown.escape.window="showTerms=false">
-                    <div
-                        class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-y-auto p-6 relative">
-                        <button type="button" class="absolute top-3 right-3 text-slate-500 hover:text-slate-700"
-                            @click="showTerms=false">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                        <h2 class="text-xl font-semibold text-slate-900 mb-2">{{ $activeTerms->title }}</h2>
-                        <p class="text-xs text-slate-500 mb-4">
-                            {{ \App\Support\EthiopianDate::format($activeTerms->published_at, withTime: true) }}
-                        </p>
-                        <div class=" text-slate-800 whitespace-pre-line leading-relaxed tiny-content">
-                            {!! clean(nl2br(e($activeTerms->body)), 'cases') !!}
-                        </div>
-                        <div class="mt-4 text-right">
-                            <button type="button" @click="showTerms=false"
-                                class="inline-flex items-center px-4 py-2 rounded-md bg-orange-500 text-white  font-semibold hover:bg-orange-600">
-                                {{ __('terms.modal_close') }}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </template>
-        </section>
-        @endif
 
         {{-- Actions --}}
         <div class="pt-2 flex flex-wrap gap-3">

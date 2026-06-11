@@ -4,6 +4,7 @@ import Chart from 'chart.js/auto';
 window.Chart = Chart;
 
 import Alpine from 'alpinejs';
+import { ethDatePicker } from './eth-date-picker';
 
 const registerToastStore = (alpine) => {
     if (alpine.store('toasts')) {
@@ -101,8 +102,12 @@ window.themeSystem = function themeSystem() {
 if (!window.Alpine) {
     window.Alpine = Alpine;
     Alpine.data('themeSystem', window.themeSystem);
+    Alpine.data('ethDatePicker', ethDatePicker);
     registerToastStore(Alpine);
     Alpine.start();
 } else {
+    if (typeof window.Alpine.data === 'function') {
+        window.Alpine.data('ethDatePicker', ethDatePicker);
+    }
     registerToastStore(window.Alpine);
 }
