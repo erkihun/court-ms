@@ -5,6 +5,7 @@ window.Chart = Chart;
 
 import Alpine from 'alpinejs';
 import { ethDatePicker } from './eth-date-picker';
+import { ethTimePicker } from './eth-time-picker';
 
 const registerToastStore = (alpine) => {
     if (alpine.store('toasts')) {
@@ -103,11 +104,13 @@ if (!window.Alpine) {
     window.Alpine = Alpine;
     Alpine.data('themeSystem', window.themeSystem);
     Alpine.data('ethDatePicker', ethDatePicker);
+    Alpine.data('ethTimePicker', ethTimePicker);
     registerToastStore(Alpine);
     Alpine.start();
 } else {
     if (typeof window.Alpine.data === 'function') {
         window.Alpine.data('ethDatePicker', ethDatePicker);
+        window.Alpine.data('ethTimePicker', ethTimePicker);
     }
     registerToastStore(window.Alpine);
 }

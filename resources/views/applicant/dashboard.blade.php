@@ -25,6 +25,9 @@
                     @php
                         $applicantUser = auth('applicant')->user();
                         $applicantName = $applicantUser?->full_name ?: $applicantUser?->name ?: $applicantUser?->email ?: __('applicant.user');
+                        if ($applicantUser?->is_lawyer) {
+                            $applicantName = __('dashboard.lawyer_title') . ' ' . $applicantName;
+                        }
                     @endphp
                     <h4 class="text-xl sm:text-2xl font-bold truncate">{{ __('dashboard.welcome_back') }}, {{ $applicantName }}</h4>
                 </div>

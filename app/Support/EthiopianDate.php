@@ -153,10 +153,8 @@ class EthiopianDate
             $ethiopianHour = 12;
         }
 
-        $baseTime = ltrim(sprintf('%02d:%s', $ethiopianHour, $minute), '0');
-        if (str_starts_with($baseTime, ':')) {
-            $baseTime = '0' . $baseTime;
-        }
+        // Keep the hour zero-padded to two digits (e.g. 04:00, not 4:00).
+        $baseTime = sprintf('%02d:%s', $ethiopianHour, $minute);
 
         // Append meridiem if the requested format expects it
         if (str_contains($timeFormat, 'A') || str_contains($timeFormat, 'a')) {

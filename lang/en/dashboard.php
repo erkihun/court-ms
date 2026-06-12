@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'lawyer_title' => 'Lawyer',
     'title' => 'Dashboard',
     'Dashboard' => 'Dashboard',
     'my_dashboard' => 'My Dashboard',

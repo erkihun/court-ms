@@ -173,6 +173,9 @@
     if ($applicantDisplayName === '') {
     $applicantDisplayName = trim((string) ($case->applicant_name ?? $case->applicant_full_name ?? ''));
     }
+    if ($applicantDisplayName !== '' && !empty($case->applicant_is_lawyer)) {
+    $applicantDisplayName = __('dashboard.lawyer_title') . ' ' . $applicantDisplayName;
+    }
     @endphp
     @push('styles')
     <style>
@@ -623,10 +626,6 @@
                             {{ __('cases.back') }}
                         </a>
 
-                        <button onclick="window.print()" class="{{ $headerSecondaryAction }}">
-                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-                            {{ __('cases.print') }}
-                        </button>
                     </div>
 
                 </div>
@@ -1308,7 +1307,181 @@
                     x-transition:enter-start="opacity-0 transform translate-y-4"
                     x-transition:enter-end="opacity-100 transform translate-y-0"
                     class="main-content-section rounded-2xl border border-gray-200 bg-white shadow-sm p-6 space-y-6">
-                    <h3 class="text-xl font-semibold text-gray-900">{{ __('cases.show.case_details_overview') }}</h3>
+                    <div class="flex items-center justify-between gap-3">
+                        <h3 class="text-xl font-semibold text-gray-900">{{ __('cases.show.case_details_overview') }}</h3>
+                        <button type="button" onclick="printCaseOverview()"
+                            class="no-print inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                            {{ __('cases.print') }}
+                        </button>
+                    </div>
+
+                    {{-- Word-style printable document (content only, no UI chrome) --}}
+                    <template id="case-overview-print-tpl">
+                        <h1>{{ __('cases.show.case_details_overview') }}</h1>
+                        <div class="doc-meta-row">
+                            <p>{{ __('cases.case_number') }} <strong>{{ $case->case_number }}</strong></p>
+                            <p>{{ __('cases.summary.filing_date') }} <strong>{{ $case->filing_date ? \App\Support\EthiopianDate::format($case->filing_date) : '—' }}</strong></p>
+                        </div>
+
+                        <h2>{{ __('cases.summary.applicant') }}</h2>
+                        <table class="doc-fields">
+                            <tr><td>{{ __('cases.name') }}</td><td>{{ $applicantDisplayName !== '' ? $applicantDisplayName : '—' }}</td></tr>
+                            <tr><td>{{ __('cases.address') }}</td><td>{{ trim((string) ($case->applicant_address ?? $case->applicant_profile_address ?? '')) ?: '—' }}</td></tr>
+                            <tr><td>{{ __('cases.applicant_email') }}</td><td>{{ $case->applicant_email ?? '—' }}</td></tr>
+                        </table>
+
+                        <h2>{{ __('cases.respondent_defendant') }}</h2>
+                        <table class="doc-fields">
+                            <tr><td>{{ __('cases.name') }}</td><td>{{ $case->respondent_name ?? '—' }}</td></tr>
+                            <tr><td>{{ __('cases.address') }}</td><td>{{ $case->respondent_address ?? '—' }}</td></tr>
+                        </table>
+
+                        <h2>{{ __('cases.details.case_details') }}</h2>
+                        <div class="doc-body">
+                            {!! $case->description_html ?? clean($case->description ?? __('cases.details.no_details'), 'cases') !!}
+                        </div>
+
+                        <h2>{{ __('cases.details.relief_requested') }}</h2>
+                        <div class="doc-body">
+                            {!! $reliefHtmlOut ?? __('cases.details.no_relief_specified') !!}
+                        </div>
+
+                        @if(($docs ?? collect())->isNotEmpty())
+                        <h2>{{ __('cases.documents.submitted_documents') }}</h2>
+                        <ol class="doc-list">
+                            @foreach(($docs ?? collect()) as $d)
+                            <li>{{ trim((string) ($d->title ?? '')) ?: __('cases.documents.document') }}@if(!empty($d->created_at)) — {{ \App\Support\EthiopianDate::format($d->created_at, withTime: true) }}@endif</li>
+                            @endforeach
+                        </ol>
+                        @endif
+
+                        @if(($witnesses ?? collect())->isNotEmpty())
+                        <h2>{{ __('cases.witnesses_section.title') }}</h2>
+                        <table class="doc-table">
+                            <thead>
+                                <tr>
+                                    <th>{{ __('cases.labels.name') }}</th>
+                                    <th>{{ __('cases.labels.phone') }}</th>
+                                    <th>{{ __('cases.labels.email') }}</th>
+                                    <th>{{ __('cases.labels.address') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($witnesses as $w)
+                                <tr>
+                                    <td>{{ $w->full_name }}</td>
+                                    <td>{{ $w->phone ?? '—' }}</td>
+                                    <td>{{ $w->email ?? '—' }}</td>
+                                    <td>{{ $w->address ?? '—' }}</td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                        @endif
+
+                        <p class="doc-printed">{{ \App\Support\EthiopianDate::format(now(), withTime: true) }}</p>
+                    </template>
+                    <script>
+                        function printCaseOverview() {
+                            const tpl = document.getElementById('case-overview-print-tpl');
+                            if (!tpl) return;
+                            const w = window.open('', '_blank');
+                            if (!w) return;
+                            w.document.write(`<!DOCTYPE html>
+<html lang="{{ str_replace('_','-',app()->getLocale()) }}">
+<head>
+<meta charset="utf-8">
+<title>{{ __('cases.show.case_details_overview') }} - {{ $case->case_number }}</title>
+<style>
+    @page { size: A4; margin: 2.54cm; }
+    body {
+        font-family: 'Times New Roman', 'Nyala', 'Abyssinica SIL', 'Noto Sans Ethiopic', serif;
+        font-size: 12pt; line-height: 1.7; color: #000; margin: 0;
+    }
+    h1 { font-size: 16pt; text-align: center; margin: 0 0 4pt; }
+    .doc-meta-row {
+        display: flex; justify-content: space-between; gap: 24pt;
+        margin: 0 0 18pt; font-size: 11pt;
+    }
+    .doc-meta-row p { margin: 0; font-weight: bold; }
+    .doc-meta-row p:first-child { text-align: left; }
+    .doc-meta-row p:last-child { text-align: right; }
+    h2 { font-size: 13pt; margin: 16pt 0 6pt; border-bottom: 1px solid #000; padding-bottom: 2pt; }
+    .doc-fields { border-collapse: collapse; width: 100%; }
+    .doc-fields td { padding: 2pt 6pt 2pt 0; vertical-align: top; }
+    .doc-fields td:first-child { width: 30%; font-weight: bold; }
+    .doc-body { text-align: justify; }
+    .doc-body p { margin: 0 0 8pt; }
+    .doc-body table { border-collapse: collapse; width: 100%; }
+    .doc-body td, .doc-body th { border: 1px solid #000; padding: 3pt 5pt; }
+    .doc-list { margin: 0; padding-left: 20pt; }
+    .doc-table { border-collapse: collapse; width: 100%; }
+    .doc-table th, .doc-table td { border: 1px solid #000; padding: 3pt 6pt; text-align: left; vertical-align: top; }
+    .doc-table th { font-weight: bold; }
+    .doc-printed { margin-top: 24pt; text-align: right; font-size: 10pt; }
+</style>
+</head>
+<body>
+${tpl.innerHTML}
+<script>
+    const closeAfterPrint = () => {
+        setTimeout(() => window.close(), 100);
+    };
+
+    window.addEventListener('afterprint', closeAfterPrint);
+    window.onafterprint = closeAfterPrint;
+
+    if (window.matchMedia) {
+        const mediaQueryList = window.matchMedia('print');
+        const handlePrintMediaChange = (event) => {
+            if (!event.matches) {
+                closeAfterPrint();
+            }
+        };
+
+        if (mediaQueryList.addEventListener) {
+            mediaQueryList.addEventListener('change', handlePrintMediaChange);
+        } else if (mediaQueryList.addListener) {
+            mediaQueryList.addListener(handlePrintMediaChange);
+        }
+    }
+<\/script>
+</body>
+</html>`);
+                            w.document.close();
+                            w.focus();
+                            const closePrintWindow = () => {
+                                setTimeout(() => {
+                                    if (!w.closed) {
+                                        w.close();
+                                    }
+                                }, 100);
+                            };
+
+                            w.addEventListener('afterprint', closePrintWindow);
+
+                            if (w.matchMedia) {
+                                const mediaQueryList = w.matchMedia('print');
+                                const handlePrintMediaChange = (event) => {
+                                    if (!event.matches) {
+                                        closePrintWindow();
+                                    }
+                                };
+
+                                if (mediaQueryList.addEventListener) {
+                                    mediaQueryList.addEventListener('change', handlePrintMediaChange);
+                                } else if (mediaQueryList.addListener) {
+                                    mediaQueryList.addListener(handlePrintMediaChange);
+                                }
+                            }
+
+                            setTimeout(() => {
+                                w.print();
+                                setTimeout(closePrintWindow, 500);
+                            }, 300);
+                        }
+                    </script>
 
                     <div class="grid md:grid-cols-2 gap-4 border border-gray-100 rounded-xl p-4 bg-gray-50">
                         <div>
@@ -1911,9 +2084,13 @@
                                     class="px-3 py-2.5 rounded-lg bg-white border border-gray-300 text-gray-900 w-full focus:ring-2 focus:ring-emerald-500 focus-border-emerald-500 transition-colors duration-150"
                                     placeholder="{{ __('cases.hearings.add_new_hearing') }}" required
                                     autocomplete="off">
+                                @if(app()->getLocale() === 'am')
+                                <x-eth-time-input id="hearing_time_new" value="08:00" />
+                                @else
                                 <input id="hearing_time_new" type="time" min="00:00" max="11:59"
                                     class="px-3 py-2.5 rounded-lg bg-white border border-gray-300 text-gray-900 w-full focus:ring-2 focus:ring-emerald-500 focus-border-emerald-500 transition-colors duration-150"
                                     placeholder="{{ __('cases.show.time_placeholder') }}" required>
+                                @endif
                                 <input name="type" placeholder="{{ __('cases.hearings.type_placeholder') }}"
                                     class="px-3 py-2.5 rounded-lg bg-white border border-gray-300 text-gray-900 focus:ring-2 focus:ring-emerald-500 focus-border-emerald-500 transition-colors duration-150"
                                     required>
@@ -2031,10 +2208,14 @@
                                                                     placeholder="{{ __('cases.hearings.add_new_hearing') }}"
                                                                     class="w-full px-3 py-2 rounded-lg bg-white border border-gray-300  text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                                     autocomplete="off">
+                                                                @if(app()->getLocale() === 'am')
+                                                                <x-eth-time-input id="hearing_time_edit_{{ $h->id }}" data-attr="hearing-time" value="08:00" />
+                                                                @else
                                                                 <input type="time" id="hearing_time_edit_{{ $h->id }}"
                                                                     data-hearing-time min="00:00" max="11:59" value=""
                                                                     class="w-full px-3 py-2 rounded-lg bg-white border border-gray-300  text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                                     placeholder="HH:MM (AM)" required>
+                                                                @endif
                                                                 <input name="type" value="{{ $h->type ?? '' }}"
                                                                     placeholder="{{ __('cases.hearings.type_placeholder') }}"
                                                                     class="w-full px-3 py-2 rounded-lg bg-white border border-gray-300  text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -2578,21 +2759,57 @@
             if (window.hearingTimeHelpers && typeof window.hearingTimeHelpers.normalizeToAm === 'function') {
                 return window.hearingTimeHelpers;
             }
-            const defaultTime = '04:00';
+            // Default Gregorian wall-clock time (08:00 = 2:00 ከሰአት በፊት, first slot).
+            const defaultTime = '08:00';
+            // The Ethiopian time conversion is handled entirely by the custom
+            // eth-time-input picker (am locale), which writes the Gregorian
+            // time straight into the field. So no extra ±6 shift is applied
+            // here — toGregorianTime/toEthiopianTime are pass-throughs.
+            // (Do NOT write the component tag with angle brackets in this
+            // comment: Blade compiles x- tags even inside script comments.)
+            const isEthiopianTime = false;
+            const pad = (n) => String(n).padStart(2, '0');
+            const shiftHours = (timeStr, delta) => {
+                if (!timeStr) return timeStr;
+                const parts = String(timeStr).split(':').map((p) => parseInt(p, 10));
+                let [h, m] = parts;
+                if (Number.isNaN(h)) return timeStr;
+                if (Number.isNaN(m)) m = 0;
+                h = ((h + delta) % 24 + 24) % 24;
+                return `${pad(h)}:${pad(m)}`;
+            };
+            // Validate/zero-pad a "HH:MM" 24h Gregorian time. (Formerly folded
+            // to 12h, but the custom picker now stores true Gregorian 08:00–16:00,
+            // so PM hours must be preserved — only normalise format here.)
             const normalizeToAm = (timeStr) => {
                 if (!timeStr) return defaultTime;
                 const parts = String(timeStr).split(':').map((p) => parseInt(p, 10));
                 let [h, m] = parts;
                 if (Number.isNaN(h)) return defaultTime;
                 if (Number.isNaN(m)) m = 0;
-                if (h >= 12) h = h - 12;
                 if (h < 0) h = 0;
-                const pad = (n) => String(n).padStart(2, '0');
+                if (h > 23) h = 23;
                 return `${pad(h)}:${pad(m)}`;
+            };
+            // Convert the value typed in the (Ethiopian) picker to the Gregorian
+            // wall-clock time stored in hearing_at. No-op outside the am locale.
+            const toGregorianTime = (timeStr) => isEthiopianTime ? shiftHours(timeStr, 6) : timeStr;
+            // Convert a stored Gregorian time back to what the picker should show.
+            const toEthiopianTime = (timeStr) => isEthiopianTime ? shiftHours(timeStr, -6) : timeStr;
+            // Set a time field's value AND notify the custom Ethiopian picker
+            // (am locale) so its display re-syncs. No-op difference on English.
+            const setTimeField = (el, val) => {
+                if (!el) return;
+                el.value = val;
+                el.dispatchEvent(new CustomEvent('eth-time:set', { bubbles: true }));
             };
             window.hearingTimeHelpers = {
                 defaultTime,
-                normalizeToAm
+                normalizeToAm,
+                setTimeField,
+                isEthiopianTime,
+                toGregorianTime,
+                toEthiopianTime
             };
             return window.hearingTimeHelpers;
         };
@@ -2604,7 +2821,10 @@
             const gregHidden = document.getElementById('hearing_at_greg_new');
             const {
                 defaultTime,
-                normalizeToAm
+                normalizeToAm,
+                toGregorianTime,
+                toEthiopianTime,
+                setTimeField
             } = window.getHearingTimeHelpers();
             const existingHearingDates = window.caseHearingDateSet || new Set();
             const duplicateDateMessage =
@@ -2669,9 +2889,10 @@
                     }
                     const timeVal = normalizeToAm(timeField?.value || defaultTime);
                     if (timeField && !timeField.value) {
-                        timeField.value = timeVal;
+                        setTimeField(timeField, timeVal);
                     }
-                    target.value = `${dateVal}T${timeVal}:00`;
+                    // Picker value is Ethiopian on the am locale → store Gregorian.
+                    target.value = `${dateVal}T${toGregorianTime(timeVal)}:00`;
                 });
             }
 
@@ -2684,7 +2905,8 @@
                     window.hearingConvertToGregorian :
                     (v) => v;
                 const gregDate = toGreg(dateString) || dateString;
-                return `${gregDate}T${t}:00`;
+                // Picker value is Ethiopian on the am locale → store Gregorian.
+                return `${gregDate}T${toGregorianTime(t)}:00`;
             };
             const extractTimeValue = (dateTimeValue) => {
                 if (!dateTimeValue) return '';
@@ -2706,7 +2928,8 @@
 
                 if (editTime && !editTime.value) {
                     const existingTime = extractTimeValue(editTarget.value);
-                    editTime.value = normalizeToAm(existingTime || defaultTime);
+                    // Stored time is Gregorian → show Ethiopian in the picker (am locale).
+                    setTimeField(editTime, toEthiopianTime(normalizeToAm(existingTime || defaultTime)));
                 }
 
                 editDate.addEventListener('input', syncHidden);
@@ -2719,7 +2942,7 @@
                         return;
                     }
                     if (editTime && !editTime.value) {
-                        editTime.value = defaultTime;
+                        setTimeField(editTime, defaultTime);
                     }
                     syncHidden();
                 });
@@ -2976,7 +3199,10 @@
             })();
             const {
                 defaultTime,
-                normalizeToAm
+                normalizeToAm,
+                toGregorianTime,
+                toEthiopianTime,
+                setTimeField
             } = window.getHearingTimeHelpers();
             const existingHearingDates = window.caseHearingDateSet || new Set();
             const toEthiopianDateString = (input) => {
@@ -3090,7 +3316,7 @@
                 });
             }
             if (timeInput && !timeInput.value) {
-                timeInput.value = defaultTime;
+                setTimeField(timeInput, defaultTime);
             }
 
             // Inline edit pickers
@@ -3105,9 +3331,10 @@
                         if (ethVal) dateEl.value = ethVal;
                     }
                     if (timeEl) {
-                        const baseTime = target?.value ? normalizeToAm(toTimeKey(target.value)) :
+                        // Stored time is Gregorian → show Ethiopian in the picker (am locale).
+                        const baseTime = target?.value ? toEthiopianTime(normalizeToAm(toTimeKey(target.value))) :
                             defaultTime;
-                        if (!timeEl.value) timeEl.value = baseTime;
+                        if (!timeEl.value) setTimeField(timeEl, baseTime);
                     }
                     attachPicker(dateEl, (picked, value) => {
                         if (!target) return;
@@ -3117,9 +3344,10 @@
                         }
                         const timeVal = normalizeToAm(timeEl?.value || defaultTime);
                         const gregDateStr = toGregorianString(value) || value;
-                        target.value = `${gregDateStr}T${timeVal}:00`;
+                        // Picker value is Ethiopian on the am locale → store Gregorian.
+                        target.value = `${gregDateStr}T${toGregorianTime(timeVal)}:00`;
                         if (timeEl && !timeEl.value) {
-                            timeEl.value = timeVal;
+                            setTimeField(timeEl, timeVal);
                         }
                     });
                 });
@@ -3203,9 +3431,10 @@
                         dateField.value = displayVal;
                     }
                     if (timeField && opts.setTime) {
-                        timeField.value = normalizeToAm(opts.setTime);
+                        // meta time is Gregorian → show Ethiopian in the picker (am locale).
+                        setTimeField(timeField, toEthiopianTime(normalizeToAm(opts.setTime)));
                     } else if (timeField && !timeField.value) {
-                        timeField.value = defaultTime;
+                        setTimeField(timeField, defaultTime);
                     }
                     if (window.hearingDateState?.setFromDate) {
                         window.hearingDateState.setFromDate(new Date(d));
@@ -3276,10 +3505,13 @@
                     const pad = (n) => String(n).padStart(2, '0');
                     const monthNames = ethHelper.getMonthNames?.() || [];
                     const monthName = monthNames[eth.month - 1] || pad(eth.month);
+                    // Ethiopian clock + Amharic meridiem (mirrors EthiopianDate::formatEthiopianTime)
                     const rawHour = d.getHours();
-                    const hour = rawHour % 12 === 0 ? 12 : rawHour % 12;
-                    const time = `${hour}፡${pad(d.getMinutes())}`;
-                    return `${monthName}-${pad(eth.day)}-${eth.year} ዓ.ም ${time} ሰዓት`;
+                    let ethHour = (rawHour + 6) % 12;
+                    if (ethHour === 0) ethHour = 12;
+                    const meridiem = rawHour < 12 ? 'ከሰአት በፊት' : 'ከሰአት በኋላ';
+                    const time = `${pad(ethHour)}፡${pad(d.getMinutes())}`;
+                    return `${monthName}-${pad(eth.day)}-${eth.year} ዓ.ም ${time} ${meridiem}`;
                 };
                 document.querySelectorAll('[data-hearing-display]').forEach((el) => {
                     const val = el.getAttribute('data-hearing-at');
@@ -3293,4 +3525,3 @@
 
     </div>
 </x-admin-layout>
-

@@ -59,7 +59,7 @@ class CaseController extends Controller
                 'c.*',
                 'ct.name as case_type',
                 DB::raw("TRIM(CONCAT(COALESCE(ap.first_name,''),' ',COALESCE(ap.middle_name,''),' ',COALESCE(ap.last_name,''))) as applicant_name"),
-
+                'ap.is_lawyer as applicant_is_lawyer',
                 'ass.name as assignee_name',
                 'reviewer.name as reviewer_name'
             )
@@ -402,6 +402,7 @@ class CaseController extends Controller
                 'ap.middle_name as applicant_middle_name',
                 'ap.last_name as applicant_last_name',
                 DB::raw("TRIM(CONCAT(COALESCE(ap.first_name,''),' ',COALESCE(ap.middle_name,''),' ',COALESCE(ap.last_name,''))) as applicant_name"),
+                'ap.is_lawyer as applicant_is_lawyer',
                 'ap.email as applicant_email',
                 'ap.address as applicant_profile_address'
             )

@@ -1,6 +1,7 @@
 <?php
 
 return array (
+  'lawyer_title' => 'ጠበቃ',
   'title' => 'ዳሽቦርድ',
   'Dashboard' => 'ዳሽቦርድ',
   'total_cases' => 'ጠቅላላ መዝገቦች',
