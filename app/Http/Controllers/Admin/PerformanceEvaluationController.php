@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\PerformanceCriterion;
 use App\Models\PerformanceEvaluation;
+use App\Models\PerformanceEvaluationCategory;
 use App\Models\PerformanceEvaluationScore;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -28,8 +31,12 @@ class PerformanceEvaluationController extends Controller
         }
 
         $evaluations = $query->paginate(15)->withQueryString();
-
         $users = User::where('status', 'active')->orderBy('name')->get(['id', 'name']);
+        $categories = PerformanceEvaluationCategory::query()
+            ->where('active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
 
         // Summary stats
         $stats = [
@@ -40,7 +47,7 @@ class PerformanceEvaluationController extends Controller
             'avg_score' => round(PerformanceEvaluation::where('status', 'reviewed')->avg('overall_score') ?? 0, 1),
         ];
 
-        return view('admin.performance-evaluations.index', compact('evaluations', 'users', 'stats'));
+        return view('admin.performance-evaluations.index', compact('evaluations', 'users', 'stats', 'categories'));
     }
 
     public function create()
@@ -64,7 +71,7 @@ class PerformanceEvaluationController extends Controller
             'scores.*.score'        => ['required', 'integer', 'min:0', 'max:10'],
             'scores.*.comment'      => ['nullable', 'string', 'max:500'],
             'action'            => ['required', 'in:draft,submitted'],
-        ]);
+        ], [], __('performance.validation.attributes'));
 
         DB::transaction(function () use ($data, $request) {
             $evaluation = PerformanceEvaluation::create([
@@ -89,7 +96,9 @@ class PerformanceEvaluationController extends Controller
             $evaluation->recalculateScore();
         });
 
-        $msg = $data['action'] === 'submitted' ? 'Evaluation submitted successfully.' : 'Evaluation saved as draft.';
+        $msg = $data['action'] === 'submitted'
+            ? __('performance.messages.submitted')
+            : __('performance.messages.draft');
 
         return redirect()->route('performance-evaluations.index')->with('success', $msg);
     }
@@ -108,7 +117,7 @@ class PerformanceEvaluationController extends Controller
 
     public function edit(PerformanceEvaluation $performanceEvaluation)
     {
-        abort_if($performanceEvaluation->status === 'reviewed', 403, 'Reviewed evaluations cannot be edited.');
+        abort_if($performanceEvaluation->status === 'reviewed', 403, __('performance.messages.reviewed_cannot_edit'));
 
         $performanceEvaluation->load('scores');
 
@@ -127,7 +136,7 @@ class PerformanceEvaluationController extends Controller
 
     public function update(Request $request, PerformanceEvaluation $performanceEvaluation)
     {
-        abort_if($performanceEvaluation->status === 'reviewed', 403, 'Reviewed evaluations cannot be edited.');
+        abort_if($performanceEvaluation->status === 'reviewed', 403, __('performance.messages.reviewed_cannot_edit'));
 
         $data = $request->validate([
             'evaluated_user_id' => ['required', 'exists:users,id'],
@@ -140,7 +149,7 @@ class PerformanceEvaluationController extends Controller
             'scores.*.score'        => ['required', 'integer', 'min:0', 'max:10'],
             'scores.*.comment'      => ['nullable', 'string', 'max:500'],
             'action'            => ['required', 'in:draft,submitted'],
-        ]);
+        ], [], __('performance.validation.attributes'));
 
         DB::transaction(function () use ($data, $performanceEvaluation) {
             $performanceEvaluation->update([
@@ -167,26 +176,26 @@ class PerformanceEvaluationController extends Controller
         });
 
         return redirect()->route('performance-evaluations.show', $performanceEvaluation)
-            ->with('success', 'Evaluation updated successfully.');
+            ->with('success', __('performance.messages.updated'));
     }
 
     public function destroy(PerformanceEvaluation $performanceEvaluation)
     {
-        abort_if($performanceEvaluation->status === 'reviewed', 403, 'Reviewed evaluations cannot be deleted.');
+        abort_if($performanceEvaluation->status === 'reviewed', 403, __('performance.messages.reviewed_cannot_delete'));
 
         $performanceEvaluation->delete();
 
         return redirect()->route('performance-evaluations.index')
-            ->with('success', 'Evaluation deleted.');
+            ->with('success', __('performance.messages.deleted'));
     }
 
     public function review(Request $request, PerformanceEvaluation $performanceEvaluation)
     {
-        abort_if($performanceEvaluation->status !== 'submitted', 422, 'Only submitted evaluations can be reviewed.');
+        abort_if($performanceEvaluation->status !== 'submitted', 422, __('performance.messages.submitted_only_review'));
 
         $data = $request->validate([
             'reviewer_notes' => ['nullable', 'string', 'max:2000'],
-        ]);
+        ], [], __('performance.validation.attributes'));
 
         $performanceEvaluation->update([
             'status'         => 'reviewed',
@@ -196,6 +205,6 @@ class PerformanceEvaluationController extends Controller
         ]);
 
         return redirect()->route('performance-evaluations.show', $performanceEvaluation)
-            ->with('success', 'Evaluation reviewed and approved.');
+            ->with('success', __('performance.messages.reviewed'));
     }
 }

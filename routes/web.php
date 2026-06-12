@@ -51,6 +51,7 @@ use App\Http\Controllers\Admin\HearingController;
 use App\Http\Controllers\Admin\AboutController;
 use App\Http\Controllers\Admin\LandingPageController;
 use App\Http\Controllers\Admin\PerformanceEvaluationController;
+use App\Http\Controllers\Admin\PerformanceEvaluationSettingController;
 use App\Http\Controllers\Admin\CaseInspectionRequestController;
 use App\Http\Controllers\Admin\CaseInspectionFindingController;
 use App\Http\Controllers\Admin\AnnouncementController;
@@ -386,6 +387,28 @@ Route::middleware(SetLocale::class)->group(function () {
 
             Route::post('/settings/system/clear-cache', [SystemSettingController::class, 'clearCache'])
                 ->name('settings.system.clearCache');
+
+            Route::get('/settings/performance-evaluation', [PerformanceEvaluationSettingController::class, 'index'])
+                ->middleware('perm:settings.manage')
+                ->name('settings.performance-evaluation.index');
+            Route::get('/settings/performance-evaluation/criteria/create', [PerformanceEvaluationSettingController::class, 'createCriterion'])
+                ->middleware('perm:settings.manage')
+                ->name('settings.performance-evaluation.criteria.create');
+            Route::post('/settings/performance-evaluation/criteria', [PerformanceEvaluationSettingController::class, 'store'])
+                ->middleware('perm:settings.manage')
+                ->name('settings.performance-evaluation.criteria.store');
+            Route::get('/settings/performance-evaluation/categories/create', [PerformanceEvaluationSettingController::class, 'createCategory'])
+                ->middleware('perm:settings.manage')
+                ->name('settings.performance-evaluation.categories.create');
+            Route::post('/settings/performance-evaluation/categories', [PerformanceEvaluationSettingController::class, 'storeCategory'])
+                ->middleware('perm:settings.manage')
+                ->name('settings.performance-evaluation.categories.store');
+            Route::patch('/settings/performance-evaluation/criteria/{criterion}', [PerformanceEvaluationSettingController::class, 'update'])
+                ->middleware('perm:settings.manage')
+                ->name('settings.performance-evaluation.criteria.update');
+            Route::delete('/settings/performance-evaluation/criteria/{criterion}', [PerformanceEvaluationSettingController::class, 'destroy'])
+                ->middleware('perm:settings.manage')
+                ->name('settings.performance-evaluation.criteria.destroy');
 
             // Landing page manager
             Route::get('/landing', [LandingPageController::class, 'index'])->name('admin.landing.index');

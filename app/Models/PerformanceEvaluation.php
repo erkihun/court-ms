@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -65,10 +67,10 @@ class PerformanceEvaluation extends Model
     public function getScoreLabelAttribute(): string
     {
         return match(true) {
-            $this->overall_score >= 85 => 'Excellent',
-            $this->overall_score >= 70 => 'Good',
-            $this->overall_score >= 50 => 'Satisfactory',
-            default                    => 'Needs Improvement',
+            $this->overall_score >= 85 => __('performance.score_labels.excellent'),
+            $this->overall_score >= 70 => __('performance.score_labels.good'),
+            $this->overall_score >= 50 => __('performance.score_labels.satisfactory'),
+            default                    => __('performance.score_labels.needs_improvement'),
         };
     }
 

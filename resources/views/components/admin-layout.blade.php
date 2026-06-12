@@ -216,6 +216,7 @@
     $hasLogout = Route::has('logout');
     $hasLangSwitch = Route::has('language.switch');
     $hasSystemSettings = Route::has('settings.system.edit');
+    $hasPerformanceEvaluationSettings = Route::has('settings.performance-evaluation.index');
     $hasTerms = Route::has('terms.index');
     $hasAbout = Route::has('about.index');
     $hasLetterTemplates = Route::has('letter-templates.index');
@@ -252,6 +253,7 @@
     $teamsActive = request()->routeIs('teams.*');
     $userControlOpen = $usersActive || $permissionsActive || $rolesActive || $teamsActive;
     $settingsMenuOpen = request()->routeIs('settings.system.*')
+        || request()->routeIs('settings.performance-evaluation.*')
         || request()->routeIs('terms.*')
         || request()->routeIs('about.*')
         || request()->routeIs('admin.audit')
@@ -341,6 +343,7 @@
 
             @php
             $settingsDropdownVisible = ($hasSystemSettings && auth()->user()?->hasPermission('settings.manage'))
+            || ($hasPerformanceEvaluationSettings && auth()->user()?->hasPermission('settings.manage'))
             || ($hasTerms && auth()->user()?->hasPermission('settings.manage'))
             || ($hasAbout && auth()->user()?->hasPermission('about.manage'))
             || $hasAudit;
@@ -879,6 +882,15 @@
                     {{ request()->routeIs('settings.system.*') ? 'sidebar-submenu-item-active' : 'sidebar-submenu-item-inactive' }}">
                         <x-heroicon-o-adjustments-horizontal class="sidebar-icon h-4 w-4" aria-hidden="true" />
                         <span>{{ __('app.System_Settings') }}</span>
+                    </a>
+                    @endif
+
+                    @if($hasPerformanceEvaluationSettings && auth()->user()?->hasPermission('settings.manage'))
+                    <a href="{{ route('settings.performance-evaluation.index') }}"
+                        class="sidebar-submenu-item focus-ring
+                    {{ request()->routeIs('settings.performance-evaluation.*') ? 'sidebar-submenu-item-active' : 'sidebar-submenu-item-inactive' }}">
+                        <x-heroicon-o-chart-bar-square class="sidebar-icon h-4 w-4" aria-hidden="true" />
+                        <span>{{ __('performance.settings.title') }}</span>
                     </a>
                     @endif
 
