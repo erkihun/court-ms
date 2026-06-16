@@ -48,7 +48,7 @@ session()->forget('acting_as_respondent');
                     <span>{{ __('app.View details') }}</span>
                 </button>
 
-                @if(Route::has('language.switch'))
+                @if(Route::has('language.switch') && ($settings?->show_language_switcher ?? true))
                 <div class="al-lang-switch" aria-label="{{ __('app.Language') }}">
                     <a href="{{ route('language.switch',['locale'=>'en','return'=>url()->current()]) }}"
                         class="al-lang-btn {{ app()->getLocale()==='en' ? 'active' : '' }}">

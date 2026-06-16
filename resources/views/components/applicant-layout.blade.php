@@ -12,6 +12,12 @@ $logoPath = $layout['logoPath'] ?? null;
 $footerText = $layout['footerText'] ?? __('app.all_rights_reserved');
 $notificationCount = $layout['notificationCount'] ?? 0;
 
+// Admin-controlled language switcher visibility (system settings). Defaults to on.
+$showLanguageSwitcher = ($systemSettings?->show_language_switcher ?? null);
+if ($showLanguageSwitcher === null) {
+    $showLanguageSwitcher = \App\Models\SystemSetting::current()->show_language_switcher ?? true;
+}
+
 $actingRespondent = $asRespondentNav || session('acting_as_respondent', false);
 if (!$asRespondentNav && !request()->is('respondent/*') && !request()->routeIs('respondent.*')) {
 session()->forget('acting_as_respondent');
@@ -366,6 +372,7 @@ $respondentNotifList = collect();
                     @endif
 
                     {{-- Language pill (no dropdown) --}}
+                    @if($showLanguageSwitcher)
                     <div class="ap-lang-switch mx-1" aria-label="{{ __('app.Language') }}">
                         <a href="{{ route('language.switch', ['locale' => 'en', 'return' => url()->current()]) }}"
                            class="ap-lang-opt {{ app()->getLocale() === 'en' ? 'active' : '' }}">
@@ -376,6 +383,7 @@ $respondentNotifList = collect();
                             <span class="fi fi-et text-xs"></span> አማ
                         </a>
                     </div>
+                    @endif
 
                     @if($actingRespondent)
                     {{-- Respondent notifications --}}
@@ -702,6 +710,7 @@ $respondentNotifList = collect();
 
                     @else
                     {{-- Guest --}}
+                    @if($showLanguageSwitcher)
                     <div class="ap-lang-switch mx-1" aria-label="{{ __('app.Language') }}">
                         <a href="{{ route('language.switch', ['locale' => 'en', 'return' => url()->current()]) }}"
                            class="ap-lang-opt {{ app()->getLocale() === 'en' ? 'active' : '' }}">
@@ -712,6 +721,7 @@ $respondentNotifList = collect();
                             <span class="fi fi-et text-xs"></span> አማ
                         </a>
                     </div>
+                    @endif
                     <a href="{{ route('applicant.register') }}" class="ap-navlink-cta">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
@@ -750,6 +760,7 @@ $respondentNotifList = collect();
 
                     {{-- Language --}}
                     @unless($actingRespondent)
+                    @if($showLanguageSwitcher)
                     <li class="pb-2 mb-1 border-b" style="border-color: var(--border);">
                         <div class="ap-mobile-section">{{ __('app.language') }}</div>
                         <div class="flex gap-2 px-1">
@@ -763,6 +774,7 @@ $respondentNotifList = collect();
                             </a>
                         </div>
                     </li>
+                    @endif
                     @endunless
 
                     @if(auth('applicant')->check() || $actingRespondent)

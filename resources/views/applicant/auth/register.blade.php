@@ -30,7 +30,7 @@ $noText             = __('auth.no');
             <span class="ar-brand-name">{{ $brandName }}</span>
         </a>
 
-        @if(Route::has('language.switch'))
+        @if(Route::has('language.switch') && ($settings?->show_language_switcher ?? true))
         <div class="ar-lang-switch" aria-label="{{ __('app.Language') }}">
             <a href="{{ route('language.switch', ['locale' => 'en', 'return' => url()->current()]) }}"
                class="ar-lang-opt {{ app()->getLocale() === 'en' ? 'active' : '' }}">
