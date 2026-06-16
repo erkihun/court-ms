@@ -2,6 +2,7 @@
 
 return array (
   'lawyer_title' => 'ጠበቃ',
+  'submitted_by_lawyer' => 'በጠበቃ :name የቀረበ',
   'title' => 'ዳሽቦርድ',
   'Dashboard' => 'ዳሽቦርድ',
   'total_cases' => 'ጠቅላላ መዝገቦች',

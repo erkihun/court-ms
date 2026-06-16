@@ -43,6 +43,7 @@ class ApplicantAuthController extends Controller
             'email'              => ['required', 'email', 'max:255', 'unique:applicants,email'],
             'address'            => ['required', 'string', 'max:255'],
             'is_lawyer'          => ['required', 'boolean'],
+            'lawyer_document'    => ['nullable', 'required_if:is_lawyer,1', 'file', 'mimes:pdf', 'max:1024'],
 
             // normalized (digits-only) National ID
             'national_id_number' => ['required', 'string', 'bail', 'regex:/^\d{16}$/', 'unique:applicants,national_id_number'],
@@ -50,13 +51,24 @@ class ApplicantAuthController extends Controller
             'password'           => ['required', 'confirmed', 'min:6'],
         ], [
             'national_id_number.regex' => 'National ID must be exactly 16 digits.',
+            'lawyer_document.required_if' => 'Please attach a document to verify your lawyer credentials.',
         ]);
+
+        $isLawyer = (bool) $data['is_lawyer'];
+
+        $lawyerDocumentPath = null;
+        if ($isLawyer && $request->hasFile('lawyer_document')) {
+            $lawyerDocumentPath = $request->file('lawyer_document')->store('lawyer_documents', 'private');
+        }
+
+        unset($data['lawyer_document']);
 
         $applicant = Applicant::create([
             ...$data,
             'password' => Hash::make($data['password']),
             'is_active' => true,
-            'is_lawyer' => (bool) $data['is_lawyer'],
+            'is_lawyer' => $isLawyer,
+            'lawyer_document_path' => $lawyerDocumentPath,
             // email_verified_at intentionally not set — OTP flow will set it
         ]);
 

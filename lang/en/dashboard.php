@@ -2,6 +2,7 @@
 
 return [
     'lawyer_title' => 'Lawyer',
+    'submitted_by_lawyer' => 'Submitted by lawyer: :name',
     'title' => 'Dashboard',
     'Dashboard' => 'Dashboard',
     'my_dashboard' => 'My Dashboard',

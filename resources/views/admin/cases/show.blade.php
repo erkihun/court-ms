@@ -163,19 +163,19 @@
     ->values()
     ->toArray();
 
-    $applicantDisplayName = collect([
+    $applicantDisplayName = trim((string) ($case->title ?? ''));
+
+    $lawyerName = collect([
     $case->applicant_first_name ?? null,
     $case->applicant_middle_name ?? null,
     $case->applicant_last_name ?? null,
     ])->map(fn($part) => trim((string) $part))
     ->filter()
     ->implode(' ');
-    if ($applicantDisplayName === '') {
-    $applicantDisplayName = trim((string) ($case->applicant_name ?? $case->applicant_full_name ?? ''));
+    if ($lawyerName === '') {
+    $lawyerName = trim((string) ($case->applicant_name ?? $case->applicant_full_name ?? ''));
     }
-    if ($applicantDisplayName !== '' && !empty($case->applicant_is_lawyer)) {
-    $applicantDisplayName = __('dashboard.lawyer_title') . ' ' . $applicantDisplayName;
-    }
+    $submittedByLawyer = !empty($case->applicant_is_lawyer) && $lawyerName !== '';
     @endphp
     @push('styles')
     <style>
@@ -944,145 +944,212 @@
                     x-transition:enter-start="opacity-0 transform translate-y-4"
                     x-transition:enter-end="opacity-100 transform translate-y-0"
                     class="main-content-section p-6 rounded-2xl shadow-sm space-y-6">
-                    <h3
-                        class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-3 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        {{ __('cases.navigation.case_summary') }}
-                    </h3>
+                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 pb-3">
+                        <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            {{ __('cases.navigation.case_summary') }}
+                        </h3>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold {{ $statusChip($currentStatus) }}">
+                                {{ __('cases.status.' . $currentStatus) }}
+                            </span>
+                            <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold {{ $reviewChip($reviewStatus) }}">
+                                {{ __('cases.review_status.' . $reviewStatus) }}
+                            </span>
+                        </div>
+                    </div>
 
-
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                        <div class="space-y-6">
-
-                            <div>
-                                <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">
-                                    {{ __('cases.summary.type') }}</div>
-                                <div class="text-gray-900 font-medium">{{ $case->case_type ?? '—' }}</div>
-                            </div>
-
-                            <div>
-                                <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">
-                                    {{ __('cases.summary.filing_date') }}</div>
-                                <div class="text-gray-900 font-medium">
-                                    {{ $case->filing_date ? \App\Support\EthiopianDate::format($case->filing_date) : '—' }}
-                                </div>
+                    {{-- Key facts --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="rounded-xl border border-gray-200 bg-gray-50/60 p-4">
+                            <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                                {{ __('cases.summary.type') }}</div>
+                            <div class="text-gray-900 font-semibold">{{ $case->case_type ?? '—' }}</div>
+                        </div>
+                        <div class="rounded-xl border border-gray-200 bg-gray-50/60 p-4">
+                            <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                                {{ __('cases.summary.filing_date') }}</div>
+                            <div class="text-gray-900 font-semibold">
+                                {{ $case->filing_date ? \App\Support\EthiopianDate::format($case->filing_date) : '—' }}
                             </div>
                         </div>
-                        <div class="space-y-6">
-                            <div>
-                                <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">
-                                    {{ __('cases.summary.hearings') }}</div>
-                                @if(!empty($hearings))
-                                <div class="space-y-2  text-gray-800">
-                                    @foreach($hearings as $hearing)
-                                    <div>
-                                        <div class="font-semibold text-gray-900">
-                                            {{ \App\Support\EthiopianDate::smartFormat($hearing->hearing_at, true, '—', 'h:i A', 'F j, Y') }}
-                                        </div>
-                                        <div class="text-xs text-gray-600">
-                                            {{ __('cases.case_number') }} {{ $case->case_number }}
-                                            @if(!empty($hearing->note))
-                                            &middot;
-                                            {{ \Illuminate\Support\Str::limit(strip_tags($hearing->note), 60) }}
-                                            @endif
-                                        </div>
+                        <div class="rounded-xl border border-gray-200 bg-gray-50/60 p-4">
+                            <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                                {{ __('cases.case_number') }}</div>
+                            <div class="text-gray-900 font-semibold">{{ $case->case_number ?? '—' }}</div>
+                        </div>
+                    </div>
+
+                    {{-- Submitted by lawyer --}}
+                    @if($submittedByLawyer)
+                    @php $hasLawyerDoc = !empty($case->applicant_lawyer_document_path); @endphp
+                    <div x-data="{ pdfOpen: false }"
+                        class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+                        <div class="flex items-center gap-3">
+                            <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-indigo-700">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                            </span>
+                            <p class="font-semibold text-indigo-900">
+                                {{ __('dashboard.submitted_by_lawyer', ['name' => $lawyerName]) }}
+                            </p>
+                        </div>
+
+                        @if($hasLawyerDoc)
+                        <button type="button" @click="pdfOpen = true"
+                            class="inline-flex items-center gap-1.5 rounded-lg border border-indigo-300 bg-white px-3 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-50 transition-colors">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            {{ __('cases.show.view_lawyer_document') }}
+                        </button>
+
+                        {{-- PDF preview modal --}}
+                        <div x-cloak x-show="pdfOpen" @keydown.escape.window="pdfOpen = false"
+                            class="fixed inset-0 z-50 flex items-center justify-center p-4">
+                            <div class="absolute inset-0 bg-black/50" @click="pdfOpen = false"></div>
+                            <div class="relative z-10 flex h-[80vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
+                                <div class="flex items-center justify-between bg-orange-500 px-4 py-3">
+                                    <h4 class="text-sm font-semibold text-white">{{ __('cases.show.lawyer_document') }}</h4>
+                                    <div class="flex items-center gap-2">
+                                        <a href="{{ route('cases.lawyer-document', $case->id) }}" target="_blank"
+                                            class="inline-flex items-center gap-1 rounded-lg border border-white/40 bg-white/10 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-white/20">
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                            {{ __('cases.show.open_new_tab') }}
+                                        </a>
+                                        <button type="button" @click="pdfOpen = false"
+                                            class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-white hover:bg-white/20">
+                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                        </button>
                                     </div>
-                                    @endforeach
                                 </div>
-                                @else
-                                <div class="text-gray-600">—</div>
-                                @endif
+                                <iframe x-show="pdfOpen" :src="pdfOpen ? '{{ route('cases.lawyer-document', $case->id) }}' : ''"
+                                    class="w-full flex-1 min-h-0 border-0" title="{{ __('cases.show.lawyer_document') }}"></iframe>
                             </div>
+                        </div>
+                        @endif
+                    </div>
+                    @endif
 
+                    {{-- Parties --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-indigo-100 text-indigo-700">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                </span>
+                                <div class="text-xs font-semibold text-gray-600 uppercase tracking-wide">{{ __('cases.summary.applicant') }}</div>
+                            </div>
+                            <p class="font-semibold text-gray-900">
+                                {{ $applicantDisplayName !== '' ? $applicantDisplayName : '—' }}</p>
+                            @php
+                            $applicantAddress = trim((string) ($case->applicant_address ?? ''));
+                            if ($applicantAddress === '') {
+                                $applicantAddress = trim((string) ($case->applicant_profile_address ?? ''));
+                            }
+                            @endphp
+                            <p class="text-xs text-gray-500 whitespace-pre-line mt-0.5">{{ $applicantAddress !== '' ? $applicantAddress : '—' }}</p>
+                        </div>
+                        <div class="rounded-xl border border-rose-100 bg-rose-50/40 p-4">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-100 text-rose-700">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                                </span>
+                                <div class="text-xs font-semibold text-gray-600 uppercase tracking-wide">{{ __('cases.respondent_defendant') }}</div>
+                            </div>
+                            <p class="font-semibold text-gray-900">{{ $case->respondent_name ?? '—' }}</p>
+                            <p class="text-xs text-gray-500 whitespace-pre-line mt-0.5">{{ $case->respondent_address ?? '—' }}</p>
                         </div>
                     </div>
 
+                    {{-- Hearings --}}
                     <div class="pt-4 border-t border-gray-200">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5  text-gray-800">
-                            <div>
-                                <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">
-                                    {{ __('cases.summary.applicant') }}</div>
-                                <p class="font-semibold text-gray-900">
-                                    {{ $applicantDisplayName !== '' ? $applicantDisplayName : '—' }}</p>
-                                @php
-                                $applicantAddress = trim((string) ($case->applicant_address ?? ''));
-                                if ($applicantAddress === '') {
-                                    $applicantAddress = trim((string) ($case->applicant_profile_address ?? ''));
-                                }
-                                @endphp
-                                <p class="text-xs text-gray-500 whitespace-pre-line">{{ $applicantAddress !== '' ? $applicantAddress : '—' }}</p>
+                        <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-2">
+                            {{ __('cases.summary.hearings') }}</div>
+                        @if(!empty($hearings))
+                        <div class="space-y-2 text-gray-800">
+                            @foreach($hearings as $hearing)
+                            <div class="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3">
+                                <span class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                </span>
+                                <div>
+                                    <div class="font-semibold text-gray-900">
+                                        {{ \App\Support\EthiopianDate::smartFormat($hearing->hearing_at, true, '—', 'h:i A', 'F j, Y') }}
+                                    </div>
+                                    <div class="text-xs text-gray-600">
+                                        {{ __('cases.case_number') }} {{ $case->case_number }}
+                                        @if(!empty($hearing->note))
+                                        &middot;
+                                        {{ \Illuminate\Support\Str::limit(strip_tags($hearing->note), 60) }}
+                                        @endif
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">
-                                    {{ __('cases.respondent_defendant') }}</div>
-                                <p class="font-semibold text-gray-900">{{ $case->respondent_name ?? '—' }}</p>
-                                <p class="text-xs text-gray-500">{{ $case->respondent_address ?? '—' }}</p>
-                            </div>
+                            @endforeach
                         </div>
+                        @else
+                        <div class="text-gray-500 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-3 py-2 text-sm">—</div>
+                        @endif
                     </div>
 
-
+                    {{-- Assignment --}}
                     <div class="pt-4 border-t border-gray-200">
                         <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-2">
                             {{ __('cases.summary.assignee') }}</div>
                         @if($case->assignee_name)
-                        <div class="text-gray-900 font-medium flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                            {{ $case->assignee_name }}
-
-                        </div>
-                        @if(!empty($case->assignee_team_name))
-                        <div class="sm:col-span-2">
-                            {{ __('cases.summary.team') }}: {{ $case->assignee_team_name }}
-                        </div>
-                        @endif
-                        @if($case->assigned_at)
-                        <div class="sm:col-span-2">
-                            <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">
-                                {{ __('cases.summary.assigned_at') }}</div>
-                            <div class="text-gray-900 font-medium">
-                                {{ \App\Support\EthiopianDate::format($case->assigned_at, withTime: true, timeFormat: 'h:i A') }}
+                        <div class="rounded-xl border border-gray-200 bg-gray-50/60 p-4 space-y-2">
+                            <div class="text-gray-900 font-semibold flex items-center gap-2">
+                                <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                </span>
+                                {{ $case->assignee_name }}
                             </div>
+                            @if(!empty($case->assignee_team_name))
+                            <div class="text-sm text-gray-600">
+                                {{ __('cases.summary.team') }}: <span class="font-medium text-gray-800">{{ $case->assignee_team_name }}</span>
+                            </div>
+                            @endif
+                            @if($case->assigned_at)
+                            <div>
+                                <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">
+                                    {{ __('cases.summary.assigned_at') }}</div>
+                                <div class="text-gray-900 font-medium text-sm">
+                                    {{ \App\Support\EthiopianDate::format($case->assigned_at, withTime: true, timeFormat: 'h:i A') }}
+                                </div>
+                            </div>
+                            @endif
                         </div>
-                        @endif
                         @else
-                        <div class="text-gray-500 flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                        <div class="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24"
                                 stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
-                            — {{ __('cases.summary.unassigned') }} —
+                            <span class="text-sm font-medium">{{ __('cases.summary.unassigned') }}</span>
                         </div>
                         @endif
                     </div>
 
+                    {{-- Timestamps --}}
                     <div class="pt-4 border-t border-gray-200">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                            <div>
-                                <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="rounded-xl border border-gray-200 bg-gray-50/60 p-4">
+                                <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
                                     {{ __('cases.summary.created') }}</div>
-                                <div class="text-gray-900 font-medium">
+                                <div class="text-gray-900 font-medium text-sm">
                                     {{ $case->created_at ? \App\Support\EthiopianDate::format($case->created_at, withTime: true, timeFormat: 'h:i A') : '—' }}
                                 </div>
                             </div>
-                            <div>
-                                <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">
+                            <div class="rounded-xl border border-gray-200 bg-gray-50/60 p-4">
+                                <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
                                     {{ __('cases.summary.updated') }}</div>
-                                <div class="text-gray-900 font-medium">
+                                <div class="text-gray-900 font-medium text-sm">
                                     {{ $case->updated_at ? \App\Support\EthiopianDate::format($case->updated_at, withTime: true, timeFormat: 'h:i A') : '—' }}
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 </section>
@@ -1163,7 +1230,7 @@
                     <div class="flex items-center justify-between border-b border-gray-200 pb-3">
                         <h3 class="text-lg font-semibold text-gray-900">{{ __('case_inspections.requests.index_title') }}</h3>
                         <span class="text-xs font-medium text-gray-600 bg-gray-100 rounded-full px-2.5 py-1">
-                            {{ ($inspectionRequests ?? collect())->count() }} entries
+                            {{ ($inspectionRequests ?? collect())->count() }} {{ __('cases.show.entries') }}
                         </span>
                     </div>
 
@@ -1216,7 +1283,7 @@
                     <div class="flex items-center justify-between border-b border-gray-200 pb-3">
                         <h3 class="text-lg font-semibold text-gray-900">{{ __('case_inspections.findings.index_title') }}</h3>
                         <span class="text-xs font-medium text-gray-600 bg-gray-100 rounded-full px-2.5 py-1">
-                            {{ ($inspectionFindings ?? collect())->count() }} entries
+                            {{ ($inspectionFindings ?? collect())->count() }} {{ __('cases.show.entries') }}
                         </span>
                     </div>
 
@@ -1325,6 +1392,9 @@
                         </div>
 
                         <h2>{{ __('cases.summary.applicant') }}</h2>
+                        @if($submittedByLawyer)
+                        <p><strong>{{ __('dashboard.submitted_by_lawyer', ['name' => $lawyerName]) }}</strong></p>
+                        @endif
                         <table class="doc-fields">
                             <tr><td>{{ __('cases.name') }}</td><td>{{ $applicantDisplayName !== '' ? $applicantDisplayName : '—' }}</td></tr>
                             <tr><td>{{ __('cases.address') }}</td><td>{{ trim((string) ($case->applicant_address ?? $case->applicant_profile_address ?? '')) ?: '—' }}</td></tr>
@@ -1483,6 +1553,12 @@ ${tpl.innerHTML}
                         }
                     </script>
 
+                    @if($submittedByLawyer)
+                    <div class="flex items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-800">
+                        <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        {{ __('dashboard.submitted_by_lawyer', ['name' => $lawyerName]) }}
+                    </div>
+                    @endif
                     <div class="grid md:grid-cols-2 gap-4 border border-gray-100 rounded-xl p-4 bg-gray-50">
                         <div>
                             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">{{ __('cases.summary.applicant') }}</p>
@@ -1722,16 +1798,16 @@ ${tpl.innerHTML}
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M12 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-6M9 17l3-3-3-3M14 7h7" />
                                     </svg>
-                                    Letters
+                                    {{ __('cases.navigation.letters') }}
                                 </h3>
                                 <span class="text-xs font-medium text-gray-600 bg-gray-100 rounded-full px-2.5 py-1">
-                                    {{ $letterCollection->count() }} entries
+                                    {{ $letterCollection->count() }} {{ __('cases.show.entries') }}
                                 </span>
                             </div>
                             @if($letterCollection->isEmpty())
                             <div
                                 class="text-gray-500  border border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
-                                No letters have been logged yet.
+                                {{ __('cases.show.no_letters_logged') }}
                             </div>
                             @else
                             <div class="overflow-x-auto rounded-lg border border-gray-100">
@@ -1739,18 +1815,18 @@ ${tpl.innerHTML}
                                     <thead class="bg-gray-50 text-gray-600">
                                         <tr>
                                             <th class="px-3 py-2 text-left font-medium border-b border-gray-200">
-                                                Reference</th>
-                                            <th class="px-3 py-2 text-left font-medium border-b border-gray-200">Subject
+                                                {{ __('cases.show.letters_table.reference') }}</th>
+                                            <th class="px-3 py-2 text-left font-medium border-b border-gray-200">{{ __('cases.show.letters_table.subject') }}
                                             </th>
                                             <th class="px-3 py-2 text-left font-medium border-b border-gray-200">
-                                                Template</th>
-                                            <th class="px-3 py-2 text-left font-medium border-b border-gray-200">Status
+                                                {{ __('cases.show.letters_table.template') }}</th>
+                                            <th class="px-3 py-2 text-left font-medium border-b border-gray-200">{{ __('cases.show.letters_table.status') }}
                                             </th>
-                                            <th class="px-3 py-2 text-left font-medium border-b border-gray-200">Date
+                                            <th class="px-3 py-2 text-left font-medium border-b border-gray-200">{{ __('cases.show.letters_table.date') }}
                                             </th>
-                                            <th class="px-3 py-2 text-left font-medium border-b border-gray-200">Author
+                                            <th class="px-3 py-2 text-left font-medium border-b border-gray-200">{{ __('cases.show.letters_table.author') }}
                                             </th>
-                                            <th class="px-3 py-2 text-right font-medium border-b border-gray-200">Action
+                                            <th class="px-3 py-2 text-right font-medium border-b border-gray-200">{{ __('cases.show.letters_table.action') }}
                                             </th>
                                         </tr>
                                     </thead>
@@ -1785,7 +1861,7 @@ ${tpl.innerHTML}
                                                 @if($canViewLetters)
                                                 <a href="{{ route('letters.show', $letter->id) }}" target="_blank"
                                                     class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-150">
-                                                    {{ __('cases.documents.view') }}
+                                                    {{ __('cases.documents.view_letter') }}
                                                 </a>
                                                 @else
                                                 <span class="text-gray-400 text-xs">—</span>
@@ -1815,7 +1891,7 @@ ${tpl.innerHTML}
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M11 4h10M11 8h10M4 16h16M4 12h16M4 8h4M4 4h4" />
                                 </svg>
-                                Write letter
+                                {{ __('cases.show.write_letter') }}
                             </h3>
 
                             <button type="button" @click="openSection('letters')"
@@ -1825,7 +1901,7 @@ ${tpl.innerHTML}
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M15 19l-7-7 7-7" />
                                 </svg>
-                                Back to list
+                                {{ __('cases.show.back_to_list') }}
                             </button>
                         </div>
 

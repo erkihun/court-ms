@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -42,9 +43,23 @@ class ApplicantProfileController extends Controller
 
             'current_password'   => ['nullable', 'current_password:applicant'],
             'password'           => ['nullable', 'confirmed', 'min:6'],
+
+            'lawyer_document'    => ['nullable', 'file', 'mimes:pdf', 'max:1024'],
         ], [
             'national_id_number.digits' => 'National ID must be exactly 16 digits.',
         ]);
+
+        // Only lawyers may upload a credential document.
+        if ($request->hasFile('lawyer_document') && $user->is_lawyer) {
+            $newPath = $request->file('lawyer_document')->store('lawyer_documents', 'private');
+
+            if (!empty($user->lawyer_document_path)) {
+                Storage::disk('private')->delete($user->lawyer_document_path);
+            }
+
+            $validated['lawyer_document_path'] = $newPath;
+        }
+        unset($validated['lawyer_document']);
 
         if (!empty($validated['password'])) {
             if (empty($validated['current_password'])) {
@@ -70,5 +85,21 @@ class ApplicantProfileController extends Controller
         }
 
         return back()->with('success', 'Profile updated.');
+    }
+
+    public function lawyerDocument(Request $request)
+    {
+        $user = $request->user('applicant');
+
+        abort_if(empty($user->lawyer_document_path), 404, 'Document not found.');
+
+        $disk = Storage::disk('private');
+        abort_if(!$disk->exists($user->lawyer_document_path), 404, 'Document not found.');
+
+        return $disk->response(
+            $user->lawyer_document_path,
+            basename($user->lawyer_document_path),
+            ['Content-Type' => 'application/pdf']
+        );
     }
 }

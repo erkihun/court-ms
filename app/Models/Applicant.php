@@ -27,6 +27,7 @@ class Applicant extends Authenticatable implements MustVerifyEmailContract
         'password',
         'is_active',
         'is_lawyer',
+        'lawyer_document_path',
     ];
 
     protected $hidden = ['password', 'remember_token'];

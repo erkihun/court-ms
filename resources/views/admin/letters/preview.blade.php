@@ -332,8 +332,7 @@
     ->select(
     'c.code',
     'c.respondent_name',
-    \Illuminate\Support\Facades\DB::raw("TRIM(CONCAT(COALESCE(a.first_name,''), ' ', COALESCE(a.middle_name,''), ' ',
-    COALESCE(a.last_name,''))) as applicant_name")
+    'c.title as applicant_name'
     )
     ->where('c.case_number', $letter->case_number)
     ->first();

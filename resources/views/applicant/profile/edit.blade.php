@@ -46,7 +46,8 @@
         </div>
         @endif
 
-        <form method="POST" action="{{ route('applicant.profile.update') }}" class="space-y-8">
+        <form method="POST" action="{{ route('applicant.profile.update') }}" class="space-y-8"
+            enctype="multipart/form-data">
             @csrf @method('PATCH')
 
             {{-- Personal information --}}
@@ -288,6 +289,44 @@
                     </div>
                 </div>
             </section>
+
+            {{-- Lawyer document --}}
+            @if($user->is_lawyer)
+            <section>
+                <div class="flex items-center gap-2 mb-3">
+                    <h2 class="font-semibold text-slate-800">{{ __('auth.lawyer_document') }}</h2>
+                </div>
+
+                @if(!empty($user->lawyer_document_path))
+                <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+                    <span class="inline-flex items-center gap-2 text-sm font-medium text-emerald-800">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        {{ __('auth.lawyer_document_uploaded') }}
+                    </span>
+                    <a href="{{ route('applicant.profile.lawyer-document') }}" target="_blank"
+                        class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        {{ __('cases.show.view_lawyer_document') }}
+                    </a>
+                </div>
+                <label class="mt-3 block text-xs font-medium text-slate-600" for="lawyer_document">
+                    {{ __('auth.lawyer_document_replace') }}
+                </label>
+                @else
+                <label class="block text-xs font-medium text-slate-600" for="lawyer_document">
+                    {{ __('auth.lawyer_document') }}
+                </label>
+                @endif
+
+                <input id="lawyer_document" type="file" name="lawyer_document" accept=".pdf"
+                    class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300 text-slate-900
+                           focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+                <p class="text-xs text-slate-500 mt-1">{{ __('auth.lawyer_document_hint') }}</p>
+                @error('lawyer_document')
+                <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                @enderror
+            </section>
+            @endif
 
             {{-- Actions --}}
             <div class="pt-2 flex flex-wrap items-center gap-2">

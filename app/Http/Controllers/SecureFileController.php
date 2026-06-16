@@ -50,6 +50,21 @@ class SecureFileController extends Controller
         );
     }
 
+    public function lawyerDocument(int $caseId): StreamedResponse
+    {
+        // Staff only — lawyer credential documents are reviewed by court staff.
+        abort_unless($this->staffCan('cases.view'), 403);
+
+        $path = DB::table('court_cases as c')
+            ->leftJoin('applicants as a', 'a.id', '=', 'c.applicant_id')
+            ->where('c.id', $caseId)
+            ->value('a.lawyer_document_path');
+
+        abort_if(empty($path), 404, 'Document not found.');
+
+        return $this->downloadFile($path, basename((string) $path), 'application/pdf', true);
+    }
+
     public function respondentResponse(Request $request, RespondentResponse $response): StreamedResponse
     {
         $inline = $request->boolean('inline');

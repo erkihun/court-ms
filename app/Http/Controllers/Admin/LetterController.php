@@ -81,7 +81,7 @@ class LetterController extends Controller
                     ->leftJoin('applicants as a', 'a.id', '=', 'c.applicant_id')
                     ->select(
                         'c.respondent_name',
-                        DB::raw("TRIM(CONCAT(COALESCE(a.first_name,''), ' ', COALESCE(a.middle_name,''), ' ', COALESCE(a.last_name,''))) as applicant_name")
+                        'c.title as applicant_name'
                     )
                     ->where('c.case_number', $data['case_number'])
                     ->first();
@@ -213,7 +213,7 @@ class LetterController extends Controller
                     ->leftJoin('applicants as a', 'a.id', '=', 'c.applicant_id')
                     ->select(
                         'c.respondent_name',
-                        DB::raw("TRIM(CONCAT(COALESCE(a.first_name,''), ' ', COALESCE(a.middle_name,''), ' ', COALESCE(a.last_name,''))) as applicant_name")
+                        'c.title as applicant_name'
                     )
                     ->where('c.case_number', $caseNumber)
                     ->first();
@@ -504,7 +504,7 @@ class LetterController extends Controller
             '{case_filing_date}' => (string) ($case->filing_date ? \App\Support\EthiopianDate::format($case->filing_date) : ''),
             '{case_status}' => (string) ($case->status ?? ''),
             '{respondent_name}' => (string) ($case->respondent_name ?? ''),
-            '{applicant_name}' => trim((string) ($applicant?->full_name ?? '')),
+            '{applicant_name}' => (string) ($case->title ?? ''),
             '{applicant_first_name}' => (string) ($applicant?->first_name ?? ''),
             '{applicant_middle_name}' => (string) ($applicant?->middle_name ?? ''),
             '{applicant_last_name}' => (string) ($applicant?->last_name ?? ''),

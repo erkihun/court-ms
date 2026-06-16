@@ -99,7 +99,12 @@
                         <tr>
                             <td>{{ ($cases->firstItem() ?: 0) + $loop->index }}</td>
                             <td class="font-semibold"><a href="{{ route('cases.show', $c->id) }}" class="text-blue-700 hover:underline">{{ $c->case_number }}</a></td>
-                            <td>{{ ($c->applicant_name ?? '') !== '' ? (!empty($c->applicant_is_lawyer) ? __('dashboard.lawyer_title').' ' : '') . $c->applicant_name : '-' }}</td>
+                            <td>
+                                @if(!empty($c->applicant_is_lawyer) && ($c->applicant_name ?? '') !== '')
+                                <div class="text-xs text-indigo-700 mb-0.5">{{ __('dashboard.submitted_by_lawyer', ['name' => $c->applicant_name]) }}</div>
+                                @endif
+                                {{ ($c->title ?? '') !== '' ? $c->title : '-' }}
+                            </td>
                             <td>{{ $c->case_type }}</td>
                             <td>{{ $c->team_name ?? '-' }}</td>
                             <td>{{ $c->assignee_name ?? '-' }}</td>

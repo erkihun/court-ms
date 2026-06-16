@@ -262,6 +262,7 @@ Route::middleware(SetLocale::class)->group(function () {
             // Profile
             Route::get('/applicant/profile',  [ApplicantProfileController::class, 'edit'])->name('applicant.profile.edit');
             Route::patch('/applicant/profile', [ApplicantProfileController::class, 'update'])->name('applicant.profile.update');
+            Route::get('/applicant/profile/lawyer-document', [ApplicantProfileController::class, 'lawyerDocument'])->name('applicant.profile.lawyer-document');
             Route::post('/applicant/switch-to-respondent', ApplicantRoleSwitchController::class)
                 ->name('applicant.switchToRespondent');
 
@@ -461,6 +462,7 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::get('/cases/export',            [CaseController::class, 'export'])->middleware('perm:reports.export')->name('cases.export');
             Route::get('/cases/{id}',              [CaseController::class, 'show'])->middleware('perm:cases.view')->name('cases.show');
             Route::get('/cases/{case}/documents/{doc}', [CaseController::class, 'viewDocument'])->middleware('perm:cases.view')->name('cases.documents.view');
+            Route::get('/cases/{case}/lawyer-document', [SecureFileController::class, 'lawyerDocument'])->middleware('perm:cases.view')->name('cases.lawyer-document');
 
             Route::get('/cases/{caseId}/assign',   [CaseController::class, 'assignForm'])
                 ->middleware('perm:cases.assign')

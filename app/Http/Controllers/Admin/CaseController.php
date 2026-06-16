@@ -404,7 +404,8 @@ class CaseController extends Controller
                 DB::raw("TRIM(CONCAT(COALESCE(ap.first_name,''),' ',COALESCE(ap.middle_name,''),' ',COALESCE(ap.last_name,''))) as applicant_name"),
                 'ap.is_lawyer as applicant_is_lawyer',
                 'ap.email as applicant_email',
-                'ap.address as applicant_profile_address'
+                'ap.address as applicant_profile_address',
+                'ap.lawyer_document_path as applicant_lawyer_document_path'
             )
             ->where('c.id', $id)
             ->first();

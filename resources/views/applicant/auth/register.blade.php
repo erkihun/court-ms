@@ -71,7 +71,8 @@ $noText             = __('auth.no');
             </div>
             @endif
 
-            <form method="POST" action="{{ route('applicant.register.submit') }}" class="ar-form">
+            <form method="POST" action="{{ route('applicant.register.submit') }}" class="ar-form"
+                enctype="multipart/form-data" x-data="{ isLawyer: '{{ old('is_lawyer', '0') }}' }">
                 @csrf
 
                 {{-- ── Section: Role ──────────────────────────────────── --}}
@@ -79,17 +80,24 @@ $noText             = __('auth.no');
                     <div class="ar-section-label">{{ __('auth.lawyer_question') }}</div>
                     <div class="ar-radio-group">
                         <label class="ar-radio-label">
-                            <input type="radio" name="is_lawyer" value="1" class="ar-radio"
+                            <input type="radio" name="is_lawyer" value="1" class="ar-radio" x-model="isLawyer"
                                 @checked(old('is_lawyer') === '1')>
                             <span class="ar-radio-dot"></span>
                             {{ $yesText }}
                         </label>
                         <label class="ar-radio-label">
-                            <input type="radio" name="is_lawyer" value="0" class="ar-radio"
+                            <input type="radio" name="is_lawyer" value="0" class="ar-radio" x-model="isLawyer"
                                 @checked(old('is_lawyer', '0') === '0')>
                             <span class="ar-radio-dot"></span>
                             {{ $noText }}
                         </label>
+                    </div>
+
+                    <div x-show="isLawyer === '1'" x-cloak class="ar-field" style="margin-top: 1rem;">
+                        <label class="ar-label">{{ __('auth.lawyer_document') }}</label>
+                        <input type="file" name="lawyer_document" accept=".pdf"
+                            class="ar-input" x-bind:required="isLawyer === '1'">
+                        <p class="ar-hint">{{ __('auth.lawyer_document_hint') }}</p>
                     </div>
                 </div>
 
@@ -544,6 +552,7 @@ $noText             = __('auth.no');
     .ar-input-pr { padding-right: 2.75rem; }
     .ar-select { appearance: none; cursor: pointer; }
     .ar-hint { font-size: 0.75rem; color: #94a3b8; margin: 0; }
+    [x-cloak] { display: none !important; }
 
     /* ── Phone prefix widget ─────────────────────────────────────────── */
     .ar-phone-wrap {
