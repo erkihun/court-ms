@@ -6,6 +6,7 @@ try {
 
 $brandName  = $settings?->app_name ?? config('app.name', 'Court MS');
 $logoPath   = $settings?->logo_path ?? null;
+$bannerPath = ($settings?->show_banner_on_login ?? true) ? ($settings?->banner_path ?? null) : null;
 $loginAs    = old('login_as', request('login_as', 'applicant'));
 
 $applicantPanelLabel  = __('auth.applicant_panel_label');
@@ -70,13 +71,13 @@ session()->forget('acting_as_respondent');
             <div class="al-form-inner">
 
                 {{-- Heading --}}
-                <div class="al-heading">
+                <div class="al-heading al-anim">
                     <h1>{{ __('auth.sign_in_title') }}</h1>
                     <p>{{ __('auth.sign_in_subtitle') }}</p>
                 </div>
 
                 {{-- Role tabs --}}
-                <div class="al-role-tabs" role="group" aria-label="{{ __('auth.sign_in_as') }}">
+                <div class="al-role-tabs al-anim" role="group" aria-label="{{ __('auth.sign_in_as') }}">
                     <button type="button" data-role="applicant"
                         class="al-role-tab {{ $loginAs==='applicant' ? 'active' : '' }}">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
@@ -89,7 +90,7 @@ session()->forget('acting_as_respondent');
                     </button>
                     <span class="al-role-indicator" id="al-role-indicator"></span>
                 </div>
-                <p class="al-panel-label" data-panel-label>{{ $panelLabel }}</p>
+                <p class="al-panel-label al-anim" data-panel-label>{{ $panelLabel }}</p>
 
                 {{-- Alerts --}}
                 @if(session('success'))
@@ -106,7 +107,7 @@ session()->forget('acting_as_respondent');
                 @endif
 
                 {{-- Form --}}
-                <form method="POST" action="{{ route('applicant.login.submit') }}" class="al-form">
+                <form method="POST" action="{{ route('applicant.login.submit') }}" class="al-form al-anim">
                     @csrf
                     <input type="hidden" name="login_as" id="login_as" value="{{ $loginAs }}">
 
@@ -156,7 +157,7 @@ session()->forget('acting_as_respondent');
                 </form>
 
                 {{-- Register --}}
-                <p class="al-register-line">
+                <p class="al-register-line al-anim">
                     {{ __('auth.no_account') }}
                     <a href="{{ route('applicant.register') }}">{{ __('auth.create_account') }}</a>
                 </p>
@@ -171,7 +172,13 @@ session()->forget('acting_as_respondent');
     {{-- ══════════════════════════════════════════
          RIGHT — about content on dark panel
          ══════════════════════════════════════════ --}}
-    <div class="al-right" :class="{ 'open': aboutOpen }" @keydown.escape.window="aboutOpen = false">
+    <div class="al-right {{ $bannerPath ? 'has-banner' : '' }}" :class="{ 'open': aboutOpen }" @keydown.escape.window="aboutOpen = false">
+        @if($bannerPath)
+        {{-- system banner background --}}
+        <div class="al-banner" aria-hidden="true" style="background-image:url('{{ asset('storage/'.$bannerPath) }}');"></div>
+        <div class="al-banner-overlay" aria-hidden="true"></div>
+        @endif
+
         {{-- ambient glow orbs --}}
         <div class="al-orb al-orb-1" aria-hidden="true"></div>
         <div class="al-orb al-orb-2" aria-hidden="true"></div>
@@ -253,6 +260,53 @@ session()->forget('acting_as_respondent');
 <style>
 /* ── Reset body ──────────────────────────────── */
 html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
+
+/* ══════════════════════════════════════════════
+   MOTION
+══════════════════════════════════════════════ */
+@keyframes al-fade-up {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes al-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+/* drifting / breathing ambient orbs */
+@keyframes al-orb-float-1 {
+    0%,100% { transform: translate(0,0) scale(1); }
+    50%     { transform: translate(6%, 8%) scale(1.12); }
+}
+@keyframes al-orb-float-2 {
+    0%,100% { transform: translate(0,0) scale(1); }
+    50%     { transform: translate(-7%,-6%) scale(1.08); }
+}
+@keyframes al-orb-float-3 {
+    0%,100% { transform: translate(-50%,-50%) scale(1); opacity: 0.8; }
+    50%     { transform: translate(-44%,-56%) scale(1.2); opacity: 1; }
+}
+/* button shine sweep */
+@keyframes al-shine {
+    from { left: -60%; }
+    to   { left: 130%; }
+}
+
+/* Staggered entrance for the form column */
+.al-anim { opacity: 0; animation: al-fade-up 620ms cubic-bezier(0.16,1,0.3,1) forwards; }
+.al-heading     { animation-delay: 60ms; }
+.al-role-tabs   { animation-delay: 140ms; }
+.al-panel-label { animation-delay: 200ms; }
+.al-form        { animation-delay: 260ms; }
+.al-register-line { animation-delay: 360ms; }
+
+/* Right panel content fades in */
+.al-about, .al-about-empty { animation: al-fade-in 800ms ease 120ms both; }
+
+@media (prefers-reduced-motion: reduce) {
+    .al-anim, .al-about, .al-about-empty { animation: none !important; opacity: 1 !important; transform: none !important; }
+    .al-orb, .al-banner { animation: none !important; transform: none !important; }
+    .al-submit::after { display: none !important; }
+}
 
 /* ── Shell ───────────────────────────────────── */
 .al-shell {
@@ -380,6 +434,8 @@ html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
     transition: color 180ms;
 }
 .al-role-tab.active { color: #0f172a; }
+.al-role-tab svg { transition: transform 200ms ease; }
+.al-role-tab:hover svg { transform: scale(1.12); }
 .al-role-indicator {
     position: absolute; top: 0.25rem; bottom: 0.25rem; left: 0.25rem;
     background: #fff;
@@ -433,9 +489,10 @@ html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
 .al-input:focus {
     border-color: #ea580c;
     box-shadow: 0 0 0 3px rgb(234 88 12/0.13);
+    transform: translateY(-1px);
 }
 .al-pw-eye {
-    position: absolute; inset-y: 0; right: 0;
+    position: absolute; top: 0; bottom: 0; right: 0;
     display: flex; align-items: center; padding: 0 0.875rem;
     color: #94a3b8; background: none; border: none; cursor: pointer;
     transition: color 120ms;
@@ -461,6 +518,7 @@ html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
 
 /* submit */
 .al-submit {
+    position: relative; overflow: hidden;
     display: flex; align-items: center; justify-content: center; gap: 0.5rem;
     width: 100%; height: 2.875rem;
     border-radius: 0.75rem; border: none; cursor: pointer;
@@ -471,11 +529,22 @@ html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
     transition: transform 150ms, box-shadow 150ms, opacity 150ms;
     margin-top: 0.25rem;
 }
+/* diagonal shine that sweeps on hover */
+.al-submit::after {
+    content: ""; position: absolute; top: 0; bottom: 0; left: -60%;
+    width: 45%;
+    background: linear-gradient(100deg, transparent, rgb(255 255 255/0.35), transparent);
+    transform: skewX(-18deg);
+    pointer-events: none;
+}
+.al-submit:hover::after { animation: al-shine 750ms ease forwards; }
 .al-submit:hover {
-    opacity: 0.93;
+    opacity: 0.96;
     box-shadow: 0 6px 22px rgb(234 88 12/0.48);
     transform: translateY(-1px);
 }
+.al-submit svg { transition: transform 200ms ease; }
+.al-submit:hover svg { transform: translateX(3px); }
 .al-submit:active { transform: scale(0.98); box-shadow: 0 2px 10px rgb(234 88 12/0.3); }
 
 /* register link */
@@ -554,22 +623,53 @@ html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
     }
 }
 
+/* system banner background */
+.al-banner {
+    position: absolute; inset: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: 0;
+    animation: al-banner-zoom 24s ease-in-out infinite alternate;
+}
+@keyframes al-banner-zoom {
+    from { transform: scale(1); }
+    to   { transform: scale(1.08); }
+}
+/* dark gradient so text stays readable over the banner */
+.al-banner-overlay {
+    position: absolute; inset: 0; z-index: 1;
+    background:
+        linear-gradient(160deg, rgb(8 14 39/0.82) 0%, rgb(8 14 39/0.7) 45%, rgb(8 14 39/0.9) 100%);
+}
+/* lift content above the banner layers */
+.al-right.has-banner .al-about,
+.al-right.has-banner .al-about-empty,
+.al-right.has-banner .al-about-close { z-index: 10; }
+/* soften the orbs when a banner is present */
+.al-right.has-banner .al-orb { opacity: 0.55; mix-blend-mode: screen; }
+
 /* ambient orbs */
 .al-orb {
     position: absolute; border-radius: 9999px;
     filter: blur(72px); pointer-events: none;
+    z-index: 2;
 }
 .al-orb-1 {
     top: -15%; left: -10%; width: 65%; height: 65%;
     background: radial-gradient(circle, rgb(79 70 229/0.35) 0%, transparent 70%);
+    animation: al-orb-float-1 16s ease-in-out infinite;
 }
 .al-orb-2 {
     bottom: -15%; right: -10%; width: 60%; height: 60%;
     background: radial-gradient(circle, rgb(234 88 12/0.28) 0%, transparent 70%);
+    animation: al-orb-float-2 20s ease-in-out infinite;
 }
 .al-orb-3 {
     top: 40%; left: 30%; width: 40%; height: 40%;
+    transform: translate(-50%,-50%);
     background: radial-gradient(circle, rgb(6 182 212/0.12) 0%, transparent 70%);
+    animation: al-orb-float-3 12s ease-in-out infinite;
 }
 
 .al-about-close {
