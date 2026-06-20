@@ -27,8 +27,9 @@ $bannerPath = $settings?->banner_path ?? null;
                     @else
                     linear-gradient(135deg, #0f172a, #1e293b)
                     @endif;
-                background-position: center;
+                background-position: left center;
                 background-size: cover;
+                background-repeat: no-repeat;
             }
 
             .admin-login-shell::before {
