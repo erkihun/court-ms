@@ -139,4 +139,11 @@ return array (
   'yes' => 'Yes',
   'throttle' => 'Too many login attempts. Please try again in :seconds seconds.',
   'too_many_attempts' => 'Too many login attempts. Please try again in :minutes minute(s).',
+  'stage_new' => 'New',
+  'stage_pending' => 'Pending',
+  'stage_on_process' => 'On Process',
+  'stage_review' => 'Under Review',
+  'stage_closed' => 'Closed',
+  'stage_declined' => 'Declined',
+  'stage_approved' => 'Approved',
 );
