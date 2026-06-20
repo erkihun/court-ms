@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Applicant;
 use App\Http\Controllers\Controller;
 
 use App\Models\Applicant;
+use App\Models\SystemSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
@@ -119,10 +121,17 @@ class ApplicantAuthController extends Controller
 
         $remember = $request->boolean('remember');
 
+        $loginSettings = Cache::remember('system_settings', 3600, fn() => SystemSetting::query()->first());
+        $maxAttempts   = $loginSettings?->login_max_attempts ?? 5;
+        $lockoutSecs   = ($loginSettings?->lockout_minutes ?? 15) * 60;
+
         $throttleKey = Str::lower($credentials['email']) . '|' . $request->ip();
-        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+        if (RateLimiter::tooManyAttempts($throttleKey, $maxAttempts)) {
             $seconds = RateLimiter::availableIn($throttleKey);
-            $message = "Too many login attempts. Please try again in {$seconds} seconds.";
+            $message = trans('auth.throttle', [
+                'seconds' => $seconds,
+                'minutes' => ceil($seconds / 60),
+            ]);
             if ($request->expectsJson()) {
                 return response()->json([
                     'errors' => ['email' => [$message]],
@@ -181,7 +190,7 @@ class ApplicantAuthController extends Controller
                 : redirect($target)->with('success', 'Signed in.');
         }
 
-        RateLimiter::hit($throttleKey, 300);
+        RateLimiter::hit($throttleKey, $lockoutSecs);
 
         if ($request->expectsJson()) {
             return response()->json([

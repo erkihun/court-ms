@@ -2,9 +2,11 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\SystemSetting;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -37,12 +39,19 @@ class LoginRequest extends FormRequest
      *
      * @throws \Illuminate\Validation\ValidationException
      */
+    private function loginSettings(): object
+    {
+        return Cache::remember('system_settings', 3600, fn() => SystemSetting::query()->first())
+            ?? (object) ['login_max_attempts' => 5, 'lockout_minutes' => 15];
+    }
+
     public function authenticate(): void
     {
         $this->ensureIsNotRateLimited();
 
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
-            RateLimiter::hit($this->throttleKey());
+            $settings = $this->loginSettings();
+            RateLimiter::hit($this->throttleKey(), ($settings->lockout_minutes ?? 15) * 60);
 
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),
@@ -59,7 +68,10 @@ class LoginRequest extends FormRequest
      */
     public function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        $settings = $this->loginSettings();
+        $maxAttempts = $settings->login_max_attempts ?? 5;
+
+        if (! RateLimiter::tooManyAttempts($this->throttleKey(), $maxAttempts)) {
             return;
         }
 
