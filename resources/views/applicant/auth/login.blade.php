@@ -630,17 +630,19 @@ html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
     background-position: center;
     background-repeat: no-repeat;
     z-index: 0;
+    opacity: 0.45;                 /* dim the image itself */
+    filter: blur(1px);             /* soften so it doesn't fight the text */
     animation: al-banner-zoom 24s ease-in-out infinite alternate;
 }
 @keyframes al-banner-zoom {
-    from { transform: scale(1); }
-    to   { transform: scale(1.08); }
+    from { transform: scale(1.02); }
+    to   { transform: scale(1.1); }
 }
-/* dark gradient so text stays readable over the banner */
+/* dark wash so the About text stays crisp and high-contrast */
 .al-banner-overlay {
     position: absolute; inset: 0; z-index: 1;
     background:
-        linear-gradient(160deg, rgb(8 14 39/0.82) 0%, rgb(8 14 39/0.7) 45%, rgb(8 14 39/0.9) 100%);
+        linear-gradient(160deg, rgb(8 14 39/0.92) 0%, rgb(8 14 39/0.85) 50%, rgb(8 14 39/0.95) 100%);
 }
 /* lift content above the banner layers */
 .al-right.has-banner .al-about,
