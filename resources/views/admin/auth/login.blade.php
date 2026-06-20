@@ -310,9 +310,9 @@ $bannerPath = $settings?->banner_path ?? null;
         </style>
     @endpush
 
-    <div class="min-h-screen overflow-hidden bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-        <div class="grid min-h-screen lg:grid-cols-[minmax(0,1.08fr)_minmax(420px,0.92fr)]">
-            <section class="admin-login-shell relative hidden min-h-screen overflow-hidden lg:flex">
+    <div class="relative min-h-screen overflow-hidden bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+        <div class="relative min-h-screen">
+            <section class="admin-login-shell absolute inset-0 hidden min-h-screen overflow-hidden lg:flex">
                 <div class="admin-aurora"></div>
 
                 {{-- Galaxy starfield drifting left → right --}}
@@ -343,7 +343,7 @@ $bannerPath = $settings?->banner_path ?? null;
                         </svg>
                     </div>
                 </div>
-                <div class="relative z-10 flex w-full flex-col justify-between px-10 py-12 xl:px-14">
+                <div class="relative z-10 flex w-full max-w-3xl flex-col justify-between px-10 py-12 xl:px-14">
                     <div class="flex items-center gap-4">
                         @if($logoPath)
                             <div class="flex h-16 w-16 items-center justify-center">
@@ -399,10 +399,7 @@ $bannerPath = $settings?->banner_path ?? null;
                 </div>
             </section>
 
-            <section class="relative flex min-h-screen items-center px-4 py-8 sm:px-6 lg:px-10 xl:px-14">
-                <div class="absolute inset-0 bg-[linear-gradient(135deg,rgba(248,250,252,0.96),rgba(226,232,240,0.9)_46%,rgba(219,234,254,0.86))] dark:bg-[linear-gradient(135deg,rgba(2,6,23,0.98),rgba(15,23,42,0.96)_48%,rgba(30,41,59,0.92))]"></div>
-                <div class="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/70 to-transparent dark:from-white/5"></div>
-
+            <section class="relative z-20 flex min-h-screen items-center justify-center px-4 py-8 sm:px-6 lg:ml-auto lg:max-w-xl lg:justify-end lg:px-10 xl:px-14">
                 <div class="relative mx-auto w-full max-w-md">
                     <div class="mb-6 flex flex-col items-center justify-center gap-4 text-center lg:hidden">
                         @if($logoPath)
@@ -428,9 +425,9 @@ $bannerPath = $settings?->banner_path ?? null;
                         x-transition:enter="transition ease-out duration-500"
                         x-transition:enter-start="opacity-0 translate-y-4"
                         x-transition:enter-end="opacity-100 translate-y-0"
-                        class="admin-login-form-card relative overflow-hidden rounded-2xl border border-white/70 bg-white/88 shadow-2xl shadow-slate-900/14 ring-1 ring-slate-900/5 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/78 dark:shadow-black/30 dark:ring-white/8">
+                        class="admin-login-form-card relative overflow-hidden rounded-2xl border border-white/15 bg-slate-950/55 shadow-2xl shadow-black/40 ring-1 ring-white/10 backdrop-blur-2xl">
                         <div class="h-1.5 bg-[linear-gradient(90deg,#2563eb_0%,#0f766e_48%,#f97316_100%)]"></div>
-                        <div class="p-6 sm:p-8">
+                        <div class="dark p-6 sm:p-8 text-slate-100">
                             <div class="space-y-2">
                                 <p class="text-xs font-semibold uppercase tracking-[0.22em] text-blue-700 dark:text-blue-300">{{ __('auth.admin_access_label') }}</p>
                                 <h2 class="text-2xl font-semibold tracking-tight text-slate-950 dark:text-slate-100">{{ __('auth.login_title') }}</h2>
