@@ -9,7 +9,9 @@
     <title>{{ $publicLayout['brandName'] ?? config('app.name', 'Court MS') }} – {{ __('home.meta.title') }}</title>
     <script>
         (function(){
+            var t = localStorage.getItem('theme') || 'dark';
             var a = localStorage.getItem('accent') || 'blue';
+            document.documentElement.setAttribute('data-theme', t);
             document.documentElement.setAttribute('data-accent', a);
         })();
     </script>
@@ -19,21 +21,107 @@
         html { scroll-behavior: smooth; }
 
         /* ── Accent color palette (RGB triplets) ── */
-        [data-accent="blue"]    { --ac: 37 99 235;  --ac-d: 29 78 216;  --ac-soft: 239 246 255; }
-        [data-accent="orange"]  { --ac: 234 88 12;  --ac-d: 194 65 12;  --ac-soft: 255 247 237; }
-        [data-accent="emerald"] { --ac: 5 150 105;  --ac-d: 4 120 87;   --ac-soft: 236 253 245; }
-        [data-accent="violet"]  { --ac: 124 58 237; --ac-d: 109 40 217; --ac-soft: 245 243 255; }
-        [data-accent="rose"]    { --ac: 225 29 72;  --ac-d: 190 18 60;  --ac-soft: 255 241 242; }
+        [data-accent="blue"]    { --ac: 59 130 246; --ac-d: 37 99 235;  --ac-l: 147 197 253; }
+        [data-accent="orange"]  { --ac: 249 115 22; --ac-d: 234 88 12;  --ac-l: 253 186 116; }
+        [data-accent="emerald"] { --ac: 16 185 129; --ac-d: 5 150 105;  --ac-l: 110 231 183; }
+        [data-accent="violet"]  { --ac: 139 92 246; --ac-d: 124 58 237; --ac-l: 196 181 253; }
+        [data-accent="rose"]    { --ac: 244 63 94;  --ac-d: 225 29 72;  --ac-l: 253 164 175; }
 
-        /* Accent utilities */
-        .ac-btn      { background-color: rgb(var(--ac)); color:#fff; }
-        .ac-btn:hover{ background-color: rgb(var(--ac-d)); }
-        .ac-text     { color: rgb(var(--ac)); }
-        .ac-soft     { background-color: rgb(var(--ac-soft)); }
-        .ac-ring     { --tw-ring-color: rgb(var(--ac) / 0.25); }
-        .ac-border   { border-color: rgb(var(--ac) / 0.20); }
+        /* Accent utility classes */
+        .ac-btn { background-color: rgb(var(--ac)) !important; color: #fff !important; }
+        .ac-btn:hover { background-color: rgb(var(--ac-d)) !important; }
+        .ac-text { color: rgb(var(--ac-l)) !important; }
 
-        @keyframes slideProgress { from { width:0%; } to { width:100%; } }
+        /* ── Light mode ── */
+        [data-theme="light"] body { background-color: #f8fafc; color: #0f172a; }
+
+        /* Header */
+        [data-theme="light"] header {
+            background-color: rgba(255,255,255,0.93) !important;
+            border-bottom-color: #e2e8f0 !important;
+        }
+        [data-theme="light"] header .text-blue-100 { color: #475569 !important; }
+        [data-theme="light"] header .text-blue-200 { color: #64748b !important; }
+        [data-theme="light"] header .text-blue-300 { color: #3b82f6 !important; }
+        [data-theme="light"] header .text-white    { color: #1e293b !important; }
+        [data-theme="light"] header .bg-blue-900\/30  { background-color: #f1f5f9 !important; }
+        [data-theme="light"] header .bg-blue-800\/50  { background-color: #e2e8f0 !important; }
+        [data-theme="light"] header .border-blue-700\/50 { border-color: #e2e8f0 !important; }
+        [data-theme="light"] header .hover\:bg-blue-800\/40:hover { background-color: #f1f5f9 !important; }
+        [data-theme="light"] header .hover\:bg-blue-800\/50:hover { background-color: #e2e8f0 !important; }
+        [data-theme="light"] header .hover\:bg-blue-800\/60:hover { background-color: #dbeafe !important; }
+
+        /* Mobile menu */
+        [data-theme="light"] header .bg-slate-950\/95 { background-color: rgba(255,255,255,0.97) !important; }
+        [data-theme="light"] .border-blue-900\/60 { border-color: #e2e8f0 !important; }
+
+        /* Section alt backgrounds */
+        [data-theme="light"] .bg-blue-950\/30 { background-color: #f1f5f9 !important; }
+
+        /* Glass cards in main */
+        [data-theme="light"] main .bg-white\/4  { background-color: #ffffff !important; }
+        [data-theme="light"] main .border-white\/8 { border-color: #e2e8f0 !important; }
+        [data-theme="light"] main .bg-white\/5  { background-color: #f8fafc !important; }
+        [data-theme="light"] main .bg-white\/6  { background-color: #f1f5f9 !important; }
+        [data-theme="light"] main .bg-white\/8  { background-color: #f1f5f9 !important; }
+        [data-theme="light"] main .hover\:bg-white\/6:hover  { background-color: #f8fafc !important; }
+        [data-theme="light"] main .hover\:bg-white\/10:hover { background-color: #e2e8f0 !important; }
+        [data-theme="light"] main .hover\:border-white\/15:hover { border-color: #cbd5e1 !important; }
+        [data-theme="light"] main .border-white\/15 { border-color: #e2e8f0 !important; }
+
+        /* Service icon bg */
+        [data-theme="light"] main .bg-slate-800 { background-color: #e2e8f0 !important; }
+
+        /* Case cards */
+        [data-theme="light"] main .bg-blue-950\/50 { background-color: #ffffff !important; }
+        [data-theme="light"] main .border-blue-900\/50 { border-color: #e2e8f0 !important; }
+        [data-theme="light"] main .hover\:bg-blue-950\/70:hover { background-color: #f8fafc !important; }
+        [data-theme="light"] main .hover\:border-blue-700\/60:hover { border-color: #cbd5e1 !important; }
+        [data-theme="light"] main .border-white\/5 { border-color: #e2e8f0 !important; }
+        [data-theme="light"] main .border-dashed { border-color: #bfdbfe !important; }
+        [data-theme="light"] main .bg-blue-950\/30 { background-color: #eff6ff !important; }
+
+        /* Portal / action buttons */
+        [data-theme="light"] main .bg-blue-900\/30 { background-color: #f1f5f9 !important; }
+        [data-theme="light"] main .border-blue-700\/50 { border-color: #e2e8f0 !important; }
+        [data-theme="light"] main .hover\:bg-blue-800\/50:hover { background-color: #e2e8f0 !important; }
+
+        /* Text in non-hero sections */
+        [data-theme="light"] main section:not(#home) .text-white  { color: #0f172a !important; }
+        [data-theme="light"] main section:not(#home) .text-slate-200 { color: #334155 !important; }
+        [data-theme="light"] main section:not(#home) .text-slate-400 { color: #475569 !important; }
+        [data-theme="light"] main section:not(#home) .text-slate-500 { color: #64748b !important; }
+        [data-theme="light"] main section:not(#home) .text-slate-600 { color: #94a3b8 !important; }
+        [data-theme="light"] main section:not(#home) .text-blue-100 { color: #334155 !important; }
+        [data-theme="light"] main section:not(#home) .text-blue-300 { color: #3b82f6 !important; }
+        [data-theme="light"] main section:not(#home) .text-blue-400 { color: #2563eb !important; }
+        [data-theme="light"] main section:not(#home) .text-orange-300 { color: #ea580c !important; }
+        [data-theme="light"] main section:not(#home) .text-orange-400 { color: rgb(var(--ac-d, 234 88 12)) !important; }
+
+        /* Section badges */
+        [data-theme="light"] main section:not(#home) .bg-orange-500\/10 { background-color: #fff7ed !important; }
+        [data-theme="light"] main section:not(#home) .border-orange-400\/30 { border-color: #fed7aa !important; }
+        [data-theme="light"] main section:not(#home) .bg-blue-700\/15 { background-color: #dbeafe !important; }
+        [data-theme="light"] main section:not(#home) .border-blue-400\/30 { border-color: #93c5fd !important; }
+        [data-theme="light"] main section:not(#home) .bg-violet-700\/15 { background-color: #ede9fe !important; }
+        [data-theme="light"] main section:not(#home) .border-violet-400\/30 { border-color: #c4b5fd !important; }
+        [data-theme="light"] main section:not(#home) .text-violet-300 { color: #7c3aed !important; }
+
+        /* Timeline step connector */
+        [data-theme="light"] main .ring-slate-950 { --tw-ring-color: #f1f5f9 !important; }
+        [data-theme="light"] main .from-blue-800\/0 { --tw-gradient-from: transparent !important; }
+        [data-theme="light"] main .via-blue-700\/60 { --tw-gradient-stops: var(--tw-gradient-from), #bfdbfe, var(--tw-gradient-to) !important; }
+
+        /* Step meta/duration badges */
+        [data-theme="light"] main .bg-blue-900\/50 { background-color: #dbeafe !important; }
+        [data-theme="light"] main .bg-orange-900\/40 { background-color: #ffedd5 !important; }
+
+        /* FAQ hover */
+        [data-theme="light"] main .hover\:bg-white\/4:hover { background-color: #f8fafc !important; }
+
+        /* Footer stays dark */
+        [data-theme="light"] footer { background-color: #0f172a; }
+        [data-theme="light"] footer .border-blue-900\/50 { border-color: #1e3a5f !important; }
     </style>
 </head>
 
@@ -140,12 +228,18 @@
         : (array) __('home.faq.questions');
 @endphp
 
-<body class="bg-white text-slate-900 antialiased" x-data="{
+<body class="bg-slate-950 text-slate-100 antialiased" x-data="{
     mobileOpen: false,
+    theme: localStorage.getItem('theme') || 'dark',
     accent: localStorage.getItem('accent') || 'blue',
     themePanel: false,
     init() {
+        document.documentElement.setAttribute('data-theme', this.theme);
         document.documentElement.setAttribute('data-accent', this.accent);
+        this.$watch('theme', v => {
+            localStorage.setItem('theme', v);
+            document.documentElement.setAttribute('data-theme', v);
+        });
         this.$watch('accent', v => {
             localStorage.setItem('accent', v);
             document.documentElement.setAttribute('data-accent', v);
@@ -161,8 +255,8 @@
     {{-- =========================================================
          HEADER
     ========================================================= --}}
-    <header class="sticky top-0 z-50 border-b border-slate-200 bg-white/85 backdrop-blur-xl">
-        <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+    <header class="sticky top-0 z-50 border-b border-blue-900/60 bg-slate-950/80 backdrop-blur-xl">
+        <div class="mx-auto flex max-w-[96rem] items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
 
             {{-- Logo --}}
             <a href="{{ route('landing.home') }}" class="flex items-center gap-3 flex-shrink-0">
@@ -170,15 +264,15 @@
                     <img src="{{ asset('storage/'.$logoPath) }}" alt="{{ $brandName }}"
                          class="h-10 w-auto max-w-[2.5rem] object-contain rounded-xl">
                 @else
-                    <div class="ac-soft flex h-10 w-10 items-center justify-center rounded-xl ring-1 ac-ring">
-                        <svg class="ac-text h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-800/50 ring-1 ring-blue-600/50">
+                        <svg class="h-5 w-5 text-orange-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18m-7-4h14M6.5 7.5h11M9 3.75h6m-8.5 3L4 19.25A1.5 1.5 0 005.46 21h13.08A1.5 1.5 0 0020 19.25L17.5 6.75"/>
                         </svg>
                     </div>
                 @endif
                 <div>
-                    <p class="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-400 hidden sm:block">{{ __('home.nav.agency_label') }}</p>
-                    <p class="text-sm font-semibold text-slate-900 leading-none">{{ $brandName }}</p>
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.3em] text-blue-300 hidden sm:block">{{ __('home.nav.agency_label') }}</p>
+                    <p class="text-sm font-semibold text-white leading-none">{{ $brandName }}</p>
                 </div>
             </a>
 
@@ -186,8 +280,10 @@
             @php
             $navLinks = [
                 ['#home',       __('home.nav.home'),       'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'],
+                ['#statistics', __('home.nav.statistics'), 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'],
                 ['#process',    __('home.nav.process'),    'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01'],
                 ['#services',   __('home.nav.services'),   'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'],
+                ['#cases',      __('home.nav.cases'),      'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z'],
                 ['#resources',  __('home.nav.resources'),  'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'],
                 ['#faq',        __('home.nav.faq'),        'M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'],
             ];
@@ -195,7 +291,10 @@
             <nav class="hidden lg:flex items-center gap-0.5" aria-label="Main navigation">
                 @foreach($navLinks as [$href, $label, $icon])
                 <a href="{{ $href }}"
-                   class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
+                   class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-blue-100 hover:bg-blue-800/40 hover:text-white transition">
+                    <svg class="h-3.5 w-3.5 opacity-70 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $icon }}"/>
+                    </svg>
                     {{ $label }}
                 </a>
                 @endforeach
@@ -204,26 +303,26 @@
             {{-- Right controls --}}
             <div class="flex items-center gap-2">
                 {{-- Language switcher --}}
-                <div class="hidden sm:inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-0.5">
+                <div class="hidden sm:inline-flex items-center gap-1 rounded-full border border-blue-700/50 bg-blue-900/30 p-0.5">
                     <a href="{{ route('language.switch', ['locale' => 'en', 'return' => url()->current()]) }}"
-                       class="rounded-full px-3 py-1 text-xs font-semibold transition {{ app()->getLocale() === 'en' ? 'ac-btn' : 'text-slate-500 hover:bg-slate-100' }}">EN</a>
+                       class="rounded-full px-3 py-1 text-xs font-semibold transition {{ app()->getLocale() === 'en' ? 'bg-orange-500 text-white' : 'text-blue-200 hover:bg-blue-800/60' }}">EN</a>
                     <a href="{{ route('language.switch', ['locale' => 'am', 'return' => url()->current()]) }}"
-                       class="rounded-full px-3 py-1 text-xs font-semibold transition {{ app()->getLocale() === 'am' ? 'ac-btn' : 'text-slate-500 hover:bg-slate-100' }}">AM</a>
+                       class="rounded-full px-3 py-1 text-xs font-semibold transition {{ app()->getLocale() === 'am' ? 'bg-orange-500 text-white' : 'text-blue-200 hover:bg-blue-800/60' }}">AM</a>
                 </div>
 
                 {{-- Portal links --}}
                 <a href="{{ route('applicant.login') }}"
-                   class="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">
+                   class="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-blue-700/50 bg-blue-900/30 px-3 py-1.5 text-xs font-semibold text-blue-100 hover:bg-blue-800/50 hover:text-white transition">
                     {{ __('home.nav.applicant_portal') }}
                 </a>
                 <a href="{{ route('applicant.login', ['login_as' => 'respondent']) }}"
-                   class="ac-btn hidden md:inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition shadow-sm">
+                   class="ac-btn hidden md:inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition shadow-lg shadow-orange-900/30">
                     {{ __('home.nav.respondent_portal') }}
                 </a>
 
                 {{-- Mobile hamburger --}}
                 <button @click="mobileOpen = !mobileOpen"
-                        class="lg:hidden flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition"
+                        class="lg:hidden flex h-9 w-9 items-center justify-center rounded-lg border border-blue-700/50 bg-blue-900/30 text-blue-200 hover:text-white transition"
                         :aria-label="mobileOpen ? 'Close menu' : '{{ __('home.accessibility.menu_toggle') }}'">
                     <svg x-show="!mobileOpen" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
@@ -243,25 +342,25 @@
              x-transition:leave="transition ease-in duration-100"
              x-transition:leave-start="opacity-100 translate-y-0"
              x-transition:leave-end="opacity-0 -translate-y-2"
-             class="lg:hidden border-t border-slate-200 bg-white px-4 pb-4 pt-3 space-y-1">
+             class="lg:hidden border-t border-blue-900/60 bg-slate-950/95 backdrop-blur-xl px-4 pb-4 pt-3 space-y-1">
             @foreach($navLinks as [$href, $label, $icon])
             <a href="{{ $href }}" @click="mobileOpen = false"
-               class="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
-                <svg class="h-4 w-4 opacity-50 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               class="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-blue-100 hover:bg-blue-800/40 hover:text-white transition">
+                <svg class="h-4 w-4 opacity-60 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $icon }}"/>
                 </svg>
                 {{ $label }}
             </a>
             @endforeach
-            <div class="pt-2 border-t border-slate-200 grid grid-cols-2 gap-2">
-                <div class="inline-flex items-center justify-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-0.5 col-span-2 w-fit mx-auto">
+            <div class="pt-2 border-t border-blue-900/60 grid grid-cols-2 gap-2">
+                <div class="inline-flex items-center justify-center gap-1 rounded-full border border-blue-700/50 bg-blue-900/30 p-0.5 col-span-2 w-fit mx-auto">
                     <a href="{{ route('language.switch', ['locale' => 'en', 'return' => url()->current()]) }}"
-                       class="rounded-full px-3 py-1 text-xs font-semibold transition {{ app()->getLocale() === 'en' ? 'ac-btn' : 'text-slate-500' }}">EN</a>
+                       class="rounded-full px-3 py-1 text-xs font-semibold transition {{ app()->getLocale() === 'en' ? 'bg-orange-500 text-white' : 'text-blue-200' }}">EN</a>
                     <a href="{{ route('language.switch', ['locale' => 'am', 'return' => url()->current()]) }}"
-                       class="rounded-full px-3 py-1 text-xs font-semibold transition {{ app()->getLocale() === 'am' ? 'ac-btn' : 'text-slate-500' }}">AM</a>
+                       class="rounded-full px-3 py-1 text-xs font-semibold transition {{ app()->getLocale() === 'am' ? 'bg-orange-500 text-white' : 'text-blue-200' }}">AM</a>
                 </div>
                 <a href="{{ route('applicant.login') }}"
-                   class="col-span-1 text-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">
+                   class="col-span-1 text-center rounded-lg border border-blue-700/50 bg-blue-900/30 px-3 py-2 text-xs font-semibold text-blue-100 hover:bg-blue-800/50 transition">
                     {{ __('home.nav.applicant_portal') }}
                 </a>
                 <a href="{{ route('applicant.login', ['login_as' => 'respondent']) }}"
@@ -422,7 +521,7 @@
                  x-transition:leave="transition ease-in-out duration-500"
                  x-transition:leave-start="opacity-100 translate-y-0"
                  x-transition:leave-end="opacity-0 -translate-y-4"
-                 class="absolute inset-0 flex items-center pb-16">
+                 class="absolute inset-0 flex items-center pb-28">
                 <div class="mx-auto max-w-[96rem] w-full px-4 sm:px-6 lg:px-8">
                     <div class="max-w-3xl">
 
@@ -490,7 +589,7 @@
             </button>
 
             {{-- Dot navigation --}}
-            <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
+            <div class="absolute bottom-[5.5rem] left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
                 @foreach($slides as $i => $slide)
                 <button @click="goTo({{ $i }})"
                         class="transition-all duration-300 rounded-full focus:outline-none"
@@ -503,50 +602,147 @@
             </div>
 
             {{-- Progress bar --}}
-            <div class="absolute bottom-0 left-0 right-0 h-px bg-white/10 z-20">
+            <div class="absolute bottom-[5.25rem] left-0 right-0 h-px bg-white/10 z-20">
                 <div class="h-full bg-orange-500/60 origin-left"
                      style="animation: slideProgress 6s linear infinite;"
                      :style="paused ? 'animation-play-state: paused' : ''"></div>
             </div>
+
+            {{-- Stats bar --}}
+            <div class="absolute bottom-0 left-0 right-0 z-20 border-t border-white/10 bg-black/40 backdrop-blur-md">
+                <div class="mx-auto max-w-[96rem] px-4 sm:px-6 lg:px-8">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 divide-x divide-white/10">
+                        @foreach([
+                            [$totalCases ?? 0,     __('home.hero.stats.cases')],
+                            [$resolvedCases ?? 0,  __('home.hero.stats.resolution_rate')],
+                            [$pendingCases ?? 0,   __('home.hero.stats.applicants')],
+                            [$upcomingHearings??0, __('home.hero.stats.judges')],
+                        ] as [$val, $label])
+                        <div class="px-4 py-4 sm:px-6 text-center sm:text-left">
+                            <p class="text-xl sm:text-2xl font-bold text-white">{{ number_format($val) }}</p>
+                            <p class="mt-0.5 text-[11px] text-slate-400 leading-snug">{{ $label }}</p>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
         </section>
+
+        <style>
+            @keyframes slideProgress {
+                from { width: 0%; }
+                to   { width: 100%; }
+            }
+        </style>
+
+        {{-- =====================================================
+             METRICS
+        ===================================================== --}}
+        @if($secVisible('metrics'))
+        <section id="statistics" class="py-20 sm:py-24">
+            <div class="mx-auto max-w-[96rem] px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <span class="inline-flex items-center gap-2 rounded-full border border-orange-400/30 bg-orange-500/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-orange-300 mb-4">
+                        {{ __('home.metrics.section_badge') }}
+                    </span>
+                    <h2 class="text-3xl font-bold text-white sm:text-4xl">{{ $sec('metrics', 'title', __('home.metrics.section_title')) }}</h2>
+                    <p class="mt-3 text-slate-400 text-base max-w-2xl mx-auto">{{ $sec('metrics', 'subtitle', __('home.metrics.section_description')) }}</p>
+                </div>
+
+                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    @foreach($metrics as $metric)
+                    <div class="group relative rounded-3xl border border-white/8 bg-white/4 p-6 hover:border-white/15 hover:bg-white/6 transition backdrop-blur-sm">
+                        <div class="flex items-start justify-between gap-3 mb-5">
+                            <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br {{ $metric['accent'] }} ring-2 {{ $metric['ring'] }} shadow-lg">
+                                <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ $metric['icon'] }}"/>
+                                </svg>
+                            </div>
+                            <span class="rounded-full bg-white/8 px-2.5 py-0.5 text-xs font-medium text-slate-400">{{ \App\Support\EthiopianDate::smartFormat(now(), false, '', 'h:i A', 'M Y') }}</span>
+                        </div>
+                        <p class="text-3xl font-bold text-white">{{ $metric['value'] }}</p>
+                        <p class="mt-1 text-sm font-semibold text-slate-200">{{ $metric['label'] }}</p>
+                        <p class="mt-1 text-xs text-slate-500 leading-relaxed">{{ $metric['description'] }}</p>
+                    </div>
+                    @endforeach
+                </div>
+
+                <p class="mt-6 text-center text-xs text-slate-600">
+                    {{ __('home.metrics.last_updated') }}: {{ \App\Support\EthiopianDate::smartFormat(now(), true, '', 'h:i A', 'd M Y') }}
+                </p>
+            </div>
+        </section>
+        @endif
 
         {{-- =====================================================
              PROCESS TIMELINE
         ===================================================== --}}
         @if($secVisible('process'))
-        <section id="process" class="py-20 sm:py-28 bg-slate-50 border-y border-slate-200">
-            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div class="max-w-2xl mb-14">
-                    <p class="ac-text text-xs font-semibold uppercase tracking-[0.2em] mb-3">{{ __('home.timeline.section_badge') }}</p>
-                    <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">{{ $sec('process', 'title', __('home.timeline.section_title')) }}</h2>
-                    <p class="mt-3 text-slate-500 text-base">{{ $sec('process', 'subtitle', __('home.timeline.section_description')) }}</p>
+        <section id="process" class="py-20 sm:py-24 bg-blue-950/30">
+            <div class="mx-auto max-w-[96rem] px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-14">
+                    <span class="inline-flex items-center gap-2 rounded-full border border-blue-400/30 bg-blue-700/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-blue-300 mb-4">
+                        {{ __('home.timeline.section_badge') }}
+                    </span>
+                    <h2 class="text-3xl font-bold text-white sm:text-4xl">{{ $sec('process', 'title', __('home.timeline.section_title')) }}</h2>
+                    <p class="mt-3 text-slate-400 text-base max-w-2xl mx-auto">{{ $sec('process', 'subtitle', __('home.timeline.section_description')) }}</p>
                 </div>
 
+                @php
+                $colorBg = ['blue'=>'bg-blue-500','orange'=>'bg-orange-500','emerald'=>'bg-emerald-600','violet'=>'bg-violet-500','amber'=>'bg-amber-500'];
+                @endphp
                 <div class="relative">
                     {{-- connector line --}}
-                    <div class="hidden lg:block absolute top-[1.6rem] left-[calc(10%+1.25rem)] right-[calc(10%+1.25rem)] h-px bg-slate-200"></div>
+                    <div class="hidden lg:block absolute top-[2.75rem] left-[calc(10%+1.5rem)] right-[calc(10%+1.5rem)] h-px bg-gradient-to-r from-blue-800/0 via-blue-700/60 to-blue-800/0"></div>
 
-                    @php $steps = $dbTimeline->isNotEmpty() ? $dbTimeline : collect($timelineSteps); @endphp
-                    <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
-                        @foreach($steps as $i => $step)
-                        @php $key = is_array($step) ? $step['key'] : null; @endphp
-                        <div class="relative flex flex-col text-left group">
-                            <div class="ac-btn relative z-10 mb-4 flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold shadow-sm ring-4 ring-slate-50">
+                    @if($dbTimeline->isNotEmpty())
+                    <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-{{ min($dbTimeline->count(), 5) }}">
+                        @foreach($dbTimeline as $i => $step)
+                        <div class="relative flex flex-col items-center text-center group">
+                            <div class="relative flex h-14 w-14 items-center justify-center rounded-2xl {{ $colorBg[$step->color] ?? 'bg-blue-500' }} text-white font-bold text-lg shadow-lg ring-4 ring-slate-950 z-10 mb-4 group-hover:scale-110 transition">
                                 {{ $i + 1 }}
                             </div>
-                            <p class="text-sm font-semibold text-slate-900 leading-snug mb-1">{{ $key ? __("home.timeline.steps.{$key}.title") : $step->title }}</p>
-                            <p class="text-xs text-slate-500 leading-relaxed mb-3">{{ $key ? __("home.timeline.steps.{$key}.description") : $step->description }}</p>
-                            <div class="flex items-center gap-1.5 flex-wrap">
-                                @php
-                                    $meta = $key ? __("home.timeline.steps.{$key}.meta") : ($step->meta ?? '');
-                                    $dur  = $key ? __("home.timeline.steps.{$key}.duration") : ($step->duration ?? '');
-                                @endphp
-                                @if($meta)<span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">{{ $meta }}</span>@endif
-                                @if($dur)<span class="ac-soft ac-text inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium">{{ $dur }}</span>@endif
+                            <div class="rounded-2xl border border-white/8 bg-white/4 p-4 w-full hover:border-white/15 hover:bg-white/6 transition">
+                                <p class="text-sm font-semibold text-white leading-snug mb-1">{{ $step->title }}</p>
+                                @if($step->description)
+                                <p class="text-xs text-slate-400 leading-relaxed mb-3">{{ $step->description }}</p>
+                                @endif
+                                <div class="flex items-center justify-center gap-1.5 flex-wrap">
+                                    @if($step->meta)
+                                    <span class="inline-flex items-center rounded-full bg-blue-900/50 px-2 py-0.5 text-[10px] font-medium text-blue-300">{{ $step->meta }}</span>
+                                    @endif
+                                    @if($step->duration)
+                                    <span class="inline-flex items-center rounded-full bg-orange-900/40 px-2 py-0.5 text-[10px] font-medium text-orange-300">{{ $step->duration }}</span>
+                                    @endif
+                                </div>
                             </div>
                         </div>
                         @endforeach
                     </div>
+                    @else
+                    <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
+                        @foreach($timelineSteps as $step)
+                        @php $key = $step['key']; @endphp
+                        <div class="relative flex flex-col items-center text-center group">
+                            <div class="relative flex h-14 w-14 items-center justify-center rounded-2xl {{ $step['color'] }} text-white font-bold text-lg shadow-lg ring-4 ring-slate-950 z-10 mb-4 group-hover:scale-110 transition">
+                                {{ $step['num'] }}
+                            </div>
+                            <div class="rounded-2xl border border-white/8 bg-white/4 p-4 w-full hover:border-white/15 hover:bg-white/6 transition">
+                                <p class="text-sm font-semibold text-white leading-snug mb-1">{{ __("home.timeline.steps.{$key}.title") }}</p>
+                                <p class="text-xs text-slate-400 leading-relaxed mb-3">{{ __("home.timeline.steps.{$key}.description") }}</p>
+                                <div class="flex items-center justify-center gap-1.5 flex-wrap">
+                                    <span class="inline-flex items-center rounded-full bg-blue-900/50 px-2 py-0.5 text-[10px] font-medium text-blue-300">
+                                        {{ __("home.timeline.steps.{$key}.meta") }}
+                                    </span>
+                                    <span class="inline-flex items-center rounded-full bg-orange-900/40 px-2 py-0.5 text-[10px] font-medium text-orange-300">
+                                        {{ __("home.timeline.steps.{$key}.duration") }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                    @endif
                 </div>
             </div>
         </section>
@@ -556,12 +752,14 @@
              SERVICES
         ===================================================== --}}
         @if($secVisible('services'))
-        <section id="services" class="py-20 sm:py-28">
-            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div class="max-w-2xl mb-12">
-                    <p class="ac-text text-xs font-semibold uppercase tracking-[0.2em] mb-3">{{ __('home.services.section_badge') }}</p>
-                    <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">{{ $sec('services', 'title', __('home.services.section_title')) }}</h2>
-                    <p class="mt-3 text-slate-500 text-base">{{ $sec('services', 'subtitle', __('home.services.section_description')) }}</p>
+        <section id="services" class="py-20 sm:py-24">
+            <div class="mx-auto max-w-[96rem] px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <span class="inline-flex items-center gap-2 rounded-full border border-orange-400/30 bg-orange-500/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-orange-300 mb-4">
+                        {{ __('home.services.section_badge') }}
+                    </span>
+                    <h2 class="text-3xl font-bold text-white sm:text-4xl">{{ $sec('services', 'title', __('home.services.section_title')) }}</h2>
+                    <p class="mt-3 text-slate-400 text-base max-w-2xl mx-auto">{{ $sec('services', 'subtitle', __('home.services.section_description')) }}</p>
                 </div>
 
                 @php
@@ -601,24 +799,24 @@
                 @endphp
                 <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     @foreach($renderCards as $card)
-                    <div class="group rounded-2xl border border-slate-200 bg-white p-6 transition hover:border-slate-300 hover:shadow-sm flex flex-col">
+                    <div class="group rounded-3xl border border-white/8 bg-white/4 p-6 hover:border-white/15 hover:bg-white/6 transition flex flex-col">
                         <div class="mb-4 flex items-center gap-3">
-                            <div class="ac-soft flex h-10 w-10 items-center justify-center rounded-xl">
-                                <svg class="ac-text h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800 ring-1 ring-white/10">
+                                <svg class="h-5 w-5 {{ $card['accent'] }}" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="{{ $card['icon'] }}"/>
                                 </svg>
                             </div>
                             @if($card['meta'])
-                            <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{{ $card['meta'] }}</span>
+                            <span class="rounded-full bg-white/6 px-2.5 py-0.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{{ $card['meta'] }}</span>
                             @endif
                         </div>
-                        <h3 class="text-base font-semibold text-slate-900 mb-2">{{ $card['title'] }}</h3>
-                        <p class="text-sm text-slate-500 leading-relaxed flex-1 mb-4">{{ $card['description'] }}</p>
+                        <h3 class="text-base font-semibold text-white mb-2">{{ $card['title'] }}</h3>
+                        <p class="text-sm text-slate-400 leading-relaxed flex-1 mb-4">{{ $card['description'] }}</p>
                         @if($card['features'])
                         <ul class="space-y-1.5">
                             @foreach($card['features'] as $feat)
-                            <li class="flex items-center gap-2 text-xs text-slate-600">
-                                <svg class="ac-text h-3.5 w-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <li class="flex items-center gap-2 text-xs text-slate-400">
+                                <svg class="h-3.5 w-3.5 {{ $card['accent'] }} flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
                                 </svg>
                                 {{ $feat }}
@@ -634,15 +832,100 @@
         @endif
 
         {{-- =====================================================
+             RECENT CASES
+        ===================================================== --}}
+        @if($secVisible('cases'))
+        <section id="cases" class="py-20 sm:py-24 bg-blue-950/30">
+            <div class="mx-auto max-w-[96rem] px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
+                    <div>
+                        <span class="inline-flex items-center gap-2 rounded-full border border-blue-400/30 bg-blue-700/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-blue-300 mb-3">
+                            {{ __('home.cases.section_badge') }}
+                        </span>
+                        <h2 class="text-3xl font-bold text-white sm:text-4xl">{{ __('home.cases.section_title') }}</h2>
+                        <p class="mt-2 text-slate-400 text-sm">{{ __('home.cases.section_description') }}</p>
+                    </div>
+                    <a href="{{ route('applicant.register') }}"
+                       class="flex-shrink-0 inline-flex items-center gap-2 rounded-xl border border-blue-700/50 bg-blue-900/30 px-4 py-2.5 text-sm font-semibold text-blue-100 hover:bg-blue-800/50 hover:text-white transition">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        {{ __('home.cases.file_new_case') }}
+                    </a>
+                </div>
+
+                @if($recentCases->isNotEmpty())
+                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    @foreach($recentCases as $case)
+                    @php
+                        $status = strtolower((string)($case->status ?? ''));
+                        $sClass = $statusStyles[$status] ?? $statusStyles['default'];
+                        $statusLabel = match($status) {
+                            'pending'   => __('home.cases.status_labels.filed'),
+                            'closed'    => __('home.cases.status_labels.resolved'),
+                            'dismissed' => __('home.cases.status_labels.dismissed'),
+                            default     => ucfirst($status ?: __('home.landing.recorded')),
+                        };
+                    @endphp
+                    <article class="group rounded-3xl border border-blue-900/50 bg-blue-950/50 p-5 hover:border-blue-700/60 hover:bg-blue-950/70 transition flex flex-col gap-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-[10px] font-semibold uppercase tracking-[0.25em] text-blue-300 mb-1">{{ $case->case_number }}</p>
+                                <h3 class="text-sm font-semibold text-white leading-snug line-clamp-2">{{ $case->title }}</h3>
+                            </div>
+                            <span class="flex-shrink-0 inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold {{ $sClass }}">{{ $statusLabel }}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 text-xs text-slate-500 mt-auto pt-2 border-t border-white/5">
+                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            {{ __('home.cases.filed_prefix') }} {{ \App\Support\EthiopianDate::smartRelative($case->created_at, '') }}
+                        </div>
+                    </article>
+                    @endforeach
+                </div>
+
+                {{-- Stats footer --}}
+                <div class="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4 rounded-3xl border border-white/8 bg-white/4 p-6">
+                    @foreach([
+                        [__('home.cases.stats_footer.total_cases'),         $totalCases ?? 0],
+                        [__('home.cases.stats_footer.resolved_cases'),      $resolvedCases ?? 0],
+                        [__('home.cases.stats_footer.pending_cases'),       $pendingCases ?? 0],
+                        [__('home.cases.stats_footer.resolution_efficiency'), ($totalCases ?? 0) > 0 ? round(($resolvedCases / $totalCases) * 100, 1).'%' : '—'],
+                    ] as [$lbl, $v])
+                    <div class="text-center">
+                        <p class="text-xl sm:text-2xl font-bold text-white">{{ is_numeric($v) ? number_format($v) : $v }}</p>
+                        <p class="mt-0.5 text-xs text-slate-500">{{ $lbl }}</p>
+                    </div>
+                    @endforeach
+                </div>
+                @else
+                <div class="rounded-3xl border border-dashed border-blue-700/40 bg-blue-950/30 p-14 text-center">
+                    <svg class="mx-auto h-12 w-12 text-blue-800 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <p class="text-slate-400 font-medium mb-4">{{ __('home.cases.empty.headline') }}</p>
+                    <a href="{{ route('applicant.register') }}" class="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-orange-400 transition">
+                        {{ __('home.cases.empty.cta') }}
+                    </a>
+                </div>
+                @endif
+            </div>
+        </section>
+        @endif
+
+        {{-- =====================================================
              RESOURCES & POSTS
         ===================================================== --}}
         @if($secVisible('resources') && $dbResources->isNotEmpty())
         <section id="resources" class="py-20 sm:py-24">
             <div class="mx-auto max-w-[96rem] px-4 sm:px-6 lg:px-8">
-                <div class="max-w-2xl mb-12">
-                    <p class="ac-text text-xs font-semibold uppercase tracking-[0.2em] mb-3">{{ __('home.resources.section_badge', [], null, 'Resources') }}</p>
-                    <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">{{ $sec('resources', 'title', __('home.resources.section_title', [], null, 'Resources & Updates')) }}</h2>
-                    <p class="mt-3 text-slate-500 text-base">{{ $sec('resources', 'subtitle', __('home.resources.section_description', [], null, 'Posts, forms, and documents published by the court.')) }}</p>
+                <div class="text-center mb-12">
+                    <span class="inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-700/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-violet-300 mb-4">
+                        {{ __('home.resources.section_badge', [], null, 'Resources') }}
+                    </span>
+                    <h2 class="text-3xl font-bold text-white sm:text-4xl">{{ $sec('resources', 'title', __('home.resources.section_title', [], null, 'Resources & Updates')) }}</h2>
+                    <p class="mt-3 text-slate-400 text-base max-w-2xl mx-auto">{{ $sec('resources', 'subtitle', __('home.resources.section_description', [], null, 'Posts, forms, and documents published by the court.')) }}</p>
                 </div>
 
                 <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -655,13 +938,13 @@
                         default    => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
                     };
                     $typeColor = match($res->type) {
-                        'form'     => 'text-emerald-600',
-                        'document' => 'text-blue-600',
-                        'link'     => 'text-orange-600',
-                        default    => 'text-violet-600',
+                        'form'     => 'text-emerald-400',
+                        'document' => 'text-blue-400',
+                        'link'     => 'text-orange-400',
+                        default    => 'text-violet-400',
                     };
                     @endphp
-                    <article class="group rounded-2xl border border-slate-200 bg-white overflow-hidden transition hover:border-slate-300 hover:shadow-sm flex flex-col">
+                    <article class="group rounded-3xl border border-white/8 bg-white/4 overflow-hidden hover:border-white/15 hover:bg-white/6 transition flex flex-col">
                         @if($res->cover_image)
                         <div class="h-40 overflow-hidden">
                             <img src="{{ asset('storage/' . $res->cover_image) }}"
@@ -670,33 +953,33 @@
                         @endif
                         <div class="p-5 flex flex-col flex-1">
                             <div class="flex items-center gap-2 mb-3">
-                                <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 {{ $typeColor }}">
+                                <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-white/8 {{ $typeColor }}">
                                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $typeIcon }}"/>
                                     </svg>
                                 </div>
                                 <span class="text-[10px] font-semibold uppercase tracking-widest text-slate-400">{{ ucfirst($res->type) }}</span>
                                 @if($res->is_featured)
-                                <span class="ml-auto rounded-full bg-amber-100 text-amber-700 px-2 py-0.5 text-[10px] font-semibold">Featured</span>
+                                <span class="ml-auto rounded-full bg-amber-500/20 text-amber-300 px-2 py-0.5 text-[10px] font-semibold">Featured</span>
                                 @endif
                             </div>
-                            <h3 class="text-sm font-semibold text-slate-900 leading-snug mb-2 flex-1">{{ $res->title }}</h3>
+                            <h3 class="text-sm font-semibold text-white leading-snug mb-2 flex-1">{{ $res->title }}</h3>
                             @if($res->description)
-                            <p class="text-xs text-slate-500 leading-relaxed line-clamp-3 mb-4">{{ $res->description }}</p>
+                            <p class="text-xs text-slate-400 leading-relaxed line-clamp-3 mb-4">{{ $res->description }}</p>
                             @endif
-                            <div class="mt-auto pt-3 border-t border-slate-100 flex items-center justify-between">
+                            <div class="mt-auto pt-3 border-t border-white/5 flex items-center justify-between">
                                 @if($res->published_at)
-                                <span class="text-[10px] text-slate-400">{{ \App\Support\EthiopianDate::smartFormat($res->published_at, false, '') }}</span>
+                                <span class="text-[10px] text-slate-500">{{ \App\Support\EthiopianDate::smartFormat($res->published_at, false, '') }}</span>
                                 @endif
                                 @if($res->isDownloadable() && $res->file_path)
                                 <a href="{{ asset('storage/' . $res->file_path) }}" target="_blank" download
-                                   class="ac-text inline-flex items-center gap-1 text-xs font-semibold hover:opacity-80 transition">
+                                   class="inline-flex items-center gap-1 text-xs font-semibold text-blue-300 hover:text-blue-200 transition">
                                     <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                                     Download
                                 </a>
                                 @elseif($res->external_url)
                                 <a href="{{ $res->external_url }}" target="_blank" rel="noopener"
-                                   class="ac-text inline-flex items-center gap-1 text-xs font-semibold hover:opacity-80 transition">
+                                   class="inline-flex items-center gap-1 text-xs font-semibold text-orange-300 hover:text-orange-200 transition">
                                     <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                                     Visit
                                 </a>
@@ -708,9 +991,9 @@
                 </div>
 
                 @if($dbResources->count() > 6)
-                <div class="mt-10">
+                <div class="mt-10 text-center">
                     <a href="{{ route('public.resources') }}"
-                       class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">
+                       class="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10 transition">
                         {{ __('home.resources.view_all', [], null, 'View all resources') }}
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                     </a>
@@ -721,25 +1004,54 @@
         @endif
 
         {{-- =====================================================
+             CTA BANNER
+        ===================================================== --}}
+        @if($secVisible('cta'))
+        <section class="py-20 sm:py-24">
+            <div class="mx-auto max-w-[96rem] px-4 sm:px-6 lg:px-8">
+                <div class="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-900 via-blue-800 to-orange-700 p-10 sm:p-14 text-center">
+                    <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(255,255,255,0.07),_transparent_70%)]"></div>
+                    <div class="relative">
+                        <h2 class="text-3xl font-bold text-white sm:text-4xl mb-3">{{ $sec('cta', 'title', __('home.cta.title')) }}</h2>
+                        <p class="text-blue-100 text-base max-w-xl mx-auto mb-8">{{ $sec('cta', 'description', __('home.cta.description')) }}</p>
+                        <div class="flex flex-col sm:flex-row justify-center gap-3">
+                            <a href="{{ $sec('cta', 'primary_href', route('applicant.register')) }}"
+                               class="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-6 py-3 text-sm font-semibold text-blue-900 shadow-lg hover:bg-blue-50 transition">
+                                {{ $sec('cta', 'primary_label', __('home.cta.primary_button')) }}
+                            </a>
+                            <a href="{{ $sec('cta', 'secondary_href', route('applicant.login')) }}"
+                               class="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white hover:bg-white/20 transition backdrop-blur-sm">
+                                {{ $sec('cta', 'secondary_label', __('home.cta.secondary_button')) }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        @endif
+
+        {{-- =====================================================
              FAQ
         ===================================================== --}}
-        <section id="faq" class="py-20 sm:py-28">
+        <section id="faq" class="py-20 sm:py-24 bg-blue-950/30">
             <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
                 <div class="text-center mb-12">
-                    <p class="ac-text text-xs font-semibold uppercase tracking-[0.2em] mb-3">{{ __('home.faq.section_badge') }}</p>
-                    <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">{{ __('home.faq.section_title') }}</h2>
-                    <p class="mt-3 text-slate-500 text-base">{{ __('home.faq.section_description') }}</p>
+                    <span class="inline-flex items-center gap-2 rounded-full border border-blue-400/30 bg-blue-700/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-blue-300 mb-4">
+                        {{ __('home.faq.section_badge') }}
+                    </span>
+                    <h2 class="text-3xl font-bold text-white sm:text-4xl">{{ __('home.faq.section_title') }}</h2>
+                    <p class="mt-3 text-slate-400 text-base">{{ __('home.faq.section_description') }}</p>
                 </div>
 
                 <div class="space-y-3">
                     @foreach($faqItems as $i => $faq)
                     <div x-data="{ open: false }"
-                         class="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+                         class="rounded-2xl border border-white/8 bg-white/4 overflow-hidden">
                         <button @click="open = !open"
-                                class="w-full flex items-center justify-between gap-4 px-5 py-4 text-left hover:bg-slate-50 transition"
+                                class="w-full flex items-center justify-between gap-4 px-5 py-4 text-left hover:bg-white/4 transition"
                                 :aria-expanded="open">
-                            <span class="text-sm font-semibold text-slate-900">{{ $faq['question'] }}</span>
-                            <svg class="ac-text flex-shrink-0 h-4 w-4 transition-transform duration-200"
+                            <span class="text-sm font-semibold text-white">{{ $faq['question'] }}</span>
+                            <svg class="flex-shrink-0 h-4 w-4 text-orange-400 transition-transform duration-200"
                                  :class="{ 'rotate-180': open }"
                                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
@@ -753,7 +1065,7 @@
                              x-transition:leave-start="opacity-100 translate-y-0"
                              x-transition:leave-end="opacity-0 -translate-y-1"
                              class="px-5 pb-4">
-                            <p class="text-sm text-slate-500 leading-relaxed border-t border-slate-100 pt-4">{{ $faq['answer'] }}</p>
+                            <p class="text-sm text-slate-400 leading-relaxed border-t border-white/6 pt-4">{{ $faq['answer'] }}</p>
                         </div>
                     </div>
                     @endforeach
@@ -766,8 +1078,8 @@
     {{-- =====================================================
          FOOTER
     ===================================================== --}}
-    <footer class="bg-slate-950 text-slate-300">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+    <footer class="border-t border-blue-900/60 bg-blue-950/60">
+        <div class="mx-auto max-w-[96rem] px-4 sm:px-6 lg:px-8 py-12">
             <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
 
                 {{-- Brand --}}
@@ -777,14 +1089,14 @@
                             <img src="{{ asset('storage/'.$logoPath) }}" alt="{{ $brandName }}"
                                  class="h-10 w-auto max-w-[2.5rem] object-contain rounded-xl">
                         @else
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/15">
-                                <svg class="ac-text h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-800/50 ring-1 ring-blue-600/50">
+                                <svg class="h-5 w-5 text-orange-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18m-7-4h14M6.5 7.5h11M9 3.75h6m-8.5 3L4 19.25A1.5 1.5 0 005.46 21h13.08A1.5 1.5 0 0020 19.25L17.5 6.75"/>
                                 </svg>
                             </div>
                         @endif
                         <div>
-                            <p class="ac-text text-[10px] font-semibold uppercase tracking-[0.3em]">{{ __('home.footer.agency_label') }}</p>
+                            <p class="text-[10px] font-semibold uppercase tracking-[0.3em] text-blue-400">{{ __('home.footer.agency_label') }}</p>
                             <p class="text-sm font-semibold text-white">{{ $brandName }}</p>
                         </div>
                     </div>
@@ -892,15 +1204,15 @@
                 </div>
             </div>
 
-            <div class="mt-10 border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+            <div class="mt-10 border-t border-blue-900/50 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-600">
                 <p>© {{ date('Y') }} {{ $brandName }}. {{ __('home.footer.rights') }}</p>
                 <div class="flex items-center gap-3">
                     <a href="{{ route('language.switch', ['locale' => 'en', 'return' => url()->current()]) }}"
-                       class="rounded-full px-3 py-1 text-xs font-semibold transition {{ app()->getLocale() === 'en' ? 'ac-btn' : 'text-slate-400 hover:text-white' }}">EN</a>
+                       class="rounded-full px-3 py-1 text-xs font-semibold transition {{ app()->getLocale() === 'en' ? 'bg-orange-500 text-white' : 'text-slate-400 hover:text-white' }}">EN</a>
                     <a href="{{ route('language.switch', ['locale' => 'am', 'return' => url()->current()]) }}"
-                       class="rounded-full px-3 py-1 text-xs font-semibold transition {{ app()->getLocale() === 'am' ? 'ac-btn' : 'text-slate-400 hover:text-white' }}">AM</a>
+                       class="rounded-full px-3 py-1 text-xs font-semibold transition {{ app()->getLocale() === 'am' ? 'bg-orange-500 text-white' : 'text-slate-400 hover:text-white' }}">AM</a>
                     <a href="#home" aria-label="{{ __('home.accessibility.back_to_top') }}"
-                       class="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition">
+                       class="flex h-7 w-7 items-center justify-center rounded-full border border-blue-700/50 bg-blue-900/30 text-slate-400 hover:text-white hover:bg-blue-800/50 transition">
                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
                         </svg>
@@ -911,7 +1223,7 @@
     </footer>
 
 
-    {{-- ── Accent color switcher ── --}}
+    {{-- ── Theme switcher ── --}}
     <div class="fixed bottom-6 right-6 z-[200]" @click.outside="themePanel = false">
 
         {{-- Panel --}}
@@ -922,22 +1234,43 @@
              x-transition:leave="transition ease-in duration-100"
              x-transition:leave-start="opacity-100 translate-y-0 scale-100"
              x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-             class="absolute bottom-16 right-0 w-48 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl origin-bottom-right">
+             class="absolute bottom-16 right-0 w-52 rounded-2xl border border-white/15 bg-slate-900/95 backdrop-blur-xl p-4 shadow-2xl origin-bottom-right">
+
+            {{-- Dark / Light --}}
+            <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-2">Mode</p>
+            <div class="flex gap-2 mb-4">
+                <button @click="theme = 'dark'"
+                        class="flex-1 flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition"
+                        :class="theme === 'dark' ? 'bg-white/15 text-white ring-1 ring-white/25' : 'text-slate-400 hover:bg-white/8 hover:text-slate-200'">
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                    </svg>
+                    Dark
+                </button>
+                <button @click="theme = 'light'"
+                        class="flex-1 flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition"
+                        :class="theme === 'light' ? 'bg-white/15 text-white ring-1 ring-white/25' : 'text-slate-400 hover:bg-white/8 hover:text-slate-200'">
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    </svg>
+                    Light
+                </button>
+            </div>
 
             {{-- Accent swatches --}}
             <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-2.5">Accent</p>
             <div class="grid grid-cols-5 gap-2">
                 @foreach([
-                    ['blue',    '#2563eb', 'Blue'],
-                    ['orange',  '#ea580c', 'Orange'],
-                    ['emerald', '#059669', 'Emerald'],
-                    ['violet',  '#7c3aed', 'Violet'],
-                    ['rose',    '#e11d48', 'Rose'],
+                    ['blue',    '#3b82f6', 'Blue'],
+                    ['orange',  '#f97316', 'Orange'],
+                    ['emerald', '#10b981', 'Emerald'],
+                    ['violet',  '#8b5cf6', 'Violet'],
+                    ['rose',    '#f43f5e', 'Rose'],
                 ] as [$key, $hex, $name])
                 <button @click="accent = '{{ $key }}'"
                         title="{{ $name }}"
-                        class="relative h-8 w-8 rounded-full ring-2 ring-offset-2 ring-offset-white transition-all hover:scale-110 focus:outline-none"
-                        :class="accent === '{{ $key }}' ? 'ring-slate-900 scale-110' : 'ring-transparent'"
+                        class="relative h-8 w-8 rounded-full ring-2 ring-offset-2 ring-offset-slate-900 transition-all hover:scale-110 focus:outline-none"
+                        :class="accent === '{{ $key }}' ? 'ring-white scale-110' : 'ring-transparent'"
                         style="background-color: {{ $hex }}">
                     <span class="sr-only">{{ $name }}</span>
                     <svg x-show="accent === '{{ $key }}'" class="absolute inset-0 m-auto h-3 w-3 text-white drop-shadow" fill="currentColor" viewBox="0 0 24 24">
@@ -950,11 +1283,14 @@
 
         {{-- Toggle button --}}
         <button @click="themePanel = !themePanel"
-                class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white ring-1 ring-slate-200 text-slate-600 shadow-lg hover:bg-slate-50 transition-all"
-                :class="{ 'ring-slate-300': themePanel }"
-                title="Accent color">
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+                class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-800/95 ring-1 ring-white/20 text-white shadow-2xl hover:bg-slate-700 transition-all backdrop-blur-sm"
+                :class="{ 'ring-white/40 bg-slate-700': themePanel }"
+                title="Theme settings">
+            <svg x-show="theme === 'dark'" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+            </svg>
+            <svg x-show="theme === 'light'" x-cloak class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
             </svg>
         </button>
     </div>
