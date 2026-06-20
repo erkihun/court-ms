@@ -14,7 +14,7 @@ return array (
   'force_password_title' => 'የይለፍ ቃል ቀይር',
   'hide_password' => 'የይለፍ ቃል ደብቅ',
   'name' => 'ስም',
-  'operational_clarity_body' => 'የመዝገቦችን ሁኔታ፣ የችሎት ምደባዎችን እና  ቀጠሮዎችን የሚላኩ የተለያዩ ደብዳቤዎቸወን በአንድ ገፅ ይከታተሉ።',
+  'operational_clarity_body' => 'የመዝገቦችን ሁኔታ፣ የችሎት ምደባዎችን እና  ቀጠሮዎችን የሚላኩ የተለያዩ ደብዳቤዎችን በአንድ ገፅ ይከታተሉ።',
   'operational_clarity_title' => 'የስራ ግልጽነት',
   'password_otp_description' => 'ባለ 6 አሃዝ ኮድ ወደ ኢሜይል አድራሻዎ ልከናል። በ10 ደቂቃ ውስጥ ጊዜው ያበቃል።',
   'password_otp_title' => 'የዳግም ማስጀመሪያ ኮድ ያስገቡ',
