@@ -27,7 +27,7 @@ $bannerPath = $settings?->banner_path ?? null;
                     @else
                     linear-gradient(135deg, #0f172a, #1e293b)
                     @endif;
-                background-position: left center;
+                background-position: center;
                 background-size: cover;
                 background-repeat: no-repeat;
             }
