@@ -109,7 +109,10 @@
                                 </div>
                             </td>
                             <td class="p-3 align-top text-gray-700">
-                                {{ $decision->courtCase?->judge?->name ?: '—' }}
+                                {{ $decision->reviewing_admin_user_name
+                                    ?: ($decision->reviewer?->name
+                                    ?: (($decision->panel_judges[1]['admin_user_name'] ?? null)
+                                    ?: ($decision->courtCase?->judge?->name ?: '—'))) }}
                             </td>
                             <td class="p-3 align-top text-gray-700">
                                 {{ \App\Support\EthiopianDate::format($decision->decision_date, fallback: '—') }}
