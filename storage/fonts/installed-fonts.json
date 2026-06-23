@@ -8,5 +8,13 @@
     },
     "notosansethiopic": {
         "normal": "notosansethiopic_normal_c3a401a8c771044f0b7b36bf3bc9a773"
+    },
+    "abyssinica": {
+        "normal": "C:\\Users\\Erkis\\Documents\\GitHub\\court-ms\\storage\\fonts\/abyssinica_normal_d8f2a5241b26a4d12c01173febae7f91",
+        "bold": "abyssinica_bold_d8f2a5241b26a4d12c01173febae7f91"
+    },
+    "ethiopictext": {
+        "normal": "C:\\Users\\Erkis\\Documents\\GitHub\\court-ms\\storage\\fonts\/ethiopictext_normal_f31592aab11d0012869057937d5936c1",
+        "bold": "ethiopictext_bold_f31592aab11d0012869057937d5936c1"
     }
 }
