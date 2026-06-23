@@ -33,11 +33,66 @@ class DecisionController extends Controller
                         ->orWhere('decision_content', 'like', "%{$search}%");
                 });
             })
+            ->tap(fn ($query) => $this->scopeToUserTeam($query))
             ->orderByDesc('decision_date')
             ->paginate(12)
             ->withQueryString();
 
         return view('admin.decisions.index', compact('decisions', 'search'));
+    }
+
+    /**
+     * Restrict a decisions query to cases assigned to the current user's team(s).
+     *
+     * - Admins see everything.
+     * - Team members see decisions for any case assigned to their team(s).
+     * - Users with no team (and not admin) see nothing.
+     */
+    private function scopeToUserTeam($query): void
+    {
+        $user = auth()->user();
+
+        if ($user && method_exists($user, 'hasRole') && $user->hasRole('admin')) {
+            return; // Admins: no scoping.
+        }
+
+        $teamIds = $user
+            ? \App\Models\Team::query()
+                ->whereHas('users', fn ($q) => $q->where('users.id', $user->id))
+                ->pluck('id')
+                ->all()
+            : [];
+
+        if (empty($teamIds)) {
+            $query->whereRaw('1 = 0'); // No team => no decisions.
+            return;
+        }
+
+        $query->whereHas('courtCase', fn ($q) => $q->whereIn('assigned_team_id', $teamIds));
+    }
+
+    /**
+     * Whether the current user may access this decision (team-scoped).
+     */
+    private function canAccessDecision(Decision $decision): bool
+    {
+        $user = auth()->user();
+
+        if ($user && method_exists($user, 'hasRole') && $user->hasRole('admin')) {
+            return true;
+        }
+
+        $teamId = $decision->courtCase?->assigned_team_id;
+        if (! $teamId) {
+            return false;
+        }
+
+        return $user
+            ? \App\Models\Team::query()
+                ->where('id', $teamId)
+                ->whereHas('users', fn ($q) => $q->where('users.id', $user->id))
+                ->exists()
+            : false;
     }
 
     public function create()
@@ -51,6 +106,8 @@ class DecisionController extends Controller
     public function show(Decision $decision)
     {
         $decision->loadMissing(['courtCase', 'reviews.reviewer']);
+        abort_unless($this->canAccessDecision($decision), 403);
+
         $templates = \App\Models\DecisionTemplate::orderBy('title')->get(['id', 'title']);
         return view('admin.decisions.show', compact('decision', 'templates'));
     }
@@ -61,6 +118,9 @@ class DecisionController extends Controller
      */
     public function output(Request $request, Decision $decision)
     {
+        $decision->loadMissing('courtCase');
+        abort_unless($this->canAccessDecision($decision), 403);
+
         $validated = $request->validate([
             'template_id' => ['nullable', 'integer', 'exists:decision_templates,id'],
             'mode'        => ['nullable', 'in:stream,download'],
@@ -84,6 +144,9 @@ class DecisionController extends Controller
      */
     public function approve(Decision $decision)
     {
+        $decision->loadMissing('courtCase');
+        abort_unless($this->canAccessDecision($decision), 403);
+
         // A decision can only be approved after it has been published.
         if (! $decision->isPublished()) {
             return back()->withErrors(['approve' => __('decisions.approve_requires_published')]);
@@ -221,6 +284,9 @@ class DecisionController extends Controller
      */
     public function updateStatus(Request $request, Decision $decision)
     {
+        $decision->loadMissing('courtCase');
+        abort_unless($this->canAccessDecision($decision), 403);
+
         // Once published, the status is final and can no longer be changed.
         $this->ensureNotPublished($decision);
 
@@ -319,6 +385,8 @@ class DecisionController extends Controller
 
     public function editReview(Decision $decision, DecisionReview $review)
     {
+        $decision->loadMissing('courtCase');
+        abort_unless($this->canAccessDecision($decision), 403);
         abort_if($review->decision_id !== $decision->id, 404);
         abort_if(auth()->id() !== $review->reviewer_id, 403);
 
@@ -446,6 +514,9 @@ class DecisionController extends Controller
 
     private function ensureReviewable(Decision $decision): void
     {
+        $decision->loadMissing('courtCase');
+        abort_unless($this->canAccessDecision($decision), 403);
+
         if ($decision->status === 'published') {
             abort(403, 'Reviews are locked for published decisions.');
         }
