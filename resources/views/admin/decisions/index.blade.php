@@ -4,9 +4,6 @@
     @include('admin.decisions.partials.font-style')
 
     @php
-    $canCreateDecision = function_exists('userHasPermission')
-        ? userHasPermission('decision.create')
-        : (auth()->user()?->hasPermission('decision.create') ?? false);
     $canEditDecision = function_exists('userHasPermission')
         ? userHasPermission('decision.update')
         : (auth()->user()?->hasPermission('decision.update') ?? false);
@@ -50,13 +47,6 @@
                     </a>
                     @endif
                 </form>
-                @if($canCreateDecision)
-                <a href="{{ route('decisions.create') }}"
-                    class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 text-white text-sm hover:bg-emerald-700">
-                    <span class="text-xs">+</span>
-                    {{ __('decisions.index.new') }}
-                </a>
-                @endif
             </div>
         </div>
 
@@ -70,7 +60,6 @@
                             <th class="p-3 text-left font-medium">{{ __('decisions.index.parties') }}</th>
                             <th class="p-3 text-left font-medium">{{ __('decisions.index.judge') }}</th>
                             <th class="p-3 text-left font-medium">{{ __('decisions.index.decision_date') }}</th>
-                            <th class="p-3 text-left font-medium">{{ __('decisions.fields.updated') }}</th>
                             <th class="p-3 text-left font-medium">{{ __('app.Status') }}</th>
                             <th class="p-3 text-left font-medium w-36">{{ __('decisions.index.actions') }}</th>
                         </tr>
@@ -117,9 +106,6 @@
                             <td class="p-3 align-top text-gray-700">
                                 {{ \App\Support\EthiopianDate::format($decision->decision_date, fallback: '—') }}
                             </td>
-                            <td class="p-3 align-top text-xs text-gray-500">
-                                {{ \App\Support\EthiopianDate::smartRelative($decision->updated_at) }}
-                            </td>
                             <td class="p-3 align-top">
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide
                                     {{ $decision->status === 'published' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-gray-100 text-gray-700 border border-gray-200' }}">
@@ -156,7 +142,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="8" class="p-8 text-center text-gray-500">
+                            <td colspan="7" class="p-8 text-center text-gray-500">
                                 <svg class="h-10 w-10 mx-auto mb-2 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h6" />
                                 </svg>
