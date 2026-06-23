@@ -401,7 +401,17 @@
                     </div>
 
                     <div class="form-section">
-                        <h3 class="section-title">{{ __('bench.sections.basic_info') }}</h3>
+                        <div class="flex items-start justify-between gap-4 mb-4">
+                            <h3 class="section-title flex-1 mb-0 border-0 pb-0">{{ __('bench.sections.basic_info') }}</h3>
+                            <div class="form-group mb-0 w-48 shrink-0">
+                                <label class="form-label">{{ __('bench.labels.note_date') }}</label>
+                                <x-eth-date-input name="note_date"
+                                    :value="old('note_date', optional($benchNote->note_date)->format('Y-m-d'))" align="right" />
+                                @error('note_date')
+                                <p class="form-error">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
                         <div class="form-grid">
                             <div class="form-group">
                                 <label class="form-label form-label-required">{{ __('bench.labels.case') }}</label>
@@ -576,10 +586,18 @@
 
             // Enforce justified look in the editor for common blocks
             content_style: `
+            @font-face {
+                font-family: 'Abyssinica';
+                src: url('{{ asset('fonts/AbyssinicaSIL-Regular.ttf') }}') format('truetype');
+                font-display: swap;
+            }
             body, p, div, li, td, th, blockquote { text-align: justify; text-justify: inter-word; }
             table{width:100%;border-collapse:collapse}
             td,th{border:1px solid #ddd;padding:4px}
-            body{font-size:14px;line-height:1.5}
+            body{font-size:14px;line-height:1.5@if(app()->getLocale() === 'am');font-family:'Abyssinica','Nyala',serif@endif}
+            @if(app()->getLocale() === 'am')
+            body, p, div, li, td, th, blockquote { font-family: 'Abyssinica', 'Nyala', serif; }
+            @endif
         `,
 
             // Fix pasted content that brings its own alignment

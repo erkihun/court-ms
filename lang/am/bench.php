@@ -49,6 +49,7 @@ return array (
   array (
     'select_case' => 'ይህ ማስታወሻ የሚመለከተውን ፋይል ይምረጡ',
     'title' => 'ለማስታወሻ አጭር ርዕስ (ከፍተኛ 255 ፊደላት)',
+    'note_date' => 'ይህ ማስታወሻ የሚመለከተው ቀን (አማራጭ)',
     'note_editor' => 'በTinyMCE የተጎላበተ የበለፀገ ፅሁፍ አርታኢ።',
     'empty_content' => 'ምንም ይዘት አልቀረበም።',
     'no_teammates' => 'ምንም ተ አልተመደደም።',
@@ -60,6 +61,7 @@ return array (
     'case_prefix' => 'ፋይል:',
     'filter_by_case' => 'በፋይል ያጣሩ',
     'title' => 'ርዕስ',
+    'note_date' => 'ቀን',
     'note_editor' => 'ማስታወሻ አርታኢ',
     'panel_judges' => 'ፍርድ አቅራቢዎች',
     'panel_judge_format' => 'ፍርድ አቅራቢ :position — :name',

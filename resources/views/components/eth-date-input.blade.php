@@ -7,6 +7,10 @@
     // Optional Alpine expression (evaluated in the parent scope) that, when
     // truthy, disables the trigger. e.g. disabled-when="!canEdit"
     'disabledWhen' => null,
+    // Popover horizontal anchor: 'left' (default) opens rightward, 'right'
+    // opens leftward — use 'right' when the trigger sits in a narrow column
+    // near the right edge so the calendar doesn't overflow/clip.
+    'align' => 'left',
 ])
 
 @php
@@ -64,7 +68,7 @@
         x-show="open"
         x-cloak
         x-transition.opacity
-        class="absolute z-50 mt-1.5 w-72 rounded-xl border p-3 shadow-xl"
+        class="absolute z-50 mt-1.5 w-72 max-w-[calc(100vw-2rem)] rounded-xl border p-3 shadow-xl {{ $align === 'right' ? 'right-0' : 'left-0' }}"
         style="background: var(--surface-strong); border-color: var(--border-strong);"
     >
         {{-- Header: month / nav --}}

@@ -401,7 +401,7 @@ $bannerPath = $settings?->banner_path ?? null;
             </section>
 
             <section class="relative z-20 flex min-h-screen items-center justify-center px-4 py-8 sm:px-6 lg:ml-auto lg:max-w-xl lg:justify-end lg:px-10 xl:px-14">
-                <div class="relative mx-auto w-full max-w-md">
+                <div class="relative mx-auto w-full max-w-md lg:mx-0 lg:ml-auto">
                     <div class="mb-6 flex flex-col items-center justify-center gap-4 text-center lg:hidden">
                         @if($logoPath)
                             <div class="flex h-16 w-16 items-center justify-center">

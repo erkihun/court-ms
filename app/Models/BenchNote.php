@@ -2,9 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\CourtCase;
-use App\Models\CaseHearing;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -15,10 +12,15 @@ class BenchNote extends Model
         'hearing_id',
         'user_id',
         'title',
+        'note_date',
         'note',
         'judge_one_id',
         'judge_two_id',
         'judge_three_id',
+    ];
+
+    protected $casts = [
+        'note_date' => 'date',
     ];
 
     public function case(): BelongsTo

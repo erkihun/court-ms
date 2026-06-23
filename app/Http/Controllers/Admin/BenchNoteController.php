@@ -25,7 +25,7 @@ class BenchNoteController extends Controller
                 'judgeTwo:id,name,signature_path',
                 'judgeThree:id,name,signature_path',
             ])
-            ->when($caseId, fn($q) => $q->where('case_id', $caseId))
+            ->when($caseId, fn ($q) => $q->where('case_id', $caseId))
             ->orderByDesc('created_at')
             ->paginate(15)
             ->withQueryString();
@@ -58,8 +58,9 @@ class BenchNoteController extends Controller
     {
         $data = $request->validate([
             'case_id' => ['required', 'integer', 'exists:court_cases,id'],
-            'title'   => ['required', 'string', 'max:255'],
-            'note'    => ['required', 'string', 'max:20000'],
+            'title' => ['required', 'string', 'max:255'],
+            'note_date' => ['nullable', 'date'],
+            'note' => ['required', 'string'],
             'judges' => ['nullable', 'array', 'size:3'],
             'judges.*.admin_user_id' => ['nullable', 'integer', 'exists:users,id'],
         ]);
@@ -69,13 +70,16 @@ class BenchNoteController extends Controller
         $panelJudges = $this->normalizePanelJudges($data['judges'] ?? []);
 
         $payload = [
-            'case_id'    => $data['case_id'],
-            'user_id'    => $request->user()->id,
-            'note'       => $cleanNote,
+            'case_id' => $data['case_id'],
+            'user_id' => $request->user()->id,
+            'note' => $cleanNote,
             'hearing_id' => null,
         ];
         if (Schema::hasColumn('bench_notes', 'title')) {
             $payload['title'] = trim($data['title']);
+        }
+        if (Schema::hasColumn('bench_notes', 'note_date')) {
+            $payload['note_date'] = $data['note_date'] ?? null;
         }
         if (Schema::hasColumn('bench_notes', 'judge_one_id')) {
             $payload['judge_one_id'] = $panelJudges[0] ?? null;
@@ -134,8 +138,9 @@ class BenchNoteController extends Controller
     {
         $data = $request->validate([
             'case_id' => ['required', 'integer', 'exists:court_cases,id'],
-            'title'   => ['required', 'string', 'max:255'],
-            'note'    => ['required', 'string', 'max:20000'],
+            'title' => ['required', 'string', 'max:255'],
+            'note_date' => ['nullable', 'date'],
+            'note' => ['required', 'string'],
             'judges' => ['nullable', 'array', 'size:3'],
             'judges.*.admin_user_id' => ['nullable', 'integer', 'exists:users,id'],
         ]);
@@ -148,10 +153,13 @@ class BenchNoteController extends Controller
 
         $updatePayload = [
             'case_id' => $data['case_id'],
-            'note'    => $cleanNote,
+            'note' => $cleanNote,
         ];
         if (Schema::hasColumn('bench_notes', 'title')) {
             $updatePayload['title'] = trim($data['title']);
+        }
+        if (Schema::hasColumn('bench_notes', 'note_date')) {
+            $updatePayload['note_date'] = $data['note_date'] ?? null;
         }
 
         if ($panelJudges !== null) {
@@ -198,6 +206,7 @@ class BenchNoteController extends Controller
         if (str_contains($s, '&lt;') || str_contains($s, '&gt;')) {
             $s = htmlspecialchars_decode($s, ENT_QUOTES);
         }
+
         return Purifier::clean($s, 'default');
     }
 
@@ -208,11 +217,11 @@ class BenchNoteController extends Controller
 
         $query = User::query()->orderBy('name');
         if ($teamIds->isNotEmpty()) {
-            $query->whereHas('teams', fn($q) => $q->whereIn('teams.id', $teamIds));
+            $query->whereHas('teams', fn ($q) => $q->whereIn('teams.id', $teamIds));
         }
 
         $judgeUsers = $query->get(['id', 'name']);
-        if ($user && !$judgeUsers->contains('id', $user->id)) {
+        if ($user && ! $judgeUsers->contains('id', $user->id)) {
             $judgeUsers->push($user);
         }
 
@@ -228,6 +237,7 @@ class BenchNoteController extends Controller
             if ($id === null || $id === '') {
                 return null;
             }
+
             return (int) $id;
         })->all();
     }

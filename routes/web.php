@@ -494,7 +494,7 @@ Route::middleware(SetLocale::class)->group(function () {
                 ->middleware('perm:cases.view')
                 ->name('respondent-responses.download');
             Route::get('/cases/{case}/respondent-responses/{response}/replies/{reply}/download', [SecureFileController::class, 'applicantResponseReply'])
-                ->middleware('perm:cases.view')
+                ->middleware('perm:cases.response-replies.manage')
                 ->name('admin.applicant-response-replies.download');
 
             // Witnesses

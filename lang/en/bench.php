@@ -49,6 +49,7 @@ return array (
   array (
     'select_case' => 'Select the case this note belongs to',
     'title' => 'Brief title for the note (max 255 characters)',
+    'note_date' => 'The date this bench note refers to (optional)',
     'note_editor' => 'Rich text editor powered by TinyMCE.',
     'no_teammates' => 'No teammates are assigned to your current team.',
     'empty_content' => 'No content provided.',
@@ -60,6 +61,7 @@ return array (
     'case_prefix' => 'Case:',
     'filter_by_case' => 'Filter by case',
     'title' => 'Title',
+    'note_date' => 'Date',
     'note_editor' => 'Note Editor',
     'panel_judges' => 'Panel judges',
     'panel_judge_format' => 'Judge :position - :name',
