@@ -3,11 +3,31 @@
 namespace App\Http\Controllers\Applicant;
 
 use App\Http\Controllers\Controller;
-
+use App\Models\Decision;
+use App\Support\DecisionPdf;
 use Illuminate\Support\Facades\DB;
 
 class ApplicantDashboardController extends Controller
 {
+    /**
+     * Download the sealed decision PDF for a case the applicant owns.
+     * Only available once the decision is approved AND published.
+     */
+    public function downloadDecision(Decision $decision)
+    {
+        $applicantId = auth('applicant')->id();
+
+        $ownsCase = DB::table('court_cases')
+            ->where('applicant_id', $applicantId)
+            ->where('case_number', $decision->case_number)
+            ->exists();
+
+        abort_unless($ownsCase, 404);
+        abort_unless($decision->isDownloadableByParties(), 403);
+
+        return DecisionPdf::render($decision)->download(DecisionPdf::filename($decision));
+    }
+
     public function index()
     {
         $applicantId = auth('applicant')->id();
@@ -86,7 +106,7 @@ class ApplicantDashboardController extends Controller
                 ->get();
 
             $caseDecisions = DB::table('decisions')
-                ->select('id', 'name', 'case_number', 'decision_date', 'status', 'created_at')
+                ->select('id', 'name', 'case_number', 'decision_date', 'status', 'approved_at', 'created_at')
                 ->whereIn('case_number', $caseNumbers)
                 ->orderByDesc('decision_date')
                 ->orderByDesc('created_at')

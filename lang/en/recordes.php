@@ -8,6 +8,7 @@ return array (
     'back_to_cases' => 'Back to cases',
     'view' => 'View',
     'pdf' => 'PDF',
+    'appeal_pdf' => 'Appeal record',
   ),
   'descriptions' => 
   array (

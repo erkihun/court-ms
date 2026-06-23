@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Respondent;
 
 use App\Http\Controllers\Controller;
 use App\Mail\RespondentViewedCaseMail;
+use App\Models\Decision;
 use App\Models\Respondent;
+use App\Support\DecisionPdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -163,6 +165,16 @@ class CaseSearchController extends Controller
             ->orderByDesc('l.created_at')
             ->get();
 
+        // Only published + approved decisions are downloadable by the respondent.
+        $decisions = DB::table('decisions')
+            ->select('id', 'name', 'case_number', 'decision_date', 'status', 'approved_at', 'created_at')
+            ->where('case_number', $case->case_number)
+            ->where('status', 'published')
+            ->whereNotNull('approved_at')
+            ->orderByDesc('decision_date')
+            ->orderByDesc('created_at')
+            ->get();
+
         return view('applicant.respondent.cases.show', compact(
             'case',
             'timeline',
@@ -170,8 +182,24 @@ class CaseSearchController extends Controller
             'files',
             'msgs',
             'hearings',
-            'docs'
+            'docs',
+            'decisions'
         ) + ['witnesses' => collect(), 'audits' => collect()]);
+    }
+
+    /**
+     * Download the sealed decision PDF for a case the respondent has access to.
+     * Only available once the decision is approved AND published.
+     */
+    public function downloadDecision(Decision $decision)
+    {
+        $caseId = DB::table('court_cases')->where('case_number', $decision->case_number)->value('id');
+
+        abort_if(!$caseId, 404);
+        abort_unless($this->hasCaseAccess((int) $caseId), 403);
+        abort_unless($decision->isDownloadableByParties(), 403);
+
+        return DecisionPdf::render($decision)->download(DecisionPdf::filename($decision));
     }
 
     private function handleRespondentCaseView(object $case): void

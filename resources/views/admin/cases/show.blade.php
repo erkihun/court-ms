@@ -135,7 +135,7 @@
     // Lock actions if case is closed AND has an active decision
     $hasActiveDecision = false;
     try {
-    $hasActiveDecision = \App\Models\Decision::where('court_case_id', $case->id)->where('status', 'active')->exists();
+    $hasActiveDecision = \App\Models\Decision::where('court_case_id', $case->id)->where('status', 'published')->exists();
     } catch (\Throwable $e) {
     $hasActiveDecision = false;
     }
@@ -144,7 +144,7 @@
     // Lock actions if case is closed AND has an active decision
     $hasActiveDecision = false;
     try {
-    $hasActiveDecision = \App\Models\Decision::where('court_case_id', $case->id)->where('status', 'active')->exists();
+    $hasActiveDecision = \App\Models\Decision::where('court_case_id', $case->id)->where('status', 'published')->exists();
     } catch (\Throwable $e) {
     $hasActiveDecision = false;
     }

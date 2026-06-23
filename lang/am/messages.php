@@ -8,6 +8,7 @@ return [
         'case' => 'መዝገብ',
         'case_type' => 'የመዝገብ አይነት',
         'decision' => 'ውሳኔ',
+        'decision_template' => 'የውሳኔ ቅጽ',
         'document' => 'ሰነድ',
         'file' => 'ፋይል',
         'hearing' => 'ችሎት',

@@ -1,7 +1,7 @@
 <?php
 
 return array (
-  'create' => 
+  'create' =>
   array (
     'title' => 'አዲስ መዝገብ',
     'subtitle' => 'አዲስ መዝገብ ለመፍጠር የሚያስፈልጉትን መረጃዎች ሁሉ ያስገቡ።',
@@ -9,7 +9,7 @@ return array (
     'save' => 'አስቀምጥ',
     'cancel' => 'ሰርዝ',
   ),
-  'edit' => 
+  'edit' =>
   array (
     'title' => 'መዝገብን አርትዕ',
     'subtitle' => 'መዝገብ :name ን እያስተካከሉ ነው።',
@@ -17,42 +17,112 @@ return array (
     'save' => 'ለውጦችን አስቀምጥ',
     'cancel' => 'ሰርዝ',
   ),
-  'fields' => 
+  'fields' =>
   array (
     'name' => 'ስም',
     'case' => 'ጉዳይ (Case)',
     'select_case' => 'ጉዳይ ይምረጡ (Select a case)',
+    'case_file_number' => 'የመዝገብ ቁጥር (Case File Number)',
+    'case_file_number_placeholder' => 'ጉዳይ ከመረጡ በኋላ በራሱ ይሞላል',
     'applicant_name' => 'አመልካች ስም (Applicant name)',
     'respondent_name' => 'ተጠሪ ስም (Respondent name)',
+    'applicant_label' => 'የአመልካች ስም (Name of Applicant/Appellant)',
+    'respondent_label' => 'የመልስ ሰጭ ስም (Name of Respondent)',
     'decision_date' => 'የውሳኔ ቀን (Decision date)',
     'reviewers' => 'ገምጋሚዎች (Reviewers)',
     'multi_select_hint' => 'በርካታ ገምጋሚዎችን ለመምረጥ Ctrl/Cmd+click ይጠቀሙ። (Use Ctrl/Cmd+click to select multiple reviewers.)',
     'decision_content' => 'የውሳኔ ይዘት (Decision content)',
+    'final_decision' => 'የመጨረሻ ውሳኔ (Final Decision)',
+    'content_required' => 'ከማስቀመጥዎ በፊት እባክዎ የውሳኔ ይዘት ይጻፉ።',
     'description' => 'መግለጫ',
     'status' => 'ሁኔታ',
     'status_unknown' => 'ያልታወቀ ሁኔታ',
     'updated' => 'የዘመነበት ቀን',
   ),
-  'index' => 
+  'index' =>
   array (
     'title' => 'ውሳኔዎች',
     'showing' => 'ማሳየት',
     'total' => 'ጠቅላላ',
     'new' => 'አዲስ መዝገብ',
     'actions' => 'ተግባራት',
+    'view' => 'ይመልከቱ',
     'edit' => 'አርትዕ',
     'delete' => 'ሰርዝ',
     'empty' => 'ምንም መዝገብ የለም። አንድ በመፍጠር ይጀምሩ።',
     'pagination' => 'ከ :from እስከ :to ከጠቅላላው :total ማሳየት',
+    'search_placeholder' => 'ውሳኔዎች / የጉዳይ ቁጥር',
+    'case_and_parties' => 'ጉዳይ እና ተከራካሪዎች',
+    'no' => 'ተራ ቁ.',
+    'case_number' => 'የጉዳይ ቁጥር',
+    'parties' => 'ተከራካሪዎች',
+    'decision_date' => 'የውሳኔ ቀን',
+    'applicant' => 'አመልካች',
+    'respondent' => 'መልስ ሰጭ',
+    'judge' => 'ዳኛ',
+    'filed' => 'የቀረበበት :date',
   ),
-  'show' => 
+  'judges' =>
   array (
-    'title' => 'Title',
+    'heading' => 'ዳኞች (በቅደም ተከተል)',
+    'order_hint' => '1ኛ · 2ኛ · 3ኛ',
+    'panel' => 'ችሎት',
+    'judicial_panel' => 'የዳኝነት ችሎት (3 ዳኞች)',
+    'judge' => 'ዳኛ :number',
+    'select_judge' => 'ዳኛ ይምረጡ',
+    'no_teammates' => 'በቡድንዎ ውስጥ የቡድን አባል የለም',
+    'current_user' => 'የአሁኑ ተጠቃሚ',
+    'vote' => 'ውሳኔ: :vote',
   ),
-  'status' => 
+  'reviews' =>
+  array (
+    'heading' => 'የውሳኔ ግምገማዎች',
+    'legend' => 'ማጽደቅ / መቃወም / ማሻሻል',
+    'none' => 'እስካሁን ምንም ግምገማ አልተመዘገበም።',
+    'reviewer' => 'ገምጋሚ',
+    'add' => 'ግምገማ ጨምር',
+    'outcome' => 'ውጤት',
+    'review_note' => 'የግምገማ ማስታወሻ',
+    'review_note_placeholder' => 'አጭር ግምገማ ወይም የተጠየቁ ማሻሻያዎችን ያስገቡ',
+    'submit' => 'ግምገማ አስገባ',
+    'update' => 'አዘምን',
+    'delete' => 'ሰርዝ',
+    'delete_confirm' => 'ይህን ግምገማ ይሰርዙ?',
+    'edit_title' => 'ግምገማን አርትዕ',
+    'edit_subtitle' => 'ጉዳይ: :case | ገምጋሚ: :reviewer',
+    'case_number' => 'የጉዳይ ቁጥር',
+    'update_note_placeholder' => 'የግምገማ ማስታወሻ አዘምን',
+    'update_review' => 'ግምገማ አዘምን',
+    'back' => 'ወደ ኋላ',
+    'cancel' => 'ሰርዝ',
+    'approve' => 'እስማማለሁ',
+    'reject' => 'ልዩነት አለኝ',
+    'improve' => 'ማሻሻያ',
+    'pending' => 'በመጠባበቅ ላይ',
+    'note_required' => 'እባክዎ ግምገማዎን የሚገልጽ ማስታወሻ ይጻፉ።',
+    'note_placeholder_reject' => 'የልዩነት ሀሳብዎን ይግለጹ።',
+    'note_placeholder_improve' => 'መሻሻል ያለበትን ክፍል ይግለጹ።',
+  ),
+  'show' =>
+  array (
+    'title' => 'ርዕስ',
+  ),
+  'status' =>
   array (
     'draft' => 'ረቂቅ',
-    'active' => 'ንቁ',
-    'archived' => 'የተመዘገበ',
+    'published' => 'የታተመ',
   ),
+  'status_change' => 'ሁኔታ ቀይር',
+  'status_change_confirm' => 'የዚህን ውሳኔ ሁኔታ መቀየር እንደሚፈልጉ እርግጠኛ ነዎት?',
+  'publish_confirm' => 'ይሀ ውሳኔ አንዴ ከታተመ ውሳኔውን ማሻሻል፣ ማጥፋት እንዲሁም የውሳኔ ግምገም መስጠጥ አይቻልም።እርግጠኛ ነዎት ይታተም?',
+  'confirm_cancel' => 'አይ ይቅር',
+  'publish' => 'አዎ አትም',
+  'published_locked' => 'ይህ ውሳኔ ታትሟል። ከእንግዲህ ሊስተካከል ወይም ሊቀየር አይችልም።',
+  'approve' => 'አጽድቅ',
+  'approve_confirm' => 'ይህን ውሳኔ ያጽድቁ? ኦፊሴላዊ ማህተም ይደረግበታል፣ ለማተምም ዝግጁ ይሆናል።',
+  'approved_badge' => 'በ:user በ:date ጸድቋል',
+  'publish_requires_approval' => 'ውሳኔው ከመታተሙ በፊት መጽደቅ አለበት።',
+  'approve_requires_published' => 'ውሳኔው ከመጽደቁ በፊት መታተም አለበት።',
+  'download' => 'ውሳኔ አውርድ',
+  'download_unavailable' => 'የውሳኔው PDF ከጸደቀና ከታተመ በኋላ ይገኛል።',
 );

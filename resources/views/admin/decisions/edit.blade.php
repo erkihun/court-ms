@@ -30,9 +30,22 @@
 
             <div class="grid gap-6">
 
+                <!-- Decision Date (top right) -->
+                <div class="flex justify-end">
+                    <div class="w-full md:w-64">
+                        <label class="block text-sm font-medium text-gray-700 md:text-right">
+                            {{ __('decisions.fields.decision_date') }}
+                        </label>
+                        <x-eth-date-input name="decision_date" :value="old('decision_date', optional($decision->decision_date)->format('Y-m-d'))" class="mt-1" />
+                        @error('decision_date')
+                        <p class="text-red-500 text-xs mt-1 md:text-right">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
                 <!-- Case Details -->
-                <div class="grid md:grid-cols-3 gap-4">
-                    <div class="md:col-span-2">
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
                         <label for="decision-case-select" class="block text-sm font-semibold text-gray-800">
                             {{ __('decisions.fields.case') }}
                         </label>
@@ -48,7 +61,7 @@
                                 @foreach($cases as $case)
                                 <option value="{{ $case->id }}"
                                     data-case-number="{{ $case->case_number }}"
-                                    data-applicant="{{ $case->applicant?->full_name ?? '' }}"
+                                    data-applicant="{{ $case->title ?: ($case->applicant?->full_name ?? '') }}"
                                     data-respondent="{{ $case->respondent_name ?? '' }}"
                                     @selected(old('case_id', $decision->court_case_id)==$case->id)>
                                     {{ $case->case_number }} - {{ \Illuminate\Support\Str::limit($case->title, 60) }}
@@ -70,22 +83,12 @@
 
                     <div>
                         <label class="block text-sm font-semibold text-gray-800">
-                            Case File Number (መዝገብ ቁጥር)
+                            {{ __('decisions.fields.case_file_number') }}
                         </label>
                         <input id="case-file-number" type="text" name="case_file_number"
                             value="{{ old('case_file_number', $decision->case_file_number) }}"
                             class="mt-1 w-full px-3 py-2 rounded-lg bg-gray-50 text-gray-900 border border-gray-200"
-                            placeholder="Auto-fills after selecting a case">
-                    </div>
-
-                    <div class="md:col-span-1">
-                        <label class="block text-sm font-medium text-gray-700">
-                            {{ __('decisions.fields.decision_date') }}
-                        </label>
-                        <x-eth-date-input name="decision_date" :value="old('decision_date', optional($decision->decision_date)->format('Y-m-d'))" class="mt-1" />
-                        @error('decision_date')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
+                            placeholder="{{ __('decisions.fields.case_file_number_placeholder') }}">
                     </div>
                 </div>
 
@@ -93,7 +96,7 @@
                 <div class="grid md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700">
-                            Name of Applicant/Appellant (አመልካች)
+                            {{ __('decisions.fields.applicant_label') }}
                         </label>
                         <input id="applicant-name-display" type="text" readonly
                             value="{{ old('applicant_full_name', $decision->applicant_full_name ?? '') }}"
@@ -104,7 +107,7 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700">
-                            Name of Respondent (መልስ ሰጭ)
+                            {{ __('decisions.fields.respondent_label') }}
                         </label>
                         <input id="respondent-name-display" type="text" readonly
                             value="{{ old('respondent_full_name', $decision->respondent_full_name ?? '') }}"
@@ -117,8 +120,8 @@
                 <!-- Judges -->
                 <div class="border border-gray-200 rounded-lg p-4 space-y-3">
                     <div class="flex items-center justify-between gap-3">
-                        <h2 class="text-base font-semibold text-gray-900">Judges (in order)</h2>
-                        <span class="text-xs uppercase tracking-wide text-gray-500">1st · 2nd · 3rd</span>
+                        <h2 class="text-base font-semibold text-gray-900">{{ __('decisions.judges.heading') }}</h2>
+                        <span class="text-xs uppercase tracking-wide text-gray-500">{{ __('decisions.judges.order_hint') }}</span>
                     </div>
                     <div class="grid md:grid-cols-3 gap-3">
                         @for ($i = 0; $i < 3; $i++)
@@ -129,16 +132,16 @@
                         $isMiddle = $i === 1;
                         @endphp
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Judge {{ $i + 1 }}</label>
+                            <label class="block text-sm font-medium text-gray-700">{{ __('decisions.judges.judge', ['number' => $i + 1]) }}</label>
                             @if($isMiddle)
                             <input type="text" readonly
-                                value="{{ auth()->user()?->name ?? 'Current User' }}"
+                                value="{{ auth()->user()?->name ?? __('decisions.judges.current_user') }}"
                                 class="mt-1 w-full px-3 py-2 rounded-lg bg-gray-100 text-gray-900 border border-gray-200">
                             <input type="hidden" name="judges[{{ $i }}][admin_user_id]" value="{{ $selectedJudge }}">
                             @else
                             <select name="judges[{{ $i }}][admin_user_id]"
                                 class="mt-1 w-full px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 relative z-20">
-                                <option value="">Select judge</option>
+                                <option value="">{{ __('decisions.judges.select_judge') }}</option>
                                 @foreach($judgeUsers as $admin)
                                 <option value="{{ $admin->id }}" @selected($selectedJudge==$admin->id)>{{ $admin->name }}</option>
                                 @endforeach
@@ -152,7 +155,7 @@
                 <!-- Decision Content -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700">
-                        Final Decision / ውሳኔ
+                        {{ __('decisions.fields.final_decision') }}
                     </label>
 
                     <textarea id="decision-content-editor" name="decision_content" rows="12"
@@ -161,25 +164,6 @@
 
                     @error('decision_content')
                     <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Status -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">
-                        {{ __('decisions.fields.status') }}
-                    </label>
-
-                    <select name="status"
-                        class="mt-1 w-full px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300
-                                   focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
-                        <option value="draft" @selected(old('status', $decision->status)==='draft')>{{ __('decisions.status.draft') }}</option>
-                        <option value="active" @selected(old('status', $decision->status)==='active')>{{ __('decisions.status.active') }}</option>
-                        <option value="archived" @selected(old('status', $decision->status)==='archived')>{{ __('decisions.status.archived') }}</option>
-                    </select>
-
-                    @error('status')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -231,7 +215,7 @@
                     }
                     table { width: 100%; border-collapse: collapse }
                     td, th { border: 1px solid #ddd; padding: 4px }
-                    body { font-family: "Nyala", "Noto Sans Ethiopic", "Noto Sans", sans-serif; font-size: 14px; line-height: 1.5 }
+                    body { font-size: 14px; line-height: 1.5 }
                 `,
                 resize: false,
                 statusbar: true
@@ -251,7 +235,7 @@
 
                 if (!content) {
                     e.preventDefault();
-                    alert("Please write a decision content before saving.");
+                    alert(@json(__('decisions.fields.content_required')));
                     tinymce.get("decision-content-editor").focus();
                 }
             });

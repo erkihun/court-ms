@@ -37,7 +37,7 @@
                 <form method="GET" action="{{ route('decisions.index') }}" class="flex items-center gap-2">
                     <input name="q"
                         value="{{ $search ?? '' }}"
-                        placeholder="{{ __('decisions.index.title') }} / Case #"
+                        placeholder="{{ __('decisions.index.search_placeholder') }}"
                         class="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-500">
                     <button type="submit"
                         class="px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 text-sm hover:bg-gray-50">
@@ -65,23 +65,23 @@
                 <table class="min-w-full text-sm">
                     <thead class="bg-gray-50 text-gray-700 border-b border-gray-200">
                         <tr>
-                            <th class="p-3 text-left font-medium">{{ __('decisions.fields.name') }}</th>
-                            <th class="p-3 text-left font-medium">Case &amp; Parties</th>
-                            <th class="p-3 text-left font-medium">Decision Date</th>
+                            <th class="p-3 text-left font-medium w-12">{{ __('decisions.index.no') }}</th>
+                            <th class="p-3 text-left font-medium">{{ __('decisions.index.case_number') }}</th>
+                            <th class="p-3 text-left font-medium">{{ __('decisions.index.parties') }}</th>
+                            <th class="p-3 text-left font-medium">{{ __('decisions.index.judge') }}</th>
+                            <th class="p-3 text-left font-medium">{{ __('decisions.index.decision_date') }}</th>
+                            <th class="p-3 text-left font-medium">{{ __('decisions.fields.updated') }}</th>
                             <th class="p-3 text-left font-medium">{{ __('app.Status') }}</th>
-                            <th class="p-3 text-left font-medium">Updated</th>
                             <th class="p-3 text-left font-medium w-36">{{ __('decisions.index.actions') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
-                        @forelse($decisions as $decision)
+                        @php
+                        $rowOffset = method_exists($decisions, 'firstItem') ? (($decisions->firstItem() ?? 1) - 1) : 0;
+                        @endphp
+                        @forelse($decisions as $i => $decision)
                         <tr class="hover:bg-gray-50">
-                            <td class="p-3 align-top">
-                                <div class="font-medium text-gray-900">{{ $decision->name }}</div>
-                                <div class="text-xs text-gray-500">
-                                    {{ $decision->description ?: '—' }}
-                                </div>
-                            </td>
+                            <td class="p-3 align-top text-gray-500">{{ $rowOffset + $i + 1 }}</td>
                             <td class="p-3 align-top">
                                 <div class="text-sm font-semibold text-gray-900">
                                     @if($decision->courtCase)
@@ -92,33 +92,36 @@
                                     {{ $decision->case_number ?: '—' }}
                                     @endif
                                 </div>
-                                <div class="mt-2 grid grid-cols-2 gap-3 text-[11px] text-gray-500">
-                                    <div>
-                                        <span class="uppercase tracking-wide text-[10px] text-gray-400">Applicant</span>
-                                        <div class="text-gray-900 mt-0.5">{{ $decision->applicant_full_name ?: '—' }}</div>
-                                    </div>
-                                    <div>
-                                        <span class="uppercase tracking-wide text-[10px] text-gray-400">Respondent</span>
-                                        <div class="text-gray-900 mt-0.5">{{ $decision->respondent_full_name ?: '—' }}</div>
-                                    </div>
-                                </div>
                                 @if($decision->case_filed_date)
                                 <div class="text-[10px] text-gray-500 mt-1">
-                                    Filed {{ \App\Support\EthiopianDate::format($decision->case_filed_date) }}
+                                    {{ __('decisions.index.filed', ['date' => \App\Support\EthiopianDate::format($decision->case_filed_date)]) }}
                                 </div>
                                 @endif
+                            </td>
+                            <td class="p-3 align-top">
+                                <div class="text-[11px] text-gray-500">
+                                    <span class="uppercase tracking-wide text-[10px] text-gray-400">{{ __('decisions.index.applicant') }}</span>
+                                    <div class="text-gray-900 mt-0.5">{{ $decision->applicant_full_name ?: ($decision->courtCase?->title ?: '—') }}</div>
+                                </div>
+                                <div class="text-[11px] text-gray-500 mt-2">
+                                    <span class="uppercase tracking-wide text-[10px] text-gray-400">{{ __('decisions.index.respondent') }}</span>
+                                    <div class="text-gray-900 mt-0.5">{{ $decision->respondent_full_name ?: '—' }}</div>
+                                </div>
+                            </td>
+                            <td class="p-3 align-top text-gray-700">
+                                {{ $decision->courtCase?->judge?->name ?: '—' }}
                             </td>
                             <td class="p-3 align-top text-gray-700">
                                 {{ \App\Support\EthiopianDate::format($decision->decision_date, fallback: '—') }}
                             </td>
-                            <td class="p-3 align-top">
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide
-                                    {{ $decision->status === 'active' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : ($decision->status === 'draft' ? 'bg-gray-100 text-gray-700 border border-gray-200' : 'bg-orange-100 text-orange-700 border border-orange-200') }}">
-                                    {{ ucfirst($decision->status ?: '—') }}
-                                </span>
-                            </td>
                             <td class="p-3 align-top text-xs text-gray-500">
                                 {{ \App\Support\EthiopianDate::smartRelative($decision->updated_at) }}
+                            </td>
+                            <td class="p-3 align-top">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide
+                                    {{ $decision->status === 'published' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-gray-100 text-gray-700 border border-gray-200' }}">
+                                    {{ $decision->status ? __('decisions.status.' . $decision->status) : '—' }}
+                                </span>
                             </td>
                             @php
                             $middleJudgeId = $decision->panel_judges[1]['admin_user_id'] ?? null;
@@ -128,15 +131,15 @@
                                 <div class="flex items-center gap-2">
                                     <a href="{{ route('decisions.show', $decision) }}"
                                         class="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs border border-gray-200">
-                                        View
+                                        {{ __('decisions.index.view') }}
                                     </a>
-                                    @if($canEditDecision && $isMiddleJudge)
+                                    @if($canEditDecision && $isMiddleJudge && $decision->status !== 'published')
                                     <a href="{{ route('decisions.edit', $decision) }}"
                                         class="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs">
                                         {{ __('decisions.index.edit') }}
                                     </a>
                                     @endif
-                                    @if($canDeleteDecision && $isMiddleJudge)
+                                    @if($canDeleteDecision && $isMiddleJudge && $decision->status !== 'published')
                                     <form id="delForm-{{ $decision->id }}" action="{{ route('decisions.destroy', $decision) }}" method="POST" class="hidden">
                                         @csrf @method('DELETE')
                                     </form>
@@ -150,7 +153,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="6" class="p-8 text-center text-gray-500">
+                            <td colspan="8" class="p-8 text-center text-gray-500">
                                 <svg class="h-10 w-10 mx-auto mb-2 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h6" />
                                 </svg>

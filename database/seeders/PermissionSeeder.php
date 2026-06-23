@@ -114,8 +114,35 @@ class PermissionSeeder extends Seeder
                 'description' => null,
             ],
             [
+                'name' => 'decision.approve',
+                'label' => 'Approve decision',
+                'description' => null,
+            ],
+            [
                 'name' => 'decisions.view',
                 'label' => null,
+                'description' => null,
+            ],
+
+            // Decision templates
+            [
+                'name' => 'decision.templet.view',
+                'label' => 'View decision templates',
+                'description' => null,
+            ],
+            [
+                'name' => 'decision.templet.create',
+                'label' => 'Create decision template',
+                'description' => null,
+            ],
+            [
+                'name' => 'decision.templet.update',
+                'label' => 'Update decision template',
+                'description' => null,
+            ],
+            [
+                'name' => 'decision.templet.delete',
+                'label' => 'Delete decision template',
                 'description' => null,
             ],
 

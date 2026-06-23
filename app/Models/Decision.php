@@ -33,6 +33,8 @@ class Decision extends Model
         'description',
         'decision_content',
         'status',
+        'approved_at',
+        'approved_by',
     ];
 
     /**
@@ -43,6 +45,7 @@ class Decision extends Model
         'decision_date' => 'date',
         'panel_judges' => 'array',
         'reviewing_admin_user_names' => 'array',
+        'approved_at' => 'datetime',
     ];
 
     public function courtCase(): BelongsTo
@@ -55,8 +58,32 @@ class Decision extends Model
         return $this->belongsTo(User::class, 'reviewing_admin_user_id');
     }
 
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
     public function reviews()
     {
         return $this->hasMany(DecisionReview::class);
+    }
+
+    public function isApproved(): bool
+    {
+        return $this->approved_at !== null;
+    }
+
+    public function isPublished(): bool
+    {
+        return $this->status === 'published';
+    }
+
+    /**
+     * Parties (applicant/respondent) may download the decision only once it is
+     * both approved (sealed) and published.
+     */
+    public function isDownloadableByParties(): bool
+    {
+        return $this->isApproved() && $this->isPublished();
     }
 }

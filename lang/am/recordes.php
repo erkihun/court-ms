@@ -8,6 +8,7 @@ return array (
     'back_to_cases' => 'ወደ ጉዳዮች ተመለስ',
     'view' => 'አሳይ',
     'pdf' => 'PDF',
+    'appeal_pdf' => 'የይግባኝ መዝገብ',
   ),
   'descriptions' => 
   array (

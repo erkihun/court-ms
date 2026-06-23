@@ -32,7 +32,7 @@
 
     @php
     try {
-        $resolvedCases = \App\Models\Decision::where('status', 'active')->distinct('court_case_id')->count('court_case_id');
+        $resolvedCases = \App\Models\Decision::where('status', 'published')->distinct('court_case_id')->count('court_case_id');
     } catch (\Throwable $e) {}
 
     if (empty($activeCases)) {

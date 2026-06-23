@@ -500,6 +500,15 @@
                                     {{ __('decisions.status.' . $decision->status) }}
                                 </span>
                                 @endif
+                                @if(($decision->status ?? null) === 'published' && !empty($decision->approved_at))
+                                <a href="{{ route('applicant.decisions.download', $decision->id) }}"
+                                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-semibold border border-emerald-300 bg-emerald-50 text-emerald-700">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
+                                    </svg>
+                                    {{ __('decisions.download') }}
+                                </a>
+                                @endif
                             </div>
                         </div>
                         @empty

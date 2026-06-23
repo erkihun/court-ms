@@ -8,6 +8,7 @@ return [
         'case' => 'Case',
         'case_type' => 'Case type',
         'decision' => 'Decision',
+        'decision_template' => 'Decision template',
         'document' => 'Document',
         'file' => 'File',
         'hearing' => 'Hearing',

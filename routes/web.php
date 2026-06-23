@@ -43,6 +43,7 @@ use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\SystemSettingController;
 use App\Http\Controllers\Admin\LetterTemplateController;
 use App\Http\Controllers\Admin\LetterCategoryController;
+use App\Http\Controllers\Admin\DecisionTemplateController;
 use App\Http\Controllers\Admin\LetterController;
 use App\Http\Controllers\Admin\LetterComposerController;
 use App\Http\Controllers\Admin\TermsAndConditionsController;
@@ -196,6 +197,9 @@ Route::middleware(SetLocale::class)->group(function () {
         ->middleware(['auth:applicant', 'throttle:30,1'])
         ->name('respondent.cases.show')
         ->where('caseNumber', '.*');
+    Route::get('/respondent/decisions/{decision}/download', [CaseSearchController::class, 'downloadDecision'])
+        ->middleware(['auth:applicant', 'throttle:30,1'])
+        ->name('respondent.decisions.download');
 
     // Public-facing preview for applicants/respondents (authorization handled in controller)
     Route::get('/case-letters/{letter}', [LetterController::class, 'publicPreview'])
@@ -258,6 +262,8 @@ Route::middleware(SetLocale::class)->group(function () {
         Route::middleware(['verified:applicant.verification.notice'])->group(function () {
             // Dashboard
             Route::get('/applicant/dashboard', [ApplicantDashboardController::class, 'index'])->name('applicant.dashboard');
+            Route::get('/applicant/decisions/{decision}/download', [ApplicantDashboardController::class, 'downloadDecision'])
+                ->name('applicant.decisions.download');
 
             // Profile
             Route::get('/applicant/profile',  [ApplicantProfileController::class, 'edit'])->name('applicant.profile.edit');
@@ -581,6 +587,15 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::get('/decisions/{decision}', [DecisionController::class, 'show'])
                 ->middleware('perm:decision.view')
                 ->name('decisions.show');
+            Route::get('/decisions/{decision}/output', [DecisionController::class, 'output'])
+                ->middleware('perm:decision.view')
+                ->name('decisions.output');
+            Route::patch('/decisions/{decision}/status', [DecisionController::class, 'updateStatus'])
+                ->middleware('perm:decision.update')
+                ->name('decisions.status');
+            Route::patch('/decisions/{decision}/approve', [DecisionController::class, 'approve'])
+                ->middleware('perm:decision.approve')
+                ->name('decisions.approve');
             Route::post('/decisions/{decision}/reviews', [DecisionController::class, 'storeReview'])
                 ->middleware('perm:decision.update')
                 ->name('decisions.reviews.store');
@@ -613,6 +628,9 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::get('/recordes/{case}/pdf', [RecordController::class, 'pdf'])
                 ->middleware('perm:cases.view')
                 ->name('recordes.pdf');
+            Route::get('/recordes/{case}/appeal-pdf', [RecordController::class, 'appealPdf'])
+                ->middleware('perm:cases.view')
+                ->name('recordes.appeal-pdf');
 
             // Appeal documents
             Route::post('/appeals/{appeal}/documents',         [AppealController::class, 'uploadDoc'])->middleware('perm:appeals.edit')->name('appeals.docs.upload');
@@ -765,6 +783,26 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::delete('/letter-categories/{letterCategory}', [LetterCategoryController::class, 'destroy'])
                 ->middleware('perm:letters.templet.delete')
                 ->name('letter-categories.destroy');
+
+            // Decision templates with granular permissions
+            Route::get('/decision-templates', [DecisionTemplateController::class, 'index'])
+                ->middleware('perm:decision.templet.view')
+                ->name('decision-templates.index');
+            Route::get('/decision-templates/create', [DecisionTemplateController::class, 'create'])
+                ->middleware('perm:decision.templet.create')
+                ->name('decision-templates.create');
+            Route::post('/decision-templates', [DecisionTemplateController::class, 'store'])
+                ->middleware('perm:decision.templet.create')
+                ->name('decision-templates.store');
+            Route::get('/decision-templates/{decisionTemplate}/edit', [DecisionTemplateController::class, 'edit'])
+                ->middleware('perm:decision.templet.update')
+                ->name('decision-templates.edit');
+            Route::patch('/decision-templates/{decisionTemplate}', [DecisionTemplateController::class, 'update'])
+                ->middleware('perm:decision.templet.update')
+                ->name('decision-templates.update');
+            Route::delete('/decision-templates/{decisionTemplate}', [DecisionTemplateController::class, 'destroy'])
+                ->middleware('perm:decision.templet.delete')
+                ->name('decision-templates.destroy');
 
             // Letters with granular permissions
             Route::get('/letters/compose', [LetterComposerController::class, 'create'])

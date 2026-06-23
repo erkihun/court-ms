@@ -16,8 +16,7 @@ class DecisionController extends Controller
 {
     private const STATUS_OPTIONS = [
         'draft',
-        'active',
-        'archived',
+        'published',
     ];
 
     private const CASE_LIMIT = 250;
@@ -25,7 +24,7 @@ class DecisionController extends Controller
     public function index(Request $request)
     {
         $search = trim($request->string('q')->toString());
-        $decisions = Decision::with(['courtCase', 'reviewer'])
+        $decisions = Decision::with(['courtCase.judge', 'reviewer'])
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('name', 'like', "%{$search}%")
@@ -52,7 +51,128 @@ class DecisionController extends Controller
     public function show(Decision $decision)
     {
         $decision->loadMissing(['courtCase', 'reviews.reviewer']);
-        return view('admin.decisions.show', compact('decision'));
+        $templates = \App\Models\DecisionTemplate::orderBy('title')->get(['id', 'title']);
+        return view('admin.decisions.show', compact('decision', 'templates'));
+    }
+
+    /**
+     * Render the final decision output for both applicant and respondent
+     * using a chosen decision template, as a downloadable/streamed PDF.
+     */
+    public function output(Request $request, Decision $decision)
+    {
+        $validated = $request->validate([
+            'template_id' => ['nullable', 'integer', 'exists:decision_templates,id'],
+            'mode'        => ['nullable', 'in:stream,download'],
+        ]);
+
+        $template = ! empty($validated['template_id'])
+            ? \App\Models\DecisionTemplate::find($validated['template_id'])
+            : null;
+
+        $pdf = \App\Support\DecisionPdf::render($decision, $template);
+        $filename = \App\Support\DecisionPdf::filename($decision);
+
+        return ($validated['mode'] ?? 'stream') === 'download'
+            ? $pdf->download($filename)
+            : $pdf->stream($filename);
+    }
+
+    /**
+     * Approve a decision (the gate to publishing). Stamps the seal on the PDF
+     * and is a prerequisite for publishing and party downloads.
+     */
+    public function approve(Decision $decision)
+    {
+        // A decision can only be approved after it has been published.
+        if (! $decision->isPublished()) {
+            return back()->withErrors(['approve' => __('decisions.approve_requires_published')]);
+        }
+
+        if ($decision->isApproved()) {
+            return redirect()->route('decisions.show', $decision);
+        }
+
+        $decision->update([
+            'approved_at' => now(),
+            'approved_by' => auth()->id(),
+        ]);
+
+        return redirect()->route('decisions.show', $decision)->with('success', [
+            'key' => 'messages.success.updated',
+            'replace' => ['resource' => __('messages.resources.decision')],
+        ]);
+    }
+
+    /**
+     * Replace {{placeholder}} tokens in a template body with decision values.
+     */
+    private function fillTemplatePlaceholders(string $body, Decision $decision): string
+    {
+        $panel = is_array($decision->panel_judges) ? array_values($decision->panel_judges) : [];
+
+        $judgeName = static function (array $panel, int $index): string {
+            return (string) ($panel[$index]['admin_user_name'] ?? '');
+        };
+        $judgeVote = static function (array $panel, int $index): string {
+            return (string) ($panel[$index]['vote'] ?? '');
+        };
+
+        $replacements = [
+            'applicant_name'     => (string) ($decision->applicant_full_name ?? ''),
+            'respondent_name'    => (string) ($decision->respondent_full_name ?? ''),
+            'case_number'        => (string) ($decision->case_number ?? ''),
+            'case_file_number'   => (string) ($decision->case_file_number ?? ''),
+            'judge_name'         => (string) ($decision->courtCase?->judge?->name ?? ''),
+            'decision_date'      => \App\Support\EthiopianDate::format($decision->decision_date, fallback: ''),
+            'decision_content'   => (string) ($decision->decision_content ?? ''),
+            'decision_name'      => (string) ($decision->name ?? ''),
+
+            // Panel judges (1 = presiding/first, 2 = middle, 3 = third)
+            'judge_one'          => $judgeName($panel, 0),
+            'judge_two'          => $judgeName($panel, 1),
+            'judge_three'        => $judgeName($panel, 2),
+            'judge_one_vote'     => $judgeVote($panel, 0),
+            'judge_two_vote'     => $judgeVote($panel, 1),
+            'judge_three_vote'   => $judgeVote($panel, 2),
+
+            // Signature block for all panel judges (HTML)
+            'judges_signatures'  => $this->buildJudgesSignatures($panel),
+        ];
+
+        foreach ($replacements as $key => $value) {
+            // Allow optional spaces inside the braces: {{ key }} or {{key}}
+            $body = preg_replace('/\{\{\s*' . preg_quote($key, '/') . '\s*\}\}/', $value, $body);
+        }
+
+        return $body;
+    }
+
+    /**
+     * Build an HTML signature block for the panel judges, suitable for the PDF.
+     */
+    private function buildJudgesSignatures(array $panel): string
+    {
+        $labels = [__('decisions.judges.judge', ['number' => 1]), __('decisions.judges.judge', ['number' => 2]), __('decisions.judges.judge', ['number' => 3])];
+
+        $cells = '';
+        for ($i = 0; $i < 3; $i++) {
+            $name = trim((string) ($panel[$i]['admin_user_name'] ?? ''));
+            if ($name === '') {
+                continue;
+            }
+            $cells .= '<td style="width:33%;text-align:center;padding:8px;vertical-align:bottom;">'
+                . '<div style="border-top:1px solid #111827;margin-top:36px;padding-top:4px;">'
+                . '<div style="font-size:9pt;color:#6b7280;">' . e($labels[$i]) . '</div>'
+                . '<div style="font-weight:600;">' . e($name) . '</div>'
+                . '</div></td>';
+        }
+
+        if ($cells === '') {
+            return '';
+        }
+
+        return '<table style="width:100%;border-collapse:collapse;margin-top:18px;"><tr>' . $cells . '</tr></table>';
     }
 
     public function store(Request $request)
@@ -60,6 +180,9 @@ class DecisionController extends Controller
         $payload = $this->preparePayload($request->validate($this->rules()));
         $case = CourtCase::with('applicant')->findOrFail($payload['case_id']);
         $data = $this->hydrateCaseData($payload, $case);
+
+        // New decisions always start as draft; status is changed later from the show page.
+        $data['status'] = 'draft';
 
         Decision::create($data);
 
@@ -72,6 +195,7 @@ class DecisionController extends Controller
     public function edit(Decision $decision)
     {
         $this->ensureMiddleJudge($decision);
+        $this->ensureNotPublished($decision);
         $cases = $this->loadCases($decision);
         $adminUsers = $this->loadAdminUsers();
         $judgeUsers = $this->loadJudgeUsers();
@@ -81,6 +205,7 @@ class DecisionController extends Controller
     public function update(Request $request, Decision $decision)
     {
         $this->ensureMiddleJudge($decision);
+        $this->ensureNotPublished($decision);
         $payload = $this->preparePayload($request->validate($this->rules()));
         $case = CourtCase::with('applicant')->findOrFail($payload['case_id']);
         $decision->update($this->hydrateCaseData($payload, $case));
@@ -91,13 +216,56 @@ class DecisionController extends Controller
         ]);
     }
 
+    /**
+     * Change only the status of a decision (from the show page).
+     */
+    public function updateStatus(Request $request, Decision $decision)
+    {
+        // Once published, the status is final and can no longer be changed.
+        $this->ensureNotPublished($decision);
+
+        $data = $request->validate([
+            'status' => ['required', 'string', 'max:32', Rule::in(self::STATUS_OPTIONS)],
+        ]);
+
+        $decision->update(['status' => $data['status']]);
+
+        return redirect()->route('decisions.show', $decision)->with('success', [
+            'key' => 'messages.success.updated',
+            'replace' => ['resource' => __('messages.resources.decision')],
+        ]);
+    }
+
+    /**
+     * Validation rules for a decision review.
+     *
+     * Outcomes (stored value => meaning):
+     *   approve => Agree        (note optional)
+     *   reject  => Have difference (note required: state the difference)
+     *   improve => Improvement   (note required: the part to improve)
+     */
+    private function reviewRules(): array
+    {
+        return [
+            'outcome' => ['required', Rule::in(['approve', 'reject', 'improve'])],
+            'review_note' => ['nullable', 'string', 'max:2000', 'required_if:outcome,reject', 'required_if:outcome,improve'],
+        ];
+    }
+
+    private function reviewMessages(): array
+    {
+        return [
+            'review_note.required_if' => __('decisions.reviews.note_required'),
+        ];
+    }
+
     public function storeReview(Request $request, Decision $decision)
     {
         $this->ensureReviewable($decision);
-        $data = $request->validate([
-            'outcome' => ['required', Rule::in(['approve', 'reject', 'improve'])],
-            'review_note' => ['nullable', 'string', 'max:2000'],
-        ]);
+        $data = $request->validate(
+            $this->reviewRules(),
+            $this->reviewMessages()
+        );
 
         DecisionReview::create([
             'decision_id' => $decision->id,
@@ -119,10 +287,10 @@ class DecisionController extends Controller
         abort_if($review->decision_id !== $decision->id, 404);
         abort_if(auth()->id() !== $review->reviewer_id, 403);
 
-        $data = $request->validate([
-            'outcome' => ['required', Rule::in(['approve', 'reject', 'improve'])],
-            'review_note' => ['nullable', 'string', 'max:2000'],
-        ]);
+        $data = $request->validate(
+            $this->reviewRules(),
+            $this->reviewMessages()
+        );
 
         $review->update([
             'outcome' => $data['outcome'],
@@ -160,6 +328,7 @@ class DecisionController extends Controller
     public function destroy(Decision $decision)
     {
         $this->ensureMiddleJudge($decision);
+        $this->ensureNotPublished($decision);
         $decision->delete();
         return back()->with('success', [
             'key' => 'messages.success.deleted',
@@ -176,7 +345,6 @@ class DecisionController extends Controller
             'description' => ['nullable', 'string', 'max:5000'],
             'decision_content' => ['required', 'string'],
             'decision_date' => ['required', 'date'],
-            'status' => ['required', 'string', 'max:32', Rule::in(self::STATUS_OPTIONS)],
             'reviewing_admin_user_names' => ['nullable', 'array'],
             'reviewing_admin_user_names.*' => ['string', 'max:255'],
             'judges_comments' => ['nullable', 'string', 'max:5000'],
@@ -215,7 +383,8 @@ class DecisionController extends Controller
             'court_case_id' => $case->id,
             'case_number' => $case->case_number,
             'case_file_number' => $payload['case_file_number'] ?: $case->case_number,
-            'applicant_full_name' => trim((string) ($case->applicant?->full_name ?? '')),
+            // The applicant name is stored on the case as `title`.
+            'applicant_full_name' => trim((string) ($case->title ?: ($case->applicant?->full_name ?? ''))),
             'respondent_full_name' => $case->respondent_name,
             'case_filed_date' => $case->filing_date?->toDateString() ?? $case->created_at?->toDateString(),
             'panel_judges' => $panelJudges,
@@ -277,8 +446,18 @@ class DecisionController extends Controller
 
     private function ensureReviewable(Decision $decision): void
     {
-        if (in_array($decision->status, ['active', 'archived'], true)) {
-            abort(403, 'Reviews are locked for active or archived decisions.');
+        if ($decision->status === 'published') {
+            abort(403, 'Reviews are locked for published decisions.');
+        }
+    }
+
+    /**
+     * Block any modification once a decision has been published.
+     */
+    private function ensureNotPublished(Decision $decision): void
+    {
+        if ($decision->status === 'published') {
+            abort(403, 'This decision is published and can no longer be changed.');
         }
     }
 

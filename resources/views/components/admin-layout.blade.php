@@ -205,6 +205,7 @@
     $hasCaseTypes = Route::has('case-types.index');
     $hasHearings = Route::has('admin.hearings.index');
     $hasDecisions = Route::has('decisions.index');
+    $hasDecisionTemplates = Route::has('decision-templates.index');
     $hasUsers = Route::has('users.index');
     $hasPermissions = Route::has('permissions.index');
     $hasRoles = Route::has('roles.index');
@@ -243,6 +244,9 @@
     $lettersActive = request()->routeIs('letters.index') || request()->routeIs('letters.show');
     $composeActive = request()->routeIs('letters.compose');
     $letterMenuOpen = $letterTemplatesActive || $letterCategoriesActive || $lettersActive || $composeActive;
+    $decisionsListActive = request()->routeIs('decisions.*');
+    $decisionTemplatesActive = request()->routeIs('decision-templates.*');
+    $decisionMenuOpen = $decisionsListActive || $decisionTemplatesActive;
     $applicantsActive = request()->routeIs('applicants.*');
     $inspectionRequestsActive = request()->routeIs('case-inspection-requests.*');
     $inspectionFindingsActive = request()->routeIs('case-inspection-findings.*');
@@ -388,26 +392,68 @@
             @endif
 
 
-            {{-- Decisions --}}
+            {{-- Decisions dropdown --}}
+            @php
+            $canViewDecisions = $hasDecisions && auth()->user()?->hasPermission('decision.view');
+            $canViewDecisionTemplates = $hasDecisionTemplates && auth()->user()?->hasPermission('decision.templet.view');
+            @endphp
+            @if($canViewDecisions || $canViewDecisionTemplates)
+            <div x-data="{ open: {{ $decisionMenuOpen ? 'true' : 'false' }}, loaded: {{ $decisionMenuOpen ? 'true' : 'false' }} }" class="space-y-1">
+                <button type="button"
+                    class="sidebar-menu-toggle focus-ring
+                    {{ $decisionMenuOpen ? 'sidebar-menu-item-active' : 'sidebar-menu-item-inactive' }}"
+                    @click="if (!loaded) loaded = true; open = !open"
+                    aria-haspopup="true"
+                    :aria-expanded="open.toString()">
+                    <span class="flex items-center gap-3">
+                        <div class="grid place-items-center w-6" aria-hidden="true">
+                            <x-heroicon-o-document-text class="sidebar-icon h-4 w-4" aria-hidden="true" />
+                        </div>
+                        <span class="sidebar-menu-label truncate origin-left"
+                            x-show="!compact"
+                            x-transition:enter="motion-enter"
+                            x-transition:enter-start="motion-slide-inline-start"
+                            x-transition:enter-end="motion-slide-inline-end"
+                            x-transition:leave="motion-leave"
+                            x-transition:leave-start="motion-slide-inline-end"
+                            x-transition:leave-end="motion-slide-inline-start">
+                            {{ __('app.Decisions') }}
+                        </span>
+                    </span>
+                    <svg x-show="!compact" xmlns="http://www.w3.org/2000/svg" class="sidebar-icon h-4 w-4 transition-fast"
+                        :class="{ 'rotate-90': open }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
 
-            @if($hasDecisions && auth()->user()?->hasPermission('decision.view'))
-            <a href="{{ route('decisions.index') }}"
-                class="sidebar-menu-item focus-ring
-                {{ request()->routeIs('decisions.*') ? 'sidebar-menu-item-active' : 'sidebar-menu-item-inactive' }}">
-                <div class="grid place-items-center w-6" aria-hidden="true">
-                    <x-heroicon-o-document-text class="sidebar-icon h-4 w-4" aria-hidden="true" />
-                </div>
-                <span class="sidebar-menu-label truncate origin-left"
-                    x-show="!compact"
-                    x-transition:enter="motion-enter"
-                    x-transition:enter-start="motion-slide-inline-start"
-                    x-transition:enter-end="motion-slide-inline-end"
-                    x-transition:leave="motion-leave"
-                    x-transition:leave-start="motion-slide-inline-end"
-                    x-transition:leave-end="motion-slide-inline-start">
-                    {{ __('app.Decisions') }}
-                </span>
-            </a>
+                <template x-if="loaded">
+                    <div x-show="open && !compact"
+                        x-transition:enter="motion-enter-fast"
+                        x-transition:enter-start="motion-slide-up-start"
+                        x-transition:enter-end="motion-slide-up-end"
+                        x-transition:leave="motion-leave"
+                        x-transition:leave-start="motion-slide-up-end"
+                        x-transition:leave-end="motion-slide-up-start"
+                        class="pl-11 space-y-1">
+                        @if($canViewDecisions)
+                        <a href="{{ route('decisions.index') }}"
+                            class="sidebar-submenu-item focus-ring
+                            {{ $decisionsListActive ? 'sidebar-submenu-item-active' : 'sidebar-submenu-item-inactive' }}">
+                            <x-heroicon-o-document-text class="sidebar-icon h-4 w-4" aria-hidden="true" />
+                            <span>{{ __('app.Decisions') }}</span>
+                        </a>
+                        @endif
+                        @if($canViewDecisionTemplates)
+                        <a href="{{ route('decision-templates.index') }}"
+                            class="sidebar-submenu-item focus-ring
+                            {{ $decisionTemplatesActive ? 'sidebar-submenu-item-active' : 'sidebar-submenu-item-inactive' }}">
+                            <x-heroicon-o-document-duplicate class="sidebar-icon h-4 w-4" aria-hidden="true" />
+                            <span>{{ __('decision_templates.title') }}</span>
+                        </a>
+                        @endif
+                    </div>
+                </template>
+            </div>
             @endif
 
             {{-- Cases --}}

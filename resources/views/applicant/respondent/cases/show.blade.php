@@ -1,4 +1,4 @@
-@props(['case','timeline','letters','files','msgs','hearings','docs','witnesses','audits'])
+@props(['case','timeline','letters','files','msgs','hearings','docs','witnesses','audits','decisions' => null])
 
 @php
 $status = $case->status ?? 'pending';
@@ -402,6 +402,39 @@ default => __('cases.review_status.accepted'),
                                 {{ __('cases.view') }}
                             </a>
                         </div>
+                    </div>
+                    @endforeach
+                </div>
+                @endif
+            </aside>
+
+            {{-- Decisions (downloadable: approved + published) --}}
+            <aside class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-semibold text-slate-800">{{ __('dashboard.decisions') }}</h3>
+                    <span class="text-[11px] text-slate-500">{{ ($decisions ?? collect())->count() }}</span>
+                </div>
+                @if(($decisions ?? collect())->isEmpty())
+                <div class="text-slate-500 text-sm border border-dashed border-slate-300 rounded-lg p-4 text-center bg-slate-50">
+                    {{ __('dashboard.no_decisions') }}
+                </div>
+                @else
+                <div class="space-y-3 text-sm">
+                    @foreach($decisions as $decision)
+                    <div class="p-3 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="font-semibold text-slate-800 truncate">{{ $decision->name ?? __('dashboard.decisions') }}</div>
+                            <div class="text-xs text-slate-500">
+                                {{ \App\Support\EthiopianDate::format($decision->decision_date ?: $decision->created_at) }}
+                            </div>
+                        </div>
+                        <a href="{{ route('respondent.decisions.download', $decision->id) }}"
+                            class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 whitespace-nowrap">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
+                            </svg>
+                            {{ __('decisions.download') }}
+                        </a>
                     </div>
                     @endforeach
                 </div>

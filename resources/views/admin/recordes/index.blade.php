@@ -155,6 +155,11 @@
                                         <a href="{{ route('recordes.pdf', ['case' => $case->id]) }}" target="_blank" rel="noopener" class="btn btn-outline !px-3 !py-1.5 !text-xs">
                                             {{ __('recordes.buttons.pdf') }}
                                         </a>
+                                        @if(($case->decisions_count ?? 0) > 0 || in_array($case->status ?? '', ['closed', 'dismissed'], true))
+                                        <a href="{{ route('recordes.appeal-pdf', ['case' => $case->id]) }}" class="btn btn-primary !px-3 !py-1.5 !text-xs">
+                                            {{ __('recordes.buttons.appeal_pdf') }}
+                                        </a>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>

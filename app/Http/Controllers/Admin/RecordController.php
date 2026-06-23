@@ -47,7 +47,8 @@ class RecordController extends Controller
                 'ct.name as case_type',
                 DB::raw("TRIM(CONCAT(COALESCE(ap.first_name,''),' ',COALESCE(ap.middle_name,''),' ',COALESCE(ap.last_name,''))) as applicant_name"),
                 'ass.name as assignee_name',
-                'reviewer.name as reviewer_name'
+                'reviewer.name as reviewer_name',
+                DB::raw('(SELECT COUNT(*) FROM decisions d WHERE d.court_case_id = c.id) as decisions_count')
             )
             ->selectSub($teamNameSubquery, 'team_name');
 
@@ -138,6 +139,25 @@ class RecordController extends Controller
         $data['pdfFilename'] = 'case-record-' . ($safeCase ?: $case->id) . '.pdf';
 
         return view('admin.recordes.record-pdf', $data);
+    }
+
+    /**
+     * Server-side, consolidated "appeal record" PDF — the entire court process
+     * from start to finish, for a party appealing to a higher court.
+     */
+    public function appealPdf(CourtCase $case)
+    {
+        $data = $this->recordData($case);
+        $data['generatedAt'] = now();
+
+        $safeCase = Str::of($case->case_number ?? $case->id)->replace(['/', '\\'], '-')->slug('-');
+        $filename = 'appeal-record-' . ($safeCase ?: $case->id) . '.pdf';
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.appeal-record', $data)
+            ->setPaper('a4')
+            ->setOption('isRemoteEnabled', true);
+
+        return $pdf->download($filename);
     }
 
     private function recordData(CourtCase $case): array
