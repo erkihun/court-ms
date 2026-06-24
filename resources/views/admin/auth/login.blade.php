@@ -193,6 +193,20 @@ $bannerPath = $settings?->banner_path ?? null;
                 transform: translateY(-3px);
             }
 
+            /* Glass inputs: semi-transparent over the frosted card. */
+            .admin-login-form-card .admin-login-input {
+                background-color: rgb(255 255 255 / 0.08) !important;
+                border-color: rgb(255 255 255 / 0.22) !important;
+                color: #f8fafc !important;
+            }
+            .admin-login-form-card .admin-login-input::placeholder {
+                color: rgb(226 232 240 / 0.6) !important;
+            }
+            .admin-login-form-card .admin-login-input:focus {
+                background-color: rgb(255 255 255 / 0.12) !important;
+                border-color: rgb(147 197 253 / 0.7) !important;
+            }
+
             .admin-login-input:focus {
                 transform: translateY(-1px);
             }
@@ -220,6 +234,10 @@ $bannerPath = $settings?->banner_path ?? null;
 
             /* ── Login card hover animation ──────────────────────────── */
             .admin-login-form-card {
+                /* Transparent frosted-glass surface */
+                background-color: rgb(255 255 255 / 0.06) !important;
+                -webkit-backdrop-filter: blur(28px) saturate(150%);
+                backdrop-filter: blur(28px) saturate(150%);
                 transition:
                     transform 420ms cubic-bezier(0.16, 1, 0.3, 1),
                     box-shadow 420ms ease,
@@ -426,7 +444,7 @@ $bannerPath = $settings?->banner_path ?? null;
                         x-transition:enter="transition ease-out duration-500"
                         x-transition:enter-start="opacity-0 translate-y-4"
                         x-transition:enter-end="opacity-100 translate-y-0"
-                        class="admin-login-form-card relative overflow-hidden rounded-2xl border border-white/20 bg-white/10 shadow-2xl shadow-black/40 ring-1 ring-white/15 backdrop-blur-2xl backdrop-saturate-150">
+                        class="admin-login-form-card relative overflow-hidden rounded-2xl border border-white/25 bg-white/[0.06] shadow-2xl shadow-black/40 ring-1 ring-white/10 backdrop-blur-3xl backdrop-saturate-150">
                         <div class="h-1.5 bg-[linear-gradient(90deg,#2563eb_0%,#0f766e_48%,#f97316_100%)]"></div>
                         <div class="dark p-6 sm:p-8 text-slate-100">
                             <div class="space-y-2">
