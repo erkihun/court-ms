@@ -417,16 +417,22 @@ $noText             = __('auth.no');
         flex: 1;
         display: flex;
         justify-content: center;
-        padding: 2rem 1.25rem 1rem;
+        padding: 2rem 2rem 1rem;
+    }
+    @media (min-width: 768px) {
+        .ar-body { padding: 2.5rem 3rem 1.5rem; }
     }
     .ar-card {
         width: 100%;
-        max-width: 720px;
+        max-width: 1100px;
         background: #fff;
         border: 1.5px solid #f1f5f9;
         border-radius: 1.25rem;
         padding: 2rem 2rem 1.5rem;
         box-shadow: 0 4px 24px rgb(15 23 42 / 0.05);
+    }
+    @media (min-width: 768px) {
+        .ar-card { padding: 2.5rem 3rem 2rem; }
     }
     @media (max-width: 540px) {
         .ar-card { padding: 1.25rem 1rem 1rem; border: none; box-shadow: none; }

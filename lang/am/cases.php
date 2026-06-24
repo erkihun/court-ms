@@ -343,7 +343,7 @@ return array (
     'no_letters_logged' => 'እስካሁን ምንም ደብዳቤ አልተመዘገበም።',
     'back_to_list' => 'ወደ ዝርዝር ተመለስ',
     'view_lawyer_document' => 'የጥብቅና ማረጋገጫ ተመልከት',
-    'lawyer_document' => 'የጠበቃ ሰነድ',
+    'lawyer_document' => 'የጠበቃ/አቃቢ ህግ ሰነድ',
     'open_new_tab' => 'በአዲስ ትር ክፈት',
     'letters_table' => array (
       'reference' => 'ማመሳከሪያ',
