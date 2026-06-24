@@ -206,6 +206,14 @@ $bannerPath = $settings?->banner_path ?? null;
                 background-color: rgb(255 255 255 / 0.12) !important;
                 border-color: rgb(147 197 253 / 0.7) !important;
             }
+            /* Keep browser autofill from forcing an opaque background. */
+            .admin-login-form-card .admin-login-input:-webkit-autofill,
+            .admin-login-form-card .admin-login-input:-webkit-autofill:hover,
+            .admin-login-form-card .admin-login-input:-webkit-autofill:focus {
+                -webkit-text-fill-color: #f8fafc !important;
+                caret-color: #f8fafc !important;
+                transition: background-color 9999s ease-in-out 0s;
+            }
 
             .admin-login-input:focus {
                 transform: translateY(-1px);
@@ -234,10 +242,10 @@ $bannerPath = $settings?->banner_path ?? null;
 
             /* ── Login card hover animation ──────────────────────────── */
             .admin-login-form-card {
-                /* Transparent frosted-glass surface */
-                background-color: rgb(255 255 255 / 0.06) !important;
-                -webkit-backdrop-filter: blur(28px) saturate(150%);
-                backdrop-filter: blur(28px) saturate(150%);
+                /* Fully transparent surface — the background shows through. */
+                background-color: transparent !important;
+                -webkit-backdrop-filter: none;
+                backdrop-filter: none;
                 transition:
                     transform 420ms cubic-bezier(0.16, 1, 0.3, 1),
                     box-shadow 420ms ease,
@@ -444,7 +452,7 @@ $bannerPath = $settings?->banner_path ?? null;
                         x-transition:enter="transition ease-out duration-500"
                         x-transition:enter-start="opacity-0 translate-y-4"
                         x-transition:enter-end="opacity-100 translate-y-0"
-                        class="admin-login-form-card relative overflow-hidden rounded-2xl border border-white/25 bg-white/[0.06] shadow-2xl shadow-black/40 ring-1 ring-white/10 backdrop-blur-3xl backdrop-saturate-150">
+                        class="admin-login-form-card relative overflow-hidden rounded-2xl border border-white/25 shadow-2xl shadow-black/40 ring-1 ring-white/10">
                         <div class="h-1.5 bg-[linear-gradient(90deg,#2563eb_0%,#0f766e_48%,#f97316_100%)]"></div>
                         <div class="dark p-6 sm:p-8 text-slate-100">
                             <div class="space-y-2">
@@ -492,6 +500,7 @@ $bannerPath = $settings?->banner_path ?? null;
                                         required
                                         @empty(old('email')) autofocus @endempty
                                         autocomplete="username"
+                                        style="background-color: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.22); color: #f8fafc;"
                                         class="admin-login-input w-full rounded-xl border px-3.5 py-3 text-sm shadow-sm transition-base focus:outline-none focus:ring-4 focus:ring-blue-500/20"
                                     >
                                 </div>
@@ -514,6 +523,7 @@ $bannerPath = $settings?->banner_path ?? null;
                                             required
                                             @if(old('email')) autofocus @endif
                                             autocomplete="current-password"
+                                            style="background-color: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.22); color: #f8fafc;"
                                             class="admin-login-input w-full rounded-xl border px-3.5 py-3 pr-11 text-sm shadow-sm transition-base focus:outline-none focus:ring-4 focus:ring-blue-500/20"
                                         >
                                         <button
