@@ -1368,6 +1368,33 @@
                 } elseif (!empty($case->relief_requested)) {
                 $reliefHtmlOut = clean($case->relief_requested, 'cases');
                 }
+
+                // Active Terms & Conditions, printed as a list under the respondent section.
+                $printTerms = \App\Models\TermsAndCondition::published()
+                    ->orderByDesc('published_at')
+                    ->first();
+
+                $termsItems = [];
+                if ($printTerms && !empty($printTerms->body)) {
+                    $termsHtml = clean($printTerms->body, 'cases');
+
+                    // Prefer existing list items / paragraphs as the natural list rows.
+                    if (preg_match_all('/<li\b[^>]*>(.*?)<\/li>/is', $termsHtml, $m) && !empty($m[1])) {
+                        $rows = $m[1];
+                    } elseif (preg_match_all('/<p\b[^>]*>(.*?)<\/p>/is', $termsHtml, $m) && !empty($m[1])) {
+                        $rows = $m[1];
+                    } else {
+                        // Fall back to splitting on line breaks.
+                        $rows = preg_split('/<br\s*\/?>|\r\n|\n/i', $termsHtml);
+                    }
+
+                    foreach ($rows as $row) {
+                        $row = trim(preg_replace('/\s+/', ' ', strip_tags($row, '<strong><b><em><i><u><a>')));
+                        if ($row !== '') {
+                            $termsItems[] = $row;
+                        }
+                    }
+                }
                 @endphp
                 <section id="case-details" x-show="activeSection === 'case-details'"
                     x-transition:enter="transition ease-out duration-300"
@@ -1406,6 +1433,14 @@
                             <tr><td>{{ __('cases.name') }}</td><td>{{ $case->respondent_name ?? '—' }}</td></tr>
                             <tr><td>{{ __('cases.address') }}</td><td>{{ $case->respondent_address ?? '—' }}</td></tr>
                         </table>
+
+                        @if(!empty($termsItems))
+                        <ol class="doc-terms-list">
+                            @foreach($termsItems as $item)
+                            <li>{!! $item !!}</li>
+                            @endforeach
+                        </ol>
+                        @endif
 
                         <h2>{{ __('cases.details.case_details') }}</h2>
                         <div class="doc-body">
@@ -1481,6 +1516,8 @@
     .doc-fields { border-collapse: collapse; width: 100%; }
     .doc-fields td { padding: 2pt 6pt 2pt 0; vertical-align: top; }
     .doc-fields td:first-child { width: 30%; font-weight: bold; }
+    .doc-terms-list { margin: 6pt 0 12pt; padding-left: 22pt; text-align: justify; }
+    .doc-terms-list li { margin: 0 0 5pt; }
     .doc-body { text-align: justify; }
     .doc-body p { margin: 0 0 8pt; }
     .doc-body table { border-collapse: collapse; width: 100%; }
