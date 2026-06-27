@@ -8,6 +8,7 @@ $approvedCount = (int) ($stats['approved'] ?? 0);
 $rejectedCount = (int) ($stats['rejected'] ?? 0);
 $categoryCounts = collect($stats['category_counts'] ?? [])->sortDesc();
 $topCategory = $categoryCounts->keys()->first();
+$maxCategoryCount = (int) ($categoryCounts->first() ?? 0);
 $canCreateLetter = function_exists('userHasPermission') ? userHasPermission('letters.create') : (auth()->user()?->hasPermission('letters.create') ?? false);
 $canUpdateLetter = function_exists('userHasPermission') ? userHasPermission('letters.update') : (auth()->user()?->hasPermission('letters.update') ?? false);
 $canDeleteLetter = function_exists('userHasPermission') ? userHasPermission('letters.delete') : (auth()->user()?->hasPermission('letters.delete') ?? false);
@@ -39,7 +40,7 @@ $statusFilter = $statusFilter ?? '';
         </div>
 
         <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
             <div class="group relative bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 p-6 overflow-hidden">
                 <div class="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-full -translate-y-8 translate-x-8 group-hover:scale-110 transition-transform duration-300"></div>
                 <div class="relative flex items-center gap-4 mb-4">
@@ -112,6 +113,27 @@ $statusFilter = $statusFilter ?? '';
                         </p>
                         <p class="text-xs text-gray-500 mt-2">
                             {{ $categoryCounts->sum() }} {{ __('letters.cards.letters_count_suffix') }}@if($topCategory) | {{ __('letters.cards.top_category', ['category' => $topCategory]) }} @endif
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="group relative bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 p-6 overflow-hidden">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-full -translate-y-8 translate-x-8 group-hover:scale-110 transition-transform duration-300"></div>
+                <div class="relative flex items-center gap-4 mb-4">
+                    <div class="p-3 rounded-xl bg-emerald-100">
+                        <svg class="w-6 h-6 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v12m-4-4l4 4 4-4" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 4h14a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V5a1 1 0 011-1z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">{{ __('letters.cards.max_letter_type_count') }}</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-1">
+                            {{ $maxCategoryCount }}
+                        </p>
+                        <p class="text-xs text-gray-500 mt-2">
+                            {{ $topCategory ? __('letters.cards.top_category', ['category' => $topCategory]) : __('letters.cards.empty_top_category') }}
                         </p>
                     </div>
                 </div>

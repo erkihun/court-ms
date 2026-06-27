@@ -55,7 +55,7 @@ class LetterController extends Controller
             }))
             ->with(['template', 'author'])
             ->latest()
-            ->paginate(5)
+            ->paginate(10)
             ->withQueryString();
 
         return view('admin.letters.index', compact('letters', 'stats', 'statusFilter'));
