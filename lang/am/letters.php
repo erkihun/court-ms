@@ -94,6 +94,7 @@ return [
         'recipient' => 'ተቀባይ',
         'applicant' => 'አመልካች',
         'respondent' => 'ተጠሪ',
+        'author' => 'ደራሲ',
         'template' => 'ቴምፕሌት',
         'cc' => 'ግልባጭ',
         'created' => 'ሁኔታ',

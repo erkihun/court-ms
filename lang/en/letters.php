@@ -94,6 +94,7 @@ return [
         'recipient' => 'Recipient',
         'applicant' => 'Applicant',
         'respondent' => 'Respondent',
+        'author' => 'Author',
         'template' => 'Template',
         'cc' => 'CC',
         'created' => 'Status',

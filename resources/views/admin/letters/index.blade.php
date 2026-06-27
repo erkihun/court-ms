@@ -217,6 +217,9 @@ $statusFilter = $statusFilter ?? '';
                                 {{ __('letters.table.respondent') }}
                             </th>
                             <th scope="col" class="px-5 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                {{ __('letters.table.author') }}
+                            </th>
+                            <th scope="col" class="px-5 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                                 {{ __('letters.table.created') }}
                             </th>
                             <th scope="col" class="px-5 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
@@ -322,6 +325,22 @@ $statusFilter = $statusFilter ?? '';
                                     <div>
                                         <p class="text-sm font-semibold text-gray-900">{{ $letter->send_to_respondent ? ($letter->respondent_name ?? __('letters.cards.missing')) : __('letters.cards.missing') }}</p>
                                         <p class="text-xs text-gray-500 mt-0.5">{{ __('letters.form.deliver_respondent') }}</p>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Author Column -->
+                            <td class="px-5 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="flex h-10 w-10 items-center justify-center rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-violet-100">
+                                        <svg class="h-5 w-5 text-violet-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 7.5a3 3 0 116 0 3 3 0 01-6 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 19a7 7 0 0114 0" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-semibold text-gray-900">{{ $letter->author?->name ?? __('letters.cards.missing') }}</p>
+                                        <p class="text-xs text-gray-500 mt-0.5">{{ $letter->author?->position ?? __('letters.table.author') }}</p>
                                     </div>
                                 </div>
                             </td>
