@@ -17,8 +17,13 @@ use Mews\Purifier\Facades\Purifier;
 
 class LetterController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $statusFilter = (string) $request->query('status', '');
+        if (!in_array($statusFilter, ['', 'pending', 'approved', 'rejected'], true)) {
+            $statusFilter = '';
+        }
+
         $baseQuery = Letter::query();
 
         $stats = [
@@ -32,12 +37,28 @@ class LetterController extends Controller
                 ->pluck('aggregate_count', 'category_label'),
         ];
 
-        $letters = $baseQuery->with(['template', 'author'])
+        $letters = $baseQuery
+            ->leftJoin('court_cases as c', 'c.case_number', '=', 'letters.case_number')
+            ->leftJoin('applicants as a', 'a.id', '=', 'c.applicant_id')
+            ->select('letters.*')
+            ->selectRaw("NULLIF(TRIM(c.title), '') as applicant_name")
+            ->selectRaw("NULLIF(TRIM(CONCAT_WS(' ', NULLIF(a.first_name, ''), NULLIF(a.middle_name, ''), NULLIF(a.last_name, ''))), '') as applicant_lawyer_name")
+            ->selectRaw('COALESCE(a.is_lawyer, 0) as applicant_is_lawyer')
+            ->selectRaw("NULLIF(TRIM(c.respondent_name), '') as respondent_name")
+            ->when($statusFilter === 'approved', fn($query) => $query->where('letters.approval_status', 'approved'))
+            ->when($statusFilter === 'rejected', fn($query) => $query->where('letters.approval_status', 'rejected'))
+            ->when($statusFilter === 'pending', fn($query) => $query->where(function ($pendingQuery) {
+                $pendingQuery
+                    ->whereNull('letters.approval_status')
+                    ->orWhere('letters.approval_status', '')
+                    ->orWhere('letters.approval_status', 'pending');
+            }))
+            ->with(['template', 'author'])
             ->latest()
             ->paginate(5)
             ->withQueryString();
 
-        return view('admin.letters.index', compact('letters', 'stats'));
+        return view('admin.letters.index', compact('letters', 'stats', 'statusFilter'));
     }
 
     public function store(Request $request)

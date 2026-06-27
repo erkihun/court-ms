@@ -12,6 +12,7 @@ $canCreateLetter = function_exists('userHasPermission') ? userHasPermission('let
 $canUpdateLetter = function_exists('userHasPermission') ? userHasPermission('letters.update') : (auth()->user()?->hasPermission('letters.update') ?? false);
 $canDeleteLetter = function_exists('userHasPermission') ? userHasPermission('letters.delete') : (auth()->user()?->hasPermission('letters.delete') ?? false);
 $canApproveLetter = function_exists('userHasPermission') ? userHasPermission('letters.approve') : (auth()->user()?->hasPermission('letters.approve') ?? false);
+$statusFilter = $statusFilter ?? '';
 @endphp
 
 <x-admin-layout title="{{ __('letters.titles.index') }}">
@@ -26,7 +27,7 @@ $canApproveLetter = function_exists('userHasPermission') ? userHasPermission('le
                     <div class="p-3 rounded-2xl bg-gradient-to-br from-blue-50 to-orange-50">
                         <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                d="M7 8h10M7 12h10m-6 4h6M8 4h5.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V20a1 1 0 01-1 1H8a2 2 0 01-2-2V6a2 2 0 012-2z" />
                         </svg>
                     </div>
                     <div>
@@ -35,15 +36,6 @@ $canApproveLetter = function_exists('userHasPermission') ? userHasPermission('le
                     </div>
                 </div>
             </div>
-            @if($canCreateLetter)
-            <a href="{{ route('letters.compose') }}"
-                class="group inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-orange-500 text-white font-semibold shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-orange-600 transition-all duration-300 transform hover:-translate-y-0.5 focus:outline-none focus:ring-3 focus:ring-blue-500/30 focus:ring-offset-2">
-                <svg class="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-                {{ __('letters.actions.new_letter') }}
-            </a>
-            @endif
         </div>
 
         <!-- Stats Cards -->
@@ -53,7 +45,7 @@ $canApproveLetter = function_exists('userHasPermission') ? userHasPermission('le
                 <div class="relative flex items-center gap-4 mb-4">
                     <div class="p-3 rounded-xl bg-blue-100">
                         <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7h8M8 11h8M8 15h5m-5 5h8a2 2 0 002-2V8.414a1 1 0 00-.293-.707l-2.414-2.414A1 1 0 0014.586 5H8a2 2 0 00-2 2v11a2 2 0 002 2z" />
                         </svg>
                     </div>
                     <div>
@@ -70,7 +62,8 @@ $canApproveLetter = function_exists('userHasPermission') ? userHasPermission('le
                 <div class="relative flex items-center gap-4 mb-4">
                     <div class="p-3 rounded-xl bg-orange-100">
                         <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z" />
                         </svg>
                     </div>
                     <div>
@@ -88,7 +81,8 @@ $canApproveLetter = function_exists('userHasPermission') ? userHasPermission('le
                 <div class="relative flex items-center gap-4 mb-4">
                     <div class="p-3 rounded-xl bg-blue-100">
                         <svg class="w-6 h-6 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 9l-6 6m0-6l6 6" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z" />
                         </svg>
                     </div>
                     <div>
@@ -106,7 +100,9 @@ $canApproveLetter = function_exists('userHasPermission') ? userHasPermission('le
                 <div class="relative flex items-center gap-4 mb-4">
                     <div class="p-3 rounded-xl bg-orange-100">
                         <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 10h16M4 14h10m-10 4h6" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7h8M8 12h8M8 17h5" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 5h14a1 1 0 011 1v12a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 9l4-3m12 3l-4-3" />
                         </svg>
                     </div>
                     <div>
@@ -124,6 +120,26 @@ $canApproveLetter = function_exists('userHasPermission') ? userHasPermission('le
 
         <!-- Letters Table -->
         <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+            <div class="px-6 pt-5">
+                <div class="flex flex-wrap items-center gap-3">
+                    <a href="{{ route('letters.index', ['status' => 'pending']) }}"
+                        class="inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition-colors {{ $statusFilter === 'pending' ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50' }}">
+                        <span class="h-2.5 w-2.5 rounded-full {{ $statusFilter === 'pending' ? 'bg-amber-500' : 'bg-amber-400' }}"></span>
+                        {{ __('letters.table.status_pending') }}
+                    </a>
+                    <a href="{{ route('letters.index', ['status' => 'approved']) }}"
+                        class="inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition-colors {{ $statusFilter === 'approved' ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50' }}">
+                        <span class="h-2.5 w-2.5 rounded-full {{ $statusFilter === 'approved' ? 'bg-emerald-500' : 'bg-emerald-400' }}"></span>
+                        {{ __('letters.table.status_approved') }}
+                    </a>
+                    <a href="{{ route('letters.index', ['status' => 'rejected']) }}"
+                        class="inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition-colors {{ $statusFilter === 'rejected' ? 'border-red-300 bg-red-50 text-red-800' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50' }}">
+                        <span class="h-2.5 w-2.5 rounded-full {{ $statusFilter === 'rejected' ? 'bg-red-500' : 'bg-red-400' }}"></span>
+                        {{ __('letters.table.status_rejected') }}
+                    </a>
+                </div>
+            </div>
+
             <!-- Table Header -->
             <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -153,18 +169,11 @@ $canApproveLetter = function_exists('userHasPermission') ? userHasPermission('le
             <div class="p-16 text-center">
                 <div class="mx-auto w-20 h-20 bg-gradient-to-br from-emerald-50 to-blue-50 rounded-2xl flex items-center justify-center mb-6">
                     <svg class="w-10 h-10 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 8h10M7 12h10m-6 4h6M8 4h5.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V20a1 1 0 01-1 1H8a2 2 0 01-2-2V6a2 2 0 012-2z" />
                     </svg>
                 </div>
                 <h3 class="text-xl font-semibold text-gray-900 mb-3">{{ __('letters.cards.no_letters_yet') }}</h3>
                 <p class="text-gray-600 mb-8 max-w-md mx-auto">{{ __('letters.cards.empty_description') }}</p>
-                <a href="{{ route('letters.compose') }}"
-                    class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-semibold rounded-xl hover:from-emerald-700 hover:to-emerald-600 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    {{ __('letters.actions.new_letter') }}
-                </a>
             </div>
             @else
             <div class="overflow-x-auto relative">
@@ -180,7 +189,10 @@ $canApproveLetter = function_exists('userHasPermission') ? userHasPermission('le
                                 </div>
                             </th>
                             <th scope="col" class="px-5 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                                {{ __('letters.table.recipient') }}
+                                {{ __('letters.table.applicant') }}
+                            </th>
+                            <th scope="col" class="px-5 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                {{ __('letters.table.respondent') }}
                             </th>
                             <th scope="col" class="px-5 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                                 {{ __('letters.table.created') }}
@@ -215,7 +227,8 @@ $canApproveLetter = function_exists('userHasPermission') ? userHasPermission('le
                                         <div class="flex-shrink-0">
                                             <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 flex items-center justify-center">
                                                 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7h8M8 11h8M8 15h4" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 4h5.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V20a1 1 0 01-1 1H8a2 2 0 01-2-2V6a2 2 0 012-2z" />
                                                 </svg>
                                             </div>
                                         </div>
@@ -231,27 +244,62 @@ $canApproveLetter = function_exists('userHasPermission') ? userHasPermission('le
                                 </div>
                             </td>
 
-                            <!-- Recipient Column -->
+                            <!-- Applicant Column -->
                             <td class="px-5 py-4">
                                 <div class="flex items-center gap-3">
                                     <div class="relative">
                                         <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200 flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
                                             <svg class="w-6 h-6 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.121 17.804A9 9 0 0112 15c2.174 0 4.164.774 5.879 2.06M15 11a3 3 0 10-6 0 3 3 0 006 0z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.739 14.74A7 7 0 0012 11m0 0a7 7 0 00-7.74 3.74" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 9.5a3 3 0 116 0 3 3 0 01-6 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.5 18a5.5 5.5 0 0111 0" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 8h5m-2.5-2.5V10.5" />
                                             </svg>
                                         </div>
-                                        @if($status)
-                                        <div class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white {{ $statusClasses[$status] }} flex items-center justify-center">
+                                        @if($letter->send_to_applicant)
+                                        <div class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white bg-emerald-50 text-emerald-700 border-emerald-200 flex items-center justify-center">
                                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $statusIcons[$status] }}" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                             </svg>
                                         </div>
                                         @endif
                                     </div>
                                     <div>
-                                        <p class="text-sm font-semibold text-gray-900">{{ $letter->recipient_name ?? __('letters.cards.missing') }}</p>
-                                        <p class="text-xs text-gray-500 mt-0.5">{{ $letter->recipient_title ?? __('letters.cards.recipient_fallback') }}</p>
+                                        @if($letter->send_to_applicant)
+                                        <p class="text-sm font-semibold text-gray-900">{{ $letter->applicant_name ?? __('letters.cards.missing') }}</p>
+                                        @if(!empty($letter->applicant_is_lawyer) && !empty($letter->applicant_lawyer_name))
+                                        <p class="text-xs text-indigo-700 mt-0.5">{{ __('dashboard.submitted_by_lawyer', ['name' => $letter->applicant_lawyer_name]) }}</p>
+                                        @else
+                                        <p class="text-xs text-gray-500 mt-0.5">{{ __('letters.form.deliver_applicant') }}</p>
+                                        @endif
+                                        @else
+                                        <p class="text-sm font-semibold text-gray-900">{{ __('letters.cards.missing') }}</p>
+                                        <p class="text-xs text-gray-500 mt-0.5">{{ __('letters.form.deliver_applicant') }}</p>
+                                        @endif
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Respondent Column -->
+                            <td class="px-5 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="relative">
+                                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
+                                            <svg class="w-6 h-6 text-orange-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 9.5a3 3 0 116 0 3 3 0 01-6 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.5 18a6.5 6.5 0 0113 0" />
+                                            </svg>
+                                        </div>
+                                        @if($letter->send_to_respondent)
+                                        <div class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white bg-emerald-50 text-emerald-700 border-emerald-200 flex items-center justify-center">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </div>
+                                        @endif
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-semibold text-gray-900">{{ $letter->send_to_respondent ? ($letter->respondent_name ?? __('letters.cards.missing')) : __('letters.cards.missing') }}</p>
+                                        <p class="text-xs text-gray-500 mt-0.5">{{ __('letters.form.deliver_respondent') }}</p>
                                     </div>
                                 </div>
                             </td>
@@ -305,22 +353,20 @@ $canApproveLetter = function_exists('userHasPermission') ? userHasPermission('le
                                         </div>
                                     </button>
 
+                                    @if(!$isApproved)
                                     <!-- Edit Button -->
                                     <button type="button"
                                         onclick="window.location='{{ route('letters.edit', $letter) }}'"
-                                        class="p-2.5 rounded-xl border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 group/tooltip relative"
-                                        title="{{ $isApproved ? __('letters.messages.approved_edit_locked') : __('letters.actions.edit') }}"
-                                        {{ $isApproved ? 'disabled' : '' }}>
+                                        class="p-2.5 rounded-xl border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 hover:scale-105 transition-all duration-200 group/tooltip relative"
+                                        title="{{ __('letters.actions.edit') }}">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                         </svg>
                                         <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-gray-900 rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 whitespace-nowrap">
                                             {{ __('letters.actions.edit') }}
-                                        </div>
-                                    </button>
+                                            </div>
+                                        </button>
 
-                                    <!-- Approval Dropdown -->
-                                    @if(!$isApproved && $canApproveLetter)
                                     @if($canApproveLetter)
                                     <div x-data="{ open: false }" class="relative">
                                         <button type="button"
@@ -370,7 +416,6 @@ $canApproveLetter = function_exists('userHasPermission') ? userHasPermission('le
                                         </div>
                                     </div>
                                     @endif
-                                    @endif
 
                                     <!-- Delete Button -->
                                     @if($canDeleteLetter)
@@ -379,9 +424,8 @@ $canApproveLetter = function_exists('userHasPermission') ? userHasPermission('le
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit"
-                                            class="p-2.5 rounded-xl border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 hover:border-red-300 hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 group/tooltip relative"
-                                            title="{{ $isApproved ? __('letters.messages.approved_delete_locked') : __('letters.actions.delete') }}"
-                                            {{ $isApproved ? 'disabled' : '' }}>
+                                            class="p-2.5 rounded-xl border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 hover:border-red-300 hover:scale-105 transition-all duration-200 group/tooltip relative"
+                                            title="{{ __('letters.actions.delete') }}">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                             </svg>
@@ -390,6 +434,7 @@ $canApproveLetter = function_exists('userHasPermission') ? userHasPermission('le
                                             </div>
                                         </button>
                                     </form>
+                                    @endif
                                     @endif
                                 </div>
                             </td>
