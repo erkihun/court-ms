@@ -19,8 +19,8 @@
                 @endphp
                 <p class="text-xs text-gray-500">
                     {{ __('letters.table.reference') }}: {{ $letter->reference_number ?? __('letters.cards.missing') }}<br>
-                    {{ __('letters.form.subject') }} prefix: {{ $letter->template->subject_prefix ?? __('letters.cards.missing') }}<br>
-                    {{ __('letters.table.reference') }} (next): {{ $nextReference }}
+                    {{ __('letters.form.subject_prefix_label') }}: {{ $letter->template->subject_prefix ?? __('letters.cards.missing') }}<br>
+                    {{ __('letters.table.reference_next') }}: {{ $nextReference }}
                 </p>
             </div>
 

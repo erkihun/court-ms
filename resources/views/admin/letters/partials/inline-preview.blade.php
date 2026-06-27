@@ -249,7 +249,7 @@
             <div class="a4-sheet">
                 <div class="letter-header">
                     @if($headerImage)
-                        <img src="{{ $headerImage }}" crossorigin="anonymous" alt="Header">
+                        <img src="{{ $headerImage }}" crossorigin="anonymous" alt="{{ __('letters.preview.header_image_alt') }}">
                     @else
                         <div style="height: 20mm;"></div>
                     @endif
@@ -261,13 +261,13 @@
 
                 @if($displaySeal)
                     <div class="page-seal-bottom">
-                        <img src="{{ $sealPath }}" crossorigin="anonymous" alt="Official Seal">
+                        <img src="{{ $sealPath }}" crossorigin="anonymous" alt="{{ __('letters.preview.official_seal_alt') }}">
                     </div>
                 @endif
 
                 <div class="letter-footer">
                     @if($footerImage)
-                        <img src="{{ $footerImage }}" crossorigin="anonymous" alt="Footer">
+                        <img src="{{ $footerImage }}" crossorigin="anonymous" alt="{{ __('letters.preview.footer_image_alt') }}">
                     @endif
                     @if($qrSvg)
                         <div class="qr-block">{!! $qrSvg !!}</div>
@@ -277,3 +277,4 @@
         </template>
   
 </div>
+

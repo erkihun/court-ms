@@ -417,14 +417,14 @@
     @endphp
 
     <div class="preview-toolbar">
-        <div id="page-counter" class="text-sm font-semibold text-gray-600">Loading Preview...</div>
+        <div id="page-counter" class="text-sm font-semibold text-gray-600">{{ __('letters.preview.loading') }}</div>
         <div class="toolbar-actions">
-            <a href="{{ route('letters.index') }}" class="btn">Back to Letters</a>
+            <a href="{{ route('letters.index') }}" class="btn">{{ __('letters.preview.back_to_letters') }}</a>
             <button type="button" class="btn" onclick="printLetter()">
-                Print / Save Native PDF
+                {{ __('letters.preview.print_native_pdf') }}
             </button>
             <button type="button" id="download-pdf" class="btn btn-primary" onclick="downloadDirectPdf()">
-                Download PDF
+                {{ __('letters.preview.download_pdf') }}
             </button>
         </div>
     </div>
@@ -515,7 +515,7 @@
         <div class="a4-sheet">
             <div class="letter-header">
                 @if($template->header_image_path)
-                <img src="{{ asset('storage/' . $template->header_image_path) }}" crossorigin="anonymous" alt="Header">
+                <img src="{{ asset('storage/' . $template->header_image_path) }}" crossorigin="anonymous" alt="{{ __('letters.preview.header_image_alt') }}">
                 @else
                 <div style="height: 20mm;"></div> @endif
             </div>
@@ -527,12 +527,12 @@
             @if($isApproved && optional($systemSettings)->seal_path)
             <div class="page-seal-bottom">
                 <img src="{{ asset('storage/'.$systemSettings->seal_path) }}" crossorigin="anonymous"
-                    alt="Official Seal">
+                    alt="{{ __('letters.preview.official_seal_alt') }}">
             </div>
             @endif
             <div class="letter-footer">
                 @if($template->footer_image_path)
-                <img src="{{ asset('storage/' . $template->footer_image_path) }}" crossorigin="anonymous" alt="Footer">
+                <img src="{{ asset('storage/' . $template->footer_image_path) }}" crossorigin="anonymous" alt="{{ __('letters.preview.footer_image_alt') }}">
                 @endif
                 @if($qrSvg)
                 <div class="qr-block">
@@ -670,7 +670,7 @@
         }
 
         if (pageCounter) {
-            pageCounter.innerText = `Preview: ${pageIndex} Page(s)`;
+            pageCounter.innerText = @json(__('letters.preview.page_counter', ['count' => '__COUNT__'])).replace('__COUNT__', pageIndex);
         }
     });
 
@@ -689,7 +689,7 @@
         const filename = @json(\Illuminate\Support\Str::slug($letter->reference_number ?: ('letter-' . $letter->id), '-') . '.pdf');
         const originalText = btn.innerText;
 
-        btn.innerText = 'Generating PDF...';
+        btn.innerText = @json(__('letters.preview.generating_pdf'));
         btn.disabled = true;
 
         document.body.classList.add('pdf-export');
@@ -760,3 +760,4 @@
 </body>
 
 </html>
+

@@ -25,10 +25,20 @@ return [
         'delete' => 'Delete',
         'print' => 'Print',
         'save_pdf' => 'Save as PDF',
+        'approve' => 'Approve',
+        'return' => 'Return',
+        'reject' => 'Reject',
     ],
 
     'cards' => [
         'total_letters' => 'Total letters',
+        'approved_letters' => 'Approved Letters',
+        'approved_letters_hint' => 'Approved letters',
+        'rejected_letters' => 'Rejected Letters',
+        'rejected_letters_hint' => 'Rejected letters',
+        'letter_categories' => 'Letter Categories',
+        'letters_count_suffix' => 'letters',
+        'top_category' => 'Top: :category',
         'latest_created' => 'Latest created',
         'template_preview' => 'Template preview',
         'no_letters_yet' => 'No letters yet.',
@@ -39,6 +49,7 @@ return [
         'cc_none' => 'None',
         'untitled' => 'Untitled Letter',
         'missing' => 'N/A',
+        'empty_description' => 'You have not created any letters yet. Start by composing your first letter to begin correspondence.',
     ],
 
     'form' => [
@@ -63,6 +74,7 @@ return [
         'delivery_hint' => 'Choose which parties should receive this letter and its notifications.',
         'delivery_required' => 'Select at least one recipient (Applicant or Respondent).',
         'subject' => 'Subject',
+        'subject_prefix_label' => 'Subject prefix',
         'placeholders_title' => 'Placeholders',
         'placeholders_help' => 'Use the following keys inside your letter body:',
         'selected_template' => 'Selected template',
@@ -70,6 +82,8 @@ return [
         'body' => 'Body',
         'body_hint' => 'The preview page will render this on A4 paper with the template header/footer.',
         'body_preview_hint' => 'Changes are reflected immediately in the preview.',
+        'reference_number_auto' => 'Reference Number (auto)',
+        'reference_number_auto_help' => 'Auto-generated from case number. Final value is assigned on save.',
     ],
 
     'table' => [
@@ -80,6 +94,15 @@ return [
         'cc' => 'CC',
         'created' => 'Status',
         'actions' => 'Actions',
+        'all_letters' => 'All Letters',
+        'manage_correspondence' => 'Manage and review your correspondence',
+        'search_placeholder' => 'Search letters...',
+        'filter' => 'Filter',
+        'status_approved' => 'Approved',
+        'status_returned' => 'Returned',
+        'status_rejected' => 'Rejected',
+        'showing_results' => 'Showing :first to :last of :total results',
+        'reference_next' => 'Next reference',
     ],
 
     'preview' => [
@@ -91,10 +114,24 @@ return [
         'closing' => 'Sincerely,',
         'cc_recipients' => 'CC recipients:',
         'author_signature' => 'Signature',
+        'loading' => 'Loading preview...',
+        'back_to_letters' => 'Back to Letters',
+        'print_native_pdf' => 'Print / Save Native PDF',
+        'download_pdf' => 'Download PDF',
+        'page_counter' => 'Preview: :count page(s)',
+        'generating_pdf' => 'Generating PDF...',
+        'header_image_alt' => 'Header',
+        'footer_image_alt' => 'Footer',
+        'official_seal_alt' => 'Official seal',
     ],
 
     'confirm' => [
         'delete_letter' => 'Delete this letter permanently?',
+    ],
+
+    'messages' => [
+        'approved_edit_locked' => 'Approved letters cannot be edited',
+        'approved_delete_locked' => 'Approved letters cannot be deleted',
     ],
 
     'templates' => [

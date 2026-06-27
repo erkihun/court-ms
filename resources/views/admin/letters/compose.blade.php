@@ -133,12 +133,12 @@
                 @endphp
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Reference Number (auto)</label>
+                    <label class="block text-sm font-medium text-gray-700">{{ __('letters.form.reference_number_auto') }}</label>
                     <input type="text" value="{{ $nextReference }}" readonly
                         class="mt-1 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
 
                     <p class="text-xs text-gray-500 mt-1">
-                        Auto-generated from case number. Final value assigned on save.
+                        {{ __('letters.form.reference_number_auto_help') }}
                     </p>
                 </div>
                 @endif

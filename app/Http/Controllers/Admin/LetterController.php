@@ -19,12 +19,25 @@ class LetterController extends Controller
 {
     public function index()
     {
-        $letters = Letter::with(['template', 'author'])
+        $baseQuery = Letter::query();
+
+        $stats = [
+            'total' => (clone $baseQuery)->count(),
+            'approved' => (clone $baseQuery)->where('approval_status', 'approved')->count(),
+            'rejected' => (clone $baseQuery)->where('approval_status', 'rejected')->count(),
+            'category_counts' => (clone $baseQuery)
+                ->leftJoin('letter_templates as lt', 'lt.id', '=', 'letters.letter_template_id')
+                ->selectRaw('COALESCE(NULLIF(TRIM(lt.category), \'\'), ?) as category_label, COUNT(*) as aggregate_count', [__('letters.form.category_fallback')])
+                ->groupBy('category_label')
+                ->pluck('aggregate_count', 'category_label'),
+        ];
+
+        $letters = $baseQuery->with(['template', 'author'])
             ->latest()
             ->paginate(5)
             ->withQueryString();
 
-        return view('admin.letters.index', compact('letters'));
+        return view('admin.letters.index', compact('letters', 'stats'));
     }
 
     public function store(Request $request)

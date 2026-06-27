@@ -25,10 +25,20 @@ return [
         'delete' => 'ሰርዝ',
         'print' => 'አትም',
         'save_pdf' => 'እንደ PDF አስቀምጥ',
+        'approve' => 'አጽድቅ',
+        'return' => 'መልስ',
+        'reject' => 'ውድቅ አድርግ',
     ],
 
     'cards' => [
         'total_letters' => 'ጠቅላላ ደብዳቤዎች',
+        'approved_letters' => 'የጸደቁ ደብዳቤዎች',
+        'approved_letters_hint' => 'የጸደቁ ደብዳቤዎች',
+        'rejected_letters' => 'ውድቅ የተደረጉ ደብዳቤዎች',
+        'rejected_letters_hint' => 'ውድቅ የተደረጉ ደብዳቤዎች',
+        'letter_categories' => 'የደብዳቤ ምድቦች',
+        'letters_count_suffix' => 'ደብዳቤዎች',
+        'top_category' => 'ከፍተኛ: :category',
         'latest_created' => 'በቅርብ የተፈጠረ',
         'template_preview' => 'የቴምፕሌት ቅድመ እይታ',
         'no_letters_yet' => 'እስካሁን ደብዳቤ የለም።',
@@ -39,6 +49,7 @@ return [
         'cc_none' => 'የለም',
         'untitled' => 'ርዕስ የሌለው ደብዳቤ',
         'missing' => 'አልተገኘም',
+        'empty_description' => 'እስካሁን ምንም ደብዳቤ አልፈጠሩም። የመጀመሪያዎን ደብዳቤ በማዘጋጀት ይጀምሩ።',
     ],
 
     'form' => [
@@ -63,6 +74,7 @@ return [
         'delivery_hint' => 'ይህን ደብዳቤ እና ማሳወቂያውን የሚቀበሉትን ወገኖች ይምረጡ።',
         'delivery_required' => 'ቢያንስ አንድ ተቀባይ (አመልካች ወይም ተጠሪ) ይምረጡ።',
         'subject' => 'ርዕስ',
+        'subject_prefix_label' => 'የርዕስ ቅድመ ቃል',
         'placeholders_title' => 'ተለዋጭ ቦታዎች',
         'placeholders_help' => 'ከታች ያሉትን ቁልፎች በደብዳቤ ይዘት ውስጥ ይጠቀሙ፦',
         'selected_template' => 'የተመረጠ ቴምፕሌት',
@@ -70,6 +82,8 @@ return [
         'body' => 'ይዘት',
         'body_hint' => 'ቅድመ እይታ ገጹ ይህን በA4 ወረቀት ላይ ከቴምፕሌት ራስጌ/ግርጌ ጋር ያሳያል።',
         'body_preview_hint' => 'በሚያደርጉት ለውጥ ቅድመ እይታው ወዲያውኑ ይታያል።',
+        'reference_number_auto' => 'የማጣቀሻ ቁጥር (በራስ-ሰር)',
+        'reference_number_auto_help' => 'ከክስ ቁጥር በራስ-ሰር ይፈጠራል። የመጨረሻ እሴቱ ሲያስቀምጡ ይመደባል።',
     ],
 
     'table' => [
@@ -80,6 +94,15 @@ return [
         'cc' => 'ግልባጭ',
         'created' => 'ሁኔታ',
         'actions' => 'እርምጃዎች',
+        'all_letters' => 'ሁሉም ደብዳቤዎች',
+        'manage_correspondence' => 'ደብዳቤዎችን ያስተዳድሩ እና ይገምግሙ',
+        'search_placeholder' => 'ደብዳቤዎችን ፈልግ...',
+        'filter' => 'ማጣሪያ',
+        'status_approved' => 'ጸድቋል',
+        'status_returned' => 'ተመልሷል',
+        'status_rejected' => 'ውድቅ ተደርጓል',
+        'showing_results' => ':first እስከ :last ከ :total ውጤቶች',
+        'reference_next' => 'ቀጣይ ማጣቀሻ',
     ],
 
     'preview' => [
@@ -91,10 +114,24 @@ return [
         'closing' => 'ከአክብሮት ጋር፣',
         'cc_recipients' => 'ግልባጭ ተቀባዮች፡',
         'author_signature' => 'ፊርማ',
+        'loading' => 'ቅድመ እይታ በመጫን ላይ...',
+        'back_to_letters' => 'ወደ ደብዳቤዎች ተመለስ',
+        'print_native_pdf' => 'አትም / PDF አስቀምጥ',
+        'download_pdf' => 'PDF አውርድ',
+        'page_counter' => 'ቅድመ እይታ: :count ገጽ',
+        'generating_pdf' => 'PDF በመፍጠር ላይ...',
+        'header_image_alt' => 'ራስጌ',
+        'footer_image_alt' => 'ግርጌ',
+        'official_seal_alt' => 'ይፋዊ ማህተም',
     ],
 
     'confirm' => [
         'delete_letter' => 'ይህን ደብዳቤ በቋሚነት ማጥፋት ይፈልጋሉ?',
+    ],
+
+    'messages' => [
+        'approved_edit_locked' => 'የጸደቁ ደብዳቤዎች ማርትዕ አይቻልም',
+        'approved_delete_locked' => 'የጸደቁ ደብዳቤዎች ማጥፋት አይቻልም',
     ],
 
     'templates' => [
