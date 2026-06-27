@@ -127,7 +127,7 @@
 @php $s = $settings; @endphp
 
 <div class="ss-wrap px-5 pb-20"
-     x-data="{ tab: '{{ request('tab','general') }}', saving: false }">
+     x-data="{ tab: '{{ request('tab','general') }}', saving: false, telegramEnabled: @js((bool) old('telegram_enabled', $s->telegram_enabled ?? false)) }">
 
     {{-- Page header --}}
     <div class="ss-header">
@@ -166,6 +166,7 @@
             ['key'=>'security',     'label'=>__('settings.tab_security'),      'icon'=>'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z'],
             ['key'=>'appearance',   'label'=>__('settings.tab_appearance'),    'icon'=>'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01'],
             ['key'=>'notifications','label'=>__('settings.tab_notifications'), 'icon'=>'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9'],
+            ['key'=>'data',         'label'=>__('settings.tab_data_management'),'icon'=>'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4'],
             ['key'=>'api',          'label'=>__('settings.tab_api'),           'icon'=>'M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'],
         ];
         @endphp
@@ -654,14 +655,25 @@
                     <svg viewBox="0 0 24 24" fill="currentColor" class="w-3.5 h-3.5"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/></svg>
                 </div>
                 {{ __('settings.telegram_bot') }}
-                <div class="ml-auto">
+            </div>
+            <p class="ss-hint mb-4">{{ __('settings.telegram_hint') }}</p>
+
+            <div class="ss-toggle-row mb-4">
+                <div class="ss-toggle-info">
+                    <span class="ss-toggle-name">{{ __('settings.enable_telegram') }}</span>
+                    <span class="ss-toggle-desc">{{ __('settings.enable_telegram_desc') }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-[.7rem] font-bold uppercase"
+                          :class="telegramEnabled ? 'text-emerald-600' : 'text-[var(--text-subtle)]'"
+                          x-text="telegramEnabled ? '{{ __('settings.on') }}' : '{{ __('settings.off') }}'"></span>
                     <label class="ss-sw">
-                        <input type="checkbox" name="telegram_enabled" value="1" @checked(old('telegram_enabled',$s->telegram_enabled??false))>
+                        <input type="checkbox" name="telegram_enabled" value="1" x-model="telegramEnabled">
                         <div class="ss-sw-track"><div class="ss-sw-thumb"></div></div>
                     </label>
                 </div>
             </div>
-            <p class="ss-hint mb-4">{{ __('settings.telegram_hint') }}</p>
+
             <div class="grid md:grid-cols-2 gap-4">
                 <div>
                     <label class="ss-label">{{ __('settings.bot_token') }}</label>
@@ -743,6 +755,61 @@
                     <input name="sms_sender_id" value="{{ old('sms_sender_id',$s->sms_sender_id) }}" class="ss-input" placeholder="CourtMS or +251912345678">
                     <p class="ss-hint">{{ __('settings.sms_sender_id_hint') }}</p>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- ── TAB: DATA MANAGEMENT ───────────────────────────────── --}}
+    <div x-show="tab==='data'" x-cloak x-transition:enter="transition ease-out duration-150"
+         x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
+
+        <div class="grid lg:grid-cols-2 gap-4">
+            <div class="ss-card">
+                <div class="ss-card-title">
+                    <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg></div>
+                    {{ __('settings.data_overview') }}
+                </div>
+                <p class="ss-hint mb-3">{{ __('settings.data_overview_hint') }}</p>
+                <div class="grid sm:grid-cols-2 gap-2">
+                    @foreach([
+                        __('settings.data_driver')          => strtoupper((string) ($databaseMetrics['driver'] ?? 'unknown')),
+                        __('settings.data_connection')      => $databaseMetrics['connection'] ?? '-',
+                        __('settings.data_database')        => $databaseMetrics['database'] ?? '-',
+                        __('settings.data_tables')          => number_format((int) ($databaseMetrics['table_count'] ?? 0)),
+                        __('settings.data_size')            => $databaseMetrics['size'] ?? '-',
+                        __('settings.data_migration_batch') => $databaseMetrics['migration_batch'] ?? '-',
+                    ] as $k=>$v)
+                    <div class="ss-info-row">
+                        <span class="ss-info-key">{{ $k }}</span>
+                        <span class="ss-info-val">{{ $v }}</span>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <div class="ss-card">
+                <div class="ss-card-title">
+                    <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/></svg></div>
+                    {{ __('settings.backup_database') }}
+                    <span class="ml-auto ss-badge {{ ($databaseMetrics['backup_supported'] ?? false) ? 'ss-badge-ok' : 'ss-badge-warn' }}">
+                        {{ ($databaseMetrics['backup_supported'] ?? false) ? __('settings.backup_supported') : __('settings.backup_not_supported') }}
+                    </span>
+                </div>
+                <p class="ss-hint mb-4">{{ __('settings.backup_database_hint') }}</p>
+
+                @if($databaseMetrics['backup_supported'] ?? false)
+                    <button type="submit" form="ss-database-backup-form"
+                            onclick="return confirm('{{ __('settings.download_backup_confirm') }}')"
+                            class="cs-btn-primary text-xs px-4 py-2">
+                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+                        {{ __('settings.download_backup') }}
+                    </button>
+                @else
+                    <button type="button" class="cs-btn-secondary text-xs px-4 py-2 opacity-60 cursor-not-allowed" disabled>
+                        {{ __('settings.download_backup') }}
+                    </button>
+                    <p class="ss-hint mt-3">{{ __('settings.backup_unsupported') }}</p>
+                @endif
             </div>
         </div>
     </div>
@@ -848,6 +915,7 @@
 
     {{-- Standalone clear-cache form (outside main form — no nesting) --}}
     <form id="ss-clear-cache-form" method="POST" action="{{ route('settings.system.clearCache') }}">@csrf</form>
+    <form id="ss-database-backup-form" method="POST" action="{{ route('settings.system.databaseBackup') }}">@csrf</form>
 
 </div>
 </x-admin-layout>

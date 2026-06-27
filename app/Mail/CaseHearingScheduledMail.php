@@ -36,8 +36,12 @@ class CaseHearingScheduledMail extends Mailable
             return $text;
         };
 
-        $summary     = $escape('Court Hearing: ' . ($this->case->case_number ?? ''));
-        $description = $escape(($this->case->title ?? '') . ' — Please arrive early with any documents.');
+        $summary     = $escape(__('notifications.mail.hearing_calendar_summary', [
+            'case' => $this->case->case_number ?? '',
+        ]));
+        $description = $escape(__('notifications.mail.hearing_calendar_description', [
+            'title' => $this->case->title ?? '',
+        ]));
         $location    = $escape($this->hearing->location ?? '');
 
         $ics = implode("\r\n", [
@@ -59,7 +63,9 @@ class CaseHearingScheduledMail extends Mailable
             '',
         ]);
 
-        return $this->subject('Hearing Scheduled: ' . ($this->case->case_number ?? 'Your Case'))
+        return $this->subject(__('notifications.mail.hearing_scheduled_subject', [
+            'case' => $this->case->case_number ?? __('notifications.mail.your_case'),
+        ]))
             ->view('mail.case_hearing_scheduled')  // you already have this blade
             ->attachData($ics, 'hearing.ics', [
                 'mime' => 'text/calendar; charset=utf-8; method=PUBLISH',

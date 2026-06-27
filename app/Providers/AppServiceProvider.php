@@ -138,6 +138,16 @@ class AppServiceProvider extends ServiceProvider
             ));
         });
 
+        // ── Applicant auth card layout (logo + card only) ───────────────────
+        View::composer('components.applicant-auth-layout', function ($view) use ($getSettings) {
+            $systemSettings = $getSettings();
+            $brandName = $systemSettings?->app_name   ?? config('app.name', __('app.court_ms'));
+            $shortName = $systemSettings?->short_name ?: $brandName;
+            $logoPath  = $systemSettings?->logo_path  ?? null;
+
+            $view->with('publicLayout', compact('systemSettings', 'brandName', 'shortName', 'logoPath'));
+        });
+
         // ── Home / landing page ─────────────────────────────────────────────
         View::composer('home', function ($view) use ($getSettings) {
             $systemSettings = $getSettings();

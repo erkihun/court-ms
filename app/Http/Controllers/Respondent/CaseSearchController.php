@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Mail\RespondentViewedCaseMail;
 use App\Models\Decision;
 use App\Models\Respondent;
+use App\Services\ResponseNotificationService;
 use App\Support\DecisionPdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -214,6 +215,7 @@ class CaseSearchController extends Controller
 
         $this->recordRespondentCaseView($case->id, $respondent->id, $case->case_number ?? null);
         $this->notifyRespondentViewParticipants($case, $respondentName, $caseUrl);
+        ResponseNotificationService::notifyRespondentCaseViewed((int) $case->id, $respondentName);
         $this->logRespondentCaseAudit($case->id, $respondent->id, $respondentName);
     }
 

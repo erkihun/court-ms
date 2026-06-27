@@ -395,6 +395,10 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::post('/settings/system/clear-cache', [SystemSettingController::class, 'clearCache'])
                 ->name('settings.system.clearCache');
 
+            Route::post('/settings/system/database-backup', [SystemSettingController::class, 'downloadDatabaseBackup'])
+                ->middleware('perm:settings.manage')
+                ->name('settings.system.databaseBackup');
+
             Route::get('/settings/performance-evaluation', [PerformanceEvaluationSettingController::class, 'index'])
                 ->middleware('perm:settings.manage')
                 ->name('settings.performance-evaluation.index');

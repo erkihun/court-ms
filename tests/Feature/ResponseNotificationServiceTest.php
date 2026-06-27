@@ -6,6 +6,7 @@ use App\Models\Applicant;
 use App\Models\ApplicantResponseReply;
 use App\Models\Respondent;
 use App\Models\RespondentResponse;
+use App\Models\SystemSetting;
 use App\Models\User;
 use App\Notifications\ApplicantResponseReplyReviewed;
 use App\Notifications\ApplicantResponseReplySubmitted;
@@ -14,12 +15,173 @@ use App\Notifications\RespondentResponseSubmitted;
 use App\Services\ResponseNotificationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 class ResponseNotificationServiceTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_sends_telegram_group_alert_on_new_case_created_when_enabled(): void
+    {
+        Notification::fake();
+        Http::fake([
+            'https://api.telegram.org/*' => Http::response(['ok' => true]),
+        ]);
+        $this->enableTelegramNotifications();
+
+        [, $caseId, $caseNumber] = $this->seedCaseWithParties();
+
+        ResponseNotificationService::notifyApplicantCaseCreated($caseId);
+
+        Http::assertSent(fn ($request) => $request->url() === 'https://api.telegram.org/bottelegram-token/sendMessage'
+            && $request['chat_id'] === '-100123456789'
+            && str_contains((string) $request['text'], 'New case submitted')
+            && str_contains((string) $request['text'], $caseNumber));
+    }
+
+    public function test_sends_localized_telegram_group_alert_when_locale_is_amharic(): void
+    {
+        app()->setLocale('am');
+        Notification::fake();
+        Http::fake([
+            'https://api.telegram.org/*' => Http::response(['ok' => true]),
+        ]);
+        $this->enableTelegramNotifications();
+
+        [, $caseId, $caseNumber] = $this->seedCaseWithParties();
+
+        ResponseNotificationService::notifyApplicantCaseCreated($caseId);
+
+        Http::assertSent(fn ($request) => $request->url() === 'https://api.telegram.org/bottelegram-token/sendMessage'
+            && $request['chat_id'] === '-100123456789'
+            && str_contains((string) $request['text'], 'አዲስ ጉዳይ ቀርቧል')
+            && str_contains((string) $request['text'], 'ጉዳይ:')
+            && str_contains((string) $request['text'], $caseNumber));
+    }
+
+    public function test_sends_telegram_group_alert_on_applicant_case_updated_when_enabled(): void
+    {
+        Notification::fake();
+        Http::fake([
+            'https://api.telegram.org/*' => Http::response(['ok' => true]),
+        ]);
+        $this->enableTelegramNotifications();
+
+        [, $caseId, $caseNumber] = $this->seedCaseWithParties();
+
+        ResponseNotificationService::notifyApplicantCaseUpdated($caseId);
+
+        Http::assertSent(fn ($request) => $request->url() === 'https://api.telegram.org/bottelegram-token/sendMessage'
+            && $request['chat_id'] === '-100123456789'
+            && str_contains((string) $request['text'], 'Applicant updated case submission')
+            && str_contains((string) $request['text'], $caseNumber));
+    }
+
+    public function test_sends_telegram_group_alert_on_case_status_changed_when_enabled(): void
+    {
+        Notification::fake();
+        Http::fake([
+            'https://api.telegram.org/*' => Http::response(['ok' => true]),
+        ]);
+        $this->enableTelegramNotifications();
+
+        [, $caseId, $caseNumber] = $this->seedCaseWithParties();
+
+        ResponseNotificationService::notifyCaseStatusChanged($caseId, 'pending', 'active', 'Ready for hearing');
+
+        Http::assertSent(fn ($request) => $request->url() === 'https://api.telegram.org/bottelegram-token/sendMessage'
+            && $request['chat_id'] === '-100123456789'
+            && str_contains((string) $request['text'], 'Case status changed')
+            && str_contains((string) $request['text'], 'Ready for hearing')
+            && str_contains((string) $request['text'], $caseNumber));
+    }
+
+    public function test_sends_telegram_group_alert_on_case_message_posted_when_enabled(): void
+    {
+        Notification::fake();
+        Http::fake([
+            'https://api.telegram.org/*' => Http::response(['ok' => true]),
+        ]);
+        $this->enableTelegramNotifications();
+
+        [, $caseId, $caseNumber] = $this->seedCaseWithParties();
+
+        ResponseNotificationService::notifyCaseMessagePosted($caseId, 'Applicant', 'Please review my case message.');
+
+        Http::assertSent(fn ($request) => $request->url() === 'https://api.telegram.org/bottelegram-token/sendMessage'
+            && $request['chat_id'] === '-100123456789'
+            && str_contains((string) $request['text'], 'New case message posted')
+            && str_contains((string) $request['text'], 'Applicant')
+            && str_contains((string) $request['text'], $caseNumber));
+    }
+
+    public function test_sends_telegram_group_alert_on_case_hearing_created_when_enabled(): void
+    {
+        Notification::fake();
+        Http::fake([
+            'https://api.telegram.org/*' => Http::response(['ok' => true]),
+        ]);
+        $this->enableTelegramNotifications();
+
+        [, $caseId, $caseNumber] = $this->seedCaseWithParties();
+        $hearingId = DB::table('case_hearings')->insertGetId([
+            'case_id' => $caseId,
+            'hearing_at' => now()->addDays(7)->toDateTimeString(),
+            'location' => 'Courtroom 1',
+            'type' => 'Preliminary',
+            'notes' => 'Bring originals',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        ResponseNotificationService::notifyCaseHearingCreated($hearingId);
+
+        Http::assertSent(fn ($request) => $request->url() === 'https://api.telegram.org/bottelegram-token/sendMessage'
+            && $request['chat_id'] === '-100123456789'
+            && str_contains((string) $request['text'], 'Case hearing scheduled')
+            && str_contains((string) $request['text'], 'Courtroom 1')
+            && str_contains((string) $request['text'], $caseNumber));
+    }
+
+    public function test_sends_telegram_group_alert_on_respondent_case_viewed_when_enabled(): void
+    {
+        Notification::fake();
+        Http::fake([
+            'https://api.telegram.org/*' => Http::response(['ok' => true]),
+        ]);
+        $this->enableTelegramNotifications();
+
+        [, $caseId, $caseNumber] = $this->seedCaseWithParties();
+
+        ResponseNotificationService::notifyRespondentCaseViewed($caseId, 'Respondent User');
+
+        Http::assertSent(fn ($request) => $request->url() === 'https://api.telegram.org/bottelegram-token/sendMessage'
+            && $request['chat_id'] === '-100123456789'
+            && str_contains((string) $request['text'], 'Respondent viewed case')
+            && str_contains((string) $request['text'], 'Respondent User')
+            && str_contains((string) $request['text'], $caseNumber));
+    }
+
+    public function test_sends_telegram_group_alert_on_case_review_decision_when_enabled(): void
+    {
+        Notification::fake();
+        Http::fake([
+            'https://api.telegram.org/*' => Http::response(['ok' => true]),
+        ]);
+        $this->enableTelegramNotifications();
+
+        [, $caseId, $caseNumber] = $this->seedCaseWithParties();
+
+        ResponseNotificationService::notifyCaseReviewDecision($caseId, 'accepted', 'Review complete');
+
+        Http::assertSent(fn ($request) => $request->url() === 'https://api.telegram.org/bottelegram-token/sendMessage'
+            && $request['chat_id'] === '-100123456789'
+            && str_contains((string) $request['text'], 'Case review decision recorded')
+            && str_contains((string) $request['text'], 'accepted')
+            && str_contains((string) $request['text'], $caseNumber));
+    }
 
     public function test_notifies_applicant_and_admin_on_respondent_response_created(): void
     {
@@ -40,6 +202,33 @@ class ResponseNotificationServiceTest extends TestCase
 
         Notification::assertSentTo($admin, RespondentResponseSubmitted::class);
         Notification::assertSentTo($applicant, RespondentResponseSubmitted::class);
+    }
+
+    public function test_sends_telegram_group_alert_on_respondent_response_created_when_enabled(): void
+    {
+        Notification::fake();
+        Http::fake([
+            'https://api.telegram.org/*' => Http::response(['ok' => true]),
+        ]);
+        $this->enableTelegramNotifications();
+
+        [, , $caseNumber, , $respondent] = $this->seedCaseWithParties();
+
+        $response = RespondentResponse::create([
+            'respondent_id' => $respondent->id,
+            'case_number' => $caseNumber,
+            'response_number' => 'R/' . $caseNumber,
+            'title' => 'Test response',
+            'description' => 'Body',
+            'pdf_path' => 'respondent/responses/test.pdf',
+        ]);
+
+        ResponseNotificationService::notifyRespondentResponseCreated($response);
+
+        Http::assertSent(fn ($request) => $request->url() === 'https://api.telegram.org/bottelegram-token/sendMessage'
+            && $request['chat_id'] === '-100123456789'
+            && str_contains((string) $request['text'], 'New respondent response submitted')
+            && str_contains((string) $request['text'], $caseNumber));
     }
 
     public function test_notifies_admin_and_respondent_on_response_reply_created(): void
@@ -72,6 +261,42 @@ class ResponseNotificationServiceTest extends TestCase
         Notification::assertSentTo($respondent, ApplicantResponseReplySubmitted::class);
     }
 
+    public function test_sends_telegram_group_alert_on_applicant_response_reply_created_when_enabled(): void
+    {
+        Notification::fake();
+        Http::fake([
+            'https://api.telegram.org/*' => Http::response(['ok' => true]),
+        ]);
+        $this->enableTelegramNotifications();
+
+        [, $caseId, $caseNumber, $applicant, $respondent] = $this->seedCaseWithParties();
+
+        $response = RespondentResponse::create([
+            'respondent_id' => $respondent->id,
+            'case_number' => $caseNumber,
+            'response_number' => 'R/' . $caseNumber,
+            'title' => 'Test response',
+            'description' => 'Body',
+            'pdf_path' => 'respondent/responses/test.pdf',
+        ]);
+
+        $reply = ApplicantResponseReply::create([
+            'case_id' => $caseId,
+            'applicant_id' => $applicant->id,
+            'respondent_response_id' => $response->id,
+            'description' => 'Reply body',
+            'pdf_path' => 'applicant/response-replies/test.pdf',
+            'review_status' => 'awaiting_review',
+        ]);
+
+        ResponseNotificationService::notifyApplicantResponseReplyCreated($reply, $response);
+
+        Http::assertSent(fn ($request) => $request->url() === 'https://api.telegram.org/bottelegram-token/sendMessage'
+            && $request['chat_id'] === '-100123456789'
+            && str_contains((string) $request['text'], 'New applicant reply submitted')
+            && str_contains((string) $request['text'], $caseNumber));
+    }
+
     public function test_notifies_respondent_on_response_review(): void
     {
         Notification::fake();
@@ -90,6 +315,34 @@ class ResponseNotificationServiceTest extends TestCase
         ResponseNotificationService::notifyRespondentResponseReviewed($response, 'accepted', 'ok');
 
         Notification::assertSentTo($respondent, RespondentResponseReviewed::class);
+    }
+
+    public function test_sends_telegram_group_alert_on_respondent_response_review_when_enabled(): void
+    {
+        Notification::fake();
+        Http::fake([
+            'https://api.telegram.org/*' => Http::response(['ok' => true]),
+        ]);
+        $this->enableTelegramNotifications();
+
+        [, , $caseNumber, , $respondent] = $this->seedCaseWithParties();
+
+        $response = RespondentResponse::create([
+            'respondent_id' => $respondent->id,
+            'case_number' => $caseNumber,
+            'response_number' => 'R/' . $caseNumber,
+            'title' => 'Test response',
+            'description' => 'Body',
+            'pdf_path' => 'respondent/responses/test.pdf',
+        ]);
+
+        ResponseNotificationService::notifyRespondentResponseReviewed($response, 'accepted', 'ok');
+
+        Http::assertSent(fn ($request) => $request->url() === 'https://api.telegram.org/bottelegram-token/sendMessage'
+            && $request['chat_id'] === '-100123456789'
+            && str_contains((string) $request['text'], 'Respondent response reviewed')
+            && str_contains((string) $request['text'], 'accepted')
+            && str_contains((string) $request['text'], $caseNumber));
     }
 
     public function test_notifies_applicant_on_response_reply_review(): void
@@ -119,6 +372,43 @@ class ResponseNotificationServiceTest extends TestCase
         ResponseNotificationService::notifyResponseReplyReviewed($reply, 'returned', 'fix');
 
         Notification::assertSentTo($applicant, ApplicantResponseReplyReviewed::class);
+    }
+
+    public function test_sends_telegram_group_alert_on_response_reply_review_when_enabled(): void
+    {
+        Notification::fake();
+        Http::fake([
+            'https://api.telegram.org/*' => Http::response(['ok' => true]),
+        ]);
+        $this->enableTelegramNotifications();
+
+        [, $caseId, $caseNumber, $applicant, $respondent] = $this->seedCaseWithParties();
+
+        $response = RespondentResponse::create([
+            'respondent_id' => $respondent->id,
+            'case_number' => $caseNumber,
+            'response_number' => 'R/' . $caseNumber,
+            'title' => 'Test response',
+            'description' => 'Body',
+            'pdf_path' => 'respondent/responses/test.pdf',
+        ]);
+
+        $reply = ApplicantResponseReply::create([
+            'case_id' => $caseId,
+            'applicant_id' => $applicant->id,
+            'respondent_response_id' => $response->id,
+            'description' => 'Reply body',
+            'pdf_path' => 'applicant/response-replies/test.pdf',
+            'review_status' => 'awaiting_review',
+        ]);
+
+        ResponseNotificationService::notifyResponseReplyReviewed($reply, 'returned', 'fix');
+
+        Http::assertSent(fn ($request) => $request->url() === 'https://api.telegram.org/bottelegram-token/sendMessage'
+            && $request['chat_id'] === '-100123456789'
+            && str_contains((string) $request['text'], 'Applicant reply reviewed')
+            && str_contains((string) $request['text'], 'returned')
+            && str_contains((string) $request['text'], $caseNumber));
     }
 
     /**
@@ -194,5 +484,15 @@ class ResponseNotificationServiceTest extends TestCase
         ]);
 
         return [$admin, $caseId, $caseNumber, $applicant, $respondent];
+    }
+
+    private function enableTelegramNotifications(): void
+    {
+        SystemSetting::create([
+            'app_name' => 'Court MS',
+            'telegram_enabled' => true,
+            'telegram_bot_token' => 'telegram-token',
+            'telegram_default_chat_id' => '-100123456789',
+        ]);
     }
 }

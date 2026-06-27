@@ -18,7 +18,9 @@ class CaseMessageMail extends Mailable
 
     public function build()
     {
-        return $this->subject("New message on case {$this->caseRow->case_number}")
+        return $this->subject(__('notifications.mail.case_message_subject', [
+            'case' => $this->caseRow->case_number,
+        ]))
             ->view('mail.case_message');
     }
 }

@@ -23,7 +23,9 @@ class ApplicantReceiptMail extends Mailable
     {
         $filename = 'receipt-' . ($this->case->case_number ?? 'case') . '.pdf';
 
-        return $this->subject('Your filing receipt: ' . ($this->case->case_number ?? ''))
+        return $this->subject(__('notifications.mail.filing_receipt_subject', [
+            'case' => $this->case->case_number ?? '',
+        ]))
             ->view('mail.applicant_receipt')
             ->attachData($this->pdfBinary, $filename, ['mime' => 'application/pdf']);
     }

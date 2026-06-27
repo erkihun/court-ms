@@ -2,26 +2,33 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\Admin\CreateDatabaseBackupAction;
 use App\Http\Controllers\Controller;
 use App\Models\SystemSetting;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SystemSettingController extends Controller
 {
-    public function edit()
+    public function edit(): View
     {
         $settings = SystemSetting::current();
 
         $timezones = \DateTimeZone::listIdentifiers();
         $locales   = config('app.locales', ['en', 'am']);
         $localeNames = config('app.locale_names', ['en' => 'English', 'am' => 'Amharic']);
+        $databaseMetrics = $this->databaseMetrics();
 
-        return view('admin.settings.system', compact('settings', 'timezones', 'locales', 'localeNames'));
+        return view('admin.settings.system', compact('settings', 'timezones', 'locales', 'localeNames', 'databaseMetrics'));
     }
 
-    public function update(Request $request)
+    public function update(Request $request): RedirectResponse
     {
         $data = $request->validate([
             // Identity
@@ -153,7 +160,7 @@ class SystemSettingController extends Controller
             ]);
     }
 
-    public function clearCache()
+    public function clearCache(): RedirectResponse
     {
         Cache::forget('system_settings');
         try { Artisan::call('cache:clear'); } catch (\Throwable) {}
@@ -162,5 +169,116 @@ class SystemSettingController extends Controller
         return redirect()
             ->route('settings.system.edit')
             ->with('ok', ['key' => 'Cache cleared successfully.']);
+    }
+
+    public function downloadDatabaseBackup(Request $request, CreateDatabaseBackupAction $backup): StreamedResponse
+    {
+        abort_unless($request->user()?->hasPermission('settings.manage'), 403);
+        abort_unless($backup->supportsCurrentConnection(), 422, __('settings.backup_unsupported'));
+
+        return response()->streamDownload(
+            function () use ($backup): void {
+                $stream = fopen('php://output', 'wb');
+
+                if ($stream === false) {
+                    return;
+                }
+
+                $backup->writeTo($stream);
+            },
+            $backup->filename(),
+            ['Content-Type' => $backup->contentType()]
+        );
+    }
+
+    /**
+     * @return array<string, string|int|bool|null>
+     */
+    private function databaseMetrics(): array
+    {
+        $connection = DB::connection();
+        $driver = $connection->getDriverName();
+        $database = (string) $connection->getDatabaseName();
+
+        return [
+            'driver' => $driver,
+            'database' => $database,
+            'connection' => config('database.default'),
+            'table_count' => $this->tableCount($driver, $database),
+            'size' => $this->databaseSize($driver, $database),
+            'migration_batch' => $this->migrationBatch(),
+            'backup_supported' => in_array($driver, ['mysql', 'sqlite'], true),
+        ];
+    }
+
+    private function tableCount(string $driver, string $database): int
+    {
+        try {
+            if ($driver === 'mysql') {
+                return (int) DB::selectOne(
+                    'select count(*) as aggregate from information_schema.tables where table_schema = ? and table_type = ?',
+                    [$database, 'BASE TABLE']
+                )->aggregate;
+            }
+
+            return count(Schema::getTables());
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
+
+    private function databaseSize(string $driver, string $database): ?string
+    {
+        try {
+            $bytes = match ($driver) {
+                'mysql' => (int) DB::selectOne(
+                    'select coalesce(sum(data_length + index_length), 0) as bytes from information_schema.tables where table_schema = ?',
+                    [$database]
+                )->bytes,
+                'sqlite' => $this->sqliteDatabaseSize(),
+                default => null,
+            };
+
+            return $bytes === null ? null : $this->humanBytes($bytes);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    private function sqliteDatabaseSize(): ?int
+    {
+        $databasePath = (string) config('database.connections.sqlite.database');
+        $realPath = realpath($databasePath);
+
+        if ($databasePath === ':memory:' || $realPath === false || ! is_file($realPath)) {
+            return null;
+        }
+
+        return filesize($realPath) ?: null;
+    }
+
+    private function migrationBatch(): ?int
+    {
+        try {
+            return Schema::hasTable('migrations')
+                ? (int) DB::table('migrations')->max('batch')
+                : null;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    private function humanBytes(int $bytes): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        $size = (float) $bytes;
+        $unit = 0;
+
+        while ($size >= 1024 && $unit < count($units) - 1) {
+            $size /= 1024;
+            $unit++;
+        }
+
+        return round($size, $unit === 0 ? 0 : 2).' '.$units[$unit];
     }
 }

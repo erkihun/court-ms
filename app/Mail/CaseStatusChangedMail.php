@@ -19,7 +19,15 @@ class CaseStatusChangedMail extends Mailable
 
     public function build()
     {
-        return $this->subject("Your case {$this->caseRow->case_number} status: " . ucfirst($this->newStatus))
+        $status = __("cases.status.{$this->newStatus}");
+        if ($status === "cases.status.{$this->newStatus}") {
+            $status = ucfirst($this->newStatus);
+        }
+
+        return $this->subject(__('notifications.mail.case_status_subject', [
+            'case' => $this->caseRow->case_number,
+            'status' => $status,
+        ]))
             ->view('mail.case_status_changed');
     }
 }

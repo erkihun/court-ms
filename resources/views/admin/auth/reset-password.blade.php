@@ -1,27 +1,41 @@
-<x-guest-layout>
-    <form method="POST" action="{{ route('password.store') }}">
+<x-applicant-auth-layout
+    :title="__('auth.reset_password_title')"
+    :subtitle="__('auth.reset_password_subtitle')"
+    portal="admin"
+    accent="blue"
+    login-route="login">
+
+    @if ($errors->any())
+    <div class="auth-alert auth-alert-error mb-4">
+        <ul class="list-disc ml-5">
+            @foreach ($errors->all() as $error)
+            <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+    @endif
+
+    <form method="POST" action="{{ route('password.store') }}" class="space-y-4">
         @csrf
 
-        <!-- Password -->
         <div>
-            <x-input-label for="password" :value="__('auth.new_password')" />
-            <x-text-input id="password" class="block mt-1 w-full" type="password" name="password" required autofocus autocomplete="new-password" />
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+            <label for="password" class="auth-label">{{ __('auth.new_password') }}</label>
+            <input id="password" class="auth-input" type="password" name="password" required autofocus autocomplete="new-password">
+            @error('password')
+            <div class="mt-1 text-xs text-red-600">{{ $message }}</div>
+            @enderror
         </div>
 
-        <!-- Confirm Password -->
-        <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('auth.confirm_password')" />
-            <x-text-input id="password_confirmation" class="block mt-1 w-full"
-                type="password"
-                name="password_confirmation" required autocomplete="new-password" />
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
+        <div>
+            <label for="password_confirmation" class="auth-label">{{ __('auth.confirm_password') }}</label>
+            <input id="password_confirmation" class="auth-input" type="password" name="password_confirmation" required autocomplete="new-password">
+            @error('password_confirmation')
+            <div class="mt-1 text-xs text-red-600">{{ $message }}</div>
+            @enderror
         </div>
 
-        <div class="flex items-center justify-end mt-4">
-            <x-primary-button>
-                {{ __('auth.reset_password_button') }}
-            </x-primary-button>
-        </div>
+        <button type="submit" class="auth-primary-btn">
+            {{ __('auth.reset_password_button') }}
+        </button>
     </form>
-</x-guest-layout>
+</x-applicant-auth-layout>

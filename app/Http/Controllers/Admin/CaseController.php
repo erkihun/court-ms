@@ -774,6 +774,7 @@ class CaseController extends Controller
         ]);
 
         $this->notifyApplicantOfReview($case, $newStatus, $note);
+        ResponseNotificationService::notifyCaseReviewDecision($id, $newStatus, $note);
 
         return back()->with('success', [
             'key' => 'messages.success.review_updated_to',
@@ -951,6 +952,8 @@ class CaseController extends Controller
             ]);
         }
 
+        ResponseNotificationService::notifyCaseStatusChanged($id, $old, $new, $data['note'] ?? null);
+
         return back()->with('success', [
             'key' => 'messages.success.status_updated',
             'replace' => [
@@ -991,7 +994,7 @@ class CaseController extends Controller
 
                     if ($wants) {
                         $preview = mb_strimwidth($data['body'], 0, 180, '…');
-                        Mail::to($to)->send(new \App\Mail\CaseMessageMail($case, 'Court Staff', $preview));
+                        Mail::to($to)->send(new \App\Mail\CaseMessageMail($case, __('cases.court_staff'), $preview));
                     }
                 } else {
                     Log::info('Message mail skipped (no applicant email)', ['case_id' => $id]);
@@ -1005,6 +1008,8 @@ class CaseController extends Controller
             'by'   => 'admin',
             'body' => mb_strimwidth($data['body'], 0, 200, '...'),
         ]);
+
+        ResponseNotificationService::notifyCaseMessagePosted($id, __('cases.court_staff'), $data['body']);
 
         return back()->with('success', [
             'key' => 'messages.success.sent',
@@ -1073,6 +1078,8 @@ class CaseController extends Controller
             Log::warning('Hearing mail failed', ['case_id' => $case, 'error' => $e->getMessage()]);
         }
 
+        ResponseNotificationService::notifyCaseHearingCreated($hearingId);
+
         return back()->with('success', [
             'key' => 'messages.success.created',
             'replace' => ['resource' => __('messages.resources.hearing')],
@@ -1122,6 +1129,8 @@ class CaseController extends Controller
             'when'       => $data['hearing_at'],
         ]);
 
+        ResponseNotificationService::notifyCaseHearingUpdated($hearing);
+
         return back()->with('success', [
             'key' => 'messages.success.updated',
             'replace' => ['resource' => __('messages.resources.hearing')],
@@ -1145,6 +1154,8 @@ class CaseController extends Controller
         if ($caseId) {
             $this->logCaseAudit($caseId, 'hearing_deleted', ['hearing_id' => $hearing]);
         }
+        ResponseNotificationService::notifyCaseHearingDeleted($row);
+
         return back()->with('success', [
             'key' => 'messages.success.removed',
             'replace' => ['resource' => __('messages.resources.hearing')],
@@ -1439,7 +1450,7 @@ class CaseController extends Controller
 
                 if ($wants) {
                     $preview = mb_strimwidth($body, 0, 180, '...');
-                    Mail::to($to)->send(new \App\Mail\CaseMessageMail($case, 'Court Staff', $preview));
+                    Mail::to($to)->send(new \App\Mail\CaseMessageMail($case, __('cases.court_staff'), $preview));
                 }
             } else {
                 Log::info('Review note email skipped (no applicant email)', ['case_id' => $case->id]);

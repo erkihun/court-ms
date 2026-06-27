@@ -8,6 +8,7 @@ use App\Http\Resources\CourtCaseResource;
 use App\Models\Applicant;
 use App\Models\CaseType;
 use App\Models\CourtCase;
+use App\Services\ResponseNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -120,6 +121,8 @@ class CaseController extends Controller
             $this->storeWitnesses($case->id, $request);
 
             DB::commit();
+
+            ResponseNotificationService::notifyApplicantCaseCreated((int) $case->id);
 
             $case->loadMissing([
                 'caseType:id,name,prefix',

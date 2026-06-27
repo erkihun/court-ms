@@ -1,0 +1,57 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services;
+
+use App\Models\SystemSetting;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Throwable;
+
+final class TelegramGroupNotificationService
+{
+    public function send(string $message): void
+    {
+        $settings = SystemSetting::current();
+
+        if (! $this->configured($settings)) {
+            return;
+        }
+
+        try {
+            $response = Http::asForm()
+                ->timeout(5)
+                ->retry(1, 250)
+                ->post($this->endpoint((string) $settings->telegram_bot_token), [
+                    'chat_id' => (string) $settings->telegram_default_chat_id,
+                    'text' => $message,
+                    'parse_mode' => 'HTML',
+                    'disable_web_page_preview' => true,
+                ]);
+
+            if ($response->failed()) {
+                Log::warning('Telegram group notification failed.', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+            }
+        } catch (Throwable $exception) {
+            Log::warning('Telegram group notification could not be sent.', [
+                'message' => $exception->getMessage(),
+            ]);
+        }
+    }
+
+    private function configured(SystemSetting $settings): bool
+    {
+        return (bool) $settings->telegram_enabled
+            && filled($settings->telegram_bot_token)
+            && filled($settings->telegram_default_chat_id);
+    }
+
+    private function endpoint(string $botToken): string
+    {
+        return sprintf('https://api.telegram.org/bot%s/sendMessage', trim($botToken));
+    }
+}

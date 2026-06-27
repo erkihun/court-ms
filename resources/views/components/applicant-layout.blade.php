@@ -457,43 +457,31 @@ $respondentNotifList = collect();
                     @else
 
                     @if(auth('applicant')->check())
-                    {{-- Applicant notifications (msg + bell) --}}
-                    <div x-data="{ open:false, tab:'notifications', messageModal:false, messageCount: {{ (int) $messageNotificationCount }} }"
+                    {{-- Applicant notifications (single bell, all notifications) --}}
+                    <div x-data="{ open:false }"
                          class="relative" @close-notification-menus.window="open = false">
                         <div class="flex items-center gap-0.5">
+                            @php $totalNotifCount = (int) $messageNotificationCount + (int) $notificationCount; @endphp
                             <button type="button"
-                                @click.stop="tab = 'messages'; open = true; if (messageCount > 0) { messageModal = true }; $dispatch('close-profile-menus')"
-                                class="ap-icon-btn" :class="tab === 'messages' && open ? 'ap-icon-btn-active' : ''"
-                                aria-label="{{ __('cases.navigation.messages') }}">
-                                {{-- Messages (chat bubble) --}}
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
-                                </svg>
-                                @if($messageNotificationCount > 0)
-                                <span class="ap-badge">{{ $messageNotificationCount > 9 ? '9+' : $messageNotificationCount }}</span>
-                                @endif
-                            </button>
-                            <button type="button"
-                                @click.stop="if (tab === 'notifications') { open = !open } else { tab = 'notifications'; open = true }; $dispatch('close-profile-menus')"
-                                class="ap-icon-btn" :class="tab === 'notifications' && open ? 'ap-icon-btn-active' : ''"
+                                @click.stop="open = !open; $dispatch('close-profile-menus')"
+                                class="ap-icon-btn" :class="open ? 'ap-icon-btn-active' : ''"
                                 aria-label="{{ __('app.Notifications') }}">
                                 {{-- Notifications (bell) --}}
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/>
                                 </svg>
-                                @if($notificationCount > 0)
-                                <span class="ap-badge">{{ $notificationCount > 9 ? '9+' : $notificationCount }}</span>
+                                @if($totalNotifCount > 0)
+                                <span class="ap-badge">{{ $totalNotifCount > 9 ? '9+' : $totalNotifCount }}</span>
                                 @endif
                             </button>
                         </div>
 
-                        {{-- Notification dropdown --}}
+                        {{-- Notification dropdown (all notifications) --}}
                         <div x-cloak x-show="open" @click.outside="open=false" class="ap-notif-dropdown">
                             <div class="p-3">
                                 <div class="flex items-center justify-between">
                                     <div class="text-sm font-semibold text-slate-700">
-                                        <span x-show="tab === 'messages'" x-cloak>{{ __('cases.navigation.messages') }}</span>
-                                        <span x-show="tab !== 'messages'" x-cloak>{{ __('app.Notifications') }}</span>
+                                        {{ __('app.Notifications') }}
                                     </div>
                                     @if($hasAnyNotifications)
                                     <form method="POST" action="{{ route('applicant.notifications.markAll') }}">
@@ -503,10 +491,17 @@ $respondentNotifList = collect();
                                     @endif
                                 </div>
 
-                                <div class="mt-3 space-y-2" x-show="tab === 'messages'" x-cloak>
-                                    @if($unseenMsgs->isEmpty())
-                                    <div class="text-sm text-slate-500">{{ __('cases.messages_section.no_messages') }}</div>
-                                    @else
+                                @if(!$hasAnyNotifications)
+                                <div class="mt-3 text-sm text-slate-500">{{ __('app.youre_all_caught_up') }}</div>
+                                @endif
+
+                                {{-- Messages --}}
+                                @if($unseenMsgs->isNotEmpty())
+                                <div class="mt-3 space-y-2">
+                                    <div class="mb-1 flex items-center justify-between">
+                                        <div class="text-xs font-medium text-slate-500">{{ __('cases.navigation.messages') }}</div>
+                                        <span class="text-[11px] rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">{{ $unseenMsgs->count() }}</span>
+                                    </div>
                                     <ul class="divide-y">
                                         @foreach($unseenMsgs as $m)
                                         @php
@@ -525,13 +520,11 @@ $respondentNotifList = collect();
                                         </li>
                                         @endforeach
                                     </ul>
-                                    @endif
                                 </div>
+                                @endif
 
-                                <div class="mt-3 space-y-3" x-show="tab === 'notifications'" x-cloak>
-                                    @if(!$hasOtherNotifications)
-                                    <div class="text-sm text-slate-500">{{ __('app.youre_all_caught_up') }}</div>
-                                    @else
+                                <div class="mt-3 space-y-3">
+                                    @if($hasOtherNotifications)
                                     @if($unseenHearings->isNotEmpty())
                                     <div>
                                         <div class="mb-1 flex items-center justify-between">
@@ -604,49 +597,6 @@ $respondentNotifList = collect();
                                 <div class="mt-3 border-t pt-2 flex items-center justify-between">
                                     <a href="{{ route('applicant.notifications.index') }}" class="text-xs text-slate-600 hover:text-slate-800">{{ __('app.View all') }}</a>
                                     <a href="{{ route('applicant.notifications.settings') }}" class="text-xs text-slate-600 hover:text-slate-800">{{ __('app.Settings') }}</a>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Message modal --}}
-                        <div x-cloak x-show="messageModal"
-                            x-transition:enter="motion-overlay-enter" x-transition:enter-start="motion-fade-start" x-transition:enter-end="motion-fade-end"
-                            x-transition:leave="motion-overlay-leave" x-transition:leave-start="motion-fade-end" x-transition:leave-end="motion-fade-start"
-                            @keydown.escape.window="messageModal=false"
-                            class="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
-                            <div class="absolute inset-0 bg-black/40" @click="messageModal=false"></div>
-                            <div class="relative w-full max-w-lg rounded-xl border border-slate-200 bg-white shadow-2xl">
-                                <div class="flex items-center justify-between border-b border-slate-100 px-5 py-3">
-                                    <h3 class="text-sm font-semibold text-slate-900">{{ __('cases.navigation.messages') }}</h3>
-                                    <button type="button" class="text-slate-400 hover:text-slate-700" @click="messageModal=false">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                    </button>
-                                </div>
-                                <div class="max-h-96 overflow-auto p-5 space-y-3">
-                                    @if($unseenMsgs->isEmpty())
-                                    <div class="text-sm text-slate-500">{{ __('cases.messages_section.no_messages') }}</div>
-                                    @else
-                                    <ul class="divide-y">
-                                        @foreach($unseenMsgs as $m)
-                                        @php
-                                        $legacyApplicantUpdate = 'Applicant updated the case details. Please review the submission.';
-                                        $displayBody = trim((string) $m->body) === $legacyApplicantUpdate ? __('cases.notifications.applicant_updated_submission') : (string) $m->body;
-                                        @endphp
-                                        <li class="py-2">
-                                            <div class="flex items-start gap-3">
-                                                <div class="flex-1">
-                                                    <a href="{{ route('applicant.cases.show', $m->case_id) }}" class="text-sm font-semibold text-slate-900 hover:text-blue-600">{{ $m->case_number }}</a>
-                                                    <p class="text-xs text-slate-500 mt-0.5">{{ \Illuminate\Support\Str::limit($displayBody, 90) }} <span class="text-slate-400">·</span> {{ \App\Support\EthiopianDate::smartRelative($m->created_at) }}</p>
-                                                </div>
-                                                <form method="POST" action="{{ route('applicant.notifications.markOne', ['type'=>'message','sourceId'=>$m->id]) }}">
-                                                    @csrf
-                                                    <button class="text-xs text-slate-700 px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">{{ __('app.Seen') }}</button>
-                                                </form>
-                                            </div>
-                                        </li>
-                                        @endforeach
-                                    </ul>
-                                    @endif
                                 </div>
                             </div>
                         </div>

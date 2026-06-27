@@ -1,50 +1,41 @@
-<x-applicant-layout title="{{ __('auth.reset_password_title') }}">
-    <div class="mx-auto max-w-md">
-        <div class="rounded-xl border bg-white p-6">
+<x-applicant-auth-layout
+    :title="__('auth.reset_password_title')"
+    :subtitle="__('auth.reset_password_subtitle')"
+    portal="applicant"
+    accent="orange"
+    login-route="applicant.login">
 
-            <h1 class="text-lg font-semibold">{{ __('auth.reset_password_title') }}</h1>
-            <p class="mt-1 text-sm text-slate-600">
-                {{ __('auth.reset_password_subtitle') }}
-            </p>
-
-            @if ($errors->any())
-            <div class="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
-                <ul class="list-disc ml-5">
-                    @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-            @endif
-
-            <form method="POST" action="{{ route('applicant.password.new.update') }}" class="mt-4 space-y-3">
-                @csrf
-
-                <div>
-                    <label class="block text-sm mb-1 font-medium text-slate-700">{{ __('auth.new_password') }}</label>
-                    <input type="password" name="password" required autofocus
-                        class="w-full rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400">
-                    @error('password')
-                    <div class="text-sm text-red-600 mt-1">{{ $message }}</div>
-                    @enderror
-                </div>
-
-                <div>
-                    <label class="block text-sm mb-1 font-medium text-slate-700">{{ __('auth.confirm_new_password') }}</label>
-                    <input type="password" name="password_confirmation" required
-                        class="w-full rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400">
-                </div>
-
-                <button class="w-full rounded-md bg-orange-500 px-4 py-2 text-white hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-400 transition-colors">
-                    {{ __('auth.reset_password_button') }}
-                </button>
-            </form>
-
-            <div class="mt-4 text-sm text-center">
-                <a href="{{ route('applicant.login') }}" class="text-slate-600 hover:text-slate-800">
-                    {{ __('auth.back_to_login') }}
-                </a>
-            </div>
-        </div>
+    @if ($errors->any())
+    <div class="auth-alert auth-alert-error mb-4">
+        <ul class="list-disc ml-5">
+            @foreach ($errors->all() as $error)
+            <li>{{ $error }}</li>
+            @endforeach
+        </ul>
     </div>
-</x-applicant-layout>
+    @endif
+
+    <form method="POST" action="{{ route('applicant.password.new.update') }}" class="space-y-4">
+        @csrf
+
+        <div>
+            <label class="auth-label" for="password">{{ __('auth.new_password') }}</label>
+            <input id="password" type="password" name="password" required autofocus autocomplete="new-password" class="auth-input">
+            @error('password')
+            <div class="mt-1 text-xs text-red-600">{{ $message }}</div>
+            @enderror
+        </div>
+
+        <div>
+            <label class="auth-label" for="password_confirmation">{{ __('auth.confirm_new_password') }}</label>
+            <input id="password_confirmation" type="password" name="password_confirmation" required autocomplete="new-password" class="auth-input">
+            @error('password_confirmation')
+            <div class="mt-1 text-xs text-red-600">{{ $message }}</div>
+            @enderror
+        </div>
+
+        <button type="submit" class="auth-primary-btn">
+            {{ __('auth.reset_password_button') }}
+        </button>
+    </form>
+</x-applicant-auth-layout>

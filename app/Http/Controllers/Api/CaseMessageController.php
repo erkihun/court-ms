@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Applicant;
 use App\Models\CourtCase;
 use App\Models\User;
+use App\Services\ResponseNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -58,14 +59,18 @@ class CaseMessageController extends Controller
         if ($actor instanceof Applicant) {
             abort_unless((int) $case->applicant_id === (int) $actor->id, 403, 'Not your case.');
             $payload['sender_applicant_id'] = $actor->id;
+            $senderLabel = __('cases.summary.applicant');
         } elseif ($actor instanceof User) {
             abort_unless($actor->canDo('cases.view'), 403, 'Not authorized to message on this case.');
             $payload['sender_user_id'] = $actor->id;
+            $senderLabel = __('cases.court_staff');
         } else {
             abort(403, 'Not authorized to message on this case.');
         }
 
         $id = DB::table('case_messages')->insertGetId($payload);
+
+        ResponseNotificationService::notifyCaseMessagePosted((int) $case->id, $senderLabel, $data['body']);
 
         return response()->json([
             'ok' => true,

@@ -22,7 +22,9 @@ class RespondentViewedCaseMail extends Mailable
     public function build()
     {
         $caseNumber = $this->case->case_number ?? '';
-        return $this->subject("Respondent viewed case {$caseNumber}")
+        return $this->subject(__('notifications.mail.respondent_viewed_case_subject', [
+            'case' => $caseNumber,
+        ]))
             ->view('mail.respondent_case_viewed');
     }
 }

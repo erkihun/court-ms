@@ -1,27 +1,29 @@
-<x-guest-layout>
-    <div class="mb-4 text-sm text-gray-600">
-        {{ __('auth.confirm_password_description') }}
-    </div>
+<x-applicant-auth-layout
+    :title="__('auth.confirm_password')"
+    :subtitle="__('auth.confirm_password_description')"
+    portal="admin"
+    accent="blue"
+    login-route="login">
 
-    <form method="POST" action="{{ route('password.confirm') }}">
+    @if ($errors->any())
+    <div class="auth-alert auth-alert-error mb-4">
+        {{ $errors->first() }}
+    </div>
+    @endif
+
+    <form method="POST" action="{{ route('password.confirm') }}" class="space-y-4">
         @csrf
 
-        <!-- Password -->
         <div>
-            <x-input-label for="password" :value="__('auth.password')" />
-
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
-
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+            <label for="password" class="auth-label">{{ __('auth.password') }}</label>
+            <input id="password" class="auth-input" type="password" name="password" required autocomplete="current-password" autofocus>
+            @error('password')
+            <div class="mt-1 text-xs text-red-600">{{ $message }}</div>
+            @enderror
         </div>
 
-        <div class="flex justify-end mt-4">
-            <x-primary-button>
-                {{ __('auth.confirm') }}
-            </x-primary-button>
-        </div>
+        <button type="submit" class="auth-primary-btn">
+            {{ __('auth.confirm') }}
+        </button>
     </form>
-</x-guest-layout>
+</x-applicant-auth-layout>

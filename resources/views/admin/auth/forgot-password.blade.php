@@ -1,22 +1,35 @@
-<x-guest-layout>
-    <div class="mb-4 text-sm text-gray-600">
-        {{ __('auth.forgot_password_description') }}
-    </div>
+<x-applicant-auth-layout
+    :title="__('auth.forgot_password_title')"
+    :subtitle="__('auth.forgot_password_description')"
+    portal="admin"
+    accent="blue"
+    login-route="login">
 
-    <form method="POST" action="{{ route('password.email') }}">
+    @if (session('status'))
+    <div class="auth-alert auth-alert-success mb-4">
+        {{ session('status') }}
+    </div>
+    @endif
+
+    @if ($errors->any())
+    <div class="auth-alert auth-alert-error mb-4">
+        {{ $errors->first() }}
+    </div>
+    @endif
+
+    <form method="POST" action="{{ route('password.email') }}" class="space-y-4">
         @csrf
 
-        <!-- Email Address -->
         <div>
-            <x-input-label for="email" :value="__('auth.email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+            <label for="email" class="auth-label">{{ __('auth.email') }}</label>
+            <input id="email" class="auth-input" type="email" name="email" value="{{ old('email') }}" required autofocus>
+            @error('email')
+            <div class="mt-1 text-xs text-red-600">{{ $message }}</div>
+            @enderror
         </div>
 
-        <div class="flex items-center justify-end mt-4">
-            <x-primary-button>
-                {{ __('auth.send_reset_link') }}
-            </x-primary-button>
-        </div>
+        <button type="submit" class="auth-primary-btn">
+            {{ __('auth.send_reset_link') }}
+        </button>
     </form>
-</x-guest-layout>
+</x-applicant-auth-layout>

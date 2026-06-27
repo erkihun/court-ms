@@ -15,6 +15,7 @@ return [
     'tab_security'      => 'Security',
     'tab_appearance'    => 'Appearance',
     'tab_notifications' => 'Notifications',
+    'tab_data_management' => 'Data Management',
     'tab_api'           => 'API & Access',
 
     // ── General ──────────────────────────────────────────────
@@ -116,7 +117,11 @@ return [
     'from_name'             => 'From Name',
     'log_debug'             => 'Log (debug only)',
     'telegram_bot'          => 'Telegram Bot',
-    'telegram_hint'         => 'Create a bot via @BotFather on Telegram to get a token, then add the bot to your notification channel and copy the Chat ID.',
+    'telegram_hint'         => 'Create a bot via @BotFather on Telegram to get a token, then add the bot to your notification group and copy the Chat ID. The group receives all case notifications except OTP, password reset, and email verification messages.',
+    'enable_telegram'       => 'Enable Telegram Bot',
+    'enable_telegram_desc'  => 'Turn this on to send group alerts through the configured bot and chat ID.',
+    'on'                    => 'ON',
+    'off'                   => 'OFF',
     'bot_token'             => 'Bot Token',
     'bot_token_hint'        => 'Format: BOT_ID:SECRET_KEY',
     'default_chat_id'       => 'Default Chat ID',
@@ -155,6 +160,23 @@ return [
     'cache_hint'            => 'Settings cache is cleared automatically on save. Use this to manually flush application and view caches.',
     'clear_caches'          => 'Clear All Caches',
     'clear_caches_confirm'  => 'Clear all application caches?',
+
+    // Data Management
+    'data_overview'           => 'Data Overview',
+    'data_overview_hint'      => 'Read-only database details for support, backups, and deployment checks.',
+    'backup_database'         => 'Backup Database',
+    'backup_database_hint'    => 'Downloads the current database as a SQL backup for MySQL, or the raw SQLite database file for SQLite.',
+    'download_backup'         => 'Download Backup',
+    'download_backup_confirm' => 'Download a backup of the current database?',
+    'backup_unsupported'      => 'Database backup downloads are only supported for MySQL and SQLite connections.',
+    'backup_supported'        => 'Backup Supported',
+    'backup_not_supported'    => 'Backup Not Supported',
+    'data_driver'             => 'Driver',
+    'data_connection'         => 'Connection',
+    'data_database'           => 'Database',
+    'data_tables'             => 'Tables',
+    'data_size'               => 'Estimated Size',
+    'data_migration_batch'    => 'Migration Batch',
 
     // ── Save bar ─────────────────────────────────────────────
     'save_hint'             => 'Changes apply immediately. Cache cleared automatically on save.',

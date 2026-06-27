@@ -19,6 +19,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use App\Mail\CaseMessageMail;
 use App\Mail\ApplicantReceiptMail;
+use App\Services\ResponseNotificationService;
 use Mews\Purifier\Facades\Purifier;
 use App\Models\CourtCase;
 
@@ -284,6 +285,8 @@ class ApplicantCaseController extends Controller
             }
 
             DB::commit();
+
+            ResponseNotificationService::notifyApplicantCaseCreated($caseId);
 
             return redirect()
                 ->route('applicant.cases.show', $caseId)
@@ -959,13 +962,15 @@ class ApplicantCaseController extends Controller
 
         if ($to) {
             $preview = mb_strimwidth($data['body'], 0, 180, '...');
-            Mail::to($to)->send(new CaseMessageMail($caseRow, 'Applicant', $preview));
+            Mail::to($to)->send(new CaseMessageMail($caseRow, __('cases.summary.applicant'), $preview));
         }
 
         $this->logCaseAudit($id, 'message_posted', [
             'by'   => 'applicant',
             'body' => mb_strimwidth($data['body'], 0, 200, '...'),
         ]);
+
+        ResponseNotificationService::notifyCaseMessagePosted((int) $id, __('cases.summary.applicant'), $data['body']);
 
         return back()->with('success', 'Message sent.');
     }
@@ -1049,8 +1054,12 @@ class ApplicantCaseController extends Controller
 
         $escape = fn($t) => str_replace(["\\", ";", ","], ["\\\\", "\;", "\,"], $t ?? '');
 
-        $summary     = $escape('Court Hearing: ' . ($case->case_number ?? ''));
-        $description = $escape(($case->title ?? '') . ' — Please arrive early with any documents.');
+        $summary     = $escape(__('notifications.mail.hearing_calendar_summary', [
+            'case' => $case->case_number ?? '',
+        ]));
+        $description = $escape(__('notifications.mail.hearing_calendar_description', [
+            'title' => $case->title ?? '',
+        ]));
         $location    = $escape($hearing->location ?? '');
 
         $ics = implode("\r\n", [
@@ -1254,9 +1263,11 @@ class ApplicantCaseController extends Controller
             }
             $to = $to ?: config('mail.from.address');
 
+            ResponseNotificationService::notifyApplicantCaseUpdated((int) $case->id);
+
             if ($to) {
                 $preview = mb_strimwidth($body, 0, 180, '...');
-                Mail::to($to)->send(new CaseMessageMail($case, 'Applicant', $preview));
+                Mail::to($to)->send(new CaseMessageMail($case, __('cases.summary.applicant'), $preview));
             }
         } catch (\Throwable $e) {
             Log::error('Failed sending admin update notification', [

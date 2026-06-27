@@ -15,6 +15,7 @@ return [
     'tab_security'      => 'ደህንነት',
     'tab_appearance'    => 'ገጽታ',
     'tab_notifications' => 'ማሳወቂያዎች',
+    'tab_data_management' => 'የውሂብ አስተዳደር',
     'tab_api'           => 'ኤፒአይ እና መዳረሻ',
 
     // ── General ──────────────────────────────────────────────
@@ -116,7 +117,11 @@ return [
     'from_name'             => 'ከ ስም',
     'log_debug'             => 'ሎግ (ለሙከራ ብቻ)',
     'telegram_bot'          => 'ቴሌግራም ቦት',
-    'telegram_hint'         => 'ቶከን ለማግኘት በቴሌግራም @BotFather በኩል ቦት ፍጠሩ፣ ቦቱን ወደ ማሳወቂያ ቻናልዎ ይጨምሩ እና Chat ID ን ይቅዱ።',
+    'telegram_hint'         => 'ቶከን ለማግኘት በቴሌግራም @BotFather በኩል ቦት ፍጠሩ፣ ቦቱን ወደ ማሳወቂያ ቡድንዎ ይጨምሩ እና Chat ID ን ይቅዱ። ቡድኑ OTP፣ የይለፍ ቃል ማስጀመሪያ እና የኢሜይል ማረጋገጫ መልዕክቶችን በስተቀር ሁሉንም የጉዳይ ማሳወቂያዎች ይቀበላል።',
+    'enable_telegram'       => 'ቴሌግራም ቦት አንቃ',
+    'enable_telegram_desc'  => 'በተዋቀረው ቦት እና Chat ID የቡድን ማሳወቂያዎችን ለመላክ ይህን ያብሩ።',
+    'on'                    => 'ON',
+    'off'                   => 'OFF',
     'bot_token'             => 'የቦት ቶከን',
     'bot_token_hint'        => 'ቅርጸት፡ BOT_ID:SECRET_KEY',
     'default_chat_id'       => 'ነባሪ Chat ID',
@@ -155,6 +160,23 @@ return [
     'cache_hint'            => 'የቅንብሮች ካሽ ሲቀመጡ ራሱ ይጸዳል። ሙሉ የወደ መተግበሪያ እና ቅጽ ካሽዎችን ለማጽዳት ይጠቀሙ።',
     'clear_caches'          => 'ሁሉንም ካሽ አጽዳ',
     'clear_caches_confirm'  => 'ሁሉንም የወደ መተግበሪያ ካሽዎች ይጸዳ?',
+
+    // Data Management
+    'data_overview'           => 'የውሂብ አጠቃላይ እይታ',
+    'data_overview_hint'      => 'ለድጋፍ፣ ለባክአፕ እና ለዝርጋታ ማረጋገጫ የሚጠቅሙ ንባብ-ብቻ የዳታቤዝ ዝርዝሮች።',
+    'backup_database'         => 'ዳታቤዝ ባክአፕ',
+    'backup_database_hint'    => 'የአሁኑን ዳታቤዝ ለMySQL እንደ SQL ባክአፕ፣ ለSQLite ደግሞ እንደ የዳታቤዝ ፋይል ያወርዳል።',
+    'download_backup'         => 'ባክአፕ አውርድ',
+    'download_backup_confirm' => 'የአሁኑን ዳታቤዝ ባክአፕ ማውረድ ይፈልጋሉ?',
+    'backup_unsupported'      => 'የዳታቤዝ ባክአፕ ማውረድ ለMySQL እና SQLite ግንኙነቶች ብቻ ይደገፋል።',
+    'backup_supported'        => 'ባክአፕ ይደገፋል',
+    'backup_not_supported'    => 'ባክአፕ አይደገፍም',
+    'data_driver'             => 'ድራይቨር',
+    'data_connection'         => 'ግንኙነት',
+    'data_database'           => 'ዳታቤዝ',
+    'data_tables'             => 'ሰንጠረዦች',
+    'data_size'               => 'የተገመተ መጠን',
+    'data_migration_batch'    => 'የማይግሬሽን ባች',
 
     // ── Save bar ─────────────────────────────────────────────
     'save_hint'             => 'ለውጦች ወዲያው ተፈፃሚ ይሆናሉ። ካሽ ሲቀምጡ ራሱ ይጸዳል።',
