@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Applicant;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\Applicant;
 use App\Models\SystemSetting;
 use Illuminate\Http\Request;
@@ -30,27 +29,27 @@ class ApplicantAuthController extends Controller
         // Normalize National ID early: keep only digits
         if ($request->filled('national_id_number')) {
             $request->merge([
-                'national_id_number' => preg_replace('/\D/', '', $request->input('national_id_number'))
+                'national_id_number' => preg_replace('/\D/', '', $request->input('national_id_number')),
             ]);
         }
 
         $data = $request->validate([
-            'first_name'         => ['required', 'string', 'max:100'],
-            'middle_name'        => ['required', 'string', 'max:100'],
-            'last_name'          => ['required', 'string', 'max:100'],
-            'gender'             => ['required', Rule::in(['male', 'female'])],
-            'position'           => ['required', 'string', 'max:150'],
-            'organization_name'  => ['required', 'string', 'max:150'],
-            'phone'              => ['required', 'string', 'max:30', 'unique:applicants,phone'],
-            'email'              => ['required', 'email', 'max:255', 'unique:applicants,email'],
-            'address'            => ['required', 'string', 'max:255'],
-            'is_lawyer'          => ['required', 'boolean'],
-            'lawyer_document'    => ['nullable', 'required_if:is_lawyer,1', 'file', 'mimes:pdf', 'max:1024'],
+            'first_name' => ['required', 'string', 'max:100'],
+            'middle_name' => ['required', 'string', 'max:100'],
+            'last_name' => ['required', 'string', 'max:100'],
+            'gender' => ['required', Rule::in(['male', 'female'])],
+            'position' => ['required', 'string', 'max:150'],
+            'organization_name' => ['required', 'string', 'max:150'],
+            'phone' => ['required', 'string', 'max:30', 'unique:applicants,phone'],
+            'email' => ['required', 'email', 'max:255', 'unique:applicants,email'],
+            'address' => ['required', 'string', 'max:255'],
+            'is_lawyer' => ['required', 'boolean'],
+            'lawyer_document' => ['nullable', 'required_if:is_lawyer,1', 'file', 'mimes:pdf', 'max:1024'],
 
             // normalized (digits-only) National ID
             'national_id_number' => ['required', 'string', 'bail', 'regex:/^\d{16}$/', 'unique:applicants,national_id_number'],
 
-            'password'           => ['required', 'confirmed', 'min:6'],
+            'password' => ['required', 'confirmed', 'min:6'],
         ], [
             'national_id_number.regex' => 'National ID must be exactly 16 digits.',
             'lawyer_document.required_if' => 'Please attach a document to verify your lawyer credentials.',
@@ -78,14 +77,21 @@ class ApplicantAuthController extends Controller
 
         session([
             'pending_applicant_id' => $applicant->id,
-            'otp_code'             => hash('sha256', $otp),
-            'otp_expires_at'       => now()->addMinutes(10)->timestamp,
+            'otp_code' => hash('sha256', $otp),
+            'otp_expires_at' => now()->addMinutes(10)->timestamp,
         ]);
 
-        $applicant->notify(new \App\Notifications\ApplicantEmailOtp($otp));
+        try {
+            $applicant->notify(new \App\Notifications\ApplicantEmailOtp($otp));
+        } catch (\Throwable $e) {
+            Log::error('[Register] OTP send failed: '.$e->getMessage());
+
+            return redirect()->route('applicant.verify-otp.show')
+                ->withErrors(['code' => __('auth.reset_code_send_failed')]);
+        }
 
         return redirect()->route('applicant.verify-otp.show')
-            ->with('info', 'A 6-digit verification code has been sent to ' . $applicant->email . '.');
+            ->with('info', 'A 6-digit verification code has been sent to '.$applicant->email.'.');
     }
 
     public function showLogin()
@@ -93,6 +99,7 @@ class ApplicantAuthController extends Controller
         // Always reset acting-as flag on login screen
         session()->forget('acting_as_respondent');
         $asRespondentNav = request('login_as') === 'respondent';
+
         return response()
             ->view('applicant.auth.login', compact('asRespondentNav'))
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
@@ -102,12 +109,12 @@ class ApplicantAuthController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email'    => ['required', 'email'],
+            'email' => ['required', 'email'],
             'password' => ['required'],
         ]);
 
         $existing = Applicant::where('email', $credentials['email'])->first();
-        if ($existing && !$existing->is_active) {
+        if ($existing && ! $existing->is_active) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'errors' => ['email' => ['Your account has been deactivated.']],
@@ -121,11 +128,11 @@ class ApplicantAuthController extends Controller
 
         $remember = $request->boolean('remember');
 
-        $loginSettings = Cache::remember('system_settings', 3600, fn() => SystemSetting::query()->first());
-        $maxAttempts   = $loginSettings?->login_max_attempts ?? 5;
-        $lockoutSecs   = ($loginSettings?->lockout_minutes ?? 15) * 60;
+        $loginSettings = Cache::remember('system_settings', 3600, fn () => SystemSetting::query()->first());
+        $maxAttempts = $loginSettings?->login_max_attempts ?? 5;
+        $lockoutSecs = ($loginSettings?->lockout_minutes ?? 15) * 60;
 
-        $throttleKey = Str::lower($credentials['email']) . '|' . $request->ip();
+        $throttleKey = Str::lower($credentials['email']).'|'.$request->ip();
         if (RateLimiter::tooManyAttempts($throttleKey, $maxAttempts)) {
             $seconds = RateLimiter::availableIn($throttleKey);
             $message = trans('auth.throttle', [
@@ -150,7 +157,7 @@ class ApplicantAuthController extends Controller
         // 1) If logging in as respondent, ensure an applicant record exists and log in
         if ($isRespondentMode) {
             $applicant = Applicant::where('email', $credentials['email'])->first();
-            if (!$applicant) {
+            if (! $applicant) {
                 $applicant = Applicant::create([
                     'first_name' => $existing?->first_name ?? '',
                     'middle_name' => $existing?->middle_name ?? '',
@@ -158,7 +165,7 @@ class ApplicantAuthController extends Controller
                     'gender' => $existing?->gender ?? null,
                     'position' => $existing?->position ?? '',
                     'organization_name' => $existing?->organization_name ?? '',
-                    'phone' => $existing?->phone ?? ('resp_' . uniqid()),
+                    'phone' => $existing?->phone ?? ('resp_'.uniqid()),
                     'email' => $credentials['email'],
                     'address' => $existing?->address ?? '',
                     'national_id_number' => $existing?->national_id_number ?? '',
@@ -173,6 +180,7 @@ class ApplicantAuthController extends Controller
                 $request->session()->put('acting_as_respondent', true);
                 RateLimiter::clear($throttleKey);
                 $target = route('respondent.dashboard');
+
                 return $request->expectsJson()
                     ? response()->json(['redirect' => $target, 'message' => 'Signed in.'])
                     : redirect($target)->with('success', 'Signed in.');
@@ -185,6 +193,7 @@ class ApplicantAuthController extends Controller
             $request->session()->forget('acting_as_respondent');
             RateLimiter::clear($throttleKey);
             $target = route('applicant.dashboard');
+
             return $request->expectsJson()
                 ? response()->json(['redirect' => $target, 'message' => 'Signed in.'])
                 : redirect($target)->with('success', 'Signed in.');

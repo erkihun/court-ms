@@ -3,12 +3,11 @@
 namespace App\Http\Controllers\Applicant;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\Applicant;
 use App\Notifications\ApplicantEmailOtp;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Facades\Log;
 
 class ApplicantVerificationController extends Controller
@@ -18,9 +17,10 @@ class ApplicantVerificationController extends Controller
     {
         $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         session([
-            'email_otp'            => hash('sha256', $otp),
+            'email_otp' => hash('sha256', $otp),
             'email_otp_expires_at' => now()->addMinutes($ttlMinutes)->timestamp,
         ]);
+
         return $otp;
     }
 
@@ -30,7 +30,7 @@ class ApplicantVerificationController extends Controller
         /** @var Applicant|null $user */
         $user = $request->user('applicant');
 
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('applicant.login');
         }
         if ($user->hasVerifiedEmail()) {
@@ -38,12 +38,15 @@ class ApplicantVerificationController extends Controller
         }
 
         // Only send a new OTP when there is no unexpired one already in session
-        if (!session('email_otp') || now()->timestamp > session('email_otp_expires_at', 0)) {
+        if (! session('email_otp') || now()->timestamp > session('email_otp_expires_at', 0)) {
             try {
                 $otp = $this->generateOtp();
                 $user->notify(new ApplicantEmailOtp($otp));
             } catch (\Throwable $e) {
-                Log::error('[VerifyEmail] OTP send failed: ' . $e->getMessage());
+                // The code was never delivered — clear it so the next visit retries
+                // instead of silently skipping for the whole TTL window.
+                session()->forget(['email_otp', 'email_otp_expires_at']);
+                Log::error('[VerifyEmail] OTP send failed: '.$e->getMessage());
             }
         }
 
@@ -56,7 +59,7 @@ class ApplicantVerificationController extends Controller
         /** @var Applicant|null $user */
         $user = $request->user('applicant');
 
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('applicant.login');
         }
         if ($user->hasVerifiedEmail()) {
@@ -66,9 +69,12 @@ class ApplicantVerificationController extends Controller
         try {
             $otp = $this->generateOtp();
             $user->notify(new ApplicantEmailOtp($otp));
+
             return back()->with('success', 'A new verification code has been sent to your email.');
         } catch (\Throwable $e) {
-            Log::error('[VerifyEmail] OTP resend failed: ' . $e->getMessage());
+            session()->forget(['email_otp', 'email_otp_expires_at']);
+            Log::error('[VerifyEmail] OTP resend failed: '.$e->getMessage());
+
             return back()->withErrors(['code' => 'Could not send the code. Please try again.']);
         }
     }
@@ -81,7 +87,7 @@ class ApplicantVerificationController extends Controller
         /** @var Applicant|null $user */
         $user = $request->user('applicant');
 
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('applicant.login');
         }
         if ($user->hasVerifiedEmail()) {
@@ -89,9 +95,9 @@ class ApplicantVerificationController extends Controller
         }
 
         $storedHash = session('email_otp');
-        $expiresAt  = session('email_otp_expires_at');
+        $expiresAt = session('email_otp_expires_at');
 
-        if (!$storedHash || !$expiresAt) {
+        if (! $storedHash || ! $expiresAt) {
             return redirect()->route('applicant.verification.notice')
                 ->withErrors(['code' => 'No active code found. A new one has been sent.']);
         }
@@ -100,7 +106,7 @@ class ApplicantVerificationController extends Controller
             return back()->withErrors(['code' => 'This code has expired. Please request a new one.']);
         }
 
-        if (!hash_equals($storedHash, hash('sha256', $request->input('code')))) {
+        if (! hash_equals($storedHash, hash('sha256', $request->input('code')))) {
             return back()->withErrors(['code' => 'Invalid verification code. Please try again.']);
         }
 
@@ -117,7 +123,7 @@ class ApplicantVerificationController extends Controller
     {
         Auth::shouldUse('applicant');
 
-        if ($request->user() && !$request->user()->hasVerifiedEmail()) {
+        if ($request->user() && ! $request->user()->hasVerifiedEmail()) {
             $request->fulfill();
         }
 
@@ -127,7 +133,7 @@ class ApplicantVerificationController extends Controller
     /** Show the OTP entry form (for new registrations). */
     public function showOtp(Request $request)
     {
-        if (!session('pending_applicant_id')) {
+        if (! session('pending_applicant_id')) {
             return redirect()->route('applicant.register');
         }
 
@@ -139,11 +145,11 @@ class ApplicantVerificationController extends Controller
     {
         $request->validate(['code' => ['required', 'digits:6']]);
 
-        $pendingId  = session('pending_applicant_id');
+        $pendingId = session('pending_applicant_id');
         $storedHash = session('otp_code');
-        $expiresAt  = session('otp_expires_at');
+        $expiresAt = session('otp_expires_at');
 
-        if (!$pendingId || !$storedHash || !$expiresAt) {
+        if (! $pendingId || ! $storedHash || ! $expiresAt) {
             return redirect()->route('applicant.register')
                 ->withErrors(['code' => 'Session expired. Please register again.']);
         }
@@ -152,13 +158,14 @@ class ApplicantVerificationController extends Controller
             return back()->withErrors(['code' => 'This code has expired. Please request a new one.']);
         }
 
-        if (!hash_equals($storedHash, hash('sha256', $request->input('code')))) {
+        if (! hash_equals($storedHash, hash('sha256', $request->input('code')))) {
             return back()->withErrors(['code' => 'Invalid verification code. Please try again.']);
         }
 
         $applicant = Applicant::find($pendingId);
-        if (!$applicant) {
+        if (! $applicant) {
             session()->forget(['pending_applicant_id', 'otp_code', 'otp_expires_at']);
+
             return redirect()->route('applicant.register')
                 ->withErrors(['code' => 'Account not found. Please register again.']);
         }
@@ -179,23 +186,29 @@ class ApplicantVerificationController extends Controller
     public function resendOtp(Request $request)
     {
         $pendingId = session('pending_applicant_id');
-        if (!$pendingId) {
+        if (! $pendingId) {
             return redirect()->route('applicant.register');
         }
 
         $applicant = Applicant::find($pendingId);
-        if (!$applicant) {
+        if (! $applicant) {
             return redirect()->route('applicant.register');
         }
 
         $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
         session([
-            'otp_code'       => hash('sha256', $otp),
+            'otp_code' => hash('sha256', $otp),
             'otp_expires_at' => now()->addMinutes(10)->timestamp,
         ]);
 
-        $applicant->notify(new ApplicantEmailOtp($otp));
+        try {
+            $applicant->notify(new ApplicantEmailOtp($otp));
+        } catch (\Throwable $e) {
+            Log::error('[Register] OTP resend failed: '.$e->getMessage());
+
+            return back()->withErrors(['code' => __('auth.reset_code_send_failed')]);
+        }
 
         return back()->with('success', 'A new verification code has been sent to your email.');
     }

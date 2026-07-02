@@ -31,12 +31,25 @@ class PasswordResetLinkController extends Controller
             $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
             session([
-                'admin_pwd_otp_email'   => $request->email,
-                'admin_pwd_otp_code'    => hash('sha256', $otp),
+                'admin_pwd_otp_email' => $request->email,
+                'admin_pwd_otp_code' => hash('sha256', $otp),
                 'admin_pwd_otp_expires' => now()->addMinutes(10)->timestamp,
             ]);
 
-            $user->notify(new PasswordResetOtp($otp));
+            try {
+                $user->notify(new PasswordResetOtp($otp));
+            } catch (\Throwable $e) {
+                session()->forget(['admin_pwd_otp_email', 'admin_pwd_otp_code', 'admin_pwd_otp_expires']);
+
+                \Log::warning('Admin password reset OTP email failed', [
+                    'email' => $request->email,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return back()
+                    ->withInput($request->only('email'))
+                    ->withErrors(['email' => __('auth.reset_code_send_failed')]);
+            }
         }
 
         return redirect()->route('admin.password.otp.show')
@@ -47,7 +60,7 @@ class PasswordResetLinkController extends Controller
 
     public function showOtp()
     {
-        if (!session('admin_pwd_otp_email')) {
+        if (! session('admin_pwd_otp_email')) {
             return redirect()->route('password.request');
         }
 
@@ -63,11 +76,11 @@ class PasswordResetLinkController extends Controller
     {
         $request->validate(['code' => ['required', 'digits:6']]);
 
-        $email      = session('admin_pwd_otp_email');
+        $email = session('admin_pwd_otp_email');
         $storedHash = session('admin_pwd_otp_code');
-        $expiresAt  = session('admin_pwd_otp_expires');
+        $expiresAt = session('admin_pwd_otp_expires');
 
-        if (!$email || !$storedHash || !$expiresAt) {
+        if (! $email || ! $storedHash || ! $expiresAt) {
             return redirect()->route('password.request')
                 ->withErrors(['code' => 'Session expired. Please start again.']);
         }
@@ -76,7 +89,7 @@ class PasswordResetLinkController extends Controller
             return back()->withErrors(['code' => 'This code has expired. Please request a new one.']);
         }
 
-        if (!hash_equals($storedHash, hash('sha256', $request->input('code')))) {
+        if (! hash_equals($storedHash, hash('sha256', $request->input('code')))) {
             return back()->withErrors(['code' => 'Invalid code. Please try again.']);
         }
 
@@ -93,7 +106,7 @@ class PasswordResetLinkController extends Controller
     {
         $email = session('admin_pwd_otp_email');
 
-        if (!$email) {
+        if (! $email) {
             return redirect()->route('password.request');
         }
 
@@ -103,11 +116,20 @@ class PasswordResetLinkController extends Controller
             $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
             session([
-                'admin_pwd_otp_code'    => hash('sha256', $otp),
+                'admin_pwd_otp_code' => hash('sha256', $otp),
                 'admin_pwd_otp_expires' => now()->addMinutes(10)->timestamp,
             ]);
 
-            $user->notify(new PasswordResetOtp($otp));
+            try {
+                $user->notify(new PasswordResetOtp($otp));
+            } catch (\Throwable $e) {
+                \Log::warning('Admin password reset OTP resend failed', [
+                    'email' => $email,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return back()->withErrors(['code' => __('auth.reset_code_send_failed')]);
+            }
         }
 
         return back()->with('success', 'A new code has been sent to your email.');
