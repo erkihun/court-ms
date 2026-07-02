@@ -67,7 +67,7 @@ return [
     'password_optional_hint' => 'Password optional hint',
     'phone' => 'Phone',
     'phone_hint' => ':min–:max digits (local number without leading 0)',
-    'please_fix_errors' => 'Please fix the following:',
+    'please_fix_errors' => 'Please fix the errors highlighted below.',
     'position' => 'Position',
     'powered_by' => 'Powered by :brand',
     'profile' => [
@@ -92,6 +92,8 @@ return [
     'reset_code_sent_if_exists' => 'If that email exists, a 6-digit reset code has been sent.',
     'reset_code_sent' => 'A 6-digit reset code has been sent to your email.',
     'email_not_found' => 'This email address was not found. Please check and try again.',
+    'national_id_must_be_16' => 'National ID must be exactly 16 digits.',
+    'lawyer_document_required' => 'Please attach a document to verify your lawyer credentials.',
     'reset_password_subtitle' => 'Enter your new password below.',
     'reset_password_title' => 'Reset Password',
     'respondent_panel_label' => 'Respondent Login Panel',

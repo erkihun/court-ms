@@ -52,8 +52,8 @@ class ApplicantAuthController extends Controller
 
             'password' => ['required', 'confirmed', 'min:6'],
         ], [
-            'national_id_number.regex' => 'National ID must be exactly 16 digits.',
-            'lawyer_document.required_if' => 'Please attach a document to verify your lawyer credentials.',
+            'national_id_number.regex' => __('auth.national_id_must_be_16'),
+            'lawyer_document.required_if' => __('auth.lawyer_document_required'),
         ]);
 
         $isLawyer = (bool) $data['is_lawyer'];

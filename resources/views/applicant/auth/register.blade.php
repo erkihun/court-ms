@@ -63,11 +63,7 @@ $noText             = __('auth.no');
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
                         d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
                 </svg>
-                <ul class="ar-alert-list">
-                    @foreach ($errors->all() as $e)
-                    <li>{{ $e }}</li>
-                    @endforeach
-                </ul>
+                <span>{{ __('auth.please_fix_errors') }}</span>
             </div>
             @endif
 
@@ -92,12 +88,19 @@ $noText             = __('auth.no');
                             {{ $noText }}
                         </label>
                     </div>
+                    @error('is_lawyer')
+                    <p class="ar-error">{{ $message }}</p>
+                    @enderror
 
                     <div x-show="isLawyer === '1'" x-cloak class="ar-field" style="margin-top: 1rem;">
                         <label class="ar-label">{{ __('auth.lawyer_document') }}</label>
                         <input type="file" name="lawyer_document" accept=".pdf"
-                            class="ar-input" x-bind:required="isLawyer === '1'">
+                            class="ar-input @error('lawyer_document') ar-input-error @enderror" x-bind:required="isLawyer === '1'">
+                        @error('lawyer_document')
+                        <p class="ar-error">{{ $message }}</p>
+                        @else
                         <p class="ar-hint">{{ __('auth.lawyer_document_hint') }}</p>
+                        @enderror
                     </div>
                 </div>
 
@@ -108,30 +111,34 @@ $noText             = __('auth.no');
                     <div class="ar-grid-3">
                         <div class="ar-field">
                             <label class="ar-label">{{ __('auth.first_name') }}</label>
-                            <input name="first_name" value="{{ old('first_name') }}" required class="ar-input">
+                            <input name="first_name" value="{{ old('first_name') }}" required class="ar-input @error('first_name') ar-input-error @enderror">
+                            @error('first_name')<p class="ar-error">{{ $message }}</p>@enderror
                         </div>
                         <div class="ar-field">
                             <label class="ar-label">{{ __('auth.middle_name') }}</label>
-                            <input name="middle_name" value="{{ old('middle_name') }}" required class="ar-input">
+                            <input name="middle_name" value="{{ old('middle_name') }}" required class="ar-input @error('middle_name') ar-input-error @enderror">
+                            @error('middle_name')<p class="ar-error">{{ $message }}</p>@enderror
                         </div>
                         <div class="ar-field">
                             <label class="ar-label">{{ __('auth.last_name') }}</label>
-                            <input name="last_name" value="{{ old('last_name') }}" required class="ar-input">
+                            <input name="last_name" value="{{ old('last_name') }}" required class="ar-input @error('last_name') ar-input-error @enderror">
+                            @error('last_name')<p class="ar-error">{{ $message }}</p>@enderror
                         </div>
                     </div>
 
                     <div class="ar-grid-3">
                         <div class="ar-field">
                             <label class="ar-label">{{ __('auth.gender') }}</label>
-                            <select name="gender" class="ar-input ar-select">
+                            <select name="gender" class="ar-input ar-select @error('gender') ar-input-error @enderror">
                                 <option value="">{{ __('auth.select_option') }}</option>
                                 <option value="male"   @selected(old('gender') === 'male')>{{ __('auth.male') }}</option>
                                 <option value="female" @selected(old('gender') === 'female')>{{ __('auth.female') }}</option>
                             </select>
+                            @error('gender')<p class="ar-error">{{ $message }}</p>@enderror
                         </div>
                         <div class="ar-field">
                             <label class="ar-label">{{ __('auth.phone') }}</label>
-                            <div class="ar-phone-wrap">
+                            <div class="ar-phone-wrap @error('phone') ar-input-error @enderror">
                                 <span class="ar-phone-prefix">
                                     <span class="fi fi-et"></span>
                                     +251
@@ -146,7 +153,11 @@ $noText             = __('auth.no');
                                 <input type="hidden" name="phone" id="phone_hidden"
                                     value="{{ old('phone') }}">
                             </div>
+                            @error('phone')
+                            <p class="ar-error">{{ $message }}</p>
+                            @else
                             <p class="ar-hint">{{ __('auth.phone_hint', ['min' => 9, 'max' => 10]) }}</p>
+                            @enderror
                         </div>
                         <div class="ar-field">
                             <label class="ar-label">{{ __('auth.national_id') }}</label>
@@ -155,8 +166,12 @@ $noText             = __('auth.no');
                                 pattern="\d{4}\s\d{4}\s\d{4}\s\d{4}"
                                 title="{{ __('auth.national_id_hint') }}"
                                 placeholder="{{ __('auth.national_id_placeholder') }}"
-                                class="ar-input">
+                                class="ar-input @error('national_id_number') ar-input-error @enderror">
+                            @error('national_id_number')
+                            <p class="ar-error">{{ $message }}</p>
+                            @else
                             <p class="ar-hint">{{ __('auth.national_id_hint') }}</p>
+                            @enderror
                         </div>
                     </div>
                 </div>
@@ -172,8 +187,9 @@ $noText             = __('auth.no');
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"
                                         d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                                 </svg>
-                                <input name="position" value="{{ old('position') }}" required class="ar-input ar-input-with-icon">
+                                <input name="position" value="{{ old('position') }}" required class="ar-input ar-input-with-icon @error('position') ar-input-error @enderror">
                             </div>
+                            @error('position')<p class="ar-error">{{ $message }}</p>@enderror
                         </div>
                         <div class="ar-field">
                             <label class="ar-label">{{ __('auth.organization_name') }}</label>
@@ -182,8 +198,9 @@ $noText             = __('auth.no');
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"
                                         d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                                 </svg>
-                                <input name="organization_name" value="{{ old('organization_name') }}" required class="ar-input ar-input-with-icon">
+                                <input name="organization_name" value="{{ old('organization_name') }}" required class="ar-input ar-input-with-icon @error('organization_name') ar-input-error @enderror">
                             </div>
+                            @error('organization_name')<p class="ar-error">{{ $message }}</p>@enderror
                         </div>
                     </div>
                 </div>
@@ -200,8 +217,9 @@ $noText             = __('auth.no');
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"
                                         d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                                 </svg>
-                                <input type="email" name="email" value="{{ old('email') }}" required class="ar-input ar-input-with-icon">
+                                <input type="email" name="email" value="{{ old('email') }}" required class="ar-input ar-input-with-icon @error('email') ar-input-error @enderror">
                             </div>
+                            @error('email')<p class="ar-error">{{ $message }}</p>@enderror
                         </div>
                         <div class="ar-field">
                             <label class="ar-label">{{ __('auth.address') }}</label>
@@ -211,8 +229,9 @@ $noText             = __('auth.no');
                                         d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                                 </svg>
-                                <input name="address" value="{{ old('address') }}" required class="ar-input ar-input-with-icon">
+                                <input name="address" value="{{ old('address') }}" required class="ar-input ar-input-with-icon @error('address') ar-input-error @enderror">
                             </div>
+                            @error('address')<p class="ar-error">{{ $message }}</p>@enderror
                         </div>
                     </div>
 
@@ -225,7 +244,7 @@ $noText             = __('auth.no');
                                         d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                                 </svg>
                                 <input id="password" type="password" name="password" required
-                                    class="ar-input ar-input-with-icon ar-input-pr">
+                                    class="ar-input ar-input-with-icon ar-input-pr @error('password') ar-input-error @enderror">
                                 <button type="button" class="ar-eye-btn" data-toggle-password="password"
                                     aria-label="{{ __('auth.show_password') }}" aria-pressed="false">
                                     <svg class="ar-eye" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -235,6 +254,7 @@ $noText             = __('auth.no');
                                     </svg>
                                 </button>
                             </div>
+                            @error('password')<p class="ar-error">{{ $message }}</p>@enderror
                         </div>
                         <div class="ar-field">
                             <label class="ar-label" for="password_confirmation">{{ __('auth.confirm_password') }}</label>
@@ -244,7 +264,7 @@ $noText             = __('auth.no');
                                         d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                                 </svg>
                                 <input id="password_confirmation" type="password" name="password_confirmation" required
-                                    class="ar-input ar-input-with-icon ar-input-pr">
+                                    class="ar-input ar-input-with-icon ar-input-pr @error('password_confirmation') ar-input-error @enderror">
                                 <button type="button" class="ar-eye-btn" data-toggle-password="password_confirmation"
                                     aria-label="{{ __('auth.show_password') }}" aria-pressed="false">
                                     <svg class="ar-eye" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -254,6 +274,7 @@ $noText             = __('auth.no');
                                     </svg>
                                 </button>
                             </div>
+                            @error('password_confirmation')<p class="ar-error">{{ $message }}</p>@enderror
                         </div>
                     </div>
                 </div>
@@ -558,6 +579,12 @@ $noText             = __('auth.no');
     .ar-input-pr { padding-right: 2.75rem; }
     .ar-select { appearance: none; cursor: pointer; }
     .ar-hint { font-size: 0.75rem; color: #94a3b8; margin: 0; }
+    .ar-error { font-size: 0.75rem; color: #dc2626; margin: 0; font-weight: 500; }
+    .ar-input-error, .ar-phone-wrap.ar-input-error { border-color: #ef4444; }
+    .ar-input-error:focus, .ar-phone-wrap.ar-input-error:focus-within {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgb(239 68 68 / 0.12);
+    }
     [x-cloak] { display: none !important; }
 
     /* ── Phone prefix widget ─────────────────────────────────────────── */
