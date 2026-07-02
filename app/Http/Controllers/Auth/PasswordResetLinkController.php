@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Notifications\PasswordResetOtp;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class PasswordResetLinkController extends Controller
 {
@@ -27,33 +28,37 @@ class PasswordResetLinkController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if ($user) {
-            $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        if (! $user) {
+            return back()
+                ->withInput($request->only('email'))
+                ->withErrors(['email' => __('auth.email_not_found')]);
+        }
 
-            session([
-                'admin_pwd_otp_email' => $request->email,
-                'admin_pwd_otp_code' => hash('sha256', $otp),
-                'admin_pwd_otp_expires' => now()->addMinutes(10)->timestamp,
+        $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+        session([
+            'admin_pwd_otp_email' => $request->email,
+            'admin_pwd_otp_code' => hash('sha256', $otp),
+            'admin_pwd_otp_expires' => now()->addMinutes(10)->timestamp,
+        ]);
+
+        try {
+            $user->notify(new PasswordResetOtp($otp));
+        } catch (\Throwable $e) {
+            session()->forget(['admin_pwd_otp_email', 'admin_pwd_otp_code', 'admin_pwd_otp_expires']);
+
+            Log::warning('Admin password reset OTP email failed', [
+                'email' => $request->email,
+                'error' => $e->getMessage(),
             ]);
 
-            try {
-                $user->notify(new PasswordResetOtp($otp));
-            } catch (\Throwable $e) {
-                session()->forget(['admin_pwd_otp_email', 'admin_pwd_otp_code', 'admin_pwd_otp_expires']);
-
-                \Log::warning('Admin password reset OTP email failed', [
-                    'email' => $request->email,
-                    'error' => $e->getMessage(),
-                ]);
-
-                return back()
-                    ->withInput($request->only('email'))
-                    ->withErrors(['email' => __('auth.reset_code_send_failed')]);
-            }
+            return back()
+                ->withInput($request->only('email'))
+                ->withErrors(['email' => __('auth.reset_code_send_failed')]);
         }
 
         return redirect()->route('admin.password.otp.show')
-            ->with('info', 'If that email exists, a 6-digit reset code has been sent.');
+            ->with('info', __('auth.reset_code_sent'));
     }
 
     // ── Step 3: show OTP entry form ────────────────────────────────────────────
@@ -123,7 +128,7 @@ class PasswordResetLinkController extends Controller
             try {
                 $user->notify(new PasswordResetOtp($otp));
             } catch (\Throwable $e) {
-                \Log::warning('Admin password reset OTP resend failed', [
+                Log::warning('Admin password reset OTP resend failed', [
                     'email' => $email,
                     'error' => $e->getMessage(),
                 ]);
