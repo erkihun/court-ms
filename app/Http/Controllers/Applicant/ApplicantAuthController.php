@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -64,25 +65,24 @@ class ApplicantAuthController extends Controller
 
         unset($data['lawyer_document']);
 
-        $applicant = Applicant::create([
-            ...$data,
-            'password' => Hash::make($data['password']),
-            'is_active' => true,
-            'is_lawyer' => $isLawyer,
-            'lawyer_document_path' => $lawyerDocumentPath,
-            // email_verified_at intentionally not set — OTP flow will set it
-        ]);
-
+        // Nothing is saved to the database yet — the account is only created
+        // after the applicant proves the email is real by entering the OTP.
         $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
         session([
-            'pending_applicant_id' => $applicant->id,
+            'pending_registration' => [
+                ...$data,
+                'password' => Hash::make($data['password']),
+                'is_lawyer' => $isLawyer,
+                'lawyer_document_path' => $lawyerDocumentPath,
+            ],
             'otp_code' => hash('sha256', $otp),
             'otp_expires_at' => now()->addMinutes(10)->timestamp,
         ]);
 
         try {
-            $applicant->notify(new \App\Notifications\ApplicantEmailOtp($otp));
+            Notification::route('mail', $data['email'])
+                ->notify(new \App\Notifications\ApplicantEmailOtp($otp));
         } catch (\Throwable $e) {
             Log::error('[Register] OTP send failed: '.$e->getMessage());
 
@@ -91,7 +91,7 @@ class ApplicantAuthController extends Controller
         }
 
         return redirect()->route('applicant.verify-otp.show')
-            ->with('info', 'A 6-digit verification code has been sent to '.$applicant->email.'.');
+            ->with('info', 'A 6-digit verification code has been sent to '.$data['email'].'.');
     }
 
     public function showLogin()

@@ -9,6 +9,7 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 
 class ApplicantVerificationController extends Controller
 {
@@ -133,23 +134,23 @@ class ApplicantVerificationController extends Controller
     /** Show the OTP entry form (for new registrations). */
     public function showOtp(Request $request)
     {
-        if (! session('pending_applicant_id')) {
+        if (! session('pending_registration')) {
             return redirect()->route('applicant.register');
         }
 
         return view('applicant.auth.verify-otp');
     }
 
-    /** Verify the submitted OTP code. */
+    /** Verify the submitted OTP code and create the account. */
     public function verifyOtp(Request $request)
     {
         $request->validate(['code' => ['required', 'digits:6']]);
 
-        $pendingId = session('pending_applicant_id');
+        $pending = session('pending_registration');
         $storedHash = session('otp_code');
         $expiresAt = session('otp_expires_at');
 
-        if (! $pendingId || ! $storedHash || ! $expiresAt) {
+        if (! $pending || ! $storedHash || ! $expiresAt) {
             return redirect()->route('applicant.register')
                 ->withErrors(['code' => 'Session expired. Please register again.']);
         }
@@ -162,18 +163,24 @@ class ApplicantVerificationController extends Controller
             return back()->withErrors(['code' => 'Invalid verification code. Please try again.']);
         }
 
-        $applicant = Applicant::find($pendingId);
-        if (! $applicant) {
-            session()->forget(['pending_applicant_id', 'otp_code', 'otp_expires_at']);
+        // Email proven real — only now is the account saved to the database.
+        // Guard against a duplicate created between registration and verification.
+        $applicant = Applicant::where('email', $pending['email'])->first();
 
-            return redirect()->route('applicant.register')
-                ->withErrors(['code' => 'Account not found. Please register again.']);
+        if (! $applicant) {
+            $applicant = Applicant::create([
+                ...$pending,
+                'is_active' => true,
+            ]);
+            // Not mass-assignable — set explicitly.
+            $applicant->email_verified_at = now();
+            $applicant->save();
+        } elseif (! $applicant->email_verified_at) {
+            $applicant->email_verified_at = now();
+            $applicant->save();
         }
 
-        $applicant->email_verified_at = now();
-        $applicant->save();
-
-        session()->forget(['pending_applicant_id', 'otp_code', 'otp_expires_at']);
+        session()->forget(['pending_registration', 'otp_code', 'otp_expires_at']);
 
         Auth::guard('applicant')->login($applicant);
         $request->session()->regenerate();
@@ -185,13 +192,8 @@ class ApplicantVerificationController extends Controller
     /** Resend a fresh OTP code. */
     public function resendOtp(Request $request)
     {
-        $pendingId = session('pending_applicant_id');
-        if (! $pendingId) {
-            return redirect()->route('applicant.register');
-        }
-
-        $applicant = Applicant::find($pendingId);
-        if (! $applicant) {
+        $pending = session('pending_registration');
+        if (! $pending || empty($pending['email'])) {
             return redirect()->route('applicant.register');
         }
 
@@ -203,7 +205,8 @@ class ApplicantVerificationController extends Controller
         ]);
 
         try {
-            $applicant->notify(new ApplicantEmailOtp($otp));
+            Notification::route('mail', $pending['email'])
+                ->notify(new ApplicantEmailOtp($otp));
         } catch (\Throwable $e) {
             Log::error('[Register] OTP resend failed: '.$e->getMessage());
 
