@@ -34,7 +34,7 @@ class NewPasswordController extends Controller
 
         if (!$email) {
             return redirect()->route('password.request')
-                ->withErrors(['email' => 'Session expired. Please start again.']);
+                ->withErrors(['email' => __('auth.password_reset_session_expired')]);
         }
 
         $request->validate([
@@ -45,7 +45,7 @@ class NewPasswordController extends Controller
 
         if (!$user) {
             return redirect()->route('password.request')
-                ->withErrors(['email' => 'Account not found.']);
+                ->withErrors(['email' => __('auth.account_not_found_or_deactivated')]);
         }
 
         $user->forceFill([

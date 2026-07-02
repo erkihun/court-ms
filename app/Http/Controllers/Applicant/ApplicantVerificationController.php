@@ -35,7 +35,7 @@ class ApplicantVerificationController extends Controller
             return redirect()->route('applicant.login');
         }
         if ($user->hasVerifiedEmail()) {
-            return redirect()->route('applicant.dashboard')->with('success', 'Email already verified.');
+            return redirect()->route('applicant.dashboard')->with('success', __('auth.email_already_verified'));
         }
 
         // Only send a new OTP when there is no unexpired one already in session
@@ -64,19 +64,19 @@ class ApplicantVerificationController extends Controller
             return redirect()->route('applicant.login');
         }
         if ($user->hasVerifiedEmail()) {
-            return back()->with('success', 'Email already verified.');
+            return back()->with('success', __('auth.email_already_verified'));
         }
 
         try {
             $otp = $this->generateOtp();
             $user->notify(new ApplicantEmailOtp($otp));
 
-            return back()->with('success', 'A new verification code has been sent to your email.');
+            return back()->with('success', __('auth.verification_code_sent_to_email'));
         } catch (\Throwable $e) {
             session()->forget(['email_otp', 'email_otp_expires_at']);
             Log::error('[VerifyEmail] OTP resend failed: '.$e->getMessage());
 
-            return back()->withErrors(['code' => 'Could not send the code. Please try again.']);
+            return back()->withErrors(['code' => __('auth.verification_code_send_failed')]);
         }
     }
 
@@ -100,15 +100,15 @@ class ApplicantVerificationController extends Controller
 
         if (! $storedHash || ! $expiresAt) {
             return redirect()->route('applicant.verification.notice')
-                ->withErrors(['code' => 'No active code found. A new one has been sent.']);
+                ->withErrors(['code' => __('auth.verification_code_missing')]);
         }
 
         if (now()->timestamp > $expiresAt) {
-            return back()->withErrors(['code' => 'This code has expired. Please request a new one.']);
+            return back()->withErrors(['code' => __('auth.verification_code_expired')]);
         }
 
         if (! hash_equals($storedHash, hash('sha256', $request->input('code')))) {
-            return back()->withErrors(['code' => 'Invalid verification code. Please try again.']);
+            return back()->withErrors(['code' => __('auth.verification_code_invalid')]);
         }
 
         $user->email_verified_at = now();
@@ -116,7 +116,7 @@ class ApplicantVerificationController extends Controller
 
         session()->forget(['email_otp', 'email_otp_expires_at']);
 
-        return redirect()->route('applicant.dashboard')->with('success', 'Email verified successfully!');
+        return redirect()->route('applicant.dashboard')->with('success', __('auth.email_verified_successfully'));
     }
 
     /** Handle the signed verification link (kept for backward compatibility). */
@@ -128,7 +128,7 @@ class ApplicantVerificationController extends Controller
             $request->fulfill();
         }
 
-        return redirect()->route('applicant.dashboard')->with('success', 'Email verified successfully.');
+        return redirect()->route('applicant.dashboard')->with('success', __('auth.email_verified_successfully'));
     }
 
     /** Show the OTP entry form (for new registrations). */
@@ -152,15 +152,15 @@ class ApplicantVerificationController extends Controller
 
         if (! $pending || ! $storedHash || ! $expiresAt) {
             return redirect()->route('applicant.register')
-                ->withErrors(['code' => 'Session expired. Please register again.']);
+                ->withErrors(['code' => __('auth.verification_session_expired_register_again')]);
         }
 
         if (now()->timestamp > $expiresAt) {
-            return back()->withErrors(['code' => 'This code has expired. Please request a new one.']);
+            return back()->withErrors(['code' => __('auth.verification_code_expired')]);
         }
 
         if (! hash_equals($storedHash, hash('sha256', $request->input('code')))) {
-            return back()->withErrors(['code' => 'Invalid verification code. Please try again.']);
+            return back()->withErrors(['code' => __('auth.verification_code_invalid')]);
         }
 
         // Email proven real — only now is the account saved to the database.
@@ -186,7 +186,7 @@ class ApplicantVerificationController extends Controller
         $request->session()->regenerate();
 
         return redirect()->route('applicant.dashboard')
-            ->with('success', 'Email verified! Welcome to the applicant portal.');
+            ->with('success', __('auth.email_verified_welcome'));
     }
 
     /** Resend a fresh OTP code. */
@@ -213,6 +213,6 @@ class ApplicantVerificationController extends Controller
             return back()->withErrors(['code' => __('auth.reset_code_send_failed')]);
         }
 
-        return back()->with('success', 'A new verification code has been sent to your email.');
+        return back()->with('success', __('auth.verification_code_sent_to_email'));
     }
 }

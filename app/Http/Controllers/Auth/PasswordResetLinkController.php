@@ -87,15 +87,15 @@ class PasswordResetLinkController extends Controller
 
         if (! $email || ! $storedHash || ! $expiresAt) {
             return redirect()->route('password.request')
-                ->withErrors(['code' => 'Session expired. Please start again.']);
+                ->withErrors(['code' => __('auth.password_reset_session_expired')]);
         }
 
         if (now()->timestamp > $expiresAt) {
-            return back()->withErrors(['code' => 'This code has expired. Please request a new one.']);
+            return back()->withErrors(['code' => __('auth.password_reset_code_expired')]);
         }
 
         if (! hash_equals($storedHash, hash('sha256', $request->input('code')))) {
-            return back()->withErrors(['code' => 'Invalid code. Please try again.']);
+            return back()->withErrors(['code' => __('auth.password_reset_code_invalid')]);
         }
 
         session()->forget(['admin_pwd_otp_code', 'admin_pwd_otp_expires']);

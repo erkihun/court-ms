@@ -139,11 +139,17 @@
                                 <div class="text-xs font-medium text-slate-500 mb-1">{{ __('app.Applicant messages') }}</div>
                                 <ul class="divide-y">
                                     @foreach($adminUnseenMsgs as $m)
+                                    @php
+                                    $legacyApplicantUpdate = 'Applicant updated the case details. Please review the submission.';
+                                    $displayBody = trim((string) $m->body) === $legacyApplicantUpdate
+                                        ? __('cases.notifications.applicant_updated_submission')
+                                        : (string) $m->body;
+                                    @endphp
                                     <li class="py-2 flex items-center justify-between">
                                         <a href="{{ route('cases.show', $m->case_id) }}" class="text-sm">
                                             <div class="font-medium text-slate-800">{{ $m->case_number }}</div>
                                             <div class="text-xs text-slate-500">
-                                                {{ \Illuminate\Support\Str::limit($m->body, 80) }}
+                                                {{ \Illuminate\Support\Str::limit($displayBody, 80) }}
                                                 · {{ \App\Support\EthiopianDate::smartRelative($m->created_at) }}
                                             </div>
                                         </a>
@@ -197,7 +203,7 @@
                                                 {{ $h->case_number }} — {{ \App\Support\EthiopianDate::format($h->hearing_at, withTime: true) }}
                                             </div>
                                             <div class="text-xs text-slate-500">
-                                                {{ $h->type ?: __('app.Hearing') }} � {{ $h->location ?: '�' }}
+                                                {{ $h->type ?: __('app.Hearing') }} <span class="text-slate-400">·</span> {{ $h->location ?: '-' }}
                                             </div>
                                         </a>
                                         <form method="POST" action="{{ route('admin.notifications.markOne') }}">
@@ -306,4 +312,3 @@
         </div>
     </div>
 </nav>
-

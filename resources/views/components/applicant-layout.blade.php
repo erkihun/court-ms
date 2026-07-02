@@ -558,7 +558,11 @@ $respondentNotifList = collect();
                                             <li class="py-2 flex items-center justify-between gap-3">
                                                 <a href="{{ route('applicant.cases.show', $v->case_id) }}" class="text-sm flex-1">
                                                     <div class="font-medium text-slate-800">{{ $v->case_number }}</div>
-                                                    <div class="text-xs text-slate-500">{{ $v->respondent_name ?: __('app.admin_notifications.respondent_default') }} <span class="text-slate-400">·</span> {{ \App\Support\EthiopianDate::smartRelative($v->viewed_at) }}</div>
+                                                    <div class="text-xs text-slate-500">
+                                                        {{ __('app.admin_notifications.respondent_viewed_case', ['name' => ($v->respondent_name ?: __('app.admin_notifications.respondent_default'))]) }}
+                                                        <span class="text-slate-400">·</span>
+                                                        {{ \App\Support\EthiopianDate::smartRelative($v->viewed_at) }}
+                                                    </div>
                                                 </a>
                                                 <form method="POST" action="{{ route('applicant.notifications.markOne', ['type'=>'respondent_view','sourceId'=>$v->id]) }}">
                                                     @csrf
@@ -577,10 +581,20 @@ $respondentNotifList = collect();
                                         </div>
                                         <ul class="divide-y">
                                             @foreach($unseenStatus as $s)
+                                            @php
+                                            $fromStatusKey = "app.status.{$s->from_status}";
+                                            $toStatusKey = "app.status.{$s->to_status}";
+                                            $fromStatus = trans()->has($fromStatusKey) ? __($fromStatusKey) : \Illuminate\Support\Str::headline($s->from_status ?? '-');
+                                            $toStatus = trans()->has($toStatusKey) ? __($toStatusKey) : \Illuminate\Support\Str::headline($s->to_status ?? '-');
+                                            @endphp
                                             <li class="py-2 flex items-center justify-between gap-3">
                                                 <a href="{{ route('applicant.cases.show', $s->case_id) }}" class="text-sm flex-1">
                                                     <div class="font-medium text-slate-800">{{ $s->case_number }}</div>
-                                                    <div class="text-xs text-slate-500">{{ ucfirst($s->from_status) }} <span class="text-slate-400">·</span> <strong>{{ ucfirst($s->to_status) }}</strong> <span class="text-slate-400">·</span> {{ \App\Support\EthiopianDate::smartRelative($s->created_at) }}</div>
+                                                    <div class="text-xs text-slate-500">
+                                                        {{ __('app.admin_notifications.status_changed', ['from' => $fromStatus, 'to' => $toStatus]) }}
+                                                        <span class="text-slate-400">·</span>
+                                                        {{ \App\Support\EthiopianDate::smartRelative($s->created_at) }}
+                                                    </div>
                                                 </a>
                                                 <form method="POST" action="{{ route('applicant.notifications.markOne', ['type'=>'status','sourceId'=>$s->id]) }}">
                                                     @csrf

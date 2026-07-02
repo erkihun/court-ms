@@ -265,6 +265,9 @@ return array (
     'approved_letter_subject' => 'የጸደቀ ደብዳቤ: :subject',
     'preview_link' => 'ቅድመ እይታ: :url',
     'applicant_updated_submission' => 'አመልካቹ የክሱን ዝርዝር አዘምኗል። እባክዎ የቀረበውን ያረጋግጡ።',
+    'receipt_email_missing' => 'የኢሜይል አድራሻዎን ማግኘት አልተቻለም።',
+    'receipt_email_failed' => 'የደረሰኝ ኢሜይልን አሁን መላክ አልተቻለም።',
+    'receipt_email_sent' => 'የPDF ደረሰኝ ወደ :email ተልኳል።',
   ),
   'placeholders' => 
   array (

@@ -149,11 +149,17 @@
         @if($unseenStatus->count())
         <ul class="divide-y">
             @foreach($unseenStatus as $s)
+            @php
+            $fromStatusKey = "app.status.{$s->from_status}";
+            $toStatusKey = "app.status.{$s->to_status}";
+            $fromStatus = trans()->has($fromStatusKey) ? __($fromStatusKey) : \Illuminate\Support\Str::headline($s->from_status ?? '-');
+            $toStatus = trans()->has($toStatusKey) ? __($toStatusKey) : \Illuminate\Support\Str::headline($s->to_status ?? '-');
+            @endphp
             <li class="py-2 flex items-center justify-between">
                 <a href="{{ route('applicant.cases.show', $s->case_id) }}" class="text-sm">
                     <div class="font-medium text-slate-800">{{ $s->case_number }}</div>
                     <div class="text-xs text-slate-500">
-                        {{ ucfirst($s->from_status) }} → <strong>{{ ucfirst($s->to_status) }}</strong>
+                        {{ __('app.admin_notifications.status_changed', ['from' => $fromStatus, 'to' => $toStatus]) }}
                         <span class="text-slate-400 mx-1">·</span>
                         {{ \App\Support\EthiopianDate::smartRelative($s->created_at) }}
                     </div>

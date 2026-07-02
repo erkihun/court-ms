@@ -6,6 +6,7 @@ use App\Models\Applicant;
 use App\Models\ApplicantResponseReply;
 use App\Models\Respondent;
 use App\Models\RespondentResponse;
+use App\Models\SystemSetting;
 use App\Models\User;
 use App\Notifications\ApplicantResponseReplyReviewed;
 use App\Notifications\ApplicantResponseReplySubmitted;
@@ -326,7 +327,7 @@ class ResponseNotificationService
 
     private static function t(string $key, array $replace = []): string
     {
-        return (string) __("notifications.telegram.{$key}", $replace);
+        return (string) trans("notifications.telegram.{$key}", $replace, self::telegramLocale());
     }
 
     private static function caseStatusLabel(?string $status): string
@@ -335,7 +336,7 @@ class ResponseNotificationService
             return '';
         }
 
-        $translated = __("cases.status.{$status}");
+        $translated = trans("cases.status.{$status}", [], self::telegramLocale());
 
         return $translated === "cases.status.{$status}" ? (string) $status : (string) $translated;
     }
@@ -346,16 +347,32 @@ class ResponseNotificationService
             return '';
         }
 
-        $translated = __("cases.review_status.{$status}");
+        $translated = trans("cases.review_status.{$status}", [], self::telegramLocale());
 
         return $translated === "cases.review_status.{$status}" ? (string) $status : (string) $translated;
     }
 
     private static function responseStatusLabel(string $status): string
     {
-        $translated = __("notifications.status.{$status}");
+        $translated = trans("notifications.status.{$status}", [], self::telegramLocale());
 
         return $translated === "notifications.status.{$status}" ? $status : (string) $translated;
+    }
+
+    private static function telegramLocale(): string
+    {
+        static $locale = null;
+
+        if ($locale !== null) {
+            return $locale;
+        }
+
+        $configuredLocale = (string) (SystemSetting::current()->default_locale ?: config('app.locale', 'en'));
+        $locale = in_array($configuredLocale, ['en', 'am'], true)
+            ? $configuredLocale
+            : (string) config('app.locale', 'en');
+
+        return $locale;
     }
 
     private static function preview(mixed $value, int $width = 240): string

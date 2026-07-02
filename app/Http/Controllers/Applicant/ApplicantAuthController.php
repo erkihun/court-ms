@@ -91,7 +91,7 @@ class ApplicantAuthController extends Controller
         }
 
         return redirect()->route('applicant.verify-otp.show')
-            ->with('info', 'A 6-digit verification code has been sent to '.$data['email'].'.');
+            ->with('info', __('auth.verification_code_sent_to_email'));
     }
 
     public function showLogin()

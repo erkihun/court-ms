@@ -292,6 +292,6 @@ class ApplicantNotificationController extends Controller
             ]
         );
 
-        return back()->with('success', __('app.preferences_saved'));
+        return back()->with('success', __('app.notification_preferences.updated'));
     }
 }

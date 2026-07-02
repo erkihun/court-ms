@@ -160,11 +160,17 @@ $hasAny = $newCases->isNotEmpty() || $msgs->isNotEmpty() || $status->isNotEmpty(
         <div class="text-xs font-medium text-slate-500 mb-1">{{ __('app.admin_notifications.status_updates') }}</div>
         <ul class="divide-y">
             @foreach($status as $s)
+            @php
+            $fromStatusKey = "app.status.{$s->from_status}";
+            $toStatusKey = "app.status.{$s->to_status}";
+            $fromStatus = trans()->has($fromStatusKey) ? __($fromStatusKey) : \Illuminate\Support\Str::headline($s->from_status ?? '-');
+            $toStatus = trans()->has($toStatusKey) ? __($toStatusKey) : \Illuminate\Support\Str::headline($s->to_status ?? '-');
+            @endphp
             <li class="py-2 flex items-center justify-between">
                 <a href="{{ route('cases.show', $s->case_id) }}" class="text-sm">
                     <div class="font-medium text-slate-800">{{ $s->case_number }}</div>
                     <div class="text-xs text-slate-500">
-                        {{ __('app.admin_notifications.status_changed', ['from' => ucfirst($s->from_status), 'to' => ucfirst($s->to_status)]) }}
+                        {{ __('app.admin_notifications.status_changed', ['from' => $fromStatus, 'to' => $toStatus]) }}
                         · {{ \App\Support\EthiopianDate::smartRelative($s->created_at) }}
                     </div>
                 </a>

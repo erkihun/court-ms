@@ -4,7 +4,7 @@ return [
 
     // ── Page header ──────────────────────────────────────────
     'title'           => 'System Settings',
-    'subtitle'        => 'Manage platform identity, localization, security, appearance and notification channels.',
+    'subtitle'        => 'Manage government institution identity, localization, security, appearance, and email, Telegram, and system notification channels.',
     'maintenance_on'  => 'Maintenance Mode ON',
     'system_online'   => 'System Online',
 
@@ -19,12 +19,12 @@ return [
     'tab_api'           => 'API & Access',
 
     // ── General ──────────────────────────────────────────────
-    'platform_identity'     => 'Platform Identity',
+    'platform_identity'     => 'Government Institution Identity',
     'app_name'              => 'System Name',
     'app_name_hint'         => 'Appears in page titles, emails and PDF headers.',
     'short_name'            => 'Short Name / Abbreviation',
     'welcome_message'       => 'Welcome Message',
-    'website_url'           => 'Website URL',
+    'website_url'           => 'Institution Website URL',
     'address'               => 'Physical Address',
     'about'                 => 'About the Court / System',
     'footer_text'           => 'Footer Text',
@@ -105,7 +105,7 @@ return [
     'custom_css_hint'       => 'Injected into every admin page. Use CSS variables to override theme tokens.',
 
     // ── Notifications ────────────────────────────────────────
-    'email_smtp'            => 'Email — SMTP',
+    'email_smtp'            => 'Email Notifications',
     'smtp_host'             => 'SMTP Host',
     'smtp_port'             => 'Port',
     'encryption'            => 'Encryption',
@@ -116,8 +116,8 @@ return [
     'from_address'          => 'From Address',
     'from_name'             => 'From Name',
     'log_debug'             => 'Log (debug only)',
-    'telegram_bot'          => 'Telegram Bot',
-    'telegram_hint'         => 'Create a bot via @BotFather on Telegram to get a token, then add the bot to your notification group and copy the Chat ID. The group receives all case notifications except OTP, password reset, and email verification messages.',
+    'telegram_bot'          => 'Telegram Notifications',
+    'telegram_hint'         => 'Create a bot via @BotFather on Telegram to get a token, then add the bot to the institution notification group and copy the Chat ID. The group receives all case notifications except OTP, password reset, and email verification messages.',
     'enable_telegram'       => 'Enable Telegram Bot',
     'enable_telegram_desc'  => 'Turn this on to send group alerts through the configured bot and chat ID.',
     'on'                    => 'ON',
@@ -126,15 +126,15 @@ return [
     'bot_token_hint'        => 'Format: BOT_ID:SECRET_KEY',
     'default_chat_id'       => 'Default Chat ID',
     'default_chat_id_hint'  => 'Group / channel Chat ID for system notifications. Use a negative number for groups.',
-    'sms_gateway'           => 'SMS Gateway',
-    'sms_provider'          => 'Provider Name',
-    'sms_provider_hint'     => 'Free-text — enter any provider name for your records.',
-    'sms_base_url'          => 'API Base URL',
-    'sms_base_url_hint'     => 'The REST endpoint root your integration code will call.',
-    'sms_api_key'           => 'API Key / Account SID',
-    'sms_api_secret'        => 'API Secret / Auth Token',
-    'sms_sender_id'         => 'Sender ID / From Number',
-    'sms_sender_id_hint'    => 'Alphanumeric sender name (max 11 chars) or E.164 phone number, depending on what your provider supports.',
+    'sms_gateway'           => 'System Notifications',
+    'sms_provider'          => 'Government Institution Identifier',
+    'sms_provider_hint'     => 'Free-text — enter the institution or service provider name for your records.',
+    'sms_base_url'          => 'System API Base URL',
+    'sms_base_url_hint'     => 'The REST endpoint root used by the institution notification integration.',
+    'sms_api_key'           => 'System API Key / Account SID',
+    'sms_api_secret'        => 'System API Secret / Auth Token',
+    'sms_sender_id'         => 'Institution Sender ID / From Number',
+    'sms_sender_id_hint'    => 'Government institution sender name (max 11 chars) or E.164 phone number, depending on what your provider supports.',
 
     // ── API & Access ─────────────────────────────────────────
     'rest_api'              => 'REST API',

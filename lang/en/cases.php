@@ -264,6 +264,9 @@ return array (
     'letter' => 'Letter',
     'approved_letter_subject' => 'Approved letter: :subject',
     'preview_link' => 'Preview: :url',
+    'receipt_email_missing' => 'We could not find your email address.',
+    'receipt_email_failed' => 'Could not send the receipt email right now.',
+    'receipt_email_sent' => 'Receipt PDF emailed to :email.',
   ),
   'placeholders' => 
   array (

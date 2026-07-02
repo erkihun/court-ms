@@ -58,6 +58,6 @@ class ApplicantNotificationSettingsController extends Controller
                 array_merge($payload, ['created_at' => now()])
             );
 
-        return back()->with('success', 'Notification preferences updated.');
+        return back()->with('success', __('app.notification_preferences.updated'));
     }
 }

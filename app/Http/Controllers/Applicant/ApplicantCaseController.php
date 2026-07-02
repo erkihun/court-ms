@@ -1184,7 +1184,7 @@ class ApplicantCaseController extends Controller
         ])->setPaper('a4');
 
         if (!$email) {
-            return back()->with('error', 'We could not find your email address.');
+            return back()->with('error', __('cases.notifications.receipt_email_missing'));
         }
 
         try {
@@ -1197,10 +1197,10 @@ class ApplicantCaseController extends Controller
                 'case_id' => $id,
                 'error'   => $e->getMessage(),
             ]);
-            return back()->with('error', 'Could not send the receipt email right now.');
+            return back()->with('error', __('cases.notifications.receipt_email_failed'));
         }
 
-        return back()->with('success', 'Receipt PDF emailed to ' . $email . '.');
+        return back()->with('success', __('cases.notifications.receipt_email_sent', ['email' => $email]));
     }
 
     // --------------------

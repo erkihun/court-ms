@@ -147,6 +147,8 @@ $items = $msgs->unionAll($hrs)->unionAll($sts)->unionAll($views)->orderBy('creat
             @foreach($items as $n)
             @php
             $url = route('applicant.cases.show', $n->case_id);
+            $typeKey = "app.admin_notifications.types.{$n->type}";
+            $typeLabel = trans()->has($typeKey) ? __($typeKey) : \Illuminate\Support\Str::headline($n->type);
             if ($n->type === 'respondent_view') {
                 $url = null;
             } elseif ($n->type === 'hearing') {
@@ -165,18 +167,23 @@ $items = $msgs->unionAll($hrs)->unionAll($sts)->unionAll($views)->orderBy('creat
                 @endif
                     <div class="text-xs text-slate-500">
                         {{ \App\Support\EthiopianDate::smartRelative($n->created_at) }}
-                        → <span class="uppercase">{{ $n->type }}</span>
+                        &rarr; <span class="uppercase">{{ $typeLabel }}</span>
                     </div>
                     <div class="text-sm text-slate-800">
                         @if($n->type === 'message')
                         {{ __('app.admin_notifications.new_message_from', ['name' => ($n->meta1 ?? __('respondent.court_staff'))]) }}
                         @elseif($n->type === 'hearing')
-                        Hearing {{ $n->meta2 ? "($n->meta2) " : '' }}on
-                        {{ \App\Support\EthiopianDate::format($n->meta3, withTime: true) }}
+                        {{ __('app.admin_notifications.hearing_on', ['time' => \App\Support\EthiopianDate::format($n->meta3, withTime: true)]) }}
                         @elseif($n->type === 'respondent_view')
                         {{ __('app.admin_notifications.respondent_viewed_case', ['name' => ($n->meta1 ?? __('app.admin_notifications.respondent_default'))]) }}
                         @else
-                        {{ __('app.admin_notifications.status_changed', ['from' => ucfirst($n->meta1 ?? '-'), 'to' => ucfirst($n->meta2 ?? '-')]) }}
+                        @php
+                        $fromStatusKey = "app.status.{$n->meta1}";
+                        $toStatusKey = "app.status.{$n->meta2}";
+                        $fromStatus = trans()->has($fromStatusKey) ? __($fromStatusKey) : \Illuminate\Support\Str::headline($n->meta1 ?? '-');
+                        $toStatus = trans()->has($toStatusKey) ? __($toStatusKey) : \Illuminate\Support\Str::headline($n->meta2 ?? '-');
+                        @endphp
+                        {{ __('app.admin_notifications.status_changed', ['from' => $fromStatus, 'to' => $toStatus]) }}
                         @endif
                     </div>
                 @if($url)</a>@else</div>@endif
