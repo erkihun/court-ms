@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Applicant;
 use App\Http\Controllers\Controller;
 use App\Models\Applicant;
 use App\Models\SystemSetting;
+use App\Notifications\ApplicantEmailOtp;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 class ApplicantAuthController extends Controller
 {
@@ -50,7 +52,7 @@ class ApplicantAuthController extends Controller
             // normalized (digits-only) National ID
             'national_id_number' => ['required', 'string', 'bail', 'regex:/^\d{16}$/', 'unique:applicants,national_id_number'],
 
-            'password' => ['required', 'confirmed', 'min:6'],
+            'password' => ['required', 'confirmed', Password::defaults()],
         ], [
             'national_id_number.regex' => __('auth.national_id_must_be_16'),
             'lawyer_document.required_if' => __('auth.lawyer_document_required'),
@@ -82,7 +84,7 @@ class ApplicantAuthController extends Controller
 
         try {
             Notification::route('mail', $data['email'])
-                ->notify(new \App\Notifications\ApplicantEmailOtp($otp));
+                ->notify(new ApplicantEmailOtp($otp));
         } catch (\Throwable $e) {
             Log::error('[Register] OTP send failed: '.$e->getMessage());
 

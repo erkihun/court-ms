@@ -2,19 +2,27 @@
 
 namespace Database\Seeders;
 
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use App\Models\User;
 
 class SampleUsersSeeder extends Seeder
 {
     public function run(): void
     {
+        // Demo accounts with a known password must never reach production.
+        if (app()->environment('production')) {
+            $this->command?->warn('Skipping SampleUsersSeeder: demo accounts are not seeded in production.');
+
+            return;
+        }
+
         $schema = DB::getSchemaBuilder();
         foreach (['users', 'roles', 'role_user'] as $t) {
-            if (!$schema->hasTable($t)) {
+            if (! $schema->hasTable($t)) {
                 $this->command->warn("Skipping SampleUsersSeeder: missing table '$t'.");
+
                 return;
             }
         }
@@ -24,7 +32,7 @@ class SampleUsersSeeder extends Seeder
             DB::table('roles')->updateOrInsert(['name' => $name], ['name' => $name]);
         }
 
-        $roleId = fn($name) => DB::table('roles')->where('name', $name)->value('id');
+        $roleId = fn ($name) => DB::table('roles')->where('name', $name)->value('id');
 
         $users = [
             ['name' => 'Admin User', 'email' => 'admin@example.com',  'role' => 'admin'],

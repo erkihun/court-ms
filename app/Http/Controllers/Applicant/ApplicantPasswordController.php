@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Password;
 
 class ApplicantPasswordController extends Controller
 {
@@ -175,7 +176,7 @@ class ApplicantPasswordController extends Controller
         }
 
         $request->validate([
-            'password' => ['required', 'confirmed', 'min:8'],
+            'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
         $applicant = Applicant::where('email', $email)->where('is_active', true)->first();

@@ -2,16 +2,24 @@
 
 namespace App\Providers;
 
+use App\Listeners\RecordAuthEvent;
 use App\Models\SystemSetting;
+use Illuminate\Auth\Events\Failed;
+use Illuminate\Auth\Events\Lockout;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,13 +31,58 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perHour(100)->by($request->ip() ?: 'unknown-ip');
         });
 
+        // ── Auth event audit trail ──────────────────────────────────────────
+        Event::listen(Login::class, [RecordAuthEvent::class, 'handleLogin']);
+        Event::listen(Logout::class, [RecordAuthEvent::class, 'handleLogout']);
+        Event::listen(Failed::class, [RecordAuthEvent::class, 'handleFailed']);
+        Event::listen(Lockout::class, [RecordAuthEvent::class, 'handleLockout']);
+        Event::listen(PasswordReset::class, [RecordAuthEvent::class, 'handlePasswordReset']);
+
+        // ── Password policy ─────────────────────────────────────────────────
+        // Enforces the admin-configured rules (system settings) for every
+        // guard that validates with Password::defaults(). Minimum length is
+        // floored at 8 regardless of the stored setting (security baseline).
+        Password::defaults(function () {
+            $min = 8;
+            $upper = true;
+            $number = true;
+            $symbol = false;
+
+            try {
+                if (Schema::hasTable('system_settings')) {
+                    $s = Cache::remember('system_settings', 3600, fn () => SystemSetting::query()->first());
+                    if ($s) {
+                        $min = max(8, (int) ($s->password_min_length ?? 8));
+                        $upper = (bool) ($s->password_require_uppercase ?? true);
+                        $number = (bool) ($s->password_require_number ?? true);
+                        $symbol = (bool) ($s->password_require_symbol ?? false);
+                    }
+                }
+            } catch (\Throwable) {
+                // Settings unavailable (e.g. during migrations) — keep the baseline.
+            }
+
+            $rule = Password::min($min);
+            if ($upper) {
+                $rule->mixedCase();
+            }
+            if ($number) {
+                $rule->numbers();
+            }
+            if ($symbol) {
+                $rule->symbols();
+            }
+
+            return $rule;
+        });
+
         try {
             $purifierCachePath = config('purifier.cachePath');
             if ($purifierCachePath) {
                 File::ensureDirectoryExists($purifierCachePath, 0755, true);
-                File::ensureDirectoryExists($purifierCachePath . DIRECTORY_SEPARATOR . 'CSS', 0755, true);
-                File::ensureDirectoryExists($purifierCachePath . DIRECTORY_SEPARATOR . 'HTML', 0755, true);
-                File::ensureDirectoryExists($purifierCachePath . DIRECTORY_SEPARATOR . 'URI', 0755, true);
+                File::ensureDirectoryExists($purifierCachePath.DIRECTORY_SEPARATOR.'CSS', 0755, true);
+                File::ensureDirectoryExists($purifierCachePath.DIRECTORY_SEPARATOR.'HTML', 0755, true);
+                File::ensureDirectoryExists($purifierCachePath.DIRECTORY_SEPARATOR.'URI', 0755, true);
             }
         } catch (\Throwable) {
             // Don't block the app if the directory can't be created
@@ -48,25 +101,26 @@ class AppServiceProvider extends ServiceProvider
                     $resolvedSettings = Cache::remember(
                         'system_settings',
                         3600,
-                        fn() => SystemSetting::query()->first()
+                        fn () => SystemSetting::query()->first()
                     );
                 }
             } catch (\Throwable) {
                 $resolvedSettings = null;
             }
+
             return $resolvedSettings;
         };
 
         // ── Admin layout ────────────────────────────────────────────────────
         View::composer('components.admin-layout', function ($view) use ($getSettings) {
             $settings = $getSettings() ?? (object) [
-                'app_name'      => config('app.name', 'Laravel'),
-                'short_name'    => 'CMS',
-                'logo_path'     => null,
-                'favicon_path'  => null,
+                'app_name' => config('app.name', 'Laravel'),
+                'short_name' => 'CMS',
+                'logo_path' => null,
+                'favicon_path' => null,
                 'contact_email' => null,
                 'contact_phone' => null,
-                'about'         => null,
+                'about' => null,
             ];
 
             $view->with('systemSettings', $settings);
@@ -76,9 +130,9 @@ class AppServiceProvider extends ServiceProvider
         View::composer('components.applicant-layout', function ($view) use ($getSettings) {
             $systemSettings = $getSettings();
 
-            $brandName  = $systemSettings?->app_name   ?? config('app.name', __('app.court_ms'));
-            $shortName  = $systemSettings?->short_name ?: $brandName;
-            $logoPath   = $systemSettings?->logo_path   ?? null;
+            $brandName = $systemSettings?->app_name ?? config('app.name', __('app.court_ms'));
+            $shortName = $systemSettings?->short_name ?: $brandName;
+            $logoPath = $systemSettings?->logo_path ?? null;
             $bannerPath = $systemSettings?->banner_path ?? null;
             $footerText = $systemSettings?->footer_text ?? __('app.all_rights_reserved');
 
@@ -90,7 +144,9 @@ class AppServiceProvider extends ServiceProvider
                     try {
                         $needed = ['court_cases', 'case_hearings', 'case_messages', 'case_status_logs', 'notification_reads'];
                         foreach ($needed as $tbl) {
-                            if (!Schema::hasTable($tbl)) return 0;
+                            if (! Schema::hasTable($tbl)) {
+                                return 0;
+                            }
                         }
 
                         // Single UNION query instead of 3 separate COUNT queries
@@ -98,7 +154,7 @@ class AppServiceProvider extends ServiceProvider
                             ->join('court_cases as c', 'c.id', '=', 'h.case_id')
                             ->where('c.applicant_id', $aid)
                             ->whereBetween('h.hearing_at', [now()->subDay(), now()->addDays(60)])
-                            ->whereNotExists(fn($q) => $q->from('notification_reads as nr')
+                            ->whereNotExists(fn ($q) => $q->from('notification_reads as nr')
                                 ->whereColumn('nr.source_id', 'h.id')
                                 ->where('nr.type', 'hearing')
                                 ->where('nr.applicant_id', $aid))
@@ -109,7 +165,7 @@ class AppServiceProvider extends ServiceProvider
                             ->whereNotNull('m.sender_user_id')
                             ->where('c.applicant_id', $aid)
                             ->where('m.created_at', '>=', now()->subDays(14))
-                            ->whereNotExists(fn($q) => $q->from('notification_reads as nr')
+                            ->whereNotExists(fn ($q) => $q->from('notification_reads as nr')
                                 ->whereColumn('nr.source_id', 'm.id')
                                 ->where('nr.type', 'message')
                                 ->where('nr.applicant_id', $aid))
@@ -119,7 +175,7 @@ class AppServiceProvider extends ServiceProvider
                             ->join('court_cases as c', 'c.id', '=', 'l.case_id')
                             ->where('c.applicant_id', $aid)
                             ->where('l.created_at', '>=', now()->subDays(14))
-                            ->whereNotExists(fn($q) => $q->from('notification_reads as nr')
+                            ->whereNotExists(fn ($q) => $q->from('notification_reads as nr')
                                 ->whereColumn('nr.source_id', 'l.id')
                                 ->where('nr.type', 'status')
                                 ->where('nr.applicant_id', $aid))
@@ -141,9 +197,9 @@ class AppServiceProvider extends ServiceProvider
         // ── Applicant auth card layout (logo + card only) ───────────────────
         View::composer('components.applicant-auth-layout', function ($view) use ($getSettings) {
             $systemSettings = $getSettings();
-            $brandName = $systemSettings?->app_name   ?? config('app.name', __('app.court_ms'));
+            $brandName = $systemSettings?->app_name ?? config('app.name', __('app.court_ms'));
             $shortName = $systemSettings?->short_name ?: $brandName;
-            $logoPath  = $systemSettings?->logo_path  ?? null;
+            $logoPath = $systemSettings?->logo_path ?? null;
 
             $view->with('publicLayout', compact('systemSettings', 'brandName', 'shortName', 'logoPath'));
         });
@@ -151,9 +207,9 @@ class AppServiceProvider extends ServiceProvider
         // ── Home / landing page ─────────────────────────────────────────────
         View::composer('home', function ($view) use ($getSettings) {
             $systemSettings = $getSettings();
-            $brandName = $systemSettings?->app_name   ?? config('app.name', __('app.court_ms'));
+            $brandName = $systemSettings?->app_name ?? config('app.name', __('app.court_ms'));
             $shortName = $systemSettings?->short_name ?: $brandName;
-            $logoPath  = $systemSettings?->logo_path  ?? null;
+            $logoPath = $systemSettings?->logo_path ?? null;
 
             $view->with('publicLayout', compact('systemSettings', 'brandName', 'shortName', 'logoPath'));
         });
@@ -161,9 +217,9 @@ class AppServiceProvider extends ServiceProvider
         // ── Respondent layout ───────────────────────────────────────────────
         View::composer('components.respondant-layout', function ($view) use ($getSettings) {
             $systemSettings = $getSettings();
-            $brandName  = $systemSettings?->app_name   ?? config('app.name', __('app.court_ms'));
-            $shortName  = $systemSettings?->short_name ?: $brandName;
-            $logoPath   = $systemSettings?->logo_path   ?? null;
+            $brandName = $systemSettings?->app_name ?? config('app.name', __('app.court_ms'));
+            $shortName = $systemSettings?->short_name ?: $brandName;
+            $logoPath = $systemSettings?->logo_path ?? null;
             $bannerPath = $systemSettings?->banner_path ?? null;
             $footerText = $systemSettings?->footer_text ?? __('app.all_rights_reserved');
 

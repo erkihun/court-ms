@@ -6,12 +6,14 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 class ProfileController extends Controller
 {
     public function edit()
     {
         $respondent = Auth::guard('applicant')->user();
+
         return view('applicant.respondent.profile.edit', compact('respondent'));
     }
 
@@ -27,9 +29,9 @@ class ProfileController extends Controller
             'position' => ['nullable', 'string', 'max:150'],
             'organization_name' => ['nullable', 'string', 'max:150'],
             'address' => ['nullable', 'string', 'max:255'],
-            'national_id' => ['nullable', 'digits:16', 'unique:respondents,national_id,' . $respondent->id],
-            'phone' => ['required', 'string', 'max:30', 'unique:respondents,phone,' . $respondent->id],
-            'email' => ['required', 'email', 'max:255', 'unique:respondents,email,' . $respondent->id],
+            'national_id' => ['nullable', 'digits:16', 'unique:respondents,national_id,'.$respondent->id],
+            'phone' => ['required', 'string', 'max:30', 'unique:respondents,phone,'.$respondent->id],
+            'email' => ['required', 'email', 'max:255', 'unique:respondents,email,'.$respondent->id],
         ]);
 
         $respondent->update($data);
@@ -43,10 +45,10 @@ class ProfileController extends Controller
 
         $request->validate([
             'current_password' => ['required'],
-            'password' => ['required', 'confirmed', 'min:6'],
+            'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
-        if (!Hash::check($request->input('current_password'), $respondent->password)) {
+        if (! Hash::check($request->input('current_password'), $respondent->password)) {
             return back()->withErrors(['current_password' => __('respondent.incorrect_password')]);
         }
 

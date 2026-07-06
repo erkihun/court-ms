@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Applicant;
 
 use App\Http\Controllers\Controller;
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 class ApplicantProfileController extends Controller
 {
@@ -30,21 +30,21 @@ class ApplicantProfileController extends Controller
         ]);
 
         $validated = $request->validate([
-            'first_name'         => ['required', 'string', 'max:100'],
-            'middle_name'        => ['nullable', 'string', 'max:100'],
-            'last_name'          => ['required', 'string', 'max:100'],
-            'gender'             => ['required', Rule::in(['male', 'female'])],
-            'position'           => ['required', 'string', 'max:150'],
-            'organization_name'  => ['required', 'string', 'max:150'],
-            'phone'              => ['required', 'string', 'max:30', 'unique:applicants,phone,' . $user->id],
-            'email'              => ['required', 'email', 'max:255', 'unique:applicants,email,' . $user->id],
-            'address'            => ['required', 'string', 'max:255'],
-            'national_id_number' => ['required', 'digits:16', 'unique:applicants,national_id_number,' . $user->id],
+            'first_name' => ['required', 'string', 'max:100'],
+            'middle_name' => ['nullable', 'string', 'max:100'],
+            'last_name' => ['required', 'string', 'max:100'],
+            'gender' => ['required', Rule::in(['male', 'female'])],
+            'position' => ['required', 'string', 'max:150'],
+            'organization_name' => ['required', 'string', 'max:150'],
+            'phone' => ['required', 'string', 'max:30', 'unique:applicants,phone,'.$user->id],
+            'email' => ['required', 'email', 'max:255', 'unique:applicants,email,'.$user->id],
+            'address' => ['required', 'string', 'max:255'],
+            'national_id_number' => ['required', 'digits:16', 'unique:applicants,national_id_number,'.$user->id],
 
-            'current_password'   => ['nullable', 'current_password:applicant'],
-            'password'           => ['nullable', 'confirmed', 'min:6'],
+            'current_password' => ['nullable', 'current_password:applicant'],
+            'password' => ['nullable', 'confirmed', Password::defaults()],
 
-            'lawyer_document'    => ['nullable', 'file', 'mimes:pdf', 'max:1024'],
+            'lawyer_document' => ['nullable', 'file', 'mimes:pdf', 'max:1024'],
         ], [
             'national_id_number.digits' => 'National ID must be exactly 16 digits.',
         ]);
@@ -53,7 +53,7 @@ class ApplicantProfileController extends Controller
         if ($request->hasFile('lawyer_document') && $user->is_lawyer) {
             $newPath = $request->file('lawyer_document')->store('lawyer_documents', 'private');
 
-            if (!empty($user->lawyer_document_path)) {
+            if (! empty($user->lawyer_document_path)) {
                 Storage::disk('private')->delete($user->lawyer_document_path);
             }
 
@@ -61,7 +61,7 @@ class ApplicantProfileController extends Controller
         }
         unset($validated['lawyer_document']);
 
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             if (empty($validated['current_password'])) {
                 return back()->withErrors(['current_password' => 'Enter your current password to set a new one.']);
             }
@@ -74,12 +74,12 @@ class ApplicantProfileController extends Controller
         unset($validated['current_password']);
 
         $user->fill($validated);
-        if (!empty($currentPassword)) {
+        if (! empty($currentPassword)) {
             $user->forceFill(['remember_token' => Str::random(60)]);
         }
         $user->save();
 
-        if (!empty($currentPassword)) {
+        if (! empty($currentPassword)) {
             Auth::guard('applicant')->logoutOtherDevices($currentPassword);
             $request->session()->regenerate();
         }
@@ -94,7 +94,7 @@ class ApplicantProfileController extends Controller
         abort_if(empty($user->lawyer_document_path), 404, 'Document not found.');
 
         $disk = Storage::disk('private');
-        abort_if(!$disk->exists($user->lawyer_document_path), 404, 'Document not found.');
+        abort_if(! $disk->exists($user->lawyer_document_path), 404, 'Document not found.');
 
         return $disk->response(
             $user->lawyer_document_path,
