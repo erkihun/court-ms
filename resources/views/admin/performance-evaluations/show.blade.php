@@ -29,7 +29,7 @@
         <a href="{{ route('performance-evaluations.index') }}"
            class="text-sm text-gray-500 hover:text-gray-700">&larr; {{ __('performance.actions.back_to_list') }}</a>
         <div class="flex gap-2">
-            @if($ev->status !== 'reviewed')
+            @if($ev->status !== 'reviewed' && auth()->user()?->hasPermission('performance-evaluations.update'))
             <a href="{{ route('performance-evaluations.edit', $ev) }}"
                class="rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100">{{ __('performance.actions.edit') }}</a>
             @endif
@@ -150,7 +150,7 @@
     @endif
 
     {{-- Review action (for submitted evaluations) --}}
-    @if($ev->status === 'submitted')
+    @if($ev->status === 'submitted' && auth()->user()?->hasPermission('performance-evaluations.review'))
     <div class="rounded-xl border border-blue-200 bg-blue-50 p-5">
         <h3 class="text-sm font-semibold text-blue-800 mb-3">{{ __('performance.review.title') }}</h3>
         <form method="POST" action="{{ route('performance-evaluations.review', $ev) }}" class="space-y-3">

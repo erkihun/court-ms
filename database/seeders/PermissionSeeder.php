@@ -388,6 +388,33 @@ class PermissionSeeder extends Seeder
                 'label' => null,
                 'description' => null,
             ],
+
+            // Performance evaluations
+            [
+                'name' => 'performance-evaluations.view',
+                'label' => 'View performance evaluations',
+                'description' => 'View the performance evaluation list and details.',
+            ],
+            [
+                'name' => 'performance-evaluations.create',
+                'label' => 'Create performance evaluations',
+                'description' => 'Create draft evaluations and submit them for review.',
+            ],
+            [
+                'name' => 'performance-evaluations.update',
+                'label' => 'Update performance evaluations',
+                'description' => 'Edit performance evaluations that have not been reviewed.',
+            ],
+            [
+                'name' => 'performance-evaluations.delete',
+                'label' => 'Delete performance evaluations',
+                'description' => 'Delete performance evaluations that have not been reviewed.',
+            ],
+            [
+                'name' => 'performance-evaluations.review',
+                'label' => 'Review performance evaluations',
+                'description' => 'Approve submitted evaluations and record reviewer notes.',
+            ],
         ];
 
         $perms = array_map(static function (array $permission) use ($timestamp): array {

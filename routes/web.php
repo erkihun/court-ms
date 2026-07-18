@@ -655,14 +655,22 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::delete('/appeals/{appeal}/documents/{doc}', [AppealController::class, 'deleteDoc'])->middleware('perm:appeals.edit')->name('appeals.docs.delete');
 
             // Performance Evaluations
-            Route::get('/performance-evaluations',                              [PerformanceEvaluationController::class, 'index'])->name('performance-evaluations.index');
-            Route::get('/performance-evaluations/create',                       [PerformanceEvaluationController::class, 'create'])->name('performance-evaluations.create');
-            Route::post('/performance-evaluations',                             [PerformanceEvaluationController::class, 'store'])->name('performance-evaluations.store');
-            Route::get('/performance-evaluations/{performanceEvaluation}',      [PerformanceEvaluationController::class, 'show'])->name('performance-evaluations.show');
-            Route::get('/performance-evaluations/{performanceEvaluation}/edit', [PerformanceEvaluationController::class, 'edit'])->name('performance-evaluations.edit');
-            Route::patch('/performance-evaluations/{performanceEvaluation}',    [PerformanceEvaluationController::class, 'update'])->name('performance-evaluations.update');
-            Route::delete('/performance-evaluations/{performanceEvaluation}',   [PerformanceEvaluationController::class, 'destroy'])->name('performance-evaluations.destroy');
-            Route::post('/performance-evaluations/{performanceEvaluation}/review', [PerformanceEvaluationController::class, 'review'])->name('performance-evaluations.review');
+            Route::get('/performance-evaluations', [PerformanceEvaluationController::class, 'index'])
+                ->middleware('perm:performance-evaluations.view')->name('performance-evaluations.index');
+            Route::get('/performance-evaluations/create', [PerformanceEvaluationController::class, 'create'])
+                ->middleware('perm:performance-evaluations.create')->name('performance-evaluations.create');
+            Route::post('/performance-evaluations', [PerformanceEvaluationController::class, 'store'])
+                ->middleware('perm:performance-evaluations.create')->name('performance-evaluations.store');
+            Route::get('/performance-evaluations/{performanceEvaluation}', [PerformanceEvaluationController::class, 'show'])
+                ->middleware('perm:performance-evaluations.view')->name('performance-evaluations.show');
+            Route::get('/performance-evaluations/{performanceEvaluation}/edit', [PerformanceEvaluationController::class, 'edit'])
+                ->middleware('perm:performance-evaluations.update')->name('performance-evaluations.edit');
+            Route::patch('/performance-evaluations/{performanceEvaluation}', [PerformanceEvaluationController::class, 'update'])
+                ->middleware('perm:performance-evaluations.update')->name('performance-evaluations.update');
+            Route::delete('/performance-evaluations/{performanceEvaluation}', [PerformanceEvaluationController::class, 'destroy'])
+                ->middleware('perm:performance-evaluations.delete')->name('performance-evaluations.destroy');
+            Route::post('/performance-evaluations/{performanceEvaluation}/review', [PerformanceEvaluationController::class, 'review'])
+                ->middleware('perm:performance-evaluations.review')->name('performance-evaluations.review');
 
             // Admin notifications (matches admin layout links)
             Route::get('/notifications',           [AdminNotificationController::class, 'index'])->name('admin.notifications.index');

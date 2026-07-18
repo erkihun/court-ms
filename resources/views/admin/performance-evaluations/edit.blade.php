@@ -128,6 +128,7 @@
             <div class="flex gap-2">
                 <a href="{{ route('performance-evaluations.show', $evaluation) }}"
                    class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">{{ __('performance.actions.cancel') }}</a>
+                @if(auth()->user()?->hasPermission('performance-evaluations.delete'))
                 <form method="POST" action="{{ route('performance-evaluations.destroy', $evaluation) }}"
                       onsubmit="return confirm({{ \Illuminate\Support\Js::from(__('performance.confirm.delete')) }})">
                     @csrf @method('DELETE')
@@ -136,6 +137,7 @@
                         {{ __('performance.actions.delete') }}
                     </button>
                 </form>
+                @endif
             </div>
             <div class="flex gap-2">
                 <button type="submit" name="action" value="draft"

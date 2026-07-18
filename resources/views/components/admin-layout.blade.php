@@ -602,7 +602,7 @@
             @endif
 
             {{-- Performance Evaluations --}}
-            @if($hasPerformanceEvaluations)
+            @if($hasPerformanceEvaluations && auth()->user()?->hasPermission('performance-evaluations.view'))
             <a href="{{ route('performance-evaluations.index') }}"
                 class="sidebar-menu-item focus-ring
                 {{ request()->routeIs('performance-evaluations.*') ? 'sidebar-menu-item-active' : 'sidebar-menu-item-inactive' }}">

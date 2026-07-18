@@ -103,11 +103,13 @@
             {{ __('performance.settings.actions.add_category') }}
         </button>
         @endif
+        @if(auth()->user()?->hasPermission('performance-evaluations.create'))
         <a href="{{ route('performance-evaluations.create') }}"
            class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
             {{ __('performance.actions.new') }}
         </a>
+        @endif
     </div>
 
     {{-- Table --}}
@@ -178,7 +180,7 @@
                     <div class="flex items-center justify-end gap-2">
                         <a href="{{ route('performance-evaluations.show', $ev) }}"
                            class="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">{{ __('performance.actions.view') }}</a>
-                        @if($ev->status !== 'reviewed')
+                        @if($ev->status !== 'reviewed' && auth()->user()?->hasPermission('performance-evaluations.update'))
                         <a href="{{ route('performance-evaluations.edit', $ev) }}"
                            class="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100">{{ __('performance.actions.edit') }}</a>
                         @endif
@@ -193,7 +195,9 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
                         <p class="text-sm font-medium">{{ __('performance.empty.evaluations') }}</p>
+                        @if(auth()->user()?->hasPermission('performance-evaluations.create'))
                         <a href="{{ route('performance-evaluations.create') }}" class="text-blue-600 hover:underline text-xs">{{ __('performance.actions.create_first') }}</a>
+                        @endif
                     </div>
                 </td>
             </tr>
