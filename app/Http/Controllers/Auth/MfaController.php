@@ -24,8 +24,14 @@ class MfaController extends Controller
         $qrCode = $secret && ! $user->hasConfirmedMfa()
             ? QrCode::size(220)->margin(1)->generate($mfa->provisioningUri($user, $secret))
             : null;
+        $recoveryCodes = collect($request->session()->get('mfa_recovery_codes', []))
+            ->flatten()
+            ->filter(fn (mixed $code): bool => is_scalar($code) && (string) $code !== '')
+            ->map(fn (mixed $code): string => (string) $code)
+            ->values()
+            ->all();
 
-        return view('admin.profile.mfa', compact('user', 'secret', 'qrCode'));
+        return view('admin.profile.mfa', compact('user', 'secret', 'qrCode', 'recoveryCodes'));
     }
 
     public function begin(Request $request, MfaService $mfa): RedirectResponse

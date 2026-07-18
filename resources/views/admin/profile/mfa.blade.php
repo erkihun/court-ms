@@ -50,12 +50,12 @@
         <div class="mfa-card">
             <p class="hint">{{ __('auth.mfa_setup_hint') }}</p>
 
-            @if(session('mfa_recovery_codes'))
+            @if($recoveryCodes)
                 <div class="mfa-alert mfa-alert-warning">
                     <strong>{{ __('auth.mfa_recovery_codes') }}</strong>
                     <p>{{ __('auth.mfa_recovery_warning') }}</p>
                     <div class="mfa-codes">
-                        @foreach(session('mfa_recovery_codes') as $code)<code>{{ $code }}</code>@endforeach
+                        @foreach($recoveryCodes as $code)<code>{{ $code }}</code>@endforeach
                     </div>
                 </div>
             @endif

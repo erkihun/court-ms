@@ -139,6 +139,130 @@
             /* Blue-600 */
             outline-offset: 2px;
         }
+
+        .session-timeout-toast {
+            position: fixed;
+            right: 1.25rem;
+            bottom: 1.25rem;
+            z-index: 10050;
+            width: min(24rem, calc(100vw - 2rem));
+            overflow: hidden;
+            border: 1px solid rgb(245 158 11 / .28);
+            border-radius: 1rem;
+            background: var(--surface-strong, #fff);
+            color: var(--text, #0f172a);
+            box-shadow: 0 20px 48px rgb(15 23 42 / .2);
+            opacity: 0;
+            transform: translateY(1rem);
+            pointer-events: none;
+            transition: opacity .2s ease, transform .2s ease;
+        }
+
+        .session-timeout-toast::before {
+            display: block;
+            height: .2rem;
+            content: '';
+            background: linear-gradient(90deg, #f59e0b, #f97316);
+        }
+
+        .session-timeout-toast.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .session-timeout-toast-inner {
+            padding: 1rem;
+        }
+
+        .session-timeout-toast-head {
+            display: flex;
+            align-items: flex-start;
+            gap: .75rem;
+        }
+
+        .session-timeout-toast-icon {
+            display: grid;
+            flex-shrink: 0;
+            width: 2.25rem;
+            height: 2.25rem;
+            place-items: center;
+            border-radius: .75rem;
+            background: rgb(245 158 11 / .12);
+            color: #d97706;
+        }
+
+        .session-timeout-toast-title {
+            margin: 0;
+            color: var(--text, #0f172a);
+            font-size: .85rem;
+            font-weight: 800;
+        }
+
+        .session-timeout-toast-message {
+            margin: .25rem 0 0;
+            color: var(--text-muted, #64748b);
+            font-size: .75rem;
+            line-height: 1.45;
+        }
+
+        .session-timeout-toast-close {
+            display: grid;
+            flex-shrink: 0;
+            width: 1.75rem;
+            height: 1.75rem;
+            margin-left: auto;
+            place-items: center;
+            border: 0;
+            border-radius: .5rem;
+            background: transparent;
+            color: var(--text-subtle, #94a3b8);
+            cursor: pointer;
+        }
+
+        .session-timeout-toast-close:hover {
+            background: var(--surface-soft, #f1f5f9);
+            color: var(--text, #0f172a);
+        }
+
+        .session-timeout-toast-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: .5rem;
+            margin-top: .9rem;
+        }
+
+        .session-timeout-toast-button {
+            border: 0;
+            border-radius: .6rem;
+            padding: .5rem .75rem;
+            font-size: .72rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .session-timeout-toast-button-primary {
+            background: rgb(var(--ac));
+            color: #fff;
+        }
+
+        .session-timeout-toast-button-primary:hover {
+            filter: brightness(.95);
+        }
+
+        .session-timeout-toast-button-secondary {
+            border: 1px solid var(--border, #e2e8f0);
+            background: var(--surface-soft, #f1f5f9);
+            color: var(--text-muted, #64748b);
+        }
+
+        @media (max-width: 640px) {
+            .session-timeout-toast {
+                right: 1rem;
+                bottom: 1rem;
+                width: calc(100vw - 2rem);
+            }
+        }
     </style>
     @vite(['resources/css/app.css','resources/js/app.js'])
     @livewireStyles
@@ -2206,13 +2330,58 @@
             if (!lifetime || warning >= lifetime) return;
             let timer;
             let warned = false;
+            let toast;
+
+            const hideToast = () => {
+                toast?.classList.remove('is-visible');
+            };
+
+            const showToast = () => {
+                if (!toast) {
+                    toast = document.createElement('section');
+                    toast.className = 'session-timeout-toast';
+                    toast.setAttribute('role', 'alert');
+                    toast.setAttribute('aria-live', 'assertive');
+                    toast.innerHTML = `
+                        <div class="session-timeout-toast-inner">
+                            <div class="session-timeout-toast-head">
+                                <span class="session-timeout-toast-icon" aria-hidden="true">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m6-2a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z" />
+                                    </svg>
+                                </span>
+                                <div>
+                                    <p class="session-timeout-toast-title">${@js(__('settings.session_warning_minutes'))}</p>
+                                    <p class="session-timeout-toast-message">${@js(__('settings.session_warning_browser'))}</p>
+                                </div>
+                                <button type="button" class="session-timeout-toast-close" data-session-timeout-close aria-label="${@js(__('settings.session_dismiss'))}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="session-timeout-toast-actions">
+                                <button type="button" class="session-timeout-toast-button session-timeout-toast-button-secondary" data-session-timeout-close>${@js(__('settings.session_dismiss'))}</button>
+                                <button type="button" class="session-timeout-toast-button session-timeout-toast-button-primary" data-session-timeout-extend>${@js(__('settings.session_continue'))}</button>
+                            </div>
+                        </div>`;
+                    document.body.appendChild(toast);
+                    toast.querySelectorAll('[data-session-timeout-close]').forEach((button) => {
+                        button.addEventListener('click', hideToast);
+                    });
+                    toast.querySelector('[data-session-timeout-extend]')?.addEventListener('click', () => {
+                        window.location.reload();
+                    });
+                }
+                window.requestAnimationFrame(() => toast.classList.add('is-visible'));
+            };
+
             const schedule = () => {
                 window.clearTimeout(timer);
                 warned = false;
                 timer = window.setTimeout(() => {
                     warned = true;
-                    const extend = window.confirm('{{ __('settings.session_warning_browser') }}');
-                    if (extend) window.location.reload();
+                    showToast();
                 }, lifetime - warning);
             };
             ['click', 'keydown', 'mousemove', 'touchstart'].forEach((event) => {
