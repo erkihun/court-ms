@@ -17,28 +17,48 @@ class SetSessionCookieForGuard
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $path = $request->path();
         $base = config('session.cookie_base', config('session.cookie'));
 
         if ($base) {
-            // Prefer existing session cookie to avoid CSRF token mismatches when
-            // navigating between applicant/respondent and public pages.
+            $adminCookie = $base . '-admin';
             $applicantCookie = $base . '-applicant';
-            $respondentCookie = $base . '-respondent';
 
-            if ($request->cookies->has($applicantCookie)) {
-                config(['session.cookie' => $applicantCookie]);
-            } elseif ($request->cookies->has($respondentCookie)) {
-                config(['session.cookie' => $respondentCookie]);
-            } elseif ($request->is('applicant/*')) {
+            // The respondent portal uses the applicant guard, so both portal
+            // modes intentionally share the applicant session cookie.
+            if ($this->isAdminPath($request)) {
+                config(['session.cookie' => $adminCookie]);
+            } elseif ($request->is('applicant', 'applicant/*', 'respondent', 'respondent/*')) {
                 config(['session.cookie' => $base . '-applicant']);
-            } elseif ($request->is('respondent/*')) {
-                config(['session.cookie' => $base . '-respondent']);
             } else {
                 config(['session.cookie' => $base]);
             }
         }
 
         return $next($request);
+    }
+
+    private function isAdminPath(Request $request): bool
+    {
+        return $request->is(
+            'login',
+            'logout',
+            'register',
+            'forgot-password',
+            'password-otp',
+            'password-otp/*',
+            'new-password',
+            'new-password/*',
+            'verify-email',
+            'verify-email/*',
+            'confirm-password',
+            'force-password',
+            'password',
+            'email/verification-notification',
+            'dashboard',
+            'profile',
+            'mfa/*',
+            'admin',
+            'admin/*',
+        );
     }
 }
