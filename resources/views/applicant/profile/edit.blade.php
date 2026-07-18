@@ -1,6 +1,11 @@
 {{-- resources/views/apply/profile/edit.blade.php --}}
 <x-applicant-layout title="{{ __('auth.my_profile') }}">
-    <div class="max-w-6xl mx-auto bg-white rounded-xl border border-slate-200 shadow-sm p-6 md:p-8">
+    @php
+        $securityError = $errors->has('current_password') || $errors->has('password') || $errors->has('password_confirmation');
+    @endphp
+    <div class="max-w-6xl mx-auto bg-white rounded-xl border border-slate-200 shadow-sm p-6 md:p-8"
+        x-data="{ tab: @js($securityError || session('security_success')) || window.location.hash === '#security' ? 'security' : 'profile' }"
+        @hashchange.window="tab = window.location.hash === '#security' ? 'security' : 'profile'">
 
         {{-- Page header --}}
         <div class="flex items-center justify-between mb-6">
@@ -28,10 +33,27 @@
             </a>
         </div>
 
+        <nav class="mb-6 flex flex-wrap gap-2 border-b border-slate-200 pb-4" aria-label="{{ __('auth.profile_section') }}">
+            <a href="#profile" @click="tab = 'profile'"
+                :class="tab === 'profile' ? 'bg-blue-600 text-white' : 'border border-slate-200 bg-white text-slate-700'"
+                class="rounded-lg px-4 py-2 text-sm font-semibold transition hover:border-blue-300">
+                {{ __('auth.profile_section') }}
+            </a>
+            <a href="#security" @click="tab = 'security'"
+                :class="tab === 'security' ? 'bg-blue-600 text-white' : 'border border-slate-200 bg-white text-slate-700'"
+                class="rounded-lg px-4 py-2 text-sm font-semibold transition hover:border-blue-300">
+                {{ __('auth.security_section') }}
+            </a>
+            <a href="{{ route('applicant.profile.sessions.index') }}"
+                class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-300">
+                {{ __('auth.sessions_title') }}
+            </a>
+        </nav>
+
         {{-- Flash messages --}}
-        @if(session('success'))
+        @if(session('success') || session('security_success'))
         <div class="mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3  text-emerald-800">
-            {{ session('success') }}
+            {{ session('success') ?? session('security_success') }}
         </div>
         @endif
 
@@ -46,7 +68,7 @@
         </div>
         @endif
 
-        <form method="POST" action="{{ route('applicant.profile.update') }}" class="space-y-8"
+        <form id="profile" x-show="tab === 'profile'" x-cloak method="POST" action="{{ route('applicant.profile.update') }}" class="space-y-8"
             enctype="multipart/form-data">
             @csrf @method('PATCH')
 
@@ -229,67 +251,6 @@
 
             <hr class="border-slate-200">
 
-            {{-- Password section --}}
-            <section>
-                <div class="flex items-center gap-2 mb-3">
-                    <div class="flex items-center gap-2">
-                        <div class="h-7 w-7 rounded-full bg-orange-50 flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-orange-600" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"
-                                    d="M8 11V8a4 4 0 1 1 8 0v3m-9 0h10a1 1 0 0 1 1 1v6a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-6a1 1 0 0 1 1-1z" />
-                            </svg>
-                        </div>
-                        <h2 class=" font-semibold text-slate-800">
-                            {{ __('auth.change_password') }}
-                        </h2>
-                    </div>
-                    <span class="text-[11px] text-slate-500">
-                        {{ __('auth.password_optional_hint') ?? __('auth.password_optional') }}
-                    </span>
-                </div>
-
-                <div class="grid md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-600" for="current_password">
-                            {{ __('auth.current_password') }}
-                        </label>
-                        <input id="current_password" type="password" name="current_password"
-                            autocomplete="current-password"
-                            @error('current_password') aria-invalid="true" @enderror
-                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
-                                      focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
-                        @error('current_password')
-                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-medium text-slate-600" for="password">
-                            {{ __('auth.new_password') }}
-                        </label>
-                        <input id="password" type="password" name="password"
-                            autocomplete="new-password"
-                            @error('password') aria-invalid="true" @enderror
-                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
-                                      focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
-                        @error('password')
-                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-medium text-slate-600" for="password_confirmation">
-                            {{ __('auth.confirm_new_password') }}
-                        </label>
-                        <input id="password_confirmation" type="password" name="password_confirmation"
-                            autocomplete="new-password"
-                            class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
-                                      focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
-                    </div>
-                </div>
-            </section>
-
             {{-- Lawyer document --}}
             @if($user->is_lawyer)
             <section>
@@ -342,6 +303,47 @@
                 </a>
             </div>
         </form>
+
+        <section id="security" x-show="tab === 'security'" x-cloak class="space-y-6">
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-5">
+                <h2 class="text-lg font-semibold text-slate-900">{{ __('auth.security_section') }}</h2>
+                <p class="mt-1 text-sm leading-6 text-slate-600">{{ __('auth.profile.password_security_hint') }}</p>
+            </div>
+
+            <form method="POST" action="{{ route('applicant.profile.password.update') }}"
+                class="rounded-xl border border-slate-200 bg-white p-5">
+                @csrf
+                @method('PATCH')
+                <h3 class="text-base font-semibold text-slate-900">{{ __('auth.change_password') }}</h3>
+                <p class="mt-1 text-xs text-slate-500">{{ __('auth.password_optional_hint') ?? __('auth.password_optional') }}</p>
+
+                <div class="mt-5 grid gap-4 md:grid-cols-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600" for="security_current_password">{{ __('auth.current_password') }}</label>
+                        <input id="security_current_password" type="password" name="current_password" autocomplete="current-password" required
+                            class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                        @error('current_password')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600" for="security_password">{{ __('auth.new_password') }}</label>
+                        <input id="security_password" type="password" name="password" autocomplete="new-password" required
+                            class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                        @error('password')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600" for="security_password_confirmation">{{ __('auth.confirm_new_password') }}</label>
+                        <input id="security_password_confirmation" type="password" name="password_confirmation" autocomplete="new-password" required
+                            class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                    </div>
+                </div>
+
+                <div class="mt-5 flex justify-end">
+                    <button type="submit" class="inline-flex items-center justify-center rounded-lg bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-1">
+                        {{ __('auth.save_changes') }}
+                    </button>
+                </div>
+            </form>
+        </section>
     </div>
 
     {{-- Minimal, safe auto-formatter for National ID --}}

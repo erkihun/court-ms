@@ -17,6 +17,7 @@ class UseGuard
     public function handle(Request $request, Closure $next, string $guard): Response
     {
         Auth::shouldUse($guard);
+        $request->session()->put('_auth_guard', $guard);
 
         return $next($request);
     }

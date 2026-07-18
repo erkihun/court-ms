@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Applicant;
 
 use App\Http\Controllers\Controller;
+use App\Models\Respondent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -21,6 +22,11 @@ class ApplicantProfileController extends Controller
     public function update(Request $request)
     {
         $user = $request->user('applicant');
+        $originalEmail = (string) $user->getRawOriginal('email');
+
+        if (! $request->has('national_id_number') && $request->has('national_id')) {
+            $request->merge(['national_id_number' => $request->input('national_id')]);
+        }
 
         $request->merge([
             // Applicants store a digits-only National ID in the DB.
@@ -71,6 +77,7 @@ class ApplicantProfileController extends Controller
                 return back()->withErrors(['current_password' => 'Enter your current password to set a new one.']);
             }
             $currentPassword = $validated['current_password'];
+            $newPassword = $validated['password'];
             $validated['password'] = Hash::make($validated['password']);
         } else {
             unset($validated['password']);
@@ -83,13 +90,39 @@ class ApplicantProfileController extends Controller
             $user->forceFill(['remember_token' => Str::random(60)]);
         }
         $user->save();
+        $this->syncRespondentProfile($user, $originalEmail);
 
         if (! empty($currentPassword)) {
-            Auth::guard('applicant')->logoutOtherDevices($currentPassword);
+            $this->syncRespondentPassword($user, $originalEmail);
+            Auth::guard('applicant')->logoutOtherDevices($newPassword);
             $request->session()->regenerate();
         }
 
         return back()->with('success', 'Profile updated.');
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'current_password:applicant'],
+            'password' => ['required', 'confirmed', Password::defaults()],
+        ]);
+
+        $user = $request->user('applicant');
+        $newPassword = $validated['password'];
+
+        $user->forceFill([
+            'password' => Hash::make($newPassword),
+            'remember_token' => Str::random(60),
+        ])->save();
+        $this->syncRespondentPassword($user, (string) $user->getRawOriginal('email'));
+
+        Auth::guard('applicant')->logoutOtherDevices($newPassword);
+        $request->session()->regenerate();
+
+        return redirect()
+            ->to(route('applicant.profile.edit').'#security')
+            ->with('security_success', __('auth.profile.saved'));
     }
 
     public function lawyerDocument(Request $request)
@@ -106,5 +139,38 @@ class ApplicantProfileController extends Controller
             basename($user->lawyer_document_path),
             ['Content-Type' => 'application/pdf']
         );
+    }
+
+    private function syncRespondentProfile(object $user, string $originalEmail): void
+    {
+        $respondent = Respondent::query()
+            ->where('email', $originalEmail)
+            ->first();
+
+        if ($respondent === null) {
+            return;
+        }
+
+        $respondent->update([
+            'first_name' => $user->first_name,
+            'middle_name' => $user->middle_name ?? '',
+            'last_name' => $user->last_name,
+            'gender' => $user->gender,
+            'position' => $user->position ?? '',
+            'organization_name' => $user->organization_name ?? '',
+            'address' => $user->address ?? '',
+            'national_id' => preg_replace('/\D/', '', (string) $user->getRawOriginal('national_id_number')),
+            'phone' => $user->phone,
+            'email' => $user->email,
+        ]);
+    }
+
+    private function syncRespondentPassword(object $user, string $originalEmail): void
+    {
+        $respondent = Respondent::query()
+            ->where('email', $originalEmail)
+            ->first();
+
+        $respondent?->forceFill(['password' => $user->getRawOriginal('password')])->save();
     }
 }

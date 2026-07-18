@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Applicant;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 test('applicant profile page is displayed', function () {
@@ -127,5 +128,100 @@ test('applicant profile update validates duplicate national id after normalizati
         ->assertSessionHasErrors('national_id_number')
         ->assertRedirect(route('applicant.profile.edit'));
 
-    expect($applicant->fresh()->getRawOriginal('national_id_number'))->toBe('1234567890123456');
+expect($applicant->fresh()->getRawOriginal('national_id_number'))->toBe('1234567890123456');
+});
+
+test('applicant profile exposes profile security and sessions navigation', function () {
+    $applicant = Applicant::create([
+        'first_name' => 'Abel',
+        'middle_name' => 'K',
+        'last_name' => 'Teka',
+        'gender' => 'male',
+        'position' => 'Manager',
+        'organization_name' => 'ACME',
+        'phone' => '0911000000',
+        'email' => 'abel-navigation@example.com',
+        'address' => 'Addis Ababa',
+        'national_id_number' => '1234567890123456',
+        'password' => Hash::make('password'),
+        'is_active' => true,
+        'is_lawyer' => false,
+    ]);
+    $applicant->markEmailAsVerified();
+
+    $this->actingAs($applicant, 'applicant')
+        ->get(route('applicant.profile.edit'))
+        ->assertOk()
+        ->assertSee('#profile')
+        ->assertSee('#security')
+        ->assertSee(route('applicant.profile.sessions.index'));
+});
+
+test('applicant can change password from profile security', function () {
+    $applicant = Applicant::create([
+        'first_name' => 'Abel',
+        'middle_name' => 'K',
+        'last_name' => 'Teka',
+        'gender' => 'male',
+        'position' => 'Manager',
+        'organization_name' => 'ACME',
+        'phone' => '0911000000',
+        'email' => 'abel-password@example.com',
+        'address' => 'Addis Ababa',
+        'national_id_number' => '1234567890123456',
+        'password' => Hash::make('password'),
+        'is_active' => true,
+        'is_lawyer' => false,
+    ]);
+    $applicant->markEmailAsVerified();
+
+    $this->actingAs($applicant, 'applicant')
+        ->patch(route('applicant.profile.password.update'), [
+            'current_password' => 'password',
+            'password' => 'NewPassword1!',
+            'password_confirmation' => 'NewPassword1!',
+        ])
+        ->assertRedirect(route('applicant.profile.edit').'#security');
+
+    expect(Hash::check('NewPassword1!', $applicant->refresh()->password))->toBeTrue();
+});
+
+test('applicant can view and revoke another session', function () {
+    $applicant = Applicant::create([
+        'first_name' => 'Abel',
+        'middle_name' => 'K',
+        'last_name' => 'Teka',
+        'gender' => 'male',
+        'position' => 'Manager',
+        'organization_name' => 'ACME',
+        'phone' => '0911000000',
+        'email' => 'abel-sessions@example.com',
+        'address' => 'Addis Ababa',
+        'national_id_number' => '1234567890123456',
+        'password' => Hash::make('password'),
+        'is_active' => true,
+        'is_lawyer' => false,
+    ]);
+    $applicant->markEmailAsVerified();
+
+    DB::table('sessions')->insert([
+        'id' => 'applicant-other-session',
+        'user_id' => $applicant->id,
+        'ip_address' => '203.0.113.20',
+        'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/150.0.0.0',
+        'payload' => base64_encode(serialize(['_auth_guard' => 'applicant'])),
+        'last_activity' => now()->getTimestamp(),
+    ]);
+
+    $this->actingAs($applicant, 'applicant')
+        ->get(route('applicant.profile.sessions.index'))
+        ->assertOk()
+        ->assertSee('Windows')
+        ->assertSee('Chrome 150');
+
+    $this->actingAs($applicant, 'applicant')
+        ->delete(route('applicant.profile.sessions.destroy', 'applicant-other-session'))
+        ->assertRedirect();
+
+    $this->assertDatabaseMissing('sessions', ['id' => 'applicant-other-session']);
 });

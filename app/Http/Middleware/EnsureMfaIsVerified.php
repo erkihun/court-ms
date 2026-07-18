@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Middleware;
 
 use App\Models\SystemSetting;
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,19 +21,25 @@ class EnsureMfaIsVerified
     {
         $user = $request->user();
 
-        if ($user === null || $request->routeIs('mfa.setup.*', 'profile.mfa.*', 'mfa.challenge.*', 'logout')) {
+        if ($user === null || ! $user instanceof User || $request->routeIs('mfa.setup.*', 'profile.mfa.*', 'mfa.challenge.*', 'logout')) {
             return $next($request);
         }
 
         $enabled = (bool) SystemSetting::cached()?->mfa_enabled;
 
-        if (! $enabled || ! $user->requiresMfa()) {
+        if (! $enabled) {
             return $next($request);
         }
 
-        if (! $user->hasConfirmedMfa()) {
+        $hasConfirmedMfa = $user->hasConfirmedMfa();
+
+        if ($user->requiresMfa() && ! $hasConfirmedMfa) {
             return redirect()->route('profile.mfa.show')
                 ->with('warning', __('auth.mfa_enrollment_required'));
+        }
+
+        if (! $hasConfirmedMfa) {
+            return $next($request);
         }
 
         if (! $request->session()->has('mfa_verified_at')) {

@@ -15,12 +15,12 @@ use App\Http\Controllers\Applicant\ApplicantResponseReplyController;
 use App\Http\Controllers\Applicant\ApplicantRoleSwitchController;
 use App\Http\Controllers\Applicant\ApplicantNotificationController;
 use App\Http\Controllers\Applicant\ApplicantPasswordController;
+use App\Http\Controllers\Applicant\ApplicantSessionController;
 use App\Http\Controllers\Applicant\ApplicantVerificationController;
 use App\Http\Controllers\Respondent\RespondentAuthController;
 use App\Http\Controllers\Respondent\ResponseController;
 use App\Http\Controllers\Respondent\ResponseReplyController;
 use App\Http\Controllers\Respondent\DashboardController as RespondentDashboardController;
-use App\Http\Controllers\Respondent\ProfileController;
 use App\Http\Controllers\Respondent\CaseSearchController;
 use App\Http\Controllers\Respondent\NotificationController as RespondentNotificationController;
 
@@ -177,7 +177,7 @@ Route::middleware(SetLocale::class)->group(function () {
         Route::post('/respondent/login', fn () => redirect()->route('applicant.login', ['login_as' => 'respondent']))->name('respondent.login.submit');
     });
 
-    Route::middleware(['auth:applicant', \App\Http\Middleware\UseGuard::class . ':applicant'])->group(function () {
+    Route::middleware(['auth:applicant', \App\Http\Middleware\UseGuard::class . ':respondent'])->group(function () {
         Route::post('/respondent/logout', [RespondentAuthController::class, 'logout'])->name('respondent.logout');
         Route::get('/respondent/dashboard', [RespondentDashboardController::class, 'index'])->name('respondent.dashboard');
         Route::get('/respondent/case-search/results', [CaseSearchController::class, 'myCases'])->name('respondent.cases.my');
@@ -192,9 +192,12 @@ Route::middleware(SetLocale::class)->group(function () {
         Route::get('/respondent/response-replies/{reply}', [ResponseReplyController::class, 'show'])->name('respondent.response-replies.show');
         Route::get('/respondent/response-replies/{reply}/download', [SecureFileController::class, 'respondentApplicantResponseReply'])
             ->name('respondent.response-replies.download');
-        Route::get('/respondent/profile', [ProfileController::class, 'edit'])->name('respondent.profile.edit');
-        Route::patch('/respondent/profile', [ProfileController::class, 'update'])->name('respondent.profile.update');
-        Route::patch('/respondent/profile/password', [ProfileController::class, 'updatePassword'])->name('respondent.profile.password');
+        Route::get('/respondent/profile', fn () => redirect()->route('applicant.profile.edit'))->name('respondent.profile.edit');
+        Route::patch('/respondent/profile', [ApplicantProfileController::class, 'update'])->name('respondent.profile.update');
+        Route::patch('/respondent/profile/password', [ApplicantProfileController::class, 'updatePassword'])->name('respondent.profile.password');
+        Route::get('/respondent/profile/sessions', fn () => redirect()->route('applicant.profile.sessions.index'))->name('respondent.profile.sessions.index');
+        Route::delete('/respondent/profile/sessions/{session}', [ApplicantSessionController::class, 'destroy'])->name('respondent.profile.sessions.destroy');
+        Route::delete('/respondent/profile/sessions', [ApplicantSessionController::class, 'destroyOthers'])->name('respondent.profile.sessions.destroyOthers');
         Route::post('/respondent/notifications/mark-one', [RespondentNotificationController::class, 'markOne'])->name('respondent.notifications.markOne');
         Route::post('/respondent/notifications/mark-all', [RespondentNotificationController::class, 'markAll'])->name('respondent.notifications.markAll');
         Route::post('/respondent/switch-to-applicant', [RespondentAuthController::class, 'switchToApplicant'])->name('respondent.switchToApplicant');
@@ -278,6 +281,10 @@ Route::middleware(SetLocale::class)->group(function () {
             // Profile
             Route::get('/applicant/profile',  [ApplicantProfileController::class, 'edit'])->name('applicant.profile.edit');
             Route::patch('/applicant/profile', [ApplicantProfileController::class, 'update'])->name('applicant.profile.update');
+            Route::patch('/applicant/profile/password', [ApplicantProfileController::class, 'updatePassword'])->name('applicant.profile.password.update');
+            Route::get('/applicant/profile/sessions', [ApplicantSessionController::class, 'index'])->name('applicant.profile.sessions.index');
+            Route::delete('/applicant/profile/sessions/{session}', [ApplicantSessionController::class, 'destroy'])->name('applicant.profile.sessions.destroy');
+            Route::delete('/applicant/profile/sessions', [ApplicantSessionController::class, 'destroyOthers'])->name('applicant.profile.sessions.destroyOthers');
             Route::get('/applicant/profile/lawyer-document', [ApplicantProfileController::class, 'lawyerDocument'])->name('applicant.profile.lawyer-document');
             Route::post('/applicant/switch-to-respondent', ApplicantRoleSwitchController::class)
                 ->name('applicant.switchToRespondent');
