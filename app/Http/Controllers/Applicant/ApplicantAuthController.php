@@ -100,9 +100,11 @@ class ApplicantAuthController extends Controller
         // Always reset acting-as flag on login screen
         session()->forget('acting_as_respondent');
         $asRespondentNav = request('login_as') === 'respondent';
+        $baseCookie = (string) config('session.cookie_base', config('session.cookie'));
+        $hasAdminSession = request()->cookies->has($baseCookie.'-admin');
 
         return response()
-            ->view('applicant.auth.login', compact('asRespondentNav'))
+            ->view('applicant.auth.login', compact('asRespondentNav', 'hasAdminSession'))
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
             ->header('Pragma', 'no-cache');
     }

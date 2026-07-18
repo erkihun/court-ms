@@ -16,8 +16,12 @@ class AuthenticatedSessionController extends Controller
      */
     public function create(): Response
     {
+        $baseCookie = (string) config('session.cookie_base', config('session.cookie'));
+
         return response()
-            ->view('admin.auth.login')
+            ->view('admin.auth.login', [
+                'hasApplicantSession' => request()->cookies->has($baseCookie.'-applicant'),
+            ])
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
             ->header('Pragma', 'no-cache');
     }
