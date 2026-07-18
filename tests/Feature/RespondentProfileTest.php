@@ -42,12 +42,27 @@ function respondentProfileApplicant(): Applicant
     return $applicant;
 }
 
+test('applicant and respondent logout both return to the plain applicant login', function () {
+    $applicant = respondentProfileApplicant();
+
+    $this->actingAs($applicant, 'applicant')
+        ->post(route('applicant.logout'))
+        ->assertRedirect(route('applicant.login'));
+
+    $this->actingAs($applicant, 'applicant')
+        ->post(route('respondent.logout'))
+        ->assertRedirect(route('applicant.login'));
+});
+
 test('respondent profile exposes the same profile security and sessions navigation', function () {
     $applicant = respondentProfileApplicant();
 
     $this->actingAs($applicant, 'applicant')
         ->get(route('respondent.profile.edit'))
-        ->assertRedirect(route('applicant.profile.edit'));
+        ->assertOk()
+        ->assertSee(route('respondent.profile.update'))
+        ->assertSee(route('respondent.profile.password'))
+        ->assertSee(route('respondent.profile.sessions.index'));
 });
 
 test('respondent profile updates linked profile records and password', function () {
@@ -78,7 +93,7 @@ test('respondent profile updates linked profile records and password', function 
             'password' => 'NewPassword1!',
             'password_confirmation' => 'NewPassword1!',
         ])
-        ->assertRedirect(route('applicant.profile.edit').'#security');
+        ->assertRedirect(route('respondent.profile.edit').'#security');
 
     expect(Hash::check('NewPassword1!', $applicant->fresh()->password))->toBeTrue()
         ->and(Hash::check('NewPassword1!', Respondent::where('email', $applicant->email)->firstOrFail()->password))->toBeTrue();
@@ -98,10 +113,6 @@ test('respondent can view and revoke another respondent session', function () {
 
     $this->actingAs($applicant, 'applicant')
         ->get(route('respondent.profile.sessions.index'))
-        ->assertRedirect(route('applicant.profile.sessions.index'));
-
-    $this->actingAs($applicant, 'applicant')
-        ->get(route('applicant.profile.sessions.index'))
         ->assertOk()
         ->assertSee('Windows')
         ->assertSee('Chrome 150');

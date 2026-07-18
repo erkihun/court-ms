@@ -16,6 +16,10 @@ class ApplicantProfileController extends Controller
 {
     public function edit(Request $request)
     {
+        if ($request->routeIs('respondent.profile.*')) {
+            $request->session()->put('acting_as_respondent', true);
+        }
+
         return view('applicant.profile.edit', ['user' => $request->user('applicant')]);
     }
 
@@ -121,7 +125,7 @@ class ApplicantProfileController extends Controller
         $request->session()->regenerate();
 
         return redirect()
-            ->to(route('applicant.profile.edit').'#security')
+            ->to(route($request->routeIs('respondent.profile.*') ? 'respondent.profile.edit' : 'applicant.profile.edit').'#security')
             ->with('security_success', __('auth.profile.saved'));
     }
 

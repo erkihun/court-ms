@@ -14,6 +14,10 @@ final class ApplicantSessionController extends Controller
 {
     public function index(Request $request): View
     {
+        if ($request->routeIs('respondent.profile.*')) {
+            $request->session()->put('acting_as_respondent', true);
+        }
+
         $user = $request->user('applicant');
         abort_if($user === null, 401);
 
@@ -22,7 +26,7 @@ final class ApplicantSessionController extends Controller
             ->where('user_id', $user->getAuthIdentifier())
             ->orderByDesc('last_activity')
             ->get(['id', 'ip_address', 'user_agent', 'last_activity', 'payload'])
-            ->filter(fn (object $session): bool => (string) $session->id === (string) $currentId || $this->belongsToApplicant($session));
+            ->filter(fn (object $session): bool => (string) $session->id === (string) $currentId || $this->belongsToProfileSession($session));
 
         $sessions = $records->map(fn (object $session): object => $this->present($session, $currentId))->values();
 
@@ -44,7 +48,7 @@ final class ApplicantSessionController extends Controller
             ->where('user_id', $user->getAuthIdentifier())
             ->first(['id', 'payload']);
 
-        if ($record !== null && $this->belongsToApplicant($record)) {
+        if ($record !== null && $this->belongsToProfileSession($record)) {
             DB::table('sessions')->where('id', $session)->delete();
         }
 
@@ -60,7 +64,7 @@ final class ApplicantSessionController extends Controller
         $sessionIds = DB::table('sessions')
             ->where('user_id', $user->getAuthIdentifier())
             ->get(['id', 'payload'])
-            ->filter(fn (object $session): bool => (string) $session->id !== (string) $currentId && $this->belongsToApplicant($session))
+            ->filter(fn (object $session): bool => (string) $session->id !== (string) $currentId && $this->belongsToProfileSession($session))
             ->pluck('id');
 
         if ($sessionIds->isNotEmpty()) {
@@ -105,7 +109,7 @@ final class ApplicantSessionController extends Controller
         ];
     }
 
-    private function belongsToApplicant(object $session): bool
+    private function belongsToProfileSession(object $session): bool
     {
         $payload = base64_decode((string) $session->payload, true);
 
@@ -115,7 +119,7 @@ final class ApplicantSessionController extends Controller
 
         $data = @unserialize($payload, ['allowed_classes' => false]);
 
-        return is_array($data) && ($data['_auth_guard'] ?? null) === 'applicant';
+        return is_array($data) && in_array($data['_auth_guard'] ?? null, ['applicant', 'respondent'], true);
     }
 
     /**

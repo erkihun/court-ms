@@ -192,10 +192,10 @@ Route::middleware(SetLocale::class)->group(function () {
         Route::get('/respondent/response-replies/{reply}', [ResponseReplyController::class, 'show'])->name('respondent.response-replies.show');
         Route::get('/respondent/response-replies/{reply}/download', [SecureFileController::class, 'respondentApplicantResponseReply'])
             ->name('respondent.response-replies.download');
-        Route::get('/respondent/profile', fn () => redirect()->route('applicant.profile.edit'))->name('respondent.profile.edit');
+        Route::get('/respondent/profile', [ApplicantProfileController::class, 'edit'])->name('respondent.profile.edit');
         Route::patch('/respondent/profile', [ApplicantProfileController::class, 'update'])->name('respondent.profile.update');
         Route::patch('/respondent/profile/password', [ApplicantProfileController::class, 'updatePassword'])->name('respondent.profile.password');
-        Route::get('/respondent/profile/sessions', fn () => redirect()->route('applicant.profile.sessions.index'))->name('respondent.profile.sessions.index');
+        Route::get('/respondent/profile/sessions', [ApplicantSessionController::class, 'index'])->name('respondent.profile.sessions.index');
         Route::delete('/respondent/profile/sessions/{session}', [ApplicantSessionController::class, 'destroy'])->name('respondent.profile.sessions.destroy');
         Route::delete('/respondent/profile/sessions', [ApplicantSessionController::class, 'destroyOthers'])->name('respondent.profile.sessions.destroyOthers');
         Route::post('/respondent/notifications/mark-one', [RespondentNotificationController::class, 'markOne'])->name('respondent.notifications.markOne');

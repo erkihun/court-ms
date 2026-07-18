@@ -1,4 +1,21 @@
 <x-applicant-layout title="{{ __('auth.sessions_title') }}">
+    @php
+        $isRespondentProfile = request()->routeIs('respondent.profile.*');
+        $profileRoutes = $isRespondentProfile
+            ? [
+                'edit' => 'respondent.profile.edit',
+                'sessions' => 'respondent.profile.sessions.index',
+                'destroy' => 'respondent.profile.sessions.destroy',
+                'destroyOthers' => 'respondent.profile.sessions.destroyOthers',
+            ]
+            : [
+                'edit' => 'applicant.profile.edit',
+                'sessions' => 'applicant.profile.sessions.index',
+                'destroy' => 'applicant.profile.sessions.destroy',
+                'destroyOthers' => 'applicant.profile.sessions.destroyOthers',
+            ];
+        $dashboardRoute = $isRespondentProfile ? 'respondent.dashboard' : 'applicant.dashboard';
+    @endphp
     <div class="mx-auto max-w-6xl rounded-xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
         <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
             <div>
@@ -6,22 +23,22 @@
                 <h1 class="mt-1 text-xl font-semibold text-slate-900 md:text-2xl">{{ __('auth.sessions_title') }}</h1>
                 <p class="mt-1 text-sm text-slate-500">{{ __('auth.sessions_hint') }}</p>
             </div>
-            <a href="{{ route('applicant.dashboard') }}"
+            <a href="{{ route($dashboardRoute) }}"
                 class="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
                 {{ __('auth.back') }}
             </a>
         </div>
 
         <nav class="mb-6 flex flex-wrap gap-2 border-b border-slate-200 pb-4" aria-label="{{ __('auth.profile_section') }}">
-            <a href="{{ route('applicant.profile.edit') }}#profile"
+            <a href="{{ route($profileRoutes['edit']) }}#profile"
                 class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-300">
                 {{ __('auth.profile_section') }}
             </a>
-            <a href="{{ route('applicant.profile.edit') }}#security"
+            <a href="{{ route($profileRoutes['edit']) }}#security"
                 class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-300">
                 {{ __('auth.security_section') }}
             </a>
-            <a href="{{ route('applicant.profile.sessions.index') }}"
+            <a href="{{ route($profileRoutes['sessions']) }}"
                 class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white">
                 {{ __('auth.sessions_title') }}
             </a>
@@ -46,7 +63,7 @@
                     <p class="mt-1 text-xs text-slate-500">{{ __('auth.sessions_hint') }}</p>
                 </div>
                 @if($sessions->contains(fn (object $session): bool => ! $session->is_current))
-                    <form method="POST" action="{{ route('applicant.profile.sessions.destroyOthers') }}">
+                    <form method="POST" action="{{ route($profileRoutes['destroyOthers']) }}">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50">
@@ -78,7 +95,7 @@
                         </div>
 
                         @if(! $session->is_current)
-                            <form method="POST" action="{{ route('applicant.profile.sessions.destroy', $session->id) }}" class="shrink-0">
+                            <form method="POST" action="{{ route($profileRoutes['destroy'], $session->id) }}" class="shrink-0">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:border-red-200 hover:bg-red-50 hover:text-red-700">

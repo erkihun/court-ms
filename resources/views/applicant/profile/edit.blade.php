@@ -2,6 +2,21 @@
 <x-applicant-layout title="{{ __('auth.my_profile') }}">
     @php
         $securityError = $errors->has('current_password') || $errors->has('password') || $errors->has('password_confirmation');
+        $isRespondentProfile = request()->routeIs('respondent.profile.*');
+        $profileRoutes = $isRespondentProfile
+            ? [
+                'edit' => 'respondent.profile.edit',
+                'update' => 'respondent.profile.update',
+                'password' => 'respondent.profile.password',
+                'sessions' => 'respondent.profile.sessions.index',
+            ]
+            : [
+                'edit' => 'applicant.profile.edit',
+                'update' => 'applicant.profile.update',
+                'password' => 'applicant.profile.password.update',
+                'sessions' => 'applicant.profile.sessions.index',
+            ];
+        $dashboardRoute = $isRespondentProfile ? 'respondent.dashboard' : 'applicant.dashboard';
     @endphp
     <div class="max-w-6xl mx-auto bg-white rounded-xl border border-slate-200 shadow-sm p-6 md:p-8"
         x-data="{ tab: @js($securityError || session('security_success')) || window.location.hash === '#security' ? 'security' : 'profile' }"
@@ -27,7 +42,7 @@
                 </div>
             </div>
 
-            <a href="{{ route('applicant.dashboard') }}"
+            <a href="{{ route($dashboardRoute) }}"
                 class="hidden md:inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-1 focus:ring-slate-400">
                 {{ __('auth.back') }}
             </a>
@@ -44,7 +59,7 @@
                 class="rounded-lg px-4 py-2 text-sm font-semibold transition hover:border-blue-300">
                 {{ __('auth.security_section') }}
             </a>
-            <a href="{{ route('applicant.profile.sessions.index') }}"
+            <a href="{{ route($profileRoutes['sessions']) }}"
                 class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-300">
                 {{ __('auth.sessions_title') }}
             </a>
@@ -68,7 +83,7 @@
         </div>
         @endif
 
-        <form id="profile" x-show="tab === 'profile'" x-cloak method="POST" action="{{ route('applicant.profile.update') }}" class="space-y-8"
+        <form id="profile" x-show="tab === 'profile'" x-cloak method="POST" action="{{ route($profileRoutes['update']) }}" class="space-y-8"
             enctype="multipart/form-data">
             @csrf @method('PATCH')
 
@@ -296,7 +311,7 @@
                            hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-1">
                     {{ __('auth.save_changes') }}
                 </button>
-                <a href="{{ route('applicant.dashboard') }}"
+                <a href="{{ route($dashboardRoute) }}"
                     class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-slate-100 text-slate-700  font-medium
                           hover:bg-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-400">
                     {{ __('auth.back') }}
@@ -310,7 +325,7 @@
                 <p class="mt-1 text-sm leading-6 text-slate-600">{{ __('auth.profile.password_security_hint') }}</p>
             </div>
 
-            <form method="POST" action="{{ route('applicant.profile.password.update') }}"
+            <form method="POST" action="{{ route($profileRoutes['password']) }}"
                 class="rounded-xl border border-slate-200 bg-white p-5">
                 @csrf
                 @method('PATCH')

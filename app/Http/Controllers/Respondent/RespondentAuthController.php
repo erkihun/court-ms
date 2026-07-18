@@ -76,7 +76,7 @@ class RespondentAuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('applicant.login', ['login_as' => 'respondent']);
+        return redirect()->route('applicant.login');
     }
 
     /**
