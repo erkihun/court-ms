@@ -1,5 +1,5 @@
 <x-admin-layout title="{{ __('auth.profile_section') }}">
-    <div class="max-w-6xl mx-auto px-5 pb-16 space-y-6" x-data="{ tab: @js($errors->updatePassword->any() || session('status') === 'password-updated') || window.location.hash === '#security' ? 'security' : 'profile' }" @hashchange.window="tab = window.location.hash === '#security' ? 'security' : 'profile'">
+    <div class="max-w-6xl mx-auto px-5 pb-16 space-y-6" x-data="{ tab: @js($errors->updatePassword->any() || $errors->has('password') || session('status') === 'password-updated' || session('mfa_status')) || window.location.hash === '#security' ? 'security' : 'profile' }" @hashchange.window="tab = window.location.hash === '#security' ? 'security' : 'profile'">
         <div class="rounded-2xl border border-slate-200 bg-gradient-to-r from-blue-700 to-indigo-700 p-6 text-white shadow-lg">
             <div class="flex items-center gap-4">
                 <div class="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white/20 text-2xl font-bold ring-1 ring-white/30">
@@ -14,6 +14,10 @@
             <a href="#security" @click="tab = 'security'" :class="tab === 'security' ? 'bg-blue-600 text-white' : 'border border-slate-200 bg-white text-slate-700'" class="rounded-lg px-4 py-2 text-sm font-semibold">{{ __('auth.security_section') }}</a>
             <a href="{{ route('profile.sessions.index') }}" class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700">{{ __('auth.sessions_title') }}</a>
         </nav>
+
+        @if(session('mfa_status'))
+            <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800" role="status">{{ session('mfa_status') }}</div>
+        @endif
 
         <form id="profile" x-show="tab === 'profile'" method="POST" action="{{ route('profile.update') }}" enctype="multipart/form-data" class="grid gap-6 lg:grid-cols-[1.4fr_.8fr]">
             @csrf @method('PATCH')
@@ -34,7 +38,37 @@
 
         <section id="security" x-show="tab === 'security'" x-cloak class="grid gap-6 lg:grid-cols-2">
             <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">@include('admin.profile.partials.update-password-form')</div>
-            <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><div class="flex items-start justify-between gap-4"><div><h2 class="text-lg font-bold text-slate-900">{{ __('auth.mfa_title') }}</h2><p class="mt-1 text-sm text-slate-500">{{ auth()->user()->hasConfirmedMfa() ? __('auth.mfa_active') : __('auth.mfa_not_configured') }}</p></div><span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ auth()->user()->hasConfirmedMfa() ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700' }}">{{ auth()->user()->hasConfirmedMfa() ? __('auth.active') : __('auth.review_needed') }}</span></div><a href="{{ route('mfa.setup.show') }}" class="mt-6 inline-flex rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">{{ __('auth.mfa_manage') }}</a></div>
+            <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900">{{ __('auth.mfa_title') }}</h2>
+                        <p class="mt-1 text-sm text-slate-500">{{ auth()->user()->hasConfirmedMfa() ? __('auth.mfa_active') : __('auth.mfa_not_configured') }}</p>
+                    </div>
+                    <span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ auth()->user()->hasConfirmedMfa() ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700' }}">{{ auth()->user()->hasConfirmedMfa() ? __('auth.active') : __('auth.review_needed') }}</span>
+                </div>
+
+                @if(auth()->user()->hasConfirmedMfa())
+                    <p class="mt-4 text-sm leading-6 text-slate-600">{{ __('auth.mfa_active_hint') }}</p>
+
+                    @if(auth()->user()->requiresMfa())
+                        <div class="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{{ __('auth.mfa_required_by_role') }}</div>
+                    @else
+                        <form method="POST" action="{{ route('mfa.setup.destroy') }}" class="mt-5 space-y-3">
+                            @csrf
+                            @method('DELETE')
+                            <div>
+                                <label for="mfa_disable_password" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('auth.current_password') }}</label>
+                                <input id="mfa_disable_password" name="password" type="password" required autocomplete="current-password" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                                @error('password')<p class="mt-1.5 text-xs text-red-600">{{ $message }}</p>@enderror
+                            </div>
+                            <button type="submit" class="inline-flex rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-100">{{ __('auth.mfa_disable') }}</button>
+                        </form>
+                    @endif
+                @else
+                    <p class="mt-4 text-sm leading-6 text-slate-600">{{ __('auth.mfa_setup_hint') }}</p>
+                    <a href="{{ route('mfa.setup.show') }}" class="mt-5 inline-flex rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">{{ __('auth.mfa_begin') }}</a>
+                @endif
+            </div>
         </section>
     </div>
 </x-admin-layout>

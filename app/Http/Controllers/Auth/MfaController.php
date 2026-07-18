@@ -81,6 +81,8 @@ class MfaController extends Controller
         ])->save();
         $request->session()->forget('mfa_verified_at');
 
-        return redirect()->route('mfa.setup.show')->with('status', __('auth.mfa_disabled'));
+        return redirect()
+            ->to(route('profile.edit').'#security')
+            ->with('mfa_status', __('auth.mfa_disabled'));
     }
 }
