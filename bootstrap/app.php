@@ -8,6 +8,8 @@ use Illuminate\Session\TokenMismatchException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use App\Http\Middleware\AddSecurityHeaders;
+use App\Http\Middleware\AssignRequestId;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -18,18 +20,26 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->prepend(AssignRequestId::class);
+        $middleware->append(AddSecurityHeaders::class);
+
         // Add/keep your other aliases here too
         $middleware->alias([
             'guest'                 => \App\Http\Middleware\RedirectIfAuthenticated::class,
             'force.password.change' => \App\Http\Middleware\ForcePasswordChange::class,
             'admin.only'            => \App\Http\Middleware\AdminOnly::class,
             'perm'                  => \App\Http\Middleware\RequirePermission::class,
+            'role'                  => \App\Http\Middleware\RequireRole::class,
+            'audit'                 => \App\Http\Middleware\SystemAuditMiddleware::class,
+            'act.respondent'        => \App\Http\Middleware\ActAsRespondent::class,
             'use.guard'             => \App\Http\Middleware\UseGuard::class,
         ]);
 
         $middleware->prependToGroup('web', \App\Http\Middleware\SetSessionCookieForGuard::class);
         $middleware->prependToGroup('web', \App\Http\Middleware\AdminSessionTimeout::class);
         $middleware->appendToGroup('web', \App\Http\Middleware\ForceHttps::class);
+        $middleware->appendToGroup('web', \App\Http\Middleware\SystemAuditMiddleware::class);
+        $middleware->appendToGroup('api', \App\Http\Middleware\SystemAuditMiddleware::class);
 
         // If you ever need global middleware:
         // $middleware->append(\App\Http\Middleware\SomethingGlobal::class);

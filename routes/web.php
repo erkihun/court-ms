@@ -68,6 +68,7 @@ use App\Models\HomeTimelineStep;
 use App\Http\Controllers\TermsDisplayController;
 use App\Http\Controllers\PublicSignageController;
 use App\Http\Controllers\SecureFileController;
+use App\Http\Controllers\UserManualController;
 
 /*
 |--------------------------------------------------------------------------
@@ -84,6 +85,7 @@ Route::middleware(SetLocale::class)->group(function () {
     */
     // Single canonical language switch route (matches admin layout)
     Route::get('/language/{locale}', [LanguageController::class, 'switch'])->name('language.switch');
+    Route::get('/user-manual', UserManualController::class)->name('landing.user-manual');
 
     Route::get('/home', function () {
         $totalCases       = DB::table('court_cases')->count();
@@ -120,7 +122,7 @@ Route::middleware(SetLocale::class)->group(function () {
         );
         $dbSections = Cache::remember('home_settings', 3600, function () {
             if (!Schema::hasTable('home_settings')) return [];
-            $keys = ['metrics', 'process', 'services', 'cases', 'resources', 'cta'];
+            $keys = ['metrics', 'process', 'services', 'cases', 'resources', 'faq', 'cta'];
             $out  = [];
             foreach ($keys as $k) {
                 $out[$k] = HomeSetting::getJson("section.{$k}");
@@ -130,11 +132,17 @@ Route::middleware(SetLocale::class)->group(function () {
         $dbFooter = Cache::remember('home_footer', 3600,
             fn() => Schema::hasTable('home_settings') ? HomeSetting::getJson('footer.settings') : null
         );
+        $dbMetrics = Cache::remember('home_metrics', 3600,
+            fn() => Schema::hasTable('home_settings') ? HomeSetting::getJson('metrics.content') : []
+        );
+        $dbUserManual = Cache::remember('home_user_manual', 3600,
+            fn() => Schema::hasTable('home_settings') ? HomeSetting::getJson('user_manual.settings') : []
+        );
 
         return view('home', compact(
             'totalCases', 'pendingCases', 'resolvedCases', 'openCases',
             'upcomingHearings', 'hearingsThisWeek', 'recentCases',
-            'dbSlides', 'dbFaqs', 'dbSections', 'dbServices', 'dbTimeline', 'dbResources', 'dbFooter'
+            'dbSlides', 'dbFaqs', 'dbSections', 'dbServices', 'dbTimeline', 'dbResources', 'dbFooter', 'dbMetrics', 'dbUserManual'
         ));
     })->name('landing.home');
 
@@ -360,7 +368,7 @@ Route::middleware(SetLocale::class)->group(function () {
     | Admin area (auth:web)
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['auth', 'force.password.change', 'verified', \App\Http\Middleware\SystemAuditMiddleware::class])->group(function () {
+    Route::middleware(['auth', 'force.password.change', 'verified'])->group(function () {
         // Admin dashboard
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -433,6 +441,7 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::delete('/landing/faqs/{faq}', [LandingPageController::class, 'destroyFaq'])->name('admin.landing.faqs.destroy');
             Route::patch('/landing/faqs/{faq}/toggle', [LandingPageController::class, 'toggleFaq'])->name('admin.landing.faqs.toggle');
             Route::put('/landing/sections', [LandingPageController::class, 'updateSections'])->name('admin.landing.sections.update');
+            Route::put('/landing/metrics', [LandingPageController::class, 'updateMetrics'])->name('admin.landing.metrics.update');
             Route::post('/landing/services', [LandingPageController::class, 'storeService'])->name('admin.landing.services.store');
             Route::put('/landing/services/{service}/update', [LandingPageController::class, 'updateService'])->name('admin.landing.services.update');
             Route::delete('/landing/services/{service}', [LandingPageController::class, 'destroyService'])->name('admin.landing.services.destroy');
@@ -447,11 +456,13 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::put('/landing/resources/{resource}/update', [LandingPageController::class, 'updateResource'])->name('admin.landing.resources.update');
             Route::delete('/landing/resources/{resource}', [LandingPageController::class, 'destroyResource'])->name('admin.landing.resources.destroy');
             Route::patch('/landing/resources/{resource}/toggle', [LandingPageController::class, 'toggleResource'])->name('admin.landing.resources.toggle');
+            Route::put('/landing/user-manual', [LandingPageController::class, 'updateUserManual'])->name('admin.landing.user-manual.update');
             // Footer settings
             Route::put('/landing/footer', [LandingPageController::class, 'updateFooter'])->name('admin.landing.footer.update');
 
             // System audit (read-only view)
             Route::get('/audit', [\App\Http\Controllers\Admin\AuditController::class, 'index'])
+                ->middleware('perm:audit.view')
                 ->name('admin.audit');
 
             /*

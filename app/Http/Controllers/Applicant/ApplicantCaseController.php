@@ -20,6 +20,8 @@ use Illuminate\Support\Str;
 use App\Mail\CaseMessageMail;
 use App\Mail\ApplicantReceiptMail;
 use App\Services\ResponseNotificationService;
+use App\Services\SecureUploadService;
+use App\Services\LegalHoldService;
 use Mews\Purifier\Facades\Purifier;
 use App\Models\CourtCase;
 
@@ -225,7 +227,11 @@ class ApplicantCaseController extends Controller
                     if (!$file) continue;
 
                     /** @var UploadedFile $file */
-                    $stored = $file->store('evidences', 'private');
+                    $stored = app(SecureUploadService::class)->store($file, 'evidences', 'private', [
+                        'related_type' => 'court_case',
+                        'related_id' => $caseId,
+                        'applicant_id' => $aid,
+                    ]);
 
                     $insert = [
                         'case_id'    => $caseId,
@@ -730,7 +736,11 @@ class ApplicantCaseController extends Controller
                     if (!$file) continue;
 
                     /** @var \Illuminate\Http\UploadedFile $file */
-                    $stored = $file->store('evidences', 'private');
+                    $stored = app(SecureUploadService::class)->store($file, 'evidences', 'private', [
+                        'related_type' => 'court_case',
+                        'related_id' => (int) $id,
+                        'applicant_id' => (int) $me,
+                    ]);
 
                     $insert = [
                         'case_id'    => $id,
@@ -829,6 +839,7 @@ class ApplicantCaseController extends Controller
 
         $filePath = $ev->file_path ?? $ev->path ?? null;
         if (!empty($filePath)) {
+            app(LegalHoldService::class)->assertFileMayBeDeleted((string) $filePath);
             $this->deleteStoredFile($filePath);
         }
 
@@ -871,7 +882,7 @@ class ApplicantCaseController extends Controller
     /**
      * Upload a generic file to the case (separate from "evidences" PDFs)
      */
-    public function uploadFile(Request $request, $id)
+    public function uploadFile(Request $request, $id, SecureUploadService $uploads)
     {
         $applicantId = auth('applicant')->id();
 
@@ -885,7 +896,11 @@ class ApplicantCaseController extends Controller
 
         /** @var UploadedFile $file */
         $file = $data['file'];
-        $path = $file->store('case_files', 'private');
+        $path = $uploads->store($file, 'case_files', 'private', [
+            'related_type' => 'court_case',
+            'related_id' => (int) $id,
+            'applicant_id' => $applicantId,
+        ]);
 
         DB::table('case_files')->insert([
             'case_id'                   => $id,
@@ -909,7 +924,7 @@ class ApplicantCaseController extends Controller
     /**
      * Delete a file uploaded by the applicant
      */
-    public function deleteFile($id, $fileId)
+    public function deleteFile($id, $fileId, LegalHoldService $legalHolds)
     {
         $applicantId = auth('applicant')->id();
 
@@ -917,6 +932,8 @@ class ApplicantCaseController extends Controller
         abort_unless($file, 404);
 
         abort_unless((int) $file->uploaded_by_applicant_id === (int) $applicantId, 403);
+
+        $legalHolds->assertFileMayBeDeleted((string) $file->path);
 
         $this->deleteStoredFile($file->path);
         DB::table('case_files')->where('id', $fileId)->delete();

@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-
+use App\Services\SecureUploadService;
 use Illuminate\Http\Request;
 
 class CaseFileController extends Controller
 {
-    public function store(Request $request, \App\Models\CourtCase $case)
+    public function store(Request $request, \App\Models\CourtCase $case, SecureUploadService $uploads)
 
     {
         $validated = $request->validate([
@@ -17,7 +17,11 @@ class CaseFileController extends Controller
         ]);
 
         // Store file
-        $path = $request->file('file')->store('case-files', 'private');
+        $path = $uploads->store($request->file('file'), 'case-files', 'private', [
+            'related_type' => 'court_case',
+            'related_id' => $case->getKey(),
+            'user_id' => auth()->id(),
+        ]);
 
         $case->files()->create([
             'label' => $validated['label'] ?? null,

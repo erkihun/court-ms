@@ -19,6 +19,8 @@ use App\Models\User;
 use App\Models\RespondentResponse;
 use App\Models\ApplicantResponseReply;
 use App\Services\ResponseNotificationService;
+use App\Services\SecureUploadService;
+use App\Services\LegalHoldService;
 
 class CaseController extends Controller
 {
@@ -1165,7 +1167,7 @@ class CaseController extends Controller
     /**
      * Uploaded Files (Evidence merged here) — store.
      */
-    public function storeFile(Request $request, int $case)
+    public function storeFile(Request $request, int $case, SecureUploadService $uploads)
     {
         $c = DB::table('court_cases')->where('id', $case)->first();
         abort_if(!$c, 404);
@@ -1175,7 +1177,11 @@ class CaseController extends Controller
             'file'  => ['required', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png,webp', 'max:10240'], // 10MB
         ]);
 
-        $stored = $request->file('file')->store('case_files', 'private');
+        $stored = $uploads->store($request->file('file'), 'case_files', 'private', [
+            'related_type' => 'court_case',
+            'related_id' => $case,
+            'user_id' => Auth::id(),
+        ]);
 
         DB::table('case_files')->insert([
             'case_id'                   => $case,
@@ -1203,10 +1209,12 @@ class CaseController extends Controller
     /**
      * Uploaded Files — delete.
      */
-    public function deleteFile(int $case, int $file)
+    public function deleteFile(int $case, int $file, LegalHoldService $legalHolds)
     {
         $row = DB::table('case_files')->where('id', $file)->where('case_id', $case)->first();
         abort_if(!$row, 404);
+
+        $legalHolds->assertFileMayBeDeleted((string) $row->path);
 
         if (!empty($row->path)) {
             $this->deleteStoredFile($row->path);

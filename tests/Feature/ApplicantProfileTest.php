@@ -19,6 +19,7 @@ test('applicant profile page is displayed', function () {
         'is_active' => true,
         'is_lawyer' => false,
     ]);
+    $applicant->markEmailAsVerified();
 
     $this
         ->actingAs($applicant, 'applicant')
@@ -42,6 +43,7 @@ test('applicant can update profile with an empty middle name', function () {
         'is_active' => true,
         'is_lawyer' => false,
     ]);
+    $applicant->markEmailAsVerified();
 
     $response = $this
         ->actingAs($applicant, 'applicant')
@@ -87,6 +89,7 @@ test('applicant profile update validates duplicate national id after normalizati
         'is_active' => true,
         'is_lawyer' => false,
     ]);
+    $applicant->markEmailAsVerified();
 
     Applicant::create([
         'first_name' => 'Sara',

@@ -73,6 +73,15 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'audit' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/audit-fallback.log'),
+            'level' => 'critical',
+            'days' => env('AUDIT_FALLBACK_DAYS', 365),
+            'replace_placeholders' => true,
+            'permission' => 0640,
+        ],
+
         'slack' => [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),

@@ -96,7 +96,12 @@ class CaseInspectionFindingController extends Controller
         $attachmentOriginalName = null;
         if ($request->hasFile('attachment_pdf')) {
             $file = $request->file('attachment_pdf');
-            $attachmentPath = $file->store('case-inspections/findings', 'local');
+            $attachmentPath = app(\App\Services\SecureUploadService::class)->store(
+                $file,
+                'case-inspections/findings',
+                'local',
+                ['related_type' => 'case_inspection_finding', 'user_id' => $request->user()?->id]
+            );
             $attachmentOriginalName = $file->getClientOriginalName();
         }
 
@@ -182,10 +187,16 @@ class CaseInspectionFindingController extends Controller
         $attachmentOriginalName = $finding->attachment_original_name;
         if ($request->hasFile('attachment_pdf')) {
             if ($attachmentPath && Storage::disk('local')->exists($attachmentPath)) {
+                app(\App\Services\LegalHoldService::class)->assertFileMayBeDeleted((string) $attachmentPath);
                 Storage::disk('local')->delete($attachmentPath);
             }
             $file = $request->file('attachment_pdf');
-            $attachmentPath = $file->store('case-inspections/findings', 'local');
+            $attachmentPath = app(\App\Services\SecureUploadService::class)->store(
+                $file,
+                'case-inspections/findings',
+                'local',
+                ['related_type' => 'case_inspection_finding', 'related_id' => (int) $finding->id, 'user_id' => $request->user()?->id]
+            );
             $attachmentOriginalName = $file->getClientOriginalName();
         }
 
@@ -213,6 +224,7 @@ class CaseInspectionFindingController extends Controller
         }
 
         if ($finding->attachment_path && Storage::disk('local')->exists($finding->attachment_path)) {
+            app(\App\Services\LegalHoldService::class)->assertFileMayBeDeleted((string) $finding->attachment_path);
             Storage::disk('local')->delete($finding->attachment_path);
         }
 

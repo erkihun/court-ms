@@ -9,6 +9,7 @@ use App\Models\Applicant;
 use App\Models\CaseType;
 use App\Models\CourtCase;
 use App\Services\ResponseNotificationService;
+use App\Services\SecureUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -216,7 +217,11 @@ class CaseController extends Controller
                 continue;
             }
 
-            $stored = $file->store('evidences', 'private');
+            $stored = app(SecureUploadService::class)->store($file, 'evidences', 'private', [
+                'related_type' => 'court_case',
+                'related_id' => $caseId,
+                'applicant_id' => $applicantId,
+            ]);
 
             $insert = [
                 'case_id' => $caseId,

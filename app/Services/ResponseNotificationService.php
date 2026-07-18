@@ -118,7 +118,7 @@ class ResponseNotificationService
             ->where('case_number', $response->case_number)
             ->first();
 
-        if (!$case) {
+        if (! $case) {
             return;
         }
 
@@ -129,7 +129,7 @@ class ResponseNotificationService
 
         self::sendTelegramRespondentResponseSubmitted($response, $case);
 
-        if (!empty($case->applicant_id)) {
+        if (! empty($case->applicant_id)) {
             $applicant = Applicant::find($case->applicant_id);
             if ($applicant) {
                 $applicant->notify(new RespondentResponseSubmitted($response));
@@ -176,7 +176,7 @@ class ResponseNotificationService
         }
 
         $respondent = Respondent::find($response->respondent_id);
-        if (!$respondent) {
+        if (! $respondent) {
             return;
         }
 
@@ -192,7 +192,7 @@ class ResponseNotificationService
         ]);
 
         $applicant = Applicant::find($reply->applicant_id);
-        if (!$applicant) {
+        if (! $applicant) {
             return;
         }
 
@@ -361,18 +361,14 @@ class ResponseNotificationService
 
     private static function telegramLocale(): string
     {
-        static $locale = null;
-
-        if ($locale !== null) {
-            return $locale;
-        }
-
+        // Not memoized: this must reflect the current system-setting value on every call,
+        // not just the first one in the process — otherwise a persistent queue worker or
+        // Octane process locks in whatever locale was configured when it started.
         $configuredLocale = (string) (SystemSetting::current()->default_locale ?: config('app.locale', 'en'));
-        $locale = in_array($configuredLocale, ['en', 'am'], true)
+
+        return in_array($configuredLocale, ['en', 'am'], true)
             ? $configuredLocale
             : (string) config('app.locale', 'en');
-
-        return $locale;
     }
 
     private static function preview(mixed $value, int $width = 240): string

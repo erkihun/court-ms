@@ -6,7 +6,7 @@
     <meta name="description" content="{{ __('home.meta.description') }}" />
     <meta name="keywords" content="{{ __('home.meta.keywords') }}" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $publicLayout['brandName'] ?? config('app.name', 'Court MS') }} – {{ __('home.meta.title') }}</title>
+    <title>{{ $publicLayout['brandName'] ?? config('app.name', 'Court MS') }} - {{ __('home.meta.title') }}</title>
     <script>
         (function(){
             var a = localStorage.getItem('accent') || 'blue';
@@ -43,7 +43,10 @@
     $shortName = $layout['shortName'] ?? $brandName;
     $logoPath  = $layout['logoPath'] ?? null;
 
-    // DB-managed content (falls back to translations when tables are empty)
+    // DB-managed content (falls back to translations when tables are empty).
+    // The current CMS fields are not locale-aware, so Amharic must use the
+    // reviewed translations instead of leaking English editorial content.
+    $isAmharic = app()->getLocale() === 'am';
     $dbSlides    = $dbSlides    ?? collect();
     $dbFaqs      = $dbFaqs      ?? collect();
     $dbSections  = $dbSections  ?? [];
@@ -51,8 +54,17 @@
     $dbTimeline  = $dbTimeline  ?? collect();
     $dbResources = $dbResources ?? collect();
     $dbFooter    = $dbFooter    ?? null;
+    $dbMetrics   = is_array($dbMetrics ?? null) ? $dbMetrics : [];
+    $dbUserManual = is_array($dbUserManual ?? null) ? $dbUserManual : [];
+    $userManualUrl = !empty($dbUserManual['is_active']) && (!empty($dbUserManual['content_en']) || !empty($dbUserManual['content_am']))
+        ? route('landing.user-manual')
+        : null;
+    $userManualLabel = app()->getLocale() === 'am'
+        ? ($dbUserManual['title_am'] ?? __('home.nav.user_manual'))
+        : ($dbUserManual['title_en'] ?? __('home.nav.user_manual'));
 
-    $sec = function (string $section, string $key, string $fallback = '') use ($dbSections): string {
+    $sec = function (string $section, string $key, string $fallback = '') use ($dbSections, $isAmharic): string {
+        if ($isAmharic) return $fallback;
         return !empty($dbSections[$section][$key]) ? $dbSections[$section][$key] : $fallback;
     };
     $secVisible = function (string $section) use ($dbSections): bool {
@@ -62,48 +74,48 @@
 
     $metrics = [
         [
-            'label'       => __('home.metrics.cards.total_cases.label'),
-            'description' => __('home.metrics.cards.total_cases.description'),
+            'label'       => !$isAmharic && !empty($dbMetrics['total_cases']['label']) ? $dbMetrics['total_cases']['label'] : __('home.metrics.cards.total_cases.label'),
+            'description' => !$isAmharic && !empty($dbMetrics['total_cases']['description']) ? $dbMetrics['total_cases']['description'] : __('home.metrics.cards.total_cases.description'),
             'value'       => number_format($totalCases ?? 0),
             'icon'        => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
             'accent'      => 'from-blue-700 to-blue-500',
             'ring'        => 'ring-blue-500/30',
         ],
         [
-            'label'       => __('home.metrics.cards.resolved_cases.label'),
-            'description' => __('home.metrics.cards.resolved_cases.description'),
+            'label'       => !$isAmharic && !empty($dbMetrics['resolved_cases']['label']) ? $dbMetrics['resolved_cases']['label'] : __('home.metrics.cards.resolved_cases.label'),
+            'description' => !$isAmharic && !empty($dbMetrics['resolved_cases']['description']) ? $dbMetrics['resolved_cases']['description'] : __('home.metrics.cards.resolved_cases.description'),
             'value'       => number_format($resolvedCases ?? 0),
             'icon'        => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
             'accent'      => 'from-emerald-700 to-emerald-500',
             'ring'        => 'ring-emerald-500/30',
         ],
         [
-            'label'       => __('home.metrics.cards.pending_cases.label'),
-            'description' => __('home.metrics.cards.pending_cases.description'),
+            'label'       => !$isAmharic && !empty($dbMetrics['pending_cases']['label']) ? $dbMetrics['pending_cases']['label'] : __('home.metrics.cards.pending_cases.label'),
+            'description' => !$isAmharic && !empty($dbMetrics['pending_cases']['description']) ? $dbMetrics['pending_cases']['description'] : __('home.metrics.cards.pending_cases.description'),
             'value'       => number_format($pendingCases ?? 0),
             'icon'        => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
             'accent'      => 'from-orange-600 to-orange-400',
             'ring'        => 'ring-orange-400/30',
         ],
         [
-            'label'       => __('home.metrics.cards.active_caseload.label'),
-            'description' => __('home.metrics.cards.active_caseload.description'),
+            'label'       => !$isAmharic && !empty($dbMetrics['active_caseload']['label']) ? $dbMetrics['active_caseload']['label'] : __('home.metrics.cards.active_caseload.label'),
+            'description' => !$isAmharic && !empty($dbMetrics['active_caseload']['description']) ? $dbMetrics['active_caseload']['description'] : __('home.metrics.cards.active_caseload.description'),
             'value'       => number_format($openCases ?? 0),
             'icon'        => 'M13 10V3L4 14h7v7l9-11h-7z',
             'accent'      => 'from-blue-800 to-blue-600',
             'ring'        => 'ring-blue-600/30',
         ],
         [
-            'label'       => __('home.metrics.cards.hearings_this_week.label'),
-            'description' => __('home.metrics.cards.hearings_this_week.description'),
+            'label'       => !$isAmharic && !empty($dbMetrics['hearings_this_week']['label']) ? $dbMetrics['hearings_this_week']['label'] : __('home.metrics.cards.hearings_this_week.label'),
+            'description' => !$isAmharic && !empty($dbMetrics['hearings_this_week']['description']) ? $dbMetrics['hearings_this_week']['description'] : __('home.metrics.cards.hearings_this_week.description'),
             'value'       => number_format($hearingsThisWeek ?? 0),
             'icon'        => 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
             'accent'      => 'from-violet-700 to-violet-500',
             'ring'        => 'ring-violet-500/30',
         ],
         [
-            'label'       => __('home.metrics.cards.avg_resolution_time.label'),
-            'description' => __('home.metrics.cards.avg_resolution_time.description'),
+            'label'       => !$isAmharic && !empty($dbMetrics['avg_resolution_time']['label']) ? $dbMetrics['avg_resolution_time']['label'] : __('home.metrics.cards.avg_resolution_time.label'),
+            'description' => !$isAmharic && !empty($dbMetrics['avg_resolution_time']['description']) ? $dbMetrics['avg_resolution_time']['description'] : __('home.metrics.cards.avg_resolution_time.description'),
             'value'       => number_format($upcomingHearings ?? 0),
             'icon'        => 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z',
             'accent'      => 'from-slate-600 to-slate-400',
@@ -135,7 +147,7 @@
         'default'   => 'bg-blue-500/15 text-blue-300 ring-1 ring-inset ring-blue-400/30',
     ];
 
-    $faqItems = $dbFaqs->isNotEmpty()
+    $faqItems = !$isAmharic && $dbFaqs->isNotEmpty()
         ? $dbFaqs->map(fn($f) => ['question' => $f->question, 'answer' => $f->answer])->all()
         : (array) __('home.faq.questions');
 @endphp
@@ -199,6 +211,12 @@
                     {{ $label }}
                 </a>
                 @endforeach
+                @if($userManualUrl)
+                <a href="{{ $userManualUrl }}" target="_blank" rel="noopener"
+                   class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
+                    {{ $userManualLabel }}
+                </a>
+                @endif
             </nav>
 
             {{-- Right controls --}}
@@ -253,6 +271,12 @@
                 {{ $label }}
             </a>
             @endforeach
+            @if($userManualUrl)
+            <a href="{{ $userManualUrl }}" target="_blank" rel="noopener" @click="mobileOpen = false"
+               class="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
+                {{ $userManualLabel }}
+            </a>
+            @endif
             <div class="pt-2 border-t border-slate-200 grid grid-cols-2 gap-2">
                 <div class="inline-flex items-center justify-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-0.5 col-span-2 w-fit mx-auto">
                     <a href="{{ route('language.switch', ['locale' => 'en', 'return' => url()->current()]) }}"
@@ -302,7 +326,7 @@
             ],
         ];
 
-        if ($dbSlides->isNotEmpty()) {
+        if (!$isAmharic && $dbSlides->isNotEmpty()) {
             $slides = $dbSlides->map(fn($s) => array_merge($bgMap[$s->bg_style] ?? $bgMap['blue'], [
                 'badge'    => $s->badge ?? '',
                 'title'    => $s->title,
@@ -511,6 +535,47 @@
         </section>
 
         {{-- =====================================================
+             LIVE CASE OVERVIEW
+        ===================================================== --}}
+        @if($secVisible('metrics'))
+        <section id="statistics" class="relative z-10 bg-white py-16 sm:py-20">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-10">
+                    <div class="max-w-2xl">
+                        <p class="ac-text text-xs font-semibold uppercase tracking-[0.2em] mb-3">{{ __('home.metrics.section_badge') }}</p>
+                        <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">{{ $sec('metrics', 'title', __('home.metrics.section_title')) }}</h2>
+                        <p class="mt-3 text-slate-500">{{ $sec('metrics', 'subtitle', __('home.metrics.section_description')) }}</p>
+                    </div>
+                    <div class="inline-flex w-fit items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-600/15">
+                        <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                        {{ __('home.metrics.live_data') }}
+                    </div>
+                </div>
+
+                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    @foreach($metrics as $metric)
+                    <article class="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">
+                        <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r {{ $metric['accent'] }}"></div>
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <p class="text-sm font-semibold text-slate-700">{{ $metric['label'] }}</p>
+                                <p class="mt-3 text-3xl font-bold tracking-tight text-slate-950">{{ $metric['value'] }}</p>
+                            </div>
+                            <div class="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-gradient-to-br {{ $metric['accent'] }} text-white shadow-sm ring-4 {{ $metric['ring'] }}">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="{{ $metric['icon'] }}"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <p class="mt-3 text-xs leading-relaxed text-slate-500">{{ $metric['description'] }}</p>
+                    </article>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+        @endif
+
+        {{-- =====================================================
              PROCESS TIMELINE
         ===================================================== --}}
         @if($secVisible('process'))
@@ -526,7 +591,7 @@
                     {{-- connector line --}}
                     <div class="hidden lg:block absolute top-[1.6rem] left-[calc(10%+1.25rem)] right-[calc(10%+1.25rem)] h-px bg-slate-200"></div>
 
-                    @php $steps = $dbTimeline->isNotEmpty() ? $dbTimeline : collect($timelineSteps); @endphp
+                    @php $steps = !$isAmharic && $dbTimeline->isNotEmpty() ? $dbTimeline : collect($timelineSteps); @endphp
                     <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
                         @foreach($steps as $i => $step)
                         @php $key = is_array($step) ? $step['key'] : null; @endphp
@@ -581,7 +646,7 @@
                     'amber'   => 'text-amber-400',
                     'pink'    => 'text-pink-400',
                 ];
-                $renderCards = $dbServices->isNotEmpty()
+                $renderCards = !$isAmharic && $dbServices->isNotEmpty()
                     ? $dbServices->map(fn($s) => [
                         'title'       => $s->title,
                         'description' => $s->description ?? '',
@@ -675,9 +740,9 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $typeIcon }}"/>
                                     </svg>
                                 </div>
-                                <span class="text-[10px] font-semibold uppercase tracking-widest text-slate-400">{{ ucfirst($res->type) }}</span>
+                                <span class="text-[10px] font-semibold uppercase tracking-widest text-slate-400">{{ __("home.resources.types.{$res->type}") }}</span>
                                 @if($res->is_featured)
-                                <span class="ml-auto rounded-full bg-amber-100 text-amber-700 px-2 py-0.5 text-[10px] font-semibold">Featured</span>
+                                <span class="ml-auto rounded-full bg-amber-100 text-amber-700 px-2 py-0.5 text-[10px] font-semibold">{{ __('home.resources.featured') }}</span>
                                 @endif
                             </div>
                             <h3 class="text-sm font-semibold text-slate-900 leading-snug mb-2 flex-1">{{ $res->title }}</h3>
@@ -692,13 +757,13 @@
                                 <a href="{{ asset('storage/' . $res->file_path) }}" target="_blank" download
                                    class="ac-text inline-flex items-center gap-1 text-xs font-semibold hover:opacity-80 transition">
                                     <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                                    Download
+                                    {{ __('home.resources.download') }}
                                 </a>
                                 @elseif($res->external_url)
                                 <a href="{{ $res->external_url }}" target="_blank" rel="noopener"
                                    class="ac-text inline-flex items-center gap-1 text-xs font-semibold hover:opacity-80 transition">
                                     <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                                    Visit
+                                    {{ __('home.resources.visit') }}
                                 </a>
                                 @endif
                             </div>
@@ -723,12 +788,13 @@
         {{-- =====================================================
              FAQ
         ===================================================== --}}
+        @if($secVisible('faq'))
         <section id="faq" class="py-20 sm:py-28">
             <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
                 <div class="text-center mb-12">
                     <p class="ac-text text-xs font-semibold uppercase tracking-[0.2em] mb-3">{{ __('home.faq.section_badge') }}</p>
-                    <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">{{ __('home.faq.section_title') }}</h2>
-                    <p class="mt-3 text-slate-500 text-base">{{ __('home.faq.section_description') }}</p>
+                    <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">{{ $sec('faq', 'title', __('home.faq.section_title')) }}</h2>
+                    <p class="mt-3 text-slate-500 text-base">{{ $sec('faq', 'subtitle', __('home.faq.section_description')) }}</p>
                 </div>
 
                 <div class="space-y-3">
@@ -760,6 +826,7 @@
                 </div>
             </div>
         </section>
+        @endif
 
     </main>
 
@@ -789,7 +856,7 @@
                         </div>
                     </div>
                     <p class="text-sm text-slate-400 max-w-sm leading-relaxed">
-                        {{ !empty($dbFooter['description']) ? $dbFooter['description'] : __('home.footer.description') }}
+                        {{ !$isAmharic && !empty($dbFooter['description']) ? $dbFooter['description'] : __('home.footer.description') }}
                     </p>
                     {{-- Contact info from DB --}}
                     @if(!empty($dbFooter['contact_phone']) || !empty($dbFooter['contact_email']) || !empty($dbFooter['contact_address']))

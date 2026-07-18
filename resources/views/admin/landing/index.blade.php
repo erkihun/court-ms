@@ -1,17 +1,95 @@
-<x-admin-layout title="Landing Page Manager">
-@section('page_header', 'Landing Page Manager')
+<x-admin-layout :title="__('admin_landing.page_title')">
+@section('page_header', __('admin_landing.page_title'))
 
-<div x-data="{ tab: 'slides' }" class="space-y-6">
+<div x-data="{ tab: '{{ session('landing_tab', 'slides') }}' }" class="space-y-6">
+
+    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-950 via-blue-950 to-slate-900 p-5 text-white shadow-sm">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-blue-300">{{ __('admin_landing.eyebrow') }}</p>
+                <h2 class="mt-1 text-xl font-semibold">{{ __('admin_landing.heading') }}</h2>
+                <p class="mt-1 text-sm text-slate-300">{{ __('admin_landing.intro') }}</p>
+            </div>
+            <a href="{{ route('landing.home') }}" target="_blank" rel="noopener"
+               class="inline-flex flex-none items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-blue-50">
+                {{ __('admin_landing.preview') }}
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5h5m0 0v5m0-5L10 14M5 7v12h12v-5"/></svg>
+            </a>
+        </div>
+    </div>
 
     {{-- Tab bar --}}
     <div class="flex flex-wrap gap-1 rounded-2xl border border-slate-200 bg-slate-100 p-1 w-fit">
-        @foreach(['slides' => 'Hero Slides', 'timeline' => 'Timeline', 'services' => 'Services', 'resources' => 'Resources', 'faqs' => 'FAQ', 'footer' => 'Footer', 'sections' => 'Sections'] as $key => $label)
+        @foreach(['slides', 'metrics', 'timeline', 'services', 'resources', 'manual', 'faqs', 'footer', 'sections'] as $key)
         <button @click="tab = '{{ $key }}'"
                 :class="tab === '{{ $key }}' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
                 class="rounded-xl px-4 py-2 text-sm font-semibold transition">
-            {{ $label }}
+            {{ __("admin_landing.tabs.{$key}") }}
         </button>
         @endforeach
+    </div>
+
+    {{-- =====================================================================
+         TAB: STATISTICS CONTENT
+    ===================================================================== --}}
+    <div x-show="tab === 'metrics'" x-cloak>
+        <form method="POST" action="{{ route('admin.landing.metrics.update') }}" class="space-y-6">
+            @csrf @method('PUT')
+
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                    <h2 class="text-base font-semibold text-slate-900">{{ __('admin_landing.metrics.title') }}</h2>
+                    <p class="mt-0.5 text-xs text-slate-500">{{ __('admin_landing.metrics.description') }}</p>
+                </div>
+                <span class="inline-flex w-fit items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-600/15">
+                    <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                    {{ __('admin_landing.metrics.automatic') }}
+                </span>
+            </div>
+
+            @php
+                $metricDefinitions = [
+                    'total_cases' => ['title' => __('home.metrics.cards.total_cases.label'), 'value' => number_format($totalCases ?? 0)],
+                    'resolved_cases' => ['title' => __('home.metrics.cards.resolved_cases.label'), 'value' => number_format($resolvedCases ?? 0)],
+                    'pending_cases' => ['title' => __('home.metrics.cards.pending_cases.label'), 'value' => number_format($pendingCases ?? 0)],
+                    'active_caseload' => ['title' => __('home.metrics.cards.active_caseload.label'), 'value' => number_format($openCases ?? 0)],
+                    'hearings_this_week' => ['title' => __('home.metrics.cards.hearings_this_week.label'), 'value' => number_format($hearingsThisWeek ?? 0)],
+                    'avg_resolution_time' => ['title' => __('home.metrics.cards.avg_resolution_time.label'), 'value' => number_format($upcomingHearings ?? 0)],
+                ];
+            @endphp
+
+            <div class="grid gap-4 lg:grid-cols-2">
+                @foreach($metricDefinitions as $key => $definition)
+                <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div class="mb-4 flex items-center justify-between gap-3">
+                        <h3 class="text-sm font-semibold text-slate-900">{{ $definition['title'] }}</h3>
+                        <span class="rounded-lg bg-slate-100 px-2.5 py-1 text-sm font-bold text-slate-700">{{ $definition['value'] }}</span>
+                    </div>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="mb-1 block text-xs font-medium text-slate-700">{{ __('admin_landing.metrics.display_label') }}</label>
+                            <input type="text" name="{{ $key }}[label]" maxlength="120"
+                                   value="{{ old("{$key}.label", $metrics[$key]['label'] ?? '') }}"
+                                   placeholder="{{ __('home.metrics.cards.'.$key.'.label', [], 'en') }}"
+                                   class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-xs font-medium text-slate-700">{{ __('admin_landing.metrics.description_label') }}</label>
+                            <textarea name="{{ $key }}[description]" rows="2" maxlength="255"
+                                      placeholder="{{ __('home.metrics.cards.'.$key.'.description', [], 'en') }}"
+                                      class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">{{ old("{$key}.description", $metrics[$key]['description'] ?? '') }}</textarea>
+                        </div>
+                    </div>
+                </section>
+                @endforeach
+            </div>
+
+            <div class="flex justify-end">
+                <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
+                    {{ __('admin_landing.metrics.save') }}
+                </button>
+            </div>
+        </form>
     </div>
 
     {{-- =====================================================================
@@ -23,13 +101,13 @@
             {{-- Add button --}}
             <div class="flex items-center justify-between">
                 <div>
-                    <h2 class="text-base font-semibold text-slate-900">Hero Slides</h2>
-                    <p class="text-xs text-slate-500 mt-0.5">Manage the full-width hero carousel on the landing page.</p>
+                    <h2 class="text-base font-semibold text-slate-900">{{ __('admin_landing.slides.title') }}</h2>
+                    <p class="text-xs text-slate-500 mt-0.5">{{ __('admin_landing.slides.description') }}</p>
                 </div>
                 <button @click="showForm = !showForm; editing = null; form = { bg_style: 'blue' }"
                         class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                    Add Slide
+                    {{ __('admin_landing.slides.add') }}
                 </button>
             </div>
 
@@ -39,7 +117,7 @@
                  x-transition:enter-start="opacity-0 -translate-y-2"
                  x-transition:enter-end="opacity-100 translate-y-0"
                  class="rounded-2xl border border-blue-200 bg-blue-50 p-5">
-                <h3 class="text-sm font-semibold text-slate-800 mb-4" x-text="editing ? 'Edit Slide' : 'New Slide'"></h3>
+                <h3 class="text-sm font-semibold text-slate-800 mb-4" x-text="editing ? @js(__('admin_landing.common.edit_slide')) : @js(__('admin_landing.common.new_slide'))"></h3>
 
                 <form :action="editing ? '/admin/landing/slides/' + editing + '/update' : '{{ route('admin.landing.slides.store') }}'"
                       method="POST" enctype="multipart/form-data" class="space-y-4">
@@ -48,52 +126,52 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Badge text <span class="text-slate-400">(optional)</span></label>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.badge_text') }} <span class="text-slate-400">({{ __('admin_landing.common.optional') }})</span></label>
                             <input type="text" name="badge" x-model="form.badge" maxlength="120"
                                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Background style <span class="text-red-500">*</span></label>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.background_style') }} <span class="text-red-500">*</span></label>
                             <select name="bg_style" x-model="form.bg_style"
                                     class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="blue">Blue (default)</option>
-                                <option value="orange">Orange / Warm</option>
-                                <option value="emerald">Emerald / Analytics</option>
+                                <option value="blue">{{ __('admin_landing.common.blue') }}</option>
+                                <option value="orange">{{ __('admin_landing.common.orange') }}</option>
+                                <option value="emerald">{{ __('admin_landing.common.emerald') }}</option>
                             </select>
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-medium text-slate-700 mb-1">Title <span class="text-red-500">*</span></label>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.title') }} <span class="text-red-500">*</span></label>
                         <input type="text" name="title" x-model="form.title" required maxlength="255"
                                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
 
                     <div>
-                        <label class="block text-xs font-medium text-slate-700 mb-1">Description</label>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.description') }}</label>
                         <textarea name="description" x-model="form.description" rows="3" maxlength="1000"
                                   class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Primary button label <span class="text-red-500">*</span></label>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.primary_button_label') }} <span class="text-red-500">*</span></label>
                             <input type="text" name="primary_label" x-model="form.primary_label" required maxlength="120"
                                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Primary button URL <span class="text-red-500">*</span></label>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.primary_button_url') }} <span class="text-red-500">*</span></label>
                             <input type="text" name="primary_href" x-model="form.primary_href" required maxlength="500"
                                    placeholder="/applicant/register"
                                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Secondary button label</label>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.secondary_button_label') }}</label>
                             <input type="text" name="secondary_label" x-model="form.secondary_label" maxlength="120"
                                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Secondary button URL</label>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.secondary_button_url') }}</label>
                             <input type="text" name="secondary_href" x-model="form.secondary_href" maxlength="500"
                                    placeholder="/applicant/login"
                                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -102,16 +180,16 @@
 
                     {{-- Background image --}}
                     <div>
-                        <label class="block text-xs font-medium text-slate-700 mb-1">Background image <span class="text-slate-400">(optional, max 3 MB)</span></label>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.background_image') }} <span class="text-slate-400">({{ __('admin_landing.common.optional') }}, 3 MB)</span></label>
                         <input type="file" name="bg_image" accept="image/*"
                                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-blue-700 hover:file:bg-blue-100">
-                        <p class="text-[11px] text-slate-400 mt-1">The image overlays the colour gradient. When editing, leave empty to keep the current image.</p>
+                        <p class="text-[11px] text-slate-400 mt-1">{{ __('admin_landing.common.image_help') }}</p>
                         <template x-if="editing && form.bg_image">
                             <div class="mt-2 flex items-center gap-3">
                                 <img :src="'/storage/' + form.bg_image" class="h-10 rounded-lg object-cover" alt="Current image">
                                 <label class="flex items-center gap-1.5 text-xs text-red-600 cursor-pointer">
                                     <input type="checkbox" name="remove_bg_image" value="1" class="rounded border-slate-300 text-red-600">
-                                    Remove current image
+                                    {{ __('admin_landing.common.remove_current_image') }}
                                 </label>
                             </div>
                         </template>
@@ -121,11 +199,11 @@
                         <button type="submit"
                                 class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            <span x-text="editing ? 'Update Slide' : 'Save Slide'"></span>
+                            <span>{{ __('admin_landing.common.save_slide') }}</span>
                         </button>
                         <button type="button" @click="showForm = false; editing = null"
                                 class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 transition">
-                            Cancel
+                            {{ __('admin_landing.common.cancel') }}
                         </button>
                     </div>
                 </form>
@@ -134,7 +212,7 @@
             {{-- Slides list --}}
             @if($slides->isEmpty())
             <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-sm text-slate-500">
-                No slides yet. Click <strong>Add Slide</strong> to create the first hero slide.
+                {{ __('admin_landing.common.no_slides') }}
             </div>
             @else
             <div class="space-y-3">
@@ -211,11 +289,11 @@
 
                         {{-- Delete --}}
                         <form method="POST" action="{{ route('admin.landing.slides.destroy', $slide) }}"
-                              onsubmit="return confirm('Delete this slide?')">
+                              onsubmit="return confirm(@js(__('admin_landing.common.confirm_delete')))">
                             @csrf @method('DELETE')
                             <button type="submit"
                                     class="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition"
-                                    title="Delete">
+                                    title="{{ __('admin_landing.common.delete') }}">
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                             </button>
                         </form>
@@ -235,13 +313,13 @@
 
             <div class="flex items-center justify-between">
                 <div>
-                    <h2 class="text-base font-semibold text-slate-900">Case Processing Journey</h2>
-                    <p class="text-xs text-slate-500 mt-0.5">Steps shown in the timeline section on the landing page.</p>
+                    <h2 class="text-base font-semibold text-slate-900">{{ __('admin_landing.timeline.title') }}</h2>
+                    <p class="text-xs text-slate-500 mt-0.5">{{ __('admin_landing.timeline.description') }}</p>
                 </div>
                 <button @click="showForm = !showForm; editing = null; form = { color: 'blue' }"
                         class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                    Add Step
+                    {{ __('admin_landing.timeline.add') }}
                 </button>
             </div>
 
@@ -250,7 +328,7 @@
                  x-transition:enter-start="opacity-0 -translate-y-2"
                  x-transition:enter-end="opacity-100 translate-y-0"
                  class="rounded-2xl border border-blue-200 bg-blue-50 p-5">
-                <h3 class="text-sm font-semibold text-slate-800 mb-4" x-text="editing ? 'Edit Step' : 'New Step'"></h3>
+                <h3 class="text-sm font-semibold text-slate-800 mb-4" x-text="editing ? @js(__('admin_landing.common.edit_step')) : @js(__('admin_landing.common.new_step'))"></h3>
 
                 <form :action="editing ? '/admin/landing/steps/' + editing + '/update' : '{{ route('admin.landing.steps.store') }}'"
                       method="POST" class="space-y-4">
@@ -259,47 +337,47 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="sm:col-span-2">
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Title <span class="text-red-500">*</span></label>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.title') }} <span class="text-red-500">*</span></label>
                             <input type="text" name="title" x-model="form.title" required maxlength="255"
                                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Meta label <span class="text-slate-400">(e.g. Step 1)</span></label>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.meta_label') }}</label>
                             <input type="text" name="meta" x-model="form.meta" maxlength="120"
                                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Duration <span class="text-slate-400">(e.g. 1-3 days)</span></label>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.duration') }}</label>
                             <input type="text" name="duration" x-model="form.duration" maxlength="60"
                                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-medium text-slate-700 mb-1">Description</label>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.description') }}</label>
                         <textarea name="description" x-model="form.description" rows="3" maxlength="1000"
                                   class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
                     </div>
 
                     <div class="w-48">
-                        <label class="block text-xs font-medium text-slate-700 mb-1">Colour accent</label>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.colour_accent') }}</label>
                         <select name="color" x-model="form.color"
                                 class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="blue">🔵 Blue</option>
-                            <option value="orange">🟠 Orange</option>
-                            <option value="emerald">🟢 Emerald</option>
-                            <option value="violet">🟣 Violet</option>
-                            <option value="amber">🟡 Amber</option>
+                            <option value="blue">🔵 {{ __('admin_landing.common.blue') }}</option>
+                            <option value="orange">🟠 {{ __('admin_landing.common.orange') }}</option>
+                            <option value="emerald">🟢 {{ __('admin_landing.common.emerald') }}</option>
+                            <option value="violet">🟣 {{ __('admin_landing.common.violet') }}</option>
+                            <option value="amber">🟡 {{ __('admin_landing.common.amber') }}</option>
                         </select>
                     </div>
 
                     <div class="flex gap-2 pt-1">
                         <button type="submit"
                                 class="rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition">
-                            <span x-text="editing ? 'Update Step' : 'Save Step'"></span>
+                            <span>{{ __('admin_landing.common.save_step') }}</span>
                         </button>
                         <button type="button" @click="showForm = false; editing = null"
-                                class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 transition">Cancel</button>
+                                class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 transition">{{ __('admin_landing.common.cancel') }}</button>
                     </div>
                 </form>
             </div>
@@ -307,7 +385,7 @@
             {{-- Steps list --}}
             @if($steps->isEmpty())
             <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-sm text-slate-500">
-                No timeline steps yet. Click <strong>Add Step</strong> to create the first step.
+                {{ __('admin_landing.common.no_steps') }}
             </div>
             @else
             <div class="space-y-2">
@@ -363,7 +441,7 @@
 
                         {{-- Delete --}}
                         <form method="POST" action="{{ route('admin.landing.steps.destroy', $step) }}"
-                              onsubmit="return confirm('Delete this step?')">
+                              onsubmit="return confirm(@js(__('admin_landing.common.confirm_delete')))">
                             @csrf @method('DELETE')
                             <button type="submit"
                                     class="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition">
@@ -386,13 +464,13 @@
 
             <div class="flex items-center justify-between">
                 <div>
-                    <h2 class="text-base font-semibold text-slate-900">Service Cards</h2>
-                    <p class="text-xs text-slate-500 mt-0.5">Manage the service cards shown in the Core Services section. When any cards are saved here, they replace the default built-in cards.</p>
+                    <h2 class="text-base font-semibold text-slate-900">{{ __('admin_landing.services.title') }}</h2>
+                    <p class="text-xs text-slate-500 mt-0.5">{{ __('admin_landing.services.description') }}</p>
                 </div>
                 <button @click="showForm = !showForm; editing = null; form = { icon_type: 'document', accent: 'blue' }"
                         class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                    Add Service
+                    {{ __('admin_landing.services.add') }}
                 </button>
             </div>
 
@@ -401,7 +479,7 @@
                  x-transition:enter-start="opacity-0 -translate-y-2"
                  x-transition:enter-end="opacity-100 translate-y-0"
                  class="rounded-2xl border border-blue-200 bg-blue-50 p-5">
-                <h3 class="text-sm font-semibold text-slate-800 mb-4" x-text="editing ? 'Edit Service Card' : 'New Service Card'"></h3>
+                <h3 class="text-sm font-semibold text-slate-800 mb-4" x-text="editing ? @js(__('admin_landing.common.edit_service')) : @js(__('admin_landing.common.new_service'))"></h3>
 
                 <form :action="editing ? '/admin/landing/services/' + editing + '/update' : '{{ route('admin.landing.services.store') }}'"
                       method="POST" class="space-y-4">
@@ -410,25 +488,25 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Title <span class="text-red-500">*</span></label>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.title') }} <span class="text-red-500">*</span></label>
                             <input type="text" name="title" x-model="form.title" maxlength="255" required
                                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Meta label <span class="text-slate-400">(e.g. Core Service)</span></label>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.meta_label') }}</label>
                             <input type="text" name="meta" x-model="form.meta" maxlength="120"
                                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-medium text-slate-700 mb-1">Description</label>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.description') }}</label>
                         <textarea name="description" x-model="form.description" rows="2" maxlength="1000"
                                   class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-medium text-slate-700 mb-1">Features <span class="text-slate-400">(one per line)</span></label>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.features') }} <span class="text-slate-400">({{ __('admin_landing.common.one_per_line') }})</span></label>
                         <textarea name="features" x-model="form.features" rows="4"
                                   placeholder="Feature one&#10;Feature two&#10;Feature three"
                                   class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
@@ -436,36 +514,36 @@
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Icon</label>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.icon') }}</label>
                             <select name="icon_type" x-model="form.icon_type"
                                     class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="document">📄 Document / Upload</option>
-                                <option value="calendar">📅 Calendar / Hearing</option>
-                                <option value="lock">🔒 Lock / Evidence</option>
-                                <option value="chart">📊 Chart / Tracking</option>
-                                <option value="database">🗄️ Database</option>
-                                <option value="chat">💬 Chat / Dispute</option>
+                                <option value="document">📄 {{ __('admin_landing.common.document_upload') }}</option>
+                                <option value="calendar">📅 {{ __('admin_landing.common.calendar_hearing') }}</option>
+                                <option value="lock">🔒 {{ __('admin_landing.common.lock_evidence') }}</option>
+                                <option value="chart">📊 {{ __('admin_landing.common.chart_tracking') }}</option>
+                                <option value="database">🗄️ {{ __('admin_landing.common.database') }}</option>
+                                <option value="chat">💬 {{ __('admin_landing.common.chat_dispute') }}</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Accent colour</label>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.accent_colour') }}</label>
                             <select name="accent" x-model="form.accent"
                                     class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="blue">🔵 Blue</option>
-                                <option value="orange">🟠 Orange</option>
-                                <option value="emerald">🟢 Emerald</option>
-                                <option value="violet">🟣 Violet</option>
-                                <option value="amber">🟡 Amber</option>
-                                <option value="pink">🩷 Pink</option>
+                                <option value="blue">🔵 {{ __('admin_landing.common.blue') }}</option>
+                                <option value="orange">🟠 {{ __('admin_landing.common.orange') }}</option>
+                                <option value="emerald">🟢 {{ __('admin_landing.common.emerald') }}</option>
+                                <option value="violet">🟣 {{ __('admin_landing.common.violet') }}</option>
+                                <option value="amber">🟡 {{ __('admin_landing.common.amber') }}</option>
+                                <option value="pink">🩷 {{ __('admin_landing.common.pink') }}</option>
                             </select>
                         </div>
                     </div>
 
                     <div class="flex gap-2 pt-1">
                         <button type="submit"
-                                class="rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition">Save</button>
+                                class="rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition">{{ __('admin_landing.common.save_service') }}</button>
                         <button type="button" @click="showForm = false"
-                                class="rounded-xl border border-slate-300 px-5 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition">Cancel</button>
+                                class="rounded-xl border border-slate-300 px-5 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition">{{ __('admin_landing.common.cancel') }}</button>
                     </div>
                 </form>
             </div>
@@ -481,7 +559,7 @@
                     <div class="flex items-center gap-4 flex-1 min-w-0">
                         <form method="POST" action="{{ route('admin.landing.services.toggle', $svc) }}">
                             @csrf @method('PATCH')
-                            <button type="submit" title="{{ $svc->is_active ? 'Deactivate' : 'Activate' }}"
+                            <button type="submit" title="{{ $svc->is_active ? __('admin_landing.common.deactivate') : __('admin_landing.common.activate') }}"
                                     class="relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none
                                     {{ $svc->is_active ? 'bg-emerald-500' : 'bg-slate-200' }}">
                                 <span class="pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition duration-200
@@ -511,7 +589,7 @@
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                         </button>
                         <form method="POST" action="{{ route('admin.landing.services.destroy', $svc) }}"
-                              onsubmit="return confirm('Delete this service card?')">
+                              onsubmit="return confirm(@js(__('admin_landing.common.confirm_delete')))">
                             @csrf @method('DELETE')
                             <button type="submit"
                                     class="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition">
@@ -529,18 +607,57 @@
     {{-- =====================================================================
          TAB: RESOURCES
     ===================================================================== --}}
+    <div x-show="tab === 'manual'" x-cloak>
+        <form method="POST" action="{{ route('admin.landing.user-manual.update') }}"
+              class="mb-6 space-y-4 rounded-2xl border border-blue-200 bg-blue-50 p-5 shadow-sm">
+            @csrf @method('PUT')
+            <div>
+                <h2 class="text-base font-semibold text-slate-900">{{ __('admin_landing.manual.title') }}</h2>
+                <p class="mt-0.5 text-xs text-slate-600">{{ __('admin_landing.manual.description') }}</p>
+            </div>
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700">{{ __('admin_landing.manual.title_en') }}</label>
+                    <input name="title_en" required maxlength="255" value="{{ old('title_en', $userManual['title_en'] ?? 'User Manual') }}"
+                           class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700">{{ __('admin_landing.manual.title_am') }}</label>
+                    <input name="title_am" required maxlength="255" value="{{ old('title_am', $userManual['title_am'] ?? __('home.nav.user_manual', [], 'am')) }}"
+                           class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+            <div class="grid gap-4 lg:grid-cols-2">
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700">{{ __('admin_landing.manual.content_en') }}</label>
+                    <textarea id="user-manual-content-en" name="content_en" required rows="16" maxlength="50000" class="user-manual-editor w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm leading-6 focus:ring-2 focus:ring-blue-500">{{ old('content_en', $userManual['content_en'] ?? '') }}</textarea>
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700">{{ __('admin_landing.manual.content_am') }}</label>
+                    <textarea id="user-manual-content-am" name="content_am" required rows="16" maxlength="50000" class="user-manual-editor w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm leading-6 focus:ring-2 focus:ring-blue-500">{{ old('content_am', $userManual['content_am'] ?? '') }}</textarea>
+                </div>
+            </div>
+            <div class="flex items-center justify-between gap-4">
+                <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+                    <input type="checkbox" name="is_active" value="1" {{ ($userManual['is_active'] ?? true) ? 'checked' : '' }} class="rounded border-slate-300 text-blue-600">
+                    {{ __('admin_landing.manual.show_in_nav') }}
+                </label>
+                <button class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">{{ __('admin_landing.manual.save') }}</button>
+            </div>
+        </form>
+    </div>
     <div x-show="tab === 'resources'" x-cloak>
         <div x-data="{ showForm: false, editing: null, form: {} }" class="space-y-4">
 
             <div class="flex items-center justify-between">
                 <div>
-                    <h2 class="text-base font-semibold text-slate-900">Resources &amp; Posts</h2>
-                    <p class="text-xs text-slate-500 mt-0.5">Posts, downloadable forms, documents, and links shown on the public Resources page.</p>
+                    <h2 class="text-base font-semibold text-slate-900">{{ __('admin_landing.resources.title') }}</h2>
+                    <p class="text-xs text-slate-500 mt-0.5">{{ __('admin_landing.resources.description') }}</p>
                 </div>
                 <button @click="showForm = !showForm; editing = null; form = { type: 'post', is_featured: false }"
                         class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                    Add Resource
+                    {{ __('admin_landing.resources.add') }}
                 </button>
             </div>
 
@@ -549,7 +666,7 @@
                  x-transition:enter-start="opacity-0 -translate-y-2"
                  x-transition:enter-end="opacity-100 translate-y-0"
                  class="rounded-2xl border border-blue-200 bg-blue-50 p-5">
-                <h3 class="text-sm font-semibold text-slate-800 mb-4" x-text="editing ? 'Edit Resource' : 'New Resource'"></h3>
+                <h3 class="text-sm font-semibold text-slate-800 mb-4" x-text="editing ? @js(__('admin_landing.common.edit_resource')) : @js(__('admin_landing.common.new_resource'))"></h3>
 
                 <form :action="editing ? '/admin/landing/resources/' + editing + '/update' : '{{ route('admin.landing.resources.store') }}'"
                       method="POST" enctype="multipart/form-data" class="space-y-4">
@@ -558,42 +675,42 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="sm:col-span-2">
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Title <span class="text-red-500">*</span></label>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.title') }} <span class="text-red-500">*</span></label>
                             <input type="text" name="title" x-model="form.title" required maxlength="255"
                                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Type <span class="text-red-500">*</span></label>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.type') }} <span class="text-red-500">*</span></label>
                             <select name="type" x-model="form.type"
                                     class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="post">📝 Post / Update</option>
-                                <option value="form">📋 Downloadable Form</option>
-                                <option value="document">📄 Document</option>
-                                <option value="link">🔗 External Link</option>
+                                <option value="post">📝 {{ __('admin_landing.common.post_update') }}</option>
+                                <option value="form">📋 {{ __('admin_landing.common.downloadable_form') }}</option>
+                                <option value="document">📄 {{ __('admin_landing.common.document') }}</option>
+                                <option value="link">🔗 {{ __('admin_landing.common.external_link') }}</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Publish date <span class="text-slate-400">(optional, schedule future)</span></label>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.publish_date') }} <span class="text-slate-400">({{ __('admin_landing.common.schedule_future') }})</span></label>
                             <input type="datetime-local" name="published_at" x-model="form.published_at"
                                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-medium text-slate-700 mb-1">Description / Summary</label>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.description_summary') }}</label>
                         <textarea name="description" x-model="form.description" rows="3" maxlength="2000"
                                   class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
                     </div>
 
                     <div x-show="form.type === 'link'">
-                        <label class="block text-xs font-medium text-slate-700 mb-1">External URL</label>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.external_url') }}</label>
                         <input type="url" name="external_url" x-model="form.external_url" maxlength="500"
                                placeholder="https://..."
                                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
 
                     <div x-show="form.type === 'form' || form.type === 'document'">
-                        <label class="block text-xs font-medium text-slate-700 mb-1">File <span class="text-slate-400">(PDF, DOCX, XLS, etc. max 20 MB)</span></label>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.file') }} <span class="text-slate-400">(PDF, DOCX, XLS, 20 MB)</span></label>
                         <input type="file" name="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip"
                                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-blue-700 hover:file:bg-blue-100">
                         <template x-if="editing && form.file_path">
@@ -609,7 +726,7 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-medium text-slate-700 mb-1">Cover image <span class="text-slate-400">(optional, max 2 MB)</span></label>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.cover_image') }} <span class="text-slate-400">({{ __('admin_landing.common.optional') }}, 2 MB)</span></label>
                         <input type="file" name="cover_image" accept="image/*"
                                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-blue-700 hover:file:bg-blue-100">
                         <template x-if="editing && form.cover_image">
@@ -620,16 +737,16 @@
                     <div class="flex items-center gap-2">
                         <input type="checkbox" name="is_featured" id="is_featured" value="1"
                                x-model="form.is_featured" class="rounded border-slate-300 text-blue-600">
-                        <label for="is_featured" class="text-xs font-medium text-slate-700">Featured (shown prominently)</label>
+                        <label for="is_featured" class="text-xs font-medium text-slate-700">{{ __('admin_landing.common.featured') }}</label>
                     </div>
 
                     <div class="flex gap-2 pt-1">
                         <button type="submit"
                                 class="rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition">
-                            <span x-text="editing ? 'Update Resource' : 'Save Resource'"></span>
+                            <span>{{ __('admin_landing.common.save_resource') }}</span>
                         </button>
                         <button type="button" @click="showForm = false; editing = null"
-                                class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 transition">Cancel</button>
+                                class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 transition">{{ __('admin_landing.common.cancel') }}</button>
                     </div>
                 </form>
             </div>
@@ -637,7 +754,7 @@
             {{-- Resources list --}}
             @if($resources->isEmpty())
             <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-sm text-slate-500">
-                No resources yet. Click <strong>Add Resource</strong> to create one.
+                {{ __('admin_landing.common.no_resources') }}
             </div>
             @else
             <div class="space-y-2">
@@ -662,7 +779,7 @@
                     <div class="flex-1 min-w-0">
                         <div class="flex flex-wrap items-center gap-1.5 mb-0.5">
                             <span class="rounded-full bg-slate-100 text-slate-600 px-2 py-0.5 text-[10px] font-semibold uppercase">{{ $res->type }}</span>
-                            @if($res->is_featured)<span class="rounded-full bg-amber-100 text-amber-700 px-2 py-0.5 text-[10px] font-semibold">Featured</span>@endif
+                            @if($res->is_featured)<span class="rounded-full bg-amber-100 text-amber-700 px-2 py-0.5 text-[10px] font-semibold">{{ __('admin_landing.common.featured') }}</span>@endif
                             @if(!$res->is_active)<span class="rounded-full bg-slate-100 text-slate-500 px-2 py-0.5 text-[10px] font-semibold">Hidden</span>@endif
                             @if($res->published_at && $res->published_at->isFuture())
                             <span class="rounded-full bg-blue-100 text-blue-600 px-2 py-0.5 text-[10px] font-semibold">Scheduled {{ \App\Support\EthiopianDate::smartFormat($res->published_at, false, '', 'h:i A', 'd M') }}</span>
@@ -709,7 +826,7 @@
 
                         {{-- Delete --}}
                         <form method="POST" action="{{ route('admin.landing.resources.destroy', $res) }}"
-                              onsubmit="return confirm('Delete this resource?')">
+                              onsubmit="return confirm(@js(__('admin_landing.common.confirm_delete')))">
                             @csrf @method('DELETE')
                             <button type="submit"
                                     class="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition">
@@ -732,13 +849,13 @@
 
             <div class="flex items-center justify-between">
                 <div>
-                    <h2 class="text-base font-semibold text-slate-900">FAQ</h2>
-                    <p class="text-xs text-slate-500 mt-0.5">Questions and answers shown in the FAQ accordion on the landing page.</p>
+                    <h2 class="text-base font-semibold text-slate-900">{{ __('admin_landing.faqs.title') }}</h2>
+                    <p class="text-xs text-slate-500 mt-0.5">{{ __('admin_landing.faqs.description') }}</p>
                 </div>
                 <button @click="showForm = !showForm; editing = null; form = {}"
                         class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                    Add FAQ
+                    {{ __('admin_landing.faqs.add') }}
                 </button>
             </div>
 
@@ -747,7 +864,7 @@
                  x-transition:enter-start="opacity-0 -translate-y-2"
                  x-transition:enter-end="opacity-100 translate-y-0"
                  class="rounded-2xl border border-blue-200 bg-blue-50 p-5">
-                <h3 class="text-sm font-semibold text-slate-800 mb-4" x-text="editing ? 'Edit FAQ' : 'New FAQ'"></h3>
+                <h3 class="text-sm font-semibold text-slate-800 mb-4" x-text="editing ? @js(__('admin_landing.common.edit_faq')) : @js(__('admin_landing.common.new_faq'))"></h3>
 
                 <form :action="editing ? '/admin/landing/faqs/' + editing + '/update' : '{{ route('admin.landing.faqs.store') }}'"
                       method="POST" class="space-y-4">
@@ -755,12 +872,12 @@
                     <input x-show="editing" type="hidden" name="_method" value="PUT">
 
                     <div>
-                        <label class="block text-xs font-medium text-slate-700 mb-1">Question <span class="text-red-500">*</span></label>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.question') }} <span class="text-red-500">*</span></label>
                         <input type="text" name="question" x-model="form.question" required maxlength="500"
                                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-700 mb-1">Answer <span class="text-red-500">*</span></label>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.answer') }} <span class="text-red-500">*</span></label>
                         <textarea name="answer" x-model="form.answer" required rows="4" maxlength="2000"
                                   class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
                     </div>
@@ -768,17 +885,17 @@
                         <button type="submit"
                                 class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            <span x-text="editing ? 'Update FAQ' : 'Save FAQ'"></span>
+                            <span>{{ __('admin_landing.common.save_faq') }}</span>
                         </button>
                         <button type="button" @click="showForm = false; editing = null"
-                                class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 transition">Cancel</button>
+                                class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 transition">{{ __('admin_landing.common.cancel') }}</button>
                     </div>
                 </form>
             </div>
 
             @if($faqs->isEmpty())
             <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-sm text-slate-500">
-                No FAQs yet. Click <strong>Add FAQ</strong> to create one.
+                {{ __('admin_landing.common.no_faqs') }}
             </div>
             @else
             <div class="space-y-2">
@@ -822,7 +939,7 @@
                             </button>
 
                             <form method="POST" action="{{ route('admin.landing.faqs.destroy', $faq) }}"
-                                  onsubmit="return confirm('Delete this FAQ?')">
+                                  onsubmit="return confirm(@js(__('admin_landing.common.confirm_delete')))">
                                 @csrf @method('DELETE')
                                 <button type="submit"
                                         class="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition">
@@ -846,15 +963,15 @@
             @csrf @method('PUT')
 
             <div>
-                <h2 class="text-base font-semibold text-slate-900">Footer Settings</h2>
-                <p class="text-xs text-slate-500 mt-0.5">Contact info and social media links shown in the site footer.</p>
+                <h2 class="text-base font-semibold text-slate-900">{{ __('admin_landing.footer.title') }}</h2>
+                <p class="text-xs text-slate-500 mt-0.5">{{ __('admin_landing.footer.description') }}</p>
             </div>
 
             {{-- Description --}}
             <div class="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
-                <h3 class="text-sm font-semibold text-slate-800">About blurb</h3>
+                <h3 class="text-sm font-semibold text-slate-800">{{ __('admin_landing.footer.about') }}</h3>
                 <div>
-                    <label class="block text-xs font-medium text-slate-700 mb-1">Short description</label>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.short_description') }}</label>
                     <textarea name="description" rows="3" maxlength="500"
                               placeholder="A brief description of the organization shown in the footer…"
                               class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">{{ $footer['description'] ?? '' }}</textarea>
@@ -863,24 +980,24 @@
 
             {{-- Contact --}}
             <div class="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
-                <h3 class="text-sm font-semibold text-slate-800">Contact information</h3>
+                <h3 class="text-sm font-semibold text-slate-800">{{ __('admin_landing.footer.contact') }}</h3>
                 <div class="grid sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-medium text-slate-700 mb-1">Phone</label>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.phone') }}</label>
                         <input type="text" name="contact_phone" maxlength="60"
                                value="{{ $footer['contact_phone'] ?? '' }}"
                                placeholder="+251 11 123 4567"
                                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-700 mb-1">Email</label>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.email') }}</label>
                         <input type="email" name="contact_email" maxlength="120"
                                value="{{ $footer['contact_email'] ?? '' }}"
                                placeholder="info@court.gov.et"
                                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div class="sm:col-span-2">
-                        <label class="block text-xs font-medium text-slate-700 mb-1">Physical address</label>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.physical_address') }}</label>
                         <input type="text" name="contact_address" maxlength="255"
                                value="{{ $footer['contact_address'] ?? '' }}"
                                placeholder="Addis Ababa, Ethiopia"
@@ -891,8 +1008,8 @@
 
             {{-- Social links --}}
             <div class="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
-                <h3 class="text-sm font-semibold text-slate-800">Social media links</h3>
-                <p class="text-xs text-slate-500">Leave blank to hide the icon in the footer.</p>
+                <h3 class="text-sm font-semibold text-slate-800">{{ __('admin_landing.footer.social') }}</h3>
+                <p class="text-xs text-slate-500">{{ __('admin_landing.footer.social_help') }}</p>
                 <div class="grid sm:grid-cols-2 gap-4">
                     @foreach([
                         'social_facebook'  => ['Facebook',  'M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z'],
@@ -924,7 +1041,7 @@
                 <button type="submit"
                         class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition shadow-sm">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                    Save Footer
+                    {{ __('admin_landing.footer.save') }}
                 </button>
             </div>
         </form>
@@ -938,18 +1055,19 @@
             @csrf @method('PUT')
 
             <div>
-                <h2 class="text-base font-semibold text-slate-900">Section Settings</h2>
-                <p class="text-xs text-slate-500 mt-0.5">Control visibility and override titles for each landing page section. Leave a field blank to use the default translation.</p>
+                <h2 class="text-base font-semibold text-slate-900">{{ __('admin_landing.sections.title') }}</h2>
+                <p class="text-xs text-slate-500 mt-0.5">{{ __('admin_landing.sections.description') }}</p>
             </div>
 
             @php
             $sectionDefs = [
-                'metrics'   => ['label' => 'Metrics / Statistics',   'hasTitleSub' => true,  'hasCta' => false],
-                'process'   => ['label' => 'Process Timeline',        'hasTitleSub' => true,  'hasCta' => false],
-                'services'  => ['label' => 'Services',                'hasTitleSub' => true,  'hasCta' => false],
-                'cases'     => ['label' => 'Recent Cases',            'hasTitleSub' => false, 'hasCta' => false],
-                'resources' => ['label' => 'Resources &amp; Posts',   'hasTitleSub' => true,  'hasCta' => false],
-                'cta'       => ['label' => 'Call-to-Action Banner',   'hasTitleSub' => false, 'hasCta' => true],
+                'metrics'   => ['label' => __('admin_landing.sections.metrics'),   'hasTitleSub' => true,  'hasCta' => false],
+                'process'   => ['label' => __('admin_landing.sections.process'),   'hasTitleSub' => true,  'hasCta' => false],
+                'services'  => ['label' => __('admin_landing.sections.services'),  'hasTitleSub' => true,  'hasCta' => false],
+                'cases'     => ['label' => __('admin_landing.sections.cases'),     'hasTitleSub' => false, 'hasCta' => false],
+                'resources' => ['label' => __('admin_landing.sections.resources'),'hasTitleSub' => true,  'hasCta' => false],
+                'faq'       => ['label' => __('admin_landing.sections.faq'),      'hasTitleSub' => true, 'hasCta' => false],
+                'cta'       => ['label' => __('admin_landing.sections.cta'),      'hasTitleSub' => false, 'hasCta' => true],
             ];
             @endphp
 
@@ -965,7 +1083,7 @@
                                    class="sr-only peer">
                             <div class="w-10 h-5 bg-slate-200 peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
                         </label>
-                        <span class="text-sm font-semibold text-slate-800">{!! $def['label'] !!}</span>
+                        <span class="text-sm font-semibold text-slate-800">{{ $def['label'] }}</span>
                     </div>
                     <svg class="h-4 w-4 text-slate-400 transition-transform" :class="{ 'rotate-180': open }"
                          fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -977,17 +1095,17 @@
                     @if($def['hasTitleSub'])
                     <div class="grid sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Section Title</label>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.sections.section_title') }}</label>
                             <input type="text" name="{{ $key }}[title]" maxlength="255"
                                    value="{{ $sections[$key]['title'] ?? '' }}"
-                                   placeholder="Leave blank to use default"
+                                   placeholder="{{ __('admin_landing.sections.default_hint') }}"
                                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Subtitle / Description</label>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.sections.subtitle') }}</label>
                             <input type="text" name="{{ $key }}[subtitle]" maxlength="500"
                                    value="{{ $sections[$key]['subtitle'] ?? '' }}"
-                                   placeholder="Leave blank to use default"
+                                   placeholder="{{ __('admin_landing.sections.default_hint') }}"
                                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                     </div>
@@ -996,39 +1114,39 @@
                     @if($def['hasCta'])
                     <div class="grid sm:grid-cols-2 gap-4">
                         <div class="sm:col-span-2">
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Banner Title</label>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.banner_title') }}</label>
                             <input type="text" name="cta[title]" maxlength="255"
                                    value="{{ $sections['cta']['title'] ?? '' }}"
                                    placeholder="Ready to engage with the tribunal?"
                                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div class="sm:col-span-2">
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Banner Description</label>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.banner_description') }}</label>
                             <textarea name="cta[description]" rows="2" maxlength="500"
                                       placeholder="File a case, track an existing matter…"
                                       class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">{{ $sections['cta']['description'] ?? '' }}</textarea>
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Primary button label</label>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.primary_button_label') }}</label>
                             <input type="text" name="cta[primary_label]" maxlength="120"
                                    value="{{ $sections['cta']['primary_label'] ?? '' }}"
                                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Primary button URL</label>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.primary_button_url') }}</label>
                             <input type="text" name="cta[primary_href]" maxlength="500"
                                    value="{{ $sections['cta']['primary_href'] ?? '' }}"
                                    placeholder="/applicant/register"
                                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Secondary button label</label>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.secondary_button_label') }}</label>
                             <input type="text" name="cta[secondary_label]" maxlength="120"
                                    value="{{ $sections['cta']['secondary_label'] ?? '' }}"
                                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Secondary button URL</label>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">{{ __('admin_landing.common.secondary_button_url') }}</label>
                             <input type="text" name="cta[secondary_href]" maxlength="500"
                                    value="{{ $sections['cta']['secondary_href'] ?? '' }}"
                                    placeholder="/applicant/login"
@@ -1044,11 +1162,34 @@
                 <button type="submit"
                         class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition shadow-sm">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                    Save Settings
+                    {{ __('admin_landing.sections.save') }}
                 </button>
             </div>
         </form>
     </div>
 
 </div>
+
+<script src="{{ asset('vendor/tinymce/tinymce.min.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        if (typeof tinymce === 'undefined') return;
+        tinymce.init({
+            selector: '.user-manual-editor',
+            base_url: @js(asset('vendor/tinymce')),
+            suffix: '.min',
+            license_key: 'gpl',
+            height: 520,
+            menubar: 'file edit view insert format tools table help',
+            plugins: 'advlist lists link table code fullscreen searchreplace wordcount directionality',
+            toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link table | ltr rtl | removeformat code fullscreen',
+            branding: false,
+            promotion: false,
+            content_style: 'body { font-family: Arial, sans-serif; font-size: 15px; line-height: 1.7; }',
+            setup(editor) {
+                editor.on('change input undo redo', () => editor.save());
+            }
+        });
+    });
+</script>
 </x-admin-layout>

@@ -43,12 +43,13 @@ class ResponseNotificationServiceTest extends TestCase
 
     public function test_sends_localized_telegram_group_alert_when_locale_is_amharic(): void
     {
-        app()->setLocale('am');
+        // Telegram group alerts follow the admin-configured system locale, not the
+        // requesting user's app()->getLocale() (the alert goes to a shared group chat).
         Notification::fake();
         Http::fake([
             'https://api.telegram.org/*' => Http::response(['ok' => true]),
         ]);
-        $this->enableTelegramNotifications();
+        $this->enableTelegramNotifications(locale: 'am');
 
         [, $caseId, $caseNumber] = $this->seedCaseWithParties();
 
@@ -56,8 +57,8 @@ class ResponseNotificationServiceTest extends TestCase
 
         Http::assertSent(fn ($request) => $request->url() === 'https://api.telegram.org/bottelegram-token/sendMessage'
             && $request['chat_id'] === '-100123456789'
-            && str_contains((string) $request['text'], 'አዲስ ጉዳይ ቀርቧል')
-            && str_contains((string) $request['text'], 'ጉዳይ:')
+            && str_contains((string) $request['text'], 'አዲስ መዝገብ ለተቋሙ ቀርቧል')
+            && str_contains((string) $request['text'], 'መዝገብ:')
             && str_contains((string) $request['text'], $caseNumber));
     }
 
@@ -192,7 +193,7 @@ class ResponseNotificationServiceTest extends TestCase
         $response = RespondentResponse::create([
             'respondent_id' => $respondent->id,
             'case_number' => $caseNumber,
-            'response_number' => 'መ/' . $caseNumber,
+            'response_number' => 'መ/'.$caseNumber,
             'title' => 'Test response',
             'description' => 'Body',
             'pdf_path' => 'respondent/responses/test.pdf',
@@ -217,7 +218,7 @@ class ResponseNotificationServiceTest extends TestCase
         $response = RespondentResponse::create([
             'respondent_id' => $respondent->id,
             'case_number' => $caseNumber,
-            'response_number' => 'R/' . $caseNumber,
+            'response_number' => 'R/'.$caseNumber,
             'title' => 'Test response',
             'description' => 'Body',
             'pdf_path' => 'respondent/responses/test.pdf',
@@ -240,7 +241,7 @@ class ResponseNotificationServiceTest extends TestCase
         $response = RespondentResponse::create([
             'respondent_id' => $respondent->id,
             'case_number' => $caseNumber,
-            'response_number' => 'መ/' . $caseNumber,
+            'response_number' => 'መ/'.$caseNumber,
             'title' => 'Test response',
             'description' => 'Body',
             'pdf_path' => 'respondent/responses/test.pdf',
@@ -274,7 +275,7 @@ class ResponseNotificationServiceTest extends TestCase
         $response = RespondentResponse::create([
             'respondent_id' => $respondent->id,
             'case_number' => $caseNumber,
-            'response_number' => 'R/' . $caseNumber,
+            'response_number' => 'R/'.$caseNumber,
             'title' => 'Test response',
             'description' => 'Body',
             'pdf_path' => 'respondent/responses/test.pdf',
@@ -306,7 +307,7 @@ class ResponseNotificationServiceTest extends TestCase
         $response = RespondentResponse::create([
             'respondent_id' => $respondent->id,
             'case_number' => $caseNumber,
-            'response_number' => 'መ/' . $caseNumber,
+            'response_number' => 'መ/'.$caseNumber,
             'title' => 'Test response',
             'description' => 'Body',
             'pdf_path' => 'respondent/responses/test.pdf',
@@ -330,7 +331,7 @@ class ResponseNotificationServiceTest extends TestCase
         $response = RespondentResponse::create([
             'respondent_id' => $respondent->id,
             'case_number' => $caseNumber,
-            'response_number' => 'R/' . $caseNumber,
+            'response_number' => 'R/'.$caseNumber,
             'title' => 'Test response',
             'description' => 'Body',
             'pdf_path' => 'respondent/responses/test.pdf',
@@ -354,7 +355,7 @@ class ResponseNotificationServiceTest extends TestCase
         $response = RespondentResponse::create([
             'respondent_id' => $respondent->id,
             'case_number' => $caseNumber,
-            'response_number' => 'መ/' . $caseNumber,
+            'response_number' => 'መ/'.$caseNumber,
             'title' => 'Test response',
             'description' => 'Body',
             'pdf_path' => 'respondent/responses/test.pdf',
@@ -387,7 +388,7 @@ class ResponseNotificationServiceTest extends TestCase
         $response = RespondentResponse::create([
             'respondent_id' => $respondent->id,
             'case_number' => $caseNumber,
-            'response_number' => 'R/' . $caseNumber,
+            'response_number' => 'R/'.$caseNumber,
             'title' => 'Test response',
             'description' => 'Body',
             'pdf_path' => 'respondent/responses/test.pdf',
@@ -444,8 +445,8 @@ class ResponseNotificationServiceTest extends TestCase
             'middle_name' => 'M',
             'last_name' => 'User',
             'gender' => 'male',
-            'phone' => '2519' . rand(10000000, 99999999),
-            'email' => 'applicant' . rand(10, 9999) . '@example.com',
+            'phone' => '2519'.rand(10000000, 99999999),
+            'email' => 'applicant'.rand(10, 9999).'@example.com',
             'password' => bcrypt('password'),
             'national_id_number' => (string) rand(1000000000000000, 9999999999999999),
             'address' => 'Address',
@@ -459,13 +460,13 @@ class ResponseNotificationServiceTest extends TestCase
             'position' => '',
             'organization_name' => '',
             'address' => 'Address',
-            'national_id' => 'RN' . rand(1000, 9999),
-            'phone' => '2517' . rand(10000000, 99999999),
-            'email' => 'respondent' . rand(10, 9999) . '@example.com',
+            'national_id' => 'RN'.rand(1000, 9999),
+            'phone' => '2517'.rand(10000000, 99999999),
+            'email' => 'respondent'.rand(10, 9999).'@example.com',
             'password' => bcrypt('password'),
         ]);
 
-        $caseNumber = 'CASE-' . rand(1000, 9999);
+        $caseNumber = 'CASE-'.rand(1000, 9999);
         $caseId = DB::table('court_cases')->insertGetId([
             'applicant_id' => $applicant->id,
             'case_number' => $caseNumber,
@@ -486,13 +487,14 @@ class ResponseNotificationServiceTest extends TestCase
         return [$admin, $caseId, $caseNumber, $applicant, $respondent];
     }
 
-    private function enableTelegramNotifications(): void
+    private function enableTelegramNotifications(?string $locale = null): void
     {
-        SystemSetting::create([
+        SystemSetting::create(array_filter([
             'app_name' => 'Court MS',
             'telegram_enabled' => true,
             'telegram_bot_token' => 'telegram-token',
             'telegram_default_chat_id' => '-100123456789',
-        ]);
+            'default_locale' => $locale,
+        ], fn ($value) => $value !== null));
     }
 }

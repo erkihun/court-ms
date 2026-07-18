@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Listeners;
 
 use Illuminate\Auth\Events\Failed;
@@ -8,6 +10,7 @@ use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Writes authentication events (login, logout, failed attempt, lockout,
@@ -52,20 +55,29 @@ class RecordAuthEvent
 
         try {
             DB::table('system_audits')->insert([
+                'request_id' => $request->attributes->get('request_id'),
                 'user_id' => is_numeric($userId) ? (int) $userId : null,
                 'actor_type' => $guard ?: 'guest',
                 'action' => $action,
+                'outcome' => in_array($action, ['auth.failed', 'auth.lockout'], true) ? 'failure' : 'success',
                 'module' => 'auth',
                 'route' => optional($request->route())->getName(),
                 'method' => $request->method(),
+                'response_status' => null,
                 'ip' => $request->ip(),
                 'user_agent' => substr((string) $request->userAgent(), 0, 2000),
                 'context' => json_encode(array_merge(['path' => $request->path()], $context)),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-        } catch (\Throwable) {
-            // Never let audit logging break authentication itself.
+        } catch (\Throwable $auditFailure) {
+            Log::channel('audit')->critical('authentication_audit_database_write_failed', [
+                'action' => $action,
+                'guard' => $guard,
+                'user_id' => $userId,
+                'path' => $request->path(),
+                'failure' => $auditFailure::class,
+            ]);
         }
     }
 }

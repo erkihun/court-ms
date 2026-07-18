@@ -16,6 +16,7 @@ return [
         'faq' => 'FAQ',
         'resources' => 'Resources',
         'agency_label' => 'Administrative Tribunal',
+        'user_manual' => 'User Manual',
     ],
 
     'language' => [
@@ -74,17 +75,17 @@ return [
             ],
             'hearing' => [
                 'badge' => 'Hearing Management',
-                'title' => 'Streamlined Virtual Hearings',
-                'description' => 'Conduct hearings efficiently with integrated video conferencing, document sharing, and real-time transcription',
-                'cta_label' => 'Schedule Hearing',
-                'secondary_label' => 'Hearing Guidelines',
+                'title' => 'Track Your Hearing Schedule',
+                'description' => 'Review the hearing date, time, and venue, and receive timely notices when the schedule changes.',
+                'cta_label' => 'Sign in to your portal',
+                'secondary_label' => 'Terms of service',
             ],
             'analytics' => [
-                'badge' => 'Case Analytics',
-                'title' => 'Data-Driven Justice Delivery',
-                'description' => 'Monitor tribunal performance, track case timelines, and gain insights for continuous improvement',
-                'cta_label' => 'View Statistics',
-                'secondary_label' => 'Download Reports',
+                'badge' => 'Case tracking',
+                'title' => 'Know the Current Status of Your Case',
+                'description' => 'Review case status, submitted documents, hearing schedules, and decisions from your secure account.',
+                'cta_label' => 'View system overview',
+                'secondary_label' => 'Applicant sign in',
             ],
         ],
     ],
@@ -92,7 +93,8 @@ return [
     'metrics' => [
         'section_title' => 'Tribunal Performance Metrics',
         'section_badge' => 'Live Insights',
-        'section_description' => 'Real-time insights into case processing and tribunal efficiency',
+        'section_description' => 'A current overview of cases and scheduled hearings recorded in the system.',
+        'live_data' => 'Live data',
         'time_unit' => 'days',
         'resolution_card' => [
             'title' => 'Case Resolution Performance',
@@ -137,8 +139,8 @@ return [
                 'description' => 'Scheduled for next 7 days',
             ],
             'avg_resolution_time' => [
-                'label' => 'Avg Resolution Time',
-                'description' => 'Median time from filing to closure',
+                'label' => 'Upcoming Hearings',
+                'description' => 'Hearings scheduled from today onward',
             ],
         ],
     ],
@@ -170,7 +172,7 @@ return [
             ],
             'evidence_submission' => [
                 'title' => 'Evidence Submission & Hearings',
-                'description' => 'Digital evidence upload, witness statements, and scheduled virtual/in-person hearings',
+                'description' => 'Submit supporting documents and evidence, receive a hearing schedule, and appear before the tribunal.',
                 'meta' => 'Hearing management',
                 'duration' => '30 min',
             ],
@@ -251,13 +253,13 @@ return [
                 ],
             ],
             'online_dispute_resolution' => [
-                'title' => 'Online Dispute Resolution',
-                'description' => 'Virtual mediation and hearing facilities with recording and transcription services',
-                'meta' => 'Virtual Courtrooms',
+                'title' => 'Party Communication',
+                'description' => 'Receive case notices, exchange permitted messages, and respond through the appropriate portal.',
+                'meta' => 'Case communication',
                 'features' => [
-                    'virtual_medation' => 'Virtual mediation rooms',
-                    'recording_transcription' => 'High-fidelity recording & transcription',
-                    'secure_collaboration' => 'Secure collaboration spaces',
+                    'virtual_medation' => 'Case notices',
+                    'recording_transcription' => 'Applicant and respondent portals',
+                    'secure_collaboration' => 'Permitted message exchange',
                 ],
             ],
         ],
@@ -311,6 +313,22 @@ return [
         'secondary_button' => 'Track a Case',
     ],
 
+    'resources' => [
+        'section_badge' => 'Court resources',
+        'section_title' => 'Resources and updates',
+        'section_description' => 'Forms, documents, links, and notices published by the tribunal.',
+        'view_all' => 'View all resources',
+        'featured' => 'Featured',
+        'download' => 'Download',
+        'visit' => 'Visit',
+        'types' => [
+            'post' => 'Post',
+            'form' => 'Form',
+            'document' => 'Document',
+            'link' => 'Link',
+        ],
+    ],
+
     'faq' => [
         'section_badge' => 'Need help?',
         'section_title' => 'Frequently Asked Questions',
@@ -325,8 +343,8 @@ return [
                 'answer' => 'Yes. Use the case tracking tool on the homepage or the dashboard to see milestones, hearing schedules, and decisions.',
             ],
             [
-                'question' => 'What if I cannot attend a virtual hearing?',
-                'answer' => 'Contact the registry through the support form to request a reschedule or to arrange an alternative participation method.',
+                'question' => 'What should I do if I cannot attend a scheduled hearing?',
+                'answer' => 'Confirm the schedule in your account. If you cannot attend, notify the tribunal registry before the hearing and provide your reason and supporting evidence.',
             ],
             [
                 'question' => 'How secure is my evidence?',

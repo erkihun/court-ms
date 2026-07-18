@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 use App\Models\Applicant;
 use App\Models\CaseType;
@@ -34,5 +35,20 @@ class CourtCase extends Model
     public function applicant(): BelongsTo
     {
         return $this->belongsTo(Applicant::class, 'applicant_id');
+    }
+
+    public function files(): HasMany
+    {
+        return $this->hasMany(CaseFile::class, 'case_id');
+    }
+
+    public function evidences(): HasMany
+    {
+        return $this->hasMany(CaseEvidence::class, 'case_id');
+    }
+
+    public function witnesses(): HasMany
+    {
+        return $this->hasMany(CaseWitness::class, 'case_id');
     }
 }

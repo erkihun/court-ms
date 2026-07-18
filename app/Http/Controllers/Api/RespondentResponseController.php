@@ -74,7 +74,12 @@ class RespondentResponseController extends Controller
 
         $this->assertCaseAuthorized($caseNumber, $actor->id, true);
 
-        $path = $request->file('pdf')->store('respondent/responses', 'private');
+        $path = app(\App\Services\SecureUploadService::class)->store(
+            $request->file('pdf'),
+            'respondent/responses',
+            'private',
+            ['related_type' => 'respondent']
+        );
 
         $response = DB::transaction(function () use ($actor, $caseNumber, $data, $path) {
             return RespondentResponse::create([

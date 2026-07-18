@@ -24,6 +24,7 @@ test('applicant can create a response of response with pdf attachment', function
         'is_active' => true,
         'is_lawyer' => false,
     ]);
+    $applicant->markEmailAsVerified();
 
     $caseTypeId = DB::table('case_types')->insertGetId([
         'name' => 'Civil',
@@ -100,7 +101,7 @@ test('applicant cannot edit or delete accepted response of response', function (
         'gender' => 'male',
         'position' => 'Manager',
         'organization_name' => 'ACME',
-        'phone' => '0911444' . substr($suffix, -4),
+        'phone' => '0911444'.substr($suffix, -4),
         'email' => "lock-owner-{$suffix}@example.com",
         'address' => 'Addis Ababa',
         'national_id_number' => '1111222233334455',
@@ -108,9 +109,10 @@ test('applicant cannot edit or delete accepted response of response', function (
         'is_active' => true,
         'is_lawyer' => false,
     ]);
+    $applicant->markEmailAsVerified();
 
     $caseTypeId = DB::table('case_types')->insertGetId([
-        'name' => 'Civil Lock ' . $suffix,
+        'name' => 'Civil Lock '.$suffix,
         'description' => null,
         'created_at' => now(),
         'updated_at' => now(),
@@ -118,7 +120,7 @@ test('applicant cannot edit or delete accepted response of response', function (
 
     $caseId = DB::table('court_cases')->insertGetId([
         'applicant_id' => $applicant->id,
-        'case_number' => 'CASE-LOCK-' . strtoupper(substr($suffix, -8)),
+        'case_number' => 'CASE-LOCK-'.strtoupper(substr($suffix, -8)),
         'title' => 'Lock test case',
         'case_type_id' => $caseTypeId,
         'filing_date' => now()->toDateString(),
@@ -136,7 +138,7 @@ test('applicant cannot edit or delete accepted response of response', function (
         'position' => 'Officer',
         'organization_name' => 'Example Org',
         'address' => 'Adama',
-        'phone' => '0911555' . substr($suffix, -4),
+        'phone' => '0911555'.substr($suffix, -4),
         'email' => "resp-lock-{$suffix}@example.com",
         'password' => Hash::make('password'),
     ]);
@@ -144,7 +146,7 @@ test('applicant cannot edit or delete accepted response of response', function (
     $response = RespondentResponse::create([
         'respondent_id' => $respondent->id,
         'case_number' => DB::table('court_cases')->where('id', $caseId)->value('case_number'),
-        'response_number' => "\u{1218}/CASE-LOCK-" . strtoupper(substr($suffix, -8)),
+        'response_number' => "\u{1218}/CASE-LOCK-".strtoupper(substr($suffix, -8)),
         'title' => 'Respondent reply',
         'description' => 'Respondent description',
         'pdf_path' => 'respondent/responses/original-lock.pdf',
@@ -186,7 +188,7 @@ test('updating returned response of response resets review status to awaiting re
         'gender' => 'male',
         'position' => 'Manager',
         'organization_name' => 'ACME',
-        'phone' => '0911777' . substr($suffix, -4),
+        'phone' => '0911777'.substr($suffix, -4),
         'email' => "returned-owner-{$suffix}@example.com",
         'address' => 'Addis Ababa',
         'national_id_number' => '1111222233334466',
@@ -194,15 +196,16 @@ test('updating returned response of response resets review status to awaiting re
         'is_active' => true,
         'is_lawyer' => false,
     ]);
+    $applicant->markEmailAsVerified();
 
     $caseTypeId = DB::table('case_types')->insertGetId([
-        'name' => 'Civil Returned ' . $suffix,
+        'name' => 'Civil Returned '.$suffix,
         'description' => null,
         'created_at' => now(),
         'updated_at' => now(),
     ]);
 
-    $caseNumber = 'CASE-RET-' . strtoupper(substr($suffix, -8));
+    $caseNumber = 'CASE-RET-'.strtoupper(substr($suffix, -8));
     $caseId = DB::table('court_cases')->insertGetId([
         'applicant_id' => $applicant->id,
         'case_number' => $caseNumber,
@@ -223,7 +226,7 @@ test('updating returned response of response resets review status to awaiting re
         'position' => 'Officer',
         'organization_name' => 'Example Org',
         'address' => 'Adama',
-        'phone' => '0911888' . substr($suffix, -4),
+        'phone' => '0911888'.substr($suffix, -4),
         'email' => "resp-return-{$suffix}@example.com",
         'password' => Hash::make('password'),
     ]);

@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Listeners\RecordAuthEvent;
+use App\Listeners\RecordModelMutation;
 use App\Models\SystemSetting;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Lockout;
@@ -37,6 +38,12 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(Failed::class, [RecordAuthEvent::class, 'handleFailed']);
         Event::listen(Lockout::class, [RecordAuthEvent::class, 'handleLockout']);
         Event::listen(PasswordReset::class, [RecordAuthEvent::class, 'handlePasswordReset']);
+
+        foreach (['created', 'updated', 'deleted', 'restored'] as $modelEvent) {
+            Event::listen("eloquent.{$modelEvent}: *", function (string $eventName, array $payload): void {
+                app(RecordModelMutation::class)->handle($eventName, $payload);
+            });
+        }
 
         // ── Password policy ─────────────────────────────────────────────────
         // Enforces the admin-configured rules (system settings) for every

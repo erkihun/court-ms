@@ -24,3 +24,20 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 lang.zip
+
+# Generated document artifacts
+*.doc
+*.docx
+*.odt
+*.pdf
+*.rtf
+*.xls
+*.xlsx
+*.ppt
+*.pptx
+*.md
+
+# Picture and image artifacts
+*.png
+*.jpg
+*.jpeg

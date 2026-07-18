@@ -51,7 +51,12 @@ class ApplicantProfileController extends Controller
 
         // Only lawyers may upload a credential document.
         if ($request->hasFile('lawyer_document') && $user->is_lawyer) {
-            $newPath = $request->file('lawyer_document')->store('lawyer_documents', 'private');
+            $newPath = app(\App\Services\SecureUploadService::class)->store(
+                $request->file('lawyer_document'),
+                'lawyer_documents',
+                'private',
+                ['related_type' => 'applicant', 'related_id' => (int) $user->id, 'applicant_id' => (int) $user->id]
+            );
 
             if (! empty($user->lawyer_document_path)) {
                 Storage::disk('private')->delete($user->lawyer_document_path);

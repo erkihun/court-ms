@@ -32,6 +32,10 @@ class AuthController extends Controller
 
         $this->assertActive($user);
 
+        // The audit middleware runs after the response. Preserve the verified
+        // API actor so a successful token login is not attributed to a guest.
+        $request->attributes->set('audit_actor', $user);
+
         $token = $user->createToken(
             $data['device_name'] ?: ($request->userAgent() ?: 'api-client'),
             $this->abilitiesFor($user)

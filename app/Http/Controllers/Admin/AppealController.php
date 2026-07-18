@@ -187,7 +187,11 @@ class AppealController extends Controller
         ]);
 
         $file = $request->file('file');
-        $path = $file->store('appeals', 'private');
+        $path = app(\App\Services\SecureUploadService::class)->store($file, 'appeals', 'private', [
+            'related_type' => 'appeal',
+            'related_id' => $appeal->id,
+            'user_id' => auth()->id(),
+        ]);
 
         DB::table('appeal_documents')->insert([
             'appeal_id'  => $appealId,
@@ -215,6 +219,7 @@ class AppealController extends Controller
         abort_if(!$doc, 404);
 
         if (!empty($doc->path)) {
+            app(\App\Services\LegalHoldService::class)->assertFileMayBeDeleted((string) $doc->path);
             Storage::disk('private')->delete($doc->path);
             Storage::disk('public')->delete($doc->path); // legacy cleanup
         }

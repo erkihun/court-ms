@@ -197,6 +197,11 @@ class PermissionSeeder extends Seeder
                 'description' => null,
             ],
             [
+                'name' => 'audit.view',
+                'label' => 'View system audit trail',
+                'description' => 'View security-sensitive system and case activity records',
+            ],
+            [
                 'name' => 'about.manage',
                 'label' => 'Manage about pages',
                 'description' => null,

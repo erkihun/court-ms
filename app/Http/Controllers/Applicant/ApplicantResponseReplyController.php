@@ -65,7 +65,12 @@ class ApplicantResponseReplyController extends Controller
             'pdf' => ['required', 'file', 'mimes:pdf', 'max:2048'],
         ]);
 
-        $path = $request->file('pdf')->store('applicant/response-replies', 'private');
+        $path = app(\App\Services\SecureUploadService::class)->store(
+            $request->file('pdf'),
+            'applicant/response-replies',
+            'private',
+            ['related_type' => 'court_case', 'related_id' => $caseId, 'applicant_id' => auth('applicant')->id()]
+        );
 
         $reply = ApplicantResponseReply::create([
             'case_id' => $case->id,
@@ -128,9 +133,15 @@ class ApplicantResponseReplyController extends Controller
         ]);
 
         if ($request->hasFile('pdf')) {
+            app(\App\Services\LegalHoldService::class)->assertFileMayBeDeleted((string) $reply->pdf_path);
             Storage::disk('private')->delete($reply->pdf_path);
             Storage::disk('public')->delete($reply->pdf_path);
-            $reply->pdf_path = $request->file('pdf')->store('applicant/response-replies', 'private');
+            $reply->pdf_path = app(\App\Services\SecureUploadService::class)->store(
+                $request->file('pdf'),
+                'applicant/response-replies',
+                'private',
+                ['related_type' => 'court_case', 'related_id' => (int) $reply->case_id, 'applicant_id' => auth('applicant')->id()]
+            );
         }
 
         $reply->description = $data['description'];
@@ -158,6 +169,7 @@ class ApplicantResponseReplyController extends Controller
             ->firstOrFail();
         $this->ensureEditableReply($reply);
 
+        app(\App\Services\LegalHoldService::class)->assertFileMayBeDeleted((string) $reply->pdf_path);
         Storage::disk('private')->delete($reply->pdf_path);
         Storage::disk('public')->delete($reply->pdf_path);
         $reply->delete();

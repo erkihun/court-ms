@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Policies;
 
 use App\Models\User;
 use App\Models\CourtCase;
 
-class CourtCasePolicy
+final class CourtCasePolicy
 {
     public function view(User $user, CourtCase $case): bool
     {
@@ -21,7 +23,7 @@ class CourtCasePolicy
         return ($case->review_status ?? 'accepted') === 'accepted';
     }
 
-    public function review(User $user): bool
+    public function review(User $user, ?CourtCase $case = null): bool
     {
         return $this->hasPerm($user, 'cases.review');
     }

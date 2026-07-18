@@ -51,7 +51,7 @@ class ResponseController extends Controller
 
         if ($caseNumber !== null) {
             $case = DB::table('court_cases')
-                ->select('status')
+                ->select(['id', 'status'])
                 ->where('case_number', $caseNumber)
                 ->first();
             if ($case && $case->status === 'closed') {
@@ -64,7 +64,12 @@ class ResponseController extends Controller
         $this->assertNotOwnCase($caseNumber, (int) $applicant->id);
         $this->assertCaseAuthorized($caseNumber, $respondentId, false);
 
-        $path = $request->file('pdf')->store('respondent/responses', 'private');
+        $path = app(\App\Services\SecureUploadService::class)->store(
+            $request->file('pdf'),
+            'respondent/responses',
+            'private',
+            ['related_type' => 'court_case', 'related_id' => (int) $case->id]
+        );
 
         $descHtml = $this->cleanHtml($data['description'] ?? '');
 
@@ -117,9 +122,15 @@ class ResponseController extends Controller
         $this->assertCaseAuthorized($caseNumber, $this->currentRespondentId(), false);
 
         if ($request->hasFile('pdf')) {
+            app(\App\Services\LegalHoldService::class)->assertFileMayBeDeleted((string) $response->pdf_path);
             Storage::disk('private')->delete($response->pdf_path);
             Storage::disk('public')->delete($response->pdf_path); // legacy cleanup
-            $path = $request->file('pdf')->store('respondent/responses', 'private');
+            $path = app(\App\Services\SecureUploadService::class)->store(
+                $request->file('pdf'),
+                'respondent/responses',
+                'private',
+                ['related_type' => 'respondent_response', 'related_id' => (int) $response->id]
+            );
             $response->pdf_path = $path;
         }
 
@@ -146,6 +157,7 @@ class ResponseController extends Controller
     public function destroy(RespondentResponse $response)
     {
         $this->authorizeOwnership($response);
+        app(\App\Services\LegalHoldService::class)->assertFileMayBeDeleted((string) $response->pdf_path);
         Storage::disk('private')->delete($response->pdf_path);
         Storage::disk('public')->delete($response->pdf_path); // legacy cleanup
         $response->delete();

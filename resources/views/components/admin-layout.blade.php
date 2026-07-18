@@ -263,6 +263,7 @@
         || request()->routeIs('admin.audit')
         || request()->routeIs('admin.landing.*');
     $canViewReports = $hasReports && auth()->user()?->hasPermission('reports.view');
+    $canViewAudit = $hasAudit && auth()->user()?->hasPermission('audit.view');
     @endphp
 
     <aside
@@ -967,7 +968,7 @@
                     </a>
                     @endif
 
-                    @if($hasAudit)
+                    @if($canViewAudit)
                     <a href="{{ route('admin.audit') }}"
                         class="sidebar-submenu-item focus-ring
                     {{ request()->routeIs('admin.audit') ? 'sidebar-submenu-item-active' : 'sidebar-submenu-item-inactive' }}">

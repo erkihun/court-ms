@@ -11,6 +11,7 @@ use App\Models\HomeSlide;
 use App\Models\HomeTimelineStep;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class LandingPageController extends Controller
@@ -19,7 +20,7 @@ class LandingPageController extends Controller
 
     private function flushCache(): void
     {
-        foreach (['home_slides','home_faqs','home_settings','home_services','home_timeline','home_resources','home_footer'] as $key) {
+        foreach (['home_slides','home_faqs','home_settings','home_metrics','home_services','home_timeline','home_resources','home_footer','home_user_manual'] as $key) {
             Cache::forget($key);
         }
     }
@@ -32,6 +33,7 @@ class LandingPageController extends Controller
             'services' => ['visible' => true, 'title' => '', 'subtitle' => ''],
             'cases'    => ['visible' => true],
             'resources'=> ['visible' => true, 'title' => '', 'subtitle' => ''],
+            'faq'      => ['visible' => true, 'title' => '', 'subtitle' => ''],
             'cta'      => [
                 'visible'         => true,
                 'title'           => '',
@@ -76,11 +78,22 @@ class LandingPageController extends Controller
         $services  = HomeService::orderBy('sort_order')->get();
         $steps     = HomeTimelineStep::orderBy('sort_order')->get();
         $resources = HomeResource::orderBy('sort_order')->get();
+        $userManual = HomeSetting::getJson('user_manual.settings');
         $sections  = $this->loadSections();
+        $metrics   = HomeSetting::getJson('metrics.content');
         $footer    = HomeSetting::getJson('footer.settings');
+        $totalCases = DB::table('court_cases')->count();
+        $resolvedCases = DB::table('court_cases')->whereIn('status', ['closed', 'dismissed'])->count();
+        $pendingCases = DB::table('court_cases')->where('status', 'pending')->count();
+        $openCases = max($totalCases - $resolvedCases, 0);
+        $upcomingHearings = DB::table('case_hearings')->where('hearing_at', '>=', now())->count();
+        $hearingsThisWeek = DB::table('case_hearings')
+            ->whereBetween('hearing_at', [now()->startOfWeek(), now()->endOfWeek()])
+            ->count();
 
         return view('admin.landing.index', compact(
-            'slides', 'faqs', 'services', 'steps', 'resources', 'sections', 'footer'
+            'slides', 'faqs', 'services', 'steps', 'resources', 'userManual', 'sections', 'metrics', 'footer',
+            'totalCases', 'resolvedCases', 'pendingCases', 'openCases', 'upcomingHearings', 'hearingsThisWeek'
         ));
     }
 
@@ -382,6 +395,24 @@ class LandingPageController extends Controller
         return back();
     }
 
+    public function updateUserManual(Request $request)
+    {
+        $data = $request->validate([
+            'title_en' => 'required|string|max:255',
+            'title_am' => 'required|string|max:255',
+            'content_en' => 'required|string|max:50000',
+            'content_am' => 'required|string|max:50000',
+            'is_active' => 'boolean',
+        ]);
+        $data['content_en'] = $this->sanitizeManualHtml($data['content_en']);
+        $data['content_am'] = $this->sanitizeManualHtml($data['content_am']);
+        $data['is_active'] = $request->boolean('is_active');
+        HomeSetting::setJson('user_manual.settings', $data);
+        $this->flushCache();
+
+        return back()->with('success', __('admin_landing.manual.saved'))->with('landing_tab', 'resources');
+    }
+
     // ── Footer settings ───────────────────────────────────────────────────────
 
     public function updateFooter(Request $request)
@@ -405,6 +436,33 @@ class LandingPageController extends Controller
         return back()->with('success', 'Footer settings saved.');
     }
 
+    // ── Metrics content ──────────────────────────────────────────────────────
+
+    public function updateMetrics(Request $request)
+    {
+        $metricKeys = [
+            'total_cases',
+            'resolved_cases',
+            'pending_cases',
+            'active_caseload',
+            'hearings_this_week',
+            'avg_resolution_time',
+        ];
+
+        $rules = [];
+        foreach ($metricKeys as $key) {
+            $rules["{$key}.label"] = 'nullable|string|max:120';
+            $rules["{$key}.description"] = 'nullable|string|max:255';
+        }
+
+        HomeSetting::setJson('metrics.content', $request->validate($rules));
+        $this->flushCache();
+
+        return back()
+            ->with('success', 'Metrics content saved.')
+            ->with('landing_tab', 'metrics');
+    }
+
     // ── Section settings ──────────────────────────────────────────────────────
 
     public function updateSections(Request $request)
@@ -423,6 +481,9 @@ class LandingPageController extends Controller
             'resources.visible'        => 'boolean',
             'resources.title'          => 'nullable|string|max:255',
             'resources.subtitle'       => 'nullable|string|max:500',
+            'faq.visible'              => 'boolean',
+            'faq.title'                => 'nullable|string|max:255',
+            'faq.subtitle'             => 'nullable|string|max:500',
             'cta.visible'              => 'boolean',
             'cta.title'                => 'nullable|string|max:255',
             'cta.description'          => 'nullable|string|max:500',
@@ -432,7 +493,7 @@ class LandingPageController extends Controller
             'cta.secondary_href'       => 'nullable|string|max:500',
         ]);
 
-        foreach ($request->only(['metrics','process','services','cases','resources','cta']) as $key => $value) {
+        foreach ($request->only(['metrics','process','services','cases','resources','faq','cta']) as $key => $value) {
             $value['visible'] = (bool) ($value['visible'] ?? false);
             HomeSetting::setJson("section.{$key}", $value);
         }
@@ -448,5 +509,14 @@ class LandingPageController extends Controller
         return array_values(array_filter(
             array_map('trim', explode("\n", str_replace("\r", '', $raw)))
         ));
+    }
+
+    private function sanitizeManualHtml(string $html): string
+    {
+        $clean = strip_tags($html, '<p><br><h1><h2><h3><h4><h5><h6><strong><b><em><i><u><s><sub><sup><pre><code><ul><ol><li><blockquote><a><table><caption><colgroup><col><thead><tbody><tfoot><tr><th><td><hr><div><span><figure><figcaption>');
+        $clean = preg_replace('/\s+on[a-z]+\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)/iu', '', $clean) ?? '';
+        $clean = preg_replace('/(href|src)\s*=\s*(["\'])\s*javascript:[^"\']*\2/iu', '$1="#"', $clean) ?? '';
+
+        return trim($clean);
     }
 }
