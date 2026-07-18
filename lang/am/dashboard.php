@@ -1,6 +1,16 @@
 <?php
 
 return array (
+  'action_required' => 'እርምጃ ያስፈልጋል',
+  'database_connection' => 'የዳታቤዝ ግንኙነት',
+  'unavailable' => 'አይገኝም',
+  'info_disabled' => 'ተዘግቷል',
+  'data_storage' => 'ውሂብ እና ማከማቻ',
+  'database_tables' => 'የዳታቤዝ ሰንጠረዦች',
+  'audit_events' => 'የኦዲት ክስተቶች',
+  'database_size' => 'የዳታቤዝ መጠን',
+  'storage_free' => 'ነፃ ማከማቻ',
+  'enabled' => 'ነቅቷል (ውቅር ያስፈልጋል)',
   'lawyer_title' => 'ጠበቃ/አቃቢ ህግ',
   'submitted_by_lawyer' => 'በጠበቃ/አቃቢ ህግ :name የቀረበ',
   'title' => 'ዳሽቦርድ',

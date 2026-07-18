@@ -6,6 +6,7 @@ namespace App\Actions;
 
 use App\Models\Applicant;
 use App\Models\Respondent;
+use App\Models\SystemSetting;
 use App\Models\User;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
@@ -25,6 +26,12 @@ final readonly class RecordSystemAuditAction
 
     public function execute(Request $request, ?int $responseStatus = null, ?Throwable $exception = null): void
     {
+        $settings = SystemSetting::cached();
+
+        if ($settings !== null && ! $settings->audit_logging_enabled) {
+            return;
+        }
+
         if ($request->attributes->getBoolean('system_audit_recorded')) {
             return;
         }
@@ -150,6 +157,7 @@ final readonly class RecordSystemAuditAction
 
             if ($this->isSensitive($keyName)) {
                 $safe[$keyName] = '[redacted]';
+
                 continue;
             }
 

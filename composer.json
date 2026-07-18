@@ -22,6 +22,7 @@
         "mews/purifier": "^3.4",
         "owen-it/laravel-auditing": "^14.0",
         "plesk/ext-laravel-integration": "*",
+        "pragmarx/google2fa-qrcode": "3.0",
         "simplesoftwareio/simple-qrcode": "^4.2",
         "wemersonjanuario/wkhtmltopdf-windows": "^0.12.2"
     },

@@ -57,7 +57,7 @@ class AppServiceProvider extends ServiceProvider
 
             try {
                 if (Schema::hasTable('system_settings')) {
-                    $s = Cache::remember('system_settings', 3600, fn () => SystemSetting::query()->first());
+                    $s = SystemSetting::cached();
                     if ($s) {
                         $min = max(8, (int) ($s->password_min_length ?? 8));
                         $upper = (bool) ($s->password_require_uppercase ?? true);
@@ -105,11 +105,7 @@ class AppServiceProvider extends ServiceProvider
             }
             try {
                 if (Schema::hasTable('system_settings')) {
-                    $resolvedSettings = Cache::remember(
-                        'system_settings',
-                        3600,
-                        fn () => SystemSetting::query()->first()
-                    );
+                    $resolvedSettings = SystemSetting::cached();
                 }
             } catch (\Throwable) {
                 $resolvedSettings = null;

@@ -16,6 +16,14 @@
 .ss-tab:hover { color:var(--text); }
 .ss-tab.active { color:rgb(var(--ac)); border-bottom-color:rgb(var(--ac)); font-weight:600; }
 .ss-tab svg { width:.9rem; height:.9rem; flex-shrink:0; }
+.ss-tab-dot { width:.45rem; height:.45rem; border-radius:999px; background:#ef4444; flex-shrink:0;
+              box-shadow:0 0 0 3px rgb(239 68 68/.15); }
+.ss-tab.active .ss-tab-dot { background:#fff; box-shadow:0 0 0 3px rgb(255 255 255/.25); }
+
+/* Cards laid out side by side in one row */
+.ss-card-row { display:grid; gap:1rem; align-items:stretch; margin-bottom:1.15rem; }
+.ss-card-row .ss-card { margin-bottom:0; height:100%; }
+@media (min-width:1024px) { .ss-card-row { grid-template-columns:repeat(3,minmax(0,1fr)); } }
 
 /* Cards */
 .ss-card { background:var(--surface-strong); border:1px solid var(--border); border-radius:.875rem; padding:1.375rem; margin-bottom:1rem; }
@@ -78,6 +86,40 @@
 .ss-badge { display:inline-flex; align-items:center; gap:.3rem; padding:.2rem .55rem; border-radius:999px; font-size:.68rem; font-weight:700; }
 .ss-badge-ok   { background:rgb(16 185 129/.1); color:rgb(4 120 87); border:1px solid rgb(16 185 129/.2); }
 .ss-badge-warn { background:rgb(245 158 11/.1); color:rgb(146 64 14); border:1px solid rgb(245 158 11/.2); }
+.ss-security-hero { background:linear-gradient(135deg,rgb(var(--ac)/.12),var(--surface-strong) 58%); border:1px solid rgb(var(--ac)/.2); border-radius:1rem; padding:1.25rem; margin-bottom:1rem; }
+.ss-security-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:.65rem; margin-top:1rem; }
+.ss-security-item { padding:.75rem; border-radius:.65rem; border:1px solid var(--border); background:var(--surface-strong); }
+.ss-security-item strong { display:block; font-size:.74rem; color:var(--text); margin-top:.35rem; }
+.ss-security-item span { font-size:.67rem; color:var(--text-subtle); }
+.ss-status-dot { width:.5rem; height:.5rem; border-radius:999px; display:inline-block; }
+.ss-status-on { background:#10b981; box-shadow:0 0 0 4px rgb(16 185 129/.12); }
+.ss-status-off { background:#f59e0b; box-shadow:0 0 0 4px rgb(245 158 11/.12); }
+@media (max-width:1024px) { .ss-security-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:640px) { .ss-security-grid { grid-template-columns:1fr; } }
+
+/* Modern settings workspace */
+.ss-wrap { width:100%; max-width:none; margin:0; }
+.ss-header { padding:2rem 0 1.5rem; border:0; margin-bottom:1rem; }
+.ss-title { font-size:clamp(1.45rem,2.5vw,2rem); letter-spacing:-.04em; }
+.ss-subtitle { max-width:42rem; font-size:.875rem; line-height:1.55; }
+.ss-tabs { gap:.35rem; padding:.35rem; border:1px solid var(--border); border-radius:.9rem; background:var(--surface-soft); margin-bottom:1.75rem; box-shadow:0 4px 16px rgb(15 23 42/.04); }
+.ss-tab { border:0; border-radius:.65rem; margin:0; padding:.7rem .85rem; }
+.ss-tab.active { color:#fff; background:rgb(var(--ac)); box-shadow:0 4px 10px rgb(var(--ac)/.2); }
+.ss-card { border-radius:1rem; padding:1.5rem; margin-bottom:1.15rem; box-shadow:0 5px 18px rgb(15 23 42/.035); transition:box-shadow .2s,transform .2s; }
+.ss-card:hover { box-shadow:0 10px 25px rgb(15 23 42/.07); }
+.ss-card-title { font-size:.9rem; margin-bottom:1.15rem; }
+.ss-card-icon { width:2rem; height:2rem; border-radius:.6rem; }
+.ss-input, .ss-select, .ss-textarea { padding:.65rem .8rem; border-radius:.65rem; }
+.ss-input-group { border-radius:.65rem; }
+.ss-input-group input { padding:.65rem .8rem; }
+.ss-toggle-row { padding:.85rem 1rem; border-radius:.7rem; }
+.ss-bar { margin-top:2rem; padding:.9rem 0; }
+.ss-security-hero { border-radius:1.15rem; padding:1.5rem; box-shadow:0 10px 30px rgb(var(--ac)/.08); }
+.ss-tab-page { animation:ss-tab-in .2s ease-out; }
+.ss-tab-page > .ss-card:first-child { border-top:3px solid rgb(var(--ac)); }
+.ss-tab-page .ss-card-title svg { transition:transform .2s; }
+.ss-tab-page .ss-card:hover .ss-card-title svg { transform:scale(1.08); }
+@keyframes ss-tab-in { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
 
 /* Info grid (system info) */
 .ss-info-row { display:flex; align-items:center; justify-content:space-between;
@@ -124,10 +166,16 @@
 .ss-bar-hint { font-size:.73rem; color:var(--text-subtle); display:flex; align-items:center; gap:.35rem; }
 </style>
 
-@php $s = $settings; @endphp
+@php
+$s = $settings;
+$tabKeys = ['general','branding','localization','security','appearance','notifications','data','api'];
+$requestedTab = (string) old('tab', request('tab', 'general'));
+$activeTab = in_array($requestedTab, $tabKeys, true) ? $requestedTab : 'general';
+@endphp
 
 <div class="ss-wrap px-5 pb-20"
-     x-data="{ tab: '{{ request('tab','general') }}', saving: false, telegramEnabled: @js((bool) old('telegram_enabled', $s->telegram_enabled ?? false)) }">
+     x-data="{ tab: @js($activeTab), saving: false, dirty: false, mailEnabled: @js((bool) old('mail_enabled', $s->mail_enabled ?? false)), smsEnabled: @js((bool) old('sms_enabled', $s->sms_enabled ?? false)), telegramEnabled: @js((bool) old('telegram_enabled', $s->telegram_enabled ?? false)) }"
+     x-init="window.addEventListener('beforeunload', (e) => { if (dirty && !saving) { e.preventDefault(); e.returnValue = ''; } })">
 
     {{-- Page header --}}
     <div class="ss-header">
@@ -169,25 +217,41 @@
             ['key'=>'data',         'label'=>__('settings.tab_data_management'),'icon'=>'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4'],
             ['key'=>'api',          'label'=>__('settings.tab_api'),           'icon'=>'M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'],
         ];
+        $tabFields = [
+            'general'       => ['app_name','short_name','welcome_message','about','footer_text','address','website_url','contact_email','contact_phone'],
+            'branding'      => ['banner','logo','favicon','seal'],
+            'localization'  => ['default_locale','show_language_switcher','timezone','date_format','time_format','use_ethiopian_calendar'],
+            'security'      => ['maintenance_mode','registration_open','force_https','mfa_enabled','mfa_roles','mfa_roles.*','session_lifetime','login_max_attempts','lockout_minutes','session_warning_minutes','session_extend_on_activity','password_min_length','password_require_uppercase','password_require_number','password_require_symbol'],
+            'appearance'    => ['accent_palette','default_theme','show_banner_on_login','custom_css'],
+            'notifications' => ['mail_enabled','mail_mailer','mail_host','mail_port','mail_username','mail_password','mail_encryption','mail_from_address','mail_from_name','telegram_enabled','telegram_bot_token','telegram_default_chat_id','sms_enabled','sms_provider','sms_base_url','sms_api_key','sms_api_secret','sms_sender_id'],
+            'data'          => ['audit_logging_enabled','audit_retention_days'],
+            'api'           => ['api_enabled','api_rate_limit'],
+        ];
         @endphp
         @foreach($tabs as $t)
-        <button type="button" @click="tab='{{ $t['key'] }}'"
+        <button type="button"
+                @click="tab='{{ $t['key'] }}'; history.replaceState(null, '', @js(route('settings.system.edit', ['tab' => $t['key']])))"
                 :class="tab==='{{ $t['key'] }}' && 'active'" class="ss-tab">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $t['icon'] }}"/>
             </svg>
             {{ $t['label'] }}
+            @if($errors->hasAny($tabFields[$t['key']] ?? []))
+            <span class="ss-tab-dot" title="{{ __('settings.tab_has_errors') }}"></span>
+            @endif
         </button>
         @endforeach
     </div>
 
     {{-- ════════════════════════════════════════════════════════ --}}
     <form method="POST" action="{{ route('settings.system.update') }}"
-          enctype="multipart/form-data" @submit="saving=true">
+          enctype="multipart/form-data" @submit="saving=true; dirty=false"
+          @input="dirty=true" @change="dirty=true">
     @csrf
+    <input type="hidden" name="tab" :value="tab">
 
     {{-- ── TAB: GENERAL ────────────────────────────────────── --}}
-    <div x-show="tab==='general'" x-transition:enter="transition ease-out duration-150"
+    <div class="ss-tab-page" x-show="tab==='general'" x-transition:enter="transition ease-out duration-150"
          x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
 
         <div class="ss-card">
@@ -247,7 +311,7 @@
     </div>
 
     {{-- ── TAB: BRANDING ───────────────────────────────────── --}}
-    <div x-show="tab==='branding'" x-cloak x-transition:enter="transition ease-out duration-150"
+    <div class="ss-tab-page" x-show="tab==='branding'" x-cloak x-transition:enter="transition ease-out duration-150"
          x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
 
         <div class="ss-card">
@@ -298,10 +362,11 @@
                 @endforeach
             </div>
         </div>
+
     </div>
 
     {{-- ── TAB: LOCALIZATION ───────────────────────────────── --}}
-    <div x-show="tab==='localization'" x-cloak x-transition:enter="transition ease-out duration-150"
+    <div class="ss-tab-page" x-show="tab==='localization'" x-cloak x-transition:enter="transition ease-out duration-150"
          x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
 
         <div class="ss-card">
@@ -391,9 +456,36 @@
     </div>
 
     {{-- ── TAB: SECURITY ───────────────────────────────────── --}}
-    <div x-show="tab==='security'" x-cloak x-transition:enter="transition ease-out duration-150"
+    <div class="ss-tab-page" x-show="tab==='security'" x-cloak x-transition:enter="transition ease-out duration-150"
          x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
 
+        <div class="ss-security-hero">
+            <div class="flex items-center justify-between gap-4 flex-wrap">
+                <div>
+                    <p class="text-[.68rem] font-bold uppercase tracking-[.12em] text-[var(--text-subtle)]">{{ __('settings.security_posture') }}</p>
+                    <div class="flex items-end gap-2 mt-1"><strong class="text-3xl text-[var(--text)]">{{ $securityMetrics['score'] }}%</strong><span class="text-xs text-[var(--text-subtle)] mb-1">{{ __('settings.controls_active') }}</span></div>
+                    <p class="ss-hint">{{ __('settings.security_posture_hint') }}</p>
+                </div>
+                <div class="text-right">
+                    <span class="ss-badge {{ $securityMetrics['score'] >= 80 ? 'ss-badge-ok' : 'ss-badge-warn' }}">{{ $securityMetrics['score'] >= 80 ? __('settings.protected') : __('settings.action_recommended') }}</span>
+                    <p class="ss-hint mt-2">{{ ucfirst($securityMetrics['environment']) }} · {{ $securityMetrics['session_driver'] }}</p>
+                </div>
+            </div>
+            <div class="ss-security-grid">
+                @foreach([
+                    ['state'=>$securityMetrics['https_enforced'], 'label'=>__('settings.https_protection')],
+                    ['state'=>$securityMetrics['debug_disabled'], 'label'=>__('settings.debug_protection')],
+                    ['state'=>$securityMetrics['secure_cookies'], 'label'=>__('settings.cookie_protection')],
+                    ['state'=>$securityMetrics['strong_password'], 'label'=>__('settings.password_strength')],
+                    ['state'=>$securityMetrics['strict_lockout'], 'label'=>__('settings.login_protection')],
+                    ['state'=>$securityMetrics['mfa_configured'], 'label'=>__('settings.mfa_protection')],
+                ] as $control)
+                    <div class="ss-security-item"><span class="ss-status-dot {{ $control['state'] ? 'ss-status-on' : 'ss-status-off' }}"></span><strong>{{ $control['label'] }}</strong><span>{{ $control['state'] ? __('settings.active') : __('settings.review_needed') }}</span></div>
+                @endforeach
+            </div>
+        </div>
+
+        <div class="ss-card-row">
         <div class="ss-card">
             <div class="ss-card-title">
                 <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg></div>
@@ -405,6 +497,7 @@
                     ['name'=>'maintenance_mode',  'checked'=>$s->maintenance_mode??false,   'label'=>__('settings.maintenance_mode'),   'desc'=>__('settings.maintenance_mode_desc')],
                     ['name'=>'registration_open', 'checked'=>$s->registration_open??true,   'label'=>__('settings.registration_open'),  'desc'=>__('settings.registration_open_desc')],
                     ['name'=>'force_https',       'checked'=>$s->force_https??false,         'label'=>__('settings.force_https'),        'desc'=>__('settings.force_https_desc')],
+                    ['name'=>'mfa_enabled',       'checked'=>$s->mfa_enabled??false,         'label'=>__('settings.mfa_enabled'),        'desc'=>__('settings.mfa_enabled_desc')],
                 ];
                 @endphp
                 @foreach($accessToggles as $tg)
@@ -424,32 +517,25 @@
 
         <div class="ss-card">
             <div class="ss-card-title">
-                <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
-                {{ __('settings.session_lockout') }}
+                <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 1.105-.895 2-2 2s-2-.895-2-2 .895-2 2-2 2 .895 2 2zm0 0h4m-1 0v2m0-2V9m5 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+                {{ __('settings.mfa_role_policy') }}
             </div>
-            <div class="grid md:grid-cols-3 gap-4">
-                <div>
-                    <label class="ss-label">{{ __('settings.session_lifetime') }}</label>
-                    <div class="ss-input-group">
-                        <input type="number" name="session_lifetime" min="5" max="43200" value="{{ old('session_lifetime',$s->session_lifetime??120) }}">
-                        <span class="ss-input-group-addon">{{ __('settings.unit_min') }}</span>
-                    </div>
-                    <p class="ss-hint">{{ __('settings.session_lifetime_hint') }}</p>
-                </div>
-                <div>
-                    <label class="ss-label">{{ __('settings.max_login_attempts') }}</label>
-                    <div class="ss-input-group">
-                        <input type="number" name="login_max_attempts" min="1" max="100" value="{{ old('login_max_attempts',$s->login_max_attempts??5) }}">
-                        <span class="ss-input-group-addon">{{ __('settings.unit_tries') }}</span>
-                    </div>
-                </div>
-                <div>
-                    <label class="ss-label">{{ __('settings.lockout_duration') }}</label>
-                    <div class="ss-input-group">
-                        <input type="number" name="lockout_minutes" min="1" max="1440" value="{{ old('lockout_minutes',$s->lockout_minutes??15) }}">
-                        <span class="ss-input-group-addon">{{ __('settings.unit_min') }}</span>
-                    </div>
-                </div>
+            <p class="ss-hint mb-3">{{ __('settings.mfa_role_policy_hint') }}</p>
+            <div class="grid gap-2">
+                @forelse($roles as $role)
+                    <label class="ss-toggle-row cursor-pointer">
+                        <div class="ss-toggle-info">
+                            <span class="ss-toggle-name">{{ $role->name }}</span>
+                            <span class="ss-toggle-desc">{{ $role->description ?: __('settings.mfa_role_default_desc') }}</span>
+                        </div>
+                        <span class="ss-sw">
+                            <input type="checkbox" name="mfa_roles[]" value="{{ $role->id }}" @checked(in_array($role->id, array_map('intval', old('mfa_roles', $roles->where('mfa_required', true)->pluck('id')->all()))))>
+                            <span class="ss-sw-track"><span class="ss-sw-thumb"></span></span>
+                        </span>
+                    </label>
+                @empty
+                    <p class="ss-hint">{{ __('settings.mfa_no_roles') }}</p>
+                @endforelse
             </div>
         </div>
 
@@ -487,10 +573,51 @@
                 @endforeach
             </div>
         </div>
+        </div>{{-- /ss-card-row --}}
+
+        <div class="ss-card">
+            <div class="ss-card-title">
+                <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+                {{ __('settings.session_lockout') }}
+            </div>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                    <label class="ss-label">{{ __('settings.session_lifetime') }}</label>
+                    <div class="ss-input-group">
+                        <input type="number" name="session_lifetime" min="5" max="43200" value="{{ old('session_lifetime',$s->session_lifetime??120) }}">
+                        <span class="ss-input-group-addon">{{ __('settings.unit_min') }}</span>
+                    </div>
+                    <p class="ss-hint">{{ __('settings.session_lifetime_hint') }}</p>
+                </div>
+                <div>
+                    <label class="ss-label">{{ __('settings.max_login_attempts') }}</label>
+                    <div class="ss-input-group">
+                        <input type="number" name="login_max_attempts" min="1" max="100" value="{{ old('login_max_attempts',$s->login_max_attempts??5) }}">
+                        <span class="ss-input-group-addon">{{ __('settings.unit_tries') }}</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="ss-label">{{ __('settings.lockout_duration') }}</label>
+                    <div class="ss-input-group">
+                        <input type="number" name="lockout_minutes" min="1" max="1440" value="{{ old('lockout_minutes',$s->lockout_minutes??15) }}">
+                        <span class="ss-input-group-addon">{{ __('settings.unit_min') }}</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="ss-label">{{ __('settings.session_warning_minutes') }}</label>
+                    <div class="ss-input-group">
+                        <input type="number" name="session_warning_minutes" min="1" max="120" value="{{ old('session_warning_minutes',$s->session_warning_minutes??5) }}">
+                        <span class="ss-input-group-addon">{{ __('settings.unit_min') }}</span>
+                    </div>
+                    <p class="ss-hint">{{ __('settings.session_warning_hint') }}</p>
+                </div>
+            </div>
+            <div class="ss-toggle-row mt-3"><div class="ss-toggle-info"><span class="ss-toggle-name">{{ __('settings.session_extend_on_activity') }}</span><span class="ss-toggle-desc">{{ __('settings.session_extend_on_activity_desc') }}</span></div><label class="ss-sw"><input type="checkbox" name="session_extend_on_activity" value="1" @checked(old('session_extend_on_activity',$s->session_extend_on_activity??true))><div class="ss-sw-track"><div class="ss-sw-thumb"></div></div></label></div>
+        </div>
     </div>
 
     {{-- ── TAB: APPEARANCE ─────────────────────────────────── --}}
-    <div x-show="tab==='appearance'" x-cloak x-transition:enter="transition ease-out duration-150"
+    <div class="ss-tab-page" x-show="tab==='appearance'" x-cloak x-transition:enter="transition ease-out duration-150"
          x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
 
         <div class="ss-card">
@@ -574,7 +701,7 @@
     </div>
 
     {{-- ── TAB: NOTIFICATIONS ──────────────────────────────── --}}
-    <div x-show="tab==='notifications'" x-cloak x-transition:enter="transition ease-out duration-150"
+    <div class="ss-tab-page" x-show="tab==='notifications'" x-cloak x-transition:enter="transition ease-out duration-150"
          x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
 
         {{-- ── Email (SMTP) ── --}}
@@ -584,9 +711,10 @@
                     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                 </div>
                 {{ __('settings.email_smtp') }}
-                <div class="ml-auto">
+                <div class="ml-auto flex items-center gap-2">
+                    <span class="text-[.68rem] font-bold uppercase" :class="mailEnabled ? 'text-emerald-600' : 'text-[var(--text-subtle)]'" x-text="mailEnabled ? '{{ __('settings.on') }}' : '{{ __('settings.off') }}'"></span>
                     <label class="ss-sw">
-                        <input type="checkbox" name="mail_enabled" value="1" @checked(old('mail_enabled',$s->mail_enabled??false))>
+                        <input type="checkbox" name="mail_enabled" value="1" x-model="mailEnabled" @change="dirty=true">
                         <div class="ss-sw-track"><div class="ss-sw-thumb"></div></div>
                     </label>
                 </div>
@@ -703,9 +831,10 @@
                     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                 </div>
                 {{ __('settings.sms_gateway') }}
-                <div class="ml-auto">
+                <div class="ml-auto flex items-center gap-2">
+                    <span class="text-[.68rem] font-bold uppercase" :class="smsEnabled ? 'text-emerald-600' : 'text-[var(--text-subtle)]'" x-text="smsEnabled ? '{{ __('settings.on') }}' : '{{ __('settings.off') }}'"></span>
                     <label class="ss-sw">
-                        <input type="checkbox" name="sms_enabled" value="1" @checked(old('sms_enabled',$s->sms_enabled??false))>
+                        <input type="checkbox" name="sms_enabled" value="1" x-model="smsEnabled" @change="dirty=true">
                         <div class="ss-sw-track"><div class="ss-sw-thumb"></div></div>
                     </label>
                 </div>
@@ -760,7 +889,7 @@
     </div>
 
     {{-- ── TAB: DATA MANAGEMENT ───────────────────────────────── --}}
-    <div x-show="tab==='data'" x-cloak x-transition:enter="transition ease-out duration-150"
+    <div class="ss-tab-page" x-show="tab==='data'" x-cloak x-transition:enter="transition ease-out duration-150"
          x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
 
         <div class="grid lg:grid-cols-2 gap-4">
@@ -812,10 +941,19 @@
                 @endif
             </div>
         </div>
+
+        <div class="ss-card">
+            <div class="ss-card-title">
+                <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div>
+                {{ __('settings.audit_log_configuration') }}
+            </div>
+            <div class="ss-toggle-row"><div class="ss-toggle-info"><span class="ss-toggle-name">{{ __('settings.audit_logging_enabled') }}</span><span class="ss-toggle-desc">{{ __('settings.audit_logging_enabled_desc') }}</span></div><label class="ss-sw"><input type="checkbox" name="audit_logging_enabled" value="1" @checked(old('audit_logging_enabled',$s->audit_logging_enabled??true))><div class="ss-sw-track"><div class="ss-sw-thumb"></div></div></label></div>
+            <div class="mt-3"><label class="ss-label">{{ __('settings.audit_retention_days') }}</label><div class="ss-input-group" style="max-width:220px"><input type="number" name="audit_retention_days" min="1" max="3650" value="{{ old('audit_retention_days',$s->audit_retention_days??365) }}"><span class="ss-input-group-addon">{{ __('settings.unit_days') }}</span></div><p class="ss-hint">{{ __('settings.audit_retention_hint') }}</p></div>
+        </div>
     </div>
 
     {{-- ── TAB: API & ACCESS ───────────────────────────────── --}}
-    <div x-show="tab==='api'" x-cloak x-transition:enter="transition ease-out duration-150"
+    <div class="ss-tab-page" x-show="tab==='api'" x-cloak x-transition:enter="transition ease-out duration-150"
          x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
 
         <div class="ss-card">
@@ -886,13 +1024,19 @@
 
     {{-- ── Sticky save bar ─────────────────────────────────── --}}
     <div class="ss-bar">
-        <span class="ss-bar-hint">
+        <span class="ss-bar-hint" x-show="!dirty">
             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             {{ __('settings.save_hint') }}
         </span>
+        <span class="ss-bar-hint" x-show="dirty" x-cloak style="color:#b45309;font-weight:600;">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+            {{ __('settings.unsaved_changes') }}
+        </span>
         <div class="flex items-center gap-2.5">
-            <a href="{{ route('settings.system.edit') }}" class="cs-btn-secondary text-xs px-4 py-2"
-               :class="saving && 'pointer-events-none opacity-50'">{{ __('settings.discard') }}</a>
+            <a href="{{ route('settings.system.edit') }}" :href="'{{ route('settings.system.edit') }}?tab='+tab"
+               class="cs-btn-secondary text-xs px-4 py-2"
+               :class="saving && 'pointer-events-none opacity-50'"
+               @click="dirty=false">{{ __('settings.discard') }}</a>
             <button type="submit" :disabled="saving"
                     class="cs-btn-primary text-xs px-5 py-2 min-w-[130px] justify-center disabled:opacity-60 disabled:cursor-not-allowed"
                     style="background:linear-gradient(135deg,rgb(var(--ac)) 0%,rgb(var(--ac-light,var(--ac))) 100%);">
@@ -914,7 +1058,7 @@
     </form>
 
     {{-- Standalone clear-cache form (outside main form — no nesting) --}}
-    <form id="ss-clear-cache-form" method="POST" action="{{ route('settings.system.clearCache') }}">@csrf</form>
+    <form id="ss-clear-cache-form" method="POST" action="{{ route('settings.system.clearCache') }}">@csrf<input type="hidden" name="tab" :value="tab"></form>
     <form id="ss-database-backup-form" method="POST" action="{{ route('settings.system.databaseBackup') }}">@csrf</form>
 
 </div>

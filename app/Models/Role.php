@@ -7,7 +7,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Role extends Model
 {
-    protected $fillable = ['name', 'description'];
+    protected $fillable = ['name', 'description', 'mfa_required'];
+
+    protected function casts(): array
+    {
+        return ['mfa_required' => 'boolean'];
+    }
 
     public function permissions(): BelongsToMany
     {

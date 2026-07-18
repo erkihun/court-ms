@@ -8,7 +8,6 @@ use App\Models\SystemSetting;
 use App\Notifications\ApplicantEmailOtp;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
@@ -130,7 +129,7 @@ class ApplicantAuthController extends Controller
 
         $remember = $request->boolean('remember');
 
-        $loginSettings = Cache::remember('system_settings', 3600, fn () => SystemSetting::query()->first());
+        $loginSettings = SystemSetting::cached();
         $maxAttempts = $loginSettings?->login_max_attempts ?? 5;
         $lockoutSecs = ($loginSettings?->lockout_minutes ?? 15) * 60;
 

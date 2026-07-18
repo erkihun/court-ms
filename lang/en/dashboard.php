@@ -1,6 +1,16 @@
 <?php
 
 return [
+    'action_required' => 'Action required',
+    'database_connection' => 'Database connection',
+    'unavailable' => 'Unavailable',
+    'info_disabled' => 'Disabled',
+    'data_storage' => 'Data and Storage',
+    'database_tables' => 'Database tables',
+    'audit_events' => 'Audit events',
+    'database_size' => 'Database size',
+    'storage_free' => 'Free storage',
+    'enabled' => 'Enabled (configuration needed)',
     'lawyer_title' => 'Lawyer',
     'submitted_by_lawyer' => 'Submitted by lawyer: :name',
     'title' => 'Dashboard',

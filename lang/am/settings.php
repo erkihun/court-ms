@@ -1,6 +1,37 @@
 <?php
 
 return [
+    'audit_log_configuration' => 'የኦዲት መዝገብ ውቅር',
+    'audit_logging_enabled' => 'የኦዲት መዝገብን አንቃ',
+    'audit_logging_enabled_desc' => 'የተጠቃሚ እንቅስቃሴዎችን፣ የደህንነት ክስተቶችን እና የመረጃ ለውጦችን ይመዝግብ።',
+    'audit_retention_days' => 'የኦዲት ማቆያ ጊዜ',
+    'audit_retention_hint' => 'የኦዲት መዝገቦች የሚቆዩበት የጊዜ ፖሊሲ።',
+    'session_warning_minutes' => 'ከጊዜ ማብቂያ በፊት ማስጠንቀቂያ',
+    'session_warning_hint' => 'ክፍለ ጊዜው ከሚያበቃበት በፊት ማስጠንቀቂያ የሚታይበት ደቂቃ።',
+    'session_extend_on_activity' => 'በእንቅስቃሴ ክፍለ ጊዜን አራዝም',
+    'session_extend_on_activity_desc' => 'ንቁ ጥያቄዎች የክፍለ ጊዜውን ጊዜ ያድሳሉ።',
+    'session_warning_browser' => 'የክፍለ ጊዜዎ ጊዜ በቅርቡ ያበቃል። ለመቀጠል OK ይጫኑ።',
+    'unit_days' => 'ቀናት',
+    'maintenance_public_message' => 'በታቀደ የጥገና ሥራ ምክንያት የሕዝብ መግቢያው ለጊዜው አይገኝም።',
+    'registration_closed_message' => 'የአዲስ አመልካች ምዝገባ በአሁኑ ጊዜ ዝግ ነው።',
+    'security_posture'      => 'የአሁኑ የደህንነት ሁኔታ',
+    'security_posture_hint' => 'በሲስተሙ ውስጥ በተግባር ላይ ባሉ የደህንነት መቆጣጠሪያዎች ላይ የተመሠረተ ግምገማ ነው።',
+    'controls_active'       => 'የደህንነት ውጤት',
+    'protected'             => 'የተጠበቀ',
+    'action_recommended'    => 'ማሻሻል ያስፈልጋል',
+    'https_protection'      => 'የHTTPS ጥበቃ',
+    'debug_protection'      => 'የስህተት መረጃ ተዘግቷል',
+    'cookie_protection'     => 'የክፍለ ጊዜ ውሂብ ጥበቃ',
+    'password_strength'     => 'የይለፍ ቃል ጥንካሬ',
+    'login_protection'      => 'የመግቢያ ሙከራ ጥበቃ',
+    'review_needed'         => 'መገምገም ያስፈልጋል',
+    'mfa_protection'        => 'ባለብዙ ደረጃ ማረጋገጫ',
+    'mfa_enabled'           => 'ባለብዙ ደረጃ ማረጋገጫን አንቃ',
+    'mfa_enabled_desc'      => 'በሚና ላይ የተመሠረተ የማረጋገጫ መተግበሪያ ጥበቃን ያነቃል።',
+    'mfa_role_policy'       => 'የMFA ግዴታ በሚና',
+    'mfa_role_policy_hint'  => 'ከተመረጡት ሚናዎች አንዱ ያላቸው ተጠቃሚዎች የማረጋገጫ መተግበሪያ ማዋቀር እና MFA ማጠናቀቅ አለባቸው።',
+    'mfa_role_default_desc' => 'ይህ ሚና ላላቸው ሁሉም ተጠቃሚዎች MFA ያስፈልጋል።',
+    'mfa_no_roles'          => 'ለማዋቀር የሚገኝ ሚና የለም።',
 
     // ── Page header ──────────────────────────────────────────
     'title'           => 'የስርዓት ቅንብሮች',
@@ -183,5 +214,7 @@ return [
     'save_settings'         => 'ቅንብሮችን አስቀምጥ',
     'saving'                => 'እየተቀመጠ…',
     'discard'               => 'ሰርዝ',
+    'unsaved_changes'       => 'ያልተቀመጡ ለውጦች አሉ',
+    'tab_has_errors'        => 'ይህ ትር የማረጋገጫ ስህተቶች አሉት',
 
 ];

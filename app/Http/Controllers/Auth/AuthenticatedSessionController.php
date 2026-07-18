@@ -30,6 +30,7 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
+        $request->session()->forget('mfa_verified_at');
 
         return redirect()->intended(route('dashboard', absolute: false));
     }

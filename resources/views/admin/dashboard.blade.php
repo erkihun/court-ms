@@ -4,6 +4,10 @@
 
     @php
     $systemSettings = $systemSettings ?? \App\Models\SystemSetting::current();
+    $systemLogoPath = $systemSettings?->logo_path;
+    $systemLogoUrl = filled($systemLogoPath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($systemLogoPath)
+        ? \Illuminate\Support\Facades\Storage::disk('public')->url($systemLogoPath)
+        : null;
     $totalCases = $totalCases ?? 0;
     $pendingCases = $pendingCases ?? 0;
     $resolvedCases = $resolvedCases ?? 0;
@@ -57,14 +61,16 @@
             border-radius: 1rem;
             background: var(--surface-strong);
             box-shadow: 0 4px 24px rgba(15,23,42,.05);
+            transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
         }
+        .dash-panel:hover { border-color:rgb(var(--ac)/.2); box-shadow:0 14px 34px rgb(15 23 42/.08); }
         .dash-panel-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 1rem;
             border-bottom: 1px solid var(--border);
-            padding: 1rem 1.25rem;
+            padding: 1.05rem 1.35rem;
         }
         .dash-panel-title {
             font-size: .875rem;
@@ -76,7 +82,32 @@
             color: var(--text-subtle);
             margin-top: .1rem;
         }
-        .dash-panel-body { padding: 1.25rem; }
+        .dash-panel-body { padding: 1.35rem; }
+        .dashboard-shell { max-width:none; }
+        .dashboard-overview { max-width: 1480px; margin-inline: auto; }
+        .dash-hero {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 17.5rem;
+            gap: 1.25rem;
+            overflow: hidden;
+            border: 1px solid rgb(var(--ac) / .16);
+            border-radius: 1.25rem;
+            background: radial-gradient(circle at 86% 18%, rgb(var(--ac) / .17), transparent 24%), linear-gradient(135deg, rgb(var(--ac) / .1), var(--surface-strong) 58%);
+            box-shadow: 0 12px 36px rgb(var(--ac) / .07);
+        }
+        .dash-hero-main { min-width: 0; padding: 1.5rem 1.6rem; }
+        .dash-hero-kicker { display: inline-flex; align-items: center; gap: .45rem; margin-bottom: 1.25rem; color: rgb(var(--ac)); font-size: .68rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+        .dash-hero-kicker::before { content: ''; width: .45rem; height: .45rem; border-radius: 999px; background: rgb(var(--ac)); box-shadow: 0 0 0 4px rgb(var(--ac) / .13); }
+        .dash-hero-label { margin-bottom: .2rem; color: var(--text-subtle); font-size: .75rem; font-weight: 600; }
+        .dash-hero-title { color: var(--text); font-size: clamp(1.35rem, 2vw, 1.8rem); font-weight: 800; letter-spacing: -.035em; line-height: 1.1; }
+        .dash-hero-subtitle { max-width: 42rem; margin-top: .55rem; color: var(--text-muted); font-size: .82rem; line-height: 1.55; }
+        .dash-hero-side { align-self: stretch; border-left: 1px solid rgb(var(--ac) / .12); background: rgb(255 255 255 / .16); padding: 1rem; }
+        .dash-kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .8rem; }
+        .dash-kpi::before { content: ''; position: absolute; inset: 0 0 auto; height: .18rem; background: var(--kpi-color, rgb(var(--ac))); }
+        .dash-kpi-meta { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+        .dash-kpi-trend { color: var(--text-subtle); font-size: .65rem; font-weight: 700; }
+        @media (max-width: 1024px) { .dash-hero { grid-template-columns: minmax(0, 1fr) 15.5rem; } .dash-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 680px) { .dash-hero { grid-template-columns: 1fr; } .dash-hero-main { padding: 1.25rem; } .dash-hero-side { border-top: 1px solid rgb(var(--ac) / .12); border-left: 0; } }
 
         /* KPI cards */
         .dash-kpi {
@@ -85,16 +116,17 @@
             border: 1px solid var(--border);
             border-radius: 1rem;
             background: var(--surface-strong);
-            padding: 1.1rem;
+            padding: 1.25rem 1.1rem 1.1rem;
             box-shadow: 0 4px 18px rgba(15,23,42,.05);
             transition: transform 150ms ease, box-shadow 150ms ease;
+            background:linear-gradient(145deg,var(--surface-strong),var(--surface-soft));
         }
         .dash-kpi:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 28px rgba(15,23,42,.08);
         }
         .dash-kpi-value {
-            font-size: 2.25rem;
+            font-size: clamp(1.75rem, 3vw, 2.25rem);
             font-weight: 800;
             letter-spacing: -.03em;
             color: var(--text);
@@ -113,6 +145,7 @@
             width: 2.625rem;
             place-items: center;
             border-radius: .75rem;
+            box-shadow:0 5px 12px rgb(15 23 42/.08);
         }
 
         /* Progress */
@@ -156,11 +189,11 @@
         /* Member cards */
         .dash-member-strip {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: .9rem;
         }
         @media (max-width: 900px) {
-            .dash-member-strip { grid-template-columns: repeat(2, 1fr); }
+            .dash-member-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
         @media (max-width: 560px) {
             .dash-member-strip { grid-template-columns: 1fr; }
@@ -168,10 +201,14 @@
         .dash-member-card {
             min-width: 0;
             border: 1px solid var(--border);
-            border-radius: .9rem;
-            background: var(--surface-soft);
-            padding: .9rem;
+            border-radius: 1rem;
+            background: var(--surface-strong);
+            padding: 1rem;
+            box-shadow: 0 8px 20px rgb(15 23 42 / .04);
+            transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
         }
+        .dash-member-card:hover { transform: translateY(-2px); border-color: rgb(var(--ac) / .3); box-shadow: 0 14px 28px rgb(15 23 42 / .08); }
+        .dash-member-card-head { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: .75rem; }
         .dash-member-name {
             font-size: .875rem;
             font-weight: 700;
@@ -187,6 +224,7 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+        .dash-member-user-status { display: inline-flex; flex-shrink: 0; align-items: center; border-radius: 999px; padding: .12rem .42rem; font-size: .6rem; font-weight: 700; line-height: 1; }
         .dash-member-count {
             font-size: 1.5rem;
             font-weight: 800;
@@ -197,9 +235,11 @@
             font-size: .65rem;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: .1em;
+            letter-spacing: 0;
             color: var(--text-subtle);
         }
+        .dash-member-total { flex-shrink: 0; text-align: right; }
+        .dash-member-total .dash-member-count { font-size: 1.35rem; }
         .dash-case-chip {
             display: inline-flex;
             align-items: center;
@@ -213,6 +253,25 @@
             color: var(--text-muted);
         }
         .dash-case-chip-count { color: var(--text); }
+        .dash-member-status-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin-top: 1rem; padding: .7rem 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+        .dash-member-status { display: flex; min-width: 0; flex-direction: column; align-items: center; gap: .28rem; padding: .15rem .35rem; text-align: center; }
+        .dash-member-status + .dash-member-status { border-left: 1px solid var(--border); }
+        .dash-member-status-heading { display: flex; min-width: 0; align-items: center; gap: .35rem; }
+        .dash-member-status-label { overflow: hidden; min-width: 0; color: var(--text-muted); font-size: .68rem; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+        .dash-member-status-value { font-size: 1.05rem; font-weight: 800; line-height: 1; }
+        .dash-member-status-dot { width: .42rem; height: .42rem; border-radius: 999px; }
+        .dash-member-status.pending .dash-member-status-dot { background: #f97316; }
+        .dash-member-status.pending .dash-member-status-value { color: #c2410c; }
+        .dash-member-status.active .dash-member-status-dot { background: #06b6d4; }
+        .dash-member-status.active .dash-member-status-value { color: #0e7490; }
+        .dash-member-status.resolved .dash-member-status-dot { background: #10b981; }
+        .dash-member-status.resolved .dash-member-status-value { color: #047857; }
+        .dash-member-types { display: flex; min-width: 0; align-items: center; gap: .45rem; margin-top: .8rem; }
+        .dash-member-types-label { flex-shrink: 0; color: var(--text-subtle); font-size: .62rem; font-weight: 700; }
+        .dash-member-types-list { display: flex; min-width: 0; flex-wrap: wrap; gap: .35rem; }
+        .dark .dash-member-status.pending .dash-member-status-value { color: #fdba74; }
+        .dark .dash-member-status.active .dash-member-status-value { color: #67e8f9; }
+        .dark .dash-member-status.resolved .dash-member-status-value { color: #6ee7b7; }
 
         /* Chart */
         .dash-chart-frame { height: 18rem; }
@@ -244,7 +303,17 @@
             border-radius: .875rem;
             background: var(--surface-strong);
             padding: 1rem;
+            box-shadow: 0 6px 18px rgb(15 23 42 / .04);
+            transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
         }
+        .dash-health-card:hover { transform: translateY(-2px); border-color: rgb(var(--ac) / .35); box-shadow: 0 12px 26px rgb(15 23 42 / .08); }
+        .dash-health-head { display:flex; align-items:center; gap:.65rem; }
+        .dash-health-icon { display:grid; place-items:center; width:2rem; height:2rem; border-radius:.65rem; background:rgb(var(--ac)/.1); color:rgb(var(--ac)); }
+        .dash-health-icon svg { width:1rem; height:1rem; }
+        .dash-health-meter { height:.35rem; overflow:hidden; border-radius:999px; background:var(--surface-soft); margin-top:.75rem; }
+        .dash-health-meter > span { display:block; height:100%; border-radius:inherit; background:linear-gradient(90deg,#10b981,#34d399); }
+        .dash-health-status { display:inline-flex; align-items:center; gap:.35rem; font-size:.68rem; font-weight:700; color:#047857; }
+        .dash-health-status i { width:.4rem; height:.4rem; border-radius:50%; background:#10b981; box-shadow:0 0 0 4px rgb(16 185 129/.12); }
         .dash-health-title {
             font-size: .875rem;
             font-weight: 600;
@@ -386,6 +455,17 @@
             font-weight: 700;
             color: var(--text);
         }
+        .dash-cal.dash-hero-side {
+            border: 0;
+            border-left: 1px solid rgb(var(--ac) / .12);
+            border-radius: 0;
+            background: rgb(255 255 255 / .16);
+            box-shadow: none;
+            padding: 1rem;
+        }
+        @media (max-width: 680px) {
+            .dash-cal.dash-hero-side { border-top: 1px solid rgb(var(--ac) / .12); border-left: 0; }
+        }
 
         /* Skeleton shimmer */
         .skeleton {
@@ -407,13 +487,13 @@
     </style>
     @endpush
 
-    <div class="space-y-6">
+    <div class="dashboard-overview space-y-7">
 
     {{-- Top section: calendar left + header/KPIs right --}}
-    <div class="grid grid-cols-1 gap-5 xl:grid-cols-[240px_1fr]">
+    <div class="dash-hero grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_17.5rem]">
 
         {{-- ── Mini Calendar ── --}}
-        <div class="dash-cal"
+        <div class="dash-cal dash-hero-side xl:order-2"
              x-data="dashCal('{{ $calLocale }}', {{ json_encode($calToday) }})"
              x-init="init()">
             <div class="dash-cal-head">
@@ -455,42 +535,16 @@
         </div>
 
         {{-- ── Header + KPI cards ── --}}
-        <div class="flex flex-col gap-4">
+        <div class="dash-hero-main flex flex-col gap-4 xl:order-1">
 
             @php
             $sysName    = $systemSettings?->app_name  ?? config('app.name', 'Court MS');
-            $sysShort   = $systemSettings?->short_name ?: $sysName;
-            $sysInitial = mb_strtoupper(mb_substr($sysName, 0, 1));
-            $sysSub     = $systemSettings?->welcome_message ?: ($systemSettings?->address ?? null);
             @endphp
-            <div class="enterprise-header" style="padding-bottom:0;border-bottom:none;margin-bottom:0;">
-                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div class="flex items-center gap-3 min-w-0">
-                        @if($systemSettings?->logo_path)
-                        <img src="{{ asset('storage/'.$systemSettings->logo_path) }}"
-                             alt="{{ $sysName }}"
-                             class="h-10 w-10 shrink-0 rounded-lg object-contain">
-                        @else
-                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white text-sm font-bold"
-                             style="background:rgb(var(--ac));">
-                            {{ $sysInitial }}
-                        </div>
-                        @endif
-                        <div class="min-w-0">
-                            <h1 class="enterprise-title truncate">{{ $sysName }}</h1>
-                            @if($sysSub)
-                            <p class="enterprise-subtitle truncate">{{ $sysSub }}</p>
-                            @endif
-                        </div>
-                    </div>
-                    <x-ui.badge type="info" class="admin-toolbar-chip self-start sm:self-auto shrink-0">{{ $sysShort }}</x-ui.badge>
-                </div>
-            </div>
 
             {{-- KPI cards --}}
-            <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <div class="dash-kpi-grid">
 
-                <div class="dash-kpi">
+                <div class="dash-kpi" style="--kpi-color:rgb(59 130 246);">
                     <div class="flex items-start justify-between gap-2">
                         <div class="dash-kpi-icon" style="background:rgb(59 130 246/.12);color:rgb(59 130 246);">
                             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -504,7 +558,7 @@
                     <p class="dash-kpi-label">{{ __('dashboard.total_cases') }}</p>
                 </div>
 
-                <div class="dash-kpi">
+                <div class="dash-kpi" style="--kpi-color:rgb(249 115 22);">
                     <div class="flex items-start justify-between gap-2">
                         <div class="dash-kpi-icon" style="background:rgb(249 115 22/.12);color:rgb(234 88 12);">
                             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -518,7 +572,7 @@
                     <p class="dash-kpi-label">{{ __('dashboard.pending') }}</p>
                 </div>
 
-                <div class="dash-kpi">
+                <div class="dash-kpi" style="--kpi-color:rgb(6 182 212);">
                     <div class="flex items-start justify-between gap-2">
                         <div class="dash-kpi-icon" style="background:rgb(6 182 212/.12);color:rgb(8 145 178);">
                             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -532,7 +586,7 @@
                     <p class="dash-kpi-label">{{ __('dashboard.active_cases_label') }}</p>
                 </div>
 
-                <div class="dash-kpi">
+                <div class="dash-kpi" style="--kpi-color:rgb(16 185 129);">
                     <div class="flex items-start justify-between gap-2">
                         <div class="dash-kpi-icon" style="background:rgb(16 185 129/.12);color:rgb(5 150 105);">
                             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -571,40 +625,70 @@
                 $isActive = ($member->status ?? null) === 'active';
                 @endphp
                 <article class="dash-member-card">
-                    <div class="flex items-start justify-between gap-3">
+                    <div class="dash-member-card-head">
                         <div class="flex items-center gap-2.5 min-w-0">
-                            @if($member->avatar_path)
-                            <img src="{{ asset('storage/'.$member->avatar_path) }}"
+                            @if(filled($member->avatar_path) && \Illuminate\Support\Facades\Storage::disk('public')->exists($member->avatar_path))
+                            <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($member->avatar_path) }}"
                                  alt="{{ $member->name }}"
-                                 class="h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-[var(--surface-strong)] shadow-sm">
+                                 class="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-[var(--surface-strong)] shadow-sm">
+                            @elseif($systemLogoUrl)
+                            <img src="{{ $systemLogoUrl }}"
+                                 alt="{{ $sysName }}"
+                                 class="h-10 w-10 shrink-0 rounded-full bg-white object-cover ring-2 ring-[var(--surface-strong)] shadow-sm"
+                                 style="object-position:72% center;">
                             @else
-                            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold ring-2 ring-[var(--surface-strong)] shadow-sm"
+                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ring-2 ring-[var(--surface-strong)] shadow-sm"
                                  style="background:rgb(var(--ac)/.15);color:rgb(var(--ac));">
                                 {{ strtoupper(substr($member->name, 0, 1)) }}
                             </div>
                             @endif
                             <div class="min-w-0">
                                 <p class="dash-member-name">{{ $member->name }}</p>
-                                <p class="dash-member-team">{{ $member->team_name ?: __('dashboard.no_team') }}</p>
+                                <div class="flex min-w-0 items-center gap-1.5">
+                                    <p class="dash-member-team">{{ $member->team_name ?: __('dashboard.no_team') }}</p>
+                                    <span class="dash-member-user-status
+                                        {{ $isActive
+                                            ? 'bg-emerald-100/60 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800'
+                                            : 'bg-[var(--surface-soft)] text-[var(--text-subtle)] border border-[var(--border)]' }}">
+                                        {{ ucfirst($member->status ?? 'inactive') }}
+                                    </span>
+                                </div>
                             </div>
                         </div>
-                        <span class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold
-                            {{ $isActive
-                                ? 'bg-emerald-100/60 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800'
-                                : 'bg-[var(--surface-strong)] text-[var(--text-subtle)] border border-[var(--border)]' }}">
-                            {{ ucfirst($member->status ?? 'inactive') }}
-                        </span>
-                    </div>
-
-                    <div class="mt-3 flex items-end justify-between gap-3">
-                        <div>
+                        <div class="dash-member-total">
                             <p class="dash-member-count">{{ number_format((int) $member->cases_count) }}</p>
                             <p class="dash-member-count-label">{{ __('app.Cases') }}</p>
                         </div>
                     </div>
 
+                    <div class="dash-member-status-grid" aria-label="{{ __('dashboard.status') }}">
+                        <span class="dash-member-status pending">
+                            <span class="dash-member-status-heading">
+                                <span class="dash-member-status-dot" aria-hidden="true"></span>
+                                <span class="dash-member-status-label">{{ __('dashboard.pending') }}</span>
+                            </span>
+                            <strong class="dash-member-status-value">{{ number_format((int) ($member->pending_cases_count ?? 0)) }}</strong>
+                        </span>
+                        <span class="dash-member-status active">
+                            <span class="dash-member-status-heading">
+                                <span class="dash-member-status-dot" aria-hidden="true"></span>
+                                <span class="dash-member-status-label">{{ __('dashboard.active') }}</span>
+                            </span>
+                            <strong class="dash-member-status-value">{{ number_format((int) ($member->active_cases_count ?? 0)) }}</strong>
+                        </span>
+                        <span class="dash-member-status resolved">
+                            <span class="dash-member-status-heading">
+                                <span class="dash-member-status-dot" aria-hidden="true"></span>
+                                <span class="dash-member-status-label">{{ __('dashboard.resolved') }}</span>
+                            </span>
+                            <strong class="dash-member-status-value">{{ number_format((int) ($member->resolved_cases_count ?? 0)) }}</strong>
+                        </span>
+                    </div>
+
                     @if(($member->case_type_counts ?? collect())->isNotEmpty())
-                    <div class="mt-3 flex flex-wrap gap-1.5">
+                    <div class="dash-member-types">
+                        <span class="dash-member-types-label">{{ __('dashboard.type') }}</span>
+                        <div class="dash-member-types-list">
                         @foreach($member->case_type_counts as $caseType)
                         @php
                             $caseTypeLabel = ($caseType['label'] ?? '') === '__unknown__'
@@ -616,6 +700,7 @@
                             <span class="dash-case-chip-count">{{ number_format((int) ($caseType['count'] ?? 0)) }}</span>
                         </span>
                         @endforeach
+                        </div>
                     </div>
                     @endif
 
@@ -629,6 +714,9 @@
             </div>
         </div>
     </section>
+
+    {{-- Cases by team, recent cases, and data storage --}}
+    <div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
 
     {{-- Cases by team --}}
     <section class="dash-panel">
@@ -666,10 +754,9 @@
         </div>
     </section>
 
-    {{-- Recent cases + workload summary --}}
-    <div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
+    {{-- Recent cases --}}
 
-        <section class="dash-panel xl:col-span-2">
+        <section class="dash-panel">
             <div class="dash-panel-header">
                 <div>
                     <h3 class="dash-panel-title">{{ __('dashboard.recent_cases') }}</h3>
@@ -703,17 +790,18 @@
 
         <section class="dash-panel">
             <div class="dash-panel-header">
-                <h3 class="dash-panel-title">{{ __('dashboard.case_workload') }}</h3>
+                <h3 class="dash-panel-title">{{ __('dashboard.data_storage') }}</h3>
             </div>
             <div class="dash-panel-body space-y-3">
                 <div class="dash-stat-box">
-                    <p class="dash-stat-box-label">{{ __('dashboard.cases_by_team') }}</p>
-                    <p class="dash-stat-box-value">{{ number_format($teamCaseCounts->sum('cases_count')) }}</p>
+                    <p class="dash-stat-box-label">{{ __('dashboard.database_tables') }}</p>
+                    <p class="dash-stat-box-value">{{ number_format($dataStorage['tables']) }}</p>
                 </div>
                 <div class="dash-stat-box">
-                    <p class="dash-stat-box-label">{{ __('dashboard.cases_by_member') }}</p>
-                    <p class="dash-stat-box-value">{{ number_format($memberCaseCounts->sum('cases_count')) }}</p>
+                    <p class="dash-stat-box-label">{{ __('dashboard.audit_events') }}</p>
+                    <p class="dash-stat-box-value">{{ number_format($dataStorage['audit_events']) }}</p>
                 </div>
+                <div class="grid grid-cols-2 gap-3"><div class="dash-stat-box"><p class="dash-stat-box-label">{{ __('dashboard.database_size') }}</p><p class="text-sm font-bold text-[var(--text)]">{{ $dataStorage['database_size'] ?? '—' }}</p></div><div class="dash-stat-box"><p class="dash-stat-box-label">{{ __('dashboard.storage_free') }}</p><p class="text-sm font-bold text-[var(--text)]">{{ $dataStorage['storage_free'] ? round($dataStorage['storage_free'] / 1073741824, 1).' GB' : '—' }}</p></div></div>
             </div>
         </section>
 
@@ -786,44 +874,48 @@
 
     {{-- System health --}}
     <section>
-        <div class="mb-3 flex items-center justify-between">
-            <h3 style="font-size:.875rem;font-weight:700;color:var(--text);">{{ __('dashboard.service_health') }}</h3>
+        <div class="mb-4 flex items-end justify-between gap-3">
+            @php($healthy = $serviceHealth['database'] && $serviceHealth['queue_ready'])
+            <div><h3 style="font-size:1rem;font-weight:800;color:var(--text);">{{ __('dashboard.service_health') }}</h3><p class="dash-health-sub" style="margin: .2rem 0 0;">{{ $healthy ? __('dashboard.operational') : __('dashboard.action_required') }}</p></div>
+            <span class="dash-health-status" style="color:{{ $healthy ? '#047857' : '#b45309' }}"><i style="background:{{ $healthy ? '#10b981' : '#f59e0b' }}"></i>{{ $healthy ? __('dashboard.operational') : __('dashboard.action_required') }}</span>
         </div>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
 
             <div class="dash-health-card">
-                <div class="flex items-center justify-between mb-1">
-                    <h4 class="dash-health-title">{{ __('dashboard.system_uptime') }}</h4>
+                <div class="dash-health-head mb-2"><span class="dash-health-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="1.8" d="M3 12h4l2-7 4 14 2-7h6"/></svg></span><h4 class="dash-health-title">{{ __('dashboard.system_uptime') }}</h4>
                     <svg class="h-4 w-4" style="color:rgb(16 185 129);" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path stroke-width="1.8" d="M5 13l4 4L19 7"/>
                     </svg>
                 </div>
-                <p class="dash-health-sub">{{ __('dashboard.last_restart') }}: {{ \App\Support\EthiopianDate::format(now()->subHours(5), withTime: true) }}</p>
-                <p style="font-size:1.5rem;font-weight:800;color:rgb(16 185 129);">99.9%</p>
+                <p class="dash-health-sub">{{ __('dashboard.database_connection') }}</p>
+                <p style="font-size:1.5rem;font-weight:800;color:{{ $serviceHealth['database'] ? 'rgb(16 185 129)' : 'rgb(220 38 38)' }};">{{ $serviceHealth['database'] ? __('dashboard.operational') : __('dashboard.unavailable') }}</p>
+                <div class="dash-health-meter"><span style="width:{{ $serviceHealth['database'] ? '100' : '15' }}%;background:{{ $serviceHealth['database'] ? 'linear-gradient(90deg,#10b981,#34d399)' : '#ef4444' }}"></span></div>
             </div>
 
             <div class="dash-health-card">
-                <div class="flex items-center justify-between mb-1">
-                    <h4 class="dash-health-title">{{ __('dashboard.queue_status') }}</h4>
+                <div class="dash-health-head mb-2"><span class="dash-health-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="1.8" d="M3 7h18M3 12h12M3 17h6"/></svg></span><h4 class="dash-health-title">{{ __('dashboard.queue_status') }}</h4>
                     <svg class="h-4 w-4" style="color:rgb(59 130 246);" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path stroke-width="1.8" d="M3 7h18M3 12h12M3 17h6"/>
                     </svg>
                 </div>
                 <p class="dash-health-sub">{{ __('dashboard.jobs_waiting') }}</p>
-                <p style="font-size:1.5rem;font-weight:800;color:rgb(59 130 246);">12</p>
+                <p style="font-size:1.5rem;font-weight:800;color:rgb(59 130 246);">{{ $serviceHealth['queue_waiting'] ?? '—' }}</p>
+                <div class="dash-health-meter"><span style="width:{{ $serviceHealth['queue_waiting'] === null ? 20 : min(100, max(8, $serviceHealth['queue_waiting'])) }}%;background:linear-gradient(90deg,#3b82f6,#60a5fa)"></span></div>
             </div>
 
             <div class="dash-health-card">
-                <div class="flex items-center justify-between mb-1">
-                    <h4 class="dash-health-title">{{ __('dashboard.notifications_service') }}</h4>
+                <div class="dash-health-head mb-2"><span class="dash-health-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="1.8" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg></span><h4 class="dash-health-title">{{ __('dashboard.notifications_service') }}</h4>
                     <svg class="h-4 w-4" style="color:rgb(16 185 129);" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path stroke-width="1.8" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                     </svg>
                 </div>
-                <p class="dash-health-sub">{{ __('dashboard.email_sms_gateways') }}</p>
-                <x-ui.badge type="success" class="px-2.5 py-1 text-[12px] font-medium">
-                    {{ __('dashboard.operational') }}
-                </x-ui.badge>
+                <p class="dash-health-sub">{{ __('dashboard.email_sms_gateways') }} · Telegram · In-app</p>
+                <div class="flex flex-wrap gap-2 text-xs">
+                    @foreach(['mail'=>'Email','sms'=>'SMS','telegram'=>'Telegram','in_app'=>'In-app'] as $channel=>$label)
+                        @php($ready = $channel === 'sms' ? ($serviceHealth['sms_ready'] ?? false) : $serviceHealth[$channel])
+                        <span class="rounded-full border px-2 py-1 {{ $ready ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : ($serviceHealth[$channel] ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-slate-200 bg-slate-50 text-slate-500') }}">{{ $label }}: {{ $ready ? __('dashboard.operational') : ($serviceHealth[$channel] ? __('dashboard.enabled') : __('dashboard.info_disabled')) }}</span>
+                    @endforeach
+                </div>
             </div>
 
         </div>

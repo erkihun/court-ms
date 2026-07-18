@@ -3,12 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-
+use App\Http\Requests\Admin\UpdateProfileRequest;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Throwable;
 
 class ProfileController extends Controller
 {
@@ -25,47 +24,32 @@ class ProfileController extends Controller
     /**
      * Update the user's profile information, avatar, and signature.
      */
-    public function update(Request $request)
+    public function update(UpdateProfileRequest $request)
     {
         $user = $request->user();
+        $validated = $request->safe()->except(['avatar', 'signature', 'remove_signature']);
+        $oldAvatarPath = $user->avatar_path;
+        $newAvatarPath = $request->file('avatar')?->store('avatars', 'public');
 
-        $validated = $request->validate([
-            'name'      => ['required', 'string', 'max:255'],
-            'email'     => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'avatar'    => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
-            'signature' => ['nullable', 'image', 'mimes:png,webp,jpg,jpeg', 'max:2048'],
-            // Optional password change (uncomment in form when you need it)
-            // 'current_password' => ['nullable', 'current_password'],
-            // 'password' => ['nullable', Password::defaults(), 'confirmed'],
-        ]);
-
-        if ($request->hasFile('avatar')) {
-            if ($user->avatar_path) {
-                Storage::disk('public')->delete($user->avatar_path);
-            }
-            $validated['avatar_path'] = $request->file('avatar')->store('avatars', 'public');
+        if ($newAvatarPath) {
+            $validated['avatar_path'] = $newAvatarPath;
         }
-
-        // Handle signature upload
-        if ($request->hasFile('signature')) {
-            if ($user->signature_path) {
-                Storage::disk('public')->delete($user->signature_path);
-            }
-            $validated['signature_path'] = $request->file('signature')->store('signatures', 'public');
-        }
-
-        // Optional password change
-        // if (!empty($validated['password'] ?? null)) {
-        //     $validated['password'] = Hash::make($validated['password']);
-        // }
 
         // Reset verification if email changes
         if (isset($validated['email']) && $validated['email'] !== $user->email) {
             $user->email_verified_at = null;
         }
 
-        // Persist
-        $user->fill($validated)->save();
+        try {
+            $user->fill($validated)->save();
+        } catch (Throwable $exception) {
+            Storage::disk('public')->delete(array_filter([$newAvatarPath]));
+            throw $exception;
+        }
+
+        if ($newAvatarPath && $oldAvatarPath) {
+            Storage::disk('public')->delete($oldAvatarPath);
+        }
 
         return redirect()->route('profile.edit')->with('success', [
             'key' => 'messages.success.updated',

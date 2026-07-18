@@ -55,7 +55,20 @@ class User extends Authenticatable implements MustVerifyEmailContract, Auditable
             'password'          => 'hashed',
             'must_change_password' => 'boolean',
             'date_of_birth'     => 'date',
+            'mfa_secret' => 'encrypted',
+            'mfa_recovery_codes' => 'encrypted:array',
+            'mfa_confirmed_at' => 'datetime',
         ];
+    }
+
+    public function requiresMfa(): bool
+    {
+        return $this->roles()->where('mfa_required', true)->exists();
+    }
+
+    public function hasConfirmedMfa(): bool
+    {
+        return filled($this->mfa_secret) && $this->mfa_confirmed_at !== null;
     }
 
     /**

@@ -5,7 +5,6 @@ namespace App\Http\Middleware;
 use App\Models\SystemSetting;
 use Closure;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 
 class SetLocale
@@ -20,7 +19,7 @@ class SetLocale
             ?? $this->defaultLocale();
 
         $allowed = config('app.locales', ['en', 'am']);
-        if (!in_array($locale, $allowed, true) && !str_starts_with((string) $locale, 'am')) {
+        if (! in_array($locale, $allowed, true) && ! str_starts_with((string) $locale, 'am')) {
             $locale = config('app.fallback_locale', 'en');
         }
 
@@ -38,13 +37,7 @@ class SetLocale
     {
         try {
             if (Schema::hasTable('system_settings')) {
-                $settings = Cache::remember(
-                    'system_settings',
-                    3600,
-                    fn() => SystemSetting::query()->first()
-                );
-
-                $default = $settings?->default_locale;
+                $default = SystemSetting::cached()?->default_locale;
                 if (is_string($default) && $default !== '') {
                     return $default;
                 }

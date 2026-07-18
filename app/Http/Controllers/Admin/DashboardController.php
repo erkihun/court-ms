@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use App\Models\SystemSetting;
+use Illuminate\Support\Facades\Schema;
 
 class DashboardController extends Controller
 {
@@ -15,7 +17,7 @@ class DashboardController extends Controller
 
     public function index()
     {
-        $data = Cache::remember('dashboard_index', self::CACHE_TTL, function () {
+        $data = Cache::remember('dashboard_index_v2', self::CACHE_TTL, function () {
             $totalCases    = DB::table('court_cases')->count();
             $pendingCases  = DB::table('court_cases')->where('status', 'pending')->count();
             $resolvedCases = DB::table('court_cases')->whereIn('status', ['closed', 'dismissed'])->count();
@@ -59,7 +61,10 @@ class DashboardController extends Controller
                 ->select(
                     'u.id', 'u.name', 'u.email', 'u.status', 'u.avatar_path',
                     't.name as team_name',
-                    DB::raw('COUNT(DISTINCT c.id) as cases_count')
+                    DB::raw('COUNT(DISTINCT c.id) as cases_count'),
+                    DB::raw("COUNT(DISTINCT CASE WHEN c.status = 'pending' THEN c.id END) as pending_cases_count"),
+                    DB::raw("COUNT(DISTINCT CASE WHEN c.status = 'active' THEN c.id END) as active_cases_count"),
+                    DB::raw("COUNT(DISTINCT CASE WHEN c.status IN ('closed', 'dismissed') THEN c.id END) as resolved_cases_count")
                 )
                 ->groupBy('u.id', 'u.name', 'u.email', 'u.status', 'u.avatar_path', 't.name')
                 ->orderByDesc('cases_count')
@@ -125,7 +130,66 @@ class DashboardController extends Controller
             );
         });
 
+        $data['serviceHealth'] = $this->serviceHealth();
+        $data['dataStorage'] = $this->dataStorage();
+
         return view('admin.dashboard', $data);
+    }
+
+    /** @return array<string, mixed> */
+    private function serviceHealth(): array
+    {
+        $database = true;
+        try { DB::connection()->getPdo(); } catch (\Throwable) { $database = false; }
+        $queue = null;
+        try { $queue = Schema::hasTable('jobs') ? (int) DB::table('jobs')->count() : null; } catch (\Throwable) { $queue = null; }
+        $settings = SystemSetting::current();
+
+        return [
+            'database' => $database,
+            'queue_waiting' => $queue,
+            'queue_ready' => $queue !== null,
+            'mail' => (bool) ($settings->mail_enabled ?? false) && filled($settings->mail_host ?? config('mail.mailers.smtp.host')),
+            'sms' => (bool) ($settings->sms_enabled ?? false),
+            'sms_ready' => (bool) ($settings->sms_enabled ?? false) && filled($settings->sms_base_url ?? null),
+            'telegram' => (bool) ($settings->telegram_enabled ?? false) && filled($settings->telegram_bot_token ?? null) && filled($settings->telegram_default_chat_id ?? null),
+            'in_app' => Schema::hasTable('notifications'),
+        ];
+    }
+
+    /** @return array<string, int|string|null> */
+    private function dataStorage(): array
+    {
+        $tables = 0;
+        try { $tables = count(Schema::getTables()); } catch (\Throwable) {}
+        $size = null;
+        try {
+            $driver = DB::connection()->getDriverName();
+            $database = (string) DB::connection()->getDatabaseName();
+            $bytes = match ($driver) {
+                'mysql' => (int) DB::selectOne('select coalesce(sum(data_length + index_length), 0) as bytes from information_schema.tables where table_schema = ?', [$database])->bytes,
+                'sqlite' => $this->sqliteSize($database),
+                default => null,
+            };
+            $size = $bytes === null ? null : round($bytes / 1048576, 2).' MB';
+        } catch (\Throwable) {}
+
+        return [
+            'tables' => $tables,
+            'database_size' => $size,
+            'storage_free' => disk_free_space(storage_path()),
+            'audit_events' => Schema::hasTable('system_audits') ? (int) DB::table('system_audits')->count() : 0,
+            'last_backup' => null,
+        ];
+    }
+
+    private function sqliteSize(string $database): ?int
+    {
+        if ($database === ':memory:') return null;
+        $path = realpath($database);
+        if ($path === false || ! is_file($path)) return null;
+        $bytes = filesize($path);
+        return $bytes === false ? null : $bytes;
     }
 
     /**
@@ -159,7 +223,7 @@ class DashboardController extends Controller
         }
 
         // Cache key encodes the exact day range so custom ranges also benefit
-        $cacheKey = 'dashboard_stats_' . $start->toDateString() . '_' . $end->toDateString();
+        $cacheKey = 'dashboard_stats_v2_' . $start->toDateString() . '_' . $end->toDateString();
 
         $result = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($start, $end, $now) {
 
@@ -214,7 +278,10 @@ class DashboardController extends Controller
                 ->select(
                     'u.id', 'u.name', 'u.email', 'u.status', 'u.avatar_path',
                     't.name as team_name',
-                    DB::raw('COUNT(DISTINCT c.id) as cases_count')
+                    DB::raw('COUNT(DISTINCT c.id) as cases_count'),
+                    DB::raw("COUNT(DISTINCT CASE WHEN c.status = 'pending' THEN c.id END) as pending_cases_count"),
+                    DB::raw("COUNT(DISTINCT CASE WHEN c.status = 'active' THEN c.id END) as active_cases_count"),
+                    DB::raw("COUNT(DISTINCT CASE WHEN c.status IN ('closed', 'dismissed') THEN c.id END) as resolved_cases_count")
                 )
                 ->groupBy('u.id', 'u.name', 'u.email', 'u.status', 'u.avatar_path', 't.name')
                 ->orderByDesc('cases_count')

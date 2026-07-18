@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\SystemSetting;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -11,11 +12,19 @@ class ForceHttps
     /**
      * Redirect to HTTPS and the canonical host in production.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (! app()->environment('production')) {
+        $forceHttps = app()->environment('production');
+
+        try {
+            $forceHttps = $forceHttps || (bool) SystemSetting::cached()?->force_https;
+        } catch (\Throwable) {
+            // Keep the production security baseline if settings are unavailable.
+        }
+
+        if (! $forceHttps) {
             return $next($request);
         }
 

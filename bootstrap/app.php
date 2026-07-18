@@ -33,11 +33,15 @@ return Application::configure(basePath: dirname(__DIR__))
             'audit'                 => \App\Http\Middleware\SystemAuditMiddleware::class,
             'act.respondent'        => \App\Http\Middleware\ActAsRespondent::class,
             'use.guard'             => \App\Http\Middleware\UseGuard::class,
+            'mfa'                   => \App\Http\Middleware\EnsureMfaIsVerified::class,
         ]);
 
         $middleware->prependToGroup('web', \App\Http\Middleware\SetSessionCookieForGuard::class);
         $middleware->prependToGroup('web', \App\Http\Middleware\AdminSessionTimeout::class);
+        $middleware->appendToGroup('web', \App\Http\Middleware\EnforceSystemAvailability::class);
         $middleware->appendToGroup('web', \App\Http\Middleware\ForceHttps::class);
+        $middleware->appendToGroup('web', \App\Http\Middleware\CaptureClientHints::class);
+        $middleware->appendToGroup('web', \App\Http\Middleware\EnsureMfaIsVerified::class);
         $middleware->appendToGroup('web', \App\Http\Middleware\SystemAuditMiddleware::class);
         $middleware->appendToGroup('api', \App\Http\Middleware\SystemAuditMiddleware::class);
 

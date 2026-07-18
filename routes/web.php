@@ -56,6 +56,8 @@ use App\Http\Controllers\Admin\PerformanceEvaluationSettingController;
 use App\Http\Controllers\Admin\CaseInspectionRequestController;
 use App\Http\Controllers\Admin\CaseInspectionFindingController;
 use App\Http\Controllers\Admin\AnnouncementController;
+use App\Http\Controllers\Auth\MfaChallengeController;
+use App\Http\Controllers\Auth\MfaController;
 
 // Localization middleware
 use App\Http\Middleware\SetLocale;
@@ -376,6 +378,18 @@ Route::middleware(SetLocale::class)->group(function () {
         Route::get('/profile',    [AdminProfileController::class, 'edit'])->name('profile.edit');
         Route::patch('/profile',  [AdminProfileController::class, 'update'])->name('profile.update');
         Route::delete('/profile', [AdminProfileController::class, 'destroy'])->name('profile.destroy');
+        Route::get('/profile/sessions', [\App\Http\Controllers\Admin\ActiveSessionController::class, 'index'])->name('profile.sessions.index');
+        Route::delete('/profile/sessions/{session}', [\App\Http\Controllers\Admin\ActiveSessionController::class, 'destroy'])->name('profile.sessions.destroy');
+        Route::delete('/profile/sessions', [\App\Http\Controllers\Admin\ActiveSessionController::class, 'destroyOthers'])->name('profile.sessions.destroyOthers');
+        Route::get('/mfa/setup', [MfaController::class, 'show'])->name('mfa.setup.show');
+        Route::post('/mfa/setup', [MfaController::class, 'begin'])->name('mfa.setup.begin');
+        Route::post('/mfa/setup/confirm', [MfaController::class, 'confirm'])->name('mfa.setup.confirm');
+        Route::delete('/mfa/setup', [MfaController::class, 'destroy'])->name('mfa.setup.destroy');
+        Route::redirect('/profile/mfa', '/mfa/setup')->name('profile.mfa.show');
+        Route::get('/mfa-challenge', [MfaChallengeController::class, 'show'])->name('mfa.challenge.show');
+        Route::post('/mfa-challenge', [MfaChallengeController::class, 'store'])
+            ->middleware('throttle:6,1')
+            ->name('mfa.challenge.store');
 
         // Admin section with /admin prefix
         Route::prefix('admin')->group(function () {
@@ -395,12 +409,15 @@ Route::middleware(SetLocale::class)->group(function () {
 
             // System settings
             Route::get('/settings/system', [SystemSettingController::class, 'edit'])
+                ->middleware('perm:settings.manage')
                 ->name('settings.system.edit');
 
             Route::post('/settings/system', [SystemSettingController::class, 'update'])
+                ->middleware('perm:settings.manage')
                 ->name('settings.system.update');
 
             Route::post('/settings/system/clear-cache', [SystemSettingController::class, 'clearCache'])
+                ->middleware('perm:settings.manage')
                 ->name('settings.system.clearCache');
 
             Route::post('/settings/system/database-backup', [SystemSettingController::class, 'downloadDatabaseBackup'])

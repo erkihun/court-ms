@@ -2196,6 +2196,32 @@
         })();
     </script>
     @endif
+    @auth
+    @php($sessionSettings = $systemSettings ?? null)
+    <script>
+        (() => {
+            const lifetime = Number(@js((int) ($sessionSettings?->session_lifetime ?? config('session.lifetime', 120)))) * 60 * 1000;
+            const warning = Number(@js((int) ($sessionSettings?->session_warning_minutes ?? 5))) * 60 * 1000;
+            const extendOnActivity = @js((bool) ($sessionSettings?->session_extend_on_activity ?? true));
+            if (!lifetime || warning >= lifetime) return;
+            let timer;
+            let warned = false;
+            const schedule = () => {
+                window.clearTimeout(timer);
+                warned = false;
+                timer = window.setTimeout(() => {
+                    warned = true;
+                    const extend = window.confirm('{{ __('settings.session_warning_browser') }}');
+                    if (extend) window.location.reload();
+                }, lifetime - warning);
+            };
+            ['click', 'keydown', 'mousemove', 'touchstart'].forEach((event) => {
+                window.addEventListener(event, () => { if (extendOnActivity && !warned) schedule(); }, { passive: true });
+            });
+            schedule();
+        })();
+    </script>
+    @endauth
     @livewireScripts
     @stack('scripts')
 </body>
