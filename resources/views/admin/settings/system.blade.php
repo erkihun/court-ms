@@ -71,6 +71,9 @@
                  padding:.7rem .875rem; border-radius:.5rem;
                  border:1px solid var(--border); background:var(--surface-soft); }
 .ss-toggle-row + .ss-toggle-row { margin-top:.5rem; }
+.ss-role-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.5rem; }
+.ss-role-grid .ss-toggle-row + .ss-toggle-row { margin-top:0; }
+@media (max-width:640px) { .ss-role-grid { grid-template-columns:1fr; } }
 .ss-toggle-info { flex:1; min-width:0; }
 .ss-toggle-name { font-size:.8125rem; font-weight:600; color:var(--text); display:block; }
 .ss-toggle-desc { font-size:.7rem; color:var(--text-subtle); margin-top:.1rem; }
@@ -521,7 +524,7 @@ $activeTab = in_array($requestedTab, $tabKeys, true) ? $requestedTab : 'general'
                 {{ __('settings.mfa_role_policy') }}
             </div>
             <p class="ss-hint mb-3">{{ __('settings.mfa_role_policy_hint') }}</p>
-            <div class="grid gap-2">
+            <div class="ss-role-grid">
                 @forelse($roles as $role)
                     <label class="ss-toggle-row cursor-pointer">
                         <div class="ss-toggle-info">

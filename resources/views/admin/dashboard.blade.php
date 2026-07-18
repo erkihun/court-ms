@@ -319,6 +319,7 @@
             font-weight: 600;
             color: var(--text);
         }
+        .dash-health-value { font-size: .95rem; font-weight: 800; line-height: 1.2; }
         .dash-health-sub {
             font-size: .72rem;
             color: var(--text-subtle);
@@ -888,7 +889,7 @@
                     </svg>
                 </div>
                 <p class="dash-health-sub">{{ __('dashboard.database_connection') }}</p>
-                <p style="font-size:1.5rem;font-weight:800;color:{{ $serviceHealth['database'] ? 'rgb(16 185 129)' : 'rgb(220 38 38)' }};">{{ $serviceHealth['database'] ? __('dashboard.operational') : __('dashboard.unavailable') }}</p>
+                <p class="dash-health-value" style="color:{{ $serviceHealth['database'] ? 'rgb(16 185 129)' : 'rgb(220 38 38)' }};">{{ $serviceHealth['database'] ? __('dashboard.operational') : __('dashboard.unavailable') }}</p>
                 <div class="dash-health-meter"><span style="width:{{ $serviceHealth['database'] ? '100' : '15' }}%;background:{{ $serviceHealth['database'] ? 'linear-gradient(90deg,#10b981,#34d399)' : '#ef4444' }}"></span></div>
             </div>
 
