@@ -16,12 +16,8 @@ class AuthenticatedSessionController extends Controller
      */
     public function create(): Response
     {
-        $baseCookie = (string) config('session.cookie_base', config('session.cookie'));
-
         return response()
-            ->view('admin.auth.login', [
-                'hasApplicantSession' => request()->cookies->has($baseCookie.'-applicant'),
-            ])
+            ->view('admin.auth.login')
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
             ->header('Pragma', 'no-cache');
     }
@@ -36,7 +32,13 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
         $request->session()->forget('mfa_verified_at');
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        $response = redirect()->intended(route('dashboard', absolute: false));
+
+        if ($this->hasApplicantSession($request)) {
+            $response->with('info', __('auth.applicant_session_active_message'));
+        }
+
+        return $response;
     }
 
     /**
@@ -49,5 +51,12 @@ class AuthenticatedSessionController extends Controller
         $request->session()->invalidate();
 
         return redirect()->route('login');
+    }
+
+    private function hasApplicantSession(Request $request): bool
+    {
+        $baseCookie = (string) config('session.cookie_base', config('session.cookie'));
+
+        return $request->cookies->has($baseCookie.'-applicant');
     }
 }

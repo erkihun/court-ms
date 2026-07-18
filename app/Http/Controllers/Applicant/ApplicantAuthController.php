@@ -100,11 +100,9 @@ class ApplicantAuthController extends Controller
         // Always reset acting-as flag on login screen
         session()->forget('acting_as_respondent');
         $asRespondentNav = request('login_as') === 'respondent';
-        $baseCookie = (string) config('session.cookie_base', config('session.cookie'));
-        $hasAdminSession = request()->cookies->has($baseCookie.'-admin');
 
         return response()
-            ->view('applicant.auth.login', compact('asRespondentNav', 'hasAdminSession'))
+            ->view('applicant.auth.login', compact('asRespondentNav'))
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
             ->header('Pragma', 'no-cache');
     }
@@ -130,6 +128,8 @@ class ApplicantAuthController extends Controller
         }
 
         $remember = $request->boolean('remember');
+        $baseCookie = (string) config('session.cookie_base', config('session.cookie'));
+        $hasAdminSession = $request->cookies->has($baseCookie.'-admin');
 
         $loginSettings = SystemSetting::cached();
         $maxAttempts = $loginSettings?->login_max_attempts ?? 5;
@@ -184,9 +184,7 @@ class ApplicantAuthController extends Controller
                 RateLimiter::clear($throttleKey);
                 $target = route('respondent.dashboard');
 
-                return $request->expectsJson()
-                    ? response()->json(['redirect' => $target, 'message' => 'Signed in.'])
-                    : redirect($target)->with('success', 'Signed in.');
+                return $this->loginResponse($request, $target, $hasAdminSession);
             }
         }
 
@@ -197,9 +195,7 @@ class ApplicantAuthController extends Controller
             RateLimiter::clear($throttleKey);
             $target = route('applicant.dashboard');
 
-            return $request->expectsJson()
-                ? response()->json(['redirect' => $target, 'message' => 'Signed in.'])
-                : redirect($target)->with('success', 'Signed in.');
+            return $this->loginResponse($request, $target, $hasAdminSession);
         }
 
         RateLimiter::hit($throttleKey, $lockoutSecs);
@@ -213,6 +209,25 @@ class ApplicantAuthController extends Controller
         return back()
             ->withErrors(['email' => 'Invalid credentials.'])
             ->withInput($request->only('email', 'login_as'));
+    }
+
+    private function loginResponse(Request $request, string $target, bool $hasAdminSession)
+    {
+        if ($request->expectsJson()) {
+            return response()->json([
+                'redirect' => $target,
+                'message' => 'Signed in.',
+                'notice' => $hasAdminSession ? __('auth.admin_session_active_message') : null,
+            ]);
+        }
+
+        $response = redirect($target)->with('success', 'Signed in.');
+
+        if ($hasAdminSession) {
+            $response->with('info', __('auth.admin_session_active_message'));
+        }
+
+        return $response;
     }
 
     public function logout(Request $request)

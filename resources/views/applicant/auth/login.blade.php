@@ -93,7 +93,7 @@ session()->forget('acting_as_respondent');
                 <p class="al-panel-label al-anim" data-panel-label>{{ $panelLabel }}</p>
 
                 {{-- Alerts --}}
-                @if($hasAdminSession ?? false)
+                @if(session('__login_notice_disabled__'))
                 <div class="al-alert al-alert-info" role="status" aria-live="polite">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 flex-shrink-0 mt-px" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
                     <div>
@@ -467,7 +467,6 @@ html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
 }
 .al-alert ul { margin: 0; padding: 0; list-style: none; }
 .al-alert-ok { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
-.al-alert-info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; }
 .al-alert-err { background: #fff1f2; border: 1px solid #fecdd3; color: #be123c; }
 
 /* form */

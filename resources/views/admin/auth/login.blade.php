@@ -463,13 +463,6 @@ $bannerPath = $settings?->banner_path ?? null;
                                 </p>
                             </div>
 
-                            @if($hasApplicantSession ?? false)
-                                <div role="status" aria-live="polite" class="mt-5 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800 dark:border-sky-400/30 dark:bg-sky-400/10 dark:text-sky-100">
-                                    <p class="font-semibold">{{ __('auth.applicant_session_active_title') }}</p>
-                                    <p class="mt-1 leading-5">{{ __('auth.applicant_session_active_message') }}</p>
-                                </div>
-                            @endif
-
                             @if(session('error') || $errors->any())
                             <div role="alert" aria-live="assertive" class="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
                                 <div class="flex items-start gap-2.5">

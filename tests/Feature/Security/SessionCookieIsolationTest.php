@@ -1,7 +1,11 @@
 <?php
 
 use App\Http\Middleware\SetSessionCookieForGuard;
+use App\Models\Applicant;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 test('admin and applicant paths select separate session cookies', function () {
     $base = (string) config('session.cookie_base');
@@ -29,30 +33,55 @@ test('admin and applicant paths select separate session cookies', function () {
     config(['session.cookie' => $base]);
 });
 
-test('admin login explains that an applicant session is already active', function () {
+test('admin login flashes an applicant-session notice after sign in', function () {
     $base = (string) config('session.cookie_base');
     $applicantLogin = $this->get(route('applicant.login'));
     $applicantCookie = $applicantLogin->getCookie($base.'-applicant');
+    $user = User::factory()->create([
+        'password' => Hash::make('password'),
+        'status' => 'active',
+    ]);
 
     expect($applicantCookie)->not->toBeNull();
 
+    Auth::shouldUse('web');
+
     $this->withCookie($applicantCookie->getName(), $applicantCookie->getValue())
-        ->get(route('login'))
-        ->assertOk()
-        ->assertSee(__('auth.applicant_session_active_title'))
-        ->assertSee(__('auth.applicant_session_active_message'));
+        ->post(route('login'), [
+            'email' => $user->email,
+            'password' => 'password',
+        ])
+        ->assertRedirect(route('dashboard', absolute: false))
+        ->assertSessionHas('info', __('auth.applicant_session_active_message'));
 });
 
-test('applicant login explains that an admin session is already active', function () {
+test('applicant login flashes an admin-session notice after sign in', function () {
     $base = (string) config('session.cookie_base');
     $adminLogin = $this->get(route('login'));
     $adminCookie = $adminLogin->getCookie($base.'-admin');
+    $applicant = Applicant::create([
+        'first_name' => 'Abel',
+        'middle_name' => 'K',
+        'last_name' => 'Teka',
+        'gender' => 'male',
+        'position' => 'Manager',
+        'organization_name' => 'ACME',
+        'phone' => '0911000200',
+        'email' => 'session-notice@example.com',
+        'address' => 'Addis Ababa',
+        'national_id_number' => '1234567890123456',
+        'password' => Hash::make('password'),
+        'is_active' => true,
+        'is_lawyer' => false,
+    ]);
 
     expect($adminCookie)->not->toBeNull();
 
     $this->withCookie($adminCookie->getName(), $adminCookie->getValue())
-        ->get(route('applicant.login'))
-        ->assertOk()
-        ->assertSee(__('auth.admin_session_active_title'))
-        ->assertSee(__('auth.admin_session_active_message'));
+        ->post(route('applicant.login.submit'), [
+            'email' => $applicant->email,
+            'password' => 'password',
+        ])
+        ->assertRedirect(route('applicant.dashboard'))
+        ->assertSessionHas('info', __('auth.admin_session_active_message'));
 });
