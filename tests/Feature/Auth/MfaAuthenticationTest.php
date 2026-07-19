@@ -29,6 +29,9 @@ test('a user with active MFA is challenged after logging in again', function () 
 
     $this->get('/dashboard')
         ->assertRedirect(route('mfa.challenge.show'));
+
+    $this->get(route('mfa.challenge.show'))
+        ->assertOk();
 });
 
 test('admin MFA challenge page loads for an authenticated admin', function () {

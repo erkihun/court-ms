@@ -57,6 +57,8 @@ class SetSessionCookieForGuard
             'dashboard',
             'profile',
             'mfa/*',
+            'mfa-challenge',
+            'mfa-challenge/*',
             'admin',
             'admin/*',
         );
