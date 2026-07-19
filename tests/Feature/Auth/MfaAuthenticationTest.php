@@ -48,6 +48,12 @@ test('admin MFA challenge page loads for an authenticated admin', function () {
     $this->actingAs($user, 'web')
         ->get(route('mfa.challenge.show'))
         ->assertOk();
+
+    $this->post(route('logout'))
+        ->assertRedirect(route('login'));
+
+    $this->get(route('login'))
+        ->assertOk();
 });
 
 test('applicant dashboard is not processed by admin MFA middleware', function () {
