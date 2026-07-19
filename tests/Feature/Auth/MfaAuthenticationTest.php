@@ -31,6 +31,22 @@ test('a user with active MFA is challenged after logging in again', function () 
         ->assertRedirect(route('mfa.challenge.show'));
 });
 
+test('admin MFA challenge page loads for an authenticated admin', function () {
+    $user = User::factory()->create();
+    $user->forceFill([
+        'mfa_secret' => app(MfaService::class)->generateSecret(),
+        'mfa_confirmed_at' => now(),
+    ])->save();
+
+    $settings = SystemSetting::query()->first() ?? SystemSetting::create(['mfa_enabled' => true]);
+    $settings->forceFill(['mfa_enabled' => true])->save();
+    Cache::forget('system_settings');
+
+    $this->actingAs($user, 'web')
+        ->get(route('mfa.challenge.show'))
+        ->assertOk();
+});
+
 test('applicant dashboard is not processed by admin MFA middleware', function () {
     $applicant = Applicant::create([
         'first_name' => 'Abel',
