@@ -9,7 +9,7 @@ use App\Http\Requests\Auth\ConfirmMfaRequest;
 use App\Services\MfaService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
@@ -17,7 +17,7 @@ class MfaController extends Controller
 {
     public function show(Request $request, MfaService $mfa): View
     {
-        $user = $request->user();
+        $user = Auth::guard('web')->user();
         abort_if($user === null, 401);
 
         $secret = $user->mfa_secret;
@@ -36,7 +36,7 @@ class MfaController extends Controller
 
     public function begin(Request $request, MfaService $mfa): RedirectResponse
     {
-        $user = $request->user();
+        $user = Auth::guard('web')->user();
         abort_if($user === null, 401);
 
         if (! $user->hasConfirmedMfa()) {
@@ -51,7 +51,7 @@ class MfaController extends Controller
 
     public function confirm(ConfirmMfaRequest $request, MfaService $mfa): RedirectResponse
     {
-        $user = $request->user();
+        $user = Auth::guard('web')->user();
         abort_if($user === null || blank($user->mfa_secret), 422);
 
         if (! $mfa->verify($user->mfa_secret, $request->string('code')->toString())) {
@@ -70,7 +70,7 @@ class MfaController extends Controller
     public function destroy(Request $request): RedirectResponse
     {
         $request->validate(['password' => ['required', 'current_password']]);
-        $user = $request->user();
+        $user = Auth::guard('web')->user();
         abort_if($user === null, 401);
         abort_if($user->requiresMfa(), 403, __('auth.mfa_required_by_role'));
 

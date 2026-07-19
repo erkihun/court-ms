@@ -19,9 +19,12 @@ class EnsureMfaIsVerified
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $user = $request->user();
+        // MFA is currently an admin-only feature. Never resolve the current
+        // user through the request's mutable/default guard because applicant
+        // requests use a different authenticatable model.
+        $user = auth('web')->user();
 
-        if ($user === null || ! $user instanceof User || $request->routeIs('mfa.setup.*', 'profile.mfa.*', 'mfa.challenge.*', 'logout')) {
+        if ($user === null || ! ($user instanceof User) || $request->routeIs('mfa.setup.*', 'profile.mfa.*', 'mfa.challenge.*', 'logout')) {
             return $next($request);
         }
 
