@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Http\Request;
 use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Session\TokenMismatchException;
 use Illuminate\Support\Facades\Log;
@@ -10,6 +11,7 @@ use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use App\Http\Middleware\AddSecurityHeaders;
 use App\Http\Middleware\AssignRequestId;
+use App\Http\Middleware\Authenticate;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -20,11 +22,25 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // The production site may sit behind Apache/Nginx or a load balancer.
+        // Trust the configured proxy chain so ForceHttps can see the browser's
+        // original HTTPS scheme instead of redirecting HTTPS requests forever.
+        $middleware->trustProxies(
+            at: env('TRUSTED_PROXIES', '*'),
+            headers: Request::HEADER_X_FORWARDED_FOR
+                | Request::HEADER_X_FORWARDED_HOST
+                | Request::HEADER_X_FORWARDED_PORT
+                | Request::HEADER_X_FORWARDED_PROTO
+                | Request::HEADER_X_FORWARDED_PREFIX
+                | Request::HEADER_X_FORWARDED_AWS_ELB,
+        );
+
         $middleware->prepend(AssignRequestId::class);
         $middleware->append(AddSecurityHeaders::class);
 
         // Add/keep your other aliases here too
         $middleware->alias([
+            'auth'                  => Authenticate::class,
             'guest'                 => \App\Http\Middleware\RedirectIfAuthenticated::class,
             'force.password.change' => \App\Http\Middleware\ForcePasswordChange::class,
             'admin.only'            => \App\Http\Middleware\AdminOnly::class,

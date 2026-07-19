@@ -33,7 +33,7 @@ test('admin and applicant paths select separate session cookies', function () {
     config(['session.cookie' => $base]);
 });
 
-test('admin login flashes an applicant-session notice after sign in', function () {
+test('admin login does not flash a cross-portal session notice', function () {
     $base = (string) config('session.cookie_base');
     $applicantLogin = $this->get(route('applicant.login'));
     $applicantCookie = $applicantLogin->getCookie($base.'-applicant');
@@ -52,10 +52,10 @@ test('admin login flashes an applicant-session notice after sign in', function (
             'password' => 'password',
         ])
         ->assertRedirect(route('dashboard', absolute: false))
-        ->assertSessionHas('info', __('auth.applicant_session_active_message'));
+        ->assertSessionMissing('info');
 });
 
-test('applicant login flashes an admin-session notice after sign in', function () {
+test('applicant login does not flash a cross-portal session notice', function () {
     $base = (string) config('session.cookie_base');
     $adminLogin = $this->get(route('login'));
     $adminCookie = $adminLogin->getCookie($base.'-admin');
@@ -83,5 +83,5 @@ test('applicant login flashes an admin-session notice after sign in', function (
             'password' => 'password',
         ])
         ->assertRedirect(route('applicant.dashboard'))
-        ->assertSessionHas('info', __('auth.admin_session_active_message'));
+        ->assertSessionMissing('info');
 });

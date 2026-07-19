@@ -32,13 +32,7 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
         $request->session()->forget('mfa_verified_at');
 
-        $response = redirect()->intended(route('dashboard', absolute: false));
-
-        if ($this->hasApplicantSession($request)) {
-            $response->with('info', __('auth.applicant_session_active_message'));
-        }
-
-        return $response;
+        return redirect()->intended(route('dashboard', absolute: false));
     }
 
     /**
@@ -53,10 +47,4 @@ class AuthenticatedSessionController extends Controller
         return redirect()->route('login');
     }
 
-    private function hasApplicantSession(Request $request): bool
-    {
-        $baseCookie = (string) config('session.cookie_base', config('session.cookie'));
-
-        return $request->cookies->has($baseCookie.'-applicant');
-    }
 }

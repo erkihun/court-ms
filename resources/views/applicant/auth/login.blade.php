@@ -93,15 +93,6 @@ session()->forget('acting_as_respondent');
                 <p class="al-panel-label al-anim" data-panel-label>{{ $panelLabel }}</p>
 
                 {{-- Alerts --}}
-                @if(session('__login_notice_disabled__'))
-                <div class="al-alert al-alert-info" role="status" aria-live="polite">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 flex-shrink-0 mt-px" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
-                    <div>
-                        <p class="font-semibold">{{ __('auth.admin_session_active_title') }}</p>
-                        <p class="mt-1">{{ __('auth.admin_session_active_message') }}</p>
-                    </div>
-                </div>
-                @endif
                 @if(session('success'))
                 <div class="al-alert al-alert-ok">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
