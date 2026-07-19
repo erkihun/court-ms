@@ -39,3 +39,17 @@ test('users can logout', function () {
     $this->assertGuest();
     $response->assertRedirect('/login');
 });
+
+test('the site root opens the applicant login after admin logout', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user, 'web')
+        ->post(route('logout'))
+        ->assertRedirect(route('login'));
+
+    $this->get('/')
+        ->assertRedirect(route('applicant.login'));
+
+    $this->get(route('applicant.login'))
+        ->assertOk();
+});
