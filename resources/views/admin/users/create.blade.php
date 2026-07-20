@@ -1,14 +1,14 @@
-<x-admin-layout title="New User">
-    @section('page_header','New User')
+<x-admin-layout title="{{ __('users.new_user_title') }}">
+    @section('page_header', __('users.new_user_title'))
 
     <div class="enterprise-page">
         <div class="enterprise-header">
             <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
-                    <h1 class="enterprise-title">Create User Account</h1>
-                    <p class="enterprise-subtitle">Set identity, contact details, role assignments, and profile assets.</p>
+                    <h1 class="enterprise-title">{{ __('users.create_account_title') }}</h1>
+                    <p class="enterprise-subtitle">{{ __('users.create_account_subtitle') }}</p>
                 </div>
-                <a href="{{ route('users.index') }}" class="btn btn-outline">Back to Users</a>
+                <a href="{{ route('users.index') }}" class="btn btn-outline">{{ __('users.back_to_users') }}</a>
             </div>
         </div>
 
@@ -18,40 +18,40 @@
             <div class="admin-form-main space-y-5">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700">First Name</label>
+                        <label class="block text-sm font-medium text-slate-700">{{ __('users.first_name') }}</label>
                         <input name="first_name" value="{{ old('first_name') }}" class="ui-input mt-1">
                         @error('first_name') <p class="text-rose-600 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-700">Middle Name</label>
+                        <label class="block text-sm font-medium text-slate-700">{{ __('users.middle_name') }}</label>
                         <input name="middle_name" value="{{ old('middle_name') }}" class="ui-input mt-1">
                         @error('middle_name') <p class="text-rose-600 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-700">Last Name</label>
+                        <label class="block text-sm font-medium text-slate-700">{{ __('users.last_name') }}</label>
                         <input name="last_name" value="{{ old('last_name') }}" class="ui-input mt-1">
                         @error('last_name') <p class="text-rose-600 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-slate-700">Email</label>
+                    <label class="block text-sm font-medium text-slate-700">{{ __('users.email') }}</label>
                     <input name="email" type="email" value="{{ old('email') }}" class="ui-input mt-1">
                     @error('email') <p class="text-rose-600 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700">Gender</label>
+                        <label class="block text-sm font-medium text-slate-700">{{ __('users.gender') }}</label>
                         <select name="gender" class="ui-select mt-1">
-                            <option value="">Select</option>
-                            <option value="male" @selected(old('gender')==='male')>Male</option>
-                            <option value="female" @selected(old('gender')==='female')>Female</option>
+                            <option value="">{{ __('users.select') }}</option>
+                            <option value="male" @selected(old('gender')==='male')>{{ __('users.male') }}</option>
+                            <option value="female" @selected(old('gender')==='female')>{{ __('users.female') }}</option>
                         </select>
                         @error('gender') <p class="text-rose-600 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-700">Date of Birth</label>
+                        <label class="block text-sm font-medium text-slate-700">{{ __('users.date_of_birth') }}</label>
                         <x-eth-date-input name="date_of_birth" :value="old('date_of_birth')" class="mt-1" />
                         @error('date_of_birth') <p class="text-rose-600 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
@@ -59,7 +59,7 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700">National ID</label>
+                        <label class="block text-sm font-medium text-slate-700">{{ __('users.national_id') }}</label>
                         <input name="national_id" value="{{ old('national_id') }}"
                             inputmode="text" maxlength="19"
                             placeholder="XXXX XXXX XXXX XXXX"
@@ -71,10 +71,10 @@
                             class="ui-input mt-1"
                             aria-describedby="national_id_help">
                         @error('national_id') <p class="text-rose-600 text-xs mt-1">{{ $message }}</p> @enderror
-                        <p id="national_id_help" class="text-xs text-slate-500 mt-1">Enter 16 letters or digits; spaces are added automatically.</p>
+                        <p id="national_id_help" class="text-xs text-slate-500 mt-1">{{ __('users.national_id_help') }}</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-700">Position</label>
+                        <label class="block text-sm font-medium text-slate-700">{{ __('users.position') }}</label>
                         <input name="position" value="{{ old('position') }}" class="ui-input mt-1">
                         @error('position') <p class="text-rose-600 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
@@ -82,28 +82,26 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700">Phone</label>
+                        <label class="block text-sm font-medium text-slate-700">{{ __('users.phone') }}</label>
                         <input name="phone" value="{{ old('phone') }}" class="ui-input mt-1">
                         @error('phone') <p class="text-rose-600 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-700">Address</label>
+                        <label class="block text-sm font-medium text-slate-700">{{ __('users.address') }}</label>
                         <input name="address" value="{{ old('address') }}" class="ui-input mt-1">
                         @error('address') <p class="text-rose-600 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                 </div>
 
                 <div class="admin-panel-muted text-sm text-amber-800 border-amber-200 bg-amber-50">
-                    The user will be created with the default password
-                    <span class="font-semibold">{{ config('auth.default_user_password', 'ChangeMe123!') }}</span>
-                    and must change it at first login.
+                    {{ __('users.default_password_notice', ['password' => config('auth.default_user_password', 'ChangeMe123!')]) }}
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-slate-700">Status</label>
+                    <label class="block text-sm font-medium text-slate-700">{{ __('users.status') }}</label>
                     <select name="status" class="ui-select mt-1">
-                        <option value="active" @selected(old('status')==='active' )>Active</option>
-                        <option value="inactive" @selected(old('status')==='inactive' )>Inactive</option>
+                        <option value="active" @selected(old('status')==='active' )>{{ __('users.active') }}</option>
+                        <option value="inactive" @selected(old('status')==='inactive' )>{{ __('users.inactive') }}</option>
                     </select>
                     @error('status') <p class="text-rose-600 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
@@ -111,7 +109,7 @@
 
             <div class="admin-form-side">
                 <div class="admin-panel space-y-4">
-                    <h3 class="text-sm font-semibold text-slate-900">Assign Roles</h3>
+                    <h3 class="text-sm font-semibold text-slate-900">{{ __('users.assign_roles') }}</h3>
                     <div class="space-y-2 max-h-80 overflow-auto pr-1">
                         @foreach($roles as $role)
                         <label class="admin-checkbox-card">
@@ -126,11 +124,11 @@
 
                 <div class="admin-panel space-y-4">
                     <div class="p-4 rounded-xl border border-slate-200 bg-slate-50" x-data="{preview: null}">
-                        <label class="block text-sm font-medium text-slate-700 mb-2">Avatar</label>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">{{ __('users.avatar') }}</label>
                         <div class="flex items-center gap-4">
                             <div class="w-16 h-16 rounded-full bg-white border border-slate-300 overflow-hidden grid place-items-center">
-                                <img x-show="preview" :src="preview" class="w-full h-full object-cover" alt="Avatar preview">
-                                <span x-show="!preview" class="text-xs text-slate-500">No image</span>
+                                <img x-show="preview" :src="preview" class="w-full h-full object-cover" alt="{{ __('users.avatar_preview') }}">
+                                <span x-show="!preview" class="text-xs text-slate-500">{{ __('users.no_image') }}</span>
                             </div>
                             <input type="file" name="avatar" accept="image/*"
                                 @change="preview = $event.target.files[0] ? URL.createObjectURL($event.target.files[0]) : null"
@@ -141,9 +139,9 @@
 
                     <div class="grid gap-4">
                         <div class="p-4 rounded-xl border border-slate-200 bg-slate-50" x-data="{preview: null}">
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Signature</label>
-                            <img x-show="preview" :src="preview" class="max-h-20 border border-slate-200" alt="Signature preview">
-                            <div x-show="!preview" class="text-xs text-slate-500 mb-2">No signature uploaded.</div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">{{ __('users.signature') }}</label>
+                            <img x-show="preview" :src="preview" class="max-h-20 border border-slate-200" alt="{{ __('users.signature_preview') }}">
+                            <div x-show="!preview" class="text-xs text-slate-500 mb-2">{{ __('users.no_signature') }}</div>
                             <input type="file" name="signature" accept="image/png,image/webp,image/jpeg"
                                 @change="preview = $event.target.files[0] ? URL.createObjectURL($event.target.files[0]) : null"
                                 class="enterprise-file-input">
@@ -151,9 +149,9 @@
                         </div>
 
                         <div class="p-4 rounded-xl border border-slate-200 bg-slate-50" x-data="{previewStamp: null}">
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Stamp</label>
-                            <img x-show="previewStamp" :src="previewStamp" class="max-h-20 border border-slate-200" alt="Stamp preview">
-                            <div x-show="!previewStamp" class="text-xs text-slate-500 mb-2">No stamp uploaded.</div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">{{ __('users.stamp') }}</label>
+                            <img x-show="previewStamp" :src="previewStamp" class="max-h-20 border border-slate-200" alt="{{ __('users.stamp_preview') }}">
+                            <div x-show="!previewStamp" class="text-xs text-slate-500 mb-2">{{ __('users.no_stamp') }}</div>
                             <input type="file" name="stamp" accept="image/png,image/webp,image/jpeg"
                                 @change="previewStamp = $event.target.files[0] ? URL.createObjectURL($event.target.files[0]) : null"
                                 class="enterprise-file-input">
@@ -163,8 +161,8 @@
                 </div>
 
                 <div class="enterprise-actions justify-end">
-                    <a href="{{ route('users.index') }}" class="btn btn-outline">Cancel</a>
-                    <button class="btn btn-primary">Create User</button>
+                    <a href="{{ route('users.index') }}" class="btn btn-outline">{{ __('users.cancel') }}</a>
+                    <button class="btn btn-primary">{{ __('users.create_user') }}</button>
                 </div>
             </div>
         </form>

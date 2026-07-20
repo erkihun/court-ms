@@ -20,6 +20,8 @@ test('admin and applicant paths select separate session cookies', function () {
         ['/admin/settings/system', $base.'-admin'],
         ['/profile', $base.'-admin'],
         ['/mfa-challenge', $base.'-admin'],
+        ['/users', $base.'-admin'],
+        ['/users/1', $base.'-admin'],
     ];
 
     foreach ($cases as [$path, $expectedCookie]) {

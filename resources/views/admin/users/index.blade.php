@@ -1,5 +1,5 @@
-<x-admin-layout title="{{ __('app.Users') }}">
-    @section('page_header', __('app.Users'))
+<x-admin-layout title="{{ __('users.administration') }}">
+    @section('page_header', __('users.administration'))
 
         <div class="enterprise-page">
             <div class="enterprise-header">
@@ -17,9 +17,9 @@
                 <x-ui.input name="q" value="{{ request('q','') }}" placeholder="{{ __('app.Search') }}..."
                     class="w-full md:w-80" />
                 <x-ui.select name="status" class="w-full md:w-52">
-                    <option value="">{{ __('app.All statuses') }}</option>
-                    <option value="active" @selected(request('status')==='active' )>{{ __('app.Active') }}</option>
-                    <option value="inactive" @selected(request('status')==='inactive' )>{{ __('app.Inactive') }}</option>
+                    <option value="">{{ __('users.all_statuses') }}</option>
+                    <option value="active" @selected(request('status')==='active' )>{{ __('users.active') }}</option>
+                    <option value="inactive" @selected(request('status')==='inactive' )>{{ __('users.inactive') }}</option>
                 </x-ui.select>
             </div>
             <x-ui.actions>
@@ -33,13 +33,13 @@
         <x-ui.table>
             <x-slot name="head">
                 <tr>
-                    <th>User</th>
-                    <th>Email</th>
-                    <th>Roles</th>
-                    <th>Status</th>
-                    <th>Verified</th>
-                    <th>Created</th>
-                    <th>Actions</th>
+                    <th>{{ __('users.user') }}</th>
+                    <th>{{ __('users.email') }}</th>
+                    <th>{{ __('users.roles') }}</th>
+                    <th>{{ __('users.status') }}</th>
+                    <th>{{ __('users.verified_column') }}</th>
+                    <th>{{ __('users.created') }}</th>
+                    <th>{{ __('users.actions') }}</th>
                 </tr>
             </x-slot>
             <x-slot name="body">
@@ -48,7 +48,7 @@
                             <td>
                                 <div class="flex items-center gap-3">
                                     @if($u->avatar_url)
-                                    <img src="{{ $u->avatar_url }}" class="h-9 w-9 rounded-full object-cover border border-slate-200" alt="{{ __('app.Avatar') }}">
+                                    <img src="{{ $u->avatar_url }}" class="h-9 w-9 rounded-full object-cover border border-slate-200" alt="{{ __('users.avatar') }}">
                                     @else
                                     <div class="h-9 w-9 rounded-full bg-blue-100 text-blue-700 grid place-items-center text-xs font-semibold border border-blue-200">
                                         {{ strtoupper(substr($u->name ?? 'U',0,1)) }}
@@ -69,7 +69,7 @@
                             </td>
                             <td>
                                 <x-ui.badge :type="$u->status === 'active' ? 'success' : 'neutral'">
-                                    {{ ucfirst($u->status) }}
+                                    {{ $u->status === 'active' ? __('users.active') : __('users.inactive') }}
                                 </x-ui.badge>
                             </td>
                             <td>
@@ -80,8 +80,8 @@
                             <td class="text-slate-600">{{ \App\Support\EthiopianDate::format($u->created_at) }}</td>
                             <td>
                                 <x-ui.actions>
-                                    <x-ui.button :href="route('users.show', $u)" variant="secondary" size="sm">{{ __('app.View') }}</x-ui.button>
-                                    <x-ui.button :href="route('users.edit', $u)" size="sm">{{ __('permissions.index.edit') }}</x-ui.button>
+                                    <x-ui.button :href="route('users.show', $u)" variant="secondary" size="sm">{{ __('users.view_profile') }}</x-ui.button>
+                                    <x-ui.button :href="route('users.edit', $u)" size="sm">{{ __('users.edit_profile') }}</x-ui.button>
                                     <form method="POST" action="{{ route('users.destroy',$u) }}"
                                         onsubmit="return confirm(@js(__('users.delete_user_confirm')))">
                                         @csrf @method('DELETE')

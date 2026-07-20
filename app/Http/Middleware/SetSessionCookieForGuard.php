@@ -59,6 +59,8 @@ class SetSessionCookieForGuard
             'mfa/*',
             'mfa-challenge',
             'mfa-challenge/*',
+            'users',
+            'users/*',
             'admin',
             'admin/*',
         );
