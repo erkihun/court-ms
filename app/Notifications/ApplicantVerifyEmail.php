@@ -3,12 +3,13 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Notifications\Notification;
-use Illuminate\Notifications\Messages\MailMessage;
 
-class ApplicantVerifyEmail extends Notification
+class ApplicantVerifyEmail extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -23,7 +24,7 @@ class ApplicantVerifyEmail extends Notification
             'applicant.verification.verify',               // <-- matches your routes
             Carbon::now()->addMinutes(60),
             [
-                'id'   => $notifiable->getKey(),
+                'id' => $notifiable->getKey(),
                 'hash' => sha1($notifiable->getEmailForVerification()),
             ]
         );
@@ -33,7 +34,7 @@ class ApplicantVerifyEmail extends Notification
     {
         return (new MailMessage)
             ->subject('Verify your email address')
-            ->greeting('Hello ' . ($notifiable->full_name ?? 'Applicant'))
+            ->greeting('Hello '.($notifiable->full_name ?? 'Applicant'))
             ->line('Please verify your email to access the applicant portal.')
             ->action('Verify Email', $this->verificationUrl($notifiable))
             ->line('If you did not create an account, no further action is required.');
