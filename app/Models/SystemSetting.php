@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\EncryptedOrPlain;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use OwenIt\Auditing\Auditable;
@@ -68,7 +69,7 @@ class SystemSetting extends Model implements AuditableContract
         'api_enabled' => 'boolean',
         'mail_enabled' => 'boolean',
         'mail_port' => 'integer',
-        'mail_password' => 'encrypted',
+        'mail_password' => EncryptedOrPlain::class,
         'telegram_enabled' => 'boolean',
         'sms_enabled' => 'boolean',
         'session_lifetime' => 'integer',
