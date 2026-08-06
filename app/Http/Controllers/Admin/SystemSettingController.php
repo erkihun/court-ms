@@ -126,13 +126,20 @@ class SystemSettingController extends Controller
             'session_warning_minutes', 'audit_retention_days',
             'login_max_attempts', 'lockout_minutes',
             'accent_palette', 'default_theme', 'custom_css', 'api_rate_limit',
-            'mail_mailer', 'mail_host', 'mail_port', 'mail_username', 'mail_password',
+            'mail_mailer', 'mail_host', 'mail_port', 'mail_username',
             'mail_encryption', 'mail_from_address', 'mail_from_name',
             'telegram_bot_token', 'telegram_default_chat_id',
             'sms_provider', 'sms_api_key', 'sms_api_secret', 'sms_sender_id', 'sms_base_url',
         ];
         foreach ($scalar as $field) {
             $settings->$field = $data[$field] ?? null;
+        }
+
+        // The SMTP password is never rendered back into the form, so an empty
+        // submission means "leave it alone" rather than "clear it". Only touch
+        // the stored value when a new one is actually supplied.
+        if (filled($data['mail_password'] ?? null)) {
+            $settings->mail_password = $data['mail_password'];
         }
 
         // Boolean fields (unchecked checkboxes are absent from request)

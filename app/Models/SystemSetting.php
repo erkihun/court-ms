@@ -68,6 +68,7 @@ class SystemSetting extends Model implements AuditableContract
         'api_enabled' => 'boolean',
         'mail_enabled' => 'boolean',
         'mail_port' => 'integer',
+        'mail_password' => 'encrypted',
         'telegram_enabled' => 'boolean',
         'sms_enabled' => 'boolean',
         'session_lifetime' => 'integer',
