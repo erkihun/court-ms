@@ -42,7 +42,16 @@ test('legacy session cookies present on the request are expired', function () {
         'app-session-admin' => 'keep',
     ]);
 
-    foreach (['-session', '-session-admin', '-session-applicant', 'pscourt-session-admin'] as $stale) {
+    // Only assert on names that are actually retired: SESSION_COOKIE decides
+    // whether "pscourt-session*" is legacy or the live cookie.
+    $retired = array_intersect(
+        ['-session', '-session-admin', '-session-applicant', 'pscourt-session-admin'],
+        PurgeLegacySessionCookies::legacyNames(),
+    );
+
+    expect($retired)->not->toBeEmpty();
+
+    foreach ($retired as $stale) {
         $forgotten = emittedNamed($sent, $stale)->first();
 
         expect($forgotten)->not->toBeNull("expected {$stale} to be expired")
@@ -78,6 +87,48 @@ test('nothing is emitted when no legacy cookies are present', function () {
     expect(purgeWithCookies(['app-session-admin' => 'live']))->toBeEmpty();
 });
 
+test('the configured session cookie is never exempted from encryption', function () {
+    // Exempting a live cookie would put the raw session id on the wire.
+    // Production hit exactly this when SESSION_COOKIE=pscourt-session was set
+    // while "pscourt-session" was still listed as a retired name.
+    $active = trim((string) env('SESSION_COOKIE', ''), '-');
+
+    if ($active === '') {
+        // Nothing configured: every legacy base is safe to exempt.
+        expect(PurgeLegacySessionCookies::legacyNames())->toContain('pscourt-session');
+
+        return;
+    }
+
+    $legacy = PurgeLegacySessionCookies::legacyNames();
+
+    foreach ([$active, $active.'-admin', $active.'-applicant'] as $live) {
+        expect($legacy)->not->toContain($live);
+    }
+})->skip(
+    fn () => trim((string) env('SESSION_COOKIE', ''), '-') === '',
+    'requires SESSION_COOKIE to be configured',
+);
+
+test('a legacy base that becomes the active cookie drops out of the exempt list', function () {
+    // Simulates SESSION_COOKIE=pscourt-session, which is production's setting.
+    putenv('SESSION_COOKIE=pscourt-session');
+    $_ENV['SESSION_COOKIE'] = 'pscourt-session';
+
+    try {
+        $legacy = PurgeLegacySessionCookies::legacyNames();
+
+        expect($legacy)->not->toContain('pscourt-session')
+            ->not->toContain('pscourt-session-admin')
+            ->not->toContain('pscourt-session-applicant')
+            // The genuinely dead names are still purged.
+            ->toContain('-session-admin');
+    } finally {
+        putenv('SESSION_COOKIE');
+        unset($_ENV['SESSION_COOKIE']);
+    }
+});
+
 test('deletes survive the encryption layer in the real web stack', function () {
     $response = $this->withUnencryptedCookies([
         '-session-admin' => 'stale',
@@ -86,7 +137,12 @@ test('deletes survive the encryption layer in the real web stack', function () {
 
     $cookies = $response->baseResponse->headers->getCookies();
 
-    foreach (['-session-admin', 'pscourt-session-admin'] as $stale) {
+    $retired = array_intersect(
+        ['-session-admin', 'pscourt-session-admin'],
+        PurgeLegacySessionCookies::legacyNames(),
+    );
+
+    foreach ($retired as $stale) {
         $deletes = emittedNamed($cookies, $stale);
 
         expect($deletes)->not->toBeEmpty("expected {$stale} to be deleted");

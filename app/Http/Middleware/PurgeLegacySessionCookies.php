@@ -43,13 +43,25 @@ class PurgeLegacySessionCookies
     /**
      * Every retired cookie name, including the per-portal suffixes.
      *
+     * The base the app is currently configured to issue is always excluded:
+     * whichever name SESSION_COOKIE resolves to is live, and exempting a live
+     * cookie from encryption would transmit the session id in cleartext.
+     *
      * @return list<string>
      */
     public static function legacyNames(): array
     {
+        // Read from env, not config(): this is called from bootstrap/app.php
+        // while building the middleware stack, before config is loaded.
+        $active = trim((string) env('SESSION_COOKIE', ''), '-');
+
         $names = [];
 
         foreach (self::LEGACY_BASES as $base) {
+            if ($base === $active) {
+                continue;
+            }
+
             $names[] = $base;
             $names[] = $base.'-admin';
             $names[] = $base.'-applicant';
