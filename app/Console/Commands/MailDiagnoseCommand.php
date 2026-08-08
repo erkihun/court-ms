@@ -18,7 +18,9 @@ use Illuminate\Support\Facades\Mail;
  */
 class MailDiagnoseCommand extends Command
 {
-    protected $signature = 'mail:diagnose {--to= : Send a real test message to this address}';
+    protected $signature = 'mail:diagnose
+        {--to= : Send a real test message to this address}
+        {--no-probe : Skip the SMTP port connectivity checks}';
 
     protected $description = 'Check SMTP configuration and report the exact delivery error';
 
@@ -60,6 +62,10 @@ class MailDiagnoseCommand extends Command
             }
         }
 
+        if ($host !== '' && ! $this->option('no-probe')) {
+            $this->probeConnectivity($host);
+        }
+
         $to = $this->option('to');
 
         if (! $to) {
@@ -90,6 +96,41 @@ class MailDiagnoseCommand extends Command
         $this->line('  <fg=green>✓ sent successfully</>');
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Try each standard SMTP endpoint so the reachable one is obvious.
+     *
+     * Which ports are open depends on the server's network, not on config, so
+     * this has to run where the app runs.
+     */
+    private function probeConnectivity(string $host): void
+    {
+        $this->line('');
+        $this->line('<comment>Connectivity from this server</comment>');
+
+        $targets = [
+            ['tcp://'.$host.':25', 'port 25  — needs MAIL_SCHEME=smtp'],
+            ['tcp://'.$host.':587', 'port 587 — needs MAIL_SCHEME=smtp'],
+            ['ssl://'.$host.':465', 'port 465 — needs MAIL_SCHEME=smtps'],
+        ];
+
+        foreach ($targets as [$url, $label]) {
+            $stream = @stream_socket_client($url, $errno, $errstr, 8, STREAM_CLIENT_CONNECT);
+
+            if ($stream !== false) {
+                $banner = trim((string) @fgets($stream, 512));
+                fclose($stream);
+
+                $this->line('  <fg=green>✓</> '.$label.($banner !== '' ? '  ['.substr($banner, 0, 50).']' : ''));
+
+                continue;
+            }
+
+            $reason = trim((string) $errstr) !== '' ? trim((string) $errstr) : 'no route';
+
+            $this->line('  <fg=red>✗</> '.$label.'  ('.$reason.')');
+        }
     }
 
     /**
@@ -162,6 +203,13 @@ class MailDiagnoseCommand extends Command
 
         // Implicit TLS (465) and STARTTLS (587) are not interchangeable; the
         // wrong pairing hangs until MAIL_TIMEOUT and then throws.
+        // Port 25 is plaintext SMTP. "smtps" forces an implicit-TLS handshake
+        // (ssl://host:25), which the port does not speak — it hangs until
+        // MAIL_TIMEOUT and throws. This is production's current setting.
+        if ($port === 25 && $scheme === 'smtps') {
+            $problems[] = 'Port 25 with MAIL_SCHEME=smtps forces implicit TLS on a plaintext port — use MAIL_SCHEME=smtp.';
+        }
+
         if ($port === 465 && $scheme !== 'smtps') {
             $problems[] = 'Port 465 needs MAIL_SCHEME=smtps (implicit TLS). Current scheme: '.($scheme ?? 'null').'.';
         }
