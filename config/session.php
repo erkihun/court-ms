@@ -5,6 +5,21 @@ use Illuminate\Support\Str;
 $appUrl = (string) env('APP_URL', '');
 $appUsesHttps = $appUrl !== '' && Str::startsWith($appUrl, 'https://');
 
+// Derive a safe cookie name. Str::slug() returns an empty string for a
+// fully non-ASCII APP_NAME (the production name is Amharic), which would
+// otherwise produce the cookie name "-session" and, once suffixed by
+// SetSessionCookieForGuard, "-session-admin" / "-session-applicant".
+// A leading-dash cookie name is rejected or silently dropped by some
+// proxies and browsers, so the session — and any OTP stored in it —
+// is lost between the "send code" and "verify code" requests.
+$cookieSlug = Str::slug((string) env('APP_NAME', 'laravel'));
+
+if ($cookieSlug === '') {
+    $cookieSlug = 'app';
+}
+
+$sessionCookie = (string) env('SESSION_COOKIE', $cookieSlug.'-session');
+
 return [
 
     /*
@@ -130,15 +145,9 @@ return [
     |
     */
 
-    'cookie_base' => env(
-        'SESSION_COOKIE',
-        Str::slug((string) env('APP_NAME', 'laravel')).'-session'
-    ),
+    'cookie_base' => $sessionCookie,
 
-    'cookie' => env(
-        'SESSION_COOKIE',
-        Str::slug((string) env('APP_NAME', 'laravel')).'-session'
-    ),
+    'cookie' => $sessionCookie,
 
     /*
     |--------------------------------------------------------------------------

@@ -4,33 +4,12 @@ declare(strict_types=1);
 
 namespace App\Notifications;
 
-use App\Queue\Middleware\SkipExpiredOtp;
-use Carbon\CarbonImmutable;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-final class ApplicantEmailOtp extends Notification implements ShouldQueue
+final class ApplicantEmailOtp extends Notification
 {
-    use Queueable;
-
-    private readonly CarbonImmutable $expiresAt;
-
-    public function __construct(protected readonly string $code)
-    {
-        $this->expiresAt = CarbonImmutable::now()->addMinutes(10);
-    }
-
-    /**
-     * Do not deliver a verification code after its matching session state has expired.
-     *
-     * @return array<int, SkipExpiredOtp>
-     */
-    public function middleware(mixed $notifiable, string $channel): array
-    {
-        return [new SkipExpiredOtp($this->expiresAt)];
-    }
+    public function __construct(protected readonly string $code) {}
 
     public function via($notifiable): array
     {

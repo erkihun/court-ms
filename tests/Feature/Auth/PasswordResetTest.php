@@ -2,8 +2,11 @@
 
 use App\Models\User;
 use App\Notifications\PasswordResetOtp;
+use Illuminate\Notifications\SendQueuedNotifications;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Queue;
 
 // Staff password recovery is a custom OTP flow (PasswordResetLinkController /
 // NewPasswordController), not Breeze's default token-link + ResetPassword notification.
@@ -23,6 +26,18 @@ test('requesting a reset code emails an OTP and redirects to the otp screen', fu
         ->assertRedirect(route('admin.password.otp.show'));
 
     Notification::assertSentTo($user, PasswordResetOtp::class);
+});
+
+test('requesting a reset code bypasses the queue', function () {
+    Mail::fake();
+    Queue::fake();
+
+    $user = User::factory()->create();
+
+    $this->post('/forgot-password', ['email' => $user->email])
+        ->assertRedirect(route('admin.password.otp.show'));
+
+    Queue::assertNotPushed(SendQueuedNotifications::class);
 });
 
 test('unknown email is rejected on the forgot-password form', function () {

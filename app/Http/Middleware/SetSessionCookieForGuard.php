@@ -13,25 +13,29 @@ class SetSessionCookieForGuard
      *
      * This runs before StartSession so the correct cookie is read/written.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $base = config('session.cookie_base', config('session.cookie'));
+        $base = (string) config('session.cookie_base', config('session.cookie'));
 
-        if ($base) {
-            $adminCookie = $base . '-admin';
-            $applicantCookie = $base . '-applicant';
+        // Never build a cookie name off an empty or dash-leading base: browsers
+        // and proxies may drop it, which silently destroys the session that
+        // holds pending OTP codes between the send and verify requests.
+        $base = trim($base, '-');
 
-            // The respondent portal uses the applicant guard, so both portal
-            // modes intentionally share the applicant session cookie.
-            if ($this->isAdminPath($request)) {
-                config(['session.cookie' => $adminCookie]);
-            } elseif ($request->is('applicant', 'applicant/*', 'respondent', 'respondent/*')) {
-                config(['session.cookie' => $base . '-applicant']);
-            } else {
-                config(['session.cookie' => $base]);
-            }
+        if ($base === '') {
+            $base = 'app-session';
+        }
+
+        // The respondent portal uses the applicant guard, so both portal
+        // modes intentionally share the applicant session cookie.
+        if ($this->isAdminPath($request)) {
+            config(['session.cookie' => $base.'-admin']);
+        } elseif ($request->is('applicant', 'applicant/*', 'respondent', 'respondent/*')) {
+            config(['session.cookie' => $base.'-applicant']);
+        } else {
+            config(['session.cookie' => $base]);
         }
 
         return $next($request);
