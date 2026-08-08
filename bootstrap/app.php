@@ -1,24 +1,39 @@
 <?php
 
+use App\Http\Middleware\ActAsRespondent;
+use App\Http\Middleware\AddSecurityHeaders;
+use App\Http\Middleware\AdminOnly;
+use App\Http\Middleware\AdminSessionTimeout;
+use App\Http\Middleware\AssignRequestId;
+use App\Http\Middleware\Authenticate;
+use App\Http\Middleware\CaptureClientHints;
+use App\Http\Middleware\EnforceSystemAvailability;
+use App\Http\Middleware\EnsureMfaIsVerified;
+use App\Http\Middleware\ForceHttps;
+use App\Http\Middleware\ForcePasswordChange;
+use App\Http\Middleware\PurgeLegacySessionCookies;
+use App\Http\Middleware\RedirectIfAuthenticated;
+use App\Http\Middleware\RequirePermission;
+use App\Http\Middleware\RequireRole;
+use App\Http\Middleware\SetSessionCookieForGuard;
+use App\Http\Middleware\SystemAuditMiddleware;
+use App\Http\Middleware\UseGuard;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Auth\AuthenticationException;
-use Illuminate\Http\Request;
 use Illuminate\Http\Exceptions\PostTooLargeException;
+use Illuminate\Http\Request;
 use Illuminate\Session\TokenMismatchException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
-use App\Http\Middleware\AddSecurityHeaders;
-use App\Http\Middleware\AssignRequestId;
-use App\Http\Middleware\Authenticate;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         channels: __DIR__.'/../routes/channels.php',
-        web: __DIR__ . '/../routes/web.php',
-        api: __DIR__ . '/../routes/api.php',
-        commands: __DIR__ . '/../routes/console.php',
+        web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
+        commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
@@ -40,26 +55,38 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Add/keep your other aliases here too
         $middleware->alias([
-            'auth'                  => Authenticate::class,
-            'guest'                 => \App\Http\Middleware\RedirectIfAuthenticated::class,
-            'force.password.change' => \App\Http\Middleware\ForcePasswordChange::class,
-            'admin.only'            => \App\Http\Middleware\AdminOnly::class,
-            'perm'                  => \App\Http\Middleware\RequirePermission::class,
-            'role'                  => \App\Http\Middleware\RequireRole::class,
-            'audit'                 => \App\Http\Middleware\SystemAuditMiddleware::class,
-            'act.respondent'        => \App\Http\Middleware\ActAsRespondent::class,
-            'use.guard'             => \App\Http\Middleware\UseGuard::class,
-            'mfa'                   => \App\Http\Middleware\EnsureMfaIsVerified::class,
+            'auth' => Authenticate::class,
+            'guest' => RedirectIfAuthenticated::class,
+            'force.password.change' => ForcePasswordChange::class,
+            'admin.only' => AdminOnly::class,
+            'perm' => RequirePermission::class,
+            'role' => RequireRole::class,
+            'audit' => SystemAuditMiddleware::class,
+            'act.respondent' => ActAsRespondent::class,
+            'use.guard' => UseGuard::class,
+            'mfa' => EnsureMfaIsVerified::class,
         ]);
 
-        $middleware->prependToGroup('web', \App\Http\Middleware\SetSessionCookieForGuard::class);
-        $middleware->prependToGroup('web', \App\Http\Middleware\AdminSessionTimeout::class);
-        $middleware->appendToGroup('web', \App\Http\Middleware\EnforceSystemAvailability::class);
-        $middleware->appendToGroup('web', \App\Http\Middleware\ForceHttps::class);
-        $middleware->appendToGroup('web', \App\Http\Middleware\CaptureClientHints::class);
-        $middleware->appendToGroup('web', \App\Http\Middleware\EnsureMfaIsVerified::class);
-        $middleware->appendToGroup('web', \App\Http\Middleware\SystemAuditMiddleware::class);
-        $middleware->appendToGroup('api', \App\Http\Middleware\SystemAuditMiddleware::class);
+        $middleware->prependToGroup('web', SetSessionCookieForGuard::class);
+
+        // Retires session cookies from earlier naming generations. Temporary —
+        // remove (with the encryption exemption below) once live traffic no
+        // longer carries the legacy names.
+        $middleware->appendToGroup('web', PurgeLegacySessionCookies::class);
+
+        // The delete cookies carry an empty value on purpose. Without this,
+        // EncryptCookies rewrites them into fresh encrypted payloads and the
+        // browser keeps the stale cookie instead of dropping it.
+        $middleware->encryptCookies(
+            except: PurgeLegacySessionCookies::legacyNames(),
+        );
+        $middleware->prependToGroup('web', AdminSessionTimeout::class);
+        $middleware->appendToGroup('web', EnforceSystemAvailability::class);
+        $middleware->appendToGroup('web', ForceHttps::class);
+        $middleware->appendToGroup('web', CaptureClientHints::class);
+        $middleware->appendToGroup('web', EnsureMfaIsVerified::class);
+        $middleware->appendToGroup('web', SystemAuditMiddleware::class);
+        $middleware->appendToGroup('api', SystemAuditMiddleware::class);
 
         // If you ever need global middleware:
         // $middleware->append(\App\Http\Middleware\SomethingGlobal::class);
@@ -110,7 +137,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->with('error', 'Session expired. Please sign in again.');
         });
 
-        $exceptions->render(function (\Throwable $e, $request) {
+        $exceptions->render(function (Throwable $e, $request) {
             // Preserve default handling for common non-500 flows.
             if ($e instanceof ValidationException || $e instanceof AuthenticationException) {
                 return null;
