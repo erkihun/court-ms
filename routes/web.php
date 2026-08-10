@@ -427,6 +427,10 @@ Route::middleware(SetLocale::class)->group(function () {
                 ->middleware('perm:settings.manage')
                 ->name('settings.system.clearCache');
 
+            Route::post('/settings/system/test-smtp', [SystemSettingController::class, 'testSmtp'])
+                ->middleware('perm:settings.manage')
+                ->name('settings.system.testSmtp');
+
             Route::post('/settings/system/database-backup', [SystemSettingController::class, 'downloadDatabaseBackup'])
                 ->middleware('perm:settings.manage')
                 ->name('settings.system.databaseBackup');

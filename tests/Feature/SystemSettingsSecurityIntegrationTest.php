@@ -6,6 +6,10 @@ use App\Models\Role;
 use App\Models\SystemSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Notifications\SendQueuedNotifications;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Queue;
 
 uses(RefreshDatabase::class);
 
@@ -22,7 +26,7 @@ test('a poisoned system_settings cache key self-heals instead of crashing', func
     SystemSetting::query()->create(['app_name' => 'Court MS', 'maintenance_mode' => false]);
 
     // Simulate the old bug: a scalar cached under the shared settings key.
-    \Illuminate\Support\Facades\Cache::put('system_settings', false, 3600);
+    Cache::put('system_settings', false, 3600);
 
     $user = User::factory()->create(['must_change_password' => false]);
 
@@ -61,6 +65,57 @@ test('security tab displays live integrated protection status', function () {
         ->assertSee(__('settings.password_strength'));
 
     expect(config('session.lifetime'))->toBe(45);
+});
+
+test('saved SMTP password is never rendered into the settings page', function () {
+    SystemSetting::query()->create([
+        'app_name' => 'Court MS',
+        'mail_enabled' => true,
+        'mail_host' => 'smtp.example.test',
+        'mail_password' => 'smtp-secret-value',
+    ]);
+
+    $this->actingAs(systemSettingsAdministrator())
+        ->get(route('settings.system.edit', ['tab' => 'notifications']))
+        ->assertOk()
+        ->assertDontSee('smtp-secret-value', false);
+});
+
+test('SMTP secrets are not flashed back after validation errors', function () {
+    SystemSetting::query()->create(['app_name' => 'Court MS']);
+
+    $this->actingAs(systemSettingsAdministrator())
+        ->from(route('settings.system.edit', ['tab' => 'notifications']))
+        ->post(route('settings.system.update'), [
+            'app_name' => '',
+            'mail_password' => 'smtp-secret-value',
+        ])
+        ->assertSessionHasErrors('app_name');
+
+    expect(session()->getOldInput('mail_password'))->toBeNull();
+});
+
+test('authorized administrator can send a synchronous SMTP diagnostic email', function () {
+    Mail::fake();
+    Queue::fake();
+
+    SystemSetting::query()->create(['app_name' => 'Court MS']);
+
+    $this->actingAs(systemSettingsAdministrator())
+        ->post(route('settings.system.testSmtp'), ['recipient' => 'admin@example.test'])
+        ->assertRedirect(route('settings.system.edit', ['tab' => 'notifications']))
+        ->assertSessionHasNoErrors();
+
+    Mail::assertOutgoingCount(1);
+    Queue::assertNotPushed(SendQueuedNotifications::class);
+});
+
+test('SMTP diagnostic endpoint requires settings permission', function () {
+    $user = User::factory()->create(['must_change_password' => false]);
+
+    $this->actingAs($user)
+        ->post(route('settings.system.testSmtp'), ['recipient' => 'admin@example.test'])
+        ->assertRedirect(route('dashboard'));
 });
 
 test('closed registration setting blocks applicant self registration', function () {

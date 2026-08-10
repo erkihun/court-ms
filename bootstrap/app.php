@@ -92,6 +92,13 @@ return Application::configure(basePath: dirname(__DIR__))
         // $middleware->append(\App\Http\Middleware\SomethingGlobal::class);
     })
     ->withExceptions(function ($exceptions) {
+        $exceptions->dontFlash([
+            'mail_password',
+            'telegram_bot_token',
+            'sms_api_key',
+            'sms_api_secret',
+        ]);
+
         $exceptions->render(function (PostTooLargeException $e, $request) {
             $limit = (string) (ini_get('post_max_size') ?: 'server limit');
             $message = "Upload is too large for the server limit ({$limit}). Reduce file size/quantity and try again.";

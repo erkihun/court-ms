@@ -1,9 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Admin;
 
 use App\Actions\Admin\CreateDatabaseBackupAction;
+use App\Actions\Admin\SendSmtpTestEmail;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\TestSmtpRequest;
 use App\Http\Requests\Admin\UpdateSystemSettingRequest;
 use App\Models\Role;
 use App\Models\SystemSetting;
@@ -12,9 +16,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Throwable;
 
 class SystemSettingController extends Controller
 {
@@ -191,16 +197,47 @@ class SystemSettingController extends Controller
         Cache::forget('system_settings');
         try {
             Artisan::call('cache:clear');
-        } catch (\Throwable) {
+        } catch (Throwable) {
         }
         try {
             Artisan::call('view:clear');
-        } catch (\Throwable) {
+        } catch (Throwable) {
         }
 
         return redirect()
             ->route('settings.system.edit', ['tab' => $this->activeTab($request)])
             ->with('ok', ['key' => 'Cache cleared successfully.']);
+    }
+
+    public function testSmtp(TestSmtpRequest $request, SendSmtpTestEmail $sendTestEmail): RedirectResponse
+    {
+        $recipient = $request->validated('recipient');
+
+        try {
+            $sendTestEmail->execute($recipient);
+        } catch (Throwable $exception) {
+            Log::warning('SMTP diagnostic email failed', [
+                'user_id' => $request->user()?->getAuthIdentifier(),
+                'mailer' => config('mail.default'),
+                'host' => config('mail.mailers.smtp.host'),
+                'port' => config('mail.mailers.smtp.port'),
+                'scheme' => config('mail.mailers.smtp.scheme'),
+                'exception' => $exception::class,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return redirect()
+                ->route('settings.system.edit', ['tab' => 'notifications'])
+                ->withErrors(['smtp_test' => $this->smtpFailureMessage($exception)])
+                ->withInput(['recipient' => $recipient]);
+        }
+
+        return redirect()
+            ->route('settings.system.edit', ['tab' => 'notifications'])
+            ->with('ok', [
+                'key' => 'settings.smtp_test_sent',
+                'replace' => ['email' => $recipient],
+            ]);
     }
 
     private function activeTab(Request $request): string
@@ -209,6 +246,18 @@ class SystemSettingController extends Controller
         $valid = ['general', 'branding', 'localization', 'security', 'appearance', 'notifications', 'data', 'api'];
 
         return in_array($tab, $valid, true) ? $tab : 'general';
+    }
+
+    private function smtpFailureMessage(Throwable $exception): string
+    {
+        $message = strtolower($exception->getMessage());
+
+        return match (true) {
+            str_contains($message, 'authenticate'), str_contains($message, '535') => __('settings.smtp_test_auth_failed'),
+            str_contains($message, 'connect'), str_contains($message, 'timed out'), str_contains($message, 'timeout') => __('settings.smtp_test_connection_failed'),
+            str_contains($message, 'certificate'), str_contains($message, 'tls'), str_contains($message, 'ssl') => __('settings.smtp_test_tls_failed'),
+            default => __('settings.smtp_test_failed'),
+        };
     }
 
     public function downloadDatabaseBackup(Request $request, CreateDatabaseBackupAction $backup): StreamedResponse
@@ -262,7 +311,7 @@ class SystemSettingController extends Controller
             }
 
             return count(Schema::getTables());
-        } catch (\Throwable) {
+        } catch (Throwable) {
             return 0;
         }
     }
@@ -280,7 +329,7 @@ class SystemSettingController extends Controller
             };
 
             return $bytes === null ? null : $this->humanBytes($bytes);
-        } catch (\Throwable) {
+        } catch (Throwable) {
             return null;
         }
     }
@@ -303,7 +352,7 @@ class SystemSettingController extends Controller
             return Schema::hasTable('migrations')
                 ? (int) DB::table('migrations')->max('batch')
                 : null;
-        } catch (\Throwable) {
+        } catch (Throwable) {
             return null;
         }
     }

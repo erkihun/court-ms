@@ -759,7 +759,7 @@ $activeTab = in_array($requestedTab, $tabKeys, true) ? $requestedTab : 'general'
                     <label class="ss-label">{{ __('settings.mail_password') }}</label>
                     <div class="ss-pw-wrap" x-data="{show:false}">
                         <input :type="show?'text':'password'" name="mail_password"
-                               value="{{ old('mail_password',$s->mail_password) }}"
+                               value=""
                                class="ss-input" placeholder="••••••••••••" autocomplete="new-password">
                         <button type="button" class="ss-pw-toggle" @click="show=!show" :title="show?'Hide':'Show'">
                             <svg x-show="!show" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
@@ -775,6 +775,24 @@ $activeTab = in_array($requestedTab, $tabKeys, true) ? $requestedTab : 'general'
                 <div>
                     <label class="ss-label">{{ __('settings.from_name') }}</label>
                     <input name="mail_from_name" value="{{ old('mail_from_name',$s->mail_from_name??$s->app_name) }}" class="ss-input" placeholder="{{ $s->app_name ?? config('app.name') }}">
+                </div>
+                <div class="md:col-span-2 rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] p-4">
+                    <div class="grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
+                        <div>
+                            <label class="ss-label">{{ __('settings.smtp_test_recipient') }}</label>
+                            <input type="email" name="recipient" form="ss-smtp-test-form"
+                                   value="{{ old('recipient', auth()->user()?->email) }}"
+                                   class="ss-input" autocomplete="email">
+                            <p class="ss-hint mt-1">{{ __('settings.smtp_test_hint', [
+                                'host' => config('mail.mailers.smtp.host'),
+                                'port' => config('mail.mailers.smtp.port'),
+                                'scheme' => config('mail.mailers.smtp.scheme') ?: 'auto',
+                            ]) }}</p>
+                        </div>
+                        <button type="submit" form="ss-smtp-test-form" class="cs-btn-secondary px-4 py-2 text-xs">
+                            {{ __('settings.smtp_test_send') }}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1062,6 +1080,7 @@ $activeTab = in_array($requestedTab, $tabKeys, true) ? $requestedTab : 'general'
 
     {{-- Standalone clear-cache form (outside main form — no nesting) --}}
     <form id="ss-clear-cache-form" method="POST" action="{{ route('settings.system.clearCache') }}">@csrf<input type="hidden" name="tab" :value="tab"></form>
+    <form id="ss-smtp-test-form" method="POST" action="{{ route('settings.system.testSmtp') }}">@csrf</form>
     <form id="ss-database-backup-form" method="POST" action="{{ route('settings.system.databaseBackup') }}">@csrf</form>
 
 </div>
