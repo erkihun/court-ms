@@ -42,7 +42,7 @@ class ApplicantVerificationController extends Controller
         if (! session('email_otp') || now()->timestamp > session('email_otp_expires_at', 0)) {
             try {
                 $otp = $this->generateOtp();
-                $user->notify(new ApplicantEmailOtp($otp));
+                $user->notifyNow(new ApplicantEmailOtp($otp));
             } catch (\Throwable $e) {
                 // The code was never delivered — clear it so the next visit retries
                 // instead of silently skipping for the whole TTL window.
@@ -69,7 +69,7 @@ class ApplicantVerificationController extends Controller
 
         try {
             $otp = $this->generateOtp();
-            $user->notify(new ApplicantEmailOtp($otp));
+            $user->notifyNow(new ApplicantEmailOtp($otp));
 
             return back()->with('success', __('auth.verification_code_sent_to_email'));
         } catch (\Throwable $e) {
@@ -206,7 +206,7 @@ class ApplicantVerificationController extends Controller
 
         try {
             Notification::route('mail', $pending['email'])
-                ->notify(new ApplicantEmailOtp($otp));
+                ->notifyNow(new ApplicantEmailOtp($otp));
         } catch (\Throwable $e) {
             Log::error('[Register] OTP resend failed: '.$e->getMessage());
 

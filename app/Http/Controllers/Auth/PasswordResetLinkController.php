@@ -43,7 +43,7 @@ class PasswordResetLinkController extends Controller
         ]);
 
         try {
-            $user->notify(new PasswordResetOtp($otp));
+            $user->notifyNow(new PasswordResetOtp($otp));
         } catch (\Throwable $e) {
             session()->forget(['admin_pwd_otp_email', 'admin_pwd_otp_code', 'admin_pwd_otp_expires']);
 
@@ -126,7 +126,7 @@ class PasswordResetLinkController extends Controller
             ]);
 
             try {
-                $user->notify(new PasswordResetOtp($otp));
+                $user->notifyNow(new PasswordResetOtp($otp));
             } catch (\Throwable $e) {
                 Log::warning('Admin password reset OTP resend failed', [
                     'email' => $email,

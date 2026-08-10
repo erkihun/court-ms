@@ -83,7 +83,7 @@ class ApplicantAuthController extends Controller
 
         try {
             Notification::route('mail', $data['email'])
-                ->notify(new ApplicantEmailOtp($otp));
+                ->notifyNow(new ApplicantEmailOtp($otp));
         } catch (\Throwable $e) {
             Log::error('[Register] OTP send failed: '.$e->getMessage());
 

@@ -45,7 +45,7 @@ class ApplicantPasswordController extends Controller
         ]);
 
         try {
-            $applicant->notify(new PasswordResetOtp($otp));
+            $applicant->notifyNow(new PasswordResetOtp($otp));
         } catch (\Throwable $e) {
             session()->forget([
                 'applicant_pwd_otp_email',
@@ -131,7 +131,7 @@ class ApplicantPasswordController extends Controller
             ]);
 
             try {
-                $applicant->notify(new PasswordResetOtp($otp));
+                $applicant->notifyNow(new PasswordResetOtp($otp));
             } catch (\Throwable $e) {
                 session()->forget([
                     'applicant_pwd_otp_email',
