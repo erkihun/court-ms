@@ -1,76 +1,76 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\Admin\AboutController;
+use App\Http\Controllers\Admin\ActiveSessionController;
+use App\Http\Controllers\Admin\AdminNotificationController;
+use App\Http\Controllers\Admin\AnnouncementController;
+use App\Http\Controllers\Admin\AppealController;
 // Applicant-facing controllers
+use App\Http\Controllers\Admin\ApplicantController;
+use App\Http\Controllers\Admin\AuditController;
+use App\Http\Controllers\Admin\BenchNoteController;
+use App\Http\Controllers\Admin\CaseController;
+use App\Http\Controllers\Admin\CaseInspectionFindingController;
+use App\Http\Controllers\Admin\CaseInspectionRequestController;
+use App\Http\Controllers\Admin\CaseTypeController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\DecisionController;
+use App\Http\Controllers\Admin\DecisionTemplateController;
+use App\Http\Controllers\Admin\HearingController;
+use App\Http\Controllers\Admin\LandingPageController;
+use App\Http\Controllers\Admin\LanguageController;
+use App\Http\Controllers\Admin\LetterCategoryController;
+use App\Http\Controllers\Admin\LetterComposerController;
+use App\Http\Controllers\Admin\LetterController;
+// Admin-facing controllers
+use App\Http\Controllers\Admin\LetterTemplateController;
+use App\Http\Controllers\Admin\PerformanceEvaluationController;
+use App\Http\Controllers\Admin\PerformanceEvaluationSettingController;
+use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
+use App\Http\Controllers\Admin\RecordController;
+use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\RolesController;
+use App\Http\Controllers\Admin\SystemSettingController;
+use App\Http\Controllers\Admin\TeamController;
+use App\Http\Controllers\Admin\TermsAndConditionsController;
+use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Applicant\ApplicantAuthController;
 use App\Http\Controllers\Applicant\ApplicantCaseController;
 use App\Http\Controllers\Applicant\ApplicantDashboardController;
+use App\Http\Controllers\Applicant\ApplicantNotificationController;
+use App\Http\Controllers\Applicant\ApplicantPasswordController;
 use App\Http\Controllers\Applicant\ApplicantProfileController;
 use App\Http\Controllers\Applicant\ApplicantResponseReplyController;
 use App\Http\Controllers\Applicant\ApplicantRoleSwitchController;
-use App\Http\Controllers\Applicant\ApplicantNotificationController;
-use App\Http\Controllers\Applicant\ApplicantPasswordController;
 use App\Http\Controllers\Applicant\ApplicantSessionController;
 use App\Http\Controllers\Applicant\ApplicantVerificationController;
+use App\Http\Controllers\Auth\MfaChallengeController;
+use App\Http\Controllers\Auth\MfaController;
+use App\Http\Controllers\PublicSignageController;
+use App\Http\Controllers\Respondent\CaseSearchController;
+use App\Http\Controllers\Respondent\DashboardController as RespondentDashboardController;
+use App\Http\Controllers\Respondent\NotificationController as RespondentNotificationController;
 use App\Http\Controllers\Respondent\RespondentAuthController;
 use App\Http\Controllers\Respondent\ResponseController;
 use App\Http\Controllers\Respondent\ResponseReplyController;
-use App\Http\Controllers\Respondent\DashboardController as RespondentDashboardController;
-use App\Http\Controllers\Respondent\CaseSearchController;
-use App\Http\Controllers\Respondent\NotificationController as RespondentNotificationController;
-
-// Admin-facing controllers
-use App\Http\Controllers\Admin\ApplicantController;
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\ReportController;
-use App\Http\Controllers\Admin\TeamController;
-use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
-use App\Http\Controllers\Admin\UsersController;
-use App\Http\Controllers\Admin\RolesController;
-use App\Http\Controllers\Admin\CaseController;
-use App\Http\Controllers\Admin\BenchNoteController;
-use App\Http\Controllers\Admin\AdminNotificationController;
-use App\Http\Controllers\Admin\AppealController;
-use App\Http\Controllers\Admin\LanguageController;
-use App\Http\Controllers\Admin\CaseTypeController;
-use App\Http\Controllers\Admin\DecisionController;
-use App\Http\Controllers\Admin\PermissionController;
-use App\Http\Controllers\Admin\SystemSettingController;
-use App\Http\Controllers\Admin\LetterTemplateController;
-use App\Http\Controllers\Admin\LetterCategoryController;
-use App\Http\Controllers\Admin\DecisionTemplateController;
-use App\Http\Controllers\Admin\LetterController;
-use App\Http\Controllers\Admin\LetterComposerController;
-use App\Http\Controllers\Admin\TermsAndConditionsController;
-use App\Http\Controllers\Admin\RecordController;
-use App\Http\Controllers\Admin\HearingController;
-use App\Http\Controllers\Admin\AboutController;
-use App\Http\Controllers\Admin\LandingPageController;
-use App\Http\Controllers\Admin\PerformanceEvaluationController;
-use App\Http\Controllers\Admin\PerformanceEvaluationSettingController;
-use App\Http\Controllers\Admin\CaseInspectionRequestController;
-use App\Http\Controllers\Admin\CaseInspectionFindingController;
-use App\Http\Controllers\Admin\AnnouncementController;
-use App\Http\Controllers\Auth\MfaChallengeController;
-use App\Http\Controllers\Auth\MfaController;
-
+use App\Http\Controllers\SecureFileController;
+use App\Http\Controllers\TermsDisplayController;
 // Localization middleware
+use App\Http\Controllers\UserManualController;
 use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\UseGuard;
 use App\Models\HomeFaq;
 use App\Models\HomeResource;
 use App\Models\HomeService;
 use App\Models\HomeSetting;
 use App\Models\HomeSlide;
 use App\Models\HomeTimelineStep;
-use App\Http\Controllers\TermsDisplayController;
-use App\Http\Controllers\PublicSignageController;
-use App\Http\Controllers\SecureFileController;
-use App\Http\Controllers\UserManualController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 
 /*
 |--------------------------------------------------------------------------
@@ -90,17 +90,17 @@ Route::middleware(SetLocale::class)->group(function () {
     Route::get('/user-manual', UserManualController::class)->name('landing.user-manual');
 
     Route::get('/home', function () {
-        $totalCases       = DB::table('court_cases')->count();
-        $pendingCases     = DB::table('court_cases')->where('status', 'pending')->count();
-        $resolvedCases    = DB::table('court_cases')->whereIn('status', ['closed', 'dismissed'])->count();
-        $openCases        = max($totalCases - $resolvedCases, 0);
+        $totalCases = DB::table('court_cases')->count();
+        $pendingCases = DB::table('court_cases')->where('status', 'pending')->count();
+        $resolvedCases = DB::table('court_cases')->whereIn('status', ['closed', 'dismissed'])->count();
+        $openCases = max($totalCases - $resolvedCases, 0);
         $upcomingHearings = DB::table('case_hearings')
             ->whereBetween('hearing_at', [now(), now()->addDays(30)])
             ->count();
         $hearingsThisWeek = DB::table('case_hearings')
             ->whereBetween('hearing_at', [now()->startOfWeek(), now()->endOfWeek()])
             ->count();
-        $recentCases      = DB::table('court_cases')
+        $recentCases = DB::table('court_cases')
             ->select('case_number', 'title', 'status', 'created_at')
             ->orderByDesc('created_at')
             ->limit(6)
@@ -108,37 +108,40 @@ Route::middleware(SetLocale::class)->group(function () {
 
         // Admin-managed landing content
         $dbSlides = Cache::remember('home_slides', 3600,
-            fn() => Schema::hasTable('home_slides') ? HomeSlide::active()->get() : collect()
+            fn () => Schema::hasTable('home_slides') ? HomeSlide::active()->get() : collect()
         );
         $dbFaqs = Cache::remember('home_faqs', 3600,
-            fn() => Schema::hasTable('home_faqs') ? HomeFaq::active()->get() : collect()
+            fn () => Schema::hasTable('home_faqs') ? HomeFaq::active()->get() : collect()
         );
         $dbServices = Cache::remember('home_services', 3600,
-            fn() => Schema::hasTable('home_services') ? HomeService::active()->get() : collect()
+            fn () => Schema::hasTable('home_services') ? HomeService::active()->get() : collect()
         );
         $dbTimeline = Cache::remember('home_timeline', 3600,
-            fn() => Schema::hasTable('home_timeline_steps') ? HomeTimelineStep::active()->get() : collect()
+            fn () => Schema::hasTable('home_timeline_steps') ? HomeTimelineStep::active()->get() : collect()
         );
         $dbResources = Cache::remember('home_resources', 3600,
-            fn() => Schema::hasTable('home_resources') ? HomeResource::active()->get() : collect()
+            fn () => Schema::hasTable('home_resources') ? HomeResource::active()->get() : collect()
         );
         $dbSections = Cache::remember('home_settings', 3600, function () {
-            if (!Schema::hasTable('home_settings')) return [];
+            if (! Schema::hasTable('home_settings')) {
+                return [];
+            }
             $keys = ['metrics', 'process', 'services', 'cases', 'resources', 'faq', 'cta'];
-            $out  = [];
+            $out = [];
             foreach ($keys as $k) {
                 $out[$k] = HomeSetting::getJson("section.{$k}");
             }
+
             return $out;
         });
         $dbFooter = Cache::remember('home_footer', 3600,
-            fn() => Schema::hasTable('home_settings') ? HomeSetting::getJson('footer.settings') : null
+            fn () => Schema::hasTable('home_settings') ? HomeSetting::getJson('footer.settings') : null
         );
         $dbMetrics = Cache::remember('home_metrics', 3600,
-            fn() => Schema::hasTable('home_settings') ? HomeSetting::getJson('metrics.content') : []
+            fn () => Schema::hasTable('home_settings') ? HomeSetting::getJson('metrics.content') : []
         );
         $dbUserManual = Cache::remember('home_user_manual', 3600,
-            fn() => Schema::hasTable('home_settings') ? HomeSetting::getJson('user_manual.settings') : []
+            fn () => Schema::hasTable('home_settings') ? HomeSetting::getJson('user_manual.settings') : []
         );
 
         return view('home', compact(
@@ -149,35 +152,36 @@ Route::middleware(SetLocale::class)->group(function () {
     })->name('landing.home');
 
     if (app()->environment('local')) {
-        Route::get('/debug-locale', fn() => 'locale=' . app()->getLocale());
+        Route::get('/debug-locale', fn () => 'locale='.app()->getLocale());
     }
-    Route::get('/', fn() => redirect()->route('applicant.login'))->name('root');
+    Route::get('/', fn () => redirect()->route('applicant.login'))->name('root');
     Route::get('/resources', function () {
         $resources = Cache::remember('home_resources', 3600,
-            fn() => Schema::hasTable('home_resources') ? HomeResource::active()->get() : collect()
+            fn () => Schema::hasTable('home_resources') ? HomeResource::active()->get() : collect()
         );
+
         return view('public.resources', compact('resources'));
     })->name('public.resources');
     Route::get('/terms', [TermsDisplayController::class, 'show'])->name('public.terms');
     Route::get('/signage', [PublicSignageController::class, 'show'])
         ->middleware(['throttle:30,1'])
         ->name('public.signage');
-    Route::get('/applicant', fn() => redirect()->route('applicant.login'))->name('applicant.login.shortcut');
-    Route::get('/respondent', fn() => redirect()->route('respondent.login'))->name('respondent.login.shortcut');
+    Route::get('/applicant', fn () => redirect()->route('applicant.login'))->name('applicant.login.shortcut');
+    Route::get('/respondent', fn () => redirect()->route('respondent.login'))->name('respondent.login.shortcut');
 
     /*
-    |-------------------------------------------------------------------------- 
+    |--------------------------------------------------------------------------
     | Respondent Public Routes (guest:respondent)
-    |-------------------------------------------------------------------------- 
+    |--------------------------------------------------------------------------
     */
-    Route::middleware(['guest:respondent', \App\Http\Middleware\UseGuard::class . ':respondent'])->group(function () {
+    Route::middleware(['guest:respondent', UseGuard::class.':respondent'])->group(function () {
         Route::get('/respondent/register', fn () => redirect()->route('applicant.login', ['login_as' => 'respondent']))->name('respondent.register');
         Route::post('/respondent/register', fn () => redirect()->route('applicant.login', ['login_as' => 'respondent']))->name('respondent.register.submit');
         Route::get('/respondent/login', fn () => redirect()->route('applicant.login', ['login_as' => 'respondent']))->name('respondent.login');
         Route::post('/respondent/login', fn () => redirect()->route('applicant.login', ['login_as' => 'respondent']))->name('respondent.login.submit');
     });
 
-    Route::middleware(['auth:applicant', \App\Http\Middleware\UseGuard::class . ':respondent'])->group(function () {
+    Route::middleware(['auth:applicant', UseGuard::class.':respondent'])->group(function () {
         Route::post('/respondent/logout', [RespondentAuthController::class, 'logout'])->name('respondent.logout');
         Route::get('/respondent/dashboard', [RespondentDashboardController::class, 'index'])->name('respondent.dashboard');
         Route::get('/respondent/case-search/results', [CaseSearchController::class, 'myCases'])->name('respondent.cases.my');
@@ -234,25 +238,21 @@ Route::middleware(SetLocale::class)->group(function () {
     | Applicant Auth (guest:applicant)
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['guest:applicant', \App\Http\Middleware\UseGuard::class . ':applicant'])->group(function () {
+    Route::middleware(['guest:applicant', UseGuard::class.':applicant'])->group(function () {
         // Register
-        Route::get('/applicant/register',  [ApplicantAuthController::class, 'showRegister'])->name('applicant.register');
+        Route::get('/applicant/register', [ApplicantAuthController::class, 'showRegister'])->name('applicant.register');
         Route::post('/applicant/register', [ApplicantAuthController::class, 'register'])->name('applicant.register.submit');
-        Route::get('/applicant/login',  [ApplicantAuthController::class, 'showLogin'])->name('applicant.login');
+        Route::get('/applicant/login', [ApplicantAuthController::class, 'showLogin'])->name('applicant.login');
         Route::post('/applicant/login', [ApplicantAuthController::class, 'login'])->name('applicant.login.submit');
         // Password reset — OTP flow
-        Route::get('/applicant/forgot-password',           [ApplicantPasswordController::class, 'showLinkRequestForm'])->name('applicant.password.request');
-        Route::post('/applicant/forgot-password',          [ApplicantPasswordController::class, 'sendResetLinkEmail'])->name('applicant.password.email');
-        Route::get('/applicant/password-otp',              [ApplicantPasswordController::class, 'showOtpForm'])->name('applicant.password.otp.show');
-        Route::post('/applicant/password-otp',             [ApplicantPasswordController::class, 'verifyOtp'])->name('applicant.password.otp.verify');
-        Route::post('/applicant/password-otp/resend',      [ApplicantPasswordController::class, 'resendOtp'])->name('applicant.password.otp.resend');
-        Route::get('/applicant/new-password',              [ApplicantPasswordController::class, 'showNewPasswordForm'])->name('applicant.password.new.show');
-        Route::post('/applicant/new-password',             [ApplicantPasswordController::class, 'updatePassword'])->name('applicant.password.new.update');
+        Route::get('/applicant/forgot-password', [ApplicantPasswordController::class, 'showLinkRequestForm'])->name('applicant.password.request');
+        Route::post('/applicant/forgot-password', [ApplicantPasswordController::class, 'sendResetLinkEmail'])->name('applicant.password.email');
+        Route::get('/applicant/password-otp', [ApplicantPasswordController::class, 'showOtpForm'])->name('applicant.password.otp.show');
+        Route::post('/applicant/password-otp', [ApplicantPasswordController::class, 'verifyOtp'])->name('applicant.password.otp.verify');
+        Route::post('/applicant/password-otp/resend', [ApplicantPasswordController::class, 'resendOtp'])->name('applicant.password.otp.resend');
+        Route::get('/applicant/new-password', [ApplicantPasswordController::class, 'showNewPasswordForm'])->name('applicant.password.new.show');
+        Route::post('/applicant/new-password', [ApplicantPasswordController::class, 'updatePassword'])->name('applicant.password.new.update');
 
-        // OTP email verification (after registration, before login)
-        Route::get('/applicant/verify-otp',         [ApplicantVerificationController::class, 'showOtp'])->name('applicant.verify-otp.show');
-        Route::post('/applicant/verify-otp',        [ApplicantVerificationController::class, 'verifyOtp'])->name('applicant.verify-otp.submit');
-        Route::post('/applicant/verify-otp/resend', [ApplicantVerificationController::class, 'resendOtp'])->name('applicant.verify-otp.resend');
     });
 
     /*
@@ -260,7 +260,7 @@ Route::middleware(SetLocale::class)->group(function () {
     | Applicant Portal (auth:applicant)
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['auth:applicant', \App\Http\Middleware\UseGuard::class . ':applicant'])->group(function () {
+    Route::middleware(['auth:applicant', UseGuard::class.':applicant'])->group(function () {
         Route::post('/applicant/logout', [ApplicantAuthController::class, 'logout'])->name('applicant.logout');
 
         // Email verification (OTP-based)
@@ -272,14 +272,16 @@ Route::middleware(SetLocale::class)->group(function () {
         Route::get('/applicant/email/verify/{id}/{hash}', [ApplicantVerificationController::class, 'verify'])
             ->middleware(['signed', 'throttle:6,1'])->name('applicant.verification.verify');
 
-        Route::middleware(['verified:applicant.verification.notice'])->group(function () {
+        // Registration no longer requires email OTP verification, so the portal
+        // is not gated behind `verified` — OTP is used for password reset only.
+        Route::middleware([])->group(function () {
             // Dashboard
             Route::get('/applicant/dashboard', [ApplicantDashboardController::class, 'index'])->name('applicant.dashboard');
             Route::get('/applicant/decisions/{decision}/download', [ApplicantDashboardController::class, 'downloadDecision'])
                 ->name('applicant.decisions.download');
 
             // Profile
-            Route::get('/applicant/profile',  [ApplicantProfileController::class, 'edit'])->name('applicant.profile.edit');
+            Route::get('/applicant/profile', [ApplicantProfileController::class, 'edit'])->name('applicant.profile.edit');
             Route::patch('/applicant/profile', [ApplicantProfileController::class, 'update'])->name('applicant.profile.update');
             Route::patch('/applicant/profile/password', [ApplicantProfileController::class, 'updatePassword'])->name('applicant.profile.password.update');
             Route::get('/applicant/profile/sessions', [ApplicantSessionController::class, 'index'])->name('applicant.profile.sessions.index');
@@ -290,10 +292,10 @@ Route::middleware(SetLocale::class)->group(function () {
                 ->name('applicant.switchToRespondent');
 
             // Cases (only applicant's own)
-            Route::get('/applicant/cases',            [ApplicantCaseController::class, 'index'])->name('applicant.cases.index');
-            Route::get('/applicant/cases/create',     [ApplicantCaseController::class, 'create'])->name('applicant.cases.create');
-            Route::post('/applicant/cases',           [ApplicantCaseController::class, 'store'])->name('applicant.cases.store');
-            Route::get('/applicant/cases/{id}',       [ApplicantCaseController::class, 'show'])->name('applicant.cases.show');
+            Route::get('/applicant/cases', [ApplicantCaseController::class, 'index'])->name('applicant.cases.index');
+            Route::get('/applicant/cases/create', [ApplicantCaseController::class, 'create'])->name('applicant.cases.create');
+            Route::post('/applicant/cases', [ApplicantCaseController::class, 'store'])->name('applicant.cases.store');
+            Route::get('/applicant/cases/{id}', [ApplicantCaseController::class, 'show'])->name('applicant.cases.show');
             Route::get('/applicant/cases/{case}/respondent-responses/{response}', [ApplicantCaseController::class, 'showRespondentResponse'])->name('applicant.cases.respondentResponses.show');
             Route::get('/applicant/response-replies', [ApplicantResponseReplyController::class, 'index'])->name('applicant.response-replies.index');
             Route::get('/applicant/cases/{case}/respondent-responses/{response}/reply', [ApplicantResponseReplyController::class, 'create'])->name('applicant.cases.respondentResponses.reply');
@@ -303,12 +305,12 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::get('/applicant/cases/{case}/respondent-responses/{response}/replies/{reply}/edit', [ApplicantResponseReplyController::class, 'edit'])->name('applicant.cases.respondentResponses.replies.edit');
             Route::patch('/applicant/cases/{case}/respondent-responses/{response}/replies/{reply}', [ApplicantResponseReplyController::class, 'update'])->name('applicant.cases.respondentResponses.replies.update');
             Route::delete('/applicant/cases/{case}/respondent-responses/{response}/replies/{reply}', [ApplicantResponseReplyController::class, 'destroy'])->name('applicant.cases.respondentResponses.replies.destroy');
-            Route::get('/applicant/cases/{id}/edit',  [ApplicantCaseController::class, 'edit'])->name('applicant.cases.edit');
-            Route::patch('/applicant/cases/{id}',     [ApplicantCaseController::class, 'update'])->name('applicant.cases.update');
+            Route::get('/applicant/cases/{id}/edit', [ApplicantCaseController::class, 'edit'])->name('applicant.cases.edit');
+            Route::patch('/applicant/cases/{id}', [ApplicantCaseController::class, 'update'])->name('applicant.cases.update');
             Route::delete('/applicant/cases/{id}', [ApplicantCaseController::class, 'destroy'])
                 ->name('applicant.cases.destroy');
             // Files
-            Route::post('/applicant/cases/{id}/files',            [ApplicantCaseController::class, 'uploadFile'])->name('applicant.cases.files.upload');
+            Route::post('/applicant/cases/{id}/files', [ApplicantCaseController::class, 'uploadFile'])->name('applicant.cases.files.upload');
             Route::delete('/applicant/cases/{id}/files/{fileId}', [ApplicantCaseController::class, 'deleteFile'])->name('applicant.cases.files.delete');
             Route::get('/applicant/cases/{id}/files/{fileId}/download', [SecureFileController::class, 'caseFile'])
                 ->name('applicant.cases.files.download');
@@ -317,14 +319,14 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::delete('/applicant/cases/{id}/evidences/{evidenceId}', [ApplicantCaseController::class, 'deleteEvidence'])->name('applicant.cases.evidences.delete');
             Route::get('/applicant/cases/{id}/evidences/{evidenceId}/download', [SecureFileController::class, 'caseEvidence'])
                 ->name('applicant.cases.evidences.download');
-            Route::delete('/applicant/cases/{id}/witnesses/{witnessId}',  [ApplicantCaseController::class, 'deleteWitness'])->name('applicant.cases.witnesses.delete');
+            Route::delete('/applicant/cases/{id}/witnesses/{witnessId}', [ApplicantCaseController::class, 'deleteWitness'])->name('applicant.cases.witnesses.delete');
 
             // Messages
             Route::post('/applicant/cases/{id}/messages', [ApplicantCaseController::class, 'postMessage'])->name('applicant.cases.messages.post');
 
             // Receipts / exports
-            Route::get('/applicant/cases/{id}/receipt',        [ApplicantCaseController::class, 'receipt'])->name('applicant.cases.receipt');
-            Route::get('/applicant/cases/{id}/receipt/pdf',    [ApplicantCaseController::class, 'receiptPdf'])->name('applicant.cases.receipt.pdf');
+            Route::get('/applicant/cases/{id}/receipt', [ApplicantCaseController::class, 'receipt'])->name('applicant.cases.receipt');
+            Route::get('/applicant/cases/{id}/receipt/pdf', [ApplicantCaseController::class, 'receiptPdf'])->name('applicant.cases.receipt.pdf');
             Route::post('/applicant/cases/{id}/receipt/email', [ApplicantCaseController::class, 'emailReceipt'])->name('applicant.cases.receipt.email');
 
             // Hearing ICS
@@ -362,12 +364,12 @@ Route::middleware(SetLocale::class)->group(function () {
                 ->name('applicant.cases.respondentResponses.replies.download');
 
             // Notifications
-            Route::get('/applicant/notifications',           [ApplicantNotificationController::class, 'index'])->name('applicant.notifications.index');
+            Route::get('/applicant/notifications', [ApplicantNotificationController::class, 'index'])->name('applicant.notifications.index');
             Route::post('/applicant/notifications/mark-one', [ApplicantNotificationController::class, 'markOne'])->name('applicant.notifications.markOne');
             Route::post('/applicant/notifications/mark-all', [ApplicantNotificationController::class, 'markAll'])->name('applicant.notifications.markAll');
 
             // Notification settings
-            Route::get('/applicant/notifications/settings',  [ApplicantNotificationController::class, 'settingsEdit'])->name('applicant.notifications.settings');
+            Route::get('/applicant/notifications/settings', [ApplicantNotificationController::class, 'settingsEdit'])->name('applicant.notifications.settings');
             Route::post('/applicant/notifications/settings', [ApplicantNotificationController::class, 'settingsUpdate'])->name('applicant.notifications.settings.update');
         });
     });
@@ -382,12 +384,12 @@ Route::middleware(SetLocale::class)->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         // Admin self profile
-        Route::get('/profile',    [AdminProfileController::class, 'edit'])->name('profile.edit');
-        Route::patch('/profile',  [AdminProfileController::class, 'update'])->name('profile.update');
+        Route::get('/profile', [AdminProfileController::class, 'edit'])->name('profile.edit');
+        Route::patch('/profile', [AdminProfileController::class, 'update'])->name('profile.update');
         Route::delete('/profile', [AdminProfileController::class, 'destroy'])->name('profile.destroy');
-        Route::get('/profile/sessions', [\App\Http\Controllers\Admin\ActiveSessionController::class, 'index'])->name('profile.sessions.index');
-        Route::delete('/profile/sessions/{session}', [\App\Http\Controllers\Admin\ActiveSessionController::class, 'destroy'])->name('profile.sessions.destroy');
-        Route::delete('/profile/sessions', [\App\Http\Controllers\Admin\ActiveSessionController::class, 'destroyOthers'])->name('profile.sessions.destroyOthers');
+        Route::get('/profile/sessions', [ActiveSessionController::class, 'index'])->name('profile.sessions.index');
+        Route::delete('/profile/sessions/{session}', [ActiveSessionController::class, 'destroy'])->name('profile.sessions.destroy');
+        Route::delete('/profile/sessions', [ActiveSessionController::class, 'destroyOthers'])->name('profile.sessions.destroyOthers');
         Route::get('/mfa/setup', [MfaController::class, 'show'])->name('mfa.setup.show');
         Route::post('/mfa/setup', [MfaController::class, 'begin'])->name('mfa.setup.begin');
         Route::post('/mfa/setup/confirm', [MfaController::class, 'confirm'])->name('mfa.setup.confirm');
@@ -400,19 +402,19 @@ Route::middleware(SetLocale::class)->group(function () {
 
         // Admin section with /admin prefix
         Route::prefix('admin')->group(function () {
-            Route::get('/', fn() => redirect()->route('admin.dashboard'))
+            Route::get('/', fn () => redirect()->route('admin.dashboard'))
                 ->name('admin.home');
 
-              Route::get('/dashboard', [DashboardController::class, 'index'])
-                  ->name('admin.dashboard');
+            Route::get('/dashboard', [DashboardController::class, 'index'])
+                ->name('admin.dashboard');
 
-              Route::get('/reports', [ReportController::class, 'index'])
-                  ->middleware('perm:reports.view')
-                  ->name('reports.index');
+            Route::get('/reports', [ReportController::class, 'index'])
+                ->middleware('perm:reports.view')
+                ->name('reports.index');
 
-              // Dashboard stats (AJAX)
-              Route::get('/dashboard/stats', [DashboardController::class, 'stats'])
-                  ->name('admin.dashboard.stats');
+            // Dashboard stats (AJAX)
+            Route::get('/dashboard/stats', [DashboardController::class, 'stats'])
+                ->name('admin.dashboard.stats');
 
             // System settings
             Route::get('/settings/system', [SystemSettingController::class, 'edit'])
@@ -489,7 +491,7 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::put('/landing/footer', [LandingPageController::class, 'updateFooter'])->name('admin.landing.footer.update');
 
             // System audit (read-only view)
-            Route::get('/audit', [\App\Http\Controllers\Admin\AuditController::class, 'index'])
+            Route::get('/audit', [AuditController::class, 'index'])
                 ->middleware('perm:audit.view')
                 ->name('admin.audit');
 
@@ -507,34 +509,33 @@ Route::middleware(SetLocale::class)->group(function () {
                 ->middleware('perm:cases.response-replies.manage')
                 ->name('applicant-response-replies.review');
 
-            Route::get('/cases',                   [CaseController::class, 'index'])->middleware('perm:cases.view')->name('cases.index');
-            Route::get('/cases/export',            [CaseController::class, 'export'])->middleware('perm:reports.export')->name('cases.export');
-            Route::get('/cases/{id}',              [CaseController::class, 'show'])->middleware('perm:cases.view')->name('cases.show');
+            Route::get('/cases', [CaseController::class, 'index'])->middleware('perm:cases.view')->name('cases.index');
+            Route::get('/cases/export', [CaseController::class, 'export'])->middleware('perm:reports.export')->name('cases.export');
+            Route::get('/cases/{id}', [CaseController::class, 'show'])->middleware('perm:cases.view')->name('cases.show');
             Route::get('/cases/{case}/documents/{doc}', [CaseController::class, 'viewDocument'])->middleware('perm:cases.view')->name('cases.documents.view');
             Route::get('/cases/{case}/lawyer-document', [SecureFileController::class, 'lawyerDocument'])->middleware('perm:cases.view')->name('cases.lawyer-document');
 
-            Route::get('/cases/{caseId}/assign',   [CaseController::class, 'assignForm'])
+            Route::get('/cases/{caseId}/assign', [CaseController::class, 'assignForm'])
                 ->middleware('perm:cases.assign')
                 ->name('cases.assign.form');
             Route::patch('/cases/{caseId}/assign', [CaseController::class, 'assignUpdate'])
                 ->middleware('perm:cases.assign')
                 ->name('cases.assign.update');
 
-            Route::patch('/cases/{id}/status',     [CaseController::class, 'updateStatus'])->middleware('perm:cases.edit')->name('cases.status.update');
-            Route::post('/cases/{id}/messages',    [CaseController::class, 'postAdminMessage'])->middleware('perm:cases.edit')->name('cases.messages.post');
+            Route::patch('/cases/{id}/status', [CaseController::class, 'updateStatus'])->middleware('perm:cases.edit')->name('cases.status.update');
+            Route::post('/cases/{id}/messages', [CaseController::class, 'postAdminMessage'])->middleware('perm:cases.edit')->name('cases.messages.post');
 
             // Registrar review (accept/reject) - route used by index blade
-            Route::post('/cases/review',           [CaseController::class, 'review'])->middleware('perm:cases.review')->name('cases.review');
+            Route::post('/cases/review', [CaseController::class, 'review'])->middleware('perm:cases.review')->name('cases.review');
 
             // Hearings
-            Route::post('/cases/{case}/hearings',  [CaseController::class, 'storeHearing'])->middleware('perm:cases.edit')->name('cases.hearings.store');
-            Route::patch('/hearings/{hearing}',    [CaseController::class, 'updateHearing'])->middleware('perm:cases.edit')->name('cases.hearings.update');
-            Route::delete('/hearings/{hearing}',   [CaseController::class, 'deleteHearing'])->middleware('perm:cases.edit')->name('cases.hearings.delete');
-            Route::get('/hearings',                [HearingController::class, 'index'])->middleware('perm:cases.view')->name('admin.hearings.index');
-
+            Route::post('/cases/{case}/hearings', [CaseController::class, 'storeHearing'])->middleware('perm:cases.edit')->name('cases.hearings.store');
+            Route::patch('/hearings/{hearing}', [CaseController::class, 'updateHearing'])->middleware('perm:cases.edit')->name('cases.hearings.update');
+            Route::delete('/hearings/{hearing}', [CaseController::class, 'deleteHearing'])->middleware('perm:cases.edit')->name('cases.hearings.delete');
+            Route::get('/hearings', [HearingController::class, 'index'])->middleware('perm:cases.view')->name('admin.hearings.index');
 
             // Files
-            Route::post('/cases/{case}/files',          [CaseController::class, 'storeFile'])->middleware('perm:cases.edit')->name('cases.files.upload');
+            Route::post('/cases/{case}/files', [CaseController::class, 'storeFile'])->middleware('perm:cases.edit')->name('cases.files.upload');
             Route::delete('/cases/{case}/files/{file}', [CaseController::class, 'deleteFile'])->middleware('perm:cases.edit')->name('cases.files.delete');
             Route::get('/cases/{case}/files/{file}/download', [SecureFileController::class, 'caseFile'])
                 ->middleware('perm:cases.view')
@@ -547,7 +548,7 @@ Route::middleware(SetLocale::class)->group(function () {
                 ->name('admin.applicant-response-replies.download');
 
             // Witnesses
-            Route::post('/cases/{case}/witnesses',            [CaseController::class, 'storeWitness'])->middleware('perm:cases.edit')->name('cases.witnesses.store');
+            Route::post('/cases/{case}/witnesses', [CaseController::class, 'storeWitness'])->middleware('perm:cases.edit')->name('cases.witnesses.store');
             Route::patch('/cases/{case}/witnesses/{witness}', [CaseController::class, 'updateWitness'])->middleware('perm:cases.edit')->name('cases.witnesses.update');
             Route::delete('/cases/{case}/witnesses/{witness}', [CaseController::class, 'deleteWitness'])->middleware('perm:cases.edit')->name('cases.witnesses.delete');
 
@@ -606,12 +607,12 @@ Route::middleware(SetLocale::class)->group(function () {
             /*
              * Appeals (admin)
              */
-            Route::get('/appeals',                  [AppealController::class, 'index'])->middleware('perm:appeals.view')->name('appeals.index');
-            Route::get('/appeals/create',           [AppealController::class, 'create'])->middleware('perm:appeals.create')->name('appeals.create');
-            Route::post('/appeals',                 [AppealController::class, 'store'])->middleware('perm:appeals.create')->name('appeals.store');
-            Route::get('/appeals/{appeal}',         [AppealController::class, 'show'])->middleware('perm:appeals.view')->name('appeals.show');
-            Route::get('/appeals/{appeal}/edit',    [AppealController::class, 'edit'])->middleware('perm:appeals.edit')->name('appeals.edit');
-            Route::patch('/appeals/{appeal}',       [AppealController::class, 'update'])->middleware('perm:appeals.edit')->name('appeals.update');
+            Route::get('/appeals', [AppealController::class, 'index'])->middleware('perm:appeals.view')->name('appeals.index');
+            Route::get('/appeals/create', [AppealController::class, 'create'])->middleware('perm:appeals.create')->name('appeals.create');
+            Route::post('/appeals', [AppealController::class, 'store'])->middleware('perm:appeals.create')->name('appeals.store');
+            Route::get('/appeals/{appeal}', [AppealController::class, 'show'])->middleware('perm:appeals.view')->name('appeals.show');
+            Route::get('/appeals/{appeal}/edit', [AppealController::class, 'edit'])->middleware('perm:appeals.edit')->name('appeals.edit');
+            Route::patch('/appeals/{appeal}', [AppealController::class, 'update'])->middleware('perm:appeals.edit')->name('appeals.update');
             Route::post('/appeals/{appeal}/submit', [AppealController::class, 'submit'])->middleware('perm:appeals.edit')->name('appeals.submit');
             Route::post('/appeals/{appeal}/decide', [AppealController::class, 'decide'])->middleware('perm:appeals.decide')->name('appeals.decide');
 
@@ -676,7 +677,7 @@ Route::middleware(SetLocale::class)->group(function () {
                 ->name('recordes.appeal-pdf');
 
             // Appeal documents
-            Route::post('/appeals/{appeal}/documents',         [AppealController::class, 'uploadDoc'])->middleware('perm:appeals.edit')->name('appeals.docs.upload');
+            Route::post('/appeals/{appeal}/documents', [AppealController::class, 'uploadDoc'])->middleware('perm:appeals.edit')->name('appeals.docs.upload');
             Route::get('/appeals/{appeal}/documents/{doc}/download', [SecureFileController::class, 'appealDocument'])
                 ->middleware('perm:appeals.view')
                 ->name('appeals.docs.download');
@@ -701,18 +702,18 @@ Route::middleware(SetLocale::class)->group(function () {
                 ->middleware('perm:performance-evaluations.review')->name('performance-evaluations.review');
 
             // Admin notifications (matches admin layout links)
-            Route::get('/notifications',           [AdminNotificationController::class, 'index'])->name('admin.notifications.index');
-            Route::get('/notifications/count',     [AdminNotificationController::class, 'count'])->name('admin.notifications.count');
+            Route::get('/notifications', [AdminNotificationController::class, 'index'])->name('admin.notifications.index');
+            Route::get('/notifications/count', [AdminNotificationController::class, 'count'])->name('admin.notifications.count');
             Route::post('/notifications/mark-one', [AdminNotificationController::class, 'markOne'])->name('admin.notifications.markOne');
             Route::post('/notifications/mark-all', [AdminNotificationController::class, 'markAll'])->name('admin.notifications.markAll');
 
             // Case Types (matches admin layout link 'case-types.index')
-            Route::get('/case-types',           [CaseTypeController::class, 'index'])->name('case-types.index');
-            Route::get('/case-types/create',    [CaseTypeController::class, 'create'])->name('case-types.create');
-            Route::post('/case-types',          [CaseTypeController::class, 'store'])->name('case-types.store');
+            Route::get('/case-types', [CaseTypeController::class, 'index'])->name('case-types.index');
+            Route::get('/case-types/create', [CaseTypeController::class, 'create'])->name('case-types.create');
+            Route::post('/case-types', [CaseTypeController::class, 'store'])->name('case-types.store');
             Route::get('/case-types/{id}/edit', [CaseTypeController::class, 'edit'])->name('case-types.edit');
-            Route::patch('/case-types/{id}',    [CaseTypeController::class, 'update'])->name('case-types.update');
-            Route::delete('/case-types/{id}',   [CaseTypeController::class, 'destroy'])->name('case-types.delete');
+            Route::patch('/case-types/{id}', [CaseTypeController::class, 'update'])->name('case-types.update');
+            Route::delete('/case-types/{id}', [CaseTypeController::class, 'destroy'])->name('case-types.delete');
 
             // Letter templates
             // Letter templates with granular permissions
@@ -893,15 +894,15 @@ Route::middleware(SetLocale::class)->group(function () {
          * Keep names as 'users.*' and 'roles.*' to satisfy admin layout.
          */
         Route::middleware('perm:users.manage')->group(function () {
-            Route::get('users',        [UsersController::class, 'index'])->name('users.index');
+            Route::get('users', [UsersController::class, 'index'])->name('users.index');
             Route::get('users/create', [UsersController::class, 'create'])->name('users.create');
-            Route::post('users',       [UsersController::class, 'store'])->name('users.store');
+            Route::post('users', [UsersController::class, 'store'])->name('users.store');
         });
 
-        Route::get('users/{user}',      [UsersController::class, 'show'])->middleware('can:view,user')->name('users.show');
+        Route::get('users/{user}', [UsersController::class, 'show'])->middleware('can:view,user')->name('users.show');
         Route::get('users/{user}/edit', [UsersController::class, 'edit'])->middleware('can:update,user')->name('users.edit');
-        Route::patch('users/{user}',    [UsersController::class, 'update'])->middleware('can:update,user')->name('users.update');
-        Route::delete('users/{user}',   [UsersController::class, 'destroy'])->middleware('can:delete,user')->name('users.destroy');
+        Route::patch('users/{user}', [UsersController::class, 'update'])->middleware('can:update,user')->name('users.update');
+        Route::delete('users/{user}', [UsersController::class, 'destroy'])->middleware('can:delete,user')->name('users.destroy');
 
         // Roles (resource with explicit names 'roles.*' as used in sidebar)
         Route::resource('roles', RolesController::class)
@@ -910,5 +911,5 @@ Route::middleware(SetLocale::class)->group(function () {
             ->names('roles');
     });
 
-    require __DIR__ . '/auth.php';
+    require __DIR__.'/auth.php';
 });

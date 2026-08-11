@@ -5,12 +5,9 @@ namespace App\Http\Controllers\Applicant;
 use App\Http\Controllers\Controller;
 use App\Models\Applicant;
 use App\Models\SystemSetting;
-use App\Notifications\ApplicantEmailOtp;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -66,33 +63,24 @@ class ApplicantAuthController extends Controller
 
         unset($data['lawyer_document']);
 
-        // Nothing is saved to the database yet — the account is only created
-        // after the applicant proves the email is real by entering the OTP.
-        $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-
-        session([
-            'pending_registration' => [
-                ...$data,
-                'password' => Hash::make($data['password']),
-                'is_lawyer' => $isLawyer,
-                'lawyer_document_path' => $lawyerDocumentPath,
-            ],
-            'otp_code' => hash('sha256', $otp),
-            'otp_expires_at' => now()->addMinutes(10)->timestamp,
+        // Registration is not email-OTP gated: the account is created straight
+        // away. OTP verification is only used for the password-reset flow.
+        $applicant = Applicant::create([
+            ...$data,
+            'is_lawyer' => $isLawyer,
+            'lawyer_document_path' => $lawyerDocumentPath,
+            'is_active' => true,
         ]);
 
-        try {
-            Notification::route('mail', $data['email'])
-                ->notifyNow(new ApplicantEmailOtp($otp));
-        } catch (\Throwable $e) {
-            Log::error('[Register] OTP send failed: '.$e->getMessage());
+        // Not mass-assignable — set explicitly.
+        $applicant->email_verified_at = now();
+        $applicant->save();
 
-            return redirect()->route('applicant.verify-otp.show')
-                ->withErrors(['code' => __('auth.reset_code_send_failed')]);
-        }
+        Auth::guard('applicant')->login($applicant);
+        $request->session()->regenerate();
 
-        return redirect()->route('applicant.verify-otp.show')
-            ->with('info', __('auth.verification_code_sent_to_email'));
+        return redirect()->route('applicant.dashboard')
+            ->with('success', __('auth.email_verified_welcome'));
     }
 
     public function showLogin()
