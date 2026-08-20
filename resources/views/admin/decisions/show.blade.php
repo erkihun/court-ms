@@ -211,7 +211,6 @@
                         $judge=$panel[$i] ?? null;
                         $name=$judge['admin_user_name'] ?? null;
                         $vote=$judge['vote'] ?? null;
-                        $signatureUrl=$panelJudgeSignatures[(int) ($judge['admin_user_id'] ?? 0)] ?? null;
                         @endphp
                         <div class="border border-gray-100 rounded-lg p-3 space-y-1 bg-gray-50">
                         <div class="flex items-center justify-between">
@@ -226,12 +225,6 @@
                             </svg>
                             {{ $name ?: '—' }}
                         </div>
-                        @if($signatureUrl)
-                        <div class="flex min-h-16 items-end justify-center py-2">
-                            <img src="{{ $signatureUrl }}" alt="{{ $name }} {{ __('users.signature') }}"
-                                class="max-h-14 max-w-full object-contain">
-                        </div>
-                        @endif
                         <div class="text-xs text-gray-500 flex items-center gap-1">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
