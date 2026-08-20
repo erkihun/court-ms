@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Support;
 
 use App\Models\Decision;
 use App\Models\DecisionTemplate;
 use App\Models\SystemSetting;
+use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
 
@@ -32,11 +35,14 @@ class DecisionPdf
             }
         }
 
+        $signaturePaths = self::resolveJudgeSignaturePaths($decision);
+
         return Pdf::loadView('pdf.decision-output', [
             'decision' => $decision,
             'template' => $template,
             'body'     => $body,
             'sealPath' => $sealPath,
+            'signaturePaths' => $signaturePaths,
         ])->setPaper('a4');
     }
 
@@ -79,5 +85,41 @@ class DecisionPdf
         }
 
         return $body;
+    }
+
+    /**
+     * Resolve uploaded panel signatures for a final decision PDF.
+     *
+     * @return array<int, string|null>
+     */
+    private static function resolveJudgeSignaturePaths(Decision $decision): array
+    {
+        if (! $decision->isPublished() || ! $decision->isApproved()) {
+            return [];
+        }
+
+        $panel = is_array($decision->panel_judges) ? array_values($decision->panel_judges) : [];
+        $judgeIds = collect($panel)
+            ->take(3)
+            ->pluck('admin_user_id')
+            ->filter()
+            ->map(fn ($id): int => (int) $id)
+            ->unique();
+        $judges = User::query()
+            ->whereKey($judgeIds)
+            ->get(['id', 'signature_path'])
+            ->keyBy('id');
+        $paths = [];
+
+        foreach (array_slice($panel, 0, 3) as $index => $panelJudge) {
+            $judge = $judges->get((int) ($panelJudge['admin_user_id'] ?? 0));
+            $signaturePath = $judge?->signature_path;
+
+            $paths[$index] = $signaturePath && Storage::disk('public')->exists($signaturePath)
+                ? Storage::disk('public')->path($signaturePath)
+                : null;
+        }
+
+        return $paths;
     }
 }

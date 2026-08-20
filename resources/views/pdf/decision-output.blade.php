@@ -2,6 +2,7 @@
 @php
     $caseNumber = $decision->case_number ?? '';
     $panel = is_array($decision->panel_judges) ? array_values($decision->panel_judges) : [];
+    $judgeSignatures = $signaturePaths ?? [];
     $judgeNames = [];
     for ($i = 0; $i < 3; $i++) {
         $name = trim((string) ($panel[$i]['admin_user_name'] ?? ''));
@@ -80,7 +81,9 @@
             vertical-align: bottom;
             font-size: 10pt;
         }
-        .signatures .sig .line { border-top: 1px solid #111827; margin: 18mm 6mm 0 6mm; padding-top: 3px; }
+        .signatures .sig .signature-mark { height: 18mm; line-height: 18mm; }
+        .signatures .sig .signature-mark img { max-width: 44mm; max-height: 16mm; vertical-align: bottom; }
+        .signatures .sig .line { border-top: 1px solid #111827; margin: 0 6mm; padding-top: 3px; }
         .signatures .sig .name { font-weight: 600; }
 
         /* Fixed seal repeats on every page (dompdf honours position:fixed). */
@@ -145,6 +148,11 @@
     <div class="signatures">
         @for($i = 0; $i < 3; $i++)
         <div class="sig">
+            <div class="signature-mark">
+                @if(!empty($judgeSignatures[$i]))
+                <img src="{{ $judgeSignatures[$i] }}" alt="{{ $judgeNames[$i] ?? 'Judge signature' }}">
+                @endif
+            </div>
             <div class="line">
                 <div class="name">{{ $judgeNames[$i] ?? '' }}</div>
             </div>
