@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -7,6 +9,7 @@ use App\Models\CourtCase;
 use App\Models\Decision;
 use App\Models\User;
 use App\Models\DecisionReview;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
@@ -14,6 +17,8 @@ use Mews\Purifier\Facades\Purifier;
 
 class DecisionController extends Controller
 {
+    private const string VIEW_ALL_PERMISSION = 'decision.view.all';
+
     private const STATUS_OPTIONS = [
         'draft',
         'published',
@@ -44,17 +49,17 @@ class DecisionController extends Controller
     /**
      * Restrict a decisions query to cases assigned to the current user's team(s).
      *
-     * - Admins see everything.
+     * - Admins and users with decision.view.all see everything.
      * - Team members see decisions for any case assigned to their team(s).
-     * - Users with no team (and not admin) see nothing.
+     * - Other users with no team see nothing.
      */
-    private function scopeToUserTeam($query): void
+    private function scopeToUserTeam(Builder $query): void
     {
-        $user = auth()->user();
-
-        if ($user && method_exists($user, 'hasRole') && $user->hasRole('admin')) {
-            return; // Admins: no scoping.
+        if ($this->canViewAllDecisions()) {
+            return;
         }
+
+        $user = auth()->user();
 
         $teamIds = $user
             ? \App\Models\Team::query()
@@ -76,12 +81,11 @@ class DecisionController extends Controller
      */
     private function canAccessDecision(Decision $decision): bool
     {
-        $user = auth()->user();
-
-        if ($user && method_exists($user, 'hasRole') && $user->hasRole('admin')) {
+        if ($this->canViewAllDecisions()) {
             return true;
         }
 
+        $user = auth()->user();
         $teamId = $decision->courtCase?->assigned_team_id;
         if (! $teamId) {
             return false;
@@ -93,6 +97,14 @@ class DecisionController extends Controller
                 ->whereHas('users', fn ($q) => $q->where('users.id', $user->id))
                 ->exists()
             : false;
+    }
+
+    private function canViewAllDecisions(): bool
+    {
+        $user = auth()->user();
+
+        return $user instanceof User
+            && ($user->hasRole('admin') || $user->hasPermission(self::VIEW_ALL_PERMISSION));
     }
 
     public function create()

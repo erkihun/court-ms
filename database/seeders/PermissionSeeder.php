@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
@@ -97,6 +99,11 @@ class PermissionSeeder extends Seeder
                 'name' => 'decision.view',
                 'label' => 'View decisions',
                 'description' => null,
+            ],
+            [
+                'name' => 'decision.view.all',
+                'label' => 'View all decisions',
+                'description' => 'View decisions across all teams, including cases without an assigned team.',
             ],
             [
                 'name' => 'decision.create',
