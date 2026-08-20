@@ -130,25 +130,25 @@
                         <span class="text-xs uppercase tracking-wide text-gray-500">{{ __('decisions.judges.order_hint') }}</span>
                     </div>
                     <div class="grid md:grid-cols-3 gap-3">
-                        @for ($i = 0; $i < 3; $i++)
+                        @foreach ([1, 0, 2] as $displayIndex => $storageIndex)
                         @php
-                        $defaultJudgeId = $i === 1 ? auth()->id() : null;
-                        $selectedJudge = old("judges.$i.admin_user_id", $defaultJudgeId);
-                        $isMiddle = $i === 1;
-                        $isThird = $i === 2;
+                        $defaultJudgeId = $storageIndex === 1 ? auth()->id() : null;
+                        $selectedJudge = old("judges.$storageIndex.admin_user_id", $defaultJudgeId);
+                        $isSessionJudge = $storageIndex === 1;
+                        $isThird = $storageIndex === 2;
                         $availableJudges = $isThird
                             ? ($teamJudgeUsers->isNotEmpty() ? $teamJudgeUsers : $judgeUsersCollection)
                             : $judgeUsersCollection;
                         @endphp
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">{{ __('decisions.judges.judge', ['number' => $i + 1]) }}</label>
-                            @if($isMiddle)
+                            <label class="block text-sm font-medium text-gray-700">{{ __('decisions.judges.judge', ['number' => $displayIndex + 1]) }}</label>
+                            @if($isSessionJudge)
                             <input type="text" readonly
                                 value="{{ auth()->user()?->name ?? __('decisions.judges.current_user') }}"
                                 class="mt-1 w-full px-3 py-2 rounded-lg bg-gray-100 text-gray-900 border border-gray-200">
-                            <input type="hidden" name="judges[{{ $i }}][admin_user_id]" value="{{ $selectedJudge }}">
+                            <input type="hidden" name="judges[{{ $storageIndex }}][admin_user_id]" value="{{ $selectedJudge }}">
                             @else
-                            <select name="judges[{{ $i }}][admin_user_id]"
+                            <select name="judges[{{ $storageIndex }}][admin_user_id]"
                                 class="mt-1 w-full px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 relative z-20">
                                 <option value="">{{ __('decisions.judges.select_judge') }}</option>
                                 @foreach($availableJudges as $admin)
@@ -160,7 +160,7 @@
                             </select>
                             @endif
                         </div>
-                        @endfor
+                        @endforeach
                     </div>
                 </div>
 
@@ -280,4 +280,3 @@
         });
     </script>
 </x-admin-layout>
-
