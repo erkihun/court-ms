@@ -8,6 +8,7 @@ use App\Models\Decision;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 function decisionUiOrderRole(): Role
@@ -63,11 +64,17 @@ test('create form displays the session judge first while retaining the original 
 });
 
 test('decision view always displays the decision author first without changing stored panel order', function (): void {
+    Storage::fake('public');
     $role = decisionUiOrderRole();
     $author = decisionUiOrderUser($role, 'Decision Author');
     $viewer = decisionUiOrderUser($role, 'Different Viewer');
     $firstStoredJudge = decisionUiOrderUser($role, 'First Stored Judge');
     $thirdJudge = decisionUiOrderUser($role, 'Third Judge');
+    foreach ([$author, $firstStoredJudge, $thirdJudge] as $judge) {
+        $signaturePath = 'signatures/judge-'.$judge->id.'.png';
+        Storage::disk('public')->put($signaturePath, 'signature');
+        $judge->update(['signature_path' => $signaturePath]);
+    }
     $courtCase = decisionUiOrderCase();
     $storedPanel = [
         ['order' => 1, 'admin_user_id' => $firstStoredJudge->id, 'admin_user_name' => $firstStoredJudge->name],
@@ -83,7 +90,7 @@ test('decision view always displays the decision author first without changing s
         'reviewing_admin_user_name' => $author->name,
         'name' => 'UI order ruling',
         'decision_content' => 'Decision content.',
-        'status' => 'draft',
+        'status' => 'published',
     ]);
 
     $html = $this->actingAs($viewer)
@@ -92,5 +99,8 @@ test('decision view always displays the decision author first without changing s
         ->getContent();
 
     expect($html)->toMatch('/Judge 1.*Decision Author.*Judge 2.*First Stored Judge.*Judge 3.*Third Judge/s')
+        ->and($html)->toContain(Storage::disk('public')->url($author->signature_path))
+        ->and($html)->toContain(Storage::disk('public')->url($firstStoredJudge->signature_path))
+        ->and($html)->toContain(Storage::disk('public')->url($thirdJudge->signature_path))
         ->and($decision->fresh()->panel_judges)->toBe($storedPanel);
 });

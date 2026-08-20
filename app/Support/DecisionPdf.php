@@ -96,7 +96,7 @@ class DecisionPdf
      */
     private static function resolveJudgeSignaturePaths(Decision $decision, array $panel): array
     {
-        if (! $decision->isPublished() || ! $decision->isApproved()) {
+        if (! $decision->isPublished()) {
             return [];
         }
 

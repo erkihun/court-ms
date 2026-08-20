@@ -121,7 +121,16 @@ class DecisionController extends Controller
         abort_unless($this->canAccessDecision($decision), 403);
 
         $templates = \App\Models\DecisionTemplate::orderBy('title')->get(['id', 'title']);
-        return view('admin.decisions.show', compact('decision', 'templates'));
+        $panelJudgeSignatures = $decision->isPublished()
+            ? User::query()
+                ->whereKey(collect($decision->panelJudgesAuthorFirst())->pluck('admin_user_id')->filter())
+                ->get(['id', 'signature_path'])
+                ->mapWithKeys(fn (User $judge): array => [$judge->id => $judge->signature_url])
+                ->filter()
+                ->all()
+            : [];
+
+        return view('admin.decisions.show', compact('decision', 'templates', 'panelJudgeSignatures'));
     }
 
     /**

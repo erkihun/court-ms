@@ -53,7 +53,7 @@ test('approved published decision embeds an available panel judge signature', fu
     expect(substr_count($pdf, '/Subtype /Image'))->toBeGreaterThanOrEqual(1);
 });
 
-test('unapproved decision does not embed judge signatures', function (): void {
+test('published decision embeds judge signatures before approval', function (): void {
     Storage::fake('public');
     $signaturePath = 'signatures/judge.png';
     Storage::disk('public')->put(
@@ -62,6 +62,21 @@ test('unapproved decision does not embed judge signatures', function (): void {
     );
     $judge = User::factory()->create(['signature_path' => $signaturePath]);
     $decision = decisionWithPanelJudge($judge, approved: false);
+
+    $pdf = DecisionPdf::render($decision)->output();
+
+    expect(substr_count($pdf, '/Subtype /Image'))->toBeGreaterThanOrEqual(1);
+});
+
+test('draft decision does not embed judge signatures', function (): void {
+    Storage::fake('public');
+    $signaturePath = 'signatures/judge.png';
+    Storage::disk('public')->put(
+        $signaturePath,
+        base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='),
+    );
+    $judge = User::factory()->create(['signature_path' => $signaturePath]);
+    $decision = decisionWithPanelJudge($judge, status: 'draft', approved: false);
 
     $pdf = DecisionPdf::render($decision)->output();
 
