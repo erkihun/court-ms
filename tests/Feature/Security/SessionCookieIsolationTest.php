@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Http\Middleware\SetSessionCookieForGuard;
 use App\Models\Applicant;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,6 +25,8 @@ test('admin and applicant paths select separate session cookies', function () {
         ['/mfa-challenge', $base.'-admin'],
         ['/users', $base.'-admin'],
         ['/users/1', $base.'-admin'],
+        ['/roles', $base.'-admin'],
+        ['/roles/1/edit', $base.'-admin'],
     ];
 
     foreach ($cases as [$path, $expectedCookie]) {
@@ -56,6 +61,29 @@ test('admin login does not flash a cross-portal session notice', function () {
         ])
         ->assertRedirect(route('dashboard', absolute: false))
         ->assertSessionMissing('info');
+});
+
+test('admin session remains authenticated on the roles page', function () {
+    $adminRole = Role::query()->create([
+        'name' => 'admin',
+        'description' => 'Administrator',
+        'mfa_required' => false,
+    ]);
+    $user = User::factory()->create([
+        'password' => Hash::make('password'),
+        'status' => 'active',
+    ]);
+
+    $user->roles()->attach($adminRole);
+
+    $this->post(route('login'), [
+        'email' => $user->email,
+        'password' => 'password',
+    ])->assertRedirect(route('dashboard', absolute: false));
+
+    $this->get(route('roles.index'))
+        ->assertOk()
+        ->assertViewIs('admin.roles.index');
 });
 
 test('applicant login does not flash a cross-portal session notice', function () {

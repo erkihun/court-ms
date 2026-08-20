@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Middleware;
 
 use Closure;
@@ -65,6 +67,8 @@ class SetSessionCookieForGuard
             'mfa-challenge/*',
             'users',
             'users/*',
+            'roles',
+            'roles/*',
             'admin',
             'admin/*',
         );
