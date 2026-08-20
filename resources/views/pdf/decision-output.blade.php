@@ -1,21 +1,8 @@
 {{-- resources/views/pdf/decision-output.blade.php --}}
 @php
     $caseNumber = $decision->case_number ?? '';
-    $panel = is_array($decision->panel_judges) ? array_values($decision->panel_judges) : [];
-    $preferredJudgeId = auth('web')->id() ?: $decision->reviewing_admin_user_id;
-    $displayPanel = collect($panel)
-        ->map(fn($judge, $index) => [
-            'judge' => $judge,
-            'signature' => $signaturePaths[$index] ?? null,
-        ]);
-    if ($preferredJudgeId) {
-        $displayPanel = $displayPanel->sortByDesc(
-            fn($entry) => (int) ($entry['judge']['admin_user_id'] ?? 0) === (int) $preferredJudgeId,
-        );
-    }
-    $displayPanel = $displayPanel->values();
-    $panel = $displayPanel->pluck('judge')->all();
-    $judgeSignatures = $displayPanel->pluck('signature')->all();
+    $panel = $displayPanel ?? $decision->panelJudgesAuthorFirst();
+    $judgeSignatures = $signaturePaths ?? [];
     $judgeNames = [];
     for ($i = 0; $i < 3; $i++) {
         $name = trim((string) ($panel[$i]['admin_user_name'] ?? ''));

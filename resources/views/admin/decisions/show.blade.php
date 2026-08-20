@@ -192,15 +192,7 @@
 
             <!-- Judicial Panel -->
             @php
-            $panel = $decision->panel_judges ?? [];
-            $panel = is_array($panel) ? array_values($panel) : [];
-            $sessionJudgeId = auth()->id();
-            if ($sessionJudgeId) {
-                $panel = collect($panel)
-                    ->sortByDesc(fn($judge) => (int) ($judge['admin_user_id'] ?? 0) === (int) $sessionJudgeId)
-                    ->values()
-                    ->all();
-            }
+            $panel = $decision->panelJudgesAuthorFirst();
             $reviewLocked = $decision->status === 'published';
             @endphp
             <div class="border border-gray-200 rounded-lg p-4 space-y-3">

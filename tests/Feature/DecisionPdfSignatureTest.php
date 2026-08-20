@@ -80,32 +80,36 @@ test('missing signature file leaves the signature line empty', function (): void
     expect(substr_count($pdf, '/Subtype /Image'))->toBe(0);
 });
 
-test('pdf displays the session judge first with the matching signature without changing storage', function (): void {
+test('pdf displays the decision author first with the matching signature without changing storage', function (): void {
     $firstStoredJudge = User::factory()->create(['name' => 'First Stored Judge']);
-    $sessionJudge = User::factory()->create(['name' => 'Session Judge']);
+    $author = User::factory()->create(['name' => 'Decision Author']);
+    $viewer = User::factory()->create(['name' => 'Different Viewer']);
     $thirdJudge = User::factory()->create(['name' => 'Third Judge']);
     $decision = decisionWithPanelJudge($firstStoredJudge);
     $storedPanel = [
         ['order' => 1, 'admin_user_id' => $firstStoredJudge->id, 'admin_user_name' => $firstStoredJudge->name],
-        ['order' => 2, 'admin_user_id' => $sessionJudge->id, 'admin_user_name' => $sessionJudge->name],
+        ['order' => 2, 'admin_user_id' => $author->id, 'admin_user_name' => $author->name],
         ['order' => 3, 'admin_user_id' => $thirdJudge->id, 'admin_user_name' => $thirdJudge->name],
     ];
     $decision->update([
         'panel_judges' => $storedPanel,
-        'reviewing_admin_user_id' => $sessionJudge->id,
-        'reviewing_admin_user_name' => $sessionJudge->name,
+        'reviewing_admin_user_id' => $author->id,
+        'reviewing_admin_user_name' => $author->name,
     ]);
 
-    $this->actingAs($sessionJudge);
+    $this->actingAs($viewer);
+    $displayPanel = $decision->panelJudgesAuthorFirst();
     $html = view('pdf.decision-output', [
         'decision' => $decision,
         'template' => null,
         'body' => '<p>Decision content.</p>',
         'sealPath' => null,
-        'signaturePaths' => ['first.png', 'session.png', 'third.png'],
+        'displayPanel' => $displayPanel,
+        'signaturePaths' => ['author.png', 'first.png', 'third.png'],
     ])->render();
 
-    expect(strpos($html, 'Session Judge'))->toBeLessThan(strpos($html, 'First Stored Judge'))
-        ->and(strpos($html, 'session.png'))->toBeLessThan(strpos($html, 'first.png'))
+    expect(strpos($html, 'Decision Author'))->toBeLessThan(strpos($html, 'First Stored Judge'))
+        ->and(strpos($html, 'author.png'))->toBeLessThan(strpos($html, 'first.png'))
+        ->and(DecisionPdf::fillPlaceholders('{{judge_one}}', $decision))->toBe('Decision Author')
         ->and($decision->fresh()->panel_judges)->toBe($storedPanel);
 });

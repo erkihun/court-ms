@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -76,6 +78,28 @@ class Decision extends Model
     public function isPublished(): bool
     {
         return $this->status === 'published';
+    }
+
+    /**
+     * Return the judicial panel with the recorded decision author first.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function panelJudgesAuthorFirst(): array
+    {
+        $panel = is_array($this->panel_judges) ? array_values($this->panel_judges) : [];
+        $authorId = (int) $this->reviewing_admin_user_id;
+
+        if (! $authorId) {
+            return $panel;
+        }
+
+        return collect($panel)
+            ->sortByDesc(
+                fn (array $judge): bool => (int) ($judge['admin_user_id'] ?? 0) === $authorId,
+            )
+            ->values()
+            ->all();
     }
 
     /**

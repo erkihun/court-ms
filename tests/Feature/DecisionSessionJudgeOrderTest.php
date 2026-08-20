@@ -62,15 +62,16 @@ test('create form displays the session judge first while retaining the original 
         ->and(strpos($html, $sessionField))->toBeLessThan(strpos($html, 'name="judges[0][admin_user_id]"'));
 });
 
-test('decision view displays the session judge first without changing stored panel order', function (): void {
+test('decision view always displays the decision author first without changing stored panel order', function (): void {
     $role = decisionUiOrderRole();
-    $creator = decisionUiOrderUser($role, 'Session Judge');
+    $author = decisionUiOrderUser($role, 'Decision Author');
+    $viewer = decisionUiOrderUser($role, 'Different Viewer');
     $firstStoredJudge = decisionUiOrderUser($role, 'First Stored Judge');
     $thirdJudge = decisionUiOrderUser($role, 'Third Judge');
     $courtCase = decisionUiOrderCase();
     $storedPanel = [
         ['order' => 1, 'admin_user_id' => $firstStoredJudge->id, 'admin_user_name' => $firstStoredJudge->name],
-        ['order' => 2, 'admin_user_id' => $creator->id, 'admin_user_name' => $creator->name],
+        ['order' => 2, 'admin_user_id' => $author->id, 'admin_user_name' => $author->name],
         ['order' => 3, 'admin_user_id' => $thirdJudge->id, 'admin_user_name' => $thirdJudge->name],
     ];
     $decision = Decision::query()->create([
@@ -78,18 +79,18 @@ test('decision view displays the session judge first without changing stored pan
         'case_number' => $courtCase->case_number,
         'decision_date' => now()->toDateString(),
         'panel_judges' => $storedPanel,
-        'reviewing_admin_user_id' => $creator->id,
-        'reviewing_admin_user_name' => $creator->name,
+        'reviewing_admin_user_id' => $author->id,
+        'reviewing_admin_user_name' => $author->name,
         'name' => 'UI order ruling',
         'decision_content' => 'Decision content.',
         'status' => 'draft',
     ]);
 
-    $html = $this->actingAs($creator)
+    $html = $this->actingAs($viewer)
         ->get(route('decisions.show', $decision))
         ->assertOk()
         ->getContent();
 
-    expect($html)->toMatch('/Judge 1.*Session Judge.*Judge 2.*First Stored Judge.*Judge 3.*Third Judge/s')
+    expect($html)->toMatch('/Judge 1.*Decision Author.*Judge 2.*First Stored Judge.*Judge 3.*Third Judge/s')
         ->and($decision->fresh()->panel_judges)->toBe($storedPanel);
 });

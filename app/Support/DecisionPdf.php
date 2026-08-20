@@ -35,13 +35,15 @@ class DecisionPdf
             }
         }
 
-        $signaturePaths = self::resolveJudgeSignaturePaths($decision);
+        $displayPanel = $decision->panelJudgesAuthorFirst();
+        $signaturePaths = self::resolveJudgeSignaturePaths($decision, $displayPanel);
 
         return Pdf::loadView('pdf.decision-output', [
             'decision' => $decision,
             'template' => $template,
             'body'     => $body,
             'sealPath' => $sealPath,
+            'displayPanel' => $displayPanel,
             'signaturePaths' => $signaturePaths,
         ])->setPaper('a4');
     }
@@ -58,7 +60,7 @@ class DecisionPdf
      */
     public static function fillPlaceholders(string $body, Decision $decision): string
     {
-        $panel = is_array($decision->panel_judges) ? array_values($decision->panel_judges) : [];
+        $panel = $decision->panelJudgesAuthorFirst();
 
         $judgeName = static fn (array $panel, int $i): string => (string) ($panel[$i]['admin_user_name'] ?? '');
         $judgeVote = static fn (array $panel, int $i): string => (string) ($panel[$i]['vote'] ?? '');
@@ -92,13 +94,12 @@ class DecisionPdf
      *
      * @return array<int, string|null>
      */
-    private static function resolveJudgeSignaturePaths(Decision $decision): array
+    private static function resolveJudgeSignaturePaths(Decision $decision, array $panel): array
     {
         if (! $decision->isPublished() || ! $decision->isApproved()) {
             return [];
         }
 
-        $panel = is_array($decision->panel_judges) ? array_values($decision->panel_judges) : [];
         $judgeIds = collect($panel)
             ->take(3)
             ->pluck('admin_user_id')
