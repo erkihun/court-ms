@@ -166,7 +166,7 @@
                                     <div class="flex items-baseline justify-end gap-2">
                                         <p
                                             class="text-5xl md:text-6xl font-black leading-none drop-shadow-xl tracking-tight">
-                                            {{ number_format($totalCases) }}</p>
+                                            {{ number_format((int) ($statusCounts->firstWhere('label', 'active')?->total ?? 0)) }}</p>
                                         <span class="text-lg font-bold text-blue-200">{{ __('signage.cases') }}</span>
                                     </div>
                                     <p class="mt-2 text-xs text-blue-200/70 font-medium">
