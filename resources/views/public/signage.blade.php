@@ -162,11 +162,11 @@
                                 <div
                                     class="inline-block rounded-xl bg-white/10 backdrop-blur-sm p-4 border border-white/20">
                                     <p class="text-xs uppercase  text-blue-200/80 font-semibold mb-2">
-                                        {{ __('signage.active_cases') }}</p>
+                                        {{ __('signage.total_cases') }}</p>
                                     <div class="flex items-baseline justify-end gap-2">
                                         <p
                                             class="text-5xl md:text-6xl font-black leading-none drop-shadow-xl tracking-tight">
-                                            {{ number_format((int) ($statusCounts->firstWhere('label', 'active')?->total ?? 0)) }}</p>
+                                            {{ number_format($totalCases) }}</p>
                                         <span class="text-lg font-bold text-blue-200">{{ __('signage.cases') }}</span>
                                     </div>
                                     <p class="mt-2 text-xs text-blue-200/70 font-medium">

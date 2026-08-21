@@ -4,7 +4,7 @@ return array (
   'across_departments' => 'Across all departments',
   'active' => 'Active',
   'active_announcements' => 'Active announcements',
-  'active_cases' => 'Active Cases',
+  'total_cases' => 'Total Cases',
   'active_staff_label' => 'ስራ ላይ',
   'applicant_column' => 'አመልካች',
   'auto_refresh' => 'Auto-refresh • 2 minute intervals',

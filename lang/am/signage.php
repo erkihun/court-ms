@@ -15,7 +15,7 @@ return [
     'live_updates' => ' በየ 2 ደቂቃው ', 
     'public_display' => 'ለሁሉም እንዲታይ የተፈቀደ', 
     'auto_refresh' => ' • በየ 2 ደቂቃው', 
-    'active_cases' => 'ንቁ መዝገቦች', 
+    'total_cases' => 'ጠቅላላ መዝገቦች',
     'across_departments' => 'በሁሉም ችሎቶች', 
     'case_distribution' => 'የመዝገብ ሁኔታ', 
     'status_breakdown' => 'የሁኔታ ዝርዝር', 
