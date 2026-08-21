@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreDecisionRequest;
 use App\Models\CourtCase;
 use App\Models\Decision;
 use App\Models\User;
@@ -109,7 +110,7 @@ class DecisionController extends Controller
 
     public function create()
     {
-        $cases = $this->loadCases(); // allow all cases
+        $cases = $this->loadCases(status: 'closed');
         $adminUsers = $this->loadAdminUsers();
         $judgeUsers = $this->loadJudgeUsers();
         return view('admin.decisions.create', compact('cases', 'adminUsers', 'judgeUsers'));
@@ -250,10 +251,12 @@ class DecisionController extends Controller
         return '<table style="width:100%;border-collapse:collapse;margin-top:18px;"><tr>' . $cells . '</tr></table>';
     }
 
-    public function store(Request $request)
+    public function store(StoreDecisionRequest $request)
     {
-        $payload = $this->preparePayload($request->validate($this->rules()));
-        $case = CourtCase::with('applicant')->findOrFail($payload['case_id']);
+        $payload = $this->preparePayload($request->validated());
+        $case = CourtCase::with('applicant')
+            ->where('status', 'closed')
+            ->findOrFail($payload['case_id']);
         $data = $this->hydrateCaseData($payload, $case);
 
         // New decisions always start as draft; status is changed later from the show page.
@@ -544,12 +547,12 @@ class DecisionController extends Controller
         }
     }
 
-    private function loadCases(Decision $decision = null, bool $excludeClosed = false)
+    private function loadCases(?Decision $decision = null, ?string $status = null)
     {
         $cases = CourtCase::with('applicant')
             ->orderByDesc('filing_date')
             ->limit(self::CASE_LIMIT)
-            ->when($excludeClosed, fn($q) => $q->where('status', '!=', 'closed'))
+            ->when($status !== null, fn ($query) => $query->where('status', $status))
             ->get(['id', 'case_number', 'title', 'filing_date', 'applicant_id', 'respondent_name', 'status']);
 
         if ($decision && $decision->court_case_id && !$cases->contains('id', $decision->court_case_id)) {

@@ -131,4 +131,8 @@ return array (
   'approve_requires_published' => 'The decision must be published before it can be approved.',
   'download' => 'Download decision',
   'download_unavailable' => 'The decision PDF will be available once it is approved and published.',
+  'validation' =>
+  array (
+    'closed_case_required' => 'A decision can only be created for a closed case.',
+  ),
 );

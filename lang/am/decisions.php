@@ -131,4 +131,8 @@ return array (
   'approve_requires_published' => 'ውሳኔው ከመጽደቁ በፊት መታተም አለበት።',
   'download' => 'ውሳኔ አውርድ',
   'download_unavailable' => 'የውሳኔው PDF ከጸደቀና ከታተመ በኋላ ይገኛል።',
+  'validation' =>
+  array (
+    'closed_case_required' => 'ውሳኔ መፍጠር የሚቻለው ለተዘጋ ጉዳይ ብቻ ነው።',
+  ),
 );
