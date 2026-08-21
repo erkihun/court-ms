@@ -711,7 +711,7 @@
         </form>
 
         {{-- Status change (admins) --}}
-        @if($canEditStatus)
+        @if($canEditStatus && $currentStatus !== 'closed')
         <div class="p-4 rounded-2xl border border-[var(--border)] bg-[var(--surface-strong)] shadow-sm mb-6 no-print">
             <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24"
@@ -752,6 +752,11 @@
                     </button>
                 </div>
             </form>
+        </div>
+        @elseif($canEditStatus)
+        <div class="p-4 rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-800 shadow-sm mb-6 no-print">
+            <p class="font-semibold">{{ __('cases.status.closed_locked_title') }}</p>
+            <p class="mt-1 text-sm">{{ __('cases.status.closed_locked') }}</p>
         </div>
         @endif
 

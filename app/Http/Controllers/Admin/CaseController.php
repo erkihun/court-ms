@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -12,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
@@ -887,6 +890,12 @@ class CaseController extends Controller
         $old = $case->status;
         $new = $data['status'];
 
+        if ($old === 'closed' && $new !== $old) {
+            throw ValidationException::withMessages([
+                'status' => __('cases.status.closed_locked'),
+            ]);
+        }
+
         if ($old === $new) {
             return back()->with('success', [
                 'key' => 'messages.success.unchanged',
@@ -897,10 +906,24 @@ class CaseController extends Controller
             ]);
         }
 
-        DB::table('court_cases')->where('id', $id)->update([
-            'status'     => $new,
-            'updated_at' => now(),
-        ]);
+        $updated = DB::table('court_cases')
+            ->where('id', $id)
+            ->where('status', $old)
+            ->where('status', '!=', 'closed')
+            ->update([
+                'status'     => $new,
+                'updated_at' => now(),
+            ]);
+
+        if ($updated === 0) {
+            $currentStatus = DB::table('court_cases')->where('id', $id)->value('status');
+
+            throw ValidationException::withMessages([
+                'status' => $currentStatus === 'closed'
+                    ? __('cases.status.closed_locked')
+                    : __('cases.status.changed_retry'),
+            ]);
+        }
 
         // Email applicant (best-effort) — uses applicant_notification_prefs
         try {
