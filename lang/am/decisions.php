@@ -57,6 +57,7 @@ return array (
     'case_number' => 'የጉዳይ ቁጥር',
     'parties' => 'ተከራካሪዎች',
     'decision_date' => 'የውሳኔ ቀን',
+    'approval_status' => 'የማጽደቅ ሁኔታ',
     'applicant' => 'አመልካች',
     'respondent' => 'መልስ ሰጭ',
     'judge' => 'ዳኛ',
@@ -111,6 +112,11 @@ return array (
   array (
     'draft' => 'ረቂቅ',
     'published' => 'የታተመ',
+  ),
+  'approval_status' =>
+  array (
+    'approved' => 'ጸድቋል',
+    'pending' => 'መጽደቅን በመጠባበቅ ላይ',
   ),
   'status_change' => 'ሁኔታ ቀይር',
   'status_change_confirm' => 'የዚህን ውሳኔ ሁኔታ መቀየር እንደሚፈልጉ እርግጠኛ ነዎት?',

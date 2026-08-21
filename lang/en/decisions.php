@@ -57,6 +57,7 @@ return array (
     'case_number' => 'Case Number',
     'parties' => 'Parties',
     'decision_date' => 'Decision Date',
+    'approval_status' => 'Approval Status',
     'applicant' => 'Applicant',
     'respondent' => 'Respondent',
     'judge' => 'Judge',
@@ -111,6 +112,11 @@ return array (
   array (
     'draft' => 'Draft',
     'published' => 'Published',
+  ),
+  'approval_status' =>
+  array (
+    'approved' => 'Approved',
+    'pending' => 'Pending approval',
   ),
   'status_change' => 'Change status',
   'status_change_confirm' => 'Are you sure you want to change the status of this decision?',

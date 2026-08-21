@@ -111,3 +111,22 @@ test('decision view all bypasses team scope for a permitted user without a team'
         ->assertOk()
         ->assertViewIs('admin.decisions.show');
 });
+
+test('decision index displays each decision approval status', function (): void {
+    $approvedDecision = decisionVisibilityDecision();
+    $approvedDecision->update([
+        'status' => 'published',
+        'approved_at' => now(),
+    ]);
+
+    decisionVisibilityDecision();
+
+    $user = decisionVisibilityUser(['decision.view', 'decision.view.all']);
+
+    $this->actingAs($user)
+        ->get(route('decisions.index'))
+        ->assertOk()
+        ->assertSeeText(__('decisions.index.approval_status'))
+        ->assertSeeText(__('decisions.approval_status.approved'))
+        ->assertSeeText(__('decisions.approval_status.pending'));
+});

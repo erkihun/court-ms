@@ -61,6 +61,7 @@
                             <th class="p-3 text-left font-medium">{{ __('decisions.index.judge') }}</th>
                             <th class="p-3 text-left font-medium">{{ __('decisions.index.decision_date') }}</th>
                             <th class="p-3 text-left font-medium">{{ __('app.Status') }}</th>
+                            <th class="p-3 text-left font-medium">{{ __('decisions.index.approval_status') }}</th>
                             <th class="p-3 text-left font-medium w-36">{{ __('decisions.index.actions') }}</th>
                         </tr>
                     </thead>
@@ -112,6 +113,12 @@
                                     {{ $decision->status ? __('decisions.status.' . $decision->status) : '—' }}
                                 </span>
                             </td>
+                            <td class="p-3 align-top">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide
+                                    {{ $decision->isApproved() ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-amber-100 text-amber-700 border border-amber-200' }}">
+                                    {{ __('decisions.approval_status.' . ($decision->isApproved() ? 'approved' : 'pending')) }}
+                                </span>
+                            </td>
                             @php
                             $middleJudgeId = $decision->panel_judges[1]['admin_user_id'] ?? null;
                             $isMiddleJudge = $middleJudgeId && auth()->id() === $middleJudgeId;
@@ -142,7 +149,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7" class="p-8 text-center text-gray-500">
+                            <td colspan="8" class="p-8 text-center text-gray-500">
                                 <svg class="h-10 w-10 mx-auto mb-2 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h6" />
                                 </svg>
@@ -169,4 +176,3 @@
         </div>
     </div>
 </x-admin-layout>
-
