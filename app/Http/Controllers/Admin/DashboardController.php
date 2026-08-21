@@ -1,13 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\SystemSetting;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use App\Models\SystemSetting;
 use Illuminate\Support\Facades\Schema;
 
 class DashboardController extends Controller
@@ -15,12 +19,16 @@ class DashboardController extends Controller
     // Cache TTL in seconds — short enough to feel live, long enough to matter
     private const CACHE_TTL = 300; // 5 minutes
 
-    public function index()
+    public function index(): View
     {
-        $data = Cache::remember('dashboard_index_v2', self::CACHE_TTL, function () {
+        $data = Cache::remember('dashboard_index_v3', self::CACHE_TTL, function () {
             $totalCases    = DB::table('court_cases')->count();
             $pendingCases  = DB::table('court_cases')->where('status', 'pending')->count();
-            $resolvedCases = DB::table('court_cases')->whereIn('status', ['closed', 'dismissed'])->count();
+            $resolvedCases = DB::table('decisions')
+                ->where('status', 'published')
+                ->whereNotNull('court_case_id')
+                ->distinct()
+                ->count('court_case_id');
             $activeUsers   = DB::table('users')->where('status', 'active')->count();
 
             $recent = DB::table('court_cases')
@@ -58,13 +66,17 @@ class DashboardController extends Controller
                                 ->whereNull('c.assigned_member_user_id');
                         });
                 })
+                ->leftJoin('decisions as d', function ($join) {
+                    $join->on('d.court_case_id', '=', 'c.id')
+                        ->where('d.status', '=', 'published');
+                })
                 ->select(
                     'u.id', 'u.name', 'u.email', 'u.status', 'u.avatar_path',
                     't.name as team_name',
                     DB::raw('COUNT(DISTINCT c.id) as cases_count'),
                     DB::raw("COUNT(DISTINCT CASE WHEN c.status = 'pending' THEN c.id END) as pending_cases_count"),
                     DB::raw("COUNT(DISTINCT CASE WHEN c.status = 'active' THEN c.id END) as active_cases_count"),
-                    DB::raw("COUNT(DISTINCT CASE WHEN c.status IN ('closed', 'dismissed') THEN c.id END) as resolved_cases_count")
+                    DB::raw('COUNT(DISTINCT CASE WHEN d.id IS NOT NULL THEN c.id END) as resolved_cases_count')
                 )
                 ->groupBy('u.id', 'u.name', 'u.email', 'u.status', 'u.avatar_path', 't.name')
                 ->orderByDesc('cases_count')
@@ -196,7 +208,7 @@ class DashboardController extends Controller
      * Returns dashboard stats for a selected date range via AJAX.
      * Cached per range key so repeated toggles hit cache, not DB.
      */
-    public function stats(Request $request)
+    public function stats(Request $request): JsonResponse
     {
         $now = Carbon::now();
 
@@ -223,18 +235,22 @@ class DashboardController extends Controller
         }
 
         // Cache key encodes the exact day range so custom ranges also benefit
-        $cacheKey = 'dashboard_stats_v2_' . $start->toDateString() . '_' . $end->toDateString();
+        $cacheKey = 'dashboard_stats_v3_' . $start->toDateString() . '_' . $end->toDateString();
 
         $result = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($start, $end, $now) {
 
             // All 4 KPI counts in a single pass using conditional aggregation
-            $kpiRow = DB::table('court_cases')
+            $kpiRow = DB::table('court_cases as c')
+                ->leftJoin('decisions as d', function ($join) {
+                    $join->on('d.court_case_id', '=', 'c.id')
+                        ->where('d.status', '=', 'published');
+                })
                 ->selectRaw("
-                    COUNT(*) as total,
-                    SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
-                    SUM(CASE WHEN status IN ('closed','dismissed') THEN 1 ELSE 0 END) as resolved
+                    COUNT(DISTINCT c.id) as total,
+                    COUNT(DISTINCT CASE WHEN c.status = 'pending' THEN c.id END) as pending,
+                    COUNT(DISTINCT CASE WHEN d.id IS NOT NULL THEN c.id END) as resolved
                 ")
-                ->whereBetween('created_at', [$start, $end])
+                ->whereBetween('c.created_at', [$start, $end])
                 ->first();
 
             $totalCases    = (int) $kpiRow->total;
@@ -275,13 +291,17 @@ class DashboardController extends Controller
                                 });
                         });
                 })
+                ->leftJoin('decisions as d', function ($join) {
+                    $join->on('d.court_case_id', '=', 'c.id')
+                        ->where('d.status', '=', 'published');
+                })
                 ->select(
                     'u.id', 'u.name', 'u.email', 'u.status', 'u.avatar_path',
                     't.name as team_name',
                     DB::raw('COUNT(DISTINCT c.id) as cases_count'),
                     DB::raw("COUNT(DISTINCT CASE WHEN c.status = 'pending' THEN c.id END) as pending_cases_count"),
                     DB::raw("COUNT(DISTINCT CASE WHEN c.status = 'active' THEN c.id END) as active_cases_count"),
-                    DB::raw("COUNT(DISTINCT CASE WHEN c.status IN ('closed', 'dismissed') THEN c.id END) as resolved_cases_count")
+                    DB::raw('COUNT(DISTINCT CASE WHEN d.id IS NOT NULL THEN c.id END) as resolved_cases_count')
                 )
                 ->groupBy('u.id', 'u.name', 'u.email', 'u.status', 'u.avatar_path', 't.name')
                 ->orderByDesc('cases_count')
