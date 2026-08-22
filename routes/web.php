@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AboutController;
 use App\Http\Controllers\Admin\ActiveSessionController;
 use App\Http\Controllers\Admin\AdminNotificationController;
+use App\Http\Controllers\Admin\AdminRoleSwitchController;
 use App\Http\Controllers\Admin\AnnouncementController;
 use App\Http\Controllers\Admin\AppealController;
 // Applicant-facing controllers
@@ -379,9 +380,12 @@ Route::middleware(SetLocale::class)->group(function () {
     | Admin area (auth:web)
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['auth', 'force.password.change', 'verified'])->group(function () {
+    Route::middleware(['auth', 'force.password.change', 'verified', 'active.admin.role'])->group(function () {
         // Admin dashboard
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+        Route::post('/admin/role/switch', AdminRoleSwitchController::class)
+            ->name('admin.roles.switch');
 
         // Admin self profile
         Route::get('/profile', [AdminProfileController::class, 'edit'])->name('profile.edit');

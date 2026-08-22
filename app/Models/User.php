@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,6 +18,14 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable implements MustVerifyEmailContract, AuditableContract
 {
     use HasApiTokens, HasFactory, Notifiable, MustVerifyEmail, Auditable;
+
+    public const string ACTIVE_ROLE_SESSION_KEY = 'active_admin_role_id';
+
+    private bool $activeRoleResolved = false;
+
+    private ?int $resolvedActiveRoleId = null;
+
+    private ?Role $resolvedActiveRole = null;
 
     /**
      * Mass assignable attributes.
@@ -97,6 +107,18 @@ class User extends Authenticatable implements MustVerifyEmailContract, Auditable
      */
     public function hasPermission(string $perm): bool
     {
+        $activeRole = $this->activeRole();
+
+        if ($activeRole instanceof Role) {
+            if (mb_strtolower($activeRole->name) === 'admin') {
+                return true;
+            }
+
+            $activeRole->loadMissing('permissions');
+
+            return $activeRole->permissions->contains('name', $perm);
+        }
+
         // Global bypass: Admin role has full permission access.
         if ($this->hasRole('admin')) {
             return true;
@@ -109,9 +131,58 @@ class User extends Authenticatable implements MustVerifyEmailContract, Auditable
 
     public function hasRole(string $role): bool
     {
+        $activeRole = $this->activeRole();
+
+        if ($activeRole instanceof Role) {
+            return mb_strtolower($activeRole->name) === mb_strtolower($role);
+        }
+
         return $this->roles()
             ->whereRaw('LOWER(name) = ?', [mb_strtolower($role)])
             ->exists();
+    }
+
+    public function activeRole(): ?Role
+    {
+        $roleId = $this->activeRoleIdFromSession();
+
+        if ($this->activeRoleResolved && $this->resolvedActiveRoleId === $roleId) {
+            return $this->resolvedActiveRole;
+        }
+
+        $this->activeRoleResolved = true;
+        $this->resolvedActiveRoleId = $roleId;
+        $this->resolvedActiveRole = null;
+
+        if ($roleId === null) {
+            return null;
+        }
+
+        $roles = $this->relationLoaded('roles')
+            ? $this->roles
+            : $this->roles()->get();
+
+        $role = $roles->firstWhere('id', $roleId);
+        $this->resolvedActiveRole = $role instanceof Role ? $role : null;
+
+        return $this->resolvedActiveRole;
+    }
+
+    private function activeRoleIdFromSession(): ?int
+    {
+        if (! app()->bound('request')) {
+            return null;
+        }
+
+        $request = request();
+
+        if (! $request->hasSession()) {
+            return null;
+        }
+
+        $roleId = (int) $request->session()->get(self::ACTIVE_ROLE_SESSION_KEY, 0);
+
+        return $roleId > 0 ? $roleId : null;
     }
 
     public function getIsAdminAttribute(): bool

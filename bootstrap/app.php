@@ -15,6 +15,7 @@ use App\Http\Middleware\PurgeLegacySessionCookies;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\RequirePermission;
 use App\Http\Middleware\RequireRole;
+use App\Http\Middleware\ResolveAdminRole;
 use App\Http\Middleware\SetSessionCookieForGuard;
 use App\Http\Middleware\SystemAuditMiddleware;
 use App\Http\Middleware\UseGuard;
@@ -61,6 +62,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.only' => AdminOnly::class,
             'perm' => RequirePermission::class,
             'role' => RequireRole::class,
+            'active.admin.role' => ResolveAdminRole::class,
             'audit' => SystemAuditMiddleware::class,
             'act.respondent' => ActAsRespondent::class,
             'use.guard' => UseGuard::class,

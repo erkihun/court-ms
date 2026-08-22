@@ -333,6 +333,7 @@
     $hasUsers = Route::has('users.index');
     $hasPermissions = Route::has('permissions.index');
     $hasRoles = Route::has('roles.index');
+    $hasAdminRoleSwitch = Route::has('admin.roles.switch');
     $hasTeams = Route::has('teams.index');
     $hasNotifIndex = Route::has('admin.notifications.index');
     $hasNotifMarkAll = Route::has('admin.notifications.markAll');
@@ -1109,7 +1110,10 @@
         </div>
 
         {{-- User profile card --}}
-        @php $__sidebarUser = auth()->user(); @endphp
+        @php
+        $__sidebarUser = auth()->user();
+        $__sidebarActiveRole = $__sidebarUser?->activeRole();
+        @endphp
         @if($__sidebarUser)
         <div class="sidebar-user-card">
             <div class="flex items-center gap-2.5" :class="compact ? 'justify-center' : ''">
@@ -1133,7 +1137,7 @@
                     x-transition:leave-start="motion-slide-inline-end"
                     x-transition:leave-end="motion-slide-inline-start">
                     <div class="text-[12.5px] font-semibold text-slate-200 truncate leading-tight">{{ $__sidebarUser->name ?? 'Admin' }}</div>
-                    <div class="text-[10.5px] text-slate-500 truncate capitalize mt-px">{{ $__sidebarUser->user_type ?? 'Administrator' }}</div>
+                    <div class="text-[10.5px] text-slate-500 truncate capitalize mt-px">{{ \Illuminate\Support\Str::headline($__sidebarActiveRole?->name ?? 'Administrator') }}</div>
                 </div>
 
                 {{-- Logout --}}
@@ -1353,6 +1357,11 @@
             + $adminRespondentViewCount;
 
         $u = auth()->user();
+        $adminRoleOptions = $u?->relationLoaded('roles')
+            ? $u->roles->sortBy('name')->values()
+            : ($u?->roles()->orderBy('name')->get() ?? collect());
+        $activeAdminRole = $u?->activeRole();
+        $activeAdminRoleLabel = Str::headline($activeAdminRole?->name ?? 'Administrator');
 
         // Breadcrumb from route name
         $currentRouteName = request()->route()?->getName() ?? '';
@@ -1702,7 +1711,7 @@
                         @endif
                         <div class="hidden sm:block min-w-0 text-left">
                             <div class="text-[12.5px] font-semibold text-slate-800 dark:text-slate-100 truncate max-w-[7rem]">{{ $u->name ?? 'Admin' }}</div>
-                            <div class="text-[10.5px] text-slate-400 dark:text-slate-500 truncate max-w-[7rem] capitalize">{{ $u->user_type ?? 'Administrator' }}</div>
+                            <div class="text-[10.5px] text-slate-400 dark:text-slate-500 truncate max-w-[7rem] capitalize">{{ $activeAdminRoleLabel }}</div>
                         </div>
                         <svg xmlns="http://www.w3.org/2000/svg" class="hidden sm:block h-3.5 w-3.5 text-slate-400 dark:text-slate-500 transition-transform duration-200 flex-shrink-0" :class="open ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -1733,6 +1742,28 @@
                                 <div class="text-[11px] text-slate-400 dark:text-slate-500 truncate">{{ $u?->email }}</div>
                             </div>
                         </div>
+
+                        @if($hasAdminRoleSwitch && $adminRoleOptions->count() > 1)
+                        <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+                            <label for="admin-active-role" class="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5">
+                                {{ __('app.active_role') }}
+                            </label>
+                            <form method="POST" action="{{ route('admin.roles.switch') }}">
+                                @csrf
+                                <select id="admin-active-role" name="role_id" onchange="this.form.submit()"
+                                    class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-[12px] font-semibold text-slate-700 dark:text-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900">
+                                    @foreach($adminRoleOptions as $roleOption)
+                                    <option value="{{ $roleOption->id }}" @selected($activeAdminRole?->id === $roleOption->id)>
+                                        {{ Str::headline($roleOption->name) }}
+                                    </option>
+                                    @endforeach
+                                </select>
+                            </form>
+                            <p class="mt-1.5 text-[10.5px] leading-4 text-slate-400 dark:text-slate-500">
+                                {{ __('app.role_switch_help') }}
+                            </p>
+                        </div>
+                        @endif
 
                         {{-- Menu items --}}
                         <div class="p-1.5 space-y-0.5" role="none">

@@ -13,7 +13,7 @@ class UserPolicy
     public function before(User $actor): ?bool
     {
         // If you have an 'admin' role, allow all
-        return $actor->roles()->where('name', 'admin')->exists() ? true : null;
+        return $actor->hasRole('admin') ? true : null;
     }
 
     /** View list of users */
@@ -46,7 +46,7 @@ class UserPolicy
 
         // Only admins can modify other admins (optional guardrail)
         $targetIsAdmin = $target->roles()->where('name', 'admin')->exists();
-        $actorIsAdmin  = $actor->roles()->where('name', 'admin')->exists();
+        $actorIsAdmin  = $actor->hasRole('admin');
 
         return ! $targetIsAdmin || $actorIsAdmin;
     }
