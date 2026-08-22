@@ -62,6 +62,7 @@ class SetSessionCookieForGuard
             'email/verification-notification',
             'dashboard',
             'profile',
+            'profile/*',
             'mfa/*',
             'mfa-challenge',
             'mfa-challenge/*',
