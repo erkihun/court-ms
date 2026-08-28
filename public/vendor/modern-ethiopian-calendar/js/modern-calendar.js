@@ -318,11 +318,33 @@ class ModernCalendar {
     });
   }
   
+  // Step the view by one Ethiopian month (1-13). Stepping by Gregorian months
+  // would skip Pagume (ጳጉሜ) entirely, because that 5-6 day month never
+  // contains the 1st of a Gregorian month.
+  stepEthiopianMonth(delta) {
+    const eth = this.gregorianToEthiopian(this.viewDate);
+    let year = eth.year;
+    let month = eth.month + delta;
+    if (month > 13) {
+      month = 1;
+      year++;
+    } else if (month < 1) {
+      month = 13;
+      year--;
+    }
+    const g = this.jdToGregorian(this.ethiopianToJD(year, month, 1));
+    return new Date(g.year, g.month - 1, g.day);
+  }
+  
   previousMonth() {
-    // Prevent JS Date overflow (e.g. 31st -> skips a month)
-    const year = this.viewDate.getFullYear();
-    const month = this.viewDate.getMonth();
-    this.viewDate = new Date(year, month - 1, 1);
+    if (this.options.calendar === 'ethiopian') {
+      this.viewDate = this.stepEthiopianMonth(-1);
+    } else {
+      // Prevent JS Date overflow (e.g. 31st -> skips a month)
+      const year = this.viewDate.getFullYear();
+      const month = this.viewDate.getMonth();
+      this.viewDate = new Date(year, month - 1, 1);
+    }
     this.render();
     if (this.options.onMonthChange) {
       this.options.onMonthChange(this.viewDate);
@@ -330,10 +352,14 @@ class ModernCalendar {
   }
   
   nextMonth() {
-    // Prevent JS Date overflow (e.g. 31st -> skips a month)
-    const year = this.viewDate.getFullYear();
-    const month = this.viewDate.getMonth();
-    this.viewDate = new Date(year, month + 1, 1);
+    if (this.options.calendar === 'ethiopian') {
+      this.viewDate = this.stepEthiopianMonth(1);
+    } else {
+      // Prevent JS Date overflow (e.g. 31st -> skips a month)
+      const year = this.viewDate.getFullYear();
+      const month = this.viewDate.getMonth();
+      this.viewDate = new Date(year, month + 1, 1);
+    }
     this.render();
     if (this.options.onMonthChange) {
       this.options.onMonthChange(this.viewDate);
