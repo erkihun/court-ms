@@ -120,8 +120,9 @@
                                 </span>
                             </td>
                             @php
-                            $middleJudgeId = $decision->panel_judges[1]['admin_user_id'] ?? null;
-                            $isMiddleJudge = $middleJudgeId && auth()->id() === $middleJudgeId;
+                            // No presiding judge yet (legacy draft): any authorised editor may open it to assign the panel.
+                            $middleJudgeId = $decision->presidingJudgeId();
+                            $isMiddleJudge = $middleJudgeId === null || auth()->id() === $middleJudgeId;
                             @endphp
                             <td class="p-3 align-top">
                                 <div class="flex items-center gap-2">

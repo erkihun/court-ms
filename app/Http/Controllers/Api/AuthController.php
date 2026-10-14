@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Applicant;
 use App\Models\Respondent;
 use App\Models\User;
+use App\Support\LoginThrottle;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -22,13 +23,26 @@ class AuthController extends Controller
             'device_name' => 'nullable|string|max:255',
         ]);
 
+        $throttle = LoginThrottle::for('api:'.$data['guard'], $data['email'], $request->ip());
+        if ($throttle->tooManyAttempts()) {
+            $seconds = $throttle->availableIn();
+
+            throw ValidationException::withMessages([
+                'email' => [trans('auth.throttle', ['seconds' => $seconds, 'minutes' => ceil($seconds / 60)])],
+            ])->status(429);
+        }
+
         $user = $this->findUserForGuard($data['guard'], $data['email']);
 
         if (!$user || !Hash::check($data['password'], $user->password)) {
+            $throttle->hit();
+
             throw ValidationException::withMessages([
                 'email' => ['Invalid credentials.'],
             ]);
         }
+
+        $throttle->clear();
 
         $this->assertActive($user);
 

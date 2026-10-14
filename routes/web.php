@@ -79,7 +79,21 @@ use Illuminate\Support\Facades\Schema;
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(SetLocale::class)->group(function () {
+/*
+| Every ID-style route parameter is a numeric primary key. Constraining them
+| here makes a malformed segment (e.g. /admin/cases/abc) a clean 404 instead
+| of a TypeError 500 from an int-typed controller argument.
+*/
+$numericRouteParameters = [
+    'id', 'caseId', 'case', 'fileId', 'evidenceId', 'hearingId', 'witnessId',
+    'about', 'announcement', 'appeal', 'applicant', 'benchNote', 'criterion',
+    'decision', 'decisionTemplate', 'doc', 'faq', 'file', 'finding', 'hearing',
+    'letter', 'letterCategory', 'letter_template', 'performanceEvaluation',
+    'permission', 'reply', 'requestRecord', 'resource', 'response', 'review',
+    'role', 'service', 'slide', 'step', 'team', 'term', 'user', 'witness',
+];
+
+Route::middleware(SetLocale::class)->where(array_fill_keys($numericRouteParameters, '[0-9]+'))->group(function () {
 
     /*
     |--------------------------------------------------------------------------

@@ -121,10 +121,14 @@
                     {{ __('decisions.create.back') }}
                 </a>
                 @php
-                $middleJudgeId = $decision->panel_judges[1]['admin_user_id'] ?? null;
-                $isMiddleJudge = $middleJudgeId && auth()->id() === $middleJudgeId;
+                // No presiding judge yet (legacy draft): any authorised editor may open it to assign the panel.
+                $middleJudgeId = $decision->presidingJudgeId();
+                $isMiddleJudge = $middleJudgeId === null || auth()->id() === $middleJudgeId;
+                $canEditDecision = function_exists('userHasPermission')
+                    ? userHasPermission('decision.update')
+                    : (auth()->user()?->hasPermission('decision.update') ?? false);
                 @endphp
-                @if($isMiddleJudge && ($decision->status ?? 'draft') !== 'published')
+                @if($canEditDecision && $isMiddleJudge && ($decision->status ?? 'draft') !== 'published')
                 <a href="{{ route('decisions.edit', $decision) }}"
                     class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
