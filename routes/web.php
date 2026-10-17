@@ -477,36 +477,39 @@ Route::middleware(SetLocale::class)->where(array_fill_keys($numericRouteParamete
                 ->middleware('perm:settings.manage')
                 ->name('settings.performance-evaluation.criteria.destroy');
 
-            // Landing page manager
-            Route::get('/landing', [LandingPageController::class, 'index'])->name('admin.landing.index');
-            Route::post('/landing/slides', [LandingPageController::class, 'storeSlide'])->name('admin.landing.slides.store');
-            Route::put('/landing/slides/{slide}/update', [LandingPageController::class, 'updateSlide'])->name('admin.landing.slides.update');
-            Route::delete('/landing/slides/{slide}', [LandingPageController::class, 'destroySlide'])->name('admin.landing.slides.destroy');
-            Route::patch('/landing/slides/{slide}/toggle', [LandingPageController::class, 'toggleSlide'])->name('admin.landing.slides.toggle');
-            Route::post('/landing/slides/reorder', [LandingPageController::class, 'reorderSlides'])->name('admin.landing.slides.reorder');
-            Route::post('/landing/faqs', [LandingPageController::class, 'storeFaq'])->name('admin.landing.faqs.store');
-            Route::put('/landing/faqs/{faq}/update', [LandingPageController::class, 'updateFaq'])->name('admin.landing.faqs.update');
-            Route::delete('/landing/faqs/{faq}', [LandingPageController::class, 'destroyFaq'])->name('admin.landing.faqs.destroy');
-            Route::patch('/landing/faqs/{faq}/toggle', [LandingPageController::class, 'toggleFaq'])->name('admin.landing.faqs.toggle');
-            Route::put('/landing/sections', [LandingPageController::class, 'updateSections'])->name('admin.landing.sections.update');
-            Route::put('/landing/metrics', [LandingPageController::class, 'updateMetrics'])->name('admin.landing.metrics.update');
-            Route::post('/landing/services', [LandingPageController::class, 'storeService'])->name('admin.landing.services.store');
-            Route::put('/landing/services/{service}/update', [LandingPageController::class, 'updateService'])->name('admin.landing.services.update');
-            Route::delete('/landing/services/{service}', [LandingPageController::class, 'destroyService'])->name('admin.landing.services.destroy');
-            Route::patch('/landing/services/{service}/toggle', [LandingPageController::class, 'toggleService'])->name('admin.landing.services.toggle');
-            // Timeline steps
-            Route::post('/landing/steps', [LandingPageController::class, 'storeStep'])->name('admin.landing.steps.store');
-            Route::put('/landing/steps/{step}/update', [LandingPageController::class, 'updateStep'])->name('admin.landing.steps.update');
-            Route::delete('/landing/steps/{step}', [LandingPageController::class, 'destroyStep'])->name('admin.landing.steps.destroy');
-            Route::patch('/landing/steps/{step}/toggle', [LandingPageController::class, 'toggleStep'])->name('admin.landing.steps.toggle');
-            // Resources
-            Route::post('/landing/resources', [LandingPageController::class, 'storeResource'])->name('admin.landing.resources.store');
-            Route::put('/landing/resources/{resource}/update', [LandingPageController::class, 'updateResource'])->name('admin.landing.resources.update');
-            Route::delete('/landing/resources/{resource}', [LandingPageController::class, 'destroyResource'])->name('admin.landing.resources.destroy');
-            Route::patch('/landing/resources/{resource}/toggle', [LandingPageController::class, 'toggleResource'])->name('admin.landing.resources.toggle');
-            Route::put('/landing/user-manual', [LandingPageController::class, 'updateUserManual'])->name('admin.landing.user-manual.update');
-            // Footer settings
-            Route::put('/landing/footer', [LandingPageController::class, 'updateFooter'])->name('admin.landing.footer.update');
+            // Landing page manager: edits the public home page, so it needs the
+            // same permission as the rest of the Settings menu.
+            Route::middleware('perm:settings.manage')->group(function () {
+                Route::get('/landing', [LandingPageController::class, 'index'])->name('admin.landing.index');
+                Route::post('/landing/slides', [LandingPageController::class, 'storeSlide'])->name('admin.landing.slides.store');
+                Route::put('/landing/slides/{slide}/update', [LandingPageController::class, 'updateSlide'])->name('admin.landing.slides.update');
+                Route::delete('/landing/slides/{slide}', [LandingPageController::class, 'destroySlide'])->name('admin.landing.slides.destroy');
+                Route::patch('/landing/slides/{slide}/toggle', [LandingPageController::class, 'toggleSlide'])->name('admin.landing.slides.toggle');
+                Route::post('/landing/slides/reorder', [LandingPageController::class, 'reorderSlides'])->name('admin.landing.slides.reorder');
+                Route::post('/landing/faqs', [LandingPageController::class, 'storeFaq'])->name('admin.landing.faqs.store');
+                Route::put('/landing/faqs/{faq}/update', [LandingPageController::class, 'updateFaq'])->name('admin.landing.faqs.update');
+                Route::delete('/landing/faqs/{faq}', [LandingPageController::class, 'destroyFaq'])->name('admin.landing.faqs.destroy');
+                Route::patch('/landing/faqs/{faq}/toggle', [LandingPageController::class, 'toggleFaq'])->name('admin.landing.faqs.toggle');
+                Route::put('/landing/sections', [LandingPageController::class, 'updateSections'])->name('admin.landing.sections.update');
+                Route::put('/landing/metrics', [LandingPageController::class, 'updateMetrics'])->name('admin.landing.metrics.update');
+                Route::post('/landing/services', [LandingPageController::class, 'storeService'])->name('admin.landing.services.store');
+                Route::put('/landing/services/{service}/update', [LandingPageController::class, 'updateService'])->name('admin.landing.services.update');
+                Route::delete('/landing/services/{service}', [LandingPageController::class, 'destroyService'])->name('admin.landing.services.destroy');
+                Route::patch('/landing/services/{service}/toggle', [LandingPageController::class, 'toggleService'])->name('admin.landing.services.toggle');
+                // Timeline steps
+                Route::post('/landing/steps', [LandingPageController::class, 'storeStep'])->name('admin.landing.steps.store');
+                Route::put('/landing/steps/{step}/update', [LandingPageController::class, 'updateStep'])->name('admin.landing.steps.update');
+                Route::delete('/landing/steps/{step}', [LandingPageController::class, 'destroyStep'])->name('admin.landing.steps.destroy');
+                Route::patch('/landing/steps/{step}/toggle', [LandingPageController::class, 'toggleStep'])->name('admin.landing.steps.toggle');
+                // Resources
+                Route::post('/landing/resources', [LandingPageController::class, 'storeResource'])->name('admin.landing.resources.store');
+                Route::put('/landing/resources/{resource}/update', [LandingPageController::class, 'updateResource'])->name('admin.landing.resources.update');
+                Route::delete('/landing/resources/{resource}', [LandingPageController::class, 'destroyResource'])->name('admin.landing.resources.destroy');
+                Route::patch('/landing/resources/{resource}/toggle', [LandingPageController::class, 'toggleResource'])->name('admin.landing.resources.toggle');
+                Route::put('/landing/user-manual', [LandingPageController::class, 'updateUserManual'])->name('admin.landing.user-manual.update');
+                // Footer settings
+                Route::put('/landing/footer', [LandingPageController::class, 'updateFooter'])->name('admin.landing.footer.update');
+            });
 
             // System audit (read-only view)
             Route::get('/audit', [AuditController::class, 'index'])
