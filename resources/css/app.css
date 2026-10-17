@@ -1558,3 +1558,25 @@
   .dark .text-yellow-800 { color: #fcd34d !important; }
   .dark .border-yellow-200 { border-color: rgb(217 119 6 / 0.3) !important; }
 }
+
+/* ── React UI motion (resources/js/components/ui) ─────────────────────────── */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(-1.25rem) scale(0.95); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes dropdown-in {
+  from { opacity: 0; transform: translateY(-0.25rem) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Visible keyboard focus ring (previously inline in the Blade admin layout). */
+@utility focus-ring {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+
+  &:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+  }
+}

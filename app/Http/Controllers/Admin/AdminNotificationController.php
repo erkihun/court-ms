@@ -5,63 +5,29 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 
 use App\Models\Team;
+use App\Services\AdminNotificationFeed;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class AdminNotificationController extends Controller
 {
-    public function count(): JsonResponse
+    public function count(AdminNotificationFeed $feed): JsonResponse
     {
-        $uid = auth()->id();
-        if (!$uid) return response()->json(['count' => 0]);
-        if (!$this->canSeeCaseNotifications()) return response()->json(['count' => 0]);
+        $user = auth()->user();
 
-        // Cache per user for 2 minutes — invalidated on markOne / markAll
-        $count = Cache::remember("admin_notif_count_{$uid}", 120, function () use ($uid) {
-            $c  = $this->applyCaseAccessScope(
-                DB::table('case_messages as m')
-                    ->join('court_cases as c', 'c.id', '=', 'm.case_id')
-                    ->whereNotNull('m.sender_applicant_id')
-                    ->where('m.created_at', '>=', now()->subDays(14))
-                    ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
-                        ->whereColumn('nr.source_id', 'm.id')->where('nr.type', 'message')->where('nr.user_id', $uid))
-            )->count();
+        return response()->json(['count' => $user instanceof User ? $feed->count($user) : 0]);
+    }
 
-            $c += $this->applyCaseAccessScope(
-                DB::table('court_cases as c')
-                    ->where('c.status', 'pending')->whereNull('c.assigned_user_id')
-                    ->where('c.created_at', '>=', now()->subDays(14))
-                    ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
-                        ->whereColumn('nr.source_id', 'c.id')->where('nr.type', 'case')->where('nr.user_id', $uid))
-            )->count();
+    /**
+     * The bell dropdown: the newest unseen items of each kind.
+     */
+    public function feed(AdminNotificationFeed $feed): JsonResponse
+    {
+        $user = auth()->user();
 
-            $c += $this->applyCaseAccessScope(
-                DB::table('case_hearings as h')
-                    ->join('court_cases as c', 'c.id', '=', 'h.case_id')
-                    ->where('c.assigned_user_id', $uid)
-                    ->whereBetween('h.hearing_at', [now(), now()->addDays(14)])
-                    ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
-                        ->whereColumn('nr.source_id', 'h.id')->where('nr.type', 'hearing')->where('nr.user_id', $uid))
-            )->count();
-
-            $c += $this->applyCaseAccessScope(
-                DB::table('respondent_case_views as v')
-                    ->join('court_cases as c', 'c.id', '=', 'v.case_id')
-                    ->where(function ($q) use ($uid) {
-                        $q->where('c.assigned_user_id', $uid)->orWhereNull('c.assigned_user_id');
-                    })
-                    ->where('v.viewed_at', '>=', now()->subDays(14))
-                    ->whereNotExists(fn($q) => $q->from('admin_notification_reads as nr')
-                        ->whereColumn('nr.source_id', 'v.id')->where('nr.type', 'respondent_view')->where('nr.user_id', $uid))
-            )->count();
-
-            return $c;
-        });
-
-        return response()->json(['count' => $count]);
+        return response()->json($user instanceof User ? $feed->latest($user) : ['count' => 0, 'groups' => []]);
     }
 
     public function index(Request $request)
@@ -166,89 +132,30 @@ class AdminNotificationController extends Controller
             ['seen_at' => now(), 'updated_at' => now(), 'created_at' => now()]
         );
 
-        Cache::forget("admin_notif_count_{$uid}");
+        AdminNotificationFeed::forgetCount($uid);
 
         return back()->with('success', __('app.admin_notifications.marked_as_seen'));
     }
 
-    public function markAll()
+    public function markAll(AdminNotificationFeed $feed)
     {
-        $uid = auth()->id();
-        abort_if(!$uid, 403);
-        abort_unless($this->canSeeCaseNotifications(), 403);
+        $user = auth()->user();
+        abort_unless($user instanceof User, 403);
+        abort_unless($feed->canSee($user), 403);
+
         $now = now();
-
-        // collect unseen IDs per type
-        $msgIds = $this->applyCaseAccessScope(
-            DB::table('case_messages as m')
-                ->join('court_cases as c', 'c.id', '=', 'm.case_id')
-                ->whereNotNull('m.sender_applicant_id')
-                ->where('m.created_at', '>=', now()->subDays(14))
-                ->whereNotExists(function ($q) use ($uid) {
-                    $q->from('admin_notification_reads as nr')
-                        ->whereColumn('nr.source_id', 'm.id')
-                        ->where('nr.type', 'message')
-                        ->where('nr.user_id', $uid);
-                })
-        )->pluck('m.id')->all();
-
-        $caseIds = $this->applyCaseAccessScope(
-            DB::table('court_cases as c')
-                ->where('c.status', 'pending')->whereNull('c.assigned_user_id')
-                ->where('c.created_at', '>=', now()->subDays(14))
-                ->whereNotExists(function ($q) use ($uid) {
-                    $q->from('admin_notification_reads as nr')
-                        ->whereColumn('nr.source_id', 'c.id')
-                        ->where('nr.type', 'case')
-                        ->where('nr.user_id', $uid);
-                })
-        )->pluck('c.id')->all();
-
-        $hearingIds = $this->applyCaseAccessScope(
-            DB::table('case_hearings as h')
-                ->join('court_cases as c', 'c.id', '=', 'h.case_id')
-                ->where('c.assigned_user_id', $uid)
-                ->whereBetween('h.hearing_at', [now(), now()->addDays(14)])
-                ->whereNotExists(function ($q) use ($uid) {
-                    $q->from('admin_notification_reads as nr')
-                        ->whereColumn('nr.source_id', 'h.id')
-                        ->where('nr.type', 'hearing')
-                        ->where('nr.user_id', $uid);
-                })
-        )->pluck('h.id')->all();
-
-        $respondentViewIds = $this->applyCaseAccessScope(
-            DB::table('respondent_case_views as v')
-                ->join('court_cases as c', 'c.id', '=', 'v.case_id')
-                ->where(function ($q) use ($uid) {
-                    $q->where('c.assigned_user_id', $uid)
-                        ->orWhereNull('c.assigned_user_id');
-                })
-                ->where('v.viewed_at', '>=', now()->subDays(14))
-                ->whereNotExists(function ($q) use ($uid) {
-                    $q->from('admin_notification_reads as nr')
-                        ->whereColumn('nr.source_id', 'v.id')
-                        ->where('nr.type', 'respondent_view')
-                        ->where('nr.user_id', $uid);
-                })
-        )->pluck('v.id')->all();
-
         $rows = [];
-        foreach ($msgIds as $id)     $rows[] = ['user_id' => $uid, 'type' => 'message', 'source_id' => $id, 'seen_at' => $now, 'created_at' => $now, 'updated_at' => $now];
-        foreach ($caseIds as $id)    $rows[] = ['user_id' => $uid, 'type' => 'case', 'source_id' => $id, 'seen_at' => $now, 'created_at' => $now, 'updated_at' => $now];
-        foreach ($hearingIds as $id) $rows[] = ['user_id' => $uid, 'type' => 'hearing', 'source_id' => $id, 'seen_at' => $now, 'created_at' => $now, 'updated_at' => $now];
-        foreach ($respondentViewIds as $id) $rows[] = ['user_id' => $uid, 'type' => 'respondent_view', 'source_id' => $id, 'seen_at' => $now, 'created_at' => $now, 'updated_at' => $now];
-
-        if (!empty($rows)) {
-            // upsert avoids duplicate-key issues
-            DB::table('admin_notification_reads')->upsert(
-                $rows,
-                ['user_id', 'type', 'source_id'],
-                ['seen_at', 'updated_at']
-            );
+        foreach ($feed->unseenIds($user) as $type => $ids) {
+            foreach ($ids as $id) {
+                $rows[] = ['user_id' => $user->id, 'type' => $type, 'source_id' => $id, 'seen_at' => $now, 'created_at' => $now, 'updated_at' => $now];
+            }
         }
 
-        Cache::forget("admin_notif_count_{$uid}");
+        if ($rows !== []) {
+            DB::table('admin_notification_reads')->upsert($rows, ['user_id', 'type', 'source_id'], ['seen_at', 'updated_at']);
+        }
+
+        AdminNotificationFeed::forgetCount($user->id);
 
         return back()->with('success', __('app.admin_notifications.all_marked_as_seen'));
     }

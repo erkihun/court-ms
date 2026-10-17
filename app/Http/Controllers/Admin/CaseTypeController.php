@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 class CaseTypeController extends Controller
 {
@@ -33,9 +34,17 @@ class CaseTypeController extends Controller
                 ->groupBy('ct.prefix');
         }
 
-        $types = $query->paginate(12)->withQueryString();
+        $types = $query->paginate(12)->withQueryString()->through(fn (object $type): array => [
+            'id' => (int) $type->id,
+            'name' => (string) $type->name,
+            'prefix' => $hasPrefix ? $type->prefix : null,
+            'casesCount' => (int) $type->cases_count,
+        ]);
 
-        return view('admin.cases.types.index', compact('types', 'q'));
+        return Inertia::render('Admin/CaseTypes/Index', [
+            'types' => $types,
+            'filters' => ['q' => $q],
+        ]);
     }
 
     /**
@@ -44,7 +53,8 @@ class CaseTypeController extends Controller
     public function create()
     {
         $this->authorizeTypes();
-        return view('admin.cases.types.create');
+
+        return Inertia::render('Admin/CaseTypes/Form', ['type' => null]);
     }
 
     /**
@@ -89,7 +99,13 @@ class CaseTypeController extends Controller
         $type = DB::table('case_types')->where('id', $id)->first();
         abort_if(!$type, 404);
 
-        return view('admin.cases.types.edit', compact('type'));
+        return Inertia::render('Admin/CaseTypes/Form', [
+            'type' => [
+                'id' => (int) $type->id,
+                'name' => (string) $type->name,
+                'prefix' => $type->prefix ?? null,
+            ],
+        ]);
     }
 
     /**

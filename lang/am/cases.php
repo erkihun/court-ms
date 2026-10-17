@@ -480,5 +480,6 @@ return array (
   array (
     'empty' => 'ምንም የመዝገብ አይነት አልተገኘም።',
     'adjust_search_hint' => 'የፍለጋዎን መስፈርት በማስተካከል ይሞክሩ።',
+    'prefix_hint' => 'የመዝገብ ቁጥሩ መነሻ ሆኖ ያገለግላል (ለምሳሌ PREFIX/00001/YY)።',
   ),
 );

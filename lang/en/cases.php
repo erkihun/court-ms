@@ -476,5 +476,6 @@ return array (
   array (
     'empty' => 'No case types found.',
     'adjust_search_hint' => 'Try adjusting your search criteria.',
+    'prefix_hint' => 'Used as the case number prefix (e.g., PREFIX/00001/YY).',
   ),
 );

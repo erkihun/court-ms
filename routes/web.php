@@ -725,6 +725,7 @@ Route::middleware(SetLocale::class)->where(array_fill_keys($numericRouteParamete
             // Admin notifications (matches admin layout links)
             Route::get('/notifications', [AdminNotificationController::class, 'index'])->name('admin.notifications.index');
             Route::get('/notifications/count', [AdminNotificationController::class, 'count'])->name('admin.notifications.count');
+            Route::get('/notifications/feed', [AdminNotificationController::class, 'feed'])->name('admin.notifications.feed');
             Route::post('/notifications/mark-one', [AdminNotificationController::class, 'markOne'])->name('admin.notifications.markOne');
             Route::post('/notifications/mark-all', [AdminNotificationController::class, 'markAll'])->name('admin.notifications.markAll');
 
