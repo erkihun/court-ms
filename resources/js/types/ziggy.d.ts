@@ -1070,6 +1070,7 @@ declare module 'ziggy-js' {
     ],
     "admin.notifications.index": [],
     "admin.notifications.count": [],
+    "admin.notifications.feed": [],
     "admin.notifications.markOne": [],
     "admin.notifications.markAll": [],
     "case-types.index": [],
@@ -1418,7 +1419,6 @@ declare module 'ziggy-js' {
             "binding": "id"
         }
     ],
-    "register": [],
     "login": [],
     "password.request": [],
     "password.email": [],
