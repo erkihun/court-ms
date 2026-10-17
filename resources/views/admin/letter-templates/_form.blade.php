@@ -65,7 +65,7 @@ $categories = $categories ?? collect();
             @endif
             @if($template->header_image_path)
             <div class="mt-2 space-y-1">
-                <img src="{{ asset('storage/' . $template->header_image_path) }}" class="h-20 border rounded" alt="Header preview">
+                <img src="{{ asset('storage/' . $template->header_image_path) }}" class="h-20 border rounded-sm" alt="Header preview">
                 <label class="flex items-center gap-2 text-xs text-gray-600">
                     <input type="checkbox" name="remove_header_image" value="1">
                     {{ __('letters.templates.form.remove_header') }}
@@ -85,7 +85,7 @@ $categories = $categories ?? collect();
             @endif
             @if($template->footer_image_path)
             <div class="mt-2 space-y-1">
-                <img src="{{ asset('storage/' . $template->footer_image_path) }}" class="h-20 border rounded" alt="Footer preview">
+                <img src="{{ asset('storage/' . $template->footer_image_path) }}" class="h-20 border rounded-sm" alt="Footer preview">
                 <label class="flex items-center gap-2 text-xs text-gray-600">
                     <input type="checkbox" name="remove_footer_image" value="1">
                     {{ __('letters.templates.form.remove_footer') }}

@@ -37,7 +37,7 @@ $canDeleteCategory = function_exists('userHasPermission')
             </div>
         </div>
 
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        <div class="bg-white border border-gray-200 rounded-xl shadow-xs overflow-hidden">
             @if($categories->isEmpty())
             <div class="p-8 text-center text-gray-500 text-sm">
                 No categories yet.

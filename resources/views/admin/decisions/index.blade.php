@@ -50,7 +50,7 @@
             </div>
         </div>
 
-        <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xs">
             <div class="overflow-x-auto">
                 <table class="min-w-full text-sm">
                     <thead class="bg-gray-50 text-gray-700 border-b border-gray-200">

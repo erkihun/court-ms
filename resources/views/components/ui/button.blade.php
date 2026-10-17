@@ -6,7 +6,7 @@
 ])
 
 @php
-    $base = 'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-fast hover:scale-[var(--scale-hover)] active:scale-[var(--scale-press)] focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60';
+    $base = 'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-fast hover:scale-(--scale-hover) active:scale-(--scale-press) focus:outline-hidden focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60';
     $sizes = [
         'sm' => 'px-3 py-1.5 text-xs',
         'md' => 'px-4 py-2 text-sm',
@@ -14,7 +14,7 @@
     ];
     $variants = [
         'primary' => 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
-        'secondary' => 'border border-[var(--border-strong)] bg-[var(--surface-strong)] text-[var(--text-muted)] hover:bg-[var(--surface-soft)] focus:ring-blue-500',
+        'secondary' => 'border border-(--border-strong) bg-(--surface-strong) text-(--text-muted) hover:bg-(--surface-soft) focus:ring-blue-500',
         'danger' => 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
         'success' => 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500',
     ];

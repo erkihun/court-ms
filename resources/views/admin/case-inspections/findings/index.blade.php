@@ -17,13 +17,13 @@
             @if(!empty($caseId))
             <input type="hidden" name="case_id" value="{{ $caseId }}">
             @endif
-            <select name="request_id" class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            <select name="request_id" class="rounded-md border-gray-300 shadow-xs focus:border-blue-500 focus:ring-blue-500">
                 <option value="">{{ __('case_inspections.findings.all_requests') }}</option>
                 @foreach($requests as $req)
                 <option value="{{ $req->id }}" @selected((string) $requestId === (string) $req->id)>{{ $req->case?->case_number }} - {{ $req->subject }}</option>
                 @endforeach
             </select>
-            <select name="severity" class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            <select name="severity" class="rounded-md border-gray-300 shadow-xs focus:border-blue-500 focus:ring-blue-500">
                 <option value="">{{ __('case_inspections.findings.all_severities') }}</option>
                 @foreach(['low', 'medium', 'high', 'critical'] as $k)
                 <option value="{{ $k }}" @selected($severity === $k)>{{ __('case_inspections.severity.' . $k) }}</option>

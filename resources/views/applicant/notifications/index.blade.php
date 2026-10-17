@@ -36,7 +36,7 @@
                     @csrf
                     <input type="hidden" name="type" value="hearing">
                     <input type="hidden" name="sourceId" value="{{ $h->id }}">
-                    <button class="text-xs px-2 py-1 rounded border hover:bg-slate-50">{{ __('app.Seen') }}</button>
+                    <button class="text-xs px-2 py-1 rounded-sm border hover:bg-slate-50">{{ __('app.Seen') }}</button>
                 </form>
             </li>
             @endforeach
@@ -88,7 +88,7 @@
                     @csrf
                     <input type="hidden" name="type" value="message">
                     <input type="hidden" name="sourceId" value="{{ $m->id }}">
-                    <button class="text-xs px-2 py-1 rounded border hover:bg-slate-50">{{ __('app.Seen') }}</button>
+                    <button class="text-xs px-2 py-1 rounded-sm border hover:bg-slate-50">{{ __('app.Seen') }}</button>
                 </form>
             </li>
             @endforeach
@@ -126,7 +126,7 @@
                     @csrf
                     <input type="hidden" name="type" value="respondent_view">
                     <input type="hidden" name="sourceId" value="{{ $v->id }}">
-                    <button class="text-xs px-2 py-1 rounded border hover:bg-slate-50">{{ __('app.Seen') }}</button>
+                    <button class="text-xs px-2 py-1 rounded-sm border hover:bg-slate-50">{{ __('app.Seen') }}</button>
                 </form>
             </li>
             @endforeach
@@ -168,7 +168,7 @@
                     @csrf
                     <input type="hidden" name="type" value="status">
                     <input type="hidden" name="sourceId" value="{{ $s->id }}">
-                    <button class="text-xs px-2 py-1 rounded border hover:bg-slate-50">{{ __('app.Seen') }}</button>
+                    <button class="text-xs px-2 py-1 rounded-sm border hover:bg-slate-50">{{ __('app.Seen') }}</button>
                 </form>
             </li>
             @endforeach

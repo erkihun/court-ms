@@ -31,7 +31,7 @@
                     @endphp
                     <h4 class="text-xl sm:text-2xl font-bold truncate">{{ __('dashboard.welcome_back') }}, {{ $applicantName }}</h4>
                 </div>
-                <div class="shrink-0 rounded-xl bg-white/15 px-4 py-2 text-sm backdrop-blur-sm">
+                <div class="shrink-0 rounded-xl bg-white/15 px-4 py-2 text-sm backdrop-blur-xs">
                     <div class="text-white/70 text-xs uppercase tracking-wide">{{ __('dashboard.today') }}</div>
                     <div class="font-semibold">{{ \App\Support\EthiopianDate::smartFormat(now(), false, '', 'h:i A', 'F j, Y') }}</div>
                 </div>

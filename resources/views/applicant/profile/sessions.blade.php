@@ -16,7 +16,7 @@
             ];
         $dashboardRoute = $isRespondentProfile ? 'respondent.dashboard' : 'applicant.dashboard';
     @endphp
-    <div class="mx-auto max-w-6xl rounded-xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+    <div class="mx-auto max-w-6xl rounded-xl border border-slate-200 bg-white p-6 shadow-xs md:p-8">
         <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
             <div>
                 <p class="text-xs font-semibold uppercase tracking-[.18em] text-blue-600">{{ __('auth.security_section') }}</p>

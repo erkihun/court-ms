@@ -502,7 +502,7 @@
         }" x-on:open-section.window="openSection($event.detail.section)" x-init="init()">
 
         {{-- Header Card --}}
-        <div class="rounded-2xl border border-[var(--border)] bg-[var(--surface-strong)] shadow-sm mb-5">
+        <div class="rounded-2xl border border-(--border) bg-(--surface-strong) shadow-xs mb-5">
             {{-- Top accent stripe --}}
             <div class="h-1 w-full rounded-t-2xl" style="background: linear-gradient(90deg, rgb(var(--ac)) 0%, rgb(var(--ac-light)) 100%)"></div>
 
@@ -511,13 +511,13 @@
 
                     {{-- Left: case number + status chips --}}
                     <div class="min-w-0 flex-1">
-                        <p class="text-[10.5px] font-semibold uppercase tracking-[.16em] text-[var(--text-subtle)] mb-1.5">
+                        <p class="text-[10.5px] font-semibold uppercase tracking-[.16em] text-(--text-subtle) mb-1.5">
                             {{ __('cases.case_number') }}
                         </p>
                         <div class="flex flex-wrap items-center gap-3">
-                            <span class="font-mono text-2xl font-bold tracking-tight text-[var(--text)]" id="case-no">{{ $case->case_number }}</span>
+                            <span class="font-mono text-2xl font-bold tracking-tight text-(--text)" id="case-no">{{ $case->case_number }}</span>
                             <button type="button"
-                                class="cs-btn-secondary !px-2.5 !py-1 !text-xs"
+                                class="cs-btn-secondary px-2.5! py-1! text-xs!"
                                 x-data x-on:click="
                                     navigator.clipboard.writeText(document.querySelector('#case-no').textContent.trim());
                                     $el.innerText='{{ __('cases.copied') }}';
@@ -528,28 +528,28 @@
                         </div>
 
                         {{-- Meta row --}}
-                        <div class="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-[12.5px] text-[var(--text-muted)]">
+                        <div class="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-[12.5px] text-(--text-muted)">
                             @if($case->filing_date)
                             <span>
-                                <span class="text-[var(--text-subtle)]">{{ __('cases.summary.filing_date') }}:</span>
+                                <span class="text-(--text-subtle)">{{ __('cases.summary.filing_date') }}:</span>
                                 {{ \App\Support\EthiopianDate::format($case->filing_date) }}
                             </span>
                             @endif
                             @if($applicantDisplayName)
                             <span>
-                                <span class="text-[var(--text-subtle)]">{{ __('cases.summary.applicant') }}:</span>
+                                <span class="text-(--text-subtle)">{{ __('cases.summary.applicant') }}:</span>
                                 {{ $applicantDisplayName }}
                             </span>
                             @endif
                             @if(!empty($case->case_type))
                             <span>
-                                <span class="text-[var(--text-subtle)]">{{ __('cases.table.type') }}:</span>
+                                <span class="text-(--text-subtle)">{{ __('cases.table.type') }}:</span>
                                 {{ $case->case_type }}
                             </span>
                             @endif
                             @if(!empty($case->assignee_name))
                             <span>
-                                <span class="text-[var(--text-subtle)]">{{ __('cases.summary.assignee') }}:</span>
+                                <span class="text-(--text-subtle)">{{ __('cases.summary.assignee') }}:</span>
                                 {{ $case->assignee_name }}
                             </span>
                             @endif
@@ -573,18 +573,18 @@
                                 <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
                             </button>
                             <div x-show="reviewMenuOpen" x-cloak
-                                class="absolute right-0 top-full mt-1.5 w-44 rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] shadow-xl z-30 py-1.5 overflow-hidden">
-                                <button type="button" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-emerald-600 hover:bg-[var(--surface-soft)] transition-colors"
+                                class="absolute right-0 top-full mt-1.5 w-44 rounded-xl border border-(--border) bg-(--surface-strong) shadow-xl z-30 py-1.5 overflow-hidden">
+                                <button type="button" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-emerald-600 hover:bg-(--surface-soft) transition-colors"
                                     @click="reviewMenuOpen=false; submitReviewDecision('accept')">
                                     <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                                     {{ __('cases.show.accept') }}
                                 </button>
-                                <button type="button" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-amber-600 hover:bg-[var(--surface-soft)] transition-colors"
+                                <button type="button" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-amber-600 hover:bg-(--surface-soft) transition-colors"
                                     @click="reviewMenuOpen=false; openReviewModal('return')">
                                     <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
                                     {{ __('cases.show.return') }}
                                 </button>
-                                <button type="button" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-red-600 hover:bg-[var(--surface-soft)] transition-colors"
+                                <button type="button" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-red-600 hover:bg-(--surface-soft) transition-colors"
                                     @click="reviewMenuOpen=false; openReviewModal('reject')">
                                     <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                                     {{ __('cases.show.reject') }}
@@ -641,7 +641,7 @@
 
         {{-- Quick Access Bar --}}
         <div class="flex flex-wrap items-center gap-2 mb-5 no-print">
-            <span class="text-[11px] font-semibold uppercase tracking-[.1em] text-[var(--text-subtle)] mr-1">{{ __('cases.show.quick_access') }}</span>
+            <span class="text-[11px] font-semibold uppercase tracking-widest text-(--text-subtle) mr-1">{{ __('cases.show.quick_access') }}</span>
 
             <button @click="openSection('case-summary')" class="cs-quick-btn">
                 <svg class="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -679,9 +679,9 @@
         </div>
 
         {{-- Modal for return/reject note --}}
-        <div id="review-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-30 no-print">
-            <div class="bg-[var(--surface-strong)] rounded-xl shadow-2xl max-w-lg w-full p-6 border border-[var(--border)]">
-                <h3 class="text-lg font-semibold text-[var(--text)] mb-3" id="review-modal-title">{{ __('cases.show.review_decision') }}</h3>
+        <div id="review-modal" class="fixed inset-0 bg-black/50 backdrop-blur-xs hidden items-center justify-center z-30 no-print">
+            <div class="bg-(--surface-strong) rounded-xl shadow-2xl max-w-lg w-full p-6 border border-(--border)">
+                <h3 class="text-lg font-semibold text-(--text) mb-3" id="review-modal-title">{{ __('cases.show.review_decision') }}</h3>
                 <form method="POST" action="{{ route('cases.review.update', $case->id) }}" id="review-form"
                     class="space-y-4">
                     @csrf
@@ -712,7 +712,7 @@
 
         {{-- Status change (admins) --}}
         @if($canEditStatus && $currentStatus !== 'closed')
-        <div class="p-4 rounded-2xl border border-[var(--border)] bg-[var(--surface-strong)] shadow-sm mb-6 no-print">
+        <div class="p-4 rounded-2xl border border-(--border) bg-(--surface-strong) shadow-xs mb-6 no-print">
             <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
@@ -743,7 +743,7 @@
                 </div>
                 <div>
                     <button
-                        class="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-all duration-200 shadow-sm hover:shadow flex items-center gap-2">
+                        class="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-all duration-200 shadow-xs hover:shadow-sm flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -754,7 +754,7 @@
             </form>
         </div>
         @elseif($canEditStatus)
-        <div class="p-4 rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-800 shadow-sm mb-6 no-print">
+        <div class="p-4 rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-800 shadow-xs mb-6 no-print">
             <p class="font-semibold">{{ __('cases.status.closed_locked_title') }}</p>
             <p class="mt-1 text-sm">{{ __('cases.status.closed_locked') }}</p>
         </div>
@@ -775,8 +775,8 @@
                             <li>
                                 <button type="button" @click="openSection('case-summary')"
                                     :class="activeSection === 'case-summary'
-                                        ? 'bg-[rgb(var(--ac)/0.18)] text-white font-semibold shadow-sm'
-                                        : 'hover:bg-white/[0.06] hover:text-white'"
+                                        ? 'bg-[rgb(var(--ac)/0.18)] text-white font-semibold shadow-xs'
+                                        : 'hover:bg-white/6 hover:text-white'"
                                     class="case-nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm leading-5 transition-all duration-150 text-left"
                                     style="color:rgba(255,255,255,0.62);">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" style="color:#dbeafe;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -788,8 +788,8 @@
                             <li>
                                 <button type="button" @click="openSection('case-details')"
                                     :class="activeSection === 'case-details'
-                                        ? 'bg-[rgb(var(--ac)/0.18)] text-white font-semibold shadow-sm'
-                                        : 'hover:bg-white/[0.06] hover:text-white'"
+                                        ? 'bg-[rgb(var(--ac)/0.18)] text-white font-semibold shadow-xs'
+                                        : 'hover:bg-white/6 hover:text-white'"
                                     class="case-nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm leading-5 transition-all duration-150 text-left"
                                     style="color:rgba(255,255,255,0.62);">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" style="color:#dbeafe;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -801,8 +801,8 @@
                             <li>
                                 <button type="button" @click="openSection('letters')"
                                     :class="activeSection === 'letters'
-                                        ? 'bg-[rgb(var(--ac)/0.18)] text-white font-semibold shadow-sm'
-                                        : 'hover:bg-white/[0.06] hover:text-white'"
+                                        ? 'bg-[rgb(var(--ac)/0.18)] text-white font-semibold shadow-xs'
+                                        : 'hover:bg-white/6 hover:text-white'"
                                     class="case-nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm leading-5 transition-all duration-150 text-left"
                                     style="color:rgba(255,255,255,0.62);">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" style="color:#dbeafe;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -814,8 +814,8 @@
                             <li>
                                 <button type="button" @click="openSection('audits')"
                                     :class="activeSection === 'audits'
-                                        ? 'bg-[rgb(var(--ac)/0.18)] text-white font-semibold shadow-sm'
-                                        : 'hover:bg-white/[0.06] hover:text-white'"
+                                        ? 'bg-[rgb(var(--ac)/0.18)] text-white font-semibold shadow-xs'
+                                        : 'hover:bg-white/6 hover:text-white'"
                                     class="case-nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm leading-5 transition-all duration-150 text-left"
                                     style="color:rgba(255,255,255,0.62);">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" style="color:#dbeafe;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -828,15 +828,15 @@
 
                         {{-- Quick Access Sections in Sidebar --}}
                         <div class="pt-3 mt-2 border-t" style="border-color:rgba(255,255,255,0.07);">
-                            <p class="text-[10px] font-semibold uppercase tracking-[0.1em] px-3 mb-1.5" style="color:rgba(255,255,255,0.3);">{{ __('cases.show.quick_sections') }}</p>
+                            <p class="text-[10px] font-semibold uppercase tracking-widest px-3 mb-1.5" style="color:rgba(255,255,255,0.3);">{{ __('cases.show.quick_sections') }}</p>
                             <ul class="space-y-0.5">
                                 @if($canManageInspectionRequests || $canManageInspectionFindings)
                                     @if($canManageInspectionRequests)
                                     <li>
                                         <button type="button" @click="openSection('inspection-requests')"
                                             :class="activeSection === 'inspection-requests'
-                                                ? 'bg-[rgb(var(--ac)/0.18)] text-white font-semibold shadow-sm'
-                                                : 'hover:bg-white/[0.06] hover:text-white'"
+                                                ? 'bg-[rgb(var(--ac)/0.18)] text-white font-semibold shadow-xs'
+                                                : 'hover:bg-white/6 hover:text-white'"
                                             class="case-nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm leading-5 transition-all duration-150 text-left"
                                             style="color:rgba(255,255,255,0.62);">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" style="color:#dbeafe;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -850,8 +850,8 @@
                                     <li>
                                         <button type="button" @click="openSection('inspection-findings')"
                                             :class="activeSection === 'inspection-findings'
-                                                ? 'bg-[rgb(var(--ac)/0.18)] text-white font-semibold shadow-sm'
-                                                : 'hover:bg-white/[0.06] hover:text-white'"
+                                                ? 'bg-[rgb(var(--ac)/0.18)] text-white font-semibold shadow-xs'
+                                                : 'hover:bg-white/6 hover:text-white'"
                                             class="case-nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm leading-5 transition-all duration-150 text-left"
                                             style="color:rgba(255,255,255,0.62);">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" style="color:#dbeafe;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -867,8 +867,8 @@
                                 <li>
                                     <button type="button" @click="openSection('uploaded-files')"
                                         :class="activeSection === 'uploaded-files'
-                                            ? 'bg-[rgb(var(--ac)/0.18)] text-white font-semibold shadow-sm'
-                                            : 'hover:bg-white/[0.06] hover:text-white'"
+                                            ? 'bg-[rgb(var(--ac)/0.18)] text-white font-semibold shadow-xs'
+                                            : 'hover:bg-white/6 hover:text-white'"
                                         class="case-nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm leading-5 transition-all duration-150 text-left"
                                         style="color:rgba(255,255,255,0.62);">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" style="color:#dbeafe;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -883,8 +883,8 @@
                                 <li>
                                     <button type="button" @click="openSection('hearings')"
                                         :class="activeSection === 'hearings'
-                                            ? 'bg-[rgb(var(--ac)/0.18)] text-white font-semibold shadow-sm'
-                                            : 'hover:bg-white/[0.06] hover:text-white'"
+                                            ? 'bg-[rgb(var(--ac)/0.18)] text-white font-semibold shadow-xs'
+                                            : 'hover:bg-white/6 hover:text-white'"
                                         class="case-nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm leading-5 transition-all duration-150 text-left"
                                         style="color:rgba(255,255,255,0.62);">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" style="color:#dbeafe;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -898,8 +898,8 @@
                                 <li>
                                     <button type="button" @click="openSection('messages')"
                                         :class="activeSection === 'messages'
-                                            ? 'bg-[rgb(var(--ac)/0.18)] text-white font-semibold shadow-sm'
-                                            : 'hover:bg-white/[0.06] hover:text-white'"
+                                            ? 'bg-[rgb(var(--ac)/0.18)] text-white font-semibold shadow-xs'
+                                            : 'hover:bg-white/6 hover:text-white'"
                                         class="case-nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm leading-5 transition-all duration-150 text-left"
                                         style="color:rgba(255,255,255,0.62);">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" style="color:#dbeafe;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -911,8 +911,8 @@
                                 <li>
                                     <button type="button" @click="openSection('respondent-responses')"
                                         :class="activeSection === 'respondent-responses'
-                                            ? 'bg-[rgb(var(--ac)/0.18)] text-white font-semibold shadow-sm'
-                                            : 'hover:bg-white/[0.06] hover:text-white'"
+                                            ? 'bg-[rgb(var(--ac)/0.18)] text-white font-semibold shadow-xs'
+                                            : 'hover:bg-white/6 hover:text-white'"
                                         class="case-nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm leading-5 transition-all duration-150 text-left"
                                         style="color:rgba(255,255,255,0.62);">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" style="color:#dbeafe;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -925,8 +925,8 @@
                                 <li>
                                     <button type="button" @click="openSection('response-of-response')"
                                         :class="activeSection === 'response-of-response'
-                                            ? 'bg-[rgb(var(--ac)/0.18)] text-white font-semibold shadow-sm'
-                                            : 'hover:bg-white/[0.06] hover:text-white'"
+                                            ? 'bg-[rgb(var(--ac)/0.18)] text-white font-semibold shadow-xs'
+                                            : 'hover:bg-white/6 hover:text-white'"
                                         class="case-nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm leading-5 transition-all duration-150 text-left"
                                         style="color:rgba(255,255,255,0.62);">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" style="color:#dbeafe;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -948,7 +948,7 @@
                     x-transition:enter="transition ease-out duration-300"
                     x-transition:enter-start="opacity-0 transform translate-y-4"
                     x-transition:enter-end="opacity-100 transform translate-y-0"
-                    class="main-content-section p-6 rounded-2xl shadow-sm space-y-6">
+                    class="main-content-section p-6 rounded-2xl shadow-xs space-y-6">
                     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 pb-3">
                         <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none"
@@ -1164,7 +1164,7 @@
                     x-transition:enter="transition ease-out duration-300"
                     x-transition:enter-start="opacity-0 transform translate-y-4"
                     x-transition:enter-end="opacity-100 transform translate-y-0"
-                    class="main-content-section p-6 rounded-2xl border border-gray-200 bg-white shadow-sm space-y-3">
+                    class="main-content-section p-6 rounded-2xl border border-gray-200 bg-white shadow-xs space-y-3">
                     <div class="flex items-center justify-between border-b border-gray-200 pb-3">
                         <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none"
@@ -1213,7 +1213,7 @@
                                         @php $meta = $a->meta ? json_decode($a->meta, true) : []; @endphp
                                         @if($meta)
                                         <pre
-                                            class="bg-gray-100 border border-gray-200 rounded px-2 py-1 whitespace-pre-wrap text-[11px]">{{ json_encode($meta, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES) }}</pre>
+                                            class="bg-gray-100 border border-gray-200 rounded-sm px-2 py-1 whitespace-pre-wrap text-[11px]">{{ json_encode($meta, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES) }}</pre>
                                         @else
                                         <span class="text-gray-400">-</span>
                                         @endif
@@ -1231,7 +1231,7 @@
                     x-transition:enter="transition ease-out duration-300"
                     x-transition:enter-start="opacity-0 transform translate-y-4"
                     x-transition:enter-end="opacity-100 transform translate-y-0"
-                    class="main-content-section p-6 rounded-2xl shadow-sm space-y-4">
+                    class="main-content-section p-6 rounded-2xl shadow-xs space-y-4">
                     <div class="flex items-center justify-between border-b border-gray-200 pb-3">
                         <h3 class="text-lg font-semibold text-gray-900">{{ __('case_inspections.requests.index_title') }}</h3>
                         <span class="text-xs font-medium text-gray-600 bg-gray-100 rounded-full px-2.5 py-1">
@@ -1284,7 +1284,7 @@
                     x-transition:enter="transition ease-out duration-300"
                     x-transition:enter-start="opacity-0 transform translate-y-4"
                     x-transition:enter-end="opacity-100 transform translate-y-0"
-                    class="main-content-section p-6 rounded-2xl shadow-sm space-y-4">
+                    class="main-content-section p-6 rounded-2xl shadow-xs space-y-4">
                     <div class="flex items-center justify-between border-b border-gray-200 pb-3">
                         <h3 class="text-lg font-semibold text-gray-900">{{ __('case_inspections.findings.index_title') }}</h3>
                         <span class="text-xs font-medium text-gray-600 bg-gray-100 rounded-full px-2.5 py-1">
@@ -1405,7 +1405,7 @@
                     x-transition:enter="transition ease-out duration-300"
                     x-transition:enter-start="opacity-0 transform translate-y-4"
                     x-transition:enter-end="opacity-100 transform translate-y-0"
-                    class="main-content-section rounded-2xl border border-gray-200 bg-white shadow-sm p-6 space-y-6">
+                    class="main-content-section rounded-2xl border border-gray-200 bg-white shadow-xs p-6 space-y-6">
                     <div class="flex items-center justify-between gap-3">
                         <h3 class="text-xl font-semibold text-gray-900">{{ __('cases.show.case_details_overview') }}</h3>
                         <button type="button" onclick="printCaseOverview()"
@@ -1830,7 +1830,7 @@ ${tpl.innerHTML}
                     x-transition:enter="transition ease-out duration-300"
                     x-transition:enter-start="opacity-0 transform translate-y-4"
                     x-transition:enter-end="opacity-100 transform translate-y-0"
-                    class="main-content-section rounded-2xl border border-gray-200 bg-white shadow-sm">
+                    class="main-content-section rounded-2xl border border-gray-200 bg-white shadow-xs">
                     <div class="p-6 space-y-6">
                         <div class="space-y-3">
                             <div class="flex items-center justify-between border-b border-gray-200 pb-3">
@@ -1924,7 +1924,7 @@ ${tpl.innerHTML}
                     x-transition:enter="transition ease-out duration-300"
                     x-transition:enter-start="opacity-0 transform translate-y-4"
                     x-transition:enter-end="opacity-100 transform translate-y-0"
-                    class="main-content-section rounded-2xl border border-gray-200 bg-white shadow-sm">
+                    class="main-content-section rounded-2xl border border-gray-200 bg-white shadow-xs">
                     <div class="p-6 space-y-6">
                         <div class="flex items-center justify-between border-b border-gray-200 pb-3">
                             <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
@@ -1948,7 +1948,7 @@ ${tpl.innerHTML}
                         </div>
 
                         <div id="write-letter-panel" class="max-w-5xl mx-auto space-y-6">
-                            <div class="bg-[var(--surface-strong)] border border-[var(--border)] rounded-xl shadow-sm p-6">
+                            <div class="bg-(--surface-strong) border border-(--border) rounded-xl shadow-xs p-6">
                                 <h2 class="text-lg font-semibold text-gray-900 mb-1">
                                     {{ __('letters.form.select_template') }}</h2>
                                 <p class=" text-gray-500 mb-4">{{ __('letters.description.compose') }}</p>
@@ -1977,7 +1977,7 @@ ${tpl.innerHTML}
                                 </div>
                             </div>
 
-                            <div class="bg-[var(--surface-strong)] border border-[var(--border)] rounded-xl shadow-sm p-6">
+                            <div class="bg-(--surface-strong) border border-(--border) rounded-xl shadow-xs p-6">
                                 <form method="POST" action="{{ route('letters.store') }}" class="space-y-4">
                                     @csrf
                                     <input type="hidden" name="template_id" id="inline-template-hidden"
@@ -2050,14 +2050,14 @@ ${tpl.innerHTML}
                                                 <input type="hidden" name="send_to_applicant" value="0">
                                                 <label class="inline-flex items-center gap-2  text-gray-700">
                                                     <input type="checkbox" name="send_to_applicant" value="1"
-                                                        class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                                        class="rounded-sm border-gray-300 text-emerald-600 focus:ring-emerald-500"
                                                         @checked($sendToApplicant)>
                                                     <span>{{ __('letters.form.deliver_applicant') }}</span>
                                                 </label>
                                                 <input type="hidden" name="send_to_respondent" value="0">
                                                 <label class="inline-flex items-center gap-2  text-gray-700">
                                                     <input type="checkbox" name="send_to_respondent" value="1"
-                                                        class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                                        class="rounded-sm border-gray-300 text-emerald-600 focus:ring-emerald-500"
                                                         @checked($sendToRespondent)>
                                                     <span>{{ __('letters.form.deliver_respondent') }}</span>
                                                 </label>
@@ -2166,7 +2166,7 @@ ${tpl.innerHTML}
                     x-transition:enter="transition ease-out duration-300"
                     x-transition:enter-start="opacity-0 transform translate-y-4"
                     x-transition:enter-end="opacity-100 transform translate-y-0"
-                    class="main-content-section p-6 rounded-2xl shadow-sm space-y-4">
+                    class="main-content-section p-6 rounded-2xl shadow-xs space-y-4">
                     <div class="flex items-center justify-between border-b border-gray-200 pb-3">
                         <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none"
@@ -2186,7 +2186,7 @@ ${tpl.innerHTML}
                         @if(!$caseLocked && $canCreateHearings)
                         <div class="pt-1">
                             <h4 class=" font-medium text-gray-700 mb-3">{{ __('cases.hearings.add_new_hearing') }}</h4>
-                            <div class="mb-4 bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                            <div class="mb-4 bg-white border border-gray-200 rounded-lg p-4 shadow-xs">
                                 <div class="flex items-center justify-between mb-3">
                                     <h5 class=" font-semibold text-gray-900">{{ __('cases.show.hearing_calendar') }}</h5>
                                     <span class="text-xs text-gray-500">{{ __('cases.show.hearing_calendar_hint') }}</span>
@@ -2314,7 +2314,7 @@ ${tpl.innerHTML}
                                                         {{ __('cases.general.edit') }}
                                                     </summary>
                                                     <div
-                                                        class="relative z-[9999] mt-2 w-80 max-h-[75vh] overflow-y-auto overscroll-contain p-4 rounded-lg border border-gray-200 bg-white shadow-xl">
+                                                        class="relative z-9999 mt-2 w-80 max-h-[75vh] overflow-y-auto overscroll-contain p-4 rounded-lg border border-gray-200 bg-white shadow-xl">
                                                         <form method="POST"
                                                             action="{{ route('cases.hearings.update',$h->id) }}"
                                                             class="space-y-3" data-hearing-edit-form>
@@ -2397,7 +2397,7 @@ ${tpl.innerHTML}
                     x-transition:enter="transition ease-out duration-300"
                     x-transition:enter-start="opacity-0 transform translate-y-4"
                     x-transition:enter-end="opacity-100 transform translate-y-0"
-                    class="main-content-section p-6 rounded-2xl shadow-sm space-y-4">
+                    class="main-content-section p-6 rounded-2xl shadow-xs space-y-4">
                     <div class="flex items-center justify-between border-b border-gray-200 pb-3">
                         <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none"
@@ -2436,7 +2436,7 @@ ${tpl.innerHTML}
                             ? route('respondent-responses.download', ['response' => $resp->id, 'inline' => 1])
                             : null;
                         @endphp
-                        <div class="rounded-2xl border border-gray-100 bg-gray-50 p-4 shadow-sm space-y-3">
+                        <div class="rounded-2xl border border-gray-100 bg-gray-50 p-4 shadow-xs space-y-3">
                             <div class="flex flex-wrap items-center justify-between gap-2 text-gray-500">
                                 <div class="flex flex-wrap items-center gap-2">
                                     <span
@@ -2489,15 +2489,15 @@ ${tpl.innerHTML}
                                 <label
                                     class="text-xs font-semibold text-gray-600">{{ __('cases.reviewer_note') }}</label>
                                 <textarea name="review_note" rows="2"
-                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
                                     placeholder="{{ __('cases.show.add_reason_note') }}">{{ old('review_note', $respReviewNote ?? '') }}</textarea>
                                 <div class="flex flex-wrap items-center gap-2">
                                     <button type="submit" name="decision" value="accept"
-                                        class="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-xs font-medium text-white shadow-sm transition-all duration-200">
+                                        class="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-xs font-medium text-white shadow-xs transition-all duration-200">
                                         {{ __('cases.show.accept') }}
                                     </button>
                                     <button type="submit" name="decision" value="return"
-                                        class="px-3 py-1.5 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-xs font-medium text-white shadow-sm transition-all duration-200">
+                                        class="px-3 py-1.5 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-xs font-medium text-white shadow-xs transition-all duration-200">
                                         {{ __('cases.show.return') }}
                                     </button>
                                 </div>
@@ -2516,7 +2516,7 @@ ${tpl.innerHTML}
                     x-transition:enter="transition ease-out duration-300"
                     x-transition:enter-start="opacity-0 transform translate-y-4"
                     x-transition:enter-end="opacity-100 transform translate-y-0"
-                    class="main-content-section p-6 rounded-2xl shadow-sm space-y-4">
+                    class="main-content-section p-6 rounded-2xl shadow-xs space-y-4">
                     <div class="flex items-center justify-between border-b border-gray-200 pb-3">
                         <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -2550,7 +2550,7 @@ ${tpl.innerHTML}
                         };
                         $applicantDisplayName = trim(($reply->applicant_first_name ?? '').' '.($reply->applicant_middle_name ?? '').' '.($reply->applicant_last_name ?? ''));
                         @endphp
-                        <div class="rounded-2xl border border-gray-100 bg-gray-50 p-4 shadow-sm space-y-3">
+                        <div class="rounded-2xl border border-gray-100 bg-gray-50 p-4 shadow-xs space-y-3">
                             <div class="flex flex-wrap items-center justify-between gap-2 text-gray-500">
                                 <div class="flex flex-wrap items-center gap-2">
                                     <span class="font-semibold text-gray-900">{{ __('respondent.response_of_response') }}</span>
@@ -2587,15 +2587,15 @@ ${tpl.innerHTML}
                                 @method('PATCH')
                                 <label class="text-xs font-semibold text-gray-600">{{ __('cases.reviewer_note') }}</label>
                                 <textarea name="review_note" rows="2"
-                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
                                     placeholder="{{ __('cases.show.add_reason_note') }}">{{ old('review_note', $replyReviewNote ?? '') }}</textarea>
                                 <div class="flex flex-wrap items-center gap-2">
                                     <button type="submit" name="decision" value="accept"
-                                        class="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-xs font-medium text-white shadow-sm transition-all duration-200">
+                                        class="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-xs font-medium text-white shadow-xs transition-all duration-200">
                                         {{ __('cases.show.accept') }}
                                     </button>
                                     <button type="submit" name="decision" value="return"
-                                        class="px-3 py-1.5 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-xs font-medium text-white shadow-sm transition-all duration-200">
+                                        class="px-3 py-1.5 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-xs font-medium text-white shadow-xs transition-all duration-200">
                                         {{ __('cases.show.give_correction') }}
                                     </button>
                                 </div>
@@ -2616,17 +2616,17 @@ ${tpl.innerHTML}
                     x-transition:enter="transition ease-out duration-300"
                     x-transition:enter-start="opacity-0 transform translate-y-4"
                     x-transition:enter-end="opacity-100 transform translate-y-0"
-                    class="main-content-section overflow-hidden rounded-2xl shadow-sm">
+                    class="main-content-section overflow-hidden rounded-2xl shadow-xs">
 
                     {{-- Chat header --}}
-                    <div class="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] bg-[var(--surface-soft)]">
+                    <div class="flex items-center justify-between px-5 py-4 border-b border-(--border) bg-(--surface-soft)">
                         <div class="flex items-center gap-3">
                             <div class="cs-section-icon">
                                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
                             </div>
                             <div>
-                                <h3 class="text-sm font-700 font-bold text-[var(--text)]">{{ __('cases.messages_section.title') }}</h3>
-                                <p class="text-[11px] text-[var(--text-subtle)] mt-0.5">{{ __('cases.case_number') }}: {{ $case->case_number }}</p>
+                                <h3 class="text-sm font-700 font-bold text-(--text)">{{ __('cases.messages_section.title') }}</h3>
+                                <p class="text-[11px] text-(--text-subtle) mt-0.5">{{ __('cases.case_number') }}: {{ $case->case_number }}</p>
                             </div>
                         </div>
                         <span class="cs-count-badge">{{ ($messages ?? collect())->count() }} {{ __('cases.messages.total') }}</span>
@@ -2648,21 +2648,21 @@ ${tpl.innerHTML}
 
                         <div class="flex items-end gap-2.5 {{ $fromAdmin ? 'flex-row-reverse' : '' }}">
                             {{-- Avatar --}}
-                            <div class="flex-shrink-0 h-8 w-8 rounded-full grid place-items-center text-xs font-bold shadow-sm
-                                {{ $fromAdmin ? 'bg-[rgb(var(--ac))] text-white' : 'bg-[var(--surface-soft)] border border-[var(--border)] text-[var(--text-subtle)]' }}">
+                            <div class="shrink-0 h-8 w-8 rounded-full grid place-items-center text-xs font-bold shadow-xs
+                                {{ $fromAdmin ? 'bg-[rgb(var(--ac))] text-white' : 'bg-(--surface-soft) border border-(--border) text-(--text-subtle)' }}">
                                 {{ $initial }}
                             </div>
 
                             {{-- Bubble --}}
                             <div class="max-w-[72%] space-y-1 {{ $fromAdmin ? 'items-end' : 'items-start' }} flex flex-col">
                                 <div class="flex items-center gap-2 {{ $fromAdmin ? 'flex-row-reverse' : '' }}">
-                                    <span class="text-[11.5px] font-semibold text-[var(--text)]">{{ $who }}</span>
-                                    <span class="text-[10.5px] text-[var(--text-subtle)]">{{ \App\Support\EthiopianDate::format($m->created_at, withTime: true) }}</span>
+                                    <span class="text-[11.5px] font-semibold text-(--text)">{{ $who }}</span>
+                                    <span class="text-[10.5px] text-(--text-subtle)">{{ \App\Support\EthiopianDate::format($m->created_at, withTime: true) }}</span>
                                 </div>
-                                <div class="px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words shadow-sm
+                                <div class="px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap wrap-break-word shadow-xs
                                     {{ $fromAdmin
                                         ? 'bg-[rgb(var(--ac))] text-white rounded-br-sm'
-                                        : 'bg-[var(--surface-soft)] border border-[var(--border)] text-[var(--text)] rounded-bl-sm' }}">
+                                        : 'bg-(--surface-soft) border border-(--border) text-(--text) rounded-bl-sm' }}">
                                     {{ $m->body }}
                                 </div>
                             </div>
@@ -2671,23 +2671,23 @@ ${tpl.innerHTML}
                         @empty
                         {{-- Empty state --}}
                         <div class="flex flex-col items-center justify-center py-16 text-center">
-                            <div class="h-14 w-14 rounded-2xl bg-[var(--surface-soft)] border border-[var(--border)] grid place-items-center mb-4">
-                                <svg class="h-7 w-7 text-[var(--text-subtle)]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+                            <div class="h-14 w-14 rounded-2xl bg-(--surface-soft) border border-(--border) grid place-items-center mb-4">
+                                <svg class="h-7 w-7 text-(--text-subtle)" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
                             </div>
-                            <p class="text-sm font-medium text-[var(--text-muted)]">{{ __('cases.messages_section.no_messages') }}</p>
-                            <p class="text-xs text-[var(--text-subtle)] mt-1">{{ __('cases.show.quick_access_hint') }}</p>
+                            <p class="text-sm font-medium text-(--text-muted)">{{ __('cases.messages_section.no_messages') }}</p>
+                            <p class="text-xs text-(--text-subtle) mt-1">{{ __('cases.show.quick_access_hint') }}</p>
                         </div>
                         @endforelse
                     </div>
 
                     {{-- Compose area --}}
                     @if($canCreateMessage && !$caseLocked)
-                    <div class="border-t border-[var(--border)] bg-[var(--surface-soft)] px-5 py-4">
+                    <div class="border-t border-(--border) bg-(--surface-soft) px-5 py-4">
                         <form method="POST" action="{{ route('cases.messages.post', $case->id) }}" x-data="{ body: '{{ old('body') }}', sending: false }" @submit="sending = true">
                             @csrf
                             <div class="flex items-end gap-3">
                                 {{-- Current user avatar --}}
-                                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-[rgb(var(--ac))] grid place-items-center text-xs font-bold text-white shadow-sm">
+                                <div class="shrink-0 h-8 w-8 rounded-full bg-[rgb(var(--ac))] grid place-items-center text-xs font-bold text-white shadow-xs">
                                     {{ mb_strtoupper(mb_substr(auth()->user()->name ?? 'A', 0, 1)) }}
                                 </div>
                                 {{-- Input + send --}}
@@ -2698,13 +2698,13 @@ ${tpl.innerHTML}
                                         rows="1"
                                         @input="$el.style.height='auto'; $el.style.height=Math.min($el.scrollHeight,160)+'px'"
                                         @keydown.enter.prevent="if(!$event.shiftKey && body.trim()){ sending=true; $el.closest('form').submit(); }"
-                                        class="w-full resize-none rounded-2xl border border-[var(--border)] bg-[var(--surface-strong)] text-[var(--text)] placeholder:text-[var(--text-subtle)] px-4 py-2.5 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--ac)/0.4)] focus:border-[rgb(var(--ac)/0.5)] transition-all"
+                                        class="w-full resize-none rounded-2xl border border-(--border) bg-(--surface-strong) text-(--text) placeholder:text-(--text-subtle) px-4 py-2.5 pr-12 text-sm focus:outline-hidden focus:ring-2 focus:ring-[rgb(var(--ac)/0.4)] focus:border-[rgb(var(--ac)/0.5)] transition-all"
                                         style="min-height:42px; max-height:160px; overflow-y:auto;"
                                         placeholder="{{ __('cases.messages_section.write_message_placeholder') }}">{{ old('body') }}</textarea>
                                     {{-- Send button inside input --}}
                                     <button type="submit"
                                         :disabled="!body.trim() || sending"
-                                        :class="body.trim() && !sending ? 'bg-[rgb(var(--ac))] text-white hover:opacity-90' : 'bg-[var(--border)] text-[var(--text-subtle)] cursor-not-allowed'"
+                                        :class="body.trim() && !sending ? 'bg-[rgb(var(--ac))] text-white hover:opacity-90' : 'bg-(--border) text-(--text-subtle) cursor-not-allowed'"
                                         class="absolute right-2 bottom-2 h-7 w-7 rounded-xl grid place-items-center transition-all">
                                         <svg x-show="!sending" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
                                         <svg x-show="sending" x-cloak class="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
@@ -2714,11 +2714,11 @@ ${tpl.innerHTML}
                             @error('body')
                             <p class="mt-2 text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-1.5">{{ $message }}</p>
                             @enderror
-                            <p class="mt-2 text-[10.5px] text-[var(--text-subtle)] pl-11">{{ __('cases.messages_section.reply_to_applicant') }} &middot; Enter {{ __('cases.show.send') ?? 'to send' }}, Shift+Enter for new line</p>
+                            <p class="mt-2 text-[10.5px] text-(--text-subtle) pl-11">{{ __('cases.messages_section.reply_to_applicant') }} &middot; Enter {{ __('cases.show.send') ?? 'to send' }}, Shift+Enter for new line</p>
                         </form>
                     </div>
                     @elseif($caseLocked)
-                    <div class="border-t border-[var(--border)] px-5 py-3 flex items-center gap-2.5 bg-amber-50/60">
+                    <div class="border-t border-(--border) px-5 py-3 flex items-center gap-2.5 bg-amber-50/60">
                         <svg class="h-4 w-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
                         <span class="text-xs text-amber-700">{{ __('cases.show.actions_locked') }}</span>
                     </div>
@@ -2732,7 +2732,7 @@ ${tpl.innerHTML}
                     x-transition:enter="transition ease-out duration-300"
                     x-transition:enter-start="opacity-0 transform translate-y-4"
                     x-transition:enter-end="opacity-100 transform translate-y-0"
-                    class="main-content-section p-6 rounded-2xl shadow-sm space-y-4">
+                    class="main-content-section p-6 rounded-2xl shadow-xs space-y-4">
                     <div class="flex items-center justify-between border-b border-gray-200 pb-3">
                         <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none"

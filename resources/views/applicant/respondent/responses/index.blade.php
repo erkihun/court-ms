@@ -21,7 +21,7 @@
 
         {{-- Responses List --}}
         @if($responses->isEmpty())
-        <div class="rounded-xl border-2 border-dashed border-slate-300 bg-white p-10 text-center text-slate-500 shadow-sm"> {{-- Slightly more prominent empty state --}}
+        <div class="rounded-xl border-2 border-dashed border-slate-300 bg-white p-10 text-center text-slate-500 shadow-xs"> {{-- Slightly more prominent empty state --}}
             <svg class="w-12 h-12 mx-auto mb-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>

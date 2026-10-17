@@ -2,7 +2,7 @@
 <div class="space-y-4">
     <div>
         <label class="block text-sm font-medium text-gray-700">{{ __('case_inspections.findings.form.request') }}</label>
-        <select name="case_inspection_request_id" class="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+        <select name="case_inspection_request_id" class="mt-1 w-full rounded-md border-gray-300 shadow-xs focus:border-blue-500 focus:ring-blue-500" required>
             <option value="">{{ __('case_inspections.findings.form.select_request') }}</option>
             @foreach($requests as $req)
             <option value="{{ $req->id }}" @selected(old('case_inspection_request_id', $prefillRequestId ?? $finding->case_inspection_request_id ?? null) == $req->id)>
@@ -22,7 +22,7 @@
         <div>
             <label class="block text-sm font-medium text-gray-700">{{ __('case_inspections.findings.form.severity') }}</label>
             @php $sev = old('severity', $finding->severity ?? 'medium'); @endphp
-            <select name="severity" class="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+            <select name="severity" class="mt-1 w-full rounded-md border-gray-300 shadow-xs focus:border-blue-500 focus:ring-blue-500" required>
                 @foreach(['low', 'medium', 'high', 'critical'] as $k)
                 <option value="{{ $k }}" @selected($sev === $k)>{{ __('case_inspections.severity.' . $k) }}</option>
                 @endforeach
@@ -34,21 +34,21 @@
     <div>
         <label class="block text-sm font-medium text-gray-700">{{ __('case_inspections.findings.form.title') }}</label>
         <input type="text" name="title" value="{{ old('title', $finding->title ?? '') }}"
-            class="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+            class="mt-1 w-full rounded-md border-gray-300 shadow-xs focus:border-blue-500 focus:ring-blue-500" required>
         @error('title')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
     </div>
 
     <div>
         <label class="block text-sm font-medium text-gray-700">{{ __('case_inspections.findings.form.details') }}</label>
         <textarea name="details" rows="7"
-            class="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>{{ old('details', $finding->details ?? '') }}</textarea>
+            class="mt-1 w-full rounded-md border-gray-300 shadow-xs focus:border-blue-500 focus:ring-blue-500" required>{{ old('details', $finding->details ?? '') }}</textarea>
         @error('details')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
     </div>
 
     <div>
         <label class="block text-sm font-medium text-gray-700">{{ __('case_inspections.findings.form.attachment_pdf') }}</label>
         <input type="file" name="attachment_pdf" accept="application/pdf"
-            class="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            class="mt-1 w-full rounded-md border-gray-300 shadow-xs focus:border-blue-500 focus:ring-blue-500">
         <p class="mt-1 text-xs text-gray-500">{{ __('case_inspections.findings.form.attachment_hint') }}</p>
         @if(!empty($finding?->attachment_path))
         <p class="mt-1 text-xs">

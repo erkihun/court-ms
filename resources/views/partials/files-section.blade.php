@@ -12,7 +12,7 @@ $canEditStatus = function_exists('userHasPermission')
     x-transition:enter="transition ease-out duration-300"
     x-transition:enter-start="opacity-0 transform translate-y-4"
     x-transition:enter-end="opacity-100 transform translate-y-0"
-    class="p-6 rounded-xl border border-gray-200 bg-white shadow-sm space-y-4">
+    class="p-6 rounded-xl border border-gray-200 bg-white shadow-xs space-y-4">
 
     <div class="flex items-center justify-between border-b border-gray-200 pb-3">
         <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">

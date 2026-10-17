@@ -41,7 +41,7 @@
                 @method('PATCH')
 
                 {{-- Header / status --}}
-                <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
                     <div class="flex flex-wrap items-center justify-between gap-3">
                         <div class="flex items-center gap-3">
                             <div>
@@ -68,7 +68,7 @@
                         </div>
 
                         <a href="{{ route('applicant.cases.show', $case->id) }}"
-                            class="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-1 focus:ring-slate-400">
+                            class="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 focus:outline-hidden focus:ring-1 focus:ring-slate-400">
                             {{ __('cases.back_to_case') }}
                         </a>
                     </div>
@@ -85,7 +85,7 @@
                 </div>
 
                 {{-- Case details --}}
-                <div class="mt-6 rounded-xl border border-slate-200 bg-white p-5 space-y-5 shadow-sm">
+                <div class="mt-6 rounded-xl border border-slate-200 bg-white p-5 space-y-5 shadow-xs">
                     <h2 class=" font-semibold text-slate-800">
                         {{ __('cases.section.case_details') }}
                     </h2>
@@ -100,7 +100,7 @@
                                 value="{{ old('title', $case->title) }}"
                                 required
                                 class="w-full rounded-lg border border-slate-300 px-3 py-2.5  text-slate-900
-                                       focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
+                                       focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600
                                        disabled:bg-slate-100 disabled:text-slate-500"
                                 :disabled="!canEdit" {{ $editable ? '' : 'disabled' }}>
                             @error('title')
@@ -141,7 +141,7 @@
                                 name="case_type_id"
                                 required
                                 class="w-full rounded-lg border border-slate-300 px-3 py-2.5  text-slate-900 bg-white
-                                       focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
+                                       focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600
                                        disabled:bg-slate-100 disabled:text-slate-500"
                                 :disabled="!canEdit" {{ $editable ? '' : 'disabled' }}>
                                 <option value="">{{ __('cases.placeholders.select') }}</option>
@@ -170,7 +170,7 @@
                                 name="respondent_name"
                                 value="{{ old('respondent_name', $case->respondent_name) }}"
                                 class="w-full rounded-lg border border-slate-300 px-3 py-2.5  text-slate-900
-                                       focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
+                                       focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600
                                        disabled:bg-slate-100 disabled:text-slate-500"
                                 :disabled="!canEdit" {{ $editable ? '' : 'disabled' }}>
                             @error('respondent_name')
@@ -185,7 +185,7 @@
                                 name="respondent_address"
                                 value="{{ old('respondent_address', $case->respondent_address) }}"
                                 class="w-full rounded-lg border border-slate-300 px-3 py-2.5  text-slate-900
-                                       focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
+                                       focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600
                                        disabled:bg-slate-100 disabled:text-slate-500"
                                 :disabled="!canEdit" {{ $editable ? '' : 'disabled' }}>
                             @error('respondent_address')
@@ -233,7 +233,7 @@
 
                         <label class="flex items-start gap-2  text-slate-700 mt-3">
                             <input type="checkbox" name="certify_appeal" value="1"
-                                class="mt-1 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                                class="mt-1 rounded-sm border-slate-300 text-orange-600 focus:ring-orange-500"
                                 {{ old('certify_appeal', true) ? 'checked' : '' }}
                                 :disabled="!canEdit" {{ $editable ? '' : 'disabled' }} required>
                             <span>I certify the validity of my appeal in accordance with F/S/S/No. 92.</span>
@@ -245,7 +245,7 @@
                 </div>
 
                 {{-- Add NEW documents --}}
-                <div class="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
                     <div class="flex items-center justify-between">
                         <h2 class=" font-semibold text-slate-800">
                             {{ __('cases.section.add_documents') }}
@@ -263,7 +263,7 @@
                                 name="evidence_titles[]"
                                 :placeholder="`{{ __('cases.placeholders.document_title') }}`"
                                 class="w-full rounded-lg border border-slate-300 px-3 py-2.5  text-slate-900
-                                       focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
+                                       focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600
                                        disabled:bg-slate-100 disabled:text-slate-500"
                                 :disabled="!canEdit">
                             <input
@@ -271,7 +271,7 @@
                                 name="evidence_files[]"
                                 accept="application/pdf"
                                 class="w-full rounded-lg border border-slate-300 px-2.5 py-2  text-slate-900 bg-white
-                                       focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500
+                                       focus:outline-hidden focus:ring-1 focus:ring-blue-500 focus:border-blue-500
                                        disabled:bg-slate-100 disabled:text-slate-500"
                                 :disabled="!canEdit">
                         </div>
@@ -282,7 +282,7 @@
                 </div>
 
                 {{-- Add NEW witnesses --}}
-                <div class="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
                     <div class="flex items-center justify-between mb-3">
                         <h2 class=" font-semibold text-slate-800">
                             {{ __('cases.section.witnesses') }}
@@ -309,7 +309,7 @@
                                 value="{{ old('witnesses.0.full_name') }}"
                                 :placeholder="`{{ __('cases.placeholders.full_name') }}`"
                                 class="px-3 py-2.5 rounded-lg bg-white border border-slate-300  text-slate-900 md:col-span-2
-                                       focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
+                                       focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600
                                        disabled:bg-slate-100 disabled:text-slate-500"
                                 :disabled="!canEdit">
 
@@ -318,7 +318,7 @@
                                 value="{{ old('witnesses.0.phone') }}"
                                 :placeholder="`{{ __('cases.placeholders.phone') }}`"
                                 class="px-3 py-2.5 rounded-lg bg-white border border-slate-300  text-slate-900
-                                       focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
+                                       focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600
                                        disabled:bg-slate-100 disabled:text-slate-500"
                                 :disabled="!canEdit">
 
@@ -328,7 +328,7 @@
                                 value="{{ old('witnesses.0.email') }}"
                                 :placeholder="`{{ __('cases.placeholders.email') }}`"
                                 class="px-3 py-2.5 rounded-lg bg-white border border-slate-300  text-slate-900
-                                       focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
+                                       focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600
                                        disabled:bg-slate-100 disabled:text-slate-500"
                                 :disabled="!canEdit">
 
@@ -337,7 +337,7 @@
                                 value="{{ old('witnesses.0.address') }}"
                                 :placeholder="`{{ __('cases.placeholders.address') }}`"
                                 class="px-3 py-2.5 rounded-lg bg-white border border-slate-300  text-slate-900 md:col-span-2
-                                       focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
+                                       focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600
                                        disabled:bg-slate-100 disabled:text-slate-500"
                                 :disabled="!canEdit">
                         </div>
@@ -359,7 +359,7 @@
 
                 <label class="mt-4 flex items-start gap-2  text-slate-700">
                     <input type="checkbox" name="certify_evidence" value="1"
-                        class="mt-1 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                        class="mt-1 rounded-sm border-slate-300 text-orange-600 focus:ring-orange-500"
                         {{ old('certify_evidence', true) ? 'checked' : '' }}
                         :disabled="!canEdit" {{ $editable ? '' : 'disabled' }} required>
                     <span>I certify that the evidence I have presented is true in accordance with F.S./S.H./No. 92.</span>
@@ -369,10 +369,10 @@
                 @enderror
 
                 {{-- Submit --}}
-                <div class="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
                     @if($editable)
                     <button
-                        class="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-orange-500 px-4 py-2.5  font-semibold text-white hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-1">
+                        class="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-orange-500 px-4 py-2.5  font-semibold text-white hover:bg-orange-600 focus:outline-hidden focus:ring-2 focus:ring-orange-400 focus:ring-offset-1">
                         {{ __('cases.buttons.save_changes') }}
                     </button>
                     <p class="mt-2 text-xs text-slate-500">
@@ -400,7 +400,7 @@
         <aside class="space-y-6">
 
             {{-- Existing documents --}}
-            <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
                 <div class="flex items-center justify-between mb-3">
                     <h3 class=" font-semibold text-slate-800">
                         {{ __('cases.section.existing_documents') }}
@@ -474,7 +474,7 @@
             </div>
 
             {{-- Existing witnesses --}}
-            <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
                 <div class="flex items-center justify-between mb-3">
                     <h3 class=" font-semibold text-slate-800">
                         {{ __('cases.section.existing_witnesses') }}

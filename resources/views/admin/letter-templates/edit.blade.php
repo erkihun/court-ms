@@ -3,7 +3,7 @@
     @section('page_header', __('letters.templates.edit'))
 
     <div class="max-w-4xl mx-auto space-y-6">
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+        <div class="bg-white border border-gray-200 rounded-xl shadow-xs p-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-1">{{ __('letters.templates.edit') }}</h2>
             <p class="text-sm text-gray-500 mb-4">{{ __('letters.templates.edit_help') }}</p>
 

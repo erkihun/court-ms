@@ -2,8 +2,8 @@
     @section('page_header', 'System Audit')
 
     <div class="space-y-5">
-        <section class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-            <div class="border-b border-gray-200 bg-gradient-to-r from-blue-50 to-orange-50 px-6 py-5">
+        <section class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xs">
+            <div class="border-b border-gray-200 bg-linear-to-r from-blue-50 to-orange-50 px-6 py-5">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h1 class="text-2xl font-bold text-gray-900">End-to-End Audit Trail</h1>
@@ -129,11 +129,11 @@
                                     <div class="mt-1 font-mono text-[11px] text-gray-400">{{ $event->action }}</div>
                                     <div class="mt-2 flex flex-wrap gap-1.5">
                                         @if($event->method)
-                                            <span class="rounded bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">{{ $event->method }}</span>
+                                            <span class="rounded-sm bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">{{ $event->method }}</span>
                                         @endif
                                         <span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $outcomeClass }}">{{ ucfirst($event->outcome) }}</span>
                                         @if($event->response_status)
-                                            <span class="rounded bg-gray-100 px-2 py-1 text-xs text-gray-700">HTTP {{ $event->response_status }}</span>
+                                            <span class="rounded-sm bg-gray-100 px-2 py-1 text-xs text-gray-700">HTTP {{ $event->response_status }}</span>
                                         @endif
                                     </div>
                                 </td>
@@ -156,7 +156,7 @@
                                     @if(count($event->details) > 0)
                                         <details class="max-w-md">
                                             <summary class="cursor-pointer font-semibold text-blue-700 hover:text-blue-900">View details</summary>
-                                            <pre class="mt-2 max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-gray-950 p-3 text-xs leading-5 text-gray-100">{{ json_encode($event->details, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) }}</pre>
+                                            <pre class="mt-2 max-h-72 overflow-auto whitespace-pre-wrap wrap-break-word rounded-lg bg-gray-950 p-3 text-xs leading-5 text-gray-100">{{ json_encode($event->details, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) }}</pre>
                                         </details>
                                     @else
                                         <span class="text-gray-400">No additional details</span>

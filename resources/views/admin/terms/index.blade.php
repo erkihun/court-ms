@@ -9,7 +9,7 @@
     @endphp
 
     <div class="space-y-6">
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
+        <div class="bg-white border border-gray-200 rounded-xl shadow-xs p-5">
             <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div class="space-y-2">
                     <p class="text-xs font-semibold uppercase tracking-wide text-orange-600">Policy controls</p>
@@ -42,7 +42,7 @@
                         Preview public page
                     </a>
                     <a href="{{ route('terms.create') }}"
-                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-500 text-white text-sm font-semibold shadow-sm hover:bg-orange-600">
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-500 text-white text-sm font-semibold shadow-xs hover:bg-orange-600">
                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m7-7H5" />
                         </svg>
@@ -52,7 +52,7 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="bg-white rounded-xl border border-gray-200 shadow-xs overflow-hidden">
             @if($terms->isEmpty())
             <div class="p-10 text-center space-y-3">
                 <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-orange-50 text-orange-500 border border-orange-100">
@@ -64,7 +64,7 @@
                 <p class="text-sm text-gray-600">Start by adding your first set of terms and conditions.</p>
                 <div>
                     <a href="{{ route('terms.create') }}"
-                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-500 text-white text-sm font-semibold shadow-sm hover:bg-orange-600">
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-500 text-white text-sm font-semibold shadow-xs hover:bg-orange-600">
                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m7-7H5" />
                         </svg>

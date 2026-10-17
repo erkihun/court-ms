@@ -39,16 +39,16 @@
         x-transition:leave-start="opacity-100 scale-100 translate-y-0"
         x-transition:leave-end="opacity-0 scale-95 -translate-y-1"
         @click.outside="panelOpen = false"
-        class="absolute right-0 top-full z-50 mt-2 w-52 rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] p-3 shadow-xl"
+        class="absolute right-0 top-full z-50 mt-2 w-52 rounded-xl border border-(--border) bg-(--surface-strong) p-3 shadow-xl"
         style="display:none"
     >
         {{-- Mode row --}}
-        <p class="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-subtle)]">Mode</p>
+        <p class="mb-2 text-[10px] font-semibold uppercase tracking-wider text-(--text-subtle)">Mode</p>
         <div class="flex gap-1.5 mb-4">
             {{-- Light --}}
             <button type="button"
                 @click="set('light')"
-                :class="isActive('light') ? 'bg-[var(--border-strong)] text-[var(--text)] ring-2 ring-[rgb(var(--ac))]' : 'text-[var(--text-muted)] hover:bg-[var(--border)]'"
+                :class="isActive('light') ? 'bg-(--border-strong) text-(--text) ring-2 ring-[rgb(var(--ac))]' : 'text-(--text-muted) hover:bg-(--border)'"
                 class="flex flex-1 flex-col items-center gap-1 rounded-lg py-2 text-[11px] font-medium transition-all duration-150">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
@@ -59,7 +59,7 @@
             {{-- Dark --}}
             <button type="button"
                 @click="set('dark')"
-                :class="isActive('dark') ? 'bg-[var(--border-strong)] text-[var(--text)] ring-2 ring-[rgb(var(--ac))]' : 'text-[var(--text-muted)] hover:bg-[var(--border)]'"
+                :class="isActive('dark') ? 'bg-(--border-strong) text-(--text) ring-2 ring-[rgb(var(--ac))]' : 'text-(--text-muted) hover:bg-(--border)'"
                 class="flex flex-1 flex-col items-center gap-1 rounded-lg py-2 text-[11px] font-medium transition-all duration-150">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
@@ -70,7 +70,7 @@
             {{-- System --}}
             <button type="button"
                 @click="set('system')"
-                :class="isActive('system') ? 'bg-[var(--border-strong)] text-[var(--text)] ring-2 ring-[rgb(var(--ac))]' : 'text-[var(--text-muted)] hover:bg-[var(--border)]'"
+                :class="isActive('system') ? 'bg-(--border-strong) text-(--text) ring-2 ring-[rgb(var(--ac))]' : 'text-(--text-muted) hover:bg-(--border)'"
                 class="flex flex-1 flex-col items-center gap-1 rounded-lg py-2 text-[11px] font-medium transition-all duration-150">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
@@ -81,7 +81,7 @@
         </div>
 
         {{-- Accent row --}}
-        <p class="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-subtle)]">Accent</p>
+        <p class="mb-2 text-[10px] font-semibold uppercase tracking-wider text-(--text-subtle)">Accent</p>
         <div class="flex items-center gap-2">
             {{-- Blue --}}
             <button type="button"

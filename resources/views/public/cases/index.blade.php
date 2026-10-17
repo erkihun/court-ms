@@ -4,7 +4,7 @@
     @endphp
 
     <section class="space-y-6">
-        <div class="flex flex-col gap-4 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm lg:flex-row lg:items-end lg:justify-between lg:p-8">
+        <div class="flex flex-col gap-4 rounded-4xl border border-slate-200 bg-white p-6 shadow-xs lg:flex-row lg:items-end lg:justify-between lg:p-8">
             <div class="max-w-2xl">
                 <span class="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">
                     {{ __('home.public_cases.public_records') }}
@@ -29,7 +29,7 @@
             </div>
         </div>
 
-        <div class="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <div class="rounded-4xl border border-slate-200 bg-white p-5 shadow-xs sm:p-6">
             <form method="GET" class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:items-end">
                 <label class="block">
                     <span class="mb-2 block text-sm font-medium text-slate-700">{{ __('home.public_cases.search_public_cases') }}</span>
@@ -43,7 +43,7 @@
                             name="q"
                             value="{{ $q ?? '' }}"
                             placeholder="{{ __('home.public_portal.search_placeholder') }}"
-                            class="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+                            class="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm text-slate-900 shadow-xs outline-hidden transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
                     </div>
                 </label>
 
@@ -60,7 +60,7 @@
             </form>
         </div>
 
-        <div class="hidden overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm lg:block">
+        <div class="hidden overflow-hidden rounded-4xl border border-slate-200 bg-white shadow-xs lg:block">
             <table class="min-w-full divide-y divide-slate-200 text-sm">
                 <thead class="bg-slate-50">
                     <tr class="text-slate-600">
@@ -117,7 +117,7 @@
 
         <div class="grid gap-4 lg:hidden">
             @forelse($cases as $c)
-                <article class="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm">
+                <article class="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-xs">
                     <div class="flex items-start justify-between gap-4">
                         <div>
                             <p class="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">{{ $c->case_number }}</p>
@@ -149,7 +149,7 @@
                     </a>
                 </article>
             @empty
-                <div class="rounded-[1.75rem] border border-dashed border-slate-300 bg-white p-8 text-center shadow-sm">
+                <div class="rounded-[1.75rem] border border-dashed border-slate-300 bg-white p-8 text-center shadow-xs">
                     <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                             <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35m1.85-5.15a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />

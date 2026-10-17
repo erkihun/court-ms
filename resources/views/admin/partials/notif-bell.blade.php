@@ -71,14 +71,14 @@ $__adminNotifCount = $adminUnseenMsgs->count() + $adminUnseenCases->count() + $a
 
     {{-- Dropdown --}}
     <div x-cloak x-show="bell" @click.outside="bell=false"
-        class="absolute right-0 mt-2 w-[32rem] max-w-[90vw] rounded-md border border-slate-700 bg-slate-900 text-slate-100 shadow-xl">
+        class="absolute right-0 mt-2 w-lg max-w-[90vw] rounded-md border border-slate-700 bg-slate-900 text-slate-100 shadow-xl">
         <div class="p-3">
             <div class="mb-2 flex items-center justify-between">
                 <div class="text-sm font-semibold">{{ __('app.Notifications') }}</div>
                 @if($__adminNotifCount > 0)
                 <form method="POST" action="{{ route('admin.notifications.markAll') }}">
                     @csrf
-                    <button class="text-xs px-2 py-1 rounded border border-slate-700 hover:bg-slate-800">{{ __('app.Mark all as seen') }}</button>
+                    <button class="text-xs px-2 py-1 rounded-sm border border-slate-700 hover:bg-slate-800">{{ __('app.Mark all as seen') }}</button>
                 </form>
                 @endif
             </div>
@@ -110,7 +110,7 @@ $__adminNotifCount = $adminUnseenMsgs->count() + $adminUnseenCases->count() + $a
                             @csrf
                             <input type="hidden" name="type" value="message">
                             <input type="hidden" name="sourceId" value="{{ $m->id }}">
-                            <button class="text-xs px-2 py-1 rounded border border-slate-700 hover:bg-slate-800">{{ __('app.Seen') }}</button>
+                            <button class="text-xs px-2 py-1 rounded-sm border border-slate-700 hover:bg-slate-800">{{ __('app.Seen') }}</button>
                         </form>
                     </li>
                     @endforeach
@@ -136,7 +136,7 @@ $__adminNotifCount = $adminUnseenMsgs->count() + $adminUnseenCases->count() + $a
                             @csrf
                             <input type="hidden" name="type" value="case">
                             <input type="hidden" name="sourceId" value="{{ $c->id }}">
-                            <button class="text-xs px-2 py-1 rounded border border-slate-700 hover:bg-slate-800">{{ __('app.Seen') }}</button>
+                            <button class="text-xs px-2 py-1 rounded-sm border border-slate-700 hover:bg-slate-800">{{ __('app.Seen') }}</button>
                         </form>
                     </li>
                     @endforeach
@@ -163,7 +163,7 @@ $__adminNotifCount = $adminUnseenMsgs->count() + $adminUnseenCases->count() + $a
                             @csrf
                             <input type="hidden" name="type" value="hearing">
                             <input type="hidden" name="sourceId" value="{{ $h->id }}">
-                            <button class="text-xs px-2 py-1 rounded border border-slate-700 hover:bg-slate-800">{{ __('app.Seen') }}</button>
+                            <button class="text-xs px-2 py-1 rounded-sm border border-slate-700 hover:bg-slate-800">{{ __('app.Seen') }}</button>
                         </form>
                     </li>
                     @endforeach
@@ -173,7 +173,7 @@ $__adminNotifCount = $adminUnseenMsgs->count() + $adminUnseenCases->count() + $a
 
             <div class="mt-3 flex items-center justify-end">
                 <a href="{{ route('admin.notifications.index') }}"
-                    class="text-xs px-2 py-1 rounded border border-slate-700 hover:bg-slate-800">{{ __('app.View all') }}</a>
+                    class="text-xs px-2 py-1 rounded-sm border border-slate-700 hover:bg-slate-800">{{ __('app.View all') }}</a>
             </div>
             @endif
         </div>

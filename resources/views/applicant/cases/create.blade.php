@@ -32,7 +32,7 @@
 
     <form id="applicant-case-create-form" method="POST" action="{{ route('applicant.cases.store') }}"
         enctype="multipart/form-data"
-        class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 md:p-8 space-y-8">
+        class="bg-white rounded-xl border border-slate-200 shadow-xs p-6 md:p-8 space-y-8">
         @csrf
         <input type="hidden" name="filing_date" id="filing_date_field"
             value="{{ old('filing_date', now()->toDateString()) }}">
@@ -50,7 +50,7 @@
                         placeholder="{{ __('cases.applicant_name_placeholder') }}" @unless($isLawyer) readonly
                         @endunless required
                         class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
-                               {{ $isLawyer ? 'bg-white' : 'bg-slate-100' }} focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+                               {{ $isLawyer ? 'bg-white' : 'bg-slate-100' }} focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                     @error('title')
                     <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
                     @enderror
@@ -64,7 +64,7 @@
                         placeholder="{{ __('cases.applicant_address_placeholder') }}" @unless($isLawyer) readonly
                         @endunless required
                         class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
-                               {{ $isLawyer ? 'bg-white' : 'bg-slate-100' }} focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+                               {{ $isLawyer ? 'bg-white' : 'bg-slate-100' }} focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                     @error('applicant_address')
                     <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
                     @enderror
@@ -82,7 +82,7 @@
                     </label>
                     <input name="respondent_name" value="{{ old('respondent_name') }}"
                         placeholder="{{ __('cases.respondent_name_placeholder') }}" required class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
-                               focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+                               focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                     @error('respondent_name')
                     <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
                     @enderror
@@ -93,7 +93,7 @@
                     </label>
                     <input name="respondent_address" value="{{ old('respondent_address') }}"
                         placeholder="{{ __('cases.respondent_address_placeholder') }}" required class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
-                               focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+                               focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                     @error('respondent_address')
                     <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
                     @enderror
@@ -119,7 +119,7 @@
                         {{ __('cases.case_type') }} <span class="text-red-600">*</span>
                     </label>
                     <select x-ref="caseTypeSelect" @change="updatePrefix()" name="case_type_id" required class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
-                               bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+                               bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                         <option value="">-- {{ __('cases.select_option') }} --</option>
                         @foreach($types as $t)
                         <option value="{{ $t->id }}" data-prefix="{{ $t->prefix ?? $t->name }}"
@@ -142,7 +142,7 @@
             </div>
             <label class="flex items-start gap-2  text-slate-700">
                 <input type="checkbox" name="accept_terms" value="1"
-                    class="mt-1 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                    class="mt-1 rounded-sm border-slate-300 text-orange-600 focus:ring-orange-500"
                     {{ old('accept_terms') ? 'checked' : '' }} required>
                 <span>{{ __('terms.applicant_checkbox') }}</span>
             </label>
@@ -181,7 +181,7 @@
 
             <label class="flex items-start gap-2  text-slate-700 mt-3">
                 <input type="checkbox" name="certify_appeal" value="1"
-                    class="mt-1 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                    class="mt-1 rounded-sm border-slate-300 text-orange-600 focus:ring-orange-500"
                     {{ old('certify_appeal') ? 'checked' : '' }} required>
                 <span>{{ __('cases.certify_appeal') }}</span>
             </label>
@@ -205,7 +205,7 @@
                     </p>
                 </div>
                 <button type="button" @click="rows++"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md bg-orange-500 text-white font-medium hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-1">
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md bg-orange-500 text-white font-medium hover:bg-orange-600 focus:outline-hidden focus:ring-2 focus:ring-orange-400 focus:ring-offset-1">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -218,9 +218,9 @@
                 <div class="grid md:grid-cols-2 gap-3 mb-2">
                     <input type="text" name="evidence_titles[]"
                         placeholder="{{ __('cases.document_title_placeholder') }}" required class="px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
-                               bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+                               bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                     <input type="file" name="evidence_files[]" accept="application/pdf" required class="px-3 py-2.5 rounded-lg border border-slate-300  bg-white text-slate-900
-                               focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                               focus:outline-hidden focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
                 </div>
             </template>
 
@@ -242,7 +242,7 @@
 
                 </div>
                 <button type="button" @click="rows++"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md bg-orange-500 text-white font-medium hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-1">
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md bg-orange-500 text-white font-medium hover:bg-orange-600 focus:outline-hidden focus:ring-2 focus:ring-orange-400 focus:ring-offset-1">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -255,15 +255,15 @@
                 <div class="grid md:grid-cols-6 gap-3 mb-2">
                     <input :name="'witnesses['+(i-1)+'][full_name]'" required value="{{ old('witnesses.0.full_name') }}"
                         placeholder="{{ __('cases.witnesses_section.full_name_placeholder') }}" class="px-3 py-2.5 rounded-lg bg-white border border-slate-300  text-slate-900 md:col-span-2
-                               focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+                               focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
 
                     <input :name="'witnesses['+(i-1)+'][phone]'" required value="{{ old('witnesses.0.phone') }}"
                         placeholder="{{ __('cases.witnesses_section.phone_placeholder') }}" class="px-3 py-2.5 rounded-lg bg-white border border-slate-300  text-slate-900
-                               focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+                               focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
 
                     <input :name="'witnesses['+(i-1)+'][address]'" required value="{{ old('witnesses.0.address') }}"
                         placeholder="{{ __('cases.witnesses_section.address_placeholder') }}" class="px-3 py-2.5 rounded-lg bg-white border border-slate-300  text-slate-900 md:col-span-2
-                               focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+                               focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                 </div>
             </template>
 
@@ -277,7 +277,7 @@
 
         <label class="flex items-start gap-2  text-slate-700">
             <input type="checkbox" name="certify_evidence" value="1"
-                class="mt-1 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                class="mt-1 rounded-sm border-slate-300 text-orange-600 focus:ring-orange-500"
                 {{ old('certify_evidence') ? 'checked' : '' }} required>
             <span>{{ __('cases.certify_evidence') }}</span>
         </label>
@@ -288,11 +288,11 @@
         {{-- Actions --}}
         <div class="pt-2 flex flex-wrap gap-3">
             <button class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-orange-500 text-white  font-semibold
-                       hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-1">
+                       hover:bg-orange-600 focus:outline-hidden focus:ring-2 focus:ring-orange-400 focus:ring-offset-1">
                 {{ __('cases.submit_case_button') }}
             </button>
             <a href="{{ route('applicant.cases.index') }}" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-slate-200 text-slate-700  font-medium
-                      hover:bg-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-400">
+                      hover:bg-slate-300 focus:outline-hidden focus:ring-1 focus:ring-slate-400">
                 {{ __('cases.cancel') }}
             </a>
         </div>

@@ -4,7 +4,7 @@
     @include('admin.decisions.partials.font-style')
 
     <div class="decision-ethiopic-font max-w-3xl mx-auto space-y-6">
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 flex items-start justify-between gap-4">
+        <div class="bg-white border border-gray-200 rounded-xl shadow-xs p-6 flex items-start justify-between gap-4">
             <div>
                 <h1 class="text-xl font-semibold text-gray-900">{{ __('decisions.reviews.edit_title') }}</h1>
                 <p class="text-sm text-gray-600 mt-1">{{ __('decisions.reviews.edit_subtitle', ['case' => $decision->case_number, 'reviewer' => $review->reviewer?->name ?? '—']) }}</p>
@@ -18,7 +18,7 @@
             </a>
         </div>
 
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 space-y-4">
+        <div class="bg-white border border-gray-200 rounded-xl shadow-xs p-6 space-y-4">
             <form method="POST" action="{{ route('decisions.reviews.update', [$decision, $review]) }}" class="space-y-4"
                 x-data="{
                     outcome: '{{ old('outcome', $review->outcome) }}',

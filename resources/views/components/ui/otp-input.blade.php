@@ -34,7 +34,7 @@
             @keydown="onKeydown(i, $event)"
             @focus="$event.target.select()"
             class="h-12 w-10 sm:h-14 sm:w-12 rounded-lg border text-center text-xl sm:text-2xl font-mono font-semibold text-slate-900
-                   focus:outline-none focus:ring-2 {{ $focusClasses }}
+                   focus:outline-hidden focus:ring-2 {{ $focusClasses }}
                    @error($name) border-red-400 @else border-slate-300 @enderror"
         >
     </template>

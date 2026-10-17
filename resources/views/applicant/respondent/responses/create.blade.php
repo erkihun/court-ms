@@ -22,11 +22,11 @@
 
         <form method="POST" action="{{ route('respondent.responses.store') }}"
               enctype="multipart/form-data"
-              class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden space-y-6">
+              class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden space-y-6">
 
             {{-- Instruction note --}}
             <div class="flex gap-3 bg-amber-50 border-b border-amber-200 px-6 py-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
                 <p class="text-sm text-amber-800 leading-relaxed">
@@ -45,7 +45,7 @@
                 <input id="resp_title" type="text" name="title" value="{{ old('title') }}" required
                        autocomplete="off"
                        class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900
-                              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                              focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-blue-500
                               @error('title') border-red-400 bg-red-50 @enderror">
                 @error('title')
                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -87,7 +87,7 @@
                 </label>
                 <div class="mt-1 flex items-center gap-3 rounded-xl border border-slate-300 px-4 py-3
                             @error('pdf') border-red-400 bg-red-50 @enderror">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                     </svg>
                     <input type="file" name="pdf" required accept="application/pdf"
@@ -109,7 +109,7 @@
                 </a>
                 <button type="submit"
                         class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-blue-600 text-white
-                               text-sm font-semibold hover:bg-blue-700 active:bg-blue-800 transition-colors shadow-sm">
+                               text-sm font-semibold hover:bg-blue-700 active:bg-blue-800 transition-colors shadow-xs">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                     </svg>

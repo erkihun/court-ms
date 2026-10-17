@@ -66,12 +66,12 @@
                             </td>
                             <td>
                                 <div class="enterprise-actions">
-                                    <a href="{{ route('roles.edit',$r) }}" class="btn btn-primary !px-3 !py-1.5 !text-xs">Edit</a>
+                                    <a href="{{ route('roles.edit',$r) }}" class="btn btn-primary px-3! py-1.5! text-xs!">Edit</a>
                                     <form id="delForm-{{ $r->id }}" action="{{ route('roles.destroy',$r) }}" method="POST" class="hidden">
                                         @csrf @method('DELETE')
                                     </form>
                                     <button @click.prevent="openDelete({ id: {{ $r->id }}, name: @js($r->name) })"
-                                        class="btn btn-danger !px-3 !py-1.5 !text-xs">
+                                        class="btn btn-danger px-3! py-1.5! text-xs!">
                                         {{ __('roles.index.delete') }}
                                     </button>
                                 </div>

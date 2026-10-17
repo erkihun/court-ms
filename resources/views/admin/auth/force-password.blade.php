@@ -7,7 +7,7 @@
             </p>
         </div>
 
-        <div class="rounded-xl border border-gray-200 bg-white shadow-sm p-6">
+        <div class="rounded-xl border border-gray-200 bg-white shadow-xs p-6">
             @include('admin.profile.partials.update-password-form')
         </div>
     </div>

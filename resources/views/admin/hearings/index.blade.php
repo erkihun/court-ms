@@ -3,7 +3,7 @@
     @section('page_header', __('app.Hearings'))
 
     <div class="space-y-6" x-data="hearingViewer()" x-cloak>
-        <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
+        <div class="rounded-2xl border border-gray-200 bg-white shadow-xs">
             <div class="flex flex-col gap-4 border-b border-gray-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h2 class="text-lg font-semibold text-gray-900">{{ __('app.Hearings') }}</h2>
@@ -19,7 +19,7 @@
                     <div class="flex-1 min-w-0">
                         <label class="sr-only" for="case_number">Case number</label>
                         <input id="case_number" name="case_number" value="{{ old('case_number', $caseNumber) }}"
-                            class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
+                            class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-xs focus:border-blue-500 focus:ring-3 focus:ring-blue-200"
                             placeholder="Filter by case number">
                     </div>
                     <div class="flex-1 min-w-0">
@@ -27,7 +27,7 @@
                         <x-eth-date-input id="hearing_date" name="hearing_date" :value="old('hearing_date', $hearingDate)" />
                     </div>
                     <div class="flex items-center gap-2">
-                        <button type="submit" class="inline-flex items-center rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring focus:ring-blue-200">
+                        <button type="submit" class="inline-flex items-center rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white shadow-xs hover:bg-blue-700 focus:outline-hidden focus:ring-3 focus:ring-blue-200">
                             Apply filters
                         </button>
                         <a href="{{ route('admin.hearings.index') }}"
@@ -71,7 +71,7 @@
                                 <button
                                     type="button"
                                     class="text-xs font-semibold uppercase tracking-wide px-3 py-1 rounded-full transition focus-ring"
-                                    :class="activeId === {{ $hearing->id }} ? 'bg-blue-600 text-white shadow-sm' : 'text-blue-600 hover:text-blue-900 bg-blue-50'"
+                                    :class="activeId === {{ $hearing->id }} ? 'bg-blue-600 text-white shadow-xs' : 'text-blue-600 hover:text-blue-900 bg-blue-50'"
                                     @click="openDetails({{ json_encode([
                                         'id' => $hearing->id,
                                         'case_number' => $hearing->case_number,

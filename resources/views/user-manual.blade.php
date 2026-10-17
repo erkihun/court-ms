@@ -50,8 +50,8 @@
         </div>
     </header>
     <main class="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-16">
-        <article class="manual-card overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-            <div class="border-b border-slate-200 bg-gradient-to-r from-slate-950 to-blue-950 px-6 py-10 text-white sm:px-10">
+        <article class="manual-card overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xs">
+            <div class="border-b border-slate-200 bg-linear-to-r from-slate-950 to-blue-950 px-6 py-10 text-white sm:px-10">
                 <p class="text-xs font-semibold uppercase tracking-[0.2em] text-blue-300">{{ __('home.nav.user_manual') }}</p>
                 <h1 class="mt-3 text-3xl font-bold sm:text-4xl">{{ $title }}</h1>
             </div>

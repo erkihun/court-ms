@@ -1,7 +1,7 @@
 <x-admin-layout title="{{ __('Add Case Type') }}">
     @section('page_header', __('Add Case Type'))
 
-    <div class="p-6 rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div class="p-6 rounded-xl border border-gray-200 bg-white shadow-xs">
         <form method="POST" action="{{ route('case-types.store') }}" class="space-y-4">
             @csrf
             <div>

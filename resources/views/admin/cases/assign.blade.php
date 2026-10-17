@@ -29,7 +29,7 @@
             </div>
             <div class="mt-4">
                 <a href="{{ route('cases.index') }}"
-                    class="px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800">{{ __('cases.assign.back') }}</a>
+                    class="px-3 py-2 rounded-sm bg-gray-200 hover:bg-gray-300 text-gray-800">{{ __('cases.assign.back') }}</a>
             </div>
         </div>
 
@@ -60,7 +60,7 @@
                 <div>
                     <label class="block text-sm text-gray-700 mb-1 font-medium">{{ __('cases.assign.assign_to') }}</label>
                     <select name="assigned_user_id"
-                        class="w-full px-3 py-2 rounded bg-white text-gray-900 border border-gray-300">
+                        class="w-full px-3 py-2 rounded-sm bg-white text-gray-900 border border-gray-300">
                         <option value="">{{ __('cases.assign.select_user') }}</option>
                         @if($mode === 'leader' && $leaderTeam)
                         <optgroup label="{{ __('cases.assign.team_members') }}">
@@ -92,15 +92,15 @@
                 {{-- Unassign toggle --}}
                 @if($case->assigned_user_id)
                 <label class="flex items-center gap-2 text-sm text-gray-700">
-                    <input type="checkbox" name="unassign" value="1" class="rounded border-gray-300 bg-white">
+                    <input type="checkbox" name="unassign" value="1" class="rounded-sm border-gray-300 bg-white">
                     {{ __('cases.assign.unassign') }}
                 </label>
                 @endif
 
                 <div class="pt-2">
-                    <button class="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white">{{ __('cases.general.save') }}</button>
+                    <button class="px-4 py-2 rounded-sm bg-blue-600 hover:bg-blue-700 text-white">{{ __('cases.general.save') }}</button>
                     <a href="{{ route('cases.index') }}"
-                        class="ml-2 px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800">{{ __('cases.general.cancel') }}</a>
+                        class="ml-2 px-4 py-2 rounded-sm bg-gray-200 hover:bg-gray-300 text-gray-800">{{ __('cases.general.cancel') }}</a>
                 </div>
             </form>
         </div>

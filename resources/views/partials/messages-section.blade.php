@@ -1,6 +1,6 @@
 {{-- resources/views/cases/partials/messages-section.blade.php --}}
 <section id="messages-section" x-show="activeSection==='messages'" x-transition
-    class="p-6 rounded-xl border border-gray-200 bg-white shadow-sm space-y-4">
+    class="p-6 rounded-xl border border-gray-200 bg-white shadow-xs space-y-4">
     <div class="flex items-center justify-between border-b border-gray-200 pb-3">
         <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">

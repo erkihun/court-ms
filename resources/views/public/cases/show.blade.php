@@ -8,7 +8,7 @@
                 <div class="font-mono text-lg">{{ $case->case_number }}</div>
                 <h1 class="text-xl font-semibold mt-1">{{ $case->title }}</h1>
             </div>
-            <span class="px-2.5 py-1 rounded text-xs capitalize bg-slate-800 text-white">
+            <span class="px-2.5 py-1 rounded-sm text-xs capitalize bg-slate-800 text-white">
                 {{ $case->status }}
             </span>
         </div>

@@ -55,7 +55,7 @@ $respondentMessages = (clone $base)->limit(6)->get();
     </button>
 
     <div x-cloak x-show="open" @click.outside="open=false"
-        class="absolute right-0 mt-2 w-80 rounded-md border border-white/20 bg-white/90 text-slate-800 shadow-lg backdrop-blur">
+        class="absolute right-0 mt-2 w-80 rounded-md border border-white/20 bg-white/90 text-slate-800 shadow-lg backdrop-blur-sm">
         <div class="p-3 border-b border-white/30 text-sm font-semibold uppercase tracking-wide text-slate-600 flex items-center justify-between gap-3">
             <span>{{ __('respondent.notifications') }}</span>
             <div class="flex items-center gap-3">

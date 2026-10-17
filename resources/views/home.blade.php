@@ -79,7 +79,7 @@
             'value'       => number_format($totalCases ?? 0),
             'icon'        => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
             'accent'      => 'from-blue-700 to-blue-500',
-            'ring'        => 'ring-blue-500/30',
+            'ring-3'        => 'ring-blue-500/30',
         ],
         [
             'label'       => !$isAmharic && !empty($dbMetrics['resolved_cases']['label']) ? $dbMetrics['resolved_cases']['label'] : __('home.metrics.cards.resolved_cases.label'),
@@ -87,7 +87,7 @@
             'value'       => number_format($resolvedCases ?? 0),
             'icon'        => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
             'accent'      => 'from-emerald-700 to-emerald-500',
-            'ring'        => 'ring-emerald-500/30',
+            'ring-3'        => 'ring-emerald-500/30',
         ],
         [
             'label'       => !$isAmharic && !empty($dbMetrics['pending_cases']['label']) ? $dbMetrics['pending_cases']['label'] : __('home.metrics.cards.pending_cases.label'),
@@ -95,7 +95,7 @@
             'value'       => number_format($pendingCases ?? 0),
             'icon'        => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
             'accent'      => 'from-orange-600 to-orange-400',
-            'ring'        => 'ring-orange-400/30',
+            'ring-3'        => 'ring-orange-400/30',
         ],
         [
             'label'       => !$isAmharic && !empty($dbMetrics['active_caseload']['label']) ? $dbMetrics['active_caseload']['label'] : __('home.metrics.cards.active_caseload.label'),
@@ -103,7 +103,7 @@
             'value'       => number_format($openCases ?? 0),
             'icon'        => 'M13 10V3L4 14h7v7l9-11h-7z',
             'accent'      => 'from-blue-800 to-blue-600',
-            'ring'        => 'ring-blue-600/30',
+            'ring-3'        => 'ring-blue-600/30',
         ],
         [
             'label'       => !$isAmharic && !empty($dbMetrics['hearings_this_week']['label']) ? $dbMetrics['hearings_this_week']['label'] : __('home.metrics.cards.hearings_this_week.label'),
@@ -111,7 +111,7 @@
             'value'       => number_format($hearingsThisWeek ?? 0),
             'icon'        => 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
             'accent'      => 'from-violet-700 to-violet-500',
-            'ring'        => 'ring-violet-500/30',
+            'ring-3'        => 'ring-violet-500/30',
         ],
         [
             'label'       => !$isAmharic && !empty($dbMetrics['avg_resolution_time']['label']) ? $dbMetrics['avg_resolution_time']['label'] : __('home.metrics.cards.avg_resolution_time.label'),
@@ -119,7 +119,7 @@
             'value'       => number_format($upcomingHearings ?? 0),
             'icon'        => 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z',
             'accent'      => 'from-slate-600 to-slate-400',
-            'ring'        => 'ring-slate-400/30',
+            'ring-3'        => 'ring-slate-400/30',
         ],
     ];
 
@@ -166,7 +166,7 @@
 }">
 
     {{-- Skip link --}}
-    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 z-[100] bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-semibold">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 z-100 bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-semibold">
         {{ __('home.accessibility.skip_to_content') }}
     </a>
 
@@ -177,10 +177,10 @@
         <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
 
             {{-- Logo --}}
-            <a href="{{ route('landing.home') }}" class="flex items-center gap-3 flex-shrink-0">
+            <a href="{{ route('landing.home') }}" class="flex items-center gap-3 shrink-0">
                 @if($logoPath)
                     <img src="{{ asset('storage/'.$logoPath) }}" alt="{{ $brandName }}"
-                         class="h-10 w-auto max-w-[2.5rem] object-contain rounded-xl">
+                         class="h-10 w-auto max-w-10 object-contain rounded-xl">
                 @else
                     <div class="ac-soft flex h-10 w-10 items-center justify-center rounded-xl ring-1 ac-ring">
                         <svg class="ac-text h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
@@ -235,7 +235,7 @@
                     {{ __('home.nav.applicant_portal') }}
                 </a>
                 <a href="{{ route('applicant.login', ['login_as' => 'respondent']) }}"
-                   class="ac-btn hidden md:inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition shadow-sm">
+                   class="ac-btn hidden md:inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition shadow-xs">
                     {{ __('home.nav.respondent_portal') }}
                 </a>
 
@@ -265,7 +265,7 @@
             @foreach($navLinks as [$href, $label, $icon])
             <a href="{{ $href }}" @click="mobileOpen = false"
                class="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
-                <svg class="h-4 w-4 opacity-50 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="h-4 w-4 opacity-50 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $icon }}"/>
                 </svg>
                 {{ $label }}
@@ -305,21 +305,21 @@
         $bgMap = [
             'blue'    => [
                 'bg'          => 'from-blue-950 via-blue-900/90 to-slate-950',
-                'glow'        => 'bg-[radial-gradient(ellipse_at_top_left,_rgba(59,130,246,0.35),_transparent_55%),radial-gradient(ellipse_at_bottom_right,_rgba(234,88,12,0.18),_transparent_50%)]',
+                'glow'        => 'bg-[radial-gradient(ellipse_at_top_left,rgba(59,130,246,0.35),transparent_55%),radial-gradient(ellipse_at_bottom_right,rgba(234,88,12,0.18),transparent_50%)]',
                 'badge_color' => 'border-blue-500/30 bg-blue-700/20 text-blue-200',
                 'dot_color'   => 'bg-orange-400',
                 'accent'      => 'from-orange-400 to-orange-200',
             ],
             'orange'  => [
                 'bg'          => 'from-slate-950 via-indigo-950/80 to-orange-950/40',
-                'glow'        => 'bg-[radial-gradient(ellipse_at_top_right,_rgba(234,88,12,0.28),_transparent_55%),radial-gradient(ellipse_at_bottom_left,_rgba(99,102,241,0.2),_transparent_50%)]',
+                'glow'        => 'bg-[radial-gradient(ellipse_at_top_right,rgba(234,88,12,0.28),transparent_55%),radial-gradient(ellipse_at_bottom_left,rgba(99,102,241,0.2),transparent_50%)]',
                 'badge_color' => 'border-orange-500/30 bg-orange-700/20 text-orange-200',
                 'dot_color'   => 'bg-indigo-400',
                 'accent'      => 'from-orange-300 to-amber-200',
             ],
             'emerald' => [
                 'bg'          => 'from-slate-950 via-blue-950 to-emerald-950/50',
-                'glow'        => 'bg-[radial-gradient(ellipse_at_center,_rgba(16,185,129,0.18),_transparent_60%),radial-gradient(ellipse_at_top,_rgba(30,64,175,0.3),_transparent_50%)]',
+                'glow'        => 'bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.18),transparent_60%),radial-gradient(ellipse_at_top,rgba(30,64,175,0.3),transparent_50%)]',
                 'badge_color' => 'border-emerald-500/30 bg-emerald-700/20 text-emerald-200',
                 'dot_color'   => 'bg-emerald-400',
                 'accent'      => 'from-emerald-400 to-teal-200',
@@ -415,9 +415,9 @@
                     {{-- Dark overlay so text stays readable --}}
                     <div class="absolute inset-0 bg-slate-950/60"></div>
                     {{-- Subtle colour tint from the chosen style --}}
-                    <div class="absolute inset-0 bg-gradient-to-br {{ $slide['bg'] }} opacity-40"></div>
+                    <div class="absolute inset-0 bg-linear-to-br {{ $slide['bg'] }} opacity-40"></div>
                 @else
-                    <div class="absolute inset-0 bg-gradient-to-br {{ $slide['bg'] }}"></div>
+                    <div class="absolute inset-0 bg-linear-to-br {{ $slide['bg'] }}"></div>
                     <div class="absolute inset-0 {{ $slide['glow'] }}"></div>
                 @endif
             </div>
@@ -429,9 +429,9 @@
                     <img src="{{ $slides[0]['bg_image'] }}" alt=""
                          class="absolute inset-0 h-full w-full object-cover">
                     <div class="absolute inset-0 bg-slate-950/60"></div>
-                    <div class="absolute inset-0 bg-gradient-to-br {{ $slides[0]['bg'] }} opacity-40"></div>
+                    <div class="absolute inset-0 bg-linear-to-br {{ $slides[0]['bg'] }} opacity-40"></div>
                 @else
-                    <div class="absolute inset-0 bg-gradient-to-br {{ $slides[0]['bg'] }}"></div>
+                    <div class="absolute inset-0 bg-linear-to-br {{ $slides[0]['bg'] }}"></div>
                     <div class="absolute inset-0 {{ $slides[0]['glow'] }}"></div>
                 @endif
             </div>
@@ -447,7 +447,7 @@
                  x-transition:leave-start="opacity-100 translate-y-0"
                  x-transition:leave-end="opacity-0 -translate-y-4"
                  class="absolute inset-0 flex items-center pb-16">
-                <div class="mx-auto max-w-[96rem] w-full px-4 sm:px-6 lg:px-8">
+                <div class="mx-auto max-w-384 w-full px-4 sm:px-6 lg:px-8">
                     <div class="max-w-3xl">
 
                         {{-- Badge --}}
@@ -461,7 +461,7 @@
 
                         {{-- Title --}}
                         <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl xl:text-7xl leading-tight">
-                            <span class="text-transparent bg-clip-text bg-gradient-to-r {{ $slide['accent'] }}">
+                            <span class="text-transparent bg-clip-text bg-linear-to-r {{ $slide['accent'] }}">
                                 {{ $slide['title'] }}
                             </span>
                         </h1>
@@ -480,7 +480,7 @@
                                 {{ $slide['cta'] }}
                             </a>
                             <a href="{{ $slide['sec_href'] }}"
-                               class="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/25 bg-white/10 px-6 py-3.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/20">
+                               class="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/25 bg-white/10 px-6 py-3.5 text-sm font-semibold text-white backdrop-blur-xs transition hover:bg-white/20">
                                 {{ $slide['sec'] }}
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -499,14 +499,14 @@
 
             {{-- Prev / Next arrows --}}
             <button @click="prev()"
-                    class="absolute left-4 top-1/2 -translate-y-10 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/30 text-white backdrop-blur-sm transition hover:bg-black/50 hover:border-white/40 focus:outline-none"
+                    class="absolute left-4 top-1/2 -translate-y-10 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/30 text-white backdrop-blur-xs transition hover:bg-black/50 hover:border-white/40 focus:outline-hidden"
                     aria-label="Previous slide">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>
             </button>
             <button @click="next()"
-                    class="absolute right-4 top-1/2 -translate-y-10 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/30 text-white backdrop-blur-sm transition hover:bg-black/50 hover:border-white/40 focus:outline-none"
+                    class="absolute right-4 top-1/2 -translate-y-10 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/30 text-white backdrop-blur-xs transition hover:bg-black/50 hover:border-white/40 focus:outline-hidden"
                     aria-label="Next slide">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -517,7 +517,7 @@
             <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
                 @foreach($slides as $i => $slide)
                 <button @click="goTo({{ $i }})"
-                        class="transition-all duration-300 rounded-full focus:outline-none"
+                        class="transition-all duration-300 rounded-full focus:outline-hidden"
                         :class="current === {{ $i }}
                             ? 'w-6 h-2 bg-orange-400'
                             : 'w-2 h-2 bg-white/30 hover:bg-white/60'"
@@ -554,14 +554,14 @@
 
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     @foreach($metrics as $metric)
-                    <article class="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">
-                        <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r {{ $metric['accent'] }}"></div>
+                    <article class="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition duration-300 hover:-translate-y-1 hover:shadow-lg">
+                        <div class="absolute inset-x-0 top-0 h-1 bg-linear-to-r {{ $metric['accent'] }}"></div>
                         <div class="flex items-start justify-between gap-4">
                             <div>
                                 <p class="text-sm font-semibold text-slate-700">{{ $metric['label'] }}</p>
                                 <p class="mt-3 text-3xl font-bold tracking-tight text-slate-950">{{ $metric['value'] }}</p>
                             </div>
-                            <div class="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-gradient-to-br {{ $metric['accent'] }} text-white shadow-sm ring-4 {{ $metric['ring'] }}">
+                            <div class="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-linear-to-br {{ $metric['accent'] }} text-white shadow-xs ring-4 {{ $metric['ring-3'] }}">
                                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="{{ $metric['icon'] }}"/>
                                 </svg>
@@ -596,7 +596,7 @@
                         @foreach($steps as $i => $step)
                         @php $key = is_array($step) ? $step['key'] : null; @endphp
                         <div class="relative flex flex-col text-left group">
-                            <div class="ac-btn relative z-10 mb-4 flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold shadow-sm ring-4 ring-slate-50">
+                            <div class="ac-btn relative z-10 mb-4 flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold shadow-xs ring-4 ring-slate-50">
                                 {{ $i + 1 }}
                             </div>
                             <p class="text-sm font-semibold text-slate-900 leading-snug mb-1">{{ $key ? __("home.timeline.steps.{$key}.title") : $step->title }}</p>
@@ -666,7 +666,7 @@
                 @endphp
                 <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     @foreach($renderCards as $card)
-                    <div class="group rounded-2xl border border-slate-200 bg-white p-6 transition hover:border-slate-300 hover:shadow-sm flex flex-col">
+                    <div class="group rounded-2xl border border-slate-200 bg-white p-6 transition hover:border-slate-300 hover:shadow-xs flex flex-col">
                         <div class="mb-4 flex items-center gap-3">
                             <div class="ac-soft flex h-10 w-10 items-center justify-center rounded-xl">
                                 <svg class="ac-text h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24">
@@ -683,7 +683,7 @@
                         <ul class="space-y-1.5">
                             @foreach($card['features'] as $feat)
                             <li class="flex items-center gap-2 text-xs text-slate-600">
-                                <svg class="ac-text h-3.5 w-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="ac-text h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
                                 </svg>
                                 {{ $feat }}
@@ -703,7 +703,7 @@
         ===================================================== --}}
         @if($secVisible('resources') && $dbResources->isNotEmpty())
         <section id="resources" class="py-20 sm:py-24">
-            <div class="mx-auto max-w-[96rem] px-4 sm:px-6 lg:px-8">
+            <div class="mx-auto max-w-384 px-4 sm:px-6 lg:px-8">
                 <div class="max-w-2xl mb-12">
                     <p class="ac-text text-xs font-semibold uppercase tracking-[0.2em] mb-3">{{ __('home.resources.section_badge', [], null, 'Resources') }}</p>
                     <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">{{ $sec('resources', 'title', __('home.resources.section_title', [], null, 'Resources & Updates')) }}</h2>
@@ -726,7 +726,7 @@
                         default    => 'text-violet-600',
                     };
                     @endphp
-                    <article class="group rounded-2xl border border-slate-200 bg-white overflow-hidden transition hover:border-slate-300 hover:shadow-sm flex flex-col">
+                    <article class="group rounded-2xl border border-slate-200 bg-white overflow-hidden transition hover:border-slate-300 hover:shadow-xs flex flex-col">
                         @if($res->cover_image)
                         <div class="h-40 overflow-hidden">
                             <img src="{{ asset('storage/' . $res->cover_image) }}"
@@ -805,7 +805,7 @@
                                 class="w-full flex items-center justify-between gap-4 px-5 py-4 text-left hover:bg-slate-50 transition"
                                 :aria-expanded="open">
                             <span class="text-sm font-semibold text-slate-900">{{ $faq['question'] }}</span>
-                            <svg class="ac-text flex-shrink-0 h-4 w-4 transition-transform duration-200"
+                            <svg class="ac-text shrink-0 h-4 w-4 transition-transform duration-200"
                                  :class="{ 'rotate-180': open }"
                                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
@@ -842,7 +842,7 @@
                     <div class="flex items-center gap-3 mb-4">
                         @if($logoPath)
                             <img src="{{ asset('storage/'.$logoPath) }}" alt="{{ $brandName }}"
-                                 class="h-10 w-auto max-w-[2.5rem] object-contain rounded-xl">
+                                 class="h-10 w-auto max-w-10 object-contain rounded-xl">
                         @else
                             <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/15">
                                 <svg class="ac-text h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -863,19 +863,19 @@
                     <div class="mt-4 space-y-1.5 text-xs text-slate-500">
                         @if(!empty($dbFooter['contact_phone']))
                         <div class="flex items-center gap-2">
-                            <svg class="h-3.5 w-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                            <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
                             <a href="tel:{{ $dbFooter['contact_phone'] }}" class="hover:text-orange-300 transition">{{ $dbFooter['contact_phone'] }}</a>
                         </div>
                         @endif
                         @if(!empty($dbFooter['contact_email']))
                         <div class="flex items-center gap-2">
-                            <svg class="h-3.5 w-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                             <a href="mailto:{{ $dbFooter['contact_email'] }}" class="hover:text-orange-300 transition">{{ $dbFooter['contact_email'] }}</a>
                         </div>
                         @endif
                         @if(!empty($dbFooter['contact_address']))
                         <div class="flex items-center gap-2">
-                            <svg class="h-3.5 w-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                             <span>{{ $dbFooter['contact_address'] }}</span>
                         </div>
                         @endif
@@ -921,7 +921,7 @@
                         @foreach($navLinks as [$href, $label, $icon])
                         <li>
                             <a href="{{ $href }}" class="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-orange-300 transition">
-                                <svg class="h-3.5 w-3.5 opacity-50 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="h-3.5 w-3.5 opacity-50 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $icon }}"/>
                                 </svg>
                                 {{ $label }}
@@ -979,7 +979,7 @@
 
 
     {{-- ── Accent color switcher ── --}}
-    <div class="fixed bottom-6 right-6 z-[200]" @click.outside="themePanel = false">
+    <div class="fixed bottom-6 right-6 z-200" @click.outside="themePanel = false">
 
         {{-- Panel --}}
         <div x-show="themePanel" x-cloak
@@ -1003,11 +1003,11 @@
                 ] as [$key, $hex, $name])
                 <button @click="accent = '{{ $key }}'"
                         title="{{ $name }}"
-                        class="relative h-8 w-8 rounded-full ring-2 ring-offset-2 ring-offset-white transition-all hover:scale-110 focus:outline-none"
+                        class="relative h-8 w-8 rounded-full ring-2 ring-offset-2 ring-offset-white transition-all hover:scale-110 focus:outline-hidden"
                         :class="accent === '{{ $key }}' ? 'ring-slate-900 scale-110' : 'ring-transparent'"
                         style="background-color: {{ $hex }}">
                     <span class="sr-only">{{ $name }}</span>
-                    <svg x-show="accent === '{{ $key }}'" class="absolute inset-0 m-auto h-3 w-3 text-white drop-shadow" fill="currentColor" viewBox="0 0 24 24">
+                    <svg x-show="accent === '{{ $key }}'" class="absolute inset-0 m-auto h-3 w-3 text-white drop-shadow-sm" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
                     </svg>
                 </button>

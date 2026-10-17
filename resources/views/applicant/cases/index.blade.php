@@ -9,7 +9,7 @@
 
         <a href="{{ route('applicant.cases.create') }}"
             class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md bg-orange-500 text-white  font-medium
-                  hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-orange-400 shadow-sm">
+                  hover:bg-orange-600 focus:outline-hidden focus:ring-2 focus:ring-offset-1 focus:ring-orange-400 shadow-xs">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
                 viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -19,7 +19,7 @@
         </a>
     </div>
 
-    <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-xs">
         <table class="min-w-full ">
             <thead class="bg-slate-50">
                 <tr class="border-b border-slate-200">
@@ -115,7 +115,7 @@
                             {{-- View button --}}
                             <a href="{{ route('applicant.cases.show',$c->id) }}"
                                 class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-600 text-white text-xs font-medium
-                                          hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1">
+                                          hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-blue-400 focus:ring-offset-1">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none"
                                     viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -134,7 +134,7 @@
                                 @method('DELETE')
                                 <button
                                     class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-600 text-white text-xs font-medium
-                                           hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1">
+                                           hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-red-400 focus:ring-offset-1">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

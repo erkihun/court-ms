@@ -48,7 +48,7 @@
 <div x-data x-init="$store.toasts.initFromServer(@js($toasts))"></div>
 
 {{-- Toast container --}}
-<div class="pointer-events-none fixed left-1/2 top-4 z-[1000] flex w-[min(94vw,34rem)] -translate-x-1/2 flex-col items-stretch gap-3"
+<div class="pointer-events-none fixed left-1/2 top-4 z-1000 flex w-[min(94vw,34rem)] -translate-x-1/2 flex-col items-stretch gap-3"
      data-system-toast-container
      aria-live="polite" aria-atomic="false" x-data>
     <template x-for="toast in $store.toasts.items" :key="toast.id">
@@ -69,7 +69,7 @@
              role="alert">
 
             <div class="flex items-start gap-3 pr-8">
-                <span class="mt-0.5 inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-white/18 text-white ring-1 ring-white/25">
+                <span class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/18 text-white ring-1 ring-white/25">
                     <svg x-show="toast.type==='success'" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M5 13l4 4L19 7"/>
                     </svg>
@@ -98,7 +98,7 @@
 
             <button type="button"
                     @click="$store.toasts.dismiss(toast.id)"
-                    class="absolute right-3 top-3 inline-flex h-7 w-7 items-center justify-center rounded-full text-white/75 transition hover:bg-white/15 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/40"
+                    class="absolute right-3 top-3 inline-flex h-7 w-7 items-center justify-center rounded-full text-white/75 transition hover:bg-white/15 hover:text-white focus:outline-hidden focus:ring-2 focus:ring-white/40"
                     aria-label="Dismiss">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M6 18 18 6M6 6l12 12"/>

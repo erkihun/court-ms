@@ -11,7 +11,7 @@
     ['title' => __('respondent.give_response_of_response')],
 ]">
     <div class="mx-auto w-full max-w-5xl space-y-6">
-        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
             <div class="flex flex-wrap items-start justify-between gap-4">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -47,7 +47,7 @@
             </dl>
         </div>
 
-        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
             <form method="POST" action="{{ route('applicant.cases.respondentResponses.replies.store', [$case->id, $response->id]) }}" enctype="multipart/form-data" class="space-y-5">
                 @csrf
 

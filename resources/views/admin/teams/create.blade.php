@@ -2,7 +2,7 @@
 <x-admin-layout title="{{ __('teams.buttons.add_new') }}">
     @section('page_header', __('teams.page_header.create'))
 
-    <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-xs">
         <h2 class="text-lg font-semibold text-gray-900">{{ __('teams.headings.details') }}</h2>
         <p class="text-sm text-gray-600">{{ __('teams.descriptions.details') }}</p>
 
@@ -11,14 +11,14 @@
             <div>
                 <label class="text-sm font-medium text-gray-700">{{ __('teams.labels.name') }}</label>
                 <input name="name" value="{{ old('name') }}"
-                    class="mt-1 block w-full rounded border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                    class="mt-1 block w-full rounded-sm border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
                     required>
             </div>
 
             <div>
                 <label class="text-sm font-medium text-gray-700">{{ __('teams.labels.parent') }}</label>
                 <select name="parent_id"
-                    class="mt-1 block w-full rounded border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                    class="mt-1 block w-full rounded-sm border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
                     <option value="">{{ __('teams.labels.none') }}</option>
                     @foreach($teams as $team)
                     <option value="{{ $team->id }}" @selected(old('parent_id') == $team->id)>{{ $team->name }}</option>
@@ -29,7 +29,7 @@
             <div>
                 <label class="text-sm font-medium text-gray-700">{{ __('teams.labels.team_leader') }}</label>
                 <select name="team_leader_id"
-                    class="mt-1 block w-full rounded border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                    class="mt-1 block w-full rounded-sm border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
                     <option value="">{{ __('teams.labels.none') }}</option>
                     @foreach($users as $user)
                     <option value="{{ $user->id }}" @selected(old('team_leader_id') == $user->id)>
@@ -43,12 +43,12 @@
             <div>
                 <label class="text-sm font-medium text-gray-700">{{ __('teams.labels.description') }}</label>
                 <textarea name="description"
-                    class="mt-1 block w-full rounded border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                    class="mt-1 block w-full rounded-sm border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
                     rows="4">{{ old('description') }}</textarea>
             </div>
 
             <button type="submit"
-                class="w-full rounded bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+                class="w-full rounded-sm bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">
                 {{ __('teams.buttons.create') }}
             </button>
         </form>

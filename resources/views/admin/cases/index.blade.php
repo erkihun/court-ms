@@ -145,7 +145,7 @@
                                 @endif
                             </td>
                             <td>
-                                <a href="{{ route('cases.show', $c->id) }}" class="btn btn-outline !px-3 !py-1.5 !text-xs">{{ __('cases.table.view') }}</a>
+                                <a href="{{ route('cases.show', $c->id) }}" class="btn btn-outline px-3! py-1.5! text-xs!">{{ __('cases.table.view') }}</a>
                             </td>
                         </tr>
                         @empty

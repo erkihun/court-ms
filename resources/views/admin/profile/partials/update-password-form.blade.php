@@ -21,7 +21,7 @@
                 id="update_password_current_password"
                 name="current_password"
                 type="password"
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:border-blue-500 focus:ring-3 focus:ring-blue-200 focus:ring-opacity-50"
                 autocomplete="current-password" />
             @if ($errors->updatePassword->get('current_password'))
             <div class="mt-2 text-sm text-red-600">
@@ -40,7 +40,7 @@
                 id="update_password_password"
                 name="password"
                 type="password"
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:border-blue-500 focus:ring-3 focus:ring-blue-200 focus:ring-opacity-50"
                 autocomplete="new-password" />
             @if ($errors->updatePassword->get('password'))
             <div class="mt-2 text-sm text-red-600">
@@ -59,7 +59,7 @@
                 id="update_password_password_confirmation"
                 name="password_confirmation"
                 type="password"
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:border-blue-500 focus:ring-3 focus:ring-blue-200 focus:ring-opacity-50"
                 autocomplete="new-password" />
             @if ($errors->updatePassword->get('password_confirmation'))
             <div class="mt-2 text-sm text-red-600">
@@ -71,7 +71,7 @@
         </div>
 
         <div class="flex items-center gap-4">
-            <button type="submit" class="px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-500 focus:bg-blue-700 active:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150">
+            <button type="submit" class="px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-500 focus:bg-blue-700 active:bg-blue-600 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150">
                 {{ __('Save') }}
             </button>
 

@@ -277,7 +277,7 @@ $canViewBench = function_exists('userHasPermission')
         </div>
     </div>
 
-    <div class="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div class="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-xs">
         <form method="GET" class="grid gap-3 md:grid-cols-[2fr_auto_auto] md:items-end">
             <div>
                 <label class="block text-sm font-medium text-gray-700">{{ __('bench.labels.filter_by_case') }}</label>
@@ -459,7 +459,7 @@ $canViewBench = function_exists('userHasPermission')
         </p>
         @if($canCreateBench)
         <a href="{{ route('bench-notes.create', ['case_id' => $caseId]) }}"
-            class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 shadow-sm">
+            class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 shadow-xs">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />

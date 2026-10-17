@@ -7,7 +7,7 @@
                     <div class="font-mono text-2xl font-bold text-white" id="case-no">{{ $case->case_number }}</div>
                     <button
                         type="button"
-                        class="btn btn-outline !rounded-full !border-white/20 !bg-white/10 !px-3 !py-1.5 !text-xs !font-semibold !tracking-normal !text-white hover:!bg-white/20"
+                        class="btn btn-outline rounded-full! border-white/20! bg-white/10! px-3! py-1.5! text-xs! font-semibold! tracking-normal! text-white! hover:bg-white/20!"
                         x-data
                         x-on:click="
                             navigator.clipboard.writeText(document.querySelector('#case-no').textContent);
@@ -28,17 +28,17 @@
 
         <div class="admin-header-actions">
             <a href="{{ route('cases.index') }}"
-                class="btn btn-outline order-first !border-white/20 !bg-white/10 !text-white hover:!bg-white/20">
+                class="btn btn-outline order-first border-white/20! bg-white/10! text-white! hover:bg-white/20!">
                 {{ __('cases.back') }}
             </a>
 
             @if(in_array($reviewStatus, ['awaiting_review','returned','rejected']) && $canReview)
             <div class="flex flex-wrap gap-2">
-                <button type="button" class="btn btn-primary !bg-blue-500 hover:!bg-blue-400"
+                <button type="button" class="btn btn-primary bg-blue-500! hover:bg-blue-400!"
                     onclick="submitReviewDecision('accept')">Accept</button>
-                <button type="button" class="btn btn-primary !bg-blue-500 hover:!bg-blue-400"
+                <button type="button" class="btn btn-primary bg-blue-500! hover:bg-blue-400!"
                     onclick="openReviewModal('return')">Return</button>
-                <button type="button" class="btn btn-primary !bg-blue-500 hover:!bg-blue-400"
+                <button type="button" class="btn btn-primary bg-blue-500! hover:bg-blue-400!"
                     onclick="openReviewModal('reject')">Reject</button>
             </div>
             @endif
@@ -80,7 +80,7 @@
     </div>
 
     @if($caseLocked)
-    <div class="mt-4 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50/95 px-4 py-3 text-sm text-amber-900 shadow-sm">
+    <div class="mt-4 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50/95 px-4 py-3 text-sm text-amber-900 shadow-xs">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 19a7 7 0 110-14 7 7 0 010 14z" />
         </svg>

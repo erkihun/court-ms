@@ -1,6 +1,6 @@
 <x-admin-layout title="{{ __('auth.sessions_title') }}">
     <div class="max-w-6xl mx-auto px-5 pb-16 space-y-6">
-        <div class="rounded-2xl border border-slate-200 bg-gradient-to-r from-blue-700 to-indigo-700 p-6 text-white shadow-lg">
+        <div class="rounded-2xl border border-slate-200 bg-linear-to-r from-blue-700 to-indigo-700 p-6 text-white shadow-lg">
             <div class="flex items-center gap-4">
                 <div class="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white/20 text-2xl font-bold ring-1 ring-white/30">
                     @if(auth()->user()->avatar_url)<img src="{{ auth()->user()->avatar_url }}" alt="Avatar" class="h-full w-full object-cover">@else{{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 1)) }}@endif
@@ -16,7 +16,7 @@
         </nav>
 
         @if(session('status'))<div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{{ session('status') }}</div>@endif
-        <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
             <div class="flex items-center justify-between gap-4 mb-6 flex-wrap"><div><h2 class="text-lg font-bold text-slate-900">{{ __('auth.active_sessions') }}</h2><p class="mt-1 text-sm text-slate-500">{{ __('auth.sessions_hint') }}</p></div><form method="POST" action="{{ route('profile.sessions.destroyOthers') }}">@csrf @method('DELETE')<button class="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700">{{ __('auth.revoke_other_sessions') }}</button></form></div>
             <div class="space-y-3">
                 @forelse($sessions as $session)

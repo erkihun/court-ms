@@ -12,7 +12,7 @@
     <button
         x-data=""
         x-on:click.prevent="$dispatch('open-modal', 'confirm-user-deletion')"
-        class="px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-500 focus:bg-red-700 active:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-fast hover:scale-[var(--scale-hover)] active:scale-[var(--scale-press)]">{{ __('Delete Account') }}</button>
+        class="px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-500 focus:bg-red-700 active:bg-red-600 focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-fast hover:scale-(--scale-hover) active:scale-(--scale-press)">{{ __('Delete Account') }}</button>
 
     <div x-data="{ show: @json($errors->userDeletion->isNotEmpty()) }"
         x-show="show"
@@ -56,7 +56,7 @@
                         id="password"
                         name="password"
                         type="password"
-                        class="mt-1 block w-3/4 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:border-red-500 focus:ring focus:ring-red-200 focus:ring-opacity-50"
+                        class="mt-1 block w-3/4 px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:border-red-500 focus:ring-3 focus:ring-red-200 focus:ring-opacity-50"
                         placeholder="{{ __('Password') }}" />
 
                     @if ($errors->userDeletion->get('password'))
@@ -71,12 +71,12 @@
                 <div class="mt-6 flex justify-end">
                     <button type="button"
                         x-on:click="show = false"
-                        class="px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-300 focus:bg-gray-400 active:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-fast hover:scale-[var(--scale-hover)] active:scale-[var(--scale-press)]">
+                        class="px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-300 focus:bg-gray-400 active:bg-gray-200 focus:outline-hidden focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-fast hover:scale-(--scale-hover) active:scale-(--scale-press)">
                         {{ __('Cancel') }}
                     </button>
 
                     <button type="submit"
-                        class="ms-3 px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-500 focus:bg-red-700 active:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-fast hover:scale-[var(--scale-hover)] active:scale-[var(--scale-press)]">
+                        class="ms-3 px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-500 focus:bg-red-700 active:bg-red-600 focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-fast hover:scale-(--scale-hover) active:scale-(--scale-press)">
                         {{ __('Delete Account') }}
                     </button>
                 </div>

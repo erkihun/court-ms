@@ -24,7 +24,7 @@
     ['title' => __('respondent.response_of_response')],
 ]">
     <div class="mx-auto w-full max-w-6xl space-y-6">
-        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
             <div class="flex flex-wrap items-start justify-between gap-4">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('respondent.response_of_response') }}</p>
@@ -73,7 +73,7 @@
             </dl>
         </div>
 
-        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
             <h2 class="text-lg font-semibold text-slate-900">{{ __('respondent.response_of_response_description') }}</h2>
             <div class="mt-3 whitespace-pre-line text-sm text-slate-700">{{ $reply->description }}</div>
             @if(!empty($reply->review_note))
@@ -84,7 +84,7 @@
             @endif
         </div>
 
-        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
             <div class="flex items-center justify-between gap-3">
                 <h2 class="text-lg font-semibold text-slate-900">{{ __('cases.attachment') }}</h2>
                 <a href="{{ route('applicant.cases.respondentResponses.replies.download', [$case->id, $response->id, $reply->id]) }}"

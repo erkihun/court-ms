@@ -149,14 +149,14 @@
                                 <td>{{ \Illuminate\Support\Str::limit($case->title, 48) ?: '-' }}</td>
                                 <td>
                                     <div class="flex items-center gap-2">
-                                        <a href="{{ route('recordes.show', ['case' => $case->id]) }}" class="btn btn-outline !px-3 !py-1.5 !text-xs">
+                                        <a href="{{ route('recordes.show', ['case' => $case->id]) }}" class="btn btn-outline px-3! py-1.5! text-xs!">
                                             {{ __('recordes.buttons.view') }}
                                         </a>
-                                        <a href="{{ route('recordes.pdf', ['case' => $case->id]) }}" target="_blank" rel="noopener" class="btn btn-outline !px-3 !py-1.5 !text-xs">
+                                        <a href="{{ route('recordes.pdf', ['case' => $case->id]) }}" target="_blank" rel="noopener" class="btn btn-outline px-3! py-1.5! text-xs!">
                                             {{ __('recordes.buttons.pdf') }}
                                         </a>
                                         @if(($case->decisions_count ?? 0) > 0 || in_array($case->status ?? '', ['closed', 'dismissed'], true))
-                                        <a href="{{ route('recordes.appeal-pdf', ['case' => $case->id]) }}" class="btn btn-primary !px-3 !py-1.5 !text-xs">
+                                        <a href="{{ route('recordes.appeal-pdf', ['case' => $case->id]) }}" class="btn btn-primary px-3! py-1.5! text-xs!">
                                             {{ __('recordes.buttons.appeal_pdf') }}
                                         </a>
                                         @endif

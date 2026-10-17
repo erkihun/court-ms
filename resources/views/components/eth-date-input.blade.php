@@ -75,13 +75,13 @@
         <div class="flex items-center justify-between mb-2">
             <div class="text-sm font-semibold" style="color: var(--text);">
                 <span x-text="monthLabel"></span>
-                <span x-text="yearLabel" class="text-[var(--text-subtle)]"></span>
+                <span x-text="yearLabel" class="text-(--text-subtle)"></span>
             </div>
             <div class="flex items-center gap-1">
-                <button type="button" @click="prev()" class="p-1.5 rounded-lg hover:bg-[var(--surface-soft)]" aria-label="Previous month">
+                <button type="button" @click="prev()" class="p-1.5 rounded-lg hover:bg-(--surface-soft)" aria-label="Previous month">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
                 </button>
-                <button type="button" @click="next()" class="p-1.5 rounded-lg hover:bg-[var(--surface-soft)]" aria-label="Next month">
+                <button type="button" @click="next()" class="p-1.5 rounded-lg hover:bg-(--surface-soft)" aria-label="Next month">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
                 </button>
             </div>
@@ -90,7 +90,7 @@
         {{-- Day-of-week headers --}}
         <div class="grid grid-cols-7 gap-0.5 mb-1">
             <template x-for="(dow, i) in dowHeaders" :key="i">
-                <div class="text-center text-[11px] font-medium text-[var(--text-subtle)] py-1" x-text="dow"></div>
+                <div class="text-center text-[11px] font-medium text-(--text-subtle) py-1" x-text="dow"></div>
             </template>
         </div>
 
@@ -103,11 +103,11 @@
                     :disabled="!cell.cur"
                     class="h-8 rounded-lg text-sm transition-colors"
                     :class="{
-                        'text-[var(--text-subtle)] opacity-40': !cell.cur,
-                        'hover:bg-[var(--surface-soft)]': cell.cur,
-                        'ring-1 ring-[var(--primary)] font-semibold': cell.today && !cell.selected,
-                        'bg-[var(--primary)] text-white font-semibold': cell.selected,
-                        'text-[var(--text)]': cell.cur && !cell.selected
+                        'text-(--text-subtle) opacity-40': !cell.cur,
+                        'hover:bg-(--surface-soft)': cell.cur,
+                        'ring-1 ring-(--primary) font-semibold': cell.today && !cell.selected,
+                        'bg-(--primary) text-white font-semibold': cell.selected,
+                        'text-(--text)': cell.cur && !cell.selected
                     }"
                     x-text="cell.d"
                 ></button>
@@ -116,10 +116,10 @@
 
         {{-- Footer: clear / today --}}
         <div class="flex items-center justify-between mt-2 pt-2 border-t" style="border-color: var(--border);">
-            <button type="button" @click="clear()" class="text-xs font-medium text-[var(--text-subtle)] hover:text-[var(--text)]">
+            <button type="button" @click="clear()" class="text-xs font-medium text-(--text-subtle) hover:text-(--text)">
                 {{ $locale === 'am' ? 'አጽዳ' : 'Clear' }}
             </button>
-            <button type="button" @click="goToday()" class="text-xs font-medium text-[var(--primary)] hover:opacity-80">
+            <button type="button" @click="goToday()" class="text-xs font-medium text-(--primary) hover:opacity-80">
                 {{ $locale === 'am' ? 'ዛሬ' : 'Today' }}
             </button>
         </div>

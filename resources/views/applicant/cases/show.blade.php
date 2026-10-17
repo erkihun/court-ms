@@ -187,7 +187,7 @@
         </section>
 
         {{-- LEFT: CASE INFO + RESPONDENT + DESCRIPTION + RELIEF + DOCS + WITNESSES --}}
-        <section class="lg:col-span-2 rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-5">
+        <section class="lg:col-span-2 rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-5">
             @php $reviewStatus = $reviewStatus ?? ($case->review_status ?? 'accepted'); @endphp
             @if($reviewStatus === 'returned')
             <div class="rounded-lg border border-yellow-200 bg-yellow-50 p-3  text-yellow-900">
@@ -580,7 +580,7 @@
             </aside>
 
             {{-- MESSAGES --}}
-            <aside class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <aside class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                     <div>
                         <h3 class=" font-semibold text-slate-800">
@@ -598,7 +598,7 @@
                 <div class="space-y-3 max-h-80 overflow-auto pr-1.5 ">
                     @forelse(($msgs ?? collect()) as $m)
                     <div class="flex {{ $m->sender_applicant_id ? 'justify-end' : 'justify-start' }}">
-                        <div class="relative w-full max-w-[80%] rounded-2xl border px-4 py-3 shadow-sm transition hover:shadow-lg
+                        <div class="relative w-full max-w-[80%] rounded-2xl border px-4 py-3 shadow-xs transition hover:shadow-lg
                             {{ $m->sender_applicant_id ? 'border-blue-200 bg-blue-50 text-right' : 'border-slate-100 bg-white text-left' }}">
                             <div class="flex items-start justify-between gap-2">
                                 <div class="flex items-center gap-3">
@@ -651,20 +651,20 @@
                         name="body"
                         rows="4"
                         placeholder="{{ __('cases.write_message_placeholder') }}"
-                        class="w-full rounded-2xl border border-slate-300 px-3 py-2  text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+                        class="w-full rounded-2xl border border-slate-300 px-3 py-2  text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
                         required></textarea>
                     @error('body')
                     <p class="text-xs text-red-600">{{ $message }}</p>
                     @enderror
                     <button
-                        class="w-full rounded-2xl bg-gradient-to-r from-orange-500 to-rose-500 px-3 py-2  font-semibold text-white shadow-md transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-1">
+                        class="w-full rounded-2xl bg-linear-to-r from-orange-500 to-rose-500 px-3 py-2  font-semibold text-white shadow-md transition hover:opacity-90 focus:outline-hidden focus:ring-2 focus:ring-orange-400 focus:ring-offset-1">
                         {{ __('cases.send') }}
                     </button>
                 </form>
             </aside>
 
             {{-- CASE AUDIT --}}
-            <aside class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <aside class="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
                 <div class="flex items-center justify-between mb-3">
                     <h3 class=" font-semibold text-slate-800">{{ __('cases.case_audit_trail') }}</h3>
                     <span class="text-[11px] text-slate-500">{{ ($audits ?? collect())->count() }}</span>
@@ -693,7 +693,7 @@
                             @endif
                         </div>
                         @if($meta)
-                        <pre class="mt-2 bg-white border border-slate-200 rounded px-2 py-1 whitespace-pre-wrap text-[11px]">{{ json_encode($meta, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES) }}</pre>
+                        <pre class="mt-2 bg-white border border-slate-200 rounded-sm px-2 py-1 whitespace-pre-wrap text-[11px]">{{ json_encode($meta, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES) }}</pre>
                         @endif
                     </div>
                     @endforeach

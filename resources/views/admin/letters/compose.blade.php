@@ -4,7 +4,7 @@
     @section('page_header', __('letters.titles.compose'))
 
     <div class="max-w-5xl mx-auto space-y-6">
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+        <div class="bg-white border border-gray-200 rounded-xl shadow-xs p-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-1">{{ __('letters.form.select_template') }}</h2>
             <p class="text-sm text-gray-500 mb-4">{{ __('letters.description.compose') }}</p>
 
@@ -26,7 +26,7 @@
             </form>
         </div>
 
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+        <div class="bg-white border border-gray-200 rounded-xl shadow-xs p-6">
             <form method="POST" action="{{ route('letters.store') }}" class="space-y-4" target="_blank">
                 @csrf
                 <input type="hidden" name="template_id" value="{{ optional($selectedTemplate)->id }}">
@@ -86,13 +86,13 @@
                         <div class="mt-2 flex flex-wrap items-center gap-4">
                             <input type="hidden" name="send_to_applicant" value="0">
                             <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-                                <input type="checkbox" name="send_to_applicant" value="1" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                <input type="checkbox" name="send_to_applicant" value="1" class="rounded-sm border-gray-300 text-emerald-600 focus:ring-emerald-500"
                                     @checked($sendToApplicant)>
                                 <span>{{ __('letters.form.deliver_applicant') }}</span>
                             </label>
                             <input type="hidden" name="send_to_respondent" value="0">
                             <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-                                <input type="checkbox" name="send_to_respondent" value="1" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                <input type="checkbox" name="send_to_respondent" value="1" class="rounded-sm border-gray-300 text-emerald-600 focus:ring-emerald-500"
                                     @checked($sendToRespondent)>
                                 <span>{{ __('letters.form.deliver_respondent') }}</span>
                             </label>

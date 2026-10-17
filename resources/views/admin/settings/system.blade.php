@@ -321,7 +321,7 @@ $activeTab = in_array($requestedTab, $tabKeys, true) ? $requestedTab : 'general'
             <div class="ss-card-title">
                 <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div>
                 {{ __('settings.visual_assets') }}
-                <span class="ml-auto text-[.68rem] text-[var(--text-subtle)] font-normal">{{ __('settings.keep_current_file') }}</span>
+                <span class="ml-auto text-[.68rem] text-(--text-subtle) font-normal">{{ __('settings.keep_current_file') }}</span>
             </div>
 
             <div class="mb-4">
@@ -333,7 +333,7 @@ $activeTab = in_array($requestedTab, $tabKeys, true) ? $requestedTab : 'general'
                     <p class="ss-upload-hint">{{ __('settings.banner_hint') }}</p>
                 </div>
                 @if($s->banner_path)
-                <div class="mt-2 rounded-lg border border-[var(--border)] overflow-hidden">
+                <div class="mt-2 rounded-lg border border-(--border) overflow-hidden">
                     <img src="{{ asset('storage/'.$s->banner_path) }}" class="w-full max-h-28 object-cover">
                 </div>
                 @endif
@@ -357,7 +357,7 @@ $activeTab = in_array($requestedTab, $tabKeys, true) ? $requestedTab : 'general'
                         <p class="ss-upload-hint">{{ $asset['hint'] }}</p>
                     </div>
                     @if($asset['path'])
-                    <div class="mt-2 flex items-center justify-center h-14 rounded-lg border border-[var(--border)] bg-[var(--surface-soft)]">
+                    <div class="mt-2 flex items-center justify-center h-14 rounded-lg border border-(--border) bg-(--surface-soft)">
                         <img src="{{ asset('storage/'.$asset['path']) }}" class="{{ $asset['h'] }} object-contain">
                     </div>
                     @endif
@@ -387,16 +387,16 @@ $activeTab = in_array($requestedTab, $tabKeys, true) ? $requestedTab : 'general'
                 <label class="relative cursor-pointer select-none">
                     <input type="radio" name="default_locale" value="{{ $code }}" @checked($currentLocale===$code) class="sr-only peer">
                     <div class="rounded-lg border-2 p-3.5 transition-all duration-150
-                                peer-checked:border-[rgb(var(--ac))] peer-checked:bg-[rgb(var(--ac)/0.05)] peer-checked:shadow-sm
-                                border-[var(--border)] bg-[var(--surface-soft)] hover:border-[rgb(var(--ac)/0.35)]">
+                                peer-checked:border-[rgb(var(--ac))] peer-checked:bg-[rgb(var(--ac)/0.05)] peer-checked:shadow-xs
+                                border-(--border) bg-(--surface-soft) hover:border-[rgb(var(--ac)/0.35)]">
                         <div class="flex items-center gap-2 mb-1.5">
                             <span class="text-lg leading-none">{{ $localeFlags[$code] ?? '🌐' }}</span>
-                            <span class="font-bold text-xs text-[var(--text)]">{{ $localeNames[$code] ?? $code }}</span>
+                            <span class="font-bold text-xs text-(--text)">{{ $localeNames[$code] ?? $code }}</span>
                             @if($currentLocale===$code)
                             <span class="ml-auto text-[.65rem] font-bold px-1.5 py-0.5 rounded-full bg-[rgb(var(--ac))] text-white">{{ __('settings.active') }}</span>
                             @endif
                         </div>
-                        <p class="text-[.68rem] text-[var(--text-subtle)] leading-relaxed">{{ $localeSamples[$code] ?? '' }}</p>
+                        <p class="text-[.68rem] text-(--text-subtle) leading-relaxed">{{ $localeSamples[$code] ?? '' }}</p>
                     </div>
                 </label>
                 @endforeach
@@ -465,8 +465,8 @@ $activeTab = in_array($requestedTab, $tabKeys, true) ? $requestedTab : 'general'
         <div class="ss-security-hero">
             <div class="flex items-center justify-between gap-4 flex-wrap">
                 <div>
-                    <p class="text-[.68rem] font-bold uppercase tracking-[.12em] text-[var(--text-subtle)]">{{ __('settings.security_posture') }}</p>
-                    <div class="flex items-end gap-2 mt-1"><strong class="text-3xl text-[var(--text)]">{{ $securityMetrics['score'] }}%</strong><span class="text-xs text-[var(--text-subtle)] mb-1">{{ __('settings.controls_active') }}</span></div>
+                    <p class="text-[.68rem] font-bold uppercase tracking-[.12em] text-(--text-subtle)">{{ __('settings.security_posture') }}</p>
+                    <div class="flex items-end gap-2 mt-1"><strong class="text-3xl text-(--text)">{{ $securityMetrics['score'] }}%</strong><span class="text-xs text-(--text-subtle) mb-1">{{ __('settings.controls_active') }}</span></div>
                     <p class="ss-hint">{{ __('settings.security_posture_hint') }}</p>
                 </div>
                 <div class="text-right">
@@ -695,7 +695,7 @@ $activeTab = in_array($requestedTab, $tabKeys, true) ? $requestedTab : 'general'
             <div class="ss-card-title">
                 <div class="ss-card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg></div>
                 {{ __('settings.custom_css') }}
-                <span class="ml-auto text-[.66rem] font-normal px-2 py-0.5 rounded-full border border-[var(--border)] text-[var(--text-subtle)]">{{ __('settings.custom_css_badge') }}</span>
+                <span class="ml-auto text-[.66rem] font-normal px-2 py-0.5 rounded-full border border-(--border) text-(--text-subtle)">{{ __('settings.custom_css_badge') }}</span>
             </div>
             <p class="ss-hint mb-2">{{ __('settings.custom_css_hint') }}</p>
             <textarea name="custom_css" rows="7" class="ss-textarea" style="font-family:monospace;font-size:.78rem;"
@@ -715,7 +715,7 @@ $activeTab = in_array($requestedTab, $tabKeys, true) ? $requestedTab : 'general'
                 </div>
                 {{ __('settings.email_smtp') }}
                 <div class="ml-auto flex items-center gap-2">
-                    <span class="text-[.68rem] font-bold uppercase" :class="mailEnabled ? 'text-emerald-600' : 'text-[var(--text-subtle)]'" x-text="mailEnabled ? '{{ __('settings.on') }}' : '{{ __('settings.off') }}'"></span>
+                    <span class="text-[.68rem] font-bold uppercase" :class="mailEnabled ? 'text-emerald-600' : 'text-(--text-subtle)'" x-text="mailEnabled ? '{{ __('settings.on') }}' : '{{ __('settings.off') }}'"></span>
                     <label class="ss-sw">
                         <input type="checkbox" name="mail_enabled" value="1" x-model="mailEnabled" @change="dirty=true">
                         <div class="ss-sw-track"><div class="ss-sw-thumb"></div></div>
@@ -776,7 +776,7 @@ $activeTab = in_array($requestedTab, $tabKeys, true) ? $requestedTab : 'general'
                     <label class="ss-label">{{ __('settings.from_name') }}</label>
                     <input name="mail_from_name" value="{{ old('mail_from_name',$s->mail_from_name??$s->app_name) }}" class="ss-input" placeholder="{{ $s->app_name ?? config('app.name') }}">
                 </div>
-                <div class="md:col-span-2 rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] p-4">
+                <div class="md:col-span-2 rounded-xl border border-(--border) bg-(--surface-soft) p-4">
                     <div class="grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
                         <div>
                             <label class="ss-label">{{ __('settings.smtp_test_recipient') }}</label>
@@ -814,7 +814,7 @@ $activeTab = in_array($requestedTab, $tabKeys, true) ? $requestedTab : 'general'
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="text-[.7rem] font-bold uppercase"
-                          :class="telegramEnabled ? 'text-emerald-600' : 'text-[var(--text-subtle)]'"
+                          :class="telegramEnabled ? 'text-emerald-600' : 'text-(--text-subtle)'"
                           x-text="telegramEnabled ? '{{ __('settings.on') }}' : '{{ __('settings.off') }}'"></span>
                     <label class="ss-sw">
                         <input type="checkbox" name="telegram_enabled" value="1" x-model="telegramEnabled">
@@ -853,7 +853,7 @@ $activeTab = in_array($requestedTab, $tabKeys, true) ? $requestedTab : 'general'
                 </div>
                 {{ __('settings.sms_gateway') }}
                 <div class="ml-auto flex items-center gap-2">
-                    <span class="text-[.68rem] font-bold uppercase" :class="smsEnabled ? 'text-emerald-600' : 'text-[var(--text-subtle)]'" x-text="smsEnabled ? '{{ __('settings.on') }}' : '{{ __('settings.off') }}'"></span>
+                    <span class="text-[.68rem] font-bold uppercase" :class="smsEnabled ? 'text-emerald-600' : 'text-(--text-subtle)'" x-text="smsEnabled ? '{{ __('settings.on') }}' : '{{ __('settings.off') }}'"></span>
                     <label class="ss-sw">
                         <input type="checkbox" name="sms_enabled" value="1" x-model="smsEnabled" @change="dirty=true">
                         <div class="ss-sw-track"><div class="ss-sw-thumb"></div></div>

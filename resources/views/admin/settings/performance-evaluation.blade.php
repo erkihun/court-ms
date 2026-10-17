@@ -8,10 +8,10 @@
         createCriterion: {{ old('modal') === 'criterion' && $errors->any() ? 'true' : 'false' }},
         createCategory: {{ old('modal') === 'category' && $errors->any() ? 'true' : 'false' }}
     }">
-    <div class="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--border)] py-6">
+    <div class="flex flex-wrap items-start justify-between gap-4 border-b border-(--border) py-6">
         <div>
-            <h1 class="text-xl font-bold text-[var(--text)]">{{ __('performance.settings.title') }}</h1>
-            <p class="mt-1 text-sm text-[var(--text-subtle)]">{{ __('performance.settings.subtitle') }}</p>
+            <h1 class="text-xl font-bold text-(--text)">{{ __('performance.settings.title') }}</h1>
+            <p class="mt-1 text-sm text-(--text-subtle)">{{ __('performance.settings.subtitle') }}</p>
         </div>
         <div class="flex flex-wrap gap-2">
             <button type="button" @click="createCriterion = true"
@@ -23,7 +23,7 @@
                 {{ __('performance.settings.actions.add_category') }}
             </button>
             <a href="{{ route('performance-evaluations.index') }}"
-                class="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] px-3 py-2 text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-soft)]">
+                class="inline-flex items-center gap-2 rounded-lg border border-(--border) bg-(--surface-strong) px-3 py-2 text-sm font-medium text-(--text-muted) hover:bg-(--surface-soft)">
                 {{ __('performance.settings.back_to_evaluations') }}
             </a>
         </div>
@@ -44,11 +44,11 @@
     @endif
 
     <div>
-        <section class="rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] p-5">
+        <section class="rounded-xl border border-(--border) bg-(--surface-strong) p-5">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h2 class="text-sm font-bold text-[var(--text)]">{{ __('performance.settings.criteria_title') }}</h2>
-                    <p class="mt-1 text-xs text-[var(--text-subtle)]">{{ __('performance.settings.criteria_hint') }}</p>
+                    <h2 class="text-sm font-bold text-(--text)">{{ __('performance.settings.criteria_title') }}</h2>
+                    <p class="mt-1 text-xs text-(--text-subtle)">{{ __('performance.settings.criteria_hint') }}</p>
                 </div>
                 <div class="rounded-lg border px-3 py-2 text-sm font-semibold
                     {{ $totalActiveWeight === 100 ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700' }}">
@@ -56,7 +56,7 @@
                 </div>
             </div>
 
-            <div class="mt-5 overflow-x-auto rounded-lg border border-[var(--border)]">
+            <div class="mt-5 overflow-x-auto rounded-lg border border-(--border)">
                 <table class="min-w-[1180px] w-full text-sm">
                     <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                         <tr>
@@ -71,7 +71,7 @@
                             <th class="px-3 py-3 text-right">{{ __('performance.fields.actions') }}</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-[var(--border)] bg-white">
+                    <tbody class="divide-y divide-(--border) bg-white">
                         @forelse($criteria as $criterion)
                         @php
                             $updateFormId = "criterion-update-{$criterion->id}";
@@ -143,7 +143,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="9" class="px-4 py-10 text-center text-sm text-[var(--text-subtle)]">
+                            <td colspan="9" class="px-4 py-10 text-center text-sm text-(--text-subtle)">
                                 {{ __('performance.settings.empty') }}
                             </td>
                         </tr>

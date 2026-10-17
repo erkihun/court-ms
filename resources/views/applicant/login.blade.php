@@ -6,7 +6,7 @@ session()->forget('acting_as_respondent');
 
 <x-applicant-layout title="Apply - Login" hide-footer="true" :as-respondent-nav="false">
     <div class="min-h-[70vh] flex items-center justify-center">
-        <form method="POST" action="{{ route('applicant.login.submit') }}" class="bg-white p-6 rounded-lg border space-y-4 w-full max-w-md shadow">
+        <form method="POST" action="{{ route('applicant.login.submit') }}" class="bg-white p-6 rounded-lg border space-y-4 w-full max-w-md shadow-sm">
             @csrf
             <div class="text-center space-y-1">
                 <h1 class="text-2xl font-semibold">Applicant Login</h1>
@@ -18,7 +18,7 @@ session()->forget('acting_as_respondent');
             <div>
                 <label class="block  font-medium text-slate-700" for="login_as">Login as</label>
                 <select id="login_as" name="login_as"
-                    class="mt-1 w-full px-3 py-2 rounded border border-slate-300  focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+                    class="mt-1 w-full px-3 py-2 rounded-sm border border-slate-300  focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                     <option value="applicant" {{ $initialRole === 'applicant' ? 'selected' : '' }}>Applicant</option>
                     <option value="respondent" {{ $initialRole === 'respondent' ? 'selected' : '' }}>Respondent</option>
                 </select>
@@ -26,20 +26,20 @@ session()->forget('acting_as_respondent');
 
             <div>
                 <label class="block  font-medium text-slate-700">Email</label>
-                <input name="email" type="email" value="{{ old('email') }}" class="mt-1 w-full px-3 py-2 border rounded" required>
+                <input name="email" type="email" value="{{ old('email') }}" class="mt-1 w-full px-3 py-2 border rounded-sm" required>
                 @error('email') <p class="text-red-600 ">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="block  font-medium text-slate-700">Password</label>
-                <input name="password" type="password" class="mt-1 w-full px-3 py-2 border rounded" required>
+                <input name="password" type="password" class="mt-1 w-full px-3 py-2 border rounded-sm" required>
                 @error('password') <p class="text-red-600 ">{{ $message }}</p> @enderror
             </div>
             <label class="inline-flex items-center gap-2 ">
-                <input type="checkbox" name="remember" class="rounded border-slate-300">
+                <input type="checkbox" name="remember" class="rounded-sm border-slate-300">
                 Remember me
             </label>
             <div class="flex items-center gap-3 pt-2">
-                <button class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">Sign in</button>
+                <button class="px-4 py-2 rounded-sm bg-blue-600 text-white hover:bg-blue-700">Sign in</button>
                 <a href="{{ route('applicant.register') }}" class=" text-blue-700 hover:underline">Create an account</a>
             </div>
         </form>

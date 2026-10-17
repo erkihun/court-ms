@@ -15,7 +15,7 @@
     </div>
 
     @isset($footer)
-        <div class="border-t border-[var(--border)] bg-[var(--surface-soft)] px-4 py-3">
+        <div class="border-t border-(--border) bg-(--surface-soft) px-4 py-3">
             {{ $footer }}
         </div>
     @endisset

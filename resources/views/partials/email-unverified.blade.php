@@ -10,7 +10,7 @@ $applicant = auth('applicant')->user();
             <span class="font-medium">{{ $applicant->email }}</span>. Please check your inbox (and spam).
         </div>
 
-        <form method="POST" action="{{ route('applicant.verification.send') }}" class="flex-shrink-0">
+        <form method="POST" action="{{ route('applicant.verification.send') }}" class="shrink-0">
             @csrf
             <button
                 class="inline-flex items-center gap-1.5 rounded-md border border-amber-300 bg-white px-3 py-1.5 text-sm font-medium text-amber-900 hover:bg-amber-100">

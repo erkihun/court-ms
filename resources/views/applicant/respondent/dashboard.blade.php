@@ -8,15 +8,15 @@
                     <p class="text-sm text-white/80 mt-1">{{ __('respondent.welcome_back') }}</p>
                 </div>
                 <div class="grid grid-cols-3 gap-2 sm:gap-3 lg:w-2/5">
-                    <div class="rounded-xl bg-white/15 px-3 py-2.5 backdrop-blur-sm">
+                    <div class="rounded-xl bg-white/15 px-3 py-2.5 backdrop-blur-xs">
                         <div class="text-[11px] uppercase tracking-wide text-white/70">{{ __('respondent.my_cases') }}</div>
                         <div class="mt-1 text-xl font-bold">{{ $stats['cases'] ?? 0 }}</div>
                     </div>
-                    <div class="rounded-xl bg-white/15 px-3 py-2.5 backdrop-blur-sm">
+                    <div class="rounded-xl bg-white/15 px-3 py-2.5 backdrop-blur-xs">
                         <div class="text-[11px] uppercase tracking-wide text-white/70">{{ __('respondent.my_responses') }}</div>
                         <div class="mt-1 text-xl font-bold">{{ $stats['responses'] ?? 0 }}</div>
                     </div>
-                    <div class="rounded-xl bg-white/15 px-3 py-2.5 backdrop-blur-sm">
+                    <div class="rounded-xl bg-white/15 px-3 py-2.5 backdrop-blur-xs">
                         <div class="text-[11px] uppercase tracking-wide text-white/70">{{ __('respondent.notifications') }}</div>
                         <div class="mt-1 text-xl font-bold">{{ $stats['notifications'] ?? 0 }}</div>
                     </div>

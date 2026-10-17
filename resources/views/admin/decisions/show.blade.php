@@ -89,7 +89,7 @@
 
     <div class="decision-ethiopic-font w-full space-y-6">
         <!-- Header -->
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 flex items-start justify-between gap-4">
+        <div class="bg-white border border-gray-200 rounded-xl shadow-xs p-6 flex items-start justify-between gap-4">
             <div class="space-y-1">
                 <div class="flex items-center gap-2 text-gray-500 text-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -140,7 +140,7 @@
             </div>
         </div>
 
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 space-y-6">
+        <div class="bg-white border border-gray-200 rounded-xl shadow-xs p-6 space-y-6">
             <!-- Meta -->
             <div class="grid md:grid-cols-3 gap-4 text-sm">
                 <div class="space-y-1 rounded-lg border border-gray-100 p-3 bg-gray-50">
@@ -174,7 +174,7 @@
 
             <!-- Parties -->
             <div class="grid md:grid-cols-2 gap-4 text-sm">
-                <div class="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
+                <div class="border border-gray-200 rounded-lg p-4 bg-white shadow-xs">
                     <p class="text-gray-500 flex items-center gap-1">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 11a3 3 0 10-6 0 3 3 0 006 0z" />
@@ -183,7 +183,7 @@
                     </p>
                     <p class="font-semibold text-gray-900 mt-1">{{ $decision->applicant_full_name ?: '—' }}</p>
                 </div>
-                <div class="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
+                <div class="border border-gray-200 rounded-lg p-4 bg-white shadow-xs">
                     <p class="text-gray-500 flex items-center gap-1">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 13V5a3 3 0 00-6 0v8m-2 4h8" />
@@ -316,7 +316,7 @@
 
                             <template x-teleport="body">
                                 <div x-show="approveOpen" x-cloak
-                                    class="fixed inset-0 z-[1100] flex items-center justify-center p-4"
+                                    class="fixed inset-0 z-1100 flex items-center justify-center p-4"
                                     x-on:keydown.escape.window="approveOpen = false" role="dialog" aria-modal="true">
                                     <div x-show="approveOpen" x-transition.opacity
                                         class="absolute inset-0 bg-gray-900/50" @click="approveOpen = false"></div>
@@ -329,7 +329,7 @@
                                         x-transition:leave-end="opacity-0 translate-y-3 scale-95"
                                         class="relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
                                         <div class="flex items-start gap-3 p-5">
-                                            <span class="mt-0.5 inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                                            <span class="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
                                                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
@@ -389,7 +389,7 @@
                         {{-- Custom confirmation modal --}}
                         <template x-teleport="body">
                             <div x-show="confirmOpen" x-cloak
-                                class="fixed inset-0 z-[1100] flex items-center justify-center p-4"
+                                class="fixed inset-0 z-1100 flex items-center justify-center p-4"
                                 x-on:keydown.escape.window="confirmOpen = false" role="dialog" aria-modal="true">
                                 {{-- Backdrop --}}
                                 <div x-show="confirmOpen" x-transition.opacity
@@ -405,7 +405,7 @@
                                     x-transition:leave-end="opacity-0 translate-y-3 scale-95"
                                     class="relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
                                     <div class="flex items-start gap-3 p-5">
-                                        <span class="mt-0.5 inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
+                                        <span class="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
                                             :class="isPublish ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'">
                                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M12 3 2 21h20L12 3Z"/>
@@ -457,7 +457,7 @@
         <!-- Decision Content + Reviews (side by side) -->
         <div class="grid gap-6 lg:grid-cols-3 items-start">
         <!-- Decision Content -->
-        <div class="lg:col-span-2 overflow-hidden rounded-xl border border-emerald-100 bg-white shadow-sm">
+        <div class="lg:col-span-2 overflow-hidden rounded-xl border border-emerald-100 bg-white shadow-xs">
             <div class="flex items-center justify-between gap-3 border-b border-emerald-100 bg-emerald-50/70 px-5 py-4">
                 <h2 class="flex items-center gap-2 text-base font-bold text-gray-950">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">

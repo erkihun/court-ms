@@ -5,7 +5,7 @@
 
     <div class="decision-ethiopic-font max-w-7xl mx-auto space-y-6">
         <!-- Header -->
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 flex items-start justify-between gap-4">
+        <div class="bg-white border border-gray-200 rounded-xl shadow-xs p-6 flex items-start justify-between gap-4">
             <div>
                 <h1 class="text-xl font-semibold text-gray-900">{{ __('decisions.edit.title') }}</h1>
                 <p class="text-sm text-gray-600 mt-1">{{ __('decisions.edit.subtitle', ['name' => $decision->name ?? '']) }}</p>
@@ -24,7 +24,7 @@
 
         <!-- FORM -->
         <form method="POST" action="{{ route('decisions.update', $decision) }}"
-            class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 space-y-4 overflow-visible">
+            class="bg-white border border-gray-200 rounded-xl shadow-xs p-6 space-y-4 overflow-visible">
             @csrf
             @method('PATCH')
 

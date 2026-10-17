@@ -88,7 +88,7 @@ $hasAny = $unseenHearings->isNotEmpty() || $unseenMsgs->isNotEmpty() || $unseenS
         @if($hasAny)
         <form method="POST" action="{{ route('applicant.notifications.markAll') }}">
             @csrf
-            <button class="text-xs text-slate-700 px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">
+            <button class="text-xs text-slate-700 px-2 py-1 rounded-sm border border-slate-200 hover:bg-slate-50">
                 {{ __('app.Mark all as seen') }}
             </button>
         </form>
@@ -123,7 +123,7 @@ $hasAny = $unseenHearings->isNotEmpty() || $unseenMsgs->isNotEmpty() || $unseenS
                 </a>
                 <form method="POST" action="{{ route('applicant.notifications.markOne', ['type'=>'hearing','sourceId'=>$h->id]) }}">
                     @csrf
-                    <button class="text-xs text-slate-700 px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">
+                    <button class="text-xs text-slate-700 px-2 py-1 rounded-sm border border-slate-200 hover:bg-slate-50">
                         {{ __('app.Seen') }}
                     </button>
                 </form>
@@ -171,7 +171,7 @@ $hasAny = $unseenHearings->isNotEmpty() || $unseenMsgs->isNotEmpty() || $unseenS
                 </div>
                 <form method="POST" action="{{ route('applicant.notifications.markOne', ['type'=>'message','sourceId'=>$m->id]) }}">
                     @csrf
-                    <button class="text-xs text-slate-700 px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">
+                    <button class="text-xs text-slate-700 px-2 py-1 rounded-sm border border-slate-200 hover:bg-slate-50">
                         {{ __('app.Seen') }}
                     </button>
                 </form>
@@ -203,7 +203,7 @@ $hasAny = $unseenHearings->isNotEmpty() || $unseenMsgs->isNotEmpty() || $unseenS
                 </a>
                 <form method="POST" action="{{ route('applicant.notifications.markOne', ['type'=>'respondent_view','sourceId'=>$v->id]) }}">
                     @csrf
-                    <button class="text-xs text-slate-700 px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">
+                    <button class="text-xs text-slate-700 px-2 py-1 rounded-sm border border-slate-200 hover:bg-slate-50">
                         {{ __('app.Seen') }}
                     </button>
                 </form>
@@ -241,7 +241,7 @@ $hasAny = $unseenHearings->isNotEmpty() || $unseenMsgs->isNotEmpty() || $unseenS
                 </a>
                 <form method="POST" action="{{ route('applicant.notifications.markOne', ['type'=>'status','sourceId'=>$s->id]) }}">
                     @csrf
-                    <button class="text-xs px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">
+                    <button class="text-xs px-2 py-1 rounded-sm border border-slate-200 hover:bg-slate-50">
                         {{ __('app.Seen') }}
                     </button>
                 </form>

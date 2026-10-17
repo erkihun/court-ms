@@ -6,7 +6,7 @@
         <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
             {{-- Search Form --}}
             <form method="GET" class="flex items-center gap-3">
-                <div class="flex-grow">
+                <div class="grow">
                     <label for="search-q" class="sr-only">Search</label>
                     <x-ui.input id="search-q" name="q" value="{{ $q }}" placeholder="{{ __('Search name…') }}" />
                 </div>

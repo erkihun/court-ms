@@ -27,7 +27,7 @@
     ['title' => __('cases.respondent_response')],
 ]">
     <div class="w-full max-w-[1600px] mx-auto space-y-6">
-        <div class="border border-slate-200 rounded-xl bg-white px-4 py-3 shadow-sm flex flex-wrap items-center justify-between gap-3">
+        <div class="border border-slate-200 rounded-xl bg-white px-4 py-3 shadow-xs flex flex-wrap items-center justify-between gap-3">
             <div>
                 <p class=" font-semibold text-slate-900">
                     {{ __('cases.case_number') }}: {{ $case->case_number }}
@@ -38,7 +38,7 @@
             </div>
             <div class="flex flex-wrap items-center gap-2">
                 <a href="{{ route('applicant.cases.respondentResponses.replies.create', [$case->id, $response->id]) }}"
-                   class="inline-flex items-center gap-2 rounded-md border border-blue-200 bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition">
+                   class="inline-flex items-center gap-2 rounded-md border border-blue-200 bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition">
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m-7-7h14" />
                     </svg>
@@ -51,7 +51,7 @@
             </div>
         </div>
 
-        <div class="rounded-xl border border-slate-200 bg-white shadow-sm p-5 space-y-4">
+        <div class="rounded-xl border border-slate-200 bg-white shadow-xs p-5 space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <h1 class="text-lg font-semibold text-slate-900">
@@ -124,7 +124,7 @@
             @endif
         </div>
 
-        <div class="rounded-xl border border-slate-200 bg-white shadow-sm p-5 space-y-4">
+        <div class="rounded-xl border border-slate-200 bg-white shadow-xs p-5 space-y-4">
             <div class="flex items-center justify-between gap-3">
                 <div>
                     <h2 class="text-lg font-semibold text-slate-900">{{ __('respondent.applicant_response_replies') }}</h2>

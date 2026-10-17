@@ -41,7 +41,7 @@
                             @csrf
                             <input type="hidden" name="type" value="message">
                             <input type="hidden" name="sourceId" value="{{ $m->id }}">
-                            <button class="btn btn-outline !px-3 !py-1.5 !text-xs">{{ __('app.Seen') }}</button>
+                            <button class="btn btn-outline px-3! py-1.5! text-xs!">{{ __('app.Seen') }}</button>
                         </form>
                     </div>
                     @empty
@@ -70,7 +70,7 @@
                             @csrf
                             <input type="hidden" name="type" value="case">
                             <input type="hidden" name="sourceId" value="{{ $c->id }}">
-                            <button class="btn btn-outline !px-3 !py-1.5 !text-xs">{{ __('app.Seen') }}</button>
+                            <button class="btn btn-outline px-3! py-1.5! text-xs!">{{ __('app.Seen') }}</button>
                         </form>
                     </div>
                     @empty
@@ -98,7 +98,7 @@
                             @csrf
                             <input type="hidden" name="type" value="hearing">
                             <input type="hidden" name="sourceId" value="{{ $h->id }}">
-                            <button class="btn btn-outline !px-3 !py-1.5 !text-xs">{{ __('app.Seen') }}</button>
+                            <button class="btn btn-outline px-3! py-1.5! text-xs!">{{ __('app.Seen') }}</button>
                         </form>
                     </div>
                     @empty
@@ -127,7 +127,7 @@
                             @csrf
                             <input type="hidden" name="type" value="respondent_view">
                             <input type="hidden" name="sourceId" value="{{ $v->id }}">
-                            <button class="btn btn-outline !px-3 !py-1.5 !text-xs">{{ __('app.Seen') }}</button>
+                            <button class="btn btn-outline px-3! py-1.5! text-xs!">{{ __('app.Seen') }}</button>
                         </form>
                     </div>
                     @empty

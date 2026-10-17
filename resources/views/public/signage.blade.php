@@ -105,7 +105,7 @@
 
                 <!-- Header Card -->
                 <div
-                    class="rounded-2xl bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 text-white shadow-2xl overflow-hidden border border-blue-700/30">
+                    class="rounded-2xl bg-linear-to-br from-blue-900 via-blue-800 to-blue-900 text-white shadow-2xl overflow-hidden border border-blue-700/30">
                     <div class="relative px-6 py-6 md:px-8 md:py-8">
                         <!-- Animated background pattern -->
                         <div class="absolute inset-0 opacity-10">
@@ -118,7 +118,7 @@
                             <!-- Logo and Title -->
                             <div class="flex items-center gap-5">
                                 <div
-                                    class="h-20 w-20 rounded-2xl border-2 border-white/20 bg-white/10 p-3 shadow-xl backdrop-blur-sm flex items-center justify-center">
+                                    class="h-20 w-20 rounded-2xl border-2 border-white/20 bg-white/10 p-3 shadow-xl backdrop-blur-xs flex items-center justify-center">
                                     @if($settings?->logo_path)
                                     <img class="h-full w-full object-contain drop-shadow-lg"
                                         src="{{ \Illuminate\Support\Facades\Storage::url($settings->logo_path) }}"
@@ -138,7 +138,7 @@
                                         {{ $settings->app_name ?? config('app.name', 'Justice Portal') }}</h1>
                                     <div class="mt-3 flex flex-wrap items-center gap-2">
                                         <span
-                                            class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-medium text-blue-100 backdrop-blur-sm">
+                                            class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-medium text-blue-100 backdrop-blur-xs">
                                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -146,7 +146,7 @@
                                             {{ \App\Support\EthiopianDate::format($displayNow, withTime: true) }}
                                         </span>
                                         <span
-                                            class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-medium text-blue-100 backdrop-blur-sm">
+                                            class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-medium text-blue-100 backdrop-blur-xs">
                                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -160,7 +160,7 @@
                             <!-- Total Cases -->
                             <div class="text-right mt-4 md:mt-0">
                                 <div
-                                    class="inline-block rounded-xl bg-white/10 backdrop-blur-sm p-4 border border-white/20">
+                                    class="inline-block rounded-xl bg-white/10 backdrop-blur-xs p-4 border border-white/20">
                                     <p class="text-xs uppercase  text-blue-200/80 font-semibold mb-2">
                                         {{ __('signage.total_cases') }}</p>
                                     <div class="flex items-baseline justify-end gap-2">
@@ -181,7 +181,7 @@
                 <div class="grid gap-6 md:grid-cols-2">
                     <!-- {{ __('signage.case_distribution') }} -->
                     <div class="rounded-2xl border border-slate-200 bg-white shadow-soft overflow-hidden">
-                        <div class="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-5">
+                        <div class="border-b border-slate-100 bg-linear-to-r from-slate-50 to-white px-6 py-5">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-3">
                                     <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
@@ -249,7 +249,7 @@
                                                     style="width: {{ $pct }}%;"></div>
                                             </div>
                                             <span
-                                                class="text-sm font-bold {{ $color['text'] }} min-w-[3rem] text-right">{{ $pct }}%</span>
+                                                class="text-sm font-bold {{ $color['text'] }} min-w-12 text-right">{{ $pct }}%</span>
                                         </div>
                                     </div>
                                 </div>
@@ -260,7 +260,7 @@
 
                     <!-- {{ __('signage.case_categories') }} -->
                     <div class="rounded-2xl border border-slate-200 bg-white shadow-soft overflow-hidden">
-                        <div class="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-5">
+                        <div class="border-b border-slate-100 bg-linear-to-r from-slate-50 to-white px-6 py-5">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-3">
                                     <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
@@ -293,14 +293,14 @@
                                     class="group flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-colors">
                                     <div class="flex items-center gap-4">
                                         <div
-                                            class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 group-hover:from-blue-100 group-hover:to-blue-200 transition-all">
+                                            class="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-blue-50 to-blue-100 group-hover:from-blue-100 group-hover:to-blue-200 transition-all">
                                             <span class="text-lg font-bold text-blue-700">{{ $cat->total }}</span>
                                         </div>
                                         <div>
                                             <h3 class="font-semibold text-slate-900">{{ $cat->name }}</h3>
                                             <div class="mt-2 flex items-center gap-2">
                                                 <div class="h-2 w-24 rounded-full bg-slate-200 overflow-hidden">
-                                                    <div class="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-700"
+                                                    <div class="h-full rounded-full bg-linear-to-r from-blue-500 to-blue-600 transition-all duration-700"
                                                         style="width: {{ $maxCategory > 0 ? round(($cat->total / $maxCategory) * 100) : 0 }}%;">
                                                     </div>
                                                 </div>
@@ -319,7 +319,7 @@
 
                 <!-- {{ __('signage.todays_activity') }} -->
                 <div class="rounded-2xl border border-slate-200 bg-white shadow-soft overflow-hidden">
-                    <div class="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-5">
+                    <div class="border-b border-slate-100 bg-linear-to-r from-slate-50 to-white px-6 py-5">
                         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div class="flex items-center gap-3">
                                 <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
@@ -494,7 +494,7 @@
 
                 <div class="mt-6 space-y-3">
                     <div
-                        class="rounded-2xl border border-slate-200 bg-gradient-to-r from-white to-slate-50 p-4 shadow-soft">
+                        class="rounded-2xl border border-slate-200 bg-linear-to-r from-white to-slate-50 p-4 shadow-soft">
                         <div class="flex items-center justify-between mb-3">
                             <div>
                                 <h3 class="text-base font-bold text-slate-900">
@@ -528,7 +528,7 @@
 
                 <!-- Right Column - Staff -->
                 <div class="rounded-2xl border border-slate-200 bg-white shadow-soft overflow-hidden">
-                    <div class="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-5">
+                    <div class="border-b border-slate-100 bg-linear-to-r from-slate-50 to-white px-6 py-5">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
                                 <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
@@ -557,10 +557,10 @@
                         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                             @forelse($activeStaff as $person)
                             <div
-                                class="group flex items-center gap-4 p-4 rounded-xl border border-slate-200 bg-gradient-to-r from-white to-slate-50 hover:bg-slate-50 hover:border-blue-200 transition-all">
+                                class="group flex items-center gap-4 p-4 rounded-xl border border-slate-200 bg-linear-to-r from-white to-slate-50 hover:bg-slate-50 hover:border-blue-200 transition-all">
                                 <div class="relative">
                                     <div
-                                        class="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white font-bold text-xl shadow-md overflow-hidden">
+                                        class="flex h-16 w-16 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-blue-600 text-white font-bold text-xl shadow-md overflow-hidden">
                                         @if($person->avatar_path)
                                         <img class="h-full w-full object-cover"
                                             src="{{ \Illuminate\Support\Facades\Storage::url($person->avatar_path) }}"
@@ -605,7 +605,7 @@
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-3">
                                     <div
-                                        class="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-slate-100 to-slate-50">
+                                        class="flex h-10 w-10 items-center justify-center rounded-lg bg-linear-to-br from-slate-100 to-slate-50">
                                         <span class="text-slate-600 text-lg">⏱</span>
                                     </div>
                                     <div>

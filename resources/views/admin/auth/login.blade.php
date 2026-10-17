@@ -377,7 +377,7 @@ $bannerPath = $settings?->banner_path ?? null;
                                 <img src="{{ asset('storage/'.$logoPath) }}" alt="{{ $brandName }}" class="max-h-full w-auto object-contain">
                             </div>
                         @else
-                            <div class="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-lg font-bold text-white shadow-2xl shadow-slate-950/20 backdrop-blur">
+                            <div class="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-lg font-bold text-white shadow-2xl shadow-slate-950/20 backdrop-blur-sm">
                                 {{ \Illuminate\Support\Str::of($brandName)->substr(0, 2) }}
                             </div>
                         @endif
@@ -390,7 +390,7 @@ $bannerPath = $settings?->banner_path ?? null;
 
                     <div class="admin-login-panel admin-stagger max-w-2xl space-y-6 text-white">
                         <div class="space-y-4">
-                            <p class="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-blue-50/90 shadow-lg shadow-slate-950/10 backdrop-blur">
+                            <p class="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-blue-50/90 shadow-lg shadow-slate-950/10 backdrop-blur-sm">
                                 {{ __('auth.admin_system_label') }}
                             </p>
                             <div class="space-y-4">
@@ -404,13 +404,13 @@ $bannerPath = $settings?->banner_path ?? null;
                         </div>
 
                         <div class="grid max-w-2xl gap-4 sm:grid-cols-2">
-                            <div class="admin-login-signal rounded-2xl border border-white/12 bg-white/10 p-3 shadow-xl shadow-slate-950/10 backdrop-blur">
+                            <div class="admin-login-signal rounded-2xl border border-white/12 bg-white/10 p-3 shadow-xl shadow-slate-950/10 backdrop-blur-sm">
                                 <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-200">{{ __('auth.trusted_access_title') }}</div>
                                 <p class="mt-2 text-sm leading-5 text-justify text-slate-200/82">
                                     {{ __('auth.trusted_access_body') }}
                                 </p>
                             </div>
-                            <div class="admin-login-signal rounded-2xl border border-white/12 bg-white/10 p-3 shadow-xl shadow-slate-950/10 backdrop-blur">
+                            <div class="admin-login-signal rounded-2xl border border-white/12 bg-white/10 p-3 shadow-xl shadow-slate-950/10 backdrop-blur-sm">
                                 <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-200">{{ __('auth.operational_clarity_title') }}</div>
                                 <p class="mt-2 text-sm leading-5 text-justify text-slate-200/82">
                                     {{ __('auth.operational_clarity_body') }}
@@ -421,7 +421,7 @@ $bannerPath = $settings?->banner_path ?? null;
 
                     <div class="flex items-center justify-between gap-4 text-sm text-slate-200/78">
                         <span>{{ now()->format('Y') }} {{ $brandName }}</span>
-                        <span class="h-px flex-1 bg-gradient-to-r from-white/20 to-transparent"></span>
+                        <span class="h-px flex-1 bg-linear-to-r from-white/20 to-transparent"></span>
                     </div>
                 </div>
             </section>
@@ -466,7 +466,7 @@ $bannerPath = $settings?->banner_path ?? null;
                             @if(session('error') || $errors->any())
                             <div role="alert" aria-live="assertive" class="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
                                 <div class="flex items-start gap-2.5">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-4 w-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/>
                                     </svg>
                                     <div class="min-w-0">
@@ -501,7 +501,7 @@ $bannerPath = $settings?->banner_path ?? null;
                                         @empty(old('email')) autofocus @endempty
                                         autocomplete="username"
                                         style="background-color: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.22); color: #f8fafc;"
-                                        class="admin-login-input w-full rounded-xl border px-3.5 py-3 text-sm shadow-sm transition-base focus:outline-none focus:ring-4 focus:ring-blue-500/20"
+                                        class="admin-login-input w-full rounded-xl border px-3.5 py-3 text-sm shadow-xs transition-base focus:outline-hidden focus:ring-4 focus:ring-blue-500/20"
                                     >
                                 </div>
 
@@ -524,12 +524,12 @@ $bannerPath = $settings?->banner_path ?? null;
                                             @if(old('email')) autofocus @endif
                                             autocomplete="current-password"
                                             style="background-color: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.22); color: #f8fafc;"
-                                            class="admin-login-input w-full rounded-xl border px-3.5 py-3 pr-11 text-sm shadow-sm transition-base focus:outline-none focus:ring-4 focus:ring-blue-500/20"
+                                            class="admin-login-input w-full rounded-xl border px-3.5 py-3 pr-11 text-sm shadow-xs transition-base focus:outline-hidden focus:ring-4 focus:ring-blue-500/20"
                                         >
                                         <button
                                             type="button"
                                             id="toggle-password"
-                                            class="absolute right-3 top-1/2 inline-flex -translate-y-1/2 items-center justify-center rounded-md p-1 text-slate-500 transition-fast hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                                            class="absolute right-3 top-1/2 inline-flex -translate-y-1/2 items-center justify-center rounded-md p-1 text-slate-500 transition-fast hover:bg-slate-100 hover:text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                                             aria-label="{{ __('auth.show_password') }}"
                                             aria-pressed="false"
                                         >
@@ -550,7 +550,7 @@ $bannerPath = $settings?->banner_path ?? null;
                                             id="remember_me"
                                             type="checkbox"
                                             name="remember"
-                                            class="h-4 w-4 rounded border-slate-300 text-blue-700 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900"
+                                            class="h-4 w-4 rounded-sm border-slate-300 text-blue-700 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900"
                                         >
                                         <span>{{ __('auth.remember_me') }}</span>
                                     </label>
@@ -559,7 +559,7 @@ $bannerPath = $settings?->banner_path ?? null;
                                 <button
                                     type="submit"
                                     x-bind:disabled="submitting"
-                                    class="admin-login-submit inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-900/18 transition-base hover:-translate-y-0.5 hover:bg-blue-800 hover:shadow-blue-900/28 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-80 disabled:hover:translate-y-0 dark:focus:ring-offset-slate-950"
+                                    class="admin-login-submit inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-900/18 transition-base hover:-translate-y-0.5 hover:bg-blue-800 hover:shadow-blue-900/28 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-80 disabled:hover:translate-y-0 dark:focus:ring-offset-slate-950"
                                 >
                                     <svg x-show="submitting" x-cloak class="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

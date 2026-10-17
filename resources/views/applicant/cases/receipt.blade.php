@@ -46,7 +46,7 @@
             </button>
         </div>
 
-        <div class="card rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="card rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
             <div class="flex items-start justify-between">
                 <div>
                     <h1 class="text-xl font-semibold tracking-tight">Filing Receipt</h1>

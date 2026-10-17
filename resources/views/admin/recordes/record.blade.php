@@ -30,7 +30,7 @@
                 text-align: justify;
             }
         </style>
-        <aside class="bg-white shadow rounded-xl border border-slate-200 p-5 space-y-4" data-record-nav>
+        <aside class="bg-white shadow-sm rounded-xl border border-slate-200 p-5 space-y-4" data-record-nav>
             <div>
                 <h2 class="text-sm font-semibold text-slate-800">{{ __('recordes.titles.record') }}</h2>
                 <p class="text-xs text-slate-500">
@@ -40,7 +40,7 @@
             <nav class="space-y-2" id="record-nav">
                 @foreach($sections as $id => $label)
                     <a href="#section-{{ $id }}"
-                       class="w-full inline-flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                       class="w-full inline-flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-hidden focus:ring-2 focus:ring-blue-500">
                         <span>{{ $label }}</span>
                         <svg class="h-4 w-4 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M7.22 14.78a.75.75 0 001.06 0L13 10.06l4.72 4.72a.75.75 0 101.06-1.06l-5.25-5.25a.75.75 0 00-1.06 0l-5.25 5.25a.75.75 0 000 1.06z" clip-rule="evenodd"/>
@@ -59,7 +59,7 @@
 
         <div class="lg:col-span-3 space-y-8 record-content">
             {{-- Case Summary --}}
-            <section id="section-case-summary" class="record-section bg-white shadow rounded-xl border border-slate-200 p-6 space-y-4">
+            <section id="section-case-summary" class="record-section bg-white shadow-sm rounded-xl border border-slate-200 p-6 space-y-4">
                 <header class="flex items-start justify-between gap-4">
                     <div>
                         <p class="text-xs uppercase tracking-wide text-slate-500">{{ __('recordes.titles.record') }}</p>
@@ -98,7 +98,7 @@
             </section>
 
             {{-- Bench Notes --}}
-            <section id="section-bench-notes" class="record-section hidden bg-white shadow rounded-xl border border-slate-200 p-6 space-y-4">
+            <section id="section-bench-notes" class="record-section hidden bg-white shadow-sm rounded-xl border border-slate-200 p-6 space-y-4">
                 <header class="flex items-center justify-between">
                     <h2 class="text-lg font-semibold text-slate-900">{{ __('recordes.labels.bench_notes') }}</h2>
                     <span class="text-xs text-slate-500">{{ ($benchNotes ?? collect())->count() }} {{ __('recordes.labels.total') }}</span>
@@ -122,7 +122,7 @@
             </section>
 
             {{-- Case Details --}}
-            <section id="section-case-details" class="record-section hidden bg-white shadow rounded-xl border border-slate-200 p-6 space-y-6">
+            <section id="section-case-details" class="record-section hidden bg-white shadow-sm rounded-xl border border-slate-200 p-6 space-y-6">
                 <header class="flex items-center justify-between">
                     <h2 class="text-lg font-semibold text-slate-900">{{ __('recordes.labels.case_details') }}</h2>
                     <span class="text-xs text-slate-500">{{ __('recordes.labels.case_submission') }}</span>
@@ -203,7 +203,7 @@
             </section>
 
             {{-- Respondent Responses --}}
-            <section id="section-respondent-responses" class="record-section hidden bg-white shadow rounded-xl border border-slate-200 p-6 space-y-4">
+            <section id="section-respondent-responses" class="record-section hidden bg-white shadow-sm rounded-xl border border-slate-200 p-6 space-y-4">
                 <header class="flex items-center justify-between">
                     <h2 class="text-lg font-semibold text-slate-900">{{ __('recordes.labels.respondent_responses') }}</h2>
                     <span class="text-xs text-slate-500">{{ __('recordes.labels.respondent_responses') }}</span>
@@ -234,7 +234,7 @@
             </section>
 
             {{-- Letters --}}
-            <section id="section-letters" class="record-section hidden bg-white shadow rounded-xl border border-slate-200 p-6 space-y-4">
+            <section id="section-letters" class="record-section hidden bg-white shadow-sm rounded-xl border border-slate-200 p-6 space-y-4">
                 <header class="flex items-center justify-between">
                     <h2 class="text-lg font-semibold text-slate-900">{{ __('recordes.labels.letters_section') }}</h2>
                     <span class="text-xs text-slate-500">{{ ($letters ?? collect())->count() }} {{ __('recordes.labels.total') }}</span>
@@ -265,7 +265,7 @@
             </section>
 
             {{-- Hearings --}}
-            <section id="section-hearings" class="record-section hidden bg-white shadow rounded-xl border border-slate-200 p-6 space-y-4">
+            <section id="section-hearings" class="record-section hidden bg-white shadow-sm rounded-xl border border-slate-200 p-6 space-y-4">
                 <header class="flex items-center justify-between">
                     <h2 class="text-lg font-semibold text-slate-900">{{ __('recordes.labels.hearings') }}</h2>
                     <span class="text-xs text-slate-500">{{ ($hearings ?? collect())->count() }} {{ __('recordes.labels.total') }}</span>
@@ -296,7 +296,7 @@
             </section>
 
             {{-- Final Judgment --}}
-            <section id="section-final-decision" class="record-section hidden bg-white shadow rounded-xl border border-slate-200 p-6 space-y-4">
+            <section id="section-final-decision" class="record-section hidden bg-white shadow-sm rounded-xl border border-slate-200 p-6 space-y-4">
                 <header class="flex items-center justify-between">
                     <h2 class="text-lg font-semibold text-slate-900">{{ __('recordes.labels.final_judgment') }}</h2>
                     <span class="text-xs text-slate-500">{{ $decision ? __('recordes.labels.created') . ' ' . \App\Support\EthiopianDate::smartFormat($decision->created_at, true, '') : __('recordes.messages.no_decision') }}</span>
@@ -314,7 +314,7 @@
             </section>
 
             {{-- Other Documents --}}
-            <section id="section-other-documents" class="record-section hidden bg-white shadow rounded-xl border border-slate-200 p-6 space-y-4">
+            <section id="section-other-documents" class="record-section hidden bg-white shadow-sm rounded-xl border border-slate-200 p-6 space-y-4">
                 <header class="flex items-center justify-between">
                     <h2 class="text-lg font-semibold text-slate-900">{{ __('recordes.labels.other_documents') }}</h2>
                     <span class="text-xs text-slate-500">

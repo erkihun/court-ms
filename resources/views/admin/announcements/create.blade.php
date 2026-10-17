@@ -16,7 +16,7 @@
                     {{ __('announcements.cancel') }}
                 </a>
                 <button type="submit"
-                    class="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+                    class="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-xs hover:bg-blue-700">
                     {{ __('announcements.form_submit') }}
                 </button>
             </div>

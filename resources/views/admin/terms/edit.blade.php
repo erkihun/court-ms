@@ -1,5 +1,5 @@
 <x-admin-layout title="{{ __('terms.edit_heading') }}">
-    <div class="max-w-4xl mx-auto bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+    <div class="max-w-4xl mx-auto bg-white rounded-xl border border-gray-200 shadow-xs p-6">
         <h1 class="text-2xl font-semibold text-gray-900 mb-4">{{ __('terms.edit_heading') }}</h1>
         <form method="POST" action="{{ route('terms.update', $term) }}" class="space-y-6">
             @csrf

@@ -1,5 +1,5 @@
 <x-applicant-layout title="{{ __('respondent.find_case_title') }}" :as-respondent-nav="true">
-    <div class="w-full max-w-[1800px] mx-auto bg-white rounded-2xl border border-slate-200 shadow p-6">
+    <div class="w-full max-w-[1800px] mx-auto bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
         <h1 class="text-xl font-semibold text-slate-900 mb-2">{{ __('respondent.find_case_title') }}</h1>
         <p class="text-sm text-slate-600 mb-6">{{ __('respondent.find_case_description') }}</p>
 
@@ -7,13 +7,13 @@
             <div>
                 <label class="block text-sm font-medium text-slate-700" for="case_number">{{ __('respondent.case_number_label') }}</label>
                 <input id="case_number" name="case_number" value="{{ old('case_number', $caseNumber) }}"
-                    class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+                    class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
                     placeholder="{{ __('respondent.case_number_placeholder') }}" autocomplete="off">
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700" for="case_code">{{ __('respondent.case_access_code_label') }}</label>
                 <input id="case_code" name="case_code" value="{{ old('case_code', $caseCode ?? '') }}"
-                    class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+                    class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
                     placeholder="{{ __('respondent.case_access_code_placeholder') }}" autocomplete="off">
             </div>
             <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-blue-700 text-white text-sm font-semibold hover:bg-blue-800">

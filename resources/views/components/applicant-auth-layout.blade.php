@@ -26,14 +26,14 @@ $accentColors = match ($accent) {
         'hover' => '#1d4ed8',
         'soft' => '#eff6ff',
         'softText' => '#1d4ed8',
-        'ring' => 'rgba(37, 99, 235, .22)',
+        'ring-3' => 'rgba(37, 99, 235, .22)',
     ],
     default => [
         'base' => '#f97316',
         'hover' => '#ea580c',
         'soft' => '#fff7ed',
         'softText' => '#c2410c',
-        'ring' => 'rgba(249, 115, 22, .24)',
+        'ring-3' => 'rgba(249, 115, 22, .24)',
     ],
 };
 @endphp
@@ -64,7 +64,7 @@ $accentColors = match ($accent) {
             --auth-accent-hover: {{ $accentColors['hover'] }};
             --auth-accent-soft: {{ $accentColors['soft'] }};
             --auth-accent-soft-text: {{ $accentColors['softText'] }};
-            --auth-ring: {{ $accentColors['ring'] }};
+            --auth-ring: {{ $accentColors['ring-3'] }};
             background:
                 radial-gradient(circle at top, color-mix(in srgb, var(--auth-accent) 10%, transparent), transparent 36rem),
                 #f8fafc;
@@ -176,7 +176,7 @@ $accentColors = match ($accent) {
     @stack('head')
 </head>
 
-<body class="auth-page ui-shell min-h-screen font-ui text-[var(--text)]">
+<body class="auth-page ui-shell min-h-screen font-ui text-(--text)">
     <main class="min-h-screen flex items-center justify-center px-4 py-10">
         <div class="w-full max-w-md">
             <div class="auth-card rounded-2xl p-6 md:p-7">

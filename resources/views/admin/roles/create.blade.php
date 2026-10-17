@@ -66,14 +66,14 @@
                         <p class="text-xs text-gray-500">{{ __('roles.create.permissions_hint') }}</p>
                     </div>
                     <button type="button" id="toggle-all"
-                        class="btn btn-outline !px-3 !py-1.5 !text-xs">
+                        class="btn btn-outline px-3! py-1.5! text-xs!">
                         {{ __('roles.create.select_all') }}
                     </button>
                 </div>
 
-                <div class="space-y-5 max-h-[28rem] overflow-auto pr-2" id="perm-list">
+                <div class="space-y-5 max-h-112 overflow-auto pr-2" id="perm-list">
                     @foreach($permissionGroups as $group)
-                    <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 shadow-sm">
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 shadow-xs">
                         <div class="flex items-center justify-between gap-3">
                             <div>
                                 <p class="text-sm font-semibold text-gray-900">{{ $group['label'] }}</p>

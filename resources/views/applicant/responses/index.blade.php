@@ -18,7 +18,7 @@
                 {{ __('respondent.no_applicant_response_replies') }}
             </div>
         @else
-            <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div class="rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-slate-200 text-sm">
                         <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-600">

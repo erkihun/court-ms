@@ -10,13 +10,13 @@
         </div>
 
         <form method="GET" class="grid md:grid-cols-3 gap-3">
-            <select name="case_id" class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            <select name="case_id" class="rounded-md border-gray-300 shadow-xs focus:border-blue-500 focus:ring-blue-500">
                 <option value="">{{ __('case_inspections.requests.all_cases') }}</option>
                 @foreach($cases as $case)
                 <option value="{{ $case->id }}" @selected((string) $caseId === (string) $case->id)>{{ $case->case_number }} - {{ $case->title }}</option>
                 @endforeach
             </select>
-            <select name="status" class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            <select name="status" class="rounded-md border-gray-300 shadow-xs focus:border-blue-500 focus:ring-blue-500">
                 <option value="">{{ __('case_inspections.requests.all_statuses') }}</option>
                 @foreach(['pending', 'in_progress', 'completed', 'cancelled'] as $k)
                 <option value="{{ $k }}" @selected($status === $k)>{{ __('case_inspections.status.' . $k) }}</option>

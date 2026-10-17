@@ -26,11 +26,11 @@
 
 </head>
 
-<body class="font-sans antialiased text-[var(--text)]">
-    <div class="min-h-screen bg-[var(--bg)] text-[var(--text)]">
+<body class="font-sans antialiased text-(--text)">
+    <div class="min-h-screen bg-(--bg) text-(--text)">
         @include('layouts.navigation')
         @isset($header)
-        <header class="bg-white shadow">
+        <header class="bg-white shadow-sm">
             <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-slate-900">
                 {{ $header }}
             </div>

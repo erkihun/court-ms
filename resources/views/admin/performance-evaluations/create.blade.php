@@ -17,7 +17,7 @@
         @csrf
 
         {{-- Basic info --}}
-        <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
+        <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-xs space-y-4">
             <h3 class="font-semibold text-gray-800">{{ __('performance.details') }}</h3>
 
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -67,7 +67,7 @@
         </div>
 
         {{-- Criteria scoring --}}
-        <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-5">
+        <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-xs space-y-5">
             <div class="flex items-center justify-between">
                 <h3 class="font-semibold text-gray-800">{{ __('performance.criteria_scores') }}</h3>
                 <span class="text-xs text-gray-400">{{ __('performance.score_hint') }}</span>
@@ -130,7 +130,7 @@
         </div>
 
         {{-- Actions --}}
-        <div class="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+        <div class="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-xs">
             <a href="{{ route('performance-evaluations.index') }}"
                class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">{{ __('performance.actions.cancel') }}</a>
             <div class="flex gap-2">
@@ -139,7 +139,7 @@
                     {{ __('performance.actions.save_draft') }}
                 </button>
                 <button type="submit" name="action" value="submitted"
-                    class="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700">
+                    class="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
                     {{ __('performance.actions.submit_review') }}
                 </button>
             </div>

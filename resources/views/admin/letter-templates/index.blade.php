@@ -55,7 +55,7 @@ $canViewCategories = function_exists('userHasPermission')
             </div>
         </div>
 
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        <div class="bg-white border border-gray-200 rounded-xl shadow-xs overflow-hidden">
             @if($templates->isEmpty())
             <div class="p-8 text-center text-gray-500 text-sm">
                 {{ __('letters.templates.table.empty') }}

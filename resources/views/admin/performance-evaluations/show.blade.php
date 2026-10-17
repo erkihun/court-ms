@@ -37,7 +37,7 @@
     </div>
 
     {{-- Hero card --}}
-    <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-xs">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             {{-- Member info --}}
             <div class="flex items-center gap-4">
@@ -45,7 +45,7 @@
                 <img src="{{ asset('storage/'.$ev->evaluatedUser->avatar_path) }}"
                      class="h-16 w-16 rounded-full object-cover ring-4 ring-blue-100" alt="">
                 @else
-                <div class="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-violet-600 text-2xl font-bold text-white">
+                <div class="flex h-16 w-16 items-center justify-center rounded-full bg-linear-to-br from-blue-500 to-violet-600 text-2xl font-bold text-white">
                     {{ strtoupper(substr($ev->evaluatedUser?->name ?? '?', 0, 1)) }}
                 </div>
                 @endif
@@ -100,7 +100,7 @@
     </div>
 
     {{-- Criteria breakdown --}}
-    <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
+    <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-xs space-y-4">
         <h3 class="font-semibold text-gray-800">{{ __('performance.criteria_breakdown') }}</h3>
 
         @foreach($ev->scores->sortBy('criterion.sort_order') as $score)
@@ -159,7 +159,7 @@
                 class="w-full rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"></textarea>
             <div class="flex justify-end">
                 <button type="submit"
-                    class="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow hover:bg-emerald-700">
+                    class="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700">
                     {{ __('performance.actions.approve_reviewed') }}
                 </button>
             </div>

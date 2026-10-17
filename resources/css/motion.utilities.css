@@ -1,0 +1,146 @@
+@utility transition-base {
+  transition-property:
+    color, background-color, border-color, opacity, box-shadow, transform,
+    filter, backdrop-filter;
+  transition-duration: var(--motion-normal);
+  transition-timing-function: var(--ease-standard);
+}
+
+@utility transition-fast {
+  transition-property:
+    color, background-color, border-color, opacity, box-shadow, transform,
+    filter, backdrop-filter;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+@utility transition-slow {
+  transition-property:
+    color, background-color, border-color, opacity, box-shadow, transform,
+    filter, backdrop-filter;
+  transition-duration: var(--motion-slow);
+  transition-timing-function: var(--ease-standard);
+}
+
+@utility transition-opacity-fast {
+  transition-property: opacity;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+@utility transition-opacity-slow {
+  transition-property: opacity;
+  transition-duration: var(--motion-slow);
+  transition-timing-function: var(--ease-standard);
+}
+
+@utility transition-transform-base {
+  transition-property: transform;
+  transition-duration: var(--motion-normal);
+  transition-timing-function: var(--ease-standard);
+}
+
+@utility transition-width-slow {
+  transition-property: width;
+  transition-duration: var(--motion-slow);
+  transition-timing-function: var(--ease-standard);
+}
+
+@utility transition-padding-slow {
+  transition-property: padding;
+  transition-duration: var(--motion-slow);
+  transition-timing-function: var(--ease-standard);
+}
+
+@utility motion-enter {
+  transition-property: opacity, transform;
+  transition-duration: var(--motion-normal);
+  transition-timing-function: var(--ease-out);
+}
+
+@utility motion-enter-fast {
+  transition-property: opacity, transform;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+@utility motion-leave {
+  transition-property: opacity, transform;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-in);
+}
+
+@utility motion-overlay-enter {
+  transition-property: opacity;
+  transition-duration: var(--motion-normal);
+  transition-timing-function: var(--ease-out);
+}
+
+@utility motion-overlay-leave {
+  transition-property: opacity;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-in);
+}
+
+@utility motion-fade-start {
+  opacity: var(--fade-out);
+}
+
+@utility motion-fade-end {
+  opacity: var(--fade-in);
+}
+
+@utility motion-scale-start {
+  opacity: var(--fade-out);
+  transform: scale(0.95);
+}
+
+@utility motion-scale-end {
+  opacity: var(--fade-in);
+  transform: scale(1);
+}
+
+@utility motion-slide-up-start {
+  opacity: var(--fade-out);
+  transform: translateY(-6px);
+}
+
+@utility motion-slide-up-end {
+  opacity: var(--fade-in);
+  transform: translateY(0);
+}
+
+@utility motion-slide-inline-start {
+  opacity: var(--fade-out);
+  transform: translateX(-4px);
+}
+
+@utility motion-slide-inline-end {
+  opacity: var(--fade-in);
+  transform: translateX(0);
+}
+
+@utility motion-modal-start {
+  opacity: var(--fade-out);
+  transform: translateY(1rem) scale(0.96);
+}
+
+@utility motion-modal-end {
+  opacity: var(--fade-in);
+  transform: translateY(0) scale(1);
+}
+
+@utility page-enter {
+  animation: page-fade-in var(--motion-normal) var(--ease-standard);
+}
+
+@utility skeleton {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--surface-soft) 82%, white) 25%,
+    color-mix(in srgb, var(--surface-soft) 60%, white) 37%,
+    color-mix(in srgb, var(--surface-soft) 82%, white) 63%
+  );
+  background-size: 400px 100%;
+  animation: skeleton-shimmer 1.4s infinite;
+}

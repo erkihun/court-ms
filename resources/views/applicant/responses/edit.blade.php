@@ -10,7 +10,7 @@
     ['title' => __('respondent.edit_response_of_response')],
 ]">
     <div class="mx-auto w-full max-w-5xl space-y-6">
-        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
             <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('respondent.response_of_response') }}</p>
             <h1 class="mt-1 text-2xl font-semibold text-slate-900">{{ __('respondent.edit_response_of_response') }}</h1>
 
@@ -34,7 +34,7 @@
             </dl>
         </div>
 
-        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
             <form method="POST" action="{{ route('applicant.cases.respondentResponses.replies.update', [$case->id, $response->id, $reply->id]) }}" enctype="multipart/form-data" class="space-y-5">
                 @csrf
                 @method('PATCH')

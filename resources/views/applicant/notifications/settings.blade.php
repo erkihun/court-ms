@@ -16,7 +16,7 @@
             <div class="space-y-4">
                 <label class="flex items-start gap-3">
                     <input type="checkbox" name="email_status" value="1"
-                        class="mt-1 h-4 w-4 rounded border-slate-300"
+                        class="mt-1 h-4 w-4 rounded-sm border-slate-300"
                         {{ ($prefs->email_status ?? 1) ? 'checked' : '' }}>
                     <div>
                         <div class="font-medium text-slate-800">{{ __('app.notification_preferences.status_label') }}</div>
@@ -28,7 +28,7 @@
 
                 <label class="flex items-start gap-3">
                     <input type="checkbox" name="email_hearing" value="1"
-                        class="mt-1 h-4 w-4 rounded border-slate-300"
+                        class="mt-1 h-4 w-4 rounded-sm border-slate-300"
                         {{ ($prefs->email_hearing ?? 1) ? 'checked' : '' }}>
                     <div>
                         <div class="font-medium text-slate-800">{{ __('app.notification_preferences.hearing_label') }}</div>
@@ -40,7 +40,7 @@
 
                 <label class="flex items-start gap-3">
                     <input type="checkbox" name="email_message" value="1"
-                        class="mt-1 h-4 w-4 rounded border-slate-300"
+                        class="mt-1 h-4 w-4 rounded-sm border-slate-300"
                         {{ ($prefs->email_message ?? 1) ? 'checked' : '' }}>
                     <div>
                         <div class="font-medium text-slate-800">{{ __('app.notification_preferences.message_label') }}</div>
@@ -52,7 +52,7 @@
 
                 <label class="flex items-start gap-3">
                     <input type="checkbox" name="email_weekly_digest" value="1"
-                        class="mt-1 h-4 w-4 rounded border-slate-300"
+                        class="mt-1 h-4 w-4 rounded-sm border-slate-300"
                         {{ ($prefs->email_weekly_digest ?? 0) ? 'checked' : '' }}>
                     <div>
                         <div class="font-medium text-slate-800">{{ __('app.notification_preferences.weekly_digest_label') }}</div>

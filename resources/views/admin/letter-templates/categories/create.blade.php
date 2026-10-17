@@ -3,7 +3,7 @@
     @section('page_header', 'New letter category')
 
     <div class="max-w-3xl mx-auto space-y-6">
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+        <div class="bg-white border border-gray-200 rounded-xl shadow-xs p-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-1">Create category</h2>
             <p class="text-sm text-gray-500 mb-4">Add a category to organize letter templates.</p>
 

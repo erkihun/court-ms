@@ -25,7 +25,7 @@
                 id="name"
                 name="name"
                 type="text"
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:border-blue-500 focus:ring-3 focus:ring-blue-200 focus:ring-opacity-50"
                 value="{{ old('name', $user->name) }}"
                 required
                 autofocus
@@ -47,7 +47,7 @@
                 id="email"
                 name="email"
                 type="email"
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:border-blue-500 focus:ring-3 focus:ring-blue-200 focus:ring-opacity-50"
                 value="{{ old('email', $user->email) }}"
                 required
                 autocomplete="username" />
@@ -64,7 +64,7 @@
                 <p class="text-sm text-gray-800">
                     {{ __('auth.profile.email_unverified') }}
 
-                    <button form="send-verification" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <button form="send-verification" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         {{ __('auth.profile.resend_verification_link') }}
                     </button>
                 </p>
@@ -79,7 +79,7 @@
         </div>
 
         <div class="flex items-center gap-4">
-            <button type="submit" class="px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-500 focus:bg-blue-700 active:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150">
+            <button type="submit" class="px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-500 focus:bg-blue-700 active:bg-blue-600 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150">
                 {{ __('Save') }}
             </button>
 

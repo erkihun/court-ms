@@ -117,7 +117,7 @@ default => __('cases.review_status.accepted'),
 
                         <div>
                             <a href="{{ route('respondent.responses.create') }}?case_number={{ urlencode($case->case_number) }}"
-                                class="mt-1 inline-flex items-center gap-2 rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-extrabold text-white shadow-sm transition hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                class="mt-1 inline-flex items-center gap-2 rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-extrabold text-white shadow-xs transition hover:bg-blue-800 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                                 {{ __('respondent.give_response') }}
                             </a>
                         </div>
@@ -142,7 +142,7 @@ default => __('cases.review_status.accepted'),
             </div>
         </section>
 
-        <section class="lg:col-span-2 rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-5">
+        <section class="lg:col-span-2 rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-5">
             @if(in_array($reviewStatus, ['returned', 'rejected', 'awaiting_review']))
             <div class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
                 {{ __('cases.review_notice') }}
@@ -409,7 +409,7 @@ default => __('cases.review_status.accepted'),
             </aside>
 
             {{-- Decisions (downloadable: approved + published) --}}
-            <aside class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <aside class="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
                 <div class="flex items-center justify-between mb-3">
                     <h3 class="text-sm font-semibold text-slate-800">{{ __('dashboard.decisions') }}</h3>
                     <span class="text-[11px] text-slate-500">{{ ($decisions ?? collect())->count() }}</span>
@@ -442,7 +442,7 @@ default => __('cases.review_status.accepted'),
             </aside>
 
 
-            <aside id="respondent-messages" class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <aside id="respondent-messages" class="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
                 <div class="flex items-center justify-between mb-3">
                     <h3 class="text-sm font-semibold text-slate-800">{{ __('cases.case_audit_trail') }}</h3>
                     <span class="text-[11px] text-slate-500">{{ ($audits ?? collect())->count() }}</span>
@@ -468,7 +468,7 @@ default => __('cases.review_status.accepted'),
                         </div>
                         @if($meta)
                         <pre
-                            class="mt-2 bg-white border border-slate-200 rounded px-2 py-1 whitespace-pre-wrap text-[11px]">{{ json_encode($meta, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES) }}</pre>
+                            class="mt-2 bg-white border border-slate-200 rounded-sm px-2 py-1 whitespace-pre-wrap text-[11px]">{{ json_encode($meta, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES) }}</pre>
                         @endif
                     </div>
                     @endforeach

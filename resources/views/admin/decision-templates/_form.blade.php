@@ -31,7 +31,7 @@ $placeholderValue = old('placeholders', $placeholders);
             <input type="hidden" name="is_default" value="0">
             <input type="checkbox" name="is_default" value="1"
                 @checked(old('is_default', $template->is_default))
-                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                class="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500">
             {{ __('decision_templates.form.is_default') }}
         </label>
         <p class="text-xs text-gray-500 mt-1">{{ __('decision_templates.form.is_default_help') }}</p>
@@ -59,7 +59,7 @@ $placeholderValue = old('placeholders', $placeholders);
             @if($template->header_image_path)
             <p class="text-xs text-gray-500 mt-1">{{ __('decision_templates.form.header_current', ['file' => basename($template->header_image_path)]) }}</p>
             <div class="mt-2 space-y-1">
-                <img src="{{ asset('storage/' . $template->header_image_path) }}" class="h-20 border rounded" alt="Header preview">
+                <img src="{{ asset('storage/' . $template->header_image_path) }}" class="h-20 border rounded-sm" alt="Header preview">
                 <label class="flex items-center gap-2 text-xs text-gray-600">
                     <input type="checkbox" name="remove_header_image" value="1">
                     {{ __('decision_templates.form.remove_header') }}
@@ -77,7 +77,7 @@ $placeholderValue = old('placeholders', $placeholders);
             @if($template->footer_image_path)
             <p class="text-xs text-gray-500 mt-1">{{ __('decision_templates.form.footer_current', ['file' => basename($template->footer_image_path)]) }}</p>
             <div class="mt-2 space-y-1">
-                <img src="{{ asset('storage/' . $template->footer_image_path) }}" class="h-20 border rounded" alt="Footer preview">
+                <img src="{{ asset('storage/' . $template->footer_image_path) }}" class="h-20 border rounded-sm" alt="Footer preview">
                 <label class="flex items-center gap-2 text-xs text-gray-600">
                     <input type="checkbox" name="remove_footer_image" value="1">
                     {{ __('decision_templates.form.remove_footer') }}

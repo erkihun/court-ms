@@ -29,7 +29,7 @@
             'pending'              => 'bg-orange-100/60 text-orange-700 border border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800',
             'active'               => 'bg-blue-100/60 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800',
             'closed', 'dismissed'  => 'bg-emerald-100/60 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800',
-            default                => 'bg-[var(--surface-soft)] text-[var(--text-muted)] border border-[var(--border)]',
+            default                => 'bg-(--surface-soft) text-(--text-muted) border border-(--border)',
         };
     };
     @endphp
@@ -627,14 +627,14 @@
                             @if(filled($member->avatar_path) && \Illuminate\Support\Facades\Storage::disk('public')->exists($member->avatar_path))
                             <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($member->avatar_path) }}"
                                  alt="{{ $member->name }}"
-                                 class="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-[var(--surface-strong)] shadow-sm">
+                                 class="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-(--surface-strong) shadow-xs">
                             @elseif($systemLogoUrl)
                             <img src="{{ $systemLogoUrl }}"
                                  alt="{{ $sysName }}"
-                                 class="h-10 w-10 shrink-0 rounded-full bg-white object-cover ring-2 ring-[var(--surface-strong)] shadow-sm"
+                                 class="h-10 w-10 shrink-0 rounded-full bg-white object-cover ring-2 ring-(--surface-strong) shadow-xs"
                                  style="object-position:72% center;">
                             @else
-                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ring-2 ring-[var(--surface-strong)] shadow-sm"
+                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ring-2 ring-(--surface-strong) shadow-xs"
                                  style="background:rgb(var(--ac)/.15);color:rgb(var(--ac));">
                                 {{ strtoupper(substr($member->name, 0, 1)) }}
                             </div>
@@ -646,7 +646,7 @@
                                     <span class="dash-member-user-status
                                         {{ $isActive
                                             ? 'bg-emerald-100/60 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800'
-                                            : 'bg-[var(--surface-soft)] text-[var(--text-subtle)] border border-[var(--border)]' }}">
+                                            : 'bg-(--surface-soft) text-(--text-subtle) border border-(--border)' }}">
                                         {{ ucfirst($member->status ?? 'inactive') }}
                                     </span>
                                 </div>
@@ -693,7 +693,7 @@
                                 : ($caseType['label'] ?? __('dashboard.unknown_case_type'));
                         @endphp
                         <span class="dash-case-chip">
-                            <span class="max-w-[8rem] truncate">{{ $caseTypeLabel }}</span>
+                            <span class="max-w-32 truncate">{{ $caseTypeLabel }}</span>
                             <span class="dash-case-chip-count">{{ number_format((int) ($caseType['count'] ?? 0)) }}</span>
                         </span>
                         @endforeach
@@ -798,7 +798,7 @@
                     <p class="dash-stat-box-label">{{ __('dashboard.audit_events') }}</p>
                     <p class="dash-stat-box-value">{{ number_format($dataStorage['audit_events']) }}</p>
                 </div>
-                <div class="grid grid-cols-2 gap-3"><div class="dash-stat-box"><p class="dash-stat-box-label">{{ __('dashboard.database_size') }}</p><p class="text-sm font-bold text-[var(--text)]">{{ $dataStorage['database_size'] ?? '—' }}</p></div><div class="dash-stat-box"><p class="dash-stat-box-label">{{ __('dashboard.storage_free') }}</p><p class="text-sm font-bold text-[var(--text)]">{{ $dataStorage['storage_free'] ? round($dataStorage['storage_free'] / 1073741824, 1).' GB' : '—' }}</p></div></div>
+                <div class="grid grid-cols-2 gap-3"><div class="dash-stat-box"><p class="dash-stat-box-label">{{ __('dashboard.database_size') }}</p><p class="text-sm font-bold text-(--text)">{{ $dataStorage['database_size'] ?? '—' }}</p></div><div class="dash-stat-box"><p class="dash-stat-box-label">{{ __('dashboard.storage_free') }}</p><p class="text-sm font-bold text-(--text)">{{ $dataStorage['storage_free'] ? round($dataStorage['storage_free'] / 1073741824, 1).' GB' : '—' }}</p></div></div>
             </div>
         </section>
 

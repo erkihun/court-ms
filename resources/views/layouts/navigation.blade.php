@@ -118,14 +118,14 @@
 
                     {{-- Dropdown --}}
                     <div x-cloak x-show="bell" @click.outside="bell=false"
-                        class="absolute right-0 mt-2 w-[32rem] max-w-[90vw] rounded-md border bg-white shadow-lg">
+                        class="absolute right-0 mt-2 w-lg max-w-[90vw] rounded-md border bg-white shadow-lg">
                         <div class="p-3">
                             <div class="mb-2 flex items-center justify-between">
                                 <div class="text-sm font-semibold text-slate-700">{{ __('app.Notifications') }}</div>
                                 @if($__adminNotifCount > 0)
                                 <form method="POST" action="{{ route('admin.notifications.markAll') }}">
                                     @csrf
-                                    <button class="text-xs px-2 py-1 rounded border hover:bg-slate-50">{{ __('app.Mark all as seen') }}</button>
+                                    <button class="text-xs px-2 py-1 rounded-sm border hover:bg-slate-50">{{ __('app.Mark all as seen') }}</button>
                                 </form>
                                 @endif
                             </div>
@@ -157,7 +157,7 @@
                                             @csrf
                                             <input type="hidden" name="type" value="message">
                                             <input type="hidden" name="sourceId" value="{{ $m->id }}">
-                                            <button class="text-xs px-2 py-1 rounded border hover:bg-slate-50">{{ __('app.Seen') }}</button>
+                                            <button class="text-xs px-2 py-1 rounded-sm border hover:bg-slate-50">{{ __('app.Seen') }}</button>
                                         </form>
                                     </li>
                                     @endforeach
@@ -183,7 +183,7 @@
                                             @csrf
                                             <input type="hidden" name="type" value="case">
                                             <input type="hidden" name="sourceId" value="{{ $c->id }}">
-                                            <button class="text-xs px-2 py-1 rounded border hover:bg-slate-50">{{ __('app.Seen') }}</button>
+                                            <button class="text-xs px-2 py-1 rounded-sm border hover:bg-slate-50">{{ __('app.Seen') }}</button>
                                         </form>
                                     </li>
                                     @endforeach
@@ -210,7 +210,7 @@
                                             @csrf
                                             <input type="hidden" name="type" value="hearing">
                                             <input type="hidden" name="sourceId" value="{{ $h->id }}">
-                                            <button class="text-xs px-2 py-1 rounded border hover:bg-slate-50">{{ __('app.Seen') }}</button>
+                                            <button class="text-xs px-2 py-1 rounded-sm border hover:bg-slate-50">{{ __('app.Seen') }}</button>
                                         </form>
                                     </li>
                                     @endforeach
@@ -220,7 +220,7 @@
 
                             <div class="mt-3 flex items-center justify-end">
                                 <a href="{{ route('admin.notifications.index') }}"
-                                    class="text-xs px-2 py-1 rounded border hover:bg-slate-50">{{ __('app.View all') }}</a>
+                                    class="text-xs px-2 py-1 rounded-sm border hover:bg-slate-50">{{ __('app.View all') }}</a>
                             </div>
                             @endif
                         </div>
@@ -230,7 +230,7 @@
                 <!-- Settings Dropdown -->
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
-                        <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition-fast hover:scale-[var(--scale-hover)] active:scale-[var(--scale-press)]">
+                        <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-hidden transition-fast hover:scale-(--scale-hover) active:scale-(--scale-press)">
                             <div>{{ Auth::user()->name }}</div>
 
                             <div class="ms-1">
@@ -261,7 +261,7 @@
 
             <!-- Hamburger -->
             <div class="-me-2 flex items-center sm:hidden">
-                <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition-fast hover:scale-[var(--scale-hover)] active:scale-[var(--scale-press)]">
+                <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-hidden focus:bg-gray-100 focus:text-gray-500 transition-fast hover:scale-(--scale-hover) active:scale-(--scale-press)">
                     <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                         <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 6h16M4 12h16M4 18h16" />

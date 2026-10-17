@@ -8,7 +8,7 @@
                 <p class="text-sm text-gray-600 max-w-2xl">{{ __('announcements.manage_description') }}</p>
             </div>
             <a href="{{ route('announcements.create') }}"
-                class="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+                class="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-xs hover:bg-blue-700">
                 {{ __('announcements.create_cta') }}
             </a>
         </div>

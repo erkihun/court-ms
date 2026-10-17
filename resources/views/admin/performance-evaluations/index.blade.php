@@ -105,7 +105,7 @@
         @endif
         @if(auth()->user()?->hasPermission('performance-evaluations.create'))
         <a href="{{ route('performance-evaluations.create') }}"
-           class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700">
+           class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
             {{ __('performance.actions.new') }}
         </a>
@@ -113,7 +113,7 @@
     </div>
 
     {{-- Table --}}
-    <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xs">
         <div class="overflow-x-auto">
         <table class="min-w-full text-sm">
             <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">

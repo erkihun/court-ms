@@ -50,7 +50,7 @@
                             </td>
                             <td class="text-slate-600">{{ $a->decided_by ?? '-' }}</td>
                             <td>
-                                <a href="{{ route('appeals.show',$a->id) }}" class="btn btn-outline !px-3 !py-1.5 !text-xs">Open</a>
+                                <a href="{{ route('appeals.show',$a->id) }}" class="btn btn-outline px-3! py-1.5! text-xs!">Open</a>
                             </td>
                         </tr>
                         @empty
