@@ -1,0 +1,206 @@
+/*
+ * Card-style auth screens (components/auth/AuthCardLayout.tsx): forgot/reset
+ * password, OTP entry, email verification, password confirmation and MFA.
+ * Scoped to .auth-page; the accent comes from data-auth-accent.
+ */
+.auth-page {
+    --auth-accent: #f97316;
+    --auth-accent-hover: #ea580c;
+    --auth-accent-soft: #fff7ed;
+    --auth-accent-soft-text: #c2410c;
+    --auth-ring: rgb(249 115 22 / 0.24);
+    background:
+        radial-gradient(circle at top, color-mix(in srgb, var(--auth-accent) 10%, transparent), transparent 36rem),
+        #f8fafc;
+    color: #0f172a;
+}
+
+.auth-page[data-auth-accent='blue'] {
+    --auth-accent: #2563eb;
+    --auth-accent-hover: #1d4ed8;
+    --auth-accent-soft: #eff6ff;
+    --auth-accent-soft-text: #1d4ed8;
+    --auth-ring: rgb(37 99 235 / 0.22);
+}
+
+.auth-page .auth-card {
+    border: 1px solid #e2e8f0;
+    background: rgb(255 255 255 / 0.96);
+    box-shadow: 0 20px 45px rgb(15 23 42 / 0.08);
+}
+
+.auth-page .auth-logo-fallback {
+    background: var(--auth-accent);
+}
+
+.auth-page .auth-label {
+    display: block;
+    margin-bottom: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #334155;
+}
+
+.auth-page .auth-input {
+    width: 100%;
+    border-radius: 0.625rem;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    padding: 0.7rem 0.85rem;
+    font-size: 0.875rem;
+    color: #0f172a;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.auth-page .auth-input:focus {
+    border-color: var(--auth-accent);
+    box-shadow: 0 0 0 3px var(--auth-ring);
+    outline: none;
+}
+
+.auth-page .auth-input[aria-invalid='true'] {
+    border-color: #f87171;
+}
+
+.auth-page .auth-primary-btn {
+    display: inline-flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    border-radius: 0.625rem;
+    background: var(--auth-accent);
+    padding: 0.7rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #fff;
+    transition:
+        background-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.auth-page .auth-primary-btn:hover {
+    background: var(--auth-accent-hover);
+}
+
+.auth-page .auth-primary-btn:focus-visible {
+    box-shadow: 0 0 0 3px var(--auth-ring);
+    outline: none;
+}
+
+.auth-page .auth-primary-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.75;
+}
+
+.auth-page .auth-secondary-btn {
+    display: inline-flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.625rem;
+    border: 1px solid #cbd5e1;
+    padding: 0.65rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #334155;
+    transition:
+        border-color 0.15s ease,
+        color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.auth-page .auth-secondary-btn:hover {
+    border-color: var(--auth-accent);
+    color: var(--auth-accent-hover);
+}
+
+.auth-page .auth-link {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.auth-page .auth-link:hover {
+    color: var(--auth-accent-hover);
+}
+
+.auth-page .auth-accent-link {
+    color: var(--auth-accent);
+    font-size: 0.875rem;
+    font-weight: 700;
+}
+
+.auth-page .auth-accent-link:hover {
+    color: var(--auth-accent-hover);
+}
+
+.auth-page .auth-accent-link:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.auth-page .auth-alert {
+    border-radius: 0.625rem;
+    border: 1px solid #e2e8f0;
+    padding: 0.65rem 0.8rem;
+    font-size: 0.875rem;
+    line-height: 1.45;
+}
+
+.auth-page .auth-alert-success {
+    border-color: #a7f3d0;
+    background: #ecfdf5;
+    color: #065f46;
+}
+
+.auth-page .auth-alert-info {
+    border-color: #bfdbfe;
+    background: #eff6ff;
+    color: #1e40af;
+}
+
+.auth-page .auth-alert-warning {
+    border-color: #fde68a;
+    background: #fffbeb;
+    color: #92400e;
+}
+
+.auth-page .auth-alert-error {
+    border-color: #fecaca;
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+.auth-page .auth-otp-box {
+    height: 3rem;
+    width: 2.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    text-align: center;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.auth-page .auth-otp-box:focus {
+    border-color: var(--auth-accent);
+    box-shadow: 0 0 0 2px var(--auth-accent);
+    outline: none;
+}
+
+.auth-page .auth-otp-box[aria-invalid='true'] {
+    border-color: #f87171;
+}
+
+@media (min-width: 640px) {
+    .auth-page .auth-otp-box {
+        height: 3.5rem;
+        width: 3rem;
+        font-size: 1.5rem;
+    }
+}

@@ -40,7 +40,7 @@ class PasswordController extends Controller
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect()->route('login')->with('status', 'Password updated. Please log in again.');
+            return redirect()->route('login')->with('status', __('auth.password_updated_sign_in_again'));
         }
 
         return back()->with('status', 'password-updated');

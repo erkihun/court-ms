@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Applicant;
 
+use App\Http\Controllers\Concerns\RendersAuthPages;
 use App\Http\Controllers\Controller;
 use App\Models\Applicant;
+use App\Support\AuthScreen;
 use App\Support\LoginThrottle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,12 +14,11 @@ use Illuminate\Validation\Rules\Password;
 
 class ApplicantAuthController extends Controller
 {
+    use RendersAuthPages;
+
     public function showRegister()
     {
-        return response()
-            ->view('applicant.auth.register')
-            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
-            ->header('Pragma', 'no-cache');
+        return $this->authPage('Auth/Party/Register');
     }
 
     public function register(Request $request)
@@ -84,12 +85,12 @@ class ApplicantAuthController extends Controller
     {
         // Always reset acting-as flag on login screen
         session()->forget('acting_as_respondent');
-        $asRespondentNav = request('login_as') === 'respondent';
 
-        return response()
-            ->view('applicant.auth.login', compact('asRespondentNav'))
-            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
-            ->header('Pragma', 'no-cache');
+        return $this->authPage('Auth/Party/Login', [
+            'loginAs' => request('login_as') === 'respondent' ? 'respondent' : 'applicant',
+            'bannerUrl' => AuthScreen::bannerUrl(respectLoginToggle: true),
+            'about' => AuthScreen::aboutPage(),
+        ]);
     }
 
     public function login(Request $request)
@@ -103,12 +104,12 @@ class ApplicantAuthController extends Controller
         if ($existing && ! $existing->is_active) {
             if ($request->expectsJson()) {
                 return response()->json([
-                    'errors' => ['email' => ['Your account has been deactivated.']],
+                    'errors' => ['email' => [__('auth.account_deactivated')]],
                 ], 422);
             }
 
             return back()
-                ->withErrors(['email' => 'This account has been deactivated.'])
+                ->withErrors(['email' => __('auth.account_deactivated')])
                 ->withInput($request->only('email', 'login_as'));
         }
 
@@ -158,12 +159,12 @@ class ApplicantAuthController extends Controller
 
         if ($request->expectsJson()) {
             return response()->json([
-                'errors' => ['email' => ['Invalid credentials.']],
+                'errors' => ['email' => [__('auth.failed')]],
             ], 422);
         }
 
         return back()
-            ->withErrors(['email' => 'Invalid credentials.'])
+            ->withErrors(['email' => __('auth.failed')])
             ->withInput($request->only('email', 'login_as'));
     }
 
@@ -172,11 +173,11 @@ class ApplicantAuthController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'redirect' => $target,
-                'message' => 'Signed in.',
+                'message' => __('auth.signed_in'),
             ]);
         }
 
-        return redirect($target)->with('success', 'Signed in.');
+        return redirect($target)->with('success', __('auth.signed_in'));
     }
 
     public function logout(Request $request)

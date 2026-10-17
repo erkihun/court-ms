@@ -2,24 +2,24 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Http\Controllers\Concerns\RendersAuthPages;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\Response;
 
 class ConfirmablePasswordController extends Controller
 {
+    use RendersAuthPages;
+
     /**
      * Show the confirm password view.
      */
     public function show(): Response
     {
-        return response()
-            ->view('admin.auth.confirm-password')
-            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
-            ->header('Pragma', 'no-cache');
+        return $this->authPage('Auth/ConfirmPassword');
     }
 
     /**
@@ -32,7 +32,7 @@ class ConfirmablePasswordController extends Controller
             'password' => $request->password,
         ])) {
             throw ValidationException::withMessages([
-                'password' => __('auth.password'),
+                'password' => __('validation.current_password'),
             ]);
         }
 

@@ -206,4 +206,9 @@ return [
     'stage_closed' => 'Closed',
     'stage_declined' => 'Declined',
     'stage_approved' => 'Approved',
+    'failed' => 'These credentials do not match our records.',
+    'account_deactivated' => 'This account has been deactivated.',
+    'signed_in' => 'Signed in.',
+    'password_reset_sign_in' => 'Password reset successfully. Please sign in.',
+    'password_updated_sign_in_again' => 'Password updated. Please log in again.',
 ];

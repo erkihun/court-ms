@@ -207,4 +207,8 @@ return [
     'stage_closed' => 'ተዘግቷል',
     'stage_declined' => 'ተቀባይነት አላገኘም',
     'stage_approved' => 'ጸድቋል',
+    'account_deactivated' => 'ይህ መለያ ተሰናክሏል።',
+    'signed_in' => 'ገብተዋል።',
+    'password_reset_sign_in' => 'የይለፍ ቃል በትክክል ተቀይሯል። እባክዎ ይግቡ።',
+    'password_updated_sign_in_again' => 'የይለፍ ቃል ተቀይሯል። እባክዎ እንደገና ይግቡ።',
 ];

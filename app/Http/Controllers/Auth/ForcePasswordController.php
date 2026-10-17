@@ -2,19 +2,19 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Http\Controllers\Concerns\RendersAuthPages;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\Response;
 
 class ForcePasswordController extends Controller
 {
+    use RendersAuthPages;
+
     /**
      * Show the dedicated force-password-change screen.
      */
     public function show(): Response
     {
-        return response()
-            ->view('admin.auth.force-password')
-            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
-            ->header('Pragma', 'no-cache');
+        return $this->authPage('Auth/ForcePassword');
     }
 }
