@@ -28,11 +28,45 @@ class LanguageController extends Controller
 
         App::setLocale($locale);
 
-        $return = $request->query('return');
-        if (!$return) {
-            $return = url()->previous() ?: route('root');
-        }
+        // Both candidates are user-controlled (query string, Referer header),
+        // so only same-site destinations are honoured.
+        $return = $this->sameSiteUrl($request, $request->query('return'))
+            ?? $this->sameSiteUrl($request, url()->previous())
+            ?? route('root');
 
         return redirect()->to($return);
+    }
+
+    /**
+     * Returns the URL when it points into this application, otherwise null.
+     * Accepts site-relative paths ("/cases") and absolute http(s) URLs on the
+     * application's own host; rejects other hosts, "//host" and "/\host"
+     * (both protocol-relative in browsers) and non-http schemes.
+     */
+    private function sameSiteUrl(Request $request, mixed $candidate): ?string
+    {
+        if (! is_string($candidate) || $candidate === '') {
+            return null;
+        }
+
+        if (preg_match('#^/(?![/\\\\])#', $candidate) === 1) {
+            return url($candidate);
+        }
+
+        $parts = parse_url($candidate);
+        if (! is_array($parts) || ! isset($parts['scheme'], $parts['host'])) {
+            return null;
+        }
+
+        if (! in_array(strtolower($parts['scheme']), ['http', 'https'], true)) {
+            return null;
+        }
+
+        $allowedHosts = array_filter([
+            strtolower((string) parse_url((string) config('app.url'), PHP_URL_HOST)),
+            strtolower($request->getHost()),
+        ]);
+
+        return in_array(strtolower($parts['host']), $allowedHosts, true) ? $candidate : null;
     }
 }
