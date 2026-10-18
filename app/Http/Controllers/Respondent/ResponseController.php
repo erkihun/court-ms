@@ -3,20 +3,25 @@
 namespace App\Http\Controllers\Respondent;
 
 use App\Http\Controllers\Controller;
-use App\Models\Respondent;
 use App\Models\RespondentResponse;
+use App\Services\LegalHoldService;
+use App\Services\Party\ActingRespondent;
+use App\Services\ResponseNotificationService;
+use App\Services\SecureUploadService;
+use App\Support\EthiopianDate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
-use App\Services\ResponseNotificationService;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 use Mews\Purifier\Facades\Purifier;
 
 class ResponseController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): InertiaResponse
     {
         $respondentId = $this->currentRespondentId();
         Session::put('acting_as_respondent', true);
@@ -25,12 +30,26 @@ class ResponseController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        return view('applicant.respondent.responses.index', compact('responses'));
+        return Inertia::render('Respondent/Responses/Index', [
+            'responses' => $responses->map(fn (RespondentResponse $response): array => [
+                'id' => (int) $response->id,
+                'title' => (string) $response->title,
+                'caseNumber' => $response->case_number,
+                'reviewStatus' => $this->reviewStatus($response),
+                'reviewNote' => $response->review_status === 'returned' ? ($response->review_note ?: null) : null,
+                'hasPdf' => ! empty($response->pdf_path),
+                'uploaded' => EthiopianDate::format($response->created_at),
+                'locked' => $this->isLocked($response),
+            ])->values(),
+        ]);
     }
 
-    public function create()
+    public function create(Request $request): InertiaResponse
     {
-        return view('applicant.respondent.responses.create');
+        return Inertia::render('Respondent/Responses/Form', [
+            'response' => null,
+            'caseNumber' => (string) $request->query('case_number', ''),
+        ]);
     }
 
     public function store(Request $request)
@@ -64,7 +83,7 @@ class ResponseController extends Controller
         $this->assertNotOwnCase($caseNumber, (int) $applicant->id);
         $this->assertCaseAuthorized($caseNumber, $respondentId, false);
 
-        $path = app(\App\Services\SecureUploadService::class)->store(
+        $path = app(SecureUploadService::class)->store(
             $request->file('pdf'),
             'respondent/responses',
             'private',
@@ -89,23 +108,50 @@ class ResponseController extends Controller
         return redirect()->route('respondent.responses.show', $response);
     }
 
-    public function show(RespondentResponse $response)
+    public function show(RespondentResponse $response): InertiaResponse
     {
         $this->authorizeOwnership($response);
 
-        return view('applicant.respondent.responses.show', compact('response'));
+        return Inertia::render('Respondent/Responses/Show', [
+            'response' => [
+                'id' => (int) $response->id,
+                'title' => (string) $response->title,
+                'reviewStatus' => $this->reviewStatus($response),
+                'reviewNote' => $response->review_status !== 'accepted' ? ($response->review_note ?: null) : null,
+                'created' => EthiopianDate::format($response->created_at, withTime: true),
+                'responseNumber' => $response->response_number,
+                'caseNumber' => $response->case_number,
+                // Purified on save; purified again here for rows stored before that.
+                'descriptionHtml' => empty($response->description) ? null : (string) clean($response->description, 'cases'),
+                'pdf' => empty($response->pdf_path) ? null : [
+                    'downloadUrl' => route('applicant.respondent.responses.download', $response),
+                    'inlineUrl' => route('applicant.respondent.responses.download', [$response, 'inline' => 1]),
+                ],
+                'locked' => $this->isLocked($response),
+            ],
+        ]);
     }
 
-    public function edit(RespondentResponse $response)
+    public function edit(RespondentResponse $response): InertiaResponse
     {
         $this->authorizeOwnership($response);
+        $this->ensureEditable($response);
 
-        return view('applicant.respondent.responses.edit', compact('response'));
+        return Inertia::render('Respondent/Responses/Form', [
+            'response' => [
+                'id' => (int) $response->id,
+                'title' => (string) $response->title,
+                'description' => (string) clean($response->description ?? '', 'cases'),
+                'hasPdf' => ! empty($response->pdf_path),
+            ],
+            'caseNumber' => (string) ($response->case_number ?? ''),
+        ]);
     }
 
     public function update(Request $request, RespondentResponse $response)
     {
         $this->authorizeOwnership($response);
+        $this->ensureEditable($response);
         $applicant = Auth::guard('applicant')->user();
         abort_unless($applicant, 403);
 
@@ -122,10 +168,10 @@ class ResponseController extends Controller
         $this->assertCaseAuthorized($caseNumber, $this->currentRespondentId(), false);
 
         if ($request->hasFile('pdf')) {
-            app(\App\Services\LegalHoldService::class)->assertFileMayBeDeleted((string) $response->pdf_path);
+            app(LegalHoldService::class)->assertFileMayBeDeleted((string) $response->pdf_path);
             Storage::disk('private')->delete($response->pdf_path);
             Storage::disk('public')->delete($response->pdf_path); // legacy cleanup
-            $path = app(\App\Services\SecureUploadService::class)->store(
+            $path = app(SecureUploadService::class)->store(
                 $request->file('pdf'),
                 'respondent/responses',
                 'private',
@@ -147,6 +193,11 @@ class ResponseController extends Controller
                     : $response->response_number,
                 'title' => $data['title'],
                 'description' => $descHtml ?: null,
+                // A changed response goes back to the court for review.
+                'review_status' => 'awaiting_review',
+                'review_note' => null,
+                'reviewed_by_user_id' => null,
+                'reviewed_at' => null,
             ]);
             $response->save();
         });
@@ -157,12 +208,33 @@ class ResponseController extends Controller
     public function destroy(RespondentResponse $response)
     {
         $this->authorizeOwnership($response);
-        app(\App\Services\LegalHoldService::class)->assertFileMayBeDeleted((string) $response->pdf_path);
+        $this->ensureEditable($response);
+        app(LegalHoldService::class)->assertFileMayBeDeleted((string) $response->pdf_path);
         Storage::disk('private')->delete($response->pdf_path);
         Storage::disk('public')->delete($response->pdf_path); // legacy cleanup
         $response->delete();
 
         return redirect()->route('respondent.responses.index');
+    }
+
+    /** Once the court accepts a response it is part of the case record and cannot change. */
+    private function isLocked(RespondentResponse $response): bool
+    {
+        return in_array($response->review_status, ['accepted', 'accept'], true);
+    }
+
+    private function ensureEditable(RespondentResponse $response): void
+    {
+        abort_if($this->isLocked($response), 403, __('respondent.response_locked'));
+    }
+
+    private function reviewStatus(RespondentResponse $response): string
+    {
+        return match ($response->review_status) {
+            'accepted', 'accept' => 'accepted',
+            'returned', 'rejected' => $response->review_status,
+            default => 'awaiting_review',
+        };
     }
 
     private function authorizeOwnership(RespondentResponse $response): void
@@ -176,44 +248,12 @@ class ResponseController extends Controller
         $applicant = Auth::guard('applicant')->user();
         abort_unless($applicant, 403);
 
-        $respondent = Respondent::where('email', $applicant->email)->first();
-        if (!$respondent) {
-            $phone = $applicant->phone ?? 'resp_' . substr(md5((string) microtime(true)), 0, 12);
-            if (Respondent::where('phone', $phone)->where('email', '!=', $applicant->email)->exists()) {
-                $phone = 'resp_' . substr(md5(uniqid('', true)), 0, 12);
-            }
-
-            $respondent = Respondent::create([
-                'first_name'        => $applicant->first_name ?? '',
-                'middle_name'       => $applicant->middle_name ?? '',
-                'last_name'         => $applicant->last_name ?? '',
-                'gender'            => $applicant->gender ?? null,
-                'position'          => $applicant->position ?? '',
-                'organization_name' => $applicant->organization_name ?? '',
-                'address'           => $applicant->address ?? '',
-                'national_id'       => $this->applicantNationalId($applicant),
-                'phone'             => $phone,
-                'email'             => $applicant->email,
-                'password'          => \Illuminate\Support\Str::random(32),
-            ]);
-        } else {
-            $dirty = false;
-            $maybeNationalId = $this->applicantNationalId($applicant);
-            if (!$respondent->national_id && $maybeNationalId) {
-                $respondent->national_id = $maybeNationalId;
-                $dirty = true;
-            }
-            if ($dirty) {
-                $respondent->save();
-            }
-        }
-
-        return (int) $respondent->id;
+        return (int) app(ActingRespondent::class)->resolve($applicant)->id;
     }
 
     private function assertNotOwnCase(?string $caseNumber, int $applicantId): void
     {
-        if (!$caseNumber) {
+        if (! $caseNumber) {
             return;
         }
 
@@ -229,12 +269,12 @@ class ResponseController extends Controller
 
     private function assertCaseAuthorized(?string $caseNumber, int $respondentId, bool $api): void
     {
-        if (!$caseNumber) {
+        if (! $caseNumber) {
             return;
         }
 
         $caseExists = DB::table('court_cases')->where('case_number', $caseNumber)->exists();
-        if (!$caseExists) {
+        if (! $caseExists) {
             $this->throwCaseNumberError(__('respondent.case_not_found'), $api);
         }
 
@@ -243,7 +283,7 @@ class ResponseController extends Controller
             ->where('case_number', $caseNumber)
             ->exists();
 
-        if (!$authorized) {
+        if (! $authorized) {
             $this->throwCaseNumberError(__('respondent.case_not_authorized'), $api);
         }
     }
@@ -264,6 +304,7 @@ class ResponseController extends Controller
         }
 
         $normalized = trim($caseNumber);
+
         return $normalized === '' ? null : $normalized;
     }
 
@@ -281,16 +322,6 @@ class ResponseController extends Controller
         return RespondentResponse::nextResponseNumberForCase($caseNumber, $excludeResponseId);
     }
 
-    private function applicantNationalId($applicant): ?string
-    {
-        // Normalize to digits-only and trim to 16 characters to avoid DB length violations.
-        $digits = preg_replace('/\D/', '', (string) ($applicant->getRawOriginal('national_id_number') ?? $applicant->national_id_number ?? ''));
-        if ($digits === '') {
-            return null;
-        }
-        return substr($digits, 0, 16);
-    }
-
     private function cleanHtml(?string $html): string
     {
         $s = (string) ($html ?? '');
@@ -300,6 +331,7 @@ class ResponseController extends Controller
         if (str_contains($s, '&lt;') || str_contains($s, '&gt;')) {
             $s = htmlspecialchars_decode($s, ENT_QUOTES);
         }
+
         return Purifier::clean($s, 'cases');
     }
 }

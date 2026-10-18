@@ -226,6 +226,9 @@ Route::middleware(SetLocale::class)->where(array_fill_keys($numericRouteParamete
     Route::get('/respondent/case-search', [CaseSearchController::class, 'index'])
         ->middleware(['auth:applicant', 'throttle:30,1'])
         ->name('respondent.case.search');
+    Route::post('/respondent/case-search', [CaseSearchController::class, 'submit'])
+        ->middleware(['auth:applicant', 'throttle:10,1'])
+        ->name('respondent.case.search.submit');
     Route::get('/respondent/cases/{caseNumber}', [CaseSearchController::class, 'show'])
         ->middleware(['auth:applicant', 'throttle:30,1'])
         ->name('respondent.cases.show')

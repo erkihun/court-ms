@@ -26,6 +26,7 @@ use App\Services\LegalHoldService;
 use Mews\Purifier\Facades\Purifier;
 use App\Models\CourtCase;
 use App\Support\EthiopianDate;
+use App\Support\Party\RespondentResponseView;
 use Illuminate\Support\Facades\URL;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
@@ -474,7 +475,7 @@ class ApplicantCaseController extends Controller
         return Inertia::render('Applicant/Cases/Show', $this->presentCase($case, $letters, $respondentResponses, $msgs, $hearings, $docs, $witnesses, $audits));
     }
 
-    public function showRespondentResponse(int $caseId, int $responseId)
+    public function showRespondentResponse(int $caseId, int $responseId): InertiaResponse
     {
         $aid = auth('applicant')->id();
 
@@ -507,36 +508,10 @@ class ApplicantCaseController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        return view('applicant.cases.respondent-response', compact('case', 'response', 'replies'));
-    }
-
-    public function replyRespondentResponse(int $caseId, int $responseId)
-    {
-        $aid = auth('applicant')->id();
-
-        $case = $this->findApplicantCaseWithType($caseId, $aid);
-
-        abort_if(!$case, 404);
-
-        $response = DB::table('respondent_responses as rr')
-            ->leftJoin('respondents as r', 'r.id', '=', 'rr.respondent_id')
-            ->select(
-                'rr.*',
-                'r.first_name',
-                'r.middle_name',
-                'r.last_name',
-                'r.email as respondent_email',
-                'r.phone as respondent_phone',
-                'r.organization_name as respondent_org'
-            )
-            ->where('rr.id', $responseId)
-            ->where('rr.case_number', $case->case_number)
-            ->where('rr.review_status', 'accepted')
-            ->first();
-
-        abort_if(!$response, 404);
-
-        return view('applicant.responses.create', compact('case', 'response'));
+        return Inertia::render('Applicant/RespondentResponses/Show', [
+            'response' => RespondentResponseView::response($case, $response),
+            'replies' => $replies->map(fn (object $reply): array => RespondentResponseView::reply($reply, (int) $case->id, (int) $response->id))->values(),
+        ]);
     }
 
     /**

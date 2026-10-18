@@ -83,6 +83,7 @@ declare module 'ziggy-js' {
     "respondent.notifications.markAll": [],
     "respondent.switchToApplicant": [],
     "respondent.case.search": [],
+    "respondent.case.search.submit": [],
     "respondent.cases.show": [
         {
             "name": "caseNumber",

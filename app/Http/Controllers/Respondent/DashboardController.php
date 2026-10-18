@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Respondent;
 
 use App\Http\Controllers\Controller;
-use App\Models\Respondent;
+use App\Services\Party\ActingRespondent;
 use App\Services\Party\RespondentNotificationFeed;
 use App\Support\EthiopianDate;
 use Illuminate\Support\Facades\Auth;
@@ -22,11 +22,11 @@ class DashboardController extends Controller
         $applicant = Auth::guard('applicant')->user();
         abort_unless($applicant, 403);
 
-        $respondent = $this->resolveActingRespondent($applicant);
+        $respondent = app(ActingRespondent::class)->resolve($applicant);
 
         $stats = [
-            'cases'        => DB::table('respondent_case_views')->where('respondent_id', $respondent->id)->count(),
-            'responses'    => DB::table('respondent_responses')->where('respondent_id', $respondent->id)->count(),
+            'cases' => DB::table('respondent_case_views')->where('respondent_id', $respondent->id)->count(),
+            'responses' => DB::table('respondent_responses')->where('respondent_id', $respondent->id)->count(),
             'response_replies' => DB::table('applicant_response_replies as arr')
                 ->join('respondent_responses as rr', 'rr.id', '=', 'arr.respondent_response_id')
                 ->join('respondent_case_views as rcv', function ($join) use ($respondent) {
@@ -125,51 +125,5 @@ class DashboardController extends Controller
                 'href' => route('respondent.response-replies.show', $reply->id),
             ])->values(),
         ]);
-    }
-
-    private function resolveActingRespondent($applicant): Respondent
-    {
-        $respondent = Respondent::where('email', $applicant->email)->first();
-        if (!$respondent) {
-            $phone = $applicant->phone ?? 'resp_' . substr(md5((string) microtime(true)), 0, 12);
-            if (Respondent::where('phone', $phone)->where('email', '!=', $applicant->email)->exists()) {
-                $phone = 'resp_' . substr(md5(uniqid('', true)), 0, 12);
-            }
-
-            $respondent = Respondent::create([
-                'first_name'        => $applicant->first_name ?? '',
-                'middle_name'       => $applicant->middle_name ?? '',
-                'last_name'         => $applicant->last_name ?? '',
-                'gender'            => $applicant->gender ?? null,
-                'position'          => $applicant->position ?? '',
-                'organization_name' => $applicant->organization_name ?? '',
-                'address'           => $applicant->address ?? '',
-                'national_id'       => $this->applicantNationalId($applicant),
-                'phone'             => $phone,
-                'email'             => $applicant->email,
-                'password'          => $applicant->password,
-            ]);
-        } else {
-            $dirty = false;
-            $maybeNationalId = $this->applicantNationalId($applicant);
-            if (!$respondent->national_id && $maybeNationalId) {
-                $respondent->national_id = $maybeNationalId;
-                $dirty = true;
-            }
-            if ($dirty) {
-                $respondent->save();
-            }
-        }
-
-        return $respondent;
-    }
-
-    private function applicantNationalId($applicant): ?string
-    {
-        $digits = preg_replace('/\D/', '', (string) ($applicant->getRawOriginal('national_id_number') ?? $applicant->national_id_number ?? ''));
-        if ($digits === '') {
-            return null;
-        }
-        return substr($digits, 0, 16);
     }
 }

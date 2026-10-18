@@ -6,67 +6,103 @@ use App\Http\Controllers\Controller;
 use App\Mail\RespondentViewedCaseMail;
 use App\Models\Decision;
 use App\Models\Respondent;
+use App\Services\Party\ActingRespondent;
 use App\Services\ResponseNotificationService;
 use App\Support\DecisionPdf;
+use App\Support\EthiopianDate;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\URL;
+use Inertia\Inertia;
 
 class CaseSearchController extends Controller
 {
+    /**
+     * Search page. Results come from submit() via the session, so the access
+     * code never appears in a URL. A legacy ?case_code= link still works.
+     */
     public function index(Request $request)
     {
         Session::put('acting_as_respondent', true);
         $caseNumber = trim((string) $request->get('case_number', ''));
-        $caseCode = trim((string) $request->get('case_code', ''));
         $case = null;
-        $codeError = false;
+        $codeError = (bool) session('respondent_search_failed', false);
 
-        if ($caseNumber !== '') {
-            $case = $this->findCaseForSearch($caseNumber);
+        if ($caseNumber !== '' && $request->filled('case_code')) {
+            [$case, $codeError] = $this->attempt($caseNumber, trim((string) $request->get('case_code')));
+        } elseif ($caseNumber !== '') {
+            $found = $this->findCaseForSearch($caseNumber);
+            $case = $found && $this->hasCaseAccess((int) $found->id) ? $found : null;
+        }
 
-            // Prevent applicants from viewing/searching their own cases while in respondent mode.
-            $applicantId = Auth::guard('applicant')->id();
-            if ($case && $applicantId && (int) $case->applicant_id === (int) $applicantId) {
-                $case = null;
-            }
+        return Inertia::render('Respondent/Cases/Search', [
+            'caseNumber' => $caseNumber,
+            'searched' => $caseNumber !== '' && ($case !== null || $codeError || $request->has('case_code')),
+            'codeError' => $codeError,
+            // The access granted above lets the details page open without the code in its URL.
+            'case' => $case ? [
+                'caseNumber' => (string) $case->case_number,
+                'title' => (string) $case->title,
+                'status' => (string) $case->status,
+                'filed' => EthiopianDate::format($case->created_at),
+                'href' => route('respondent.cases.show', $case->case_number),
+            ] : null,
+        ]);
+    }
 
-            if ($case) {
-                if (!$this->caseCodeMatches($case, $caseCode)) {
-                    $case = null;
-                    $codeError = true;
-                }
-            }
+    public function submit(Request $request): RedirectResponse
+    {
+        Session::put('acting_as_respondent', true);
+        $data = $request->validate([
+            'case_number' => ['required', 'string', 'max:64'],
+            'case_code' => ['required', 'string', 'max:32'],
+        ]);
+        $caseNumber = trim($data['case_number']);
 
-            if ($case) {
-                $this->grantCaseAccess($case->id);
-                $history = collect(session('respondent_viewed_cases', []));
-                $history = $history->prepend($caseNumber)->unique()->take(12);
-                session(['respondent_viewed_cases' => $history->values()->all()]);
+        [$case, $codeError] = $this->attempt($caseNumber, trim($data['case_code']));
 
-                // If the respondent is signed in, immediately record the view so it appears in "My Cases".
-                if (auth('applicant')->check()) {
-                    $respondent = $this->resolveActingRespondent();
-                    if ($respondent) {
-                        $this->recordRespondentCaseView(
-                            $case->id,
-                            $respondent->id,
-                            $case->case_number ?? null
-                        );
-                    }
-                }
+        return redirect()
+            ->route('respondent.case.search', ['case_number' => $caseNumber])
+            ->with('respondent_search_failed', $case === null && $codeError);
+    }
+
+    /**
+     * Look a case up by number and access code; on success grant this session
+     * access and record the view.
+     *
+     * @return array{0: object|null, 1: bool} [case, wrong code]
+     */
+    private function attempt(string $caseNumber, string $caseCode): array
+    {
+        $case = $this->findCaseForSearch($caseNumber);
+
+        // Applicants cannot look up their own cases while in respondent mode.
+        $applicantId = Auth::guard('applicant')->id();
+        if ($case && $applicantId && (int) $case->applicant_id === (int) $applicantId) {
+            $case = null;
+        }
+
+        if ($case && ! $this->caseCodeMatches($case, $caseCode)) {
+            return [null, true];
+        }
+
+        if ($case) {
+            $this->grantCaseAccess($case->id);
+            $history = collect(session('respondent_viewed_cases', []))->prepend($caseNumber)->unique()->take(12);
+            session(['respondent_viewed_cases' => $history->values()->all()]);
+
+            $respondent = $this->resolveActingRespondent();
+            if ($respondent) {
+                $this->recordRespondentCaseView($case->id, $respondent->id, $case->case_number ?? null);
             }
         }
 
-        return view('applicant.respondent.cases.search', [
-            'caseNumber' => $caseNumber,
-            'caseCode' => $caseCode,
-            'case' => $case,
-            'codeError' => $codeError,
-        ]);
+        return [$case, false];
     }
 
     public function show(string $caseNumber)
@@ -89,9 +125,9 @@ class CaseSearchController extends Controller
             ->where('c.case_number', trim($caseNumber))
             ->first();
 
-        abort_if(!$case, 404);
+        abort_if(! $case, 404);
 
-        if (!$this->hasCaseAccess($case->id)) {
+        if (! $this->hasCaseAccess($case->id)) {
             $hasDbAccess = false;
             if (auth('applicant')->check()) {
                 $applicant = auth('applicant')->user();
@@ -103,8 +139,8 @@ class CaseSearchController extends Controller
                         ->exists();
                 }
             }
-            if (!$hasDbAccess) {
-                abort_if(!$this->caseCodeMatches($case, $caseCode), 404);
+            if (! $hasDbAccess) {
+                abort_if(! $this->caseCodeMatches($case, $caseCode), 404);
             }
             $this->grantCaseAccess($case->id);
         }
@@ -119,48 +155,13 @@ class CaseSearchController extends Controller
             $this->handleRespondentCaseView($case);
         }
 
-        $caseId = $case->id;
-
-        $timeline = DB::table('case_status_logs')
-            ->where('case_id', $caseId)
-            ->orderBy('created_at')
-            ->get();
-
-        $files = DB::table('case_files')
-            ->where('case_id', $caseId)
-            ->orderByDesc('created_at')
-            ->get();
-
-        $msgs = DB::table('case_messages as m')
-            ->leftJoin('users as u', 'u.id', '=', 'm.sender_user_id')
-            ->select('m.*', 'u.name as admin_name')
-            ->where('m.case_id', $caseId)
-            ->orderBy('m.created_at')
-            ->get();
-
-        $hearings = DB::table('case_hearings')
-            ->where('case_id', $caseId)
-            ->orderBy('hearing_at')
-            ->get();
-
-        $docs = DB::table('case_evidences')
-            ->where('case_id', $caseId)
-            ->where('type', 'document')
-            ->orderBy('id')
-            ->get();
+        $hearings = DB::table('case_hearings')->where('case_id', $case->id)->orderBy('hearing_at')->get();
+        $docs = DB::table('case_evidences')->where('case_id', $case->id)->where('type', 'document')->orderBy('id')->get();
 
         $letters = DB::table('letters as l')
             ->leftJoin('letter_templates as lt', 'lt.id', '=', 'l.letter_template_id')
             ->leftJoin('users as u', 'u.id', '=', 'l.user_id')
-            ->select(
-                'l.id',
-                'l.subject',
-                'l.reference_number',
-                'l.approval_status',
-                'l.created_at',
-                'lt.title as template_title',
-                'u.name as author_name'
-            )
+            ->select('l.id', 'l.subject', 'l.reference_number', 'l.created_at', 'lt.title as template_title', 'u.name as author_name')
             ->where('l.case_number', $case->case_number)
             ->where('l.approval_status', 'approved')
             ->orderByDesc('l.created_at')
@@ -168,7 +169,7 @@ class CaseSearchController extends Controller
 
         // Only published + approved decisions are downloadable by the respondent.
         $decisions = DB::table('decisions')
-            ->select('id', 'name', 'case_number', 'decision_date', 'status', 'approved_at', 'created_at')
+            ->select('id', 'name', 'decision_date', 'created_at')
             ->where('case_number', $case->case_number)
             ->where('status', 'published')
             ->whereNotNull('approved_at')
@@ -176,16 +177,59 @@ class CaseSearchController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        return view('applicant.respondent.cases.show', compact(
-            'case',
-            'timeline',
-            'letters',
-            'files',
-            'msgs',
-            'hearings',
-            'docs',
-            'decisions'
-        ) + ['witnesses' => collect(), 'audits' => collect()]);
+        $at = fn ($value): string => $value ? EthiopianDate::format($value, withTime: true) : '';
+        $applicantName = trim(implode(' ', array_filter([$case->applicant_first_name, $case->applicant_middle_name, $case->applicant_last_name])));
+
+        return Inertia::render('Respondent/Cases/Show', [
+            'case' => [
+                'id' => (int) $case->id,
+                'caseNumber' => (string) $case->case_number,
+                'status' => (string) $case->status,
+                'reviewStatus' => $case->review_status ?: 'accepted',
+                'reviewNote' => $case->review_note ?: null,
+                'caseType' => $case->case_type,
+                'filed' => EthiopianDate::format($case->filing_date ?? $case->created_at),
+                'applicantName' => $applicantName !== '' ? $applicantName : ($case->title ?: null),
+                'applicantEmail' => $case->applicant_record_email ?: null,
+                'respondentName' => $case->respondent_name ?: null,
+                'respondentAddress' => $case->respondent_address ?: null,
+                'descriptionHtml' => (string) clean($case->description ?? '', 'cases'),
+                'reliefHtml' => empty($case->relief_requested) ? null : (string) clean($case->relief_requested, 'cases'),
+                'respondHref' => route('respondent.responses.create', ['case_number' => $case->case_number]),
+            ],
+            'documents' => $docs->map(fn (object $doc): array => [
+                'id' => (int) $doc->id,
+                'title' => $doc->title ?? $doc->label ?? (($doc->file_path ?? $doc->path ?? null) ? basename($doc->file_path ?? $doc->path) : __('cases.document')),
+                'mime' => $doc->mime ?? null,
+                'created' => $at($doc->created_at ?? null),
+                'descriptionHtml' => empty($doc->description) ? null : (string) clean($doc->description, 'cases'),
+                'downloadUrl' => ($doc->file_path ?? $doc->path ?? null)
+                    ? route('applicant.cases.evidences.download', ['id' => $case->id, 'evidenceId' => $doc->id])
+                    : null,
+            ])->values(),
+            'hearings' => $hearings->map(fn (object $hearing): array => [
+                'id' => (int) $hearing->id,
+                'at' => EthiopianDate::format($hearing->hearing_at, withTime: true, separator: ' · '),
+                'type' => $hearing->type ?: null,
+                'location' => $hearing->location ?: null,
+                'notes' => $hearing->notes ?: null,
+            ])->values(),
+            'letters' => $letters->map(fn (object $letter): array => [
+                'id' => (int) $letter->id,
+                'title' => $letter->subject ?? $letter->template_title ?? __('cases.letters_section.letter'),
+                'reference' => $letter->reference_number ?: null,
+                'template' => $letter->template_title ?: null,
+                'author' => $letter->author_name ?: null,
+                'created' => $at($letter->created_at),
+                'previewUrl' => URL::signedRoute('letters.case-preview', ['letter' => $letter->id]),
+            ])->values(),
+            'decisions' => $decisions->map(fn (object $decision): array => [
+                'id' => (int) $decision->id,
+                'name' => $decision->name ?? __('dashboard.decisions'),
+                'date' => EthiopianDate::format($decision->decision_date ?: $decision->created_at),
+                'downloadUrl' => route('respondent.decisions.download', $decision->id),
+            ])->values(),
+        ]);
     }
 
     /**
@@ -196,7 +240,7 @@ class CaseSearchController extends Controller
     {
         $caseId = DB::table('court_cases')->where('case_number', $decision->case_number)->value('id');
 
-        abort_if(!$caseId, 404);
+        abort_if(! $caseId, 404);
         abort_unless($this->hasCaseAccess((int) $caseId), 403);
         abort_unless($decision->isDownloadableByParties(), 403);
 
@@ -206,7 +250,7 @@ class CaseSearchController extends Controller
     private function handleRespondentCaseView(object $case): void
     {
         $respondent = $this->resolveActingRespondent();
-        if (!$respondent) {
+        if (! $respondent) {
             return;
         }
 
@@ -221,7 +265,7 @@ class CaseSearchController extends Controller
 
     private function recordRespondentCaseView(int $caseId, ?int $respondentId, ?string $caseNumber): void
     {
-        if (!$respondentId) {
+        if (! $respondentId) {
             return;
         }
 
@@ -258,7 +302,7 @@ class CaseSearchController extends Controller
         }
 
         $adminEmail = null;
-        if (!empty($case->assigned_user_id)) {
+        if (! empty($case->assigned_user_id)) {
             $adminEmail = DB::table('users')->where('id', $case->assigned_user_id)->value('email');
         }
         $adminEmail = $adminEmail ?: config('mail.from.address');
@@ -306,8 +350,9 @@ class CaseSearchController extends Controller
     {
         $name = trim($respondent->full_name ?? '');
         if ($name === '') {
-            $name = trim(($respondent->first_name ?? '') . ' ' . ($respondent->last_name ?? ''));
+            $name = trim(($respondent->first_name ?? '').' '.($respondent->last_name ?? ''));
         }
+
         return $name !== '' ? $name : ($respondent->email ?? 'Respondent');
     }
 
@@ -327,61 +372,22 @@ class CaseSearchController extends Controller
                 ->get();
         }
 
-        return view('applicant.respondent.cases.my', [
-            'cases' => $cases,
+        return Inertia::render('Respondent/Cases/My', [
+            // Access is recorded in respondent_case_views, so links need no access code.
+            'cases' => $cases->map(fn (object $case): array => [
+                'caseNumber' => (string) $case->case_number,
+                'status' => (string) ($case->status ?? 'pending'),
+                'caseType' => $case->case_type,
+                'href' => route('respondent.cases.show', $case->case_number),
+            ])->values(),
         ]);
     }
 
     private function resolveActingRespondent(): ?Respondent
     {
         $applicant = Auth::guard('applicant')->user();
-        if (!$applicant) {
-            return null;
-        }
 
-        $respondent = Respondent::where('email', $applicant->email)->first();
-        if (!$respondent) {
-            $phone = $applicant->phone ?? 'resp_' . substr(md5((string) microtime(true)), 0, 12);
-            if (Respondent::where('phone', $phone)->where('email', '!=', $applicant->email)->exists()) {
-                $phone = 'resp_' . substr(md5(uniqid('', true)), 0, 12);
-            }
-
-            $respondent = Respondent::create([
-                'first_name'        => $applicant->first_name ?? '',
-                'middle_name'       => $applicant->middle_name ?? '',
-                'last_name'         => $applicant->last_name ?? '',
-                'gender'            => $applicant->gender ?? null,
-                'position'          => $applicant->position ?? '',
-                'organization_name' => $applicant->organization_name ?? '',
-                'address'           => $applicant->address ?? '',
-                'national_id'       => $this->applicantNationalId($applicant),
-                'phone'             => $phone,
-                'email'             => $applicant->email,
-                'password'          => \Illuminate\Support\Str::random(32),
-            ]);
-        } else {
-            $dirty = false;
-            $maybeNationalId = $this->applicantNationalId($applicant);
-            if (!$respondent->national_id && $maybeNationalId) {
-                $respondent->national_id = $maybeNationalId;
-                $dirty = true;
-            }
-            if ($dirty) {
-                $respondent->save();
-            }
-        }
-
-        return $respondent;
-    }
-
-    private function applicantNationalId($applicant): ?string
-    {
-        // Normalize to digits-only and trim to 16 characters to respect DB column length.
-        $digits = preg_replace('/\D/', '', (string) ($applicant->getRawOriginal('national_id_number') ?? $applicant->national_id_number ?? ''));
-        if ($digits === '') {
-            return null;
-        }
-        return substr($digits, 0, 16);
+        return $applicant ? app(ActingRespondent::class)->resolve($applicant) : null;
     }
 
     private function caseCodeMatches(object $case, string $provided): bool
@@ -466,7 +472,7 @@ class CaseSearchController extends Controller
     private function hasCaseAccess(int $caseId): bool
     {
         $access = session('respondent_case_access', []);
-        if (!is_array($access)) {
+        if (! is_array($access)) {
             return false;
         }
 

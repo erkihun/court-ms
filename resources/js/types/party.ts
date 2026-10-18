@@ -33,3 +33,34 @@ export interface RespondentNotificationFeedData {
     count: number;
     items: RespondentNotificationItem[];
 }
+
+/** An accepted respondent response, as the case owner sees it (App\Support\Party\RespondentResponseView). */
+export interface RespondentResponseData {
+    caseId: number;
+    caseNumber: string;
+    id: number;
+    title: string;
+    responseNumber: string | null;
+    created: string;
+    respondentName: string | null;
+    respondentEmail: string | null;
+    respondentPhone: string | null;
+    respondentOrganization: string | null;
+    summary: string | null;
+    descriptionHtml: string;
+    pdfInlineUrl: string | null;
+}
+
+export interface ResponseReplyData {
+    id: number;
+    description: string;
+    reviewStatus: 'awaiting_review' | 'accepted' | 'returned' | 'rejected';
+    reviewNote: string | null;
+    created: string;
+    locked: boolean;
+    showUrl: string;
+    editUrl: string;
+    destroyUrl: string;
+    downloadUrl: string;
+    inlineUrl: string;
+}

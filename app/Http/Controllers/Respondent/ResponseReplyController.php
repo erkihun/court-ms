@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Respondent;
 
 use App\Http\Controllers\Controller;
-use App\Models\Respondent;
+use App\Services\Party\ActingRespondent;
+use App\Support\EthiopianDate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Inertia\Inertia;
 
 class ResponseReplyController extends Controller
 {
@@ -44,7 +46,15 @@ class ResponseReplyController extends Controller
             ->orderByDesc('arr.created_at')
             ->paginate(15);
 
-        return view('applicant.respondent.response-replies.index', compact('replies'));
+        return Inertia::render('Respondent/ResponseReplies/Index', [
+            'replies' => $replies->through(fn (object $reply): array => [
+                'id' => (int) $reply->id,
+                'caseNumber' => (string) $reply->case_number,
+                'responseNumber' => $reply->response_number ?: null,
+                'applicantName' => $this->applicantName($reply),
+                'uploaded' => EthiopianDate::format($reply->created_at, withTime: true),
+            ]),
+        ]);
     }
 
     public function show(int $replyId)
@@ -74,9 +84,26 @@ class ResponseReplyController extends Controller
             ->where('arr.review_status', 'accepted')
             ->first();
 
-        abort_if(!$reply, 404);
+        abort_if(! $reply, 404);
 
-        return view('applicant.respondent.response-replies.show', compact('reply'));
+        return Inertia::render('Respondent/ResponseReplies/Show', [
+            'reply' => [
+                'id' => (int) $reply->id,
+                'caseNumber' => (string) $reply->case_number,
+                'responseNumber' => $reply->response_number ?: null,
+                'applicantName' => $this->applicantName($reply),
+                'description' => (string) $reply->description,
+                'downloadUrl' => route('respondent.response-replies.download', $reply->id),
+                'inlineUrl' => route('respondent.response-replies.download', [$reply->id, 'inline' => 1]),
+            ],
+        ]);
+    }
+
+    private function applicantName(object $reply): ?string
+    {
+        $name = trim(implode(' ', array_filter([$reply->applicant_first_name, $reply->applicant_middle_name, $reply->applicant_last_name])));
+
+        return $name !== '' ? $name : null;
     }
 
     private function currentRespondentId(): int
@@ -84,38 +111,6 @@ class ResponseReplyController extends Controller
         $applicant = Auth::guard('applicant')->user();
         abort_unless($applicant, 403);
 
-        $respondent = Respondent::where('email', $applicant->email)->first();
-        if (!$respondent) {
-            $phone = $applicant->phone ?? 'resp_' . substr(md5((string) microtime(true)), 0, 12);
-            if (Respondent::where('phone', $phone)->where('email', '!=', $applicant->email)->exists()) {
-                $phone = 'resp_' . substr(md5(uniqid('', true)), 0, 12);
-            }
-
-            $respondent = Respondent::create([
-                'first_name'        => $applicant->first_name ?? '',
-                'middle_name'       => $applicant->middle_name ?? '',
-                'last_name'         => $applicant->last_name ?? '',
-                'gender'            => $applicant->gender ?? null,
-                'position'          => $applicant->position ?? '',
-                'organization_name' => $applicant->organization_name ?? '',
-                'address'           => $applicant->address ?? '',
-                'national_id'       => $this->applicantNationalId($applicant),
-                'phone'             => $phone,
-                'email'             => $applicant->email,
-                'password'          => $applicant->password,
-            ]);
-        }
-
-        return (int) $respondent->id;
-    }
-
-    private function applicantNationalId($applicant): ?string
-    {
-        $digits = preg_replace('/\D/', '', (string) ($applicant->getRawOriginal('national_id_number') ?? $applicant->national_id_number ?? ''));
-        if ($digits === '') {
-            return null;
-        }
-
-        return substr($digits, 0, 16);
+        return (int) app(ActingRespondent::class)->resolve($applicant)->id;
     }
 }
