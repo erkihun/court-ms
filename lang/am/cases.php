@@ -77,7 +77,7 @@ return array (
   'copied' => 'ተቀድቷል!',
   'copy' => 'ቅዳ',
   'court_staff' => 'የ ፍርድ ቤት ሰራተኛ',
-  'deleted_successfully' => 'Deleted successfully',
+  'deleted_successfully' => 'በተሳካ ሁኔታ ተሰርዟል።',
   'details' => 
   array (
     'case_details' => 'የ መዝገቡ ዝርዝር ሁኔታ',
@@ -167,7 +167,7 @@ return array (
   array (
     'edit_only_pending' => 'ክስ በመጠባበቅ ላይ ሳለ ብቻ መርማሪያ ይችላሉ።',
     'editing_disabled' => 'ክስ በመጠባበቅ ላይ ስለማይሆን አርትዕ ተከልክሏል።',
-    'edit_page_subtitle' => 'Edit page subtitle',
+    'edit_page_subtitle' => 'ከታች ያሉትን መረጃዎች አስተካክለው መዝገቡን ለግምገማ እንደገና ያስገቡ።',
   ),
   'inline' => 'ውስጥ ተገብሯል',
   'items' => 'እቃዎች',
@@ -225,7 +225,7 @@ return array (
     'send_message' => 'መልዕክት ላክ',
     'court_staff' => 'የ court ሰራተኛ',
     'system' => 'ስርዓት',
-    'subtitle' => 'Subtitle',
+    'subtitle' => 'ስለዚህ መዝገብ ከፍርድ ቤቱ መዝገብ ቤት ጋር የሚደረግ የመልዕክት ልውውጥ።',
   ),
   'my_cases' => 'የኔ መዝገብ',
   'name' => 'ስም',
@@ -482,4 +482,24 @@ return array (
     'adjust_search_hint' => 'የፍለጋዎን መስፈርት በማስተካከል ይሞክሩ።',
     'prefix_hint' => 'የመዝገብ ቁጥሩ መነሻ ሆኖ ያገለግላል (ለምሳሌ PREFIX/00001/YY)።',
   ),
+  'message_sent' => 'መልእክቱ ተልኳል።',
+  'access_code' => 'የመዝገብ መዳረሻ ኮድ',
+  'review_column' => 'ግምገማ',
+  'validation' => array (
+    'certify_appeal' => 'የይግባኙን ትክክለኛነት ማረጋገጥ አለብዎት።',
+    'certify_evidence' => 'ያቀረቡት ማስረጃ እውነት መሆኑን ማረጋገጥ አለብዎት።',
+    'witness_phone_unique' => 'የምስክሮች ስልክ ቁጥሮች የተለያዩ መሆን አለባቸው።',
+    'witness_email_unique' => 'የምስክሮች ኢሜይል አድራሻዎች የተለያዩ መሆን አለባቸው።',
+    'word_limit' => 'እያንዳንዱ መጻፊያ ከ1,300 ቃላት በታች መሆን አለበት።',
+  ),
+  'messages_flash' => array (
+    'created' => 'መዝገቡ በተሳካ ሁኔታ ተፈጥሯል። ቁጥር፦ :number',
+    'create_failed' => 'መዝገቡን መፍጠር አልተቻለም። እባክዎ እንደገና ይሞክሩ።',
+    'updated' => 'መዝገቡ ተዘምኗል።',
+    'update_failed' => 'መዝገቡን ማዘመን አልተቻለም። እባክዎ እንደገና ይሞክሩ።',
+    'evidence_removed' => 'ማስረጃው ተወግዷል።',
+    'witness_removed' => 'ምስክሩ ተወግዷል።',
+  ),
+  'evidence_size_limit' => 'እያንዳንዱ ማስረጃ ፋይል ከ :size MB መብለጥ የለበትም።',
+  'case_number_format' => 'የመዝገብ ቁጥር ቅርጸት',
 );
