@@ -9,6 +9,8 @@ use App\Services\ResponseNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Support\Party\RespondentResponseView;
+use Inertia\Inertia;
 
 class ApplicantResponseReplyController extends Controller
 {
@@ -40,7 +42,13 @@ class ApplicantResponseReplyController extends Controller
             ->orderByDesc('arr.created_at')
             ->paginate(15);
 
-        return view('applicant.responses.index', compact('replies'));
+        return Inertia::render('Applicant/ResponseReplies/Index', [
+            'replies' => $replies->through(fn (object $reply): array => [
+                ...RespondentResponseView::reply($reply, (int) $reply->case_id, (int) $reply->respondent_response_id),
+                'caseNumber' => (string) $reply->case_number,
+                'responseNumber' => $reply->response_number ?: null,
+            ]),
+        ]);
     }
 
     public function create(int $caseId, int $responseId)
@@ -50,7 +58,11 @@ class ApplicantResponseReplyController extends Controller
 
         [$case, $response] = $this->loadCaseAndResponse($caseId, $responseId, $applicantId);
 
-        return view('applicant.responses.create', compact('case', 'response'));
+        return Inertia::render('Applicant/ResponseReplies/Form', [
+            'response' => RespondentResponseView::response($case, $response),
+            'applicantName' => auth('applicant')->user()?->full_name,
+            'reply' => null,
+        ]);
     }
 
     public function store(Request $request, int $caseId, int $responseId)
@@ -98,7 +110,11 @@ class ApplicantResponseReplyController extends Controller
         [$case, $response] = $this->loadCaseAndResponse($caseId, $responseId, $applicantId);
         $reply = $this->loadReply($replyId, $case->id, $response->id, $applicantId);
 
-        return view('applicant.responses.show', compact('case', 'response', 'reply'));
+        return Inertia::render('Applicant/ResponseReplies/Show', [
+            'response' => RespondentResponseView::response($case, $response),
+            'applicantName' => trim(implode(' ', array_filter([$reply->applicant_first_name, $reply->applicant_middle_name, $reply->applicant_last_name]))) ?: null,
+            'reply' => RespondentResponseView::reply($reply, (int) $case->id, (int) $response->id),
+        ]);
     }
 
     public function edit(int $caseId, int $responseId, int $replyId)
@@ -110,7 +126,11 @@ class ApplicantResponseReplyController extends Controller
         $reply = $this->loadReply($replyId, $case->id, $response->id, $applicantId);
         $this->ensureEditableReply($reply);
 
-        return view('applicant.responses.edit', compact('case', 'response', 'reply'));
+        return Inertia::render('Applicant/ResponseReplies/Form', [
+            'response' => RespondentResponseView::response($case, $response),
+            'applicantName' => auth('applicant')->user()?->full_name,
+            'reply' => RespondentResponseView::reply($reply, (int) $case->id, (int) $response->id),
+        ]);
     }
 
     public function update(Request $request, int $caseId, int $responseId, int $replyId)

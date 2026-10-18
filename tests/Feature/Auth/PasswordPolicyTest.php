@@ -1,16 +1,20 @@
 <?php
 
-test('admin registration rejects weak passwords', function () {
-    $response = $this->post('/register', [
-        'name' => 'Weak Password User',
-        'email' => 'weak@example.com',
-        'national_id_number' => '1234567890123456',
-        'password' => 'password',
-        'password_confirmation' => 'password',
-    ]);
+test('staff password changes reject weak passwords', function () {
+    // Staff accounts are created by administrators; the policy applies when a
+    // staff member sets their own password.
+    $user = \App\Models\User::factory()->create(['password' => \Illuminate\Support\Facades\Hash::make('Current!Passw0rd#1')]);
 
-    $response->assertSessionHasErrors('password');
-    $this->assertGuest();
+    $this->actingAs($user)
+        ->from(route('profile.edit'))
+        ->put(route('password.update'), [
+            'current_password' => 'Current!Passw0rd#1',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ])
+        ->assertSessionHasErrorsIn('updatePassword', 'password');
+
+    expect(\Illuminate\Support\Facades\Hash::check('Current!Passw0rd#1', $user->fresh()->password))->toBeTrue();
 });
 
 test('applicant registration rejects weak passwords', function () {

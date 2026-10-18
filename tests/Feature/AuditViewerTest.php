@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Inertia\Testing\AssertableInertia as Assert;
 
 uses(RefreshDatabase::class);
 
@@ -97,13 +98,15 @@ test('authorized administrator sees every audit source and evidence field', func
     $this->actingAs($admin)
         ->get(route('admin.audit'))
         ->assertOk()
-        ->assertSee('End-to-End Audit Trail')
-        ->assertSee('audit.system.example')
-        ->assertSee('audit_case_example')
-        ->assertSee('AUDIT-CASE-001')
-        ->assertSee('Model history')
-        ->assertSee('req-system-001')
-        ->assertSee('HTTP 422');
+        ->assertInertia(function (Assert $page): void {
+            $page->component('Admin/Audit/Index');
+            $events = collect($page->toArray()['props']['events']['data'])->keyBy('action');
+
+            expect($events['audit.system.example'])->toMatchArray(['source' => 'system', 'requestId' => 'req-system-001', 'responseStatus' => 422, 'outcome' => 'failure'])
+                ->and($events['audit.system.example']['details'])->toContain('[redacted]')
+                ->and($events['audit_case_example'])->toMatchArray(['source' => 'case', 'targetLabel' => 'AUDIT-CASE-001'])
+                ->and($events['updated'])->toMatchArray(['source' => 'legacy_model', 'sourceLabel' => __('audit.sources.legacy_model')]);
+        });
 });
 
 test('audit filters apply across the unified timeline', function (): void {
@@ -113,8 +116,10 @@ test('audit filters apply across the unified timeline', function (): void {
     $this->actingAs($admin)
         ->get(route('admin.audit', ['source' => 'case']))
         ->assertOk()
-        ->assertSee('audit_case_example')
-        ->assertDontSee('audit.system.example');
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.source', 'case')
+            ->where('events.total', 1)
+            ->where('events.data.0.action', 'audit_case_example'));
 });
 
 test('destructive activity states who deleted which record', function (): void {
@@ -168,8 +173,9 @@ test('destructive activity states who deleted which record', function (): void {
     $this->actingAs($admin)
         ->get(route('admin.audit', ['search' => $requestId]))
         ->assertOk()
-        ->assertSee('Deleted Letter Template')
-        ->assertSee('ICT Support: Deleted Letter Template - Letter Template "Notice Template" #7.');
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('events.data.0.actionLabel', 'Deleted Letter Template')
+            ->where('events.data.0.description', 'ICT Support: Deleted Letter Template - Letter Template "Notice Template" #7.'));
 });
 
 test('staff without audit permission cannot open the audit trail', function (): void {

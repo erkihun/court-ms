@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Applicant;
 
+use App\Http\Controllers\Concerns\RendersAuthPages;
 use App\Http\Controllers\Controller;
 use App\Models\Applicant;
 use App\Notifications\PasswordResetOtp;
@@ -15,11 +16,13 @@ use Illuminate\Validation\Rules\Password;
 
 class ApplicantPasswordController extends Controller
 {
+    use RendersAuthPages;
+
     // ── Step 1: show email form ────────────────────────────────────────────────
 
     public function showLinkRequestForm()
     {
-        return view('applicant.auth.forgot');
+        return $this->authPage('Auth/ForgotPassword', ['portal' => 'party']);
     }
 
     // ── Step 2: send OTP to email ──────────────────────────────────────────────
@@ -76,7 +79,7 @@ class ApplicantPasswordController extends Controller
             return redirect()->route('applicant.password.request');
         }
 
-        return view('applicant.auth.password-otp');
+        return $this->authPage('Auth/PasswordOtp', ['portal' => 'party']);
     }
 
     // ── Step 4: verify OTP ─────────────────────────────────────────────────────
@@ -161,7 +164,7 @@ class ApplicantPasswordController extends Controller
             return redirect()->route('applicant.password.request');
         }
 
-        return view('applicant.auth.reset-otp');
+        return $this->authPage('Auth/ResetPassword', ['portal' => 'party']);
     }
 
     // ── Step 6: save new password ─────────────────────────────────────────────

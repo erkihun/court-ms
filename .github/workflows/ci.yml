@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Lint, types, build and tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+          MYSQL_DATABASE: court_ms_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, intl, gd, zip, exif, pdo_mysql, bcmath
+          coverage: none
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Composer cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache/files
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Install JS dependencies
+        run: npm ci --no-audit --no-fund
+
+      # tsc --noEmit + vite build; the tests also need the Vite manifest.
+      - name: Typecheck and build assets
+        run: npm run build
+
+      - name: Route types are up to date
+        run: |
+          php artisan ziggy:generate resources/js/types/ziggy.d.ts --types-only
+          git diff --exit-code resources/js/types/ziggy.d.ts
+
+      # New PHP files must be Pint-clean. Legacy files are not reformatted
+      # wholesale, and lang files keep the array() style they are exported in.
+      - name: Pint on new PHP files
+        if: github.event_name == 'pull_request'
+        run: |
+          files=$(git diff --name-only --diff-filter=A "origin/${{ github.base_ref }}...HEAD" -- '*.php' | grep -v '^lang/' || true)
+          if [ -n "$files" ]; then ./vendor/bin/pint --test $files; else echo "No new PHP files."; fi
+
+      - name: Tests
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+        run: php artisan test

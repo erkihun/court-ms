@@ -16,6 +16,7 @@ return array (
   'title' => 'ዳሽቦርድ',
   'Dashboard' => 'ዳሽቦርድ',
   'total_cases' => 'ጠቅላላ መዝገቦች',
+  'no_case_access' => 'የመዝገብ ስታቲስቲክስ መዝገቦችን ማየት ለሚችሉ ሠራተኞች ብቻ ይታያል።',
   'pending' => 'በመጠባበቅ ላይ',
   'resolved' => 'ምላሽ ያገኙ',
   'active_users' => 'ንቁ ተጠቃሚዎች',

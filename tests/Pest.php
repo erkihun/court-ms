@@ -1,5 +1,15 @@
 <?php
 
+use App\Models\Applicant;
+use App\Models\Permission;
+use App\Models\Role;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Tests\TestCase;
+
 /*
 |--------------------------------------------------------------------------
 | Test Case
@@ -11,8 +21,8 @@
 |
 */
 
-pest()->extend(Tests\TestCase::class)
-    ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+pest()->extend(TestCase::class)
+    ->use(RefreshDatabase::class)
     ->in('Feature');
 
 /*
@@ -41,7 +51,58 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/** A verified, active applicant; `$tag` keeps email, phone and national ID unique. */
+function partyApplicant(string $tag): Applicant
 {
-    // ..
+    $applicant = Applicant::create([
+        'first_name' => 'Hana',
+        'middle_name' => 'B',
+        'last_name' => 'Party',
+        'gender' => 'female',
+        'position' => 'Officer',
+        'organization_name' => 'Org',
+        'phone' => '09'.substr(sprintf('%08d', crc32($tag)), 0, 8),
+        'email' => "party-{$tag}@example.test",
+        'address' => 'Addis Ababa',
+        'national_id_number' => substr(sprintf('%016d', crc32($tag)).'0000000000000000', 0, 16),
+        'password' => Hash::make('password'),
+        'is_active' => true,
+        'is_lawyer' => false,
+    ]);
+    $applicant->markEmailAsVerified();
+
+    return $applicant;
+}
+
+/** A pending, awaiting-review case owned by `$applicant`. */
+function partyCase(Applicant $applicant, string $number, array $overrides = []): int
+{
+    $typeId = DB::table('case_types')->insertGetId(['name' => 'Type '.$number, 'created_at' => now(), 'updated_at' => now()]);
+
+    return DB::table('court_cases')->insertGetId([
+        'applicant_id' => $applicant->id,
+        'case_number' => $number,
+        'title' => 'Case '.$number,
+        'case_type_id' => $typeId,
+        'filing_date' => now()->toDateString(),
+        'status' => 'pending',
+        'review_status' => 'awaiting_review',
+        'created_at' => now(),
+        'updated_at' => now(),
+        ...$overrides,
+    ]);
+}
+
+/** An active, verified staff user holding exactly `$permissions` (role name 'admin' grants everything). */
+function inertiaStaff(array $permissions, string $roleName = ''): User
+{
+    $role = Role::query()->create(['name' => $roleName !== '' ? $roleName : 'inertia-'.Str::uuid()]);
+    $role->permissions()->sync(collect($permissions)->map(
+        fn (string $name): int => Permission::query()->firstOrCreate(['name' => $name], ['label' => Str::headline($name)])->id,
+    ));
+
+    $user = User::factory()->create(['status' => 'active', 'email_verified_at' => now()]);
+    $user->roles()->attach($role);
+
+    return $user;
 }

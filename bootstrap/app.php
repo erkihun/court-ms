@@ -11,6 +11,7 @@ use App\Http\Middleware\EnforceSystemAvailability;
 use App\Http\Middleware\EnsureMfaIsVerified;
 use App\Http\Middleware\ForceHttps;
 use App\Http\Middleware\ForcePasswordChange;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\PurgeLegacySessionCookies;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\RequirePermission;
@@ -27,6 +28,8 @@ use Illuminate\Http\Request;
 use Illuminate\Session\TokenMismatchException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -89,11 +92,24 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('web', EnsureMfaIsVerified::class);
         $middleware->appendToGroup('web', SystemAuditMiddleware::class);
         $middleware->appendToGroup('api', SystemAuditMiddleware::class);
+        $middleware->appendToGroup('web', HandleInertiaRequests::class);
 
         // If you ever need global middleware:
         // $middleware->append(\App\Http\Middleware\SomethingGlobal::class);
     })
     ->withExceptions(function ($exceptions) {
+        // Inertia visits expect a page, not an HTML error document: render the
+        // React error page for them. Full page loads keep the Blade error views.
+        $exceptions->respond(function (SymfonyResponse $response, Throwable $e, Request $request) {
+            if ($request->header('X-Inertia') && in_array($response->getStatusCode(), [403, 404, 429, 500, 503], true)) {
+                return Inertia::render('Error', ['status' => $response->getStatusCode()])
+                    ->toResponse($request)
+                    ->setStatusCode($response->getStatusCode());
+            }
+
+            return $response;
+        });
+
         $exceptions->dontFlash([
             'mail_password',
             'telegram_bot_token',

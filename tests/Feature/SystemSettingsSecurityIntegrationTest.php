@@ -10,6 +10,7 @@ use Illuminate\Notifications\SendQueuedNotifications;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
+use Inertia\Testing\AssertableInertia as Assert;
 
 uses(RefreshDatabase::class);
 
@@ -61,24 +62,61 @@ test('security tab displays live integrated protection status', function () {
     $this->actingAs(systemSettingsAdministrator())
         ->get(route('settings.system.edit', ['tab' => 'security']))
         ->assertOk()
-        ->assertSee(__('settings.security_posture'))
-        ->assertSee(__('settings.password_strength'));
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Admin/Settings/System')
+            ->where('tab', 'security')
+            ->where('securityMetrics.strong_password', true)
+            ->where('securityMetrics.strict_lockout', true)
+            ->has('securityMetrics.score'));
 
     expect(config('session.lifetime'))->toBe(45);
 });
 
-test('saved SMTP password is never rendered into the settings page', function () {
+test('saved channel secrets are never rendered into the settings page', function () {
     SystemSetting::query()->create([
         'app_name' => 'Court MS',
         'mail_enabled' => true,
         'mail_host' => 'smtp.example.test',
         'mail_password' => 'smtp-secret-value',
+        'telegram_bot_token' => 'telegram-secret-value',
+        'sms_api_key' => 'sms-key-secret-value',
+        'sms_api_secret' => 'sms-secret-secret-value',
     ]);
 
     $this->actingAs(systemSettingsAdministrator())
         ->get(route('settings.system.edit', ['tab' => 'notifications']))
         ->assertOk()
-        ->assertDontSee('smtp-secret-value', false);
+        ->assertDontSee('smtp-secret-value', false)
+        ->assertDontSee('telegram-secret-value', false)
+        ->assertDontSee('sms-key-secret-value', false)
+        ->assertDontSee('sms-secret-secret-value', false)
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('storedSecrets.mail_password', true)
+            ->where('storedSecrets.telegram_bot_token', true)
+            ->where('settings.mail_host', 'smtp.example.test')
+            ->missing('settings.mail_password')
+            ->missing('settings.telegram_bot_token'));
+});
+
+test('a blank secret keeps the stored value and a new one replaces it', function () {
+    SystemSetting::query()->create([
+        'app_name' => 'Court MS',
+        'telegram_bot_token' => 'old-token',
+        'sms_api_key' => 'old-key',
+    ]);
+
+    $this->actingAs(systemSettingsAdministrator())
+        ->post(route('settings.system.update'), [
+            'app_name' => 'Court MS',
+            'telegram_bot_token' => '',
+            'sms_api_key' => 'new-key',
+            'tab' => 'notifications',
+        ])
+        ->assertRedirect(route('settings.system.edit', ['tab' => 'notifications']));
+
+    $settings = SystemSetting::query()->sole();
+    expect($settings->telegram_bot_token)->toBe('old-token')
+        ->and($settings->sms_api_key)->toBe('new-key');
 });
 
 test('SMTP secrets are not flashed back after validation errors', function () {

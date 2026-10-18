@@ -3,25 +3,30 @@
 namespace App\Http\Controllers\Respondent;
 
 use App\Http\Controllers\Controller;
-use App\Models\Respondent;
+use App\Services\Party\ActingRespondent;
+use App\Services\Party\RespondentNotificationFeed;
+use App\Support\EthiopianDate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\URL;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(): Response
     {
         Session::put('acting_as_respondent', true);
 
         $applicant = Auth::guard('applicant')->user();
         abort_unless($applicant, 403);
 
-        $respondent = $this->resolveActingRespondent($applicant);
+        $respondent = app(ActingRespondent::class)->resolve($applicant);
 
         $stats = [
-            'cases'        => DB::table('respondent_case_views')->where('respondent_id', $respondent->id)->count(),
-            'responses'    => DB::table('respondent_responses')->where('respondent_id', $respondent->id)->count(),
+            'cases' => DB::table('respondent_case_views')->where('respondent_id', $respondent->id)->count(),
+            'responses' => DB::table('respondent_responses')->where('respondent_id', $respondent->id)->count(),
             'response_replies' => DB::table('applicant_response_replies as arr')
                 ->join('respondent_responses as rr', 'rr.id', '=', 'arr.respondent_response_id')
                 ->join('respondent_case_views as rcv', function ($join) use ($respondent) {
@@ -31,7 +36,7 @@ class DashboardController extends Controller
                 ->where('rr.respondent_id', $respondent->id)
                 ->where('arr.review_status', 'accepted')
                 ->count(),
-            'notifications'=> $this->countUnseenNotifications($respondent->id),
+            'notifications' => app(RespondentNotificationFeed::class)->count($respondent->id),
         ];
 
         $recentCases = DB::table('respondent_case_views as v')
@@ -89,70 +94,36 @@ class DashboardController extends Controller
             )
             ->get();
 
-        return view('applicant.respondent.dashboard', [
-            'stats' => $stats,
-            'recentCases' => $recentCases,
-            'letters' => $letters,
-            'responseReplies' => $responseReplies,
+        return Inertia::render('Respondent/Dashboard', [
+            'stats' => [
+                'cases' => (int) $stats['cases'],
+                'responses' => (int) $stats['responses'],
+                'responseReplies' => (int) $stats['response_replies'],
+                'notifications' => (int) $stats['notifications'],
+            ],
+            'recentCases' => $recentCases->map(fn (object $case): array => [
+                'caseNumber' => (string) $case->case_number,
+                'title' => $case->title,
+                'status' => $case->status,
+                'href' => route('respondent.cases.show', $case->case_number),
+            ])->values(),
+            'letters' => $letters->map(fn (object $letter): array => [
+                'id' => (int) $letter->id,
+                'title' => $letter->subject ?? $letter->template_title ?? __('respondent.letter'),
+                'caseNumber' => $letter->case_number,
+                'referenceNumber' => $letter->reference_number,
+                'templateTitle' => $letter->template_title,
+                'authorName' => $letter->author_name,
+                'date' => EthiopianDate::format($letter->created_at, withTime: true),
+                'previewUrl' => URL::signedRoute('letters.case-preview', ['letter' => $letter->id]),
+            ])->values(),
+            'responseReplies' => $responseReplies->map(fn (object $reply): array => [
+                'id' => (int) $reply->id,
+                'caseNumber' => $reply->case_number,
+                'responseNumber' => $reply->response_number ?: null,
+                'applicantName' => trim(implode(' ', array_filter([$reply->applicant_first_name, $reply->applicant_middle_name, $reply->applicant_last_name]))) ?: null,
+                'href' => route('respondent.response-replies.show', $reply->id),
+            ])->values(),
         ]);
-    }
-
-    private function countUnseenNotifications(int $respondentId): int
-    {
-        return DB::table('respondent_case_views as v')
-            ->where('v.respondent_id', $respondentId)
-            ->whereNotExists(function ($q) use ($respondentId) {
-                $q->from('respondent_notification_reads as r')
-                    ->whereColumn('r.source_id', 'v.id')
-                    ->where('r.type', 'respondent_view')
-                    ->where('r.respondent_id', $respondentId);
-            })
-            ->count();
-    }
-
-    private function resolveActingRespondent($applicant): Respondent
-    {
-        $respondent = Respondent::where('email', $applicant->email)->first();
-        if (!$respondent) {
-            $phone = $applicant->phone ?? 'resp_' . substr(md5((string) microtime(true)), 0, 12);
-            if (Respondent::where('phone', $phone)->where('email', '!=', $applicant->email)->exists()) {
-                $phone = 'resp_' . substr(md5(uniqid('', true)), 0, 12);
-            }
-
-            $respondent = Respondent::create([
-                'first_name'        => $applicant->first_name ?? '',
-                'middle_name'       => $applicant->middle_name ?? '',
-                'last_name'         => $applicant->last_name ?? '',
-                'gender'            => $applicant->gender ?? null,
-                'position'          => $applicant->position ?? '',
-                'organization_name' => $applicant->organization_name ?? '',
-                'address'           => $applicant->address ?? '',
-                'national_id'       => $this->applicantNationalId($applicant),
-                'phone'             => $phone,
-                'email'             => $applicant->email,
-                'password'          => $applicant->password,
-            ]);
-        } else {
-            $dirty = false;
-            $maybeNationalId = $this->applicantNationalId($applicant);
-            if (!$respondent->national_id && $maybeNationalId) {
-                $respondent->national_id = $maybeNationalId;
-                $dirty = true;
-            }
-            if ($dirty) {
-                $respondent->save();
-            }
-        }
-
-        return $respondent;
-    }
-
-    private function applicantNationalId($applicant): ?string
-    {
-        $digits = preg_replace('/\D/', '', (string) ($applicant->getRawOriginal('national_id_number') ?? $applicant->national_id_number ?? ''));
-        if ($digits === '') {
-            return null;
-        }
-        return substr($digits, 0, 16);
     }
 }

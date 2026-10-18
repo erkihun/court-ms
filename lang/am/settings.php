@@ -229,4 +229,7 @@ return [
     'unsaved_changes'       => 'ያልተቀመጡ ለውጦች አሉ',
     'tab_has_errors'        => 'ይህ ትር የማረጋገጫ ስህተቶች አሉት',
 
+    'show_value' => 'ዋጋውን አሳይ',
+    'hide_value' => 'ዋጋውን ደብቅ',
+    'secret_saved_hint' => 'ዋጋ ተቀምጧል። ለማቆየት ባዶ ይተዉት፤ የተቀመጠው ዋጋ ፈጽሞ አይታይም።',
 ];

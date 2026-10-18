@@ -207,4 +207,13 @@ return [
     'stage_closed' => 'ተዘግቷል',
     'stage_declined' => 'ተቀባይነት አላገኘም',
     'stage_approved' => 'ጸድቋል',
+    'account_deactivated' => 'ይህ መለያ ተሰናክሏል።',
+    'signed_in' => 'ገብተዋል።',
+    'password_reset_sign_in' => 'የይለፍ ቃል በትክክል ተቀይሯል። እባክዎ ይግቡ።',
+    'password_updated_sign_in_again' => 'የይለፍ ቃል ተቀይሯል። እባክዎ እንደገና ይግቡ።',
+    'profile_updated' => 'መገለጫው ተዘምኗል።',
+    'current_password_required_for_new' => 'አዲስ የይለፍ ቃል ለማዘጋጀት አሁን ያለውን የይለፍ ቃል ያስገቡ።',
+    'signature_admin_only' => 'ፊርማዎን መቀየር የሚችለው ሥልጣን ያለው አስተዳዳሪ ብቻ ነው።',
+    'no_signature_uploaded' => 'ምንም ፊርማ አልተጫነም።',
+    'update_password' => 'የይለፍ ቃል ያዘምኑ',
 ];

@@ -177,6 +177,7 @@ return array (
   'cases' => 
   array (
     'search_placeholder' => 'Search cases… (number, title, type)',
+    'search_cases' => 'Search cases',
   ),
   'Theme' => 'Theme',
   'signature' => 'Signature',

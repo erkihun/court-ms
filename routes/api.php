@@ -6,9 +6,17 @@ use App\Http\Controllers\Api\CaseMessageController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\LookupController;
 use App\Http\Controllers\Api\RespondentResponseController;
+use App\Http\Controllers\TranslationController;
+use App\Support\Translations;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', HealthController::class);
+
+// UI strings for the React frontend. Lives on the session-less api group on
+// purpose: the response is publicly cacheable, so it must never set a cookie.
+Route::get('/i18n/{locale}.json', [TranslationController::class, 'show'])
+    ->whereIn('locale', Translations::LOCALES)
+    ->name('i18n.messages');
 
 Route::prefix('v1')
     ->middleware('throttle:api-ip-hourly')

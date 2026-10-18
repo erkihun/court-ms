@@ -28,6 +28,7 @@ return [
     ],
 
     'meta' => [
+        'page_title' => 'የአስተዳደር ፍትሕ',
         'title' => 'የአስተዳደር ፍትሕ | PSHRDBATC',
         'description' => 'መዝገቦችን ለማቅረብ፣ ችሎቶችን ለመከታተል እና የችሎት መረጃዎችን ለመገምገም የሚያገለግል የአስተዳደር ችሎት ዲጂታል መግቢያ።',
         'keywords' => 'የአስተዳደር ችሎት፣ የጉዳይ አስተዳደር፣ ፍትሕ፣ ችሎቶች፣ ትንታኔ',
@@ -36,6 +37,16 @@ return [
     ],
 
     'accessibility' => [
+        'main_navigation' => 'ዋና ማውጫ',
+        'close_menu' => 'ማውጫውን ዝጋ',
+        'accent_color' => 'የገጽታ ቀለም',
+        'hero_carousel' => 'ዋና ዋና መረጃዎች',
+        'slide_of' => 'ስላይድ :current ከ :total',
+        'previous_slide' => 'ቀዳሚ ስላይድ',
+        'next_slide' => 'ቀጣይ ስላይድ',
+        'go_to_slide' => 'ወደ ስላይድ :number ይሂዱ',
+        'pause_slideshow' => 'ስላይዶቹን አቁም',
+        'play_slideshow' => 'ስላይዶቹን አጫውት',
         'skip_to_content' => 'በቀጥታ ወደ ይዘቱ ይለፉ',
         'menu_toggle' => 'የማውጫ ቁልፍ',
         'scroll_down' => 'ወደ ታችኛው ክፍል ይውረዱ',
@@ -314,6 +325,11 @@ return [
     ],
 
     'resources' => [
+        'page_title' => 'መረጃዎች እና ህትመቶች',
+        'page_description' => 'ይፋዊ ህትመቶች፣ ሊወርዱ የሚችሉ ቅጾች፣ የችሎት ሰነዶች እና ማሳወቂያዎች።',
+        'filter_label' => 'በአይነት አጣራ',
+        'filter_all' => 'ሁሉም',
+        'empty' => 'እስካሁን የታተመ መረጃ የለም።',
         'section_badge' => 'የችሎቱ መረጃዎች',
         'section_title' => 'ቅጾች፣ ሰነዶች እና ማሳወቂያዎች',
         'section_description' => 'በችሎቱ የታተሙ ቅጾችን፣ መመሪያዎችን፣ ሰነዶችንና ይፋዊ ማሳወቂያዎችን ያግኙ።',

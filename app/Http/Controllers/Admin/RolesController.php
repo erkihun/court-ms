@@ -5,10 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Permission;
 use App\Models\Role;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class RolesController extends Controller
 {
@@ -18,26 +21,30 @@ class RolesController extends Controller
         $this->middleware('perm:roles.manage');
     }
 
-    public function index()
+    public function index(): Response
     {
         $roles = Role::withCount('users')
-            ->with('permissions')
+            ->with('permissions:id,name')
             ->orderBy('name')
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString()
+            ->through(fn (Role $role): array => [
+                'id' => (int) $role->id,
+                'name' => (string) $role->name,
+                'description' => $role->description,
+                'permissions' => $role->permissions->pluck('name')->sort()->values(),
+                'usersCount' => (int) $role->users_count,
+            ]);
 
-        return view('admin.roles.index', compact('roles'));
+        return Inertia::render('Admin/Roles/Index', ['roles' => $roles]);
     }
 
-    public function create()
+    public function create(): Response
     {
-        $perms = Permission::orderBy('name')->get();
-        return view('admin.roles.create', [
-            'perms' => $perms,
-            'permissionGroups' => $this->groupPermissions($perms),
-        ]);
+        return $this->form(null);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
             'name'         => ['required', 'string', 'max:255', 'unique:roles,name'],
@@ -59,19 +66,12 @@ class RolesController extends Controller
         ]);
     }
 
-    public function edit(Role $role)
+    public function edit(Role $role): Response
     {
-        $role->load('permissions');
-        $perms = Permission::orderBy('name')->get();
-
-        return view('admin.roles.edit', [
-            'role' => $role,
-            'perms' => $perms,
-            'permissionGroups' => $this->groupPermissions($perms),
-        ]);
+        return $this->form($role->load('permissions:id')->loadCount('users'));
     }
 
-    public function update(Request $request, Role $role)
+    public function update(Request $request, Role $role): RedirectResponse
     {
         $data = $request->validate([
             'name'         => ['required', 'string', 'max:255', Rule::unique('roles', 'name')->ignore($role->id)],
@@ -93,12 +93,46 @@ class RolesController extends Controller
         ]);
     }
 
-    public function destroy(Role $role)
+    public function destroy(Role $role): RedirectResponse
     {
+        // The admin role grants everything and backs the "admin" checks; a role
+        // still held by staff would silently strip their access.
+        if ($role->name === 'admin') {
+            return back()->with('error', 'roles.index.cannot_delete_admin');
+        }
+        $holders = $role->users()->count();
+        if ($holders > 0) {
+            return back()->with('error', ['key' => 'roles.index.cannot_delete_assigned', 'replace' => ['count' => $holders]]);
+        }
+
         $role->delete();
         return back()->with('ok', [
             'key' => 'messages.success.deleted',
             'replace' => ['resource' => __('messages.resources.role')],
+        ]);
+    }
+
+    private function form(?Role $role): Response
+    {
+        $perms = Permission::orderBy('name')->get();
+
+        return Inertia::render('Admin/Roles/Form', [
+            'role' => $role === null ? null : [
+                'id' => (int) $role->id,
+                'name' => (string) $role->name,
+                'description' => (string) ($role->description ?? ''),
+                'permissionIds' => $role->permissions->pluck('id')->map(fn ($id): int => (int) $id)->values(),
+                'usersCount' => (int) $role->users_count,
+            ],
+            'groups' => $this->groupPermissions($perms)->map(fn (array $group): array => [
+                'key' => (string) $group['key'],
+                'label' => (string) $group['label'],
+                'permissions' => $group['permissions']->map(fn (Permission $permission): array => [
+                    'id' => (int) $permission->id,
+                    'name' => (string) $permission->name,
+                    'label' => $permission->label_localized,
+                ])->values(),
+            ])->values(),
         ]);
     }
 

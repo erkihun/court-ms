@@ -7,15 +7,17 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 final class ActiveSessionController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): Response
     {
         $currentId = $request->session()->getId();
-        $sessions = DB::table('sessions')->where('user_id', $request->user()->getAuthIdentifier())->orderByDesc('last_activity')->get(['id', 'ip_address', 'user_agent', 'last_activity', 'payload'])->map(function (object $session) use ($currentId): object {
+        $sessions = $this->staffSessions($request)->sortByDesc('last_activity')->values()->map(function (object $session) use ($currentId): object {
             $hints = $this->payloadHints((string) $session->payload);
 
             return (object) [
@@ -59,22 +61,78 @@ final class ActiveSessionController extends Controller
             ]);
         }
 
-        return view('admin.profile.sessions', compact('sessions'));
+        return Inertia::render('Admin/Profile/Sessions', [
+            'databaseDriver' => config('session.driver') === 'database',
+            'sessions' => $sessions->map(fn (object $session): array => [
+                // Session ids never reach the browser; rows are addressed by a keyed hash.
+                'key' => $this->publicKey((string) $session->id),
+                'deviceName' => $session->device_name,
+                'browserName' => $session->browser_name,
+                'location' => $session->location,
+                'ipAddress' => $session->ip_address,
+                'isCurrent' => $session->is_current,
+                'lastActive' => $session->last_active_at->diffForHumans(),
+                'lastActiveAt' => $session->last_active_at->format('n/j/Y H:i'),
+            ])->values(),
+        ]);
     }
 
     public function destroy(Request $request, string $session): RedirectResponse
     {
-        abort_if(hash_equals($request->session()->getId(), $session), 422, __('auth.session_current_cannot_revoke'));
-        DB::table('sessions')->where('user_id', $request->user()->getAuthIdentifier())->where('id', $session)->delete();
+        abort_if(hash_equals($this->publicKey($request->session()->getId()), $session), 422, __('auth.session_current_cannot_revoke'));
+
+        $record = $this->staffSessions($request)
+            ->first(fn (object $record): bool => hash_equals($this->publicKey((string) $record->id), $session));
+
+        if ($record !== null) {
+            DB::table('sessions')->where('id', $record->id)->delete();
+        }
 
         return back()->with('status', __('auth.session_revoked'));
     }
 
     public function destroyOthers(Request $request): RedirectResponse
     {
-        DB::table('sessions')->where('user_id', $request->user()->getAuthIdentifier())->where('id', '!=', $request->session()->getId())->delete();
+        $currentId = (string) $request->session()->getId();
+        $ids = $this->staffSessions($request)
+            ->reject(fn (object $record): bool => (string) $record->id === $currentId)
+            ->pluck('id');
+
+        if ($ids->isNotEmpty()) {
+            DB::table('sessions')->whereIn('id', $ids->all())->delete();
+        }
 
         return back()->with('status', __('auth.other_sessions_revoked'));
+    }
+
+    /**
+     * Sessions of this staff account. The table is shared with the applicant
+     * portal and user_id is only unique per guard, so rows written by the
+     * applicant or respondent guard (marked by UseGuard) are excluded.
+     *
+     * @return Collection<int, object>
+     */
+    private function staffSessions(Request $request): Collection
+    {
+        return DB::table('sessions')
+            ->where('user_id', $request->user()->getAuthIdentifier())
+            ->get(['id', 'ip_address', 'user_agent', 'last_activity', 'payload'])
+            ->reject(fn (object $session): bool => in_array($this->payloadValue((string) $session->payload, '_auth_guard'), ['applicant', 'respondent'], true))
+            ->values();
+    }
+
+    /** Stable, non-reversible handle for a session row (the raw id would let a script replay the session). */
+    private function publicKey(string $sessionId): string
+    {
+        return substr(hash_hmac('sha256', $sessionId, (string) config('app.key')), 0, 40);
+    }
+
+    private function payloadValue(string $payload, string $key): mixed
+    {
+        $decoded = $payload === '' ? false : base64_decode($payload, true);
+        $data = $decoded === false ? null : @unserialize($decoded, ['allowed_classes' => false]);
+
+        return is_array($data) ? ($data[$key] ?? null) : null;
     }
 
     /**

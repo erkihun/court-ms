@@ -7,34 +7,46 @@ use App\Models\Letter;
 use App\Mail\LetterApprovedMail;
 use App\Models\CourtCase;
 use App\Models\LetterTemplate;
+use App\Support\EthiopianDate;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
+use Inertia\Response;
 use Mews\Purifier\Facades\Purifier;
 
 class LetterController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         $statusFilter = (string) $request->query('status', '');
         if (!in_array($statusFilter, ['', 'pending', 'approved', 'rejected'], true)) {
             $statusFilter = '';
         }
+        $search = trim((string) $request->query('q', ''));
 
         $baseQuery = Letter::query();
+
+        $categoryCounts = (clone $baseQuery)
+            ->leftJoin('letter_templates as lt', 'lt.id', '=', 'letters.letter_template_id')
+            ->selectRaw('COALESCE(NULLIF(TRIM(lt.category), \'\'), ?) as category_label, COUNT(*) as aggregate_count', [__('letters.form.category_fallback')])
+            ->groupBy('category_label')
+            ->pluck('aggregate_count', 'category_label')
+            ->map(fn ($count): int => (int) $count)
+            ->sortDesc();
 
         $stats = [
             'total' => (clone $baseQuery)->count(),
             'approved' => (clone $baseQuery)->where('approval_status', 'approved')->count(),
             'rejected' => (clone $baseQuery)->where('approval_status', 'rejected')->count(),
-            'category_counts' => (clone $baseQuery)
-                ->leftJoin('letter_templates as lt', 'lt.id', '=', 'letters.letter_template_id')
-                ->selectRaw('COALESCE(NULLIF(TRIM(lt.category), \'\'), ?) as category_label, COUNT(*) as aggregate_count', [__('letters.form.category_fallback')])
-                ->groupBy('category_label')
-                ->pluck('aggregate_count', 'category_label'),
+            'categories' => $categoryCounts->count(),
+            'categorisedLetters' => (int) $categoryCounts->sum(),
+            'topCategory' => $categoryCounts->keys()->first(),
+            'topCategoryCount' => (int) ($categoryCounts->first() ?? 0),
         ];
 
         $letters = $baseQuery
@@ -53,12 +65,55 @@ class LetterController extends Controller
                     ->orWhere('letters.approval_status', '')
                     ->orWhere('letters.approval_status', 'pending');
             }))
-            ->with(['template', 'author'])
-            ->latest()
+            ->when($search !== '', function ($query) use ($search) {
+                $like = '%'.addcslashes($search, '%_\\').'%';
+                $query->where(function ($inner) use ($like) {
+                    $inner->where('letters.reference_number', 'like', $like)
+                        ->orWhere('letters.subject', 'like', $like)
+                        ->orWhere('letters.case_number', 'like', $like)
+                        ->orWhere('letters.recipient_name', 'like', $like)
+                        ->orWhere('c.title', 'like', $like)
+                        ->orWhere('c.respondent_name', 'like', $like);
+                });
+            })
+            ->with('author')
+            ->latest('letters.created_at')
             ->paginate(10)
-            ->withQueryString();
+            ->withQueryString()
+            ->through(fn (Letter $letter): array => $this->presentRow($letter));
 
-        return view('admin.letters.index', compact('letters', 'stats', 'statusFilter'));
+        return Inertia::render('Admin/Letters/Index', [
+            'letters' => $letters,
+            'stats' => $stats,
+            'filters' => ['status' => $statusFilter, 'q' => $search],
+        ]);
+    }
+
+    /** One row of the letters table. */
+    private function presentRow(Letter $letter): array
+    {
+        $status = in_array($letter->approval_status, ['approved', 'returned', 'rejected'], true)
+            ? $letter->approval_status
+            : null;
+
+        return [
+            'id' => (int) $letter->id,
+            'referenceNumber' => $letter->reference_number ?: null,
+            'subject' => $letter->subject ? Str::limit($letter->subject, 50) : null,
+            'caseNumber' => $letter->case_number ?: null,
+            'sendToApplicant' => (bool) $letter->send_to_applicant,
+            'sendToRespondent' => (bool) $letter->send_to_respondent,
+            'applicantName' => $letter->getAttribute('applicant_name'),
+            'lawyerName' => $letter->getAttribute('applicant_is_lawyer') ? $letter->getAttribute('applicant_lawyer_name') : null,
+            'respondentName' => $letter->getAttribute('respondent_name'),
+            'authorName' => $letter->author?->name,
+            'authorPosition' => $letter->author?->position,
+            'date' => EthiopianDate::format($letter->created_at),
+            'time' => EthiopianDate::formatTime($letter->created_at, timeFormat: 'h:i A'),
+            'status' => $status,
+            'approvedByName' => $letter->approved_by_name ?: null,
+            'previewUrl' => route('letters.show', $letter),
+        ];
     }
 
     public function store(Request $request)
@@ -197,11 +252,31 @@ class LetterController extends Controller
         ]);
     }
 
-    public function edit(Letter $letter)
+    public function edit(Letter $letter): Response|RedirectResponse
     {
+        if ($letter->approval_status === 'approved') {
+            return redirect()->route('letters.index')->with('error', 'messages.error.approved_letter_update_locked');
+        }
+
         $letter->load('template');
 
-        return view('admin.letters.edit', compact('letter'));
+        return Inertia::render('Admin/Letters/Edit', [
+            'letter' => [
+                'id' => (int) $letter->id,
+                'templateTitle' => (string) ($letter->template?->title ?? ''),
+                'referenceNumber' => $letter->reference_number ?: null,
+                'recipient_name' => (string) ($letter->recipient_name ?? ''),
+                'recipient_title' => (string) ($letter->recipient_title ?? ''),
+                'recipient_company' => (string) ($letter->recipient_company ?? ''),
+                'case_number' => (string) ($letter->case_number ?? ''),
+                'cc' => (string) ($letter->cc ?? ''),
+                'send_to_applicant' => (bool) ($letter->send_to_applicant ?? true),
+                'send_to_respondent' => (bool) ($letter->send_to_respondent ?? true),
+                'subject' => (string) ($letter->subject ?? ''),
+                'body' => (string) ($letter->body ?? ''),
+                'previewUrl' => route('letters.show', $letter),
+            ],
+        ]);
     }
 
     public function update(Request $request, Letter $letter)
@@ -386,6 +461,11 @@ class LetterController extends Controller
         $data = $request->validate([
             'status' => 'required|in:approved,returned,rejected',
         ]);
+
+        // An approved letter has been sent to the parties; it can no longer change state.
+        if ($letter->approval_status === 'approved') {
+            return back()->with('error', 'messages.error.approved_letter_update_locked');
+        }
 
         $letter->update([
             'approved_by_name'  => $user?->name,

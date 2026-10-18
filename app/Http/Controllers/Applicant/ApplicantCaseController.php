@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ApplicantTermAcceptance;
 use App\Models\TermsAndCondition;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -24,47 +25,59 @@ use App\Services\SecureUploadService;
 use App\Services\LegalHoldService;
 use Mews\Purifier\Facades\Purifier;
 use App\Models\CourtCase;
+use App\Support\EthiopianDate;
+use App\Support\Party\RespondentResponseView;
+use Illuminate\Support\Facades\URL;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 class ApplicantCaseController extends Controller
 {
     /**
      * List only the signed-in applicant's cases
      */
-    public function index(Request $request)
+    public function index(Request $request): InertiaResponse
     {
-        $me = auth('applicant')->id();
-
         $cases = DB::table('court_cases as c')
             ->leftJoin('case_types as ct', 'ct.id', '=', 'c.case_type_id')
-
-            ->select(
-                'c.id',
-                'c.case_number',
-                'c.title',
-                'c.status',
-                'c.review_status',
-                'c.review_note',
-                'c.reviewed_at',
-                'c.filing_date',
-                'ct.name as case_type',
-
-            )
-            ->when(Schema::hasColumn('court_cases', 'applicant_id'), fn($q) => $q->where('c.applicant_id', $me))
+            ->select('c.id', 'c.case_number', 'c.title', 'c.status', 'c.review_status', 'c.review_note', 'c.filing_date', 'ct.name as case_type')
+            ->where('c.applicant_id', auth('applicant')->id())
             ->orderByDesc('c.created_at')
-            ->paginate(10);
+            ->paginate(10)
+            ->through(fn (object $case): array => [
+                'id' => (int) $case->id,
+                'caseNumber' => (string) $case->case_number,
+                'title' => (string) $case->title,
+                'caseType' => $case->case_type,
+                'status' => (string) $case->status,
+                'reviewStatus' => $case->review_status ?: 'accepted',
+                'reviewNote' => in_array($case->review_status, ['returned', 'rejected'], true) ? ($case->review_note ?: null) : null,
+                'filed' => EthiopianDate::format($case->filing_date),
+                'canDelete' => $case->status === 'pending' && $case->review_status !== 'accepted',
+            ]);
 
-        return view('applicant.cases.index', compact('cases'));
+        return Inertia::render('Applicant/Cases/Index', ['cases' => $cases]);
     }
 
     /**
      * New case form
      */
-    public function create()
+    public function create(): InertiaResponse
     {
-        $types  = DB::table('case_types')->orderBy('name')->get(['id', 'name', 'prefix']);
+        $applicant = auth('applicant')->user();
         $activeTerms = TermsAndCondition::published()->orderByDesc('published_at')->first();
 
-        return view('applicant.cases.create', compact('types', 'activeTerms'));
+        return Inertia::render('Applicant/Cases/Create', [
+            'types' => $this->caseTypeOptions(),
+            'termsHtml' => $activeTerms ? (string) clean(nl2br(e($activeTerms->body)), 'cases') : null,
+            'applicant' => [
+                'isLawyer' => (bool) $applicant?->is_lawyer,
+                'fullName' => (string) ($applicant?->full_name ?? ''),
+                'address' => (string) ($applicant?->address ?? ''),
+            ],
+            'today' => now()->toDateString(),
+            'year' => now()->format('y'),
+        ]);
     }
 
     private function generateCaseNumber($caseTypeId)
@@ -145,8 +158,8 @@ class ApplicantCaseController extends Controller
         }
 
         $messages = [
-            'certify_appeal.accepted' => 'You must certify the validity of your appeal.',
-            'certify_evidence.accepted' => 'You must certify that your evidence is true.',
+            'certify_appeal.accepted' => __('cases.validation.certify_appeal'),
+            'certify_evidence.accepted' => __('cases.validation.certify_evidence'),
             'accept_terms.accepted' => __('terms.validation_accept_terms'),
         ];
 
@@ -158,7 +171,7 @@ class ApplicantCaseController extends Controller
             $phones = $witnesses->pluck('phone')->filter(fn($phone) => filled($phone))
                 ->map(fn($phone) => mb_strtolower(trim($phone)));
             if ($phones->count() !== $phones->unique()->count()) {
-                $validator->errors()->add('witnesses_duplicate_phone', 'Witness phone numbers must be unique.');
+                $validator->errors()->add('witnesses_duplicate_phone', __('cases.validation.witness_phone_unique'));
             }
 
             // witness email removed from form; no email validation needed here
@@ -296,18 +309,18 @@ class ApplicantCaseController extends Controller
 
             return redirect()
                 ->route('applicant.cases.show', $caseId)
-                ->with('success', "Case created successfully. Number: {$finalNumber}");
+                ->with('success', __('cases.messages_flash.created', ['number' => $finalNumber]));
         } catch (\Throwable $e) {
             DB::rollBack();
             report($e);
-            return back()->withInput()->with('error', 'Failed to create case. Please try again.');
+            return back()->withInput()->with('error', __('cases.messages_flash.create_failed'));
         }
     }
 
     /**
      * Show a case the applicant owns
      */
-    public function show(int $id)
+    public function show(int $id): InertiaResponse
     {
         $aid = auth('applicant')->id();
 
@@ -320,11 +333,6 @@ class ApplicantCaseController extends Controller
             ->first();
 
         abort_if(!$case, 404);
-
-        $timeline = DB::table('case_status_logs')
-            ->where('case_id', $id)
-            ->orderBy('created_at')
-            ->get();
 
         $letters = DB::table('letters as l')
             ->leftJoin('letter_templates as lt', 'lt.id', '=', 'l.letter_template_id')
@@ -346,11 +354,6 @@ class ApplicantCaseController extends Controller
         $respondentResponses = DB::table('respondent_responses')
             ->where('case_number', $case->case_number)
             ->where('review_status', 'accepted')
-            ->orderByDesc('created_at')
-            ->get();
-
-        $files = DB::table('case_files')
-            ->where('case_id', $id)
             ->orderByDesc('created_at')
             ->get();
 
@@ -469,21 +472,10 @@ class ApplicantCaseController extends Controller
             }
         }
 
-        return view('applicant.cases.show', compact(
-            'case',
-            'timeline',
-            'letters',
-            'respondentResponses',
-            'files',
-            'msgs',
-            'hearings',
-            'docs',
-            'witnesses',
-            'audits'
-        ));
+        return Inertia::render('Applicant/Cases/Show', $this->presentCase($case, $letters, $respondentResponses, $msgs, $hearings, $docs, $witnesses, $audits));
     }
 
-    public function showRespondentResponse(int $caseId, int $responseId)
+    public function showRespondentResponse(int $caseId, int $responseId): InertiaResponse
     {
         $aid = auth('applicant')->id();
 
@@ -516,42 +508,16 @@ class ApplicantCaseController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        return view('applicant.cases.respondent-response', compact('case', 'response', 'replies'));
-    }
-
-    public function replyRespondentResponse(int $caseId, int $responseId)
-    {
-        $aid = auth('applicant')->id();
-
-        $case = $this->findApplicantCaseWithType($caseId, $aid);
-
-        abort_if(!$case, 404);
-
-        $response = DB::table('respondent_responses as rr')
-            ->leftJoin('respondents as r', 'r.id', '=', 'rr.respondent_id')
-            ->select(
-                'rr.*',
-                'r.first_name',
-                'r.middle_name',
-                'r.last_name',
-                'r.email as respondent_email',
-                'r.phone as respondent_phone',
-                'r.organization_name as respondent_org'
-            )
-            ->where('rr.id', $responseId)
-            ->where('rr.case_number', $case->case_number)
-            ->where('rr.review_status', 'accepted')
-            ->first();
-
-        abort_if(!$response, 404);
-
-        return view('applicant.responses.create', compact('case', 'response'));
+        return Inertia::render('Applicant/RespondentResponses/Show', [
+            'response' => RespondentResponseView::response($case, $response),
+            'replies' => $replies->map(fn (object $reply): array => RespondentResponseView::reply($reply, (int) $case->id, (int) $response->id))->values(),
+        ]);
     }
 
     /**
      * Edit form (only while pending)
      */
-    public function edit(int $id)
+    public function edit(int $id): InertiaResponse|RedirectResponse
     {
         $me = auth('applicant')->id();
 
@@ -560,28 +526,69 @@ class ApplicantCaseController extends Controller
             ->where('applicant_id', $me)
             ->first();
 
-        abort_if(!$case, 404);
+        abort_if(! $case, 404);
 
-        if ($case->status !== 'pending' || ($case->review_status ?? null) === 'accepted') {
-            return redirect()->route('applicant.cases.show', $id)
-                ->with('error', 'You can only edit pending cases.');
+        if (! $this->applicantMayModify($case)) {
+            return redirect()->route('applicant.cases.show', $id)->with('error', __('cases.hints.edit_only_pending'));
         }
-
-        $types  = DB::table('case_types')->orderBy('name')->get(['id', 'name', 'prefix']);
-
 
         $docs = DB::table('case_evidences')
             ->where('case_id', $id)->where('type', 'document')
             ->orderBy('id')->get();
 
-        // correct table for witnesses
         $witnesses = DB::table('case_witnesses')
             ->where('case_id', $id)
             ->orderBy('id')
             ->get();
 
-        return view('applicant.cases.edit', compact('case', 'types', 'docs', 'witnesses'));
+        return Inertia::render('Applicant/Cases/Edit', [
+            'case' => [
+                'id' => (int) $case->id,
+                'caseNumber' => (string) $case->case_number,
+                'status' => (string) $case->status,
+                'title' => (string) $case->title,
+                'filingDate' => $case->filing_date ? substr((string) $case->filing_date, 0, 10) : '',
+                'caseTypeId' => (int) $case->case_type_id,
+                'respondentName' => (string) ($case->respondent_name ?? ''),
+                'respondentAddress' => (string) ($case->respondent_address ?? ''),
+                'description' => (string) clean($case->description ?? '', 'cases'),
+                'relief' => (string) clean($case->relief_requested ?? '', 'cases'),
+            ],
+            'types' => $this->caseTypeOptions(),
+            'year' => now()->format('y'),
+            'documents' => $docs->map(fn (object $doc): array => [
+                'id' => (int) $doc->id,
+                'title' => $doc->title ?? (($doc->file_path ?? $doc->path ?? null) ? basename($doc->file_path ?? $doc->path) : __('cases.labels.document')),
+                'downloadUrl' => ($doc->file_path ?? $doc->path ?? null)
+                    ? route('applicant.cases.evidences.download', ['id' => $case->id, 'evidenceId' => $doc->id])
+                    : null,
+            ])->values(),
+            'witnesses' => $witnesses->map(fn (object $witness): array => [
+                'id' => (int) $witness->id,
+                'fullName' => (string) $witness->full_name,
+                'phone' => $witness->phone ?: null,
+                'email' => $witness->email ?: null,
+                'address' => $witness->address ?: null,
+            ])->values(),
+        ]);
     }
+
+    /** A case stays editable by its applicant while pending and not yet accepted by a reviewer. */
+    private function applicantMayModify(object $case): bool
+    {
+        return $case->status === 'pending' && ($case->review_status ?? null) !== 'accepted';
+    }
+
+    /**
+     * @return list<array{id: int, name: string, prefix: string}>
+     */
+    private function caseTypeOptions(): array
+    {
+        return DB::table('case_types')->orderBy('name')->get(['id', 'name', 'prefix'])
+            ->map(fn (object $type): array => ['id' => (int) $type->id, 'name' => (string) $type->name, 'prefix' => (string) ($type->prefix ?? $type->name)])
+            ->all();
+    }
+
     public function destroy($id)
     {
         $applicantId = auth('applicant')->id();
@@ -590,15 +597,13 @@ class ApplicantCaseController extends Controller
         $case = CourtCase::where('applicant_id', $applicantId)->findOrFail($id);
 
         // Only allow deletion if status is pending
-        if ($case->status !== 'pending' || ($case->review_status ?? null) === 'accepted') {
-            abort(403, 'Only pending cases can be deleted.');
-        }
+        abort_unless($this->applicantMayModify($case), 403);
 
         $case->delete(); // if you want soft delete, enable SoftDeletes on the model instead
 
         return redirect()
             ->route('applicant.cases.index')
-            ->with('success', __('cases.deleted_successfully') ?? 'Case deleted successfully.');
+            ->with('success', __('cases.deleted_successfully'));
     }
     /**
      * Update case (add more docs/witness names; only while pending)
@@ -615,9 +620,8 @@ class ApplicantCaseController extends Controller
 
         abort_if(!$case, 404);
 
-        if ($case->status !== 'pending' || ($case->review_status ?? null) === 'accepted') {
-            return redirect()->route('applicant.cases.show', $id)
-                ->with('error', 'You can only edit pending cases.');
+        if (! $this->applicantMayModify($case)) {
+            return redirect()->route('applicant.cases.show', $id)->with('error', __('cases.hints.edit_only_pending'));
         }
 
         $rules = [
@@ -645,8 +649,8 @@ class ApplicantCaseController extends Controller
         ];
 
         $messages = [
-            'certify_appeal.accepted' => 'You must certify the validity of your appeal.',
-            'certify_evidence.accepted' => 'You must certify that your evidence is true.',
+            'certify_appeal.accepted' => __('cases.validation.certify_appeal'),
+            'certify_evidence.accepted' => __('cases.validation.certify_evidence'),
         ];
 
         $validator = Validator::make($request->all(), $rules, $messages);
@@ -659,7 +663,7 @@ class ApplicantCaseController extends Controller
                 ->map(fn($phone) => mb_strtolower(trim($phone)))
                 ->values();
             if ($newPhones->count() !== $newPhones->unique()->count()) {
-                $validator->errors()->add('witnesses_duplicate_phone', 'Witness phone numbers must be unique.');
+                $validator->errors()->add('witnesses_duplicate_phone', __('cases.validation.witness_phone_unique'));
             }
 
             $existingPhones = DB::table('case_witnesses')
@@ -668,7 +672,7 @@ class ApplicantCaseController extends Controller
                 ->filter(fn($phone) => filled($phone))
                 ->map(fn($phone) => mb_strtolower(trim($phone)));
             if ($existingPhones->intersect($newPhones)->isNotEmpty()) {
-                $validator->errors()->add('witnesses_duplicate_phone', 'Witness phone numbers must be unique.');
+                $validator->errors()->add('witnesses_duplicate_phone', __('cases.validation.witness_phone_unique'));
             }
 
             $newEmails = $newWitnesses->pluck('email')
@@ -676,7 +680,7 @@ class ApplicantCaseController extends Controller
                 ->map(fn($email) => mb_strtolower(trim($email)))
                 ->values();
             if ($newEmails->count() !== $newEmails->unique()->count()) {
-                $validator->errors()->add('witnesses_duplicate_email', 'Witness email addresses must be unique.');
+                $validator->errors()->add('witnesses_duplicate_email', __('cases.validation.witness_email_unique'));
             }
 
             $existingEmails = DB::table('case_witnesses')
@@ -685,7 +689,7 @@ class ApplicantCaseController extends Controller
                 ->filter(fn($email) => filled($email))
                 ->map(fn($email) => mb_strtolower(trim($email)));
             if ($existingEmails->intersect($newEmails)->isNotEmpty()) {
-                $validator->errors()->add('witnesses_duplicate_email', 'Witness email addresses must be unique.');
+                $validator->errors()->add('witnesses_duplicate_email', __('cases.validation.witness_email_unique'));
             }
         });
 
@@ -698,7 +702,7 @@ class ApplicantCaseController extends Controller
         // Optional word limit to mirror UI
         if ($this->wordCount($descHtml) > 1300 || $this->wordCount($reliefHtml) > 1300) {
             return back()
-                ->withErrors(['description' => 'Please keep each editor under ~1,300 words.'])
+                ->withErrors(['description' => __('cases.validation.word_limit')])
                 ->withInput();
         }
 
@@ -809,11 +813,11 @@ class ApplicantCaseController extends Controller
                 $this->notifyAdminCaseUpdated($case, $me);
                 $this->logCaseAudit($id, 'applicant_updated', ['sections' => 'case_core']);
             }
-            return redirect()->route('applicant.cases.show', $id)->with('success', 'Case updated.');
+            return redirect()->route('applicant.cases.show', $id)->with('success', __('cases.messages_flash.updated'));
         } catch (\Throwable $e) {
             DB::rollBack();
             report($e);
-            return back()->withInput()->with('error', 'Failed to update case. Please try again.');
+            return back()->withInput()->with('error', __('cases.messages_flash.update_failed'));
         }
     }
 
@@ -827,8 +831,8 @@ class ApplicantCaseController extends Controller
             ->first();
         abort_if(!$case, 404);
 
-        if ($case->status !== 'pending') {
-            return back()->with('error', 'You can only remove evidence on pending cases.');
+        if (! $this->applicantMayModify($case)) {
+            return back()->with('error', __('cases.hints.edit_only_pending'));
         }
 
         $ev = DB::table('case_evidences')
@@ -845,7 +849,7 @@ class ApplicantCaseController extends Controller
 
         DB::table('case_evidences')->where('id', $evidenceId)->delete();
 
-        return back()->with('success', 'Evidence removed.');
+        return back()->with('success', __('cases.messages_flash.evidence_removed'));
     }
 
     public function deleteWitness(int $id, int $witnessId)
@@ -860,8 +864,8 @@ class ApplicantCaseController extends Controller
 
         abort_if(!$case, 404);
 
-        if ($case->status !== 'pending') {
-            return back()->with('error', 'You can only remove witnesses on pending cases.');
+        if (! $this->applicantMayModify($case)) {
+            return back()->with('error', __('cases.hints.edit_only_pending'));
         }
 
         $exists = DB::table('case_witnesses')
@@ -876,7 +880,7 @@ class ApplicantCaseController extends Controller
             ->where('case_id', $id)
             ->delete();
 
-        return back()->with('success', 'Witness removed.');
+        return back()->with('success', __('cases.messages_flash.witness_removed'));
     }
 
     /**
@@ -989,7 +993,7 @@ class ApplicantCaseController extends Controller
 
         ResponseNotificationService::notifyCaseMessagePosted((int) $id, __('cases.summary.applicant'), $data['body']);
 
-        return back()->with('success', 'Message sent.');
+        return back()->with('success', __('cases.message_sent'));
     }
 
     /**
@@ -1335,5 +1339,107 @@ class ApplicantCaseController extends Controller
         if ($public->exists($path)) {
             $public->delete($path);
         }
+    }
+
+    /**
+     * Props for the case page. Rich-text fields are re-sanitised with the
+     * 'cases' purifier profile on the way out, as the Blade view did.
+     *
+     * @return array<string, mixed>
+     */
+    private function presentCase(object $case, $letters, $responses, $messages, $hearings, $docs, $witnesses, $audits): array
+    {
+        $applicant = auth('applicant')->user();
+        $reviewStatus = $case->review_status ?: 'accepted';
+        $at = fn ($value): string => $value ? EthiopianDate::format($value, withTime: true) : '';
+
+        return [
+            'case' => [
+                'id' => (int) $case->id,
+                'caseNumber' => (string) $case->case_number,
+                'code' => $case->code ?: null,
+                'status' => (string) $case->status,
+                'reviewStatus' => $reviewStatus,
+                'reviewNote' => $case->review_note ?: null,
+                'title' => $case->title ?: ($applicant?->full_name ?? '-'),
+                'caseType' => $case->case_type,
+                'filed' => EthiopianDate::format($case->filing_date ?? $case->created_at),
+                'respondentName' => $case->respondent_name ?? null,
+                'respondentAddress' => $case->respondent_address ?? null,
+                'descriptionHtml' => (string) clean($case->description ?? '', 'cases'),
+                'reliefHtml' => empty($case->relief_requested) ? null : (string) clean($case->relief_requested, 'cases'),
+                'canEdit' => $case->status === 'pending' && $reviewStatus !== 'accepted',
+            ],
+            'applicantAddress' => $applicant?->address,
+            'documents' => $docs->map(fn (object $doc): array => [
+                'id' => (int) $doc->id,
+                'title' => $doc->title ?? $doc->label ?? (($doc->file_path ?? $doc->path ?? null) ? basename($doc->file_path ?? $doc->path) : __('cases.document')),
+                'mime' => $doc->mime ?? null,
+                'sizeKb' => isset($doc->size) ? round(max(0, (int) $doc->size) / 1024, 1) : null,
+                'created' => $at($doc->created_at ?? null),
+                'descriptionHtml' => empty($doc->description) ? null : (string) clean($doc->description, 'cases'),
+                'downloadUrl' => ($doc->file_path ?? $doc->path ?? null)
+                    ? route('applicant.cases.evidences.download', ['id' => $case->id, 'evidenceId' => $doc->id])
+                    : null,
+            ])->values(),
+            'witnesses' => $witnesses->map(fn (object $witness): array => [
+                'id' => (int) $witness->id,
+                'fullName' => (string) $witness->full_name,
+                'phone' => $witness->phone ?: null,
+                'email' => $witness->email ?: null,
+                'address' => $witness->address ?: null,
+            ])->values(),
+            'hearings' => $hearings->map(fn (object $hearing): array => [
+                'id' => (int) $hearing->id,
+                'at' => EthiopianDate::format($hearing->hearing_at, withTime: true, separator: ' · '),
+                'type' => $hearing->type ?: null,
+                'location' => $hearing->location ?: null,
+                'notes' => $hearing->notes ?: null,
+                'icsUrl' => route('applicant.cases.hearings.ics', [$case->id, $hearing->id]),
+            ])->values(),
+            'letters' => $letters->map(fn (object $letter): array => [
+                'id' => (int) $letter->id,
+                'title' => $letter->subject ?? $letter->template_title ?? __('cases.letters_section.letter'),
+                'status' => $letter->approval_status ?? 'draft',
+                'reference' => $letter->reference_number ?: null,
+                'template' => $letter->template_title ?: null,
+                'author' => $letter->author_name ?: null,
+                'created' => $at($letter->created_at),
+                'previewUrl' => URL::signedRoute('letters.case-preview', ['letter' => $letter->id]),
+            ])->values(),
+            'responses' => $responses->map(fn (object $response): array => [
+                'id' => (int) $response->id,
+                'title' => $response->title ?? __('cases.respondent_response'),
+                'caseNumber' => $response->case_number ?? $case->case_number,
+                'responseNumber' => $response->response_number ?? null,
+                'created' => $at($response->created_at),
+                'excerpt' => empty($response->description) ? null : Str::limit(strip_tags($response->description), 180),
+                'href' => route('applicant.cases.respondentResponses.show', [$case->id, $response->id]),
+                'pdfUrl' => empty($response->pdf_path) ? null : route('applicant.respondent.responses.download', $response->id),
+            ])->values(),
+            'messages' => $messages->map(fn (object $message): array => [
+                'id' => (int) $message->id,
+                'mine' => (bool) $message->sender_applicant_id,
+                'author' => $message->sender_applicant_id ? null : ($message->admin_name ?? null),
+                'at' => $at($message->created_at),
+                'body' => (string) $message->body,
+            ])->values(),
+            'audits' => $audits->map(function (object $audit): array {
+                $meta = $audit->meta ? json_decode($audit->meta, true) : null;
+                $actor = match (true) {
+                    ! empty($audit->actor_name) => $audit->actor_name.($audit->actor_id ? " (#{$audit->actor_id})" : ''),
+                    ! empty($audit->actor_id) => ($audit->actor_type ?? __('cases.system'))." (#{$audit->actor_id})",
+                    default => $audit->actor_type ?? __('cases.system'),
+                };
+
+                return [
+                    'id' => (int) $audit->id,
+                    'at' => EthiopianDate::format($audit->created_at, withTime: true),
+                    'action' => ucfirst(str_replace('_', ' ', (string) $audit->action)),
+                    'actor' => $actor,
+                    'meta' => $meta ? json_encode($meta, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) : null,
+                ];
+            })->values(),
+        ];
     }
 }

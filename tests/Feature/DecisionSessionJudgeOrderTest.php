@@ -10,6 +10,7 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Inertia\Testing\AssertableInertia as Assert;
 
 function decisionUiOrderRole(): Role
 {
@@ -48,19 +49,20 @@ function decisionUiOrderCase(): CourtCase
     ]);
 }
 
-test('create form displays the session judge first while retaining the original field slot', function (): void {
+test('create form puts the session judge in the presiding seat', function (): void {
     $role = decisionUiOrderRole();
     $creator = decisionUiOrderUser($role, 'Session Judge');
 
-    $html = $this->actingAs($creator)
+    // The form shows seat 1 (the presiding seat) first and fills it with the
+    // current user; the server only accepts that user there.
+    $this->actingAs($creator)
         ->get(route('decisions.create'))
         ->assertOk()
-        ->getContent();
-
-    $sessionField = 'name="judges[1][admin_user_id]" value="'.$creator->id.'"';
-
-    expect(strpos($html, $sessionField))->not->toBeFalse()
-        ->and(strpos($html, $sessionField))->toBeLessThan(strpos($html, 'name="judges[0][admin_user_id]"'));
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Admin/Decisions/Form')
+            ->where('decision', null)
+            ->where('currentUser.id', $creator->id)
+            ->where('currentUser.name', 'Session Judge'));
 });
 
 test('decision view always displays the decision author first without changing stored panel order', function (): void {
@@ -90,12 +92,15 @@ test('decision view always displays the decision author first without changing s
         'status' => 'published',
     ]);
 
-    $html = $this->actingAs($viewer)
+    $response = $this->actingAs($viewer)
         ->get(route('decisions.show', $decision))
         ->assertOk()
-        ->getContent();
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Admin/Decisions/Show')
+            ->where('decision.panel.0.name', 'Decision Author')
+            ->where('decision.panel.1.name', 'First Stored Judge')
+            ->where('decision.panel.2.name', 'Third Judge'));
 
-    expect($html)->toMatch('/Judge 1.*Decision Author.*Judge 2.*First Stored Judge.*Judge 3.*Third Judge/s')
-        ->and($html)->not->toContain(Storage::disk('public')->url($author->signature_path))
+    expect($response->getContent())->not->toContain(Storage::disk('public')->url($author->signature_path))
         ->and($decision->fresh()->panel_judges)->toBe($storedPanel);
 });

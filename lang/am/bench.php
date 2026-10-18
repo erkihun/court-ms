@@ -3,6 +3,7 @@
 return array (
   'buttons' => 
   array (
+    'view' => 'ተመልከት',
     'new_note' => 'አዲስ ማስታወሻ',
     'create_new' => 'አዲስ ማስታወሻ ፍጠር',
     'back' => 'ወደ ማስታወሻዎች ተመለስ',
@@ -17,6 +18,7 @@ return array (
   ),
   'confirmations' => 
   array (
+    'delete_title' => 'ይህን ማስታወሻ ያጥፉ?',
     'delete' => 'ይህን ማስታወሻ መሰረዝዎን እርግጠኛ ነዎት? ይህ እርምጃ ሊቀለበስ አይችልም።',
   ),
   'descriptions' => 
@@ -56,6 +58,8 @@ return array (
   ),
   'labels' => 
   array (
+    'signature' => 'የዳኛ :number ፊርማ',
+    'judge' => 'ዳኛ :number',
     'cases' => 'ፋይሎች',
     'case' => 'ፋይል',
     'case_prefix' => 'ፋይል:',

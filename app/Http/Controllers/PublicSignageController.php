@@ -7,15 +7,20 @@ use App\Models\CaseHearing;
 use App\Models\CourtCase;
 use App\Models\SystemSetting;
 use App\Models\User;
+use App\Support\EthiopianDate;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
+use Inertia\Response;
+use Mews\Purifier\Facades\Purifier;
 
 class PublicSignageController extends Controller
 {
     /**
      * Digital signage dashboard (1920x1080) for public display.
      */
-    public function show()
+    public function show(): Response
     {
         $tz = config('app.timezone', 'UTC');
         $now = Carbon::now($tz);
@@ -44,7 +49,7 @@ class PublicSignageController extends Controller
             ->limit(6)
             ->get();
 
-        $todayCases = CourtCase::select('id', 'case_number', 'title', 'status', 'case_type_id', 'created_at', 'applicant_id')
+        $todayCases = CourtCase::select('id', 'case_number', 'status', 'case_type_id', 'created_at', 'applicant_id')
             ->with([
                 'caseType:id,name',
                 'applicant:id,first_name,middle_name,last_name',
@@ -78,17 +83,61 @@ class PublicSignageController extends Controller
             ->get();
 
         $settings = SystemSetting::query()->first();
+        $statusLabels = (array) __('signage.status_labels');
+        // A public screen shows initials only: the party can recognise their
+        // case next to its number, a passer-by cannot identify anyone.
+        $applicantName = function (?CourtCase $case): string {
+            $initials = collect([$case?->applicant?->first_name, $case?->applicant?->middle_name, $case?->applicant?->last_name])
+                ->map(fn (?string $part): string => trim((string) $part))
+                ->filter()
+                ->map(fn (string $part): string => mb_strtoupper(mb_substr($part, 0, 1)).'.')
+                ->implode(' ');
 
-        return view('public.signage', [
-            'now' => $now,
-            'settings' => $settings,
+            return $initials !== '' ? $initials : __('signage.unknown_applicant');
+        };
+
+        return Inertia::render('Public/Signage', [
+            'appName' => (string) ($settings?->app_name ?: config('app.name')),
+            'logoUrl' => $settings?->logo_path ? Storage::url($settings->logo_path) : null,
+            'now' => EthiopianDate::format($now, withTime: true),
+            'updatedAt' => EthiopianDate::formatTime($now, timeFormat: 'h:i:s A'),
             'totalCases' => $totalCases,
-            'statusCounts' => $statusCounts,
-            'categoryCounts' => $categoryCounts,
-            'todayCases' => $todayCases,
-            'todayHearings' => $todayHearings,
-            'activeAnnouncements' => $activeAnnouncements,
-            'activeStaff' => $activeStaff,
+            'statuses' => $statusCounts->map(function ($row) use ($statusLabels, $totalCases): array {
+                $key = strtolower((string) $row->label);
+
+                return [
+                    'key' => $key,
+                    'label' => (string) ($statusLabels[$key] ?? $row->label),
+                    'total' => (int) $row->total,
+                    'percent' => $totalCases > 0 ? (int) round($row->total / $totalCases * 100) : 0,
+                ];
+            })->values(),
+            'categories' => $categoryCounts->map(fn (object $row): array => ['name' => (string) $row->name, 'total' => (int) $row->total])->values(),
+            'todayCases' => $todayCases->map(fn (CourtCase $case): array => [
+                'id' => (int) $case->id,
+                'caseNumber' => (string) ($case->case_number ?: __('signage.case_number').' '.$case->id),
+                'applicant' => $applicantName($case),
+                'caseType' => $case->caseType?->name ?? __('signage.general_case_type'),
+            ])->values(),
+            'todayHearings' => $todayHearings->map(fn (CaseHearing $hearing): array => [
+                'id' => (int) $hearing->id,
+                'caseNumber' => (string) ($hearing->courtCase?->case_number ?: __('signage.case_number').' '.$hearing->case_id),
+                'when' => trim(EthiopianDate::formatDate($hearing->hearing_at, '-').' '.EthiopianDate::formatTime($hearing->hearing_at)),
+                'caseType' => $hearing->courtCase?->caseType?->name ?? __('signage.hearings'),
+            ])->values(),
+            'announcements' => $activeAnnouncements->map(fn (Announcement $announcement): array => [
+                'id' => (int) $announcement->id,
+                'title' => (string) $announcement->title,
+                'date' => EthiopianDate::formatDate($announcement->created_at),
+                // Same purifier profile the Blade signage used.
+                'contentHtml' => Purifier::clean($announcement->content ?? '', 'default'),
+            ])->values(),
+            'staff' => $activeStaff->map(fn (User $person): array => [
+                'id' => (int) $person->id,
+                'name' => (string) $person->name,
+                'position' => $person->position ?: null,
+                'avatarUrl' => $person->avatar_path ? Storage::url($person->avatar_path) : null,
+            ])->values(),
         ]);
     }
 }

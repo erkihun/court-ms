@@ -13,41 +13,48 @@ use App\Models\LetterTemplate;
 use App\Models\Respondent;
 use App\Models\Team;
 use App\Models\User;
+use App\Support\EthiopianDate;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Lang;
+use Illuminate\Support\Str;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class ReportController extends Controller
 {
     /**
      * Display a system-wide report dashboard.
      */
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         $caseStatuses = ['pending', 'active', 'adjourned', 'dismissed', 'closed'];
         $judges = User::where('status', 'active')->orderBy('name')->get(['id', 'name']);
 
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
-        $selectedStatus = $request->input('status');
-        $selectedJudge = $request->input('judge_id');
+        $startDate = $this->dateFilter($request->input('start_date'));
+        $endDate = $this->dateFilter($request->input('end_date'));
+        $selectedStatus = in_array($request->input('status'), $caseStatuses, true) ? $request->input('status') : null;
+        $selectedJudge = $request->integer('judge_id') ?: null;
 
         $caseFilter = CourtCase::query();
+        // Qualified: the per-judge query joins users, which also has status and created_at.
         if ($startDate) {
-            $caseFilter->where('created_at', '>=', $startDate);
+            $caseFilter->where('court_cases.created_at', '>=', $startDate);
         }
         if ($endDate) {
-            $caseFilter->where('created_at', '<=', $endDate . ' 23:59:59');
+            $caseFilter->where('court_cases.created_at', '<=', $endDate . ' 23:59:59');
         }
         if ($selectedStatus) {
-            $caseFilter->where('status', $selectedStatus);
+            $caseFilter->where('court_cases.status', $selectedStatus);
         }
         if ($selectedJudge) {
-            $caseFilter->where('judge_id', $selectedJudge);
+            $caseFilter->where('court_cases.judge_id', $selectedJudge);
         }
 
         $filteredCaseCount = (clone $caseFilter)->count();
         $filteredCaseStatus = (clone $caseFilter)
-            ->select('status', DB::raw('count(*) as total'))
+            ->select('court_cases.status', DB::raw('count(*) as total'))
             ->groupBy('status')
             ->orderByDesc('total')
             ->get();
@@ -134,28 +141,74 @@ class ReportController extends Controller
             ['key' => 'respondent_responses', 'value' => DB::table('respondent_responses')->count()],
         ];
 
-        return view('admin.reports.index', [
+        $caseLabel = fn (?string $status): string => $this->label($status, 'cases.status.');
+        $plainLabel = fn (?string $status): string => $this->label($status, null);
+
+        return Inertia::render('Admin/Reports/Index', [
             'summaryCards' => $summaryCards,
-            'caseStatusBreakdown' => $caseStatusBreakdown,
-            'caseTypeBreakdown' => $caseTypeBreakdown,
-            'appealStatusBreakdown' => $appealStatusBreakdown,
-            'decisionStatusBreakdown' => $decisionStatusBreakdown,
-            'letterApprovalBreakdown' => $letterApprovalBreakdown,
-            'applicantStatusBreakdown' => $applicantStatusBreakdown,
-            'userStatusBreakdown' => $userStatusBreakdown,
-            'recentCases' => $recentCases,
-            'recentAppeals' => $recentAppeals,
-            'caseStatuses' => $caseStatuses,
-            'judges' => $judges,
-            'filteredCaseCount' => $filteredCaseCount,
-            'filteredCaseStatus' => $filteredCaseStatus,
-            'casesByJudge' => $casesByJudge,
-            'filterParams' => [
-                'start_date' => $startDate,
-                'end_date' => $endDate,
-                'status' => $selectedStatus,
-                'judge_id' => $selectedJudge,
+            'filtered' => [
+                'count' => $filteredCaseCount,
+                'byStatus' => $this->breakdown($filteredCaseStatus, 'status', $caseLabel),
+                'byJudge' => $casesByJudge->map(fn (object $row): array => ['label' => (string) $row->judge_name, 'total' => (int) $row->total])->values(),
+            ],
+            'breakdowns' => [
+                'cases_status' => $this->breakdown($caseStatusBreakdown, 'status', $caseLabel),
+                'cases_types' => $caseTypeBreakdown->map(fn (object $row): array => ['label' => $row->name ?: __('reports.unknown'), 'total' => (int) $row->total])->values(),
+                'appeals_status' => $this->breakdown($appealStatusBreakdown, 'status', $plainLabel),
+                'decisions_status' => $this->breakdown($decisionStatusBreakdown, 'status', $plainLabel),
+                'letters_status' => $this->breakdown($letterApprovalBreakdown, 'status', $plainLabel),
+                'applicants_status' => $this->breakdown($applicantStatusBreakdown, 'state', $plainLabel),
+                'users_status' => $this->breakdown($userStatusBreakdown, 'status', $plainLabel),
+            ],
+            'recentCases' => $recentCases->map(fn (CourtCase $case): array => [
+                'id' => (int) $case->id,
+                'number' => (string) $case->case_number,
+                'title' => (string) $case->title,
+                'status' => $caseLabel($case->status),
+                'party' => $case->applicant?->full_name ?? __('reports.unknown'),
+                'when' => EthiopianDate::smartRelative($case->created_at),
+            ])->values(),
+            'recentAppeals' => $recentAppeals->map(fn (object $appeal): array => [
+                'id' => (int) $appeal->id,
+                'number' => (string) $appeal->appeal_number,
+                'caseNumber' => (string) $appeal->case_number,
+                'title' => (string) $appeal->title,
+                'status' => $plainLabel($appeal->status),
+                'when' => EthiopianDate::smartRelative($appeal->created_at),
+            ])->values(),
+            'caseStatuses' => collect($caseStatuses)->map(fn (string $status): array => ['value' => $status, 'label' => $caseLabel($status)])->values(),
+            'judges' => $judges->map(fn (User $judge): array => ['id' => (int) $judge->id, 'name' => (string) $judge->name])->values(),
+            'filters' => [
+                'start_date' => $startDate ?? '',
+                'end_date' => $endDate ?? '',
+                'status' => $selectedStatus ?? '',
+                'judge_id' => $selectedJudge ? (string) $selectedJudge : '',
             ],
         ]);
+    }
+
+    /** @return Collection<int, array{label: string, total: int}> */
+    private function breakdown(Collection $rows, string $column, callable $label): Collection
+    {
+        return $rows->map(fn (object $row): array => ['label' => $label($row->{$column}), 'total' => (int) $row->total])->values();
+    }
+
+    /** Translated label for a raw status value, falling back to a readable form of the value. */
+    private function label(?string $value, ?string $translationPrefix): string
+    {
+        if ($value === null || $value === '') {
+            return __('reports.unknown');
+        }
+
+        if ($translationPrefix !== null && Lang::has($translationPrefix.$value)) {
+            return __($translationPrefix.$value);
+        }
+
+        return Str::of($value)->replace('_', ' ')->title()->toString();
+    }
+
+    private function dateFilter(mixed $value): ?string
+    {
+        return is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) === 1 ? $value : null;
     }
 }

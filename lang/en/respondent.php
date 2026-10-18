@@ -123,4 +123,6 @@ return array (
   'cannot_respond_own_case' => 'You cannot submit a response to your own case.',
   'review_status_label' => 'Review status',
   'start_first_response' => 'Start by creating your first response document.',
+  'response_locked' => 'An accepted response is part of the case record and can no longer be changed.',
+  'response_instruction' => 'When answering, attach the scanned answer bearing the signature and stamp of the responsible party as a PDF, and enter the full content of the answer under “Main content”.',
 );

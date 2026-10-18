@@ -14,6 +14,8 @@ final readonly class SystemAuditMiddleware
 {
     private const EXCLUDED_ROUTES = [
         'admin.notifications.count',
+        // Static, versioned UI strings fetched by the frontend: not user activity.
+        'i18n.messages',
     ];
 
     public function __construct(private RecordSystemAuditAction $recordSystemAudit) {}

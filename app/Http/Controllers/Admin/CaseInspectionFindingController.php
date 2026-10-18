@@ -5,12 +5,18 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\CaseInspectionFinding;
 use App\Models\CaseInspectionRequest;
+use App\Support\EthiopianDate;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class CaseInspectionFindingController extends Controller
 {
-    public function index()
+    public function index(): Response
     {
         $user = auth()->user();
         $query = CaseInspectionFinding::with(['request.case', 'recordedBy'])
@@ -40,38 +46,26 @@ class CaseInspectionFindingController extends Controller
             $query->where('severity', $severity);
         }
 
-        $findings = $query->paginate(12)->withQueryString();
-        $requestsQuery = CaseInspectionRequest::with('case')
-            ->orderByDesc('request_date')
-            ->select(['id', 'court_case_id', 'subject', 'request_date']);
+        $findings = $query->paginate(12)->withQueryString()
+            ->through(fn (CaseInspectionFinding $finding): array => $this->presentRow($finding));
 
-        if (!$this->canAccessAllFindings()) {
-            $requestsQuery->where('assigned_inspector_user_id', $user?->id);
-        }
-        if ($caseId) {
-            $requestsQuery->where('court_case_id', $caseId);
-        }
-
-        $requests = $requestsQuery->get();
-
-        return view('admin.case-inspections.findings.index', compact('findings', 'requests', 'requestId', 'caseId', 'severity'));
+        return Inertia::render('Admin/CaseInspections/Findings/Index', [
+            'findings' => $findings,
+            'requests' => $this->accessibleRequests($caseId ?: null)
+                ->map(fn (CaseInspectionRequest $req): array => ['id' => (int) $req->id, 'label' => trim(($req->case?->case_number ?? '').' - '.$req->subject)])
+                ->values(),
+            'filters' => [
+                'request_id' => $requestId ? (string) $requestId : '',
+                'severity' => $severity,
+                'case_id' => $caseId ? (string) $caseId : '',
+            ],
+            'severities' => CaseInspectionFinding::SEVERITIES,
+        ]);
     }
 
-    public function create()
+    public function create(): Response
     {
-        $user = auth()->user();
-        $requestsQuery = CaseInspectionRequest::with('case')
-            ->orderByDesc('request_date')
-            ->select(['id', 'court_case_id', 'subject', 'request_date']);
-
-        if (!$this->canAccessAllFindings()) {
-            $requestsQuery->where('assigned_inspector_user_id', $user?->id);
-        }
-
-        $requests = $requestsQuery->get();
-        $prefillRequestId = request()->integer('request_id');
-
-        return view('admin.case-inspections.findings.create', compact('requests', 'prefillRequestId'));
+        return $this->form(null, request()->integer('request_id') ?: null);
     }
 
     public function store(Request $request)
@@ -81,7 +75,7 @@ class CaseInspectionFindingController extends Controller
             'finding_date' => ['required', 'date'],
             'title' => ['required', 'string', 'max:255'],
             'details' => ['required', 'string'],
-            'severity' => ['required', 'in:low,medium,high,critical'],
+            'severity' => ['required', Rule::in(CaseInspectionFinding::SEVERITIES)],
             'attachment_pdf' => ['nullable', 'file', 'mimes:pdf', 'max:2048'],
         ]);
 
@@ -127,15 +121,23 @@ class CaseInspectionFindingController extends Controller
         return redirect()->route('case-inspection-findings.index')->with('success', __('case_inspections.findings.created'));
     }
 
-    public function show(CaseInspectionFinding $finding)
+    public function show(CaseInspectionFinding $finding): Response
     {
         $this->authorizeFindingAccess($finding);
         $finding->load(['request.case', 'recordedBy', 'acceptedBy']);
 
-        return view('admin.case-inspections.findings.show', compact('finding'));
+        return Inertia::render('Admin/CaseInspections/Findings/Show', [
+            'finding' => [
+                ...$this->presentRow($finding),
+                'details' => (string) $finding->details,
+                'recordedBy' => $finding->recordedBy?->name,
+                'acceptedBy' => $finding->acceptedBy?->name,
+            ],
+            'canAccept' => $this->canAccessAllFindings() && $finding->accepted_at === null,
+        ]);
     }
 
-    public function edit(CaseInspectionFinding $finding)
+    public function edit(CaseInspectionFinding $finding): Response|RedirectResponse
     {
         $this->authorizeFindingAccess($finding);
         if ($this->isAcceptedLocked($finding)) {
@@ -144,18 +146,7 @@ class CaseInspectionFindingController extends Controller
                 ->with('error', __('case_inspections.findings.accepted_locked'));
         }
 
-        $user = auth()->user();
-        $requestsQuery = CaseInspectionRequest::with('case')
-            ->orderByDesc('request_date')
-            ->select(['id', 'court_case_id', 'subject', 'request_date']);
-
-        if (!$this->canAccessAllFindings()) {
-            $requestsQuery->where('assigned_inspector_user_id', $user?->id);
-        }
-
-        $requests = $requestsQuery->get();
-
-        return view('admin.case-inspections.findings.edit', compact('finding', 'requests'));
+        return $this->form($finding, null);
     }
 
     public function update(Request $request, CaseInspectionFinding $finding)
@@ -172,7 +163,7 @@ class CaseInspectionFindingController extends Controller
             'finding_date' => ['required', 'date'],
             'title' => ['required', 'string', 'max:255'],
             'details' => ['required', 'string'],
-            'severity' => ['required', 'in:low,medium,high,critical'],
+            'severity' => ['required', Rule::in(CaseInspectionFinding::SEVERITIES)],
             'attachment_pdf' => ['nullable', 'file', 'mimes:pdf', 'max:2048'],
         ]);
 
@@ -264,6 +255,66 @@ class CaseInspectionFindingController extends Controller
             $filename,
             ['Content-Type' => 'application/pdf']
         );
+    }
+
+    private function form(?CaseInspectionFinding $finding, ?int $prefillRequestId): Response
+    {
+        return Inertia::render('Admin/CaseInspections/Findings/Form', [
+            'finding' => $finding ? [
+                'id' => (int) $finding->id,
+                'case_inspection_request_id' => (string) $finding->case_inspection_request_id,
+                'finding_date' => $finding->finding_date?->format('Y-m-d') ?? '',
+                'title' => (string) $finding->title,
+                'details' => (string) $finding->details,
+                'severity' => (string) $finding->severity,
+                'attachmentName' => $finding->attachment_path ? ($finding->attachment_original_name ?? basename((string) $finding->attachment_path)) : null,
+                'attachmentUrl' => $finding->attachment_path ? route('case-inspection-findings.attachment', $finding) : null,
+            ] : null,
+            'defaults' => [
+                'case_inspection_request_id' => $prefillRequestId ? (string) $prefillRequestId : '',
+                'finding_date' => now()->format('Y-m-d'),
+            ],
+            'requests' => $this->accessibleRequests(null)
+                ->map(fn (CaseInspectionRequest $req): array => [
+                    'id' => (int) $req->id,
+                    'label' => trim(EthiopianDate::format($req->request_date).' - '.($req->case?->case_number ?? '').' - '.$req->subject),
+                ])
+                ->values(),
+            'severities' => CaseInspectionFinding::SEVERITIES,
+        ]);
+    }
+
+    /** @return array<string, mixed> */
+    private function presentRow(CaseInspectionFinding $finding): array
+    {
+        return [
+            'id' => (int) $finding->id,
+            'caseNumber' => $finding->request?->case?->case_number,
+            'requestSubject' => $finding->request?->subject,
+            'title' => (string) $finding->title,
+            'date' => EthiopianDate::format($finding->finding_date),
+            'severity' => (string) $finding->severity,
+            'accepted' => $finding->accepted_at !== null,
+            'attachmentName' => $finding->attachment_path ? ($finding->attachment_original_name ?? null) : null,
+            'attachmentUrl' => $finding->attachment_path ? route('case-inspection-findings.attachment', $finding) : null,
+        ];
+    }
+
+    /** Requests the current user may file findings against (all for admins, otherwise their assignments). */
+    private function accessibleRequests(?int $caseId): Collection
+    {
+        $query = CaseInspectionRequest::with('case')
+            ->orderByDesc('request_date')
+            ->select(['id', 'court_case_id', 'subject', 'request_date']);
+
+        if (!$this->canAccessAllFindings()) {
+            $query->where('assigned_inspector_user_id', auth()->id());
+        }
+        if ($caseId) {
+            $query->where('court_case_id', $caseId);
+        }
+
+        return $query->get();
     }
 
     private function canAccessAllFindings(): bool

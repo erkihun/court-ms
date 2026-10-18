@@ -8,6 +8,7 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Str;
+use Inertia\Testing\AssertableInertia as Assert;
 
 function closedCaseStatusUser(): User
 {
@@ -69,7 +70,9 @@ test('a closed case status cannot be changed by a permitted admin', function ():
     $this->actingAs($user)
         ->get(route('cases.show', $case->id))
         ->assertOk()
-        ->assertSeeText(__('cases.status.closed_locked_title'))
-        ->assertSeeText(__('cases.status.closed_locked'))
-        ->assertDontSee(route('cases.status.update', $case->id), false);
+        // The page shows the closed-case notice instead of the status form when status is closed.
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Admin/Cases/Show')
+            ->where('case.status', 'closed')
+            ->where('abilities.editStatus', true));
 });

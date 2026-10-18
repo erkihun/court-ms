@@ -1,0 +1,506 @@
+/* Applicant / respondent sign-in page (Pages/Auth/Party/Login.tsx). Every selector is page-prefixed. */
+
+/* ══════════════════════════════════════════════
+   MOTION
+══════════════════════════════════════════════ */
+@keyframes al-fade-up {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes al-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+/* drifting / breathing ambient orbs */
+@keyframes al-orb-float-1 {
+    0%,100% { transform: translate(0,0) scale(1); }
+    50%     { transform: translate(6%, 8%) scale(1.12); }
+}
+@keyframes al-orb-float-2 {
+    0%,100% { transform: translate(0,0) scale(1); }
+    50%     { transform: translate(-7%,-6%) scale(1.08); }
+}
+@keyframes al-orb-float-3 {
+    0%,100% { transform: translate(-50%,-50%) scale(1); opacity: 0.8; }
+    50%     { transform: translate(-44%,-56%) scale(1.2); opacity: 1; }
+}
+/* button shine sweep */
+@keyframes al-shine {
+    from { left: -60%; }
+    to   { left: 130%; }
+}
+
+/* Staggered entrance for the form column */
+.al-anim { opacity: 0; animation: al-fade-up 620ms cubic-bezier(0.16,1,0.3,1) forwards; }
+.al-heading     { animation-delay: 60ms; }
+.al-role-tabs   { animation-delay: 140ms; }
+.al-panel-label { animation-delay: 200ms; }
+.al-form        { animation-delay: 260ms; }
+.al-register-line { animation-delay: 360ms; }
+
+/* Right panel content fades in */
+.al-about, .al-about-empty { animation: al-fade-in 800ms ease 120ms both; }
+
+@media (prefers-reduced-motion: reduce) {
+    .al-anim, .al-about, .al-about-empty { animation: none !important; opacity: 1 !important; transform: none !important; }
+    .al-orb, .al-banner { animation: none !important; transform: none !important; }
+    .al-submit::after { display: none !important; }
+}
+
+/* ── Shell ───────────────────────────────────── */
+.al-shell {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+    font-family: inherit;
+}
+
+/* ══════════════════════════════════════════════
+   LEFT PANEL
+══════════════════════════════════════════════ */
+.al-left {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background: #ffffff;
+    overflow-y: auto;
+    position: relative;
+}
+@media (min-width: 1024px) {
+    .al-left { width: 460px; flex-shrink: 0; }
+}
+
+/* top strip */
+.al-topstrip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.375rem 2rem;
+    flex-shrink: 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+.al-top-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.al-logo-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+.al-logo-img {
+    height: 2rem; width: 2rem;
+    border-radius: 0.5rem; object-fit: contain;
+}
+.al-logo-mark {
+    display: inline-flex; align-items: center; justify-content: center;
+    height: 2rem; width: 2rem; border-radius: 0.5rem;
+    background: linear-gradient(135deg,#ea580c,#9a3412);
+    color: #fff; font-size: 0.6875rem; font-weight: 800;
+    letter-spacing: 0.04em;
+}
+.al-logo-name {
+    font-size: 0.9rem; font-weight: 700; color: #0f172a; letter-spacing: -0.01em;
+}
+
+/* language switch */
+.al-lang-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.1875rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.625rem;
+    background: #f8fafc;
+}
+.al-lang-btn {
+    display: inline-flex; align-items: center; gap: 0.375rem;
+    min-width: 3.25rem;
+    justify-content: center;
+    padding: 0.3125rem 0.5rem;
+    border-radius: 0.4375rem; border: 1px solid transparent;
+    color: #475569; cursor: pointer; text-decoration: none;
+    font-size: 0.75rem; font-weight: 700;
+    transition: background 120ms, border-color 120ms, color 120ms;
+}
+.al-lang-btn:hover { background: #fff; color: #0f172a; }
+.al-lang-btn.active {
+    background: #fff;
+    border-color: #fed7aa;
+    color: #c2410c;
+    box-shadow: 0 1px 3px rgb(15 23 42/0.08);
+}
+
+/* centered form area */
+.al-form-area {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 2rem;
+}
+.al-form-inner { width: 100%; max-width: 22rem; }
+
+/* heading */
+.al-heading { margin-bottom: 1.75rem; }
+.al-heading h1 {
+    font-size: 1.75rem; font-weight: 800; color: #0f172a;
+    letter-spacing: -0.03em; line-height: 1.2; margin: 0 0 0.375rem;
+}
+.al-heading p {
+    font-size: 0.875rem; color: #64748b; margin: 0; line-height: 1.5;
+}
+
+/* role tabs */
+.al-role-tabs {
+    display: flex;
+    position: relative;
+    background: #f1f5f9;
+    border-radius: 0.75rem;
+    padding: 0.25rem;
+    margin-bottom: 0.5rem;
+    gap: 0;
+}
+.al-role-tab {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    gap: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.8125rem; font-weight: 600;
+    color: #64748b; background: transparent; border: none; cursor: pointer;
+    position: relative; z-index: 1;
+    transition: color 180ms;
+}
+.al-role-tab.active { color: #0f172a; }
+.al-role-tab svg { transition: transform 200ms ease; }
+.al-role-tab:hover svg { transform: scale(1.12); }
+.al-role-indicator {
+    position: absolute; top: 0.25rem; bottom: 0.25rem; left: 0.25rem;
+    background: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 4px rgb(0 0 0/0.12);
+    transition: left 200ms cubic-bezier(0.4,0,0.2,1), width 200ms cubic-bezier(0.4,0,0.2,1);
+    pointer-events: none;
+}
+.al-panel-label {
+    font-size: 0.6875rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    color: #ea580c; margin: 0 0 1.25rem 0.125rem;
+}
+
+/* alerts */
+.al-alert {
+    display: flex; align-items: flex-start; gap: 0.5rem;
+    border-radius: 0.625rem; padding: 0.625rem 0.875rem;
+    font-size: 0.8rem; line-height: 1.5; margin-bottom: 1rem;
+}
+.al-alert ul { margin: 0; padding: 0; list-style: none; }
+.al-alert-ok { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
+.al-alert-err { background: #fff1f2; border: 1px solid #fecdd3; color: #be123c; }
+
+/* form */
+.al-form { display: flex; flex-direction: column; gap: 1.125rem; }
+.al-field { display: flex; flex-direction: column; }
+
+.al-label {
+    font-size: 0.8125rem; font-weight: 600; color: #334155;
+    margin-bottom: 0.375rem; display: block;
+}
+.al-input-wrap { position: relative; }
+.al-input-ico {
+    position: absolute; top: 50%; left: 0.875rem;
+    transform: translateY(-50%);
+    width: 1rem; height: 1rem; color: #94a3b8; pointer-events: none;
+}
+.al-input {
+    display: block; width: 100%; height: 2.75rem;
+    padding: 0 0.875rem 0 2.625rem;
+    border-radius: 0.625rem;
+    border: 1.5px solid #e2e8f0;
+    background: #fff;
+    font-size: 0.875rem; color: #0f172a;
+    transition: border-color 150ms, box-shadow 150ms;
+    outline: none; box-sizing: border-box;
+}
+.al-input::placeholder { color: #94a3b8; }
+.al-input:hover { border-color: #cbd5e1; }
+.al-input:focus {
+    border-color: #ea580c;
+    box-shadow: 0 0 0 3px rgb(234 88 12/0.13);
+    transform: translateY(-1px);
+}
+.al-pw-eye {
+    position: absolute; top: 0; bottom: 0; right: 0;
+    display: flex; align-items: center; padding: 0 0.875rem;
+    color: #94a3b8; background: none; border: none; cursor: pointer;
+    transition: color 120ms;
+}
+.al-pw-eye:hover { color: #475569; }
+
+.al-forgot {
+    font-size: 0.8125rem; font-weight: 600;
+    color: #ea580c; text-decoration: none; transition: color 120ms;
+}
+.al-forgot:hover { color: #c2410c; }
+
+.al-remember {
+    display: flex; align-items: center; gap: 0.625rem;
+    cursor: pointer; user-select: none;
+    font-size: 0.8125rem; color: #475569;
+}
+.al-checkbox {
+    width: 1rem; height: 1rem;
+    border-radius: 0.3125rem; border: 1.5px solid #cbd5e1;
+    accent-color: #ea580c; cursor: pointer; flex-shrink: 0;
+}
+
+/* submit */
+.al-submit {
+    position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    width: 100%; height: 2.875rem;
+    border-radius: 0.75rem; border: none; cursor: pointer;
+    background: linear-gradient(135deg,#ea580c 0%,#9a3412 100%);
+    color: #fff; font-size: 0.9375rem; font-weight: 700;
+    letter-spacing: 0.01em;
+    box-shadow: 0 4px 16px rgb(234 88 12/0.38);
+    transition: transform 150ms, box-shadow 150ms, opacity 150ms;
+    margin-top: 0.25rem;
+}
+/* diagonal shine that sweeps on hover */
+.al-submit::after {
+    content: ""; position: absolute; top: 0; bottom: 0; left: -60%;
+    width: 45%;
+    background: linear-gradient(100deg, transparent, rgb(255 255 255/0.35), transparent);
+    transform: skewX(-18deg);
+    pointer-events: none;
+}
+.al-submit:hover::after { animation: al-shine 750ms ease forwards; }
+.al-submit:hover {
+    opacity: 0.96;
+    box-shadow: 0 6px 22px rgb(234 88 12/0.48);
+    transform: translateY(-1px);
+}
+.al-submit svg { transition: transform 200ms ease; }
+.al-submit:hover svg { transform: translateX(3px); }
+.al-submit:active { transform: scale(0.98); box-shadow: 0 2px 10px rgb(234 88 12/0.3); }
+
+/* register link */
+.al-register-line {
+    margin-top: 1.25rem; text-align: center;
+    font-size: 0.8125rem; color: #64748b;
+}
+.al-register-line a {
+    font-weight: 700; color: #ea580c; text-decoration: none; transition: color 120ms;
+}
+.al-register-line a:hover { color: #c2410c; }
+
+.al-mobile-about-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    min-height: 2.625rem;
+    margin-top: 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid #fed7aa;
+    background: #fff7ed;
+    color: #c2410c;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 120ms, border-color 120ms, color 120ms;
+}
+.al-mobile-about-btn-top {
+    width: auto;
+    min-height: 2.125rem;
+    margin-top: 0;
+    padding: 0 0.75rem;
+    white-space: nowrap;
+    font-size: 0.75rem;
+}
+.al-mobile-about-btn:hover {
+    background: #ffedd5;
+    border-color: #fdba74;
+    color: #9a3412;
+}
+@media (min-width: 1024px) {
+    .al-mobile-about-btn { display: none; }
+}
+
+/* footer */
+.al-footer {
+    flex-shrink: 0; text-align: center;
+    padding: 1rem 2rem 1.25rem;
+    font-size: 0.6875rem; color: #94a3b8;
+}
+
+/* ══════════════════════════════════════════════
+   RIGHT PANEL
+══════════════════════════════════════════════ */
+.al-right {
+    display: none;
+    flex: 1; position: relative; overflow: hidden;
+    background: #080e27;
+}
+.al-right.open {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: flex;
+    align-items: stretch;
+}
+@media (min-width: 1024px) {
+    .al-right {
+        display: flex;
+        align-items: stretch;
+        position: relative;
+        inset: auto;
+        z-index: auto;
+    }
+}
+
+/* system banner background */
+.al-banner {
+    position: absolute; inset: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: 0;
+    opacity: 0.45;                 /* dim the image itself */
+    filter: blur(1px);             /* soften so it doesn't fight the text */
+    animation: al-banner-zoom 24s ease-in-out infinite alternate;
+}
+@keyframes al-banner-zoom {
+    from { transform: scale(1.02); }
+    to   { transform: scale(1.1); }
+}
+/* dark wash so the About text stays crisp and high-contrast */
+.al-banner-overlay {
+    position: absolute; inset: 0; z-index: 1;
+    background:
+        linear-gradient(160deg, rgb(8 14 39/0.92) 0%, rgb(8 14 39/0.85) 50%, rgb(8 14 39/0.95) 100%);
+}
+/* lift content above the banner layers */
+.al-right.has-banner .al-about,
+.al-right.has-banner .al-about-empty,
+.al-right.has-banner .al-about-close { z-index: 10; }
+/* soften the orbs when a banner is present */
+.al-right.has-banner .al-orb { opacity: 0.55; mix-blend-mode: screen; }
+
+/* ambient orbs */
+.al-orb {
+    position: absolute; border-radius: 9999px;
+    filter: blur(72px); pointer-events: none;
+    z-index: 2;
+}
+.al-orb-1 {
+    top: -15%; left: -10%; width: 65%; height: 65%;
+    background: radial-gradient(circle, rgb(79 70 229/0.35) 0%, transparent 70%);
+    animation: al-orb-float-1 16s ease-in-out infinite;
+}
+.al-orb-2 {
+    bottom: -15%; right: -10%; width: 60%; height: 60%;
+    background: radial-gradient(circle, rgb(234 88 12/0.28) 0%, transparent 70%);
+    animation: al-orb-float-2 20s ease-in-out infinite;
+}
+.al-orb-3 {
+    top: 40%; left: 30%; width: 40%; height: 40%;
+    transform: translate(-50%,-50%);
+    background: radial-gradient(circle, rgb(6 182 212/0.12) 0%, transparent 70%);
+    animation: al-orb-float-3 12s ease-in-out infinite;
+}
+
+.al-about-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 20;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.625rem;
+    border: 1px solid rgb(255 255 255/0.16);
+    background: rgb(255 255 255/0.08);
+    color: rgb(255 255 255/0.82);
+    cursor: pointer;
+}
+.al-about-close:hover {
+    background: rgb(255 255 255/0.14);
+    color: #fff;
+}
+@media (min-width: 1024px) {
+    .al-about-close { display: none; }
+}
+
+/* about panel */
+.al-about {
+    position: relative; z-index: 10;
+    display: flex; flex-direction: column;
+    width: 100%; padding: 2.5rem;
+}
+@media (max-width: 1023px) {
+    .al-about {
+        padding: 4.5rem 1.5rem 1.5rem;
+    }
+}
+
+.al-about-title {
+    font-size: 1.5rem; font-weight: 800;
+    color: #fff; line-height: 1.25;
+    margin: 0 0 1rem; flex-shrink: 0;
+    letter-spacing: -0.02em;
+}
+
+.al-about-divider {
+    flex-shrink: 0; height: 1px;
+    background: linear-gradient(90deg,rgb(255 255 255/0.12),transparent);
+    margin-bottom: 1.25rem;
+}
+
+.al-about-body {
+    flex: 1; min-height: 0;
+    overflow-y: auto;
+    font-size: 0.875rem; line-height: 1.8;
+    color: rgb(255 255 255/0.6);
+    word-break: break-word;
+    padding-right: 0.25rem;
+}
+/* scrollbar */
+.al-about-body::-webkit-scrollbar { width: 4px; }
+.al-about-body::-webkit-scrollbar-track { background: transparent; }
+.al-about-body::-webkit-scrollbar-thumb { background: rgb(255 255 255/0.15); border-radius: 9999px; }
+.al-about-body::-webkit-scrollbar-thumb:hover { background: rgb(255 255 255/0.25); }
+
+/* about body typography */
+.al-about-body h1,.al-about-body h2,.al-about-body h3 {
+    color: rgb(255 255 255/0.9); font-weight: 700; margin: 1em 0 0.4em;
+}
+.al-about-body p { margin: 0 0 0.75em; }
+.al-about-body a { color: #fb923c; text-decoration: underline; }
+.al-about-body ul,.al-about-body ol { padding-left: 1.25em; margin-bottom: 0.75em; }
+
+/* empty state */
+.al-about-empty {
+    position: relative; z-index: 10;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    width: 100%; text-align: center; padding: 2rem;
+}
+.al-empty-mark {
+    width: 5rem; height: 5rem; border-radius: 1.5rem;
+    background: rgb(255 255 255/0.07);
+    border: 1px solid rgb(255 255 255/0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; font-weight: 800;
+    color: rgb(255 255 255/0.7);
+    margin-bottom: 1.25rem;
+}
+.al-empty-name {
+    font-size: 1.375rem; font-weight: 700; color: #fff; margin: 0 0 0.5rem;
+}
+.al-empty-sub { font-size: 0.875rem; color: rgb(255 255 255/0.45); margin: 0; }

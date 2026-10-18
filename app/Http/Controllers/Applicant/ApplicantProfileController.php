@@ -11,16 +11,38 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class ApplicantProfileController extends Controller
 {
-    public function edit(Request $request)
+    public function edit(Request $request): Response
     {
-        if ($request->routeIs('respondent.profile.*')) {
+        $respondent = $request->routeIs('respondent.profile.*');
+        if ($respondent) {
             $request->session()->put('acting_as_respondent', true);
         }
 
-        return view('applicant.profile.edit', ['user' => $request->user('applicant')]);
+        $user = $request->user('applicant');
+        $nationalId = preg_replace('/\D/', '', (string) $user->national_id_number);
+
+        return Inertia::render('Applicant/Profile/Edit', [
+            'portal' => $respondent ? 'respondent' : 'applicant',
+            'profile' => [
+                'first_name' => (string) $user->first_name,
+                'middle_name' => (string) $user->middle_name,
+                'last_name' => (string) $user->last_name,
+                'gender' => (string) $user->gender,
+                'phone' => (string) $user->phone,
+                'national_id_number' => trim(chunk_split($nationalId, 4, ' ')),
+                'email' => (string) $user->email,
+                'address' => (string) $user->address,
+                'position' => (string) $user->position,
+                'organization_name' => (string) $user->organization_name,
+            ],
+            'isLawyer' => (bool) $user->is_lawyer,
+            'hasLawyerDocument' => ! empty($user->lawyer_document_path),
+        ]);
     }
 
     public function update(Request $request)
@@ -56,7 +78,7 @@ class ApplicantProfileController extends Controller
 
             'lawyer_document' => ['nullable', 'file', 'mimes:pdf', 'max:1024'],
         ], [
-            'national_id_number.digits' => 'National ID must be exactly 16 digits.',
+            'national_id_number.digits' => __('auth.national_id_must_be_16'),
         ]);
 
         // Only lawyers may upload a credential document.
@@ -78,7 +100,7 @@ class ApplicantProfileController extends Controller
 
         if (! empty($validated['password'])) {
             if (empty($validated['current_password'])) {
-                return back()->withErrors(['current_password' => 'Enter your current password to set a new one.']);
+                return back()->withErrors(['current_password' => __('auth.current_password_required_for_new')]);
             }
             $currentPassword = $validated['current_password'];
             $newPassword = $validated['password'];
@@ -102,7 +124,7 @@ class ApplicantProfileController extends Controller
             $request->session()->regenerate();
         }
 
-        return back()->with('success', 'Profile updated.');
+        return back()->with('success', __('auth.profile_updated'));
     }
 
     public function updatePassword(Request $request)
@@ -126,7 +148,7 @@ class ApplicantProfileController extends Controller
 
         return redirect()
             ->to(route($request->routeIs('respondent.profile.*') ? 'respondent.profile.edit' : 'applicant.profile.edit').'#security')
-            ->with('security_success', __('auth.profile.saved'));
+            ->with('success', __('auth.profile.saved'));
     }
 
     public function lawyerDocument(Request $request)

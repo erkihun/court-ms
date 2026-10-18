@@ -6,56 +6,68 @@ use App\Http\Controllers\Controller;
 use App\Models\BenchNote;
 use App\Models\CourtCase;
 use App\Models\User;
+use App\Support\EthiopianDate;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use Inertia\Inertia;
+use Inertia\Response;
 use Mews\Purifier\Facades\Purifier;
 
+/**
+ * Routes are gated by perm:bench-notes.manage; each action additionally needs
+ * its own bench-notes.{view,create,update,delete} permission, which the old
+ * pages only enforced by hiding buttons.
+ */
 class BenchNoteController extends Controller
 {
-    public function index(Request $request)
+    private const JUDGE_RELATIONS = [
+        'judgeOne:id,name,signature_path',
+        'judgeTwo:id,name,signature_path',
+        'judgeThree:id,name,signature_path',
+    ];
+
+    public function index(Request $request): Response
     {
+        $this->authorizeAction('view');
+
         $caseId = $request->integer('case_id') ?: null;
 
         $benchNotes = BenchNote::query()
-            ->with([
-                'case:id,case_number,title',
-                'user:id,name',
-                'judgeOne:id,name,signature_path',
-                'judgeTwo:id,name,signature_path',
-                'judgeThree:id,name,signature_path',
-            ])
+            ->with(['case:id,case_number,title', 'user:id,name', ...self::JUDGE_RELATIONS])
             ->when($caseId, fn ($q) => $q->where('case_id', $caseId))
             ->orderByDesc('created_at')
             ->paginate(15)
-            ->withQueryString();
+            ->withQueryString()
+            ->through(fn (BenchNote $note): array => $this->present($note));
 
-        $cases = CourtCase::query()
-            ->select('id', 'case_number', 'title')
-            ->orderBy('case_number')
-            ->limit(300)
-            ->get();
-
-        return view('admin.bench-notes.index', compact('benchNotes', 'cases', 'caseId'));
+        return Inertia::render('Admin/BenchNotes/Index', [
+            'notes' => $benchNotes,
+            'cases' => $this->caseOptions(),
+            'filters' => ['case_id' => $caseId ? (string) $caseId : ''],
+        ]);
     }
 
-    public function create(Request $request)
+    public function create(Request $request): Response
     {
+        $this->authorizeAction('create');
+
         $caseId = $request->integer('case_id') ?: null;
 
-        $cases = CourtCase::query()
-            ->select('id', 'case_number', 'title')
-            ->orderBy('case_number')
-            ->limit(300)
-            ->get();
-
-        $judgeUsers = $this->loadJudgeUsers();
-
-        return view('admin.bench-notes.create', compact('cases', 'caseId', 'judgeUsers'));
+        return Inertia::render('Admin/BenchNotes/Form', [
+            'note' => null,
+            'defaultCaseId' => $caseId,
+            ...$this->formOptions(),
+        ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
+        $this->authorizeAction('create');
+
         $data = $request->validate([
             'case_id' => ['required', 'integer', 'exists:court_cases,id'],
             'title' => ['required', 'string', 'max:255'],
@@ -101,41 +113,45 @@ class BenchNoteController extends Controller
             ]);
     }
 
-    public function show(BenchNote $benchNote)
+    public function show(BenchNote $benchNote): Response
     {
-        $benchNote->load([
-            'case:id,case_number,title',
-            'user:id,name',
-            'judgeOne:id,name,signature_path',
-            'judgeTwo:id,name,signature_path',
-            'judgeThree:id,name,signature_path',
-        ]);
+        $this->authorizeAction('view');
 
-        return view('admin.bench-notes.show', compact('benchNote'));
+        $benchNote->load(['case:id,case_number,title', 'user:id,name', ...self::JUDGE_RELATIONS]);
+
+        return Inertia::render('Admin/BenchNotes/Show', ['note' => $this->present($benchNote)]);
     }
 
-    public function edit(BenchNote $benchNote)
+    public function edit(BenchNote $benchNote): Response
     {
-        $benchNote->load([
-            'case:id,case_number,title',
-            'judgeOne:id,name,signature_path',
-            'judgeTwo:id,name,signature_path',
-            'judgeThree:id,name,signature_path',
+        $this->authorizeAction('update');
+        $this->authorizeOwnership($benchNote);
+
+        $benchNote->load(['case:id,case_number,title', 'user:id,name', ...self::JUDGE_RELATIONS]);
+
+        return Inertia::render('Admin/BenchNotes/Form', [
+            'note' => [
+                'id' => $benchNote->id,
+                'caseId' => (int) $benchNote->case_id,
+                'title' => (string) $benchNote->title,
+                'noteDate' => $benchNote->note_date?->format('Y-m-d') ?? '',
+                'note' => (string) $benchNote->note,
+                'judgeIds' => [$benchNote->judge_one_id, $benchNote->judge_two_id, $benchNote->judge_three_id],
+                'firstJudgeName' => $benchNote->judgeOne?->name,
+                'author' => $benchNote->user?->name,
+                'created' => EthiopianDate::format($benchNote->created_at, withTime: true),
+                'updated' => $this->wasEdited($benchNote) ? EthiopianDate::format($benchNote->updated_at, withTime: true) : null,
+            ],
+            'defaultCaseId' => null,
+            ...$this->formOptions(),
         ]);
-
-        $cases = CourtCase::query()
-            ->select('id', 'case_number', 'title')
-            ->orderBy('case_number')
-            ->limit(300)
-            ->get();
-
-        $judgeUsers = $this->loadJudgeUsers();
-
-        return view('admin.bench-notes.edit', compact('benchNote', 'cases', 'judgeUsers'));
     }
 
-    public function update(Request $request, BenchNote $benchNote)
+    public function update(Request $request, BenchNote $benchNote): RedirectResponse
     {
+        $this->authorizeAction('update');
+        $this->authorizeOwnership($benchNote);
+
         $data = $request->validate([
             'case_id' => ['required', 'integer', 'exists:court_cases,id'],
             'title' => ['required', 'string', 'max:255'],
@@ -184,8 +200,11 @@ class BenchNoteController extends Controller
             ]);
     }
 
-    public function destroy(BenchNote $benchNote)
+    public function destroy(BenchNote $benchNote): RedirectResponse
     {
+        $this->authorizeAction('delete');
+        $this->authorizeOwnership($benchNote);
+
         $caseId = $benchNote->case_id;
         $benchNote->delete();
 
@@ -195,6 +214,75 @@ class BenchNoteController extends Controller
                 'key' => 'messages.success.deleted',
                 'replace' => ['resource' => __('messages.resources.bench_note')],
             ]);
+    }
+
+    private function authorizeAction(string $action): void
+    {
+        abort_unless(userHasPermission('bench-notes.'.$action), 403);
+    }
+
+    /** A judge's notes are their own: only the author or an administrator may change or delete one. */
+    private function authorizeOwnership(BenchNote $note): void
+    {
+        abort_unless($this->mayModify($note), 403);
+    }
+
+    private function mayModify(BenchNote $note): bool
+    {
+        $user = Auth::user();
+
+        return $user !== null && ((int) $note->user_id === (int) $user->id || $user->hasRole('admin'));
+    }
+
+    /** @return array<string, mixed> */
+    private function present(BenchNote $note): array
+    {
+        return [
+            'id' => $note->id,
+            'title' => (string) $note->title,
+            'caseId' => $note->case_id ? (int) $note->case_id : null,
+            'caseNumber' => $note->case?->case_number,
+            'caseTitle' => $note->case?->title,
+            'author' => $note->user?->name,
+            'mine' => $this->mayModify($note),
+            'created' => EthiopianDate::format($note->created_at),
+            'createdTime' => EthiopianDate::formatTime($note->created_at, timeFormat: 'g:i A'),
+            'updated' => $this->wasEdited($note) ? EthiopianDate::format($note->updated_at, withTime: true) : null,
+            'noteDate' => $note->note_date ? EthiopianDate::format($note->note_date) : null,
+            'judges' => [$note->judgeOne?->name, $note->judgeTwo?->name, $note->judgeThree?->name],
+            'signatureUrl' => $note->judgeOne?->signature_url,
+            // Purified on save; cleaned again here because older rows predate that.
+            'noteHtml' => $note->note ? clean($note->note, 'default') : '',
+        ];
+    }
+
+    private function wasEdited(BenchNote $note): bool
+    {
+        return $note->updated_at !== null && ! $note->updated_at->equalTo($note->created_at);
+    }
+
+    /** @return Collection<int, array{id: int, label: string}> */
+    private function caseOptions(): Collection
+    {
+        return CourtCase::query()
+            ->select('id', 'case_number', 'title')
+            ->orderBy('case_number')
+            ->limit(300)
+            ->get()
+            ->map(fn (CourtCase $case): array => ['id' => $case->id, 'label' => $case->case_number.' — '.$case->title])
+            ->values();
+    }
+
+    /** @return array<string, mixed> */
+    private function formOptions(): array
+    {
+        $user = auth()->user();
+
+        return [
+            'cases' => $this->caseOptions(),
+            'judges' => $this->loadJudgeUsers()->map(fn (User $judge): array => ['id' => $judge->id, 'name' => $judge->name])->values(),
+            'currentUser' => ['id' => (int) $user->id, 'name' => (string) $user->name],
+        ];
     }
 
     private function sanitizeNote(?string $html): string

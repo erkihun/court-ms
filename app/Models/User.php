@@ -129,6 +129,39 @@ class User extends Authenticatable implements MustVerifyEmailContract, Auditable
             ->exists();
     }
 
+    /**
+     * The permission names hasPermission() would grant, for the frontend to
+     * decide what to show. ['*'] means every permission (admin). The server
+     * still authorises every request; this only drives the UI.
+     *
+     * @return list<string>
+     */
+    public function effectivePermissionNames(): array
+    {
+        $activeRole = $this->activeRole();
+
+        if ($activeRole instanceof Role) {
+            if (mb_strtolower($activeRole->name) === 'admin') {
+                return ['*'];
+            }
+
+            $activeRole->loadMissing('permissions');
+
+            return $activeRole->permissions->pluck('name')->unique()->values()->all();
+        }
+
+        if ($this->hasRole('admin')) {
+            return ['*'];
+        }
+
+        return Permission::query()
+            ->whereHas('roles', fn ($q) => $q->whereIn('roles.id', $this->roles()->select('roles.id')))
+            ->pluck('name')
+            ->unique()
+            ->values()
+            ->all();
+    }
+
     public function hasRole(string $role): bool
     {
         $activeRole = $this->activeRole();

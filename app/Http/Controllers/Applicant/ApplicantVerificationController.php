@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Applicant;
 
+use App\Http\Controllers\Concerns\RendersAuthPages;
 use App\Http\Controllers\Controller;
 use App\Models\Applicant;
 use App\Notifications\ApplicantEmailOtp;
@@ -12,6 +13,8 @@ use Illuminate\Support\Facades\Log;
 
 class ApplicantVerificationController extends Controller
 {
+    use RendersAuthPages;
+
     /** Generate a fresh OTP, store hash in session, return the plain code. */
     private function generateOtp(int $ttlMinutes = 10): string
     {
@@ -50,7 +53,7 @@ class ApplicantVerificationController extends Controller
             }
         }
 
-        return view('applicant.auth.email-verify-otp');
+        return $this->authPage('Auth/Party/VerifyEmailOtp');
     }
 
     /** Resend a fresh OTP code to the authenticated applicant. */

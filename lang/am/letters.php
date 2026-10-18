@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 return [
     'titles' => [
@@ -140,6 +140,32 @@ return [
         'approved_delete_locked' => 'የጸደቁ ደብዳቤዎች ማጥፋት አይቻልም',
     ],
 
+    'categories' => [
+        'title' => 'የደብዳቤ ምድቦች',
+        'description' => 'በደብዳቤ ቴምፕሌቶች የሚጠቀሙ ምድቦችን ያስተዳድሩ።',
+        'manage' => 'ምድቦችን አስተዳድር',
+        'back_to_templates' => 'ወደ ቴምፕሌቶች ተመለስ',
+        'new' => 'አዲስ ምድብ',
+        'empty' => 'እስካሁን ምንም ምድብ የለም።',
+        'confirm_delete' => 'ይህን ምድብ ማጥፋት ይፈልጋሉ?',
+        'create' => 'ምድብ ፍጠር',
+        'create_help' => 'የደብዳቤ ቴምፕሌቶችን ለማደራጀት ምድብ ያክሉ።',
+        'edit' => 'ምድብ አርትዕ',
+        'edit_help' => 'የምድቡን ዝርዝሮች ያዘምኑ።',
+        'save' => 'ምድብ አስቀምጥ',
+        'update' => 'ምድብ አዘምን',
+        'table' => [
+            'name' => 'ስም',
+            'description' => 'መግለጫ',
+            'actions' => 'እርምጃዎች',
+        ],
+        'form' => [
+            'name' => 'የምድብ ስም',
+            'description' => 'መግለጫ',
+            'description_placeholder' => 'አጭር መግለጫ (አማራጭ)',
+        ],
+    ],
+
     'templates' => [
         'title' => 'የደብዳቤ ቴምፕሌቶች',
         'new' => 'አዲስ የደብዳቤ ቴምፕሌት',
@@ -170,6 +196,8 @@ return [
             'title' => 'ርዕስ',
             'category' => 'ምድብ',
             'category_placeholder' => 'ለምሳሌ ችሎት፣ ይግባኝ',
+            'category_choose' => 'ምድብ ይምረጡ ወይም ይጻፉ',
+            'no_categories' => 'እስካሁን ምድብ የለም። መጀመሪያ ምድብ ይፍጠሩ።',
             'subject_prefix' => 'የርዕስ ቅድመ ቃል',
             'subject_prefix_placeholder' => 'ለምሳሌ LTR-',
             'subject_prefix_help' => 'ከዚህ ቴምፕሌት የሚፈጠሩ ደብዳቤዎች ላይ በራስ-ሰር የሚጨመር አማራጭ ቅድመ ቃል።',

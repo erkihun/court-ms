@@ -4,18 +4,21 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Auth;
 
+use App\Http\Controllers\Concerns\RendersAuthPages;
 use App\Http\Controllers\Controller;
 use App\Services\MfaService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 class MfaChallengeController extends Controller
 {
-    public function show(): View
+    use RendersAuthPages;
+
+    public function show(): Response
     {
-        return view('admin.auth.mfa-challenge');
+        return $this->authPage('Auth/MfaChallenge');
     }
 
     public function store(Request $request, MfaService $mfa): RedirectResponse

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Http\Controllers\Concerns\RendersAuthPages;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Notifications\PasswordResetOtp;
@@ -10,14 +11,13 @@ use Illuminate\Support\Facades\Log;
 
 class PasswordResetLinkController extends Controller
 {
+    use RendersAuthPages;
+
     // ── Step 1: show email form ────────────────────────────────────────────────
 
     public function create()
     {
-        return response()
-            ->view('admin.auth.forgot-password')
-            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
-            ->header('Pragma', 'no-cache');
+        return $this->authPage('Auth/ForgotPassword', ['portal' => 'staff']);
     }
 
     // ── Step 2: send OTP ───────────────────────────────────────────────────────
@@ -69,10 +69,7 @@ class PasswordResetLinkController extends Controller
             return redirect()->route('password.request');
         }
 
-        return response()
-            ->view('admin.auth.password-otp')
-            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
-            ->header('Pragma', 'no-cache');
+        return $this->authPage('Auth/PasswordOtp', ['portal' => 'staff']);
     }
 
     // ── Step 4: verify OTP ─────────────────────────────────────────────────────
@@ -137,6 +134,6 @@ class PasswordResetLinkController extends Controller
             }
         }
 
-        return back()->with('success', 'A new code has been sent to your email.');
+        return back()->with('success', __('auth.reset_code_resent'));
     }
 }

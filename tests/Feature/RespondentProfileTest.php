@@ -4,6 +4,7 @@ use App\Models\Applicant;
 use App\Models\Respondent;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Inertia\Testing\AssertableInertia as Assert;
 
 function respondentProfileApplicant(): Applicant
 {
@@ -60,9 +61,10 @@ test('respondent profile exposes the same profile security and sessions navigati
     $this->actingAs($applicant, 'applicant')
         ->get(route('respondent.profile.edit'))
         ->assertOk()
-        ->assertSee(route('respondent.profile.update'))
-        ->assertSee(route('respondent.profile.password'))
-        ->assertSee(route('respondent.profile.sessions.index'));
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Applicant/Profile/Edit')
+            ->where('portal', 'respondent')
+            ->where('auth.applicant.actingAsRespondent', true));
 });
 
 test('respondent profile updates linked profile records and password', function () {
@@ -111,14 +113,25 @@ test('respondent can view and revoke another respondent session', function () {
         'last_activity' => now()->getTimestamp(),
     ]);
 
-    $this->actingAs($applicant, 'applicant')
+    $response = $this->actingAs($applicant, 'applicant')
         ->get(route('respondent.profile.sessions.index'))
         ->assertOk()
-        ->assertSee('Windows')
-        ->assertSee('Chrome 150');
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Applicant/Profile/Sessions')
+            ->where('portal', 'respondent')
+            ->where('sessions', fn ($sessions) => collect($sessions)->contains(fn ($row) => $row['deviceName'] === 'Windows' && $row['browserName'] === 'Chrome 150')));
 
+    // The page never carries raw session ids, so a guessed id revokes nothing.
     $this->actingAs($applicant, 'applicant')
         ->delete(route('respondent.profile.sessions.destroy', 'respondent-other-session'))
+        ->assertRedirect();
+    $this->assertDatabaseHas('sessions', ['id' => 'respondent-other-session']);
+
+    $key = collect($response->viewData('page')['props']['sessions'])->firstWhere('isCurrent', false)['key'];
+    expect($key)->not->toContain('respondent-other-session');
+
+    $this->actingAs($applicant, 'applicant')
+        ->delete(route('respondent.profile.sessions.destroy', $key))
         ->assertRedirect();
 
     $this->assertDatabaseMissing('sessions', ['id' => 'respondent-other-session']);

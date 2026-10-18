@@ -143,8 +143,16 @@ test('user can revoke another session but not the current one', function () {
         'last_activity' => now()->getTimestamp(),
     ]);
 
+    // Rows are addressed by a keyed hash; the raw session id is never accepted.
+    $key = substr(hash_hmac('sha256', 'other-session-id', (string) config('app.key')), 0, 40);
+
     $this->actingAs($user)
         ->delete('/profile/sessions/other-session-id')
+        ->assertRedirect();
+    $this->assertDatabaseHas('sessions', ['id' => 'other-session-id']);
+
+    $this->actingAs($user)
+        ->delete('/profile/sessions/'.$key)
         ->assertRedirect();
 
     $this->assertDatabaseMissing('sessions', ['id' => 'other-session-id']);

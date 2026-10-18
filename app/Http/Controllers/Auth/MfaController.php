@@ -4,25 +4,30 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Auth;
 
+use App\Http\Controllers\Concerns\RendersAuthPages;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\ConfirmMfaRequest;
 use App\Services\MfaService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Symfony\Component\HttpFoundation\Response;
 
 class MfaController extends Controller
 {
-    public function show(Request $request, MfaService $mfa): View
+    use RendersAuthPages;
+
+    public function show(Request $request, MfaService $mfa): Response
     {
         $user = Auth::guard('web')->user();
         abort_if($user === null, 401);
 
-        $secret = $user->mfa_secret;
-        $qrCode = $secret && ! $user->hasConfirmedMfa()
-            ? QrCode::size(220)->margin(1)->generate($mfa->provisioningUri($user, $secret))
+        $confirmed = $user->hasConfirmedMfa();
+        $secret = $confirmed ? null : $user->mfa_secret;
+        // Sent as a data: URI and shown in an <img>, so no server markup is injected into the page.
+        $qrCode = $secret
+            ? 'data:image/svg+xml;base64,'.base64_encode((string) QrCode::format('svg')->size(220)->margin(1)->generate($mfa->provisioningUri($user, $secret)))
             : null;
         $recoveryCodes = collect($request->session()->get('mfa_recovery_codes', []))
             ->flatten()
@@ -31,7 +36,12 @@ class MfaController extends Controller
             ->values()
             ->all();
 
-        return view('admin.profile.mfa', compact('user', 'secret', 'qrCode', 'recoveryCodes'));
+        return $this->authPage('Auth/MfaSetup', [
+            'confirmed' => $confirmed,
+            'secret' => $secret,
+            'qrCode' => $qrCode,
+            'recoveryCodes' => $recoveryCodes,
+        ]);
     }
 
     public function begin(Request $request, MfaService $mfa): RedirectResponse
@@ -82,7 +92,7 @@ class MfaController extends Controller
         $request->session()->forget('mfa_verified_at');
 
         return redirect()
-            ->to(route('profile.edit').'#security')
-            ->with('mfa_status', __('auth.mfa_disabled'));
+            ->route('profile.edit', ['tab' => 'security'])
+            ->with('success', __('auth.mfa_disabled'));
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Http\Controllers\Concerns\RendersAuthPages;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
@@ -12,6 +13,8 @@ use Illuminate\Validation\Rules;
 
 class NewPasswordController extends Controller
 {
+    use RendersAuthPages;
+
     // ── Step 5: show new password form ────────────────────────────────────────
 
     public function create()
@@ -20,10 +23,7 @@ class NewPasswordController extends Controller
             return redirect()->route('password.request');
         }
 
-        return response()
-            ->view('admin.auth.reset-password')
-            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
-            ->header('Pragma', 'no-cache');
+        return $this->authPage('Auth/ResetPassword', ['portal' => 'staff']);
     }
 
     // ── Step 6: save new password ─────────────────────────────────────────────
@@ -58,6 +58,6 @@ class NewPasswordController extends Controller
         session()->forget('admin_pwd_verified_email');
 
         return redirect()->route('login')
-            ->with('status', 'Password reset successfully. Please sign in.');
+            ->with('status', __('auth.password_reset_sign_in'));
     }
 }

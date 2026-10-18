@@ -1,0 +1,19 @@
+@utility transition-base {
+  transition-property:
+    color, background-color, border-color, opacity, box-shadow, transform,
+    filter, backdrop-filter;
+  transition-duration: var(--motion-normal);
+  transition-timing-function: var(--ease-standard);
+}
+
+@utility transition-fast {
+  transition-property:
+    color, background-color, border-color, opacity, box-shadow, transform,
+    filter, backdrop-filter;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+@utility page-enter {
+  animation: page-fade-in var(--motion-normal) var(--ease-standard);
+}

@@ -1,4 +1,4 @@
-﻿@php
+@php
     use Illuminate\Support\Carbon;
     use Illuminate\Support\Str;
     use Mews\Purifier\Facades\Purifier;

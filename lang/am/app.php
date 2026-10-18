@@ -177,6 +177,7 @@ return array (
   'cases' => 
   array (
     'search_placeholder' => 'መዝገቦችን ይፈልጉ… (ቁጥር፣ ርዕስ፣ አይነት)',
+    'search_cases' => 'መዝገቦችን ይፈልጉ',
   ),
   'Theme' => 'ገጽታ',
   'signature' => 'ፊርማ',
