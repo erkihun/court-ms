@@ -27,6 +27,8 @@ interface EthDateInputProps {
     invalid?: boolean;
     placeholder?: string;
     align?: 'start' | 'end';
+    markedDates?: ReadonlySet<string>;
+    disabledDates?: ReadonlySet<string>;
 }
 
 interface Cell {
@@ -37,28 +39,36 @@ interface Cell {
     selected: boolean;
 }
 
-/**
- * Date picker that shows the Ethiopian calendar in Amharic and the
- * Gregorian one in English, while always reading/writing a Gregorian date.
- */
-export function EthDateInput({ value, onChange, disabled = false, invalid, placeholder, align = 'start' }: EthDateInputProps) {
-    const amharic = useShared().app.locale === 'am';
-    const field = useField();
-    const root = useRef<HTMLDivElement>(null);
-    const [open, setOpen] = useState(false);
-    useDismiss(root, open, () => setOpen(false));
+interface EthCalendarProps {
+    /** Gregorian Y-m-d, or '' for none. */
+    value: string;
+    onChange: (value: string) => void;
+    /** Gregorian Y-m-d dates that get a dot (e.g. existing hearings). */
+    markedDates?: ReadonlySet<string>;
+    /** Gregorian Y-m-d dates that cannot be picked. */
+    disabledDates?: ReadonlySet<string>;
+    /** Hide the Clear/Today footer. */
+    bare?: boolean;
+    className?: string;
+}
 
+/**
+ * Month grid in the Ethiopian calendar (Amharic) or the Gregorian one
+ * (English); always reads and writes a Gregorian date.
+ */
+export function EthCalendar({ value, onChange, markedDates, disabledDates, bare = false, className }: EthCalendarProps) {
+    const amharic = useShared().app.locale === 'am';
     const selected = parseIsoDate(value);
     const today = todayYmd();
-    const initial = selected ?? today;
     const [view, setView] = useState<{ y: number; m: number }>(() => {
-        const base = amharic ? gregToEt(initial) : initial;
+        const base = amharic ? gregToEt(selected ?? today) : (selected ?? today);
         return { y: base.y, m: base.m };
     });
 
     const cells = buildCells(view, amharic, selected, today);
     const monthCount = amharic ? 13 : 12;
     const monthLabel = (amharic ? ET_MONTHS : GREG_MONTHS)[view.m - 1] ?? '';
+    const isoFor = (day: number) => toIsoDate(amharic ? etToGreg({ y: view.y, m: view.m, d: day }) : { y: view.y, m: view.m, d: day });
 
     const step = (delta: 1 | -1) =>
         setView(({ y, m }) => {
@@ -68,18 +78,91 @@ export function EthDateInput({ value, onChange, disabled = false, invalid, place
             return { y, m: next };
         });
 
-    const pick = (day: number) => {
-        const date = amharic ? etToGreg({ y: view.y, m: view.m, d: day }) : { y: view.y, m: view.m, d: day };
-        onChange(toIsoDate(date));
-        setOpen(false);
-    };
-
     const goToday = () => {
         onChange(toIsoDate(today));
         const base = amharic ? gregToEt(today) : today;
         setView({ y: base.y, m: base.m });
-        setOpen(false);
     };
+
+    return (
+        <div className={className}>
+            <div className="mb-2 flex items-center justify-between">
+                <div className="text-sm font-semibold text-(--text)">
+                    {monthLabel} <span className="text-(--text-subtle)">{amharic ? `${view.y} ዓ.ም` : view.y}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                    <button type="button" onClick={() => step(-1)} className="rounded-lg p-1.5 hover:bg-(--surface-soft)" aria-label="Previous month">
+                        <ChevronLeftIcon className="h-4 w-4" />
+                    </button>
+                    <button type="button" onClick={() => step(1)} className="rounded-lg p-1.5 hover:bg-(--surface-soft)" aria-label="Next month">
+                        <ChevronRightIcon className="h-4 w-4" />
+                    </button>
+                </div>
+            </div>
+
+            <div className="mb-1 grid grid-cols-7 gap-0.5">
+                {(amharic ? ET_DOW : GREG_DOW).map((dow) => (
+                    <div key={dow} className="py-1 text-center text-[11px] font-medium text-(--text-subtle)">
+                        {dow}
+                    </div>
+                ))}
+            </div>
+
+            <div className="grid grid-cols-7 gap-0.5">
+                {cells.map((cell) => {
+                    const iso = cell.current ? isoFor(cell.day) : '';
+                    const marked = cell.current && !!markedDates?.has(iso);
+                    const blocked = cell.current && !!disabledDates?.has(iso);
+
+                    return (
+                        <button
+                            key={cell.key}
+                            type="button"
+                            disabled={!cell.current || blocked}
+                            onClick={() => onChange(iso)}
+                            aria-pressed={cell.selected}
+                            className={cn(
+                                'relative h-8 rounded-lg text-sm transition-colors',
+                                !cell.current && 'text-(--text-subtle) opacity-40',
+                                cell.current && !blocked && 'hover:bg-(--surface-soft)',
+                                blocked && 'cursor-not-allowed text-(--text-subtle)',
+                                cell.today && !cell.selected && 'font-semibold ring-1 ring-(--primary)',
+                                cell.selected && 'bg-(--primary) font-semibold text-white',
+                                cell.current && !cell.selected && !blocked && 'text-(--text)',
+                            )}
+                        >
+                            {cell.day}
+                            {marked && <span className="absolute bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-amber-500" aria-hidden="true" />}
+                        </button>
+                    );
+                })}
+            </div>
+
+            {!bare && (
+                <div className="mt-2 flex items-center justify-between border-t border-(--border) pt-2">
+                    <button type="button" onClick={() => onChange('')} className="text-xs font-medium text-(--text-subtle) hover:text-(--text)">
+                        {amharic ? 'አጽዳ' : 'Clear'}
+                    </button>
+                    <button type="button" onClick={goToday} className="text-xs font-medium text-(--primary) hover:opacity-80">
+                        {amharic ? 'ዛሬ' : 'Today'}
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
+/**
+ * Date picker that shows the Ethiopian calendar in Amharic and the
+ * Gregorian one in English, while always reading/writing a Gregorian date.
+ */
+export function EthDateInput({ value, onChange, disabled = false, invalid, placeholder, align = 'start', markedDates, disabledDates }: EthDateInputProps) {
+    const amharic = useShared().app.locale === 'am';
+    const field = useField();
+    const root = useRef<HTMLDivElement>(null);
+    const [open, setOpen] = useState(false);
+    useDismiss(root, open, () => setOpen(false));
+    const selected = parseIsoDate(value);
 
     return (
         <div ref={root} className="relative">
@@ -94,67 +177,29 @@ export function EthDateInput({ value, onChange, disabled = false, invalid, place
                 onClick={() => setOpen((current) => !current)}
                 className="ui-input flex items-center justify-between gap-2 text-left disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
             >
-                <span className={selected ? undefined : 'text-slate-400'}>{selected ? formatCalendarDate(selected, amharic) : (placeholder ?? (amharic ? 'ቀን ይምረጡ' : 'Select date'))}</span>
+                <span className={selected ? undefined : 'text-slate-400'}>
+                    {selected ? formatCalendarDate(selected, amharic) : (placeholder ?? (amharic ? 'ቀን ይምረጡ' : 'Select date'))}
+                </span>
                 <CalendarDaysIcon className="h-4 w-4 shrink-0 text-slate-400" />
             </button>
 
             {open && (
                 <div
                     role="dialog"
-                    className={cn('absolute z-50 mt-1.5 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-(--border-strong) bg-(--surface-strong) p-3 shadow-xl', align === 'end' ? 'end-0' : 'start-0')}
+                    className={cn(
+                        'absolute z-50 mt-1.5 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-(--border-strong) bg-(--surface-strong) p-3 shadow-xl',
+                        align === 'end' ? 'end-0' : 'start-0',
+                    )}
                 >
-                    <div className="mb-2 flex items-center justify-between">
-                        <div className="text-sm font-semibold text-(--text)">
-                            {monthLabel} <span className="text-(--text-subtle)">{amharic ? `${view.y} ዓ.ም` : view.y}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <button type="button" onClick={() => step(-1)} className="rounded-lg p-1.5 hover:bg-(--surface-soft)" aria-label="Previous month">
-                                <ChevronLeftIcon className="h-4 w-4" />
-                            </button>
-                            <button type="button" onClick={() => step(1)} className="rounded-lg p-1.5 hover:bg-(--surface-soft)" aria-label="Next month">
-                                <ChevronRightIcon className="h-4 w-4" />
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="mb-1 grid grid-cols-7 gap-0.5">
-                        {(amharic ? ET_DOW : GREG_DOW).map((dow) => (
-                            <div key={dow} className="py-1 text-center text-[11px] font-medium text-(--text-subtle)">
-                                {dow}
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className="grid grid-cols-7 gap-0.5">
-                        {cells.map((cell) => (
-                            <button
-                                key={cell.key}
-                                type="button"
-                                disabled={!cell.current}
-                                onClick={() => pick(cell.day)}
-                                aria-pressed={cell.selected}
-                                className={cn(
-                                    'h-8 rounded-lg text-sm transition-colors',
-                                    !cell.current && 'text-(--text-subtle) opacity-40',
-                                    cell.current && 'hover:bg-(--surface-soft)',
-                                    cell.today && !cell.selected && 'font-semibold ring-1 ring-(--primary)',
-                                    cell.selected && 'bg-(--primary) font-semibold text-white',
-                                    cell.current && !cell.selected && 'text-(--text)',
-                                )}
-                            >
-                                {cell.day}
-                            </button>
-                        ))}
-                    </div>
-
-                    <div className="mt-2 flex items-center justify-between border-t border-(--border) pt-2">
-                        <button type="button" onClick={() => onChange('')} className="text-xs font-medium text-(--text-subtle) hover:text-(--text)">
-                            {amharic ? 'አጽዳ' : 'Clear'}
-                        </button>
-                        <button type="button" onClick={goToday} className="text-xs font-medium text-(--primary) hover:opacity-80">
-                            {amharic ? 'ዛሬ' : 'Today'}
-                        </button>
-                    </div>
+                    <EthCalendar
+                        value={value}
+                        markedDates={markedDates}
+                        disabledDates={disabledDates}
+                        onChange={(next) => {
+                            onChange(next);
+                            setOpen(false);
+                        }}
+                    />
                 </div>
             )}
         </div>
