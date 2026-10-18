@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateProfileRequest;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\ViewErrorBag;
+use Inertia\Inertia;
+use Inertia\Response;
 use Throwable;
 
 class ProfileController extends Controller
@@ -14,10 +17,30 @@ class ProfileController extends Controller
     /**
      * Show the user's profile form.
      */
-    public function edit(Request $request)
+    public function edit(Request $request): Response
     {
-        return view('admin.profile.edit', [
-            'user' => $request->user(),
+        $user = $request->user();
+        $errors = $request->session()->get('errors');
+        $securityErrors = $errors instanceof ViewErrorBag
+            && ($errors->hasBag('updatePassword') || $errors->getBag('default')->has('password'));
+
+        return Inertia::render('Admin/Profile/Edit', [
+            'profile' => [
+                'name' => (string) $user->name,
+                'email' => (string) $user->email,
+                'avatarUrl' => $user->avatar_url,
+                'signatureUrl' => $user->signature_url,
+            ],
+            'mfa' => [
+                'confirmed' => $user->hasConfirmedMfa(),
+                'requiredByRole' => $user->requiresMfa(),
+            ],
+            // Land on the security tab after a password or MFA change, or when one failed.
+            'initialTab' => $securityErrors
+                || $request->session()->get('status') === 'password-updated'
+                || $request->query('tab') === 'security'
+                ? 'security'
+                : 'profile',
         ]);
     }
 

@@ -4,14 +4,18 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Applicant;
+use App\Support\EthiopianDate;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class ApplicantController extends Controller
 {
     /**
      * List applicants with optional search.
      */
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         $q = trim($request->string('q')->toString());
 
@@ -33,12 +37,28 @@ class ApplicantController extends Controller
             ->when($status === 'inactive', fn ($query) => $query->where('is_active', false))
             ->orderByDesc('created_at')
             ->paginate(12)
-            ->withQueryString();
+            ->withQueryString()
+            ->through(fn (Applicant $applicant): array => [
+                'id' => (int) $applicant->id,
+                'name' => (string) $applicant->full_name,
+                'nationalId' => $applicant->national_id_number,
+                'email' => (string) $applicant->email,
+                'phone' => $applicant->phone,
+                'position' => $applicant->position,
+                'organization' => $applicant->organization_name,
+                'active' => (bool) $applicant->is_active,
+                'verified' => $applicant->hasVerifiedEmail(),
+                'created' => EthiopianDate::format($applicant->created_at),
+            ]);
 
-        return view('admin.applicants.index', compact('applicants', 'q', 'status'));
+        return Inertia::render('Admin/Applicants/Index', [
+            'applicants' => $applicants,
+            'filters' => ['q' => $q, 'status' => in_array($status, ['active', 'inactive'], true) ? $status : ''],
+            'canManage' => (bool) $request->user()?->hasPermission('applicants.manage'),
+        ]);
     }
 
-    public function updateStatus(Request $request, Applicant $applicant)
+    public function updateStatus(Request $request, Applicant $applicant): RedirectResponse
     {
         $data = $request->validate([
             'is_active' => ['required', 'boolean'],

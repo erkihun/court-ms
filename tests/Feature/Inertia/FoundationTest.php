@@ -64,11 +64,15 @@ test('flash messages are shared as resolved toast text', function (): void {
 });
 
 test('an Inertia visit to a page that is still Blade becomes a full page load', function (): void {
-    $this->actingAs(inertiaStaff(['cases.view']))
+    // The printable filing receipt stays a server-rendered page by design.
+    $applicant = partyApplicant('blade-fallback');
+    $caseId = partyCase($applicant, 'BLADE/00001/26');
+
+    $this->actingAs($applicant, 'applicant')
         ->withHeaders(['X-Inertia' => 'true', 'X-Inertia-Version' => (string) app(HandleInertiaRequests::class)->version(request())])
-        ->get(route('admin.notifications.index'))
+        ->get(route('applicant.cases.receipt', $caseId))
         ->assertStatus(409)
-        ->assertHeader('X-Inertia-Location', route('admin.notifications.index'));
+        ->assertHeader('X-Inertia-Location', route('applicant.cases.receipt', $caseId));
 });
 
 test('an Inertia visit that hits a missing page renders the React error page', function (): void {

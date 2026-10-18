@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Inertia\Testing\AssertableInertia as Assert;
 
 test('admin and applicant paths select separate session cookies', function () {
     $base = (string) config('session.cookie_base');
@@ -85,7 +86,7 @@ test('admin session remains authenticated on the roles page', function () {
 
     $this->get(route('roles.index'))
         ->assertOk()
-        ->assertViewIs('admin.roles.index');
+        ->assertInertia(fn (Assert $page) => $page->component('Admin/Roles/Index'));
 });
 
 test('applicant login does not flash a cross-portal session notice', function () {

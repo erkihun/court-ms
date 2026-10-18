@@ -5,42 +5,83 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Team;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class TeamController extends Controller
 {
-    public function index()
+    public function index(): Response
     {
-        $teams = Team::with(['parent', 'children', 'users', 'leader'])->orderBy('name')->get();
+        $teams = Team::with(['parent:id,name', 'leader:id,name,email'])->withCount('users')->orderBy('name')->get();
 
-        return view('admin.teams.index', compact('teams'));
+        return Inertia::render('Admin/Teams/Index', [
+            'teams' => $teams->map(fn (Team $team): array => [
+                'id' => (int) $team->id,
+                'name' => (string) $team->name,
+                'parentName' => $team->parent?->name,
+                'leaderName' => $team->leader?->name,
+                'leaderEmail' => $team->leader?->email,
+                'description' => $team->description ? Str::limit($team->description, 120) : null,
+                'membersCount' => (int) $team->users_count,
+            ])->values(),
+        ]);
     }
 
-    public function create()
+    public function create(): Response
     {
-        $teams = Team::orderBy('name')->get();
-        $users = $this->availableUsers();
-
-        return view('admin.teams.create', compact('teams', 'users'));
+        return Inertia::render('Admin/Teams/Form', [
+            'team' => null,
+            'parents' => $this->teamOptions(Team::orderBy('name')->get(['id', 'name'])),
+            'users' => $this->userOptions($this->availableUsers()),
+        ]);
     }
 
-    public function show(Team $team)
+    public function show(Team $team): Response
     {
-        $team->load(['parent', 'children', 'users', 'leader']);
+        $team->load(['parent:id,name', 'leader:id,name', 'users' => fn ($query) => $query->orderBy('name')]);
 
-        return view('admin.teams.show', compact('team'));
+        return Inertia::render('Admin/Teams/Show', [
+            'team' => [
+                'id' => (int) $team->id,
+                'name' => (string) $team->name,
+                'parentName' => $team->parent?->name,
+                'leaderName' => $team->leader?->name,
+                'description' => $team->description,
+                'members' => $team->users->map(fn (User $user): array => [
+                    'id' => (int) $user->id,
+                    'name' => (string) $user->name,
+                    'email' => (string) $user->email,
+                ])->values(),
+            ],
+        ]);
     }
 
-    public function edit(Team $team)
+    public function edit(Team $team): Response
     {
-        $teams = Team::where('id', '!=', $team->id)->orderBy('name')->get();
+        $excluded = $this->descendantIds($team)->push($team->id);
         $users = $this->availableUsers($team);
 
-        return view('admin.teams.edit', compact('team', 'teams', 'users'));
+        return Inertia::render('Admin/Teams/Form', [
+            'team' => [
+                'id' => (int) $team->id,
+                'name' => (string) $team->name,
+                'parentId' => $team->parent_id ? (int) $team->parent_id : null,
+                'description' => (string) ($team->description ?? ''),
+                'leaderId' => $team->team_leader_id ? (int) $team->team_leader_id : null,
+                'memberIds' => $team->users()->pluck('users.id')->map(fn ($id): int => (int) $id)->values(),
+            ],
+            'parents' => $this->teamOptions(Team::whereNotIn('id', $excluded)->orderBy('name')->get(['id', 'name'])),
+            'users' => $this->userOptions($users),
+        ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100'],
@@ -62,7 +103,7 @@ class TeamController extends Controller
         ]);
     }
 
-    public function update(Request $request, Team $team)
+    public function update(Request $request, Team $team): RedirectResponse
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100'],
@@ -70,6 +111,11 @@ class TeamController extends Controller
             'description' => ['nullable', 'string'],
             'team_leader_id' => ['nullable', 'exists:users,id'],
         ]);
+
+        // A team cannot report to itself or to one of its own sub-teams.
+        if (! empty($data['parent_id']) && $this->descendantIds($team)->push($team->id)->contains((int) $data['parent_id'])) {
+            throw ValidationException::withMessages(['parent_id' => __('teams.errors.parent_cycle')]);
+        }
 
         $team->update($data);
 
@@ -84,7 +130,7 @@ class TeamController extends Controller
         ]);
     }
 
-    public function destroy(Team $team)
+    public function destroy(Team $team): RedirectResponse
     {
         if ($team->users()->exists()) {
             return redirect()->route('teams.index')->with('error', 'messages.error.team_has_members');
@@ -98,7 +144,7 @@ class TeamController extends Controller
         ]);
     }
 
-    public function updateUsers(Request $request, Team $team)
+    public function updateUsers(Request $request, Team $team): RedirectResponse
     {
         $userIds = collect($request->input('users', []))
             ->map(fn ($id) => (int) $id)
@@ -142,7 +188,38 @@ class TeamController extends Controller
         $query->delete();
     }
 
-    private function availableUsers(?Team $team = null)
+    /** @return \Illuminate\Support\Collection<int, int> */
+    private function descendantIds(Team $team): \Illuminate\Support\Collection
+    {
+        $ids = collect();
+        $frontier = [$team->id];
+
+        while ($frontier !== []) {
+            $children = Team::whereIn('parent_id', $frontier)->whereNotIn('id', $ids->all())->pluck('id')->map(fn ($id): int => (int) $id);
+            $ids = $ids->merge($children);
+            $frontier = $children->all();
+        }
+
+        return $ids->values();
+    }
+
+    /** @return list<array{id: int, name: string}> */
+    private function teamOptions(Collection $teams): array
+    {
+        return $teams->map(fn (Team $team): array => ['id' => (int) $team->id, 'name' => (string) $team->name])->values()->all();
+    }
+
+    /** @return list<array{id: int, name: string, email: string}> */
+    private function userOptions(Collection $users): array
+    {
+        return $users->map(fn (User $user): array => [
+            'id' => (int) $user->id,
+            'name' => (string) $user->name,
+            'email' => (string) $user->email,
+        ])->values()->all();
+    }
+
+    private function availableUsers(?Team $team = null): Collection
     {
         $assigned = DB::table('team_user')
             ->when($team, fn($q) => $q->where('team_id', '!=', $team->id))
@@ -150,6 +227,6 @@ class TeamController extends Controller
 
         return User::whereNotIn('id', $assigned)
             ->orderBy('name')
-            ->get();
+            ->get(['id', 'name', 'email']);
     }
 }

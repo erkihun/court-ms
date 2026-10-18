@@ -213,4 +213,7 @@ return [
     'password_updated_sign_in_again' => 'Password updated. Please log in again.',
     'profile_updated' => 'Profile updated.',
     'current_password_required_for_new' => 'Enter your current password to set a new one.',
+    'signature_admin_only' => 'Your signature can only be changed by an authorized administrator.',
+    'no_signature_uploaded' => 'No signature uploaded.',
+    'update_password' => 'Update password',
 ];
