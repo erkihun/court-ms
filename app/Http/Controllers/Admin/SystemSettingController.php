@@ -13,30 +13,147 @@ use App\Models\Role;
 use App\Models\SystemSetting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
 class SystemSettingController extends Controller
 {
-    public function edit(): View
+    /** Secret fields: never sent to the browser; a blank submission keeps the stored value. */
+    private const SECRETS = ['mail_password', 'telegram_bot_token', 'sms_api_key', 'sms_api_secret'];
+
+    public function edit(Request $request): Response
     {
         $settings = SystemSetting::current();
-
-        $timezones = \DateTimeZone::listIdentifiers();
-        $locales = config('app.locales', ['en', 'am']);
-        $localeNames = config('app.locale_names', ['en' => 'English', 'am' => 'Amharic']);
-        $databaseMetrics = $this->databaseMetrics();
         $roles = Role::query()->orderBy('name')->get(['id', 'name', 'description', 'mfa_required']);
+        $localeNames = config('app.locale_names', ['en' => 'English', 'am' => 'Amharic']);
 
-        $securityMetrics = $this->securityMetrics($settings);
+        return Inertia::render('Admin/Settings/System', [
+            'tab' => $this->activeTab($request),
+            'settings' => $this->formValues($settings, $roles),
+            'storedSecrets' => collect(self::SECRETS)->mapWithKeys(fn (string $field): array => [$field => filled($settings->{$field})]),
+            'assets' => [
+                'banner' => $this->assetUrl($settings->banner_path),
+                'logo' => $this->assetUrl($settings->logo_path),
+                'favicon' => $this->assetUrl($settings->favicon_path),
+                'seal' => $this->assetUrl($settings->seal_path),
+            ],
+            'maintenanceMode' => (bool) $settings->maintenance_mode,
+            'timezones' => \DateTimeZone::listIdentifiers(),
+            'locales' => collect(config('app.locales', ['en', 'am']))
+                ->map(fn (string $code): array => ['code' => $code, 'name' => (string) ($localeNames[$code] ?? $code)])
+                ->values(),
+            'roles' => $roles->map(fn (Role $role): array => [
+                'id' => $role->id,
+                'name' => (string) $role->name,
+                'description' => $role->description,
+            ])->values(),
+            'databaseMetrics' => $this->databaseMetrics(),
+            'securityMetrics' => $this->securityMetrics($settings),
+            'systemInfo' => [
+                ['label' => 'settings.info_laravel', 'value' => app()->version()],
+                ['label' => 'settings.info_php', 'value' => PHP_VERSION],
+                ['label' => 'settings.info_environment', 'value' => app()->environment()],
+                ['label' => 'settings.info_debug', 'value' => __(config('app.debug') ? 'settings.info_enabled' : 'settings.info_disabled')],
+                ['label' => 'settings.info_cache', 'value' => (string) config('cache.default')],
+                ['label' => 'settings.info_session', 'value' => (string) config('session.driver')],
+                ['label' => 'settings.info_queue', 'value' => (string) config('queue.default')],
+                ['label' => 'settings.info_db', 'value' => (string) config('database.default')],
+                ['label' => 'settings.info_timezone', 'value' => (string) config('app.timezone')],
+                ['label' => 'settings.info_server_time', 'value' => now()->format('Y-m-d H:i:s T')],
+            ],
+            'smtp' => [
+                'host' => (string) config('mail.mailers.smtp.host'),
+                'port' => (string) config('mail.mailers.smtp.port'),
+                'scheme' => (string) (config('mail.mailers.smtp.scheme') ?: 'auto'),
+                'recipient' => (string) ($request->user()?->email ?? ''),
+            ],
+            // The database backup is a plain form download, not an Inertia visit.
+            'csrfToken' => csrf_token(),
+        ]);
+    }
 
-        return view('admin.settings.system', compact('settings', 'timezones', 'locales', 'localeNames', 'databaseMetrics', 'securityMetrics', 'roles'));
+    /**
+     * Current values for the settings form, with the same defaults the form has always shown.
+     *
+     * @param  Collection<int, Role>  $roles
+     * @return array<string, mixed>
+     */
+    private function formValues(SystemSetting $s, Collection $roles): array
+    {
+        return [
+            'app_name' => (string) $s->app_name,
+            'short_name' => (string) $s->short_name,
+            'welcome_message' => (string) $s->welcome_message,
+            'about' => (string) $s->about,
+            'footer_text' => (string) $s->footer_text,
+            'address' => (string) $s->address,
+            'website_url' => (string) $s->website_url,
+            'contact_email' => (string) $s->contact_email,
+            'contact_phone' => (string) $s->contact_phone,
+
+            'default_locale' => (string) ($s->default_locale ?? 'en'),
+            'show_language_switcher' => (bool) ($s->show_language_switcher ?? true),
+            'timezone' => (string) ($s->timezone ?? 'Africa/Addis_Ababa'),
+            'date_format' => (string) ($s->date_format ?? 'Y-m-d'),
+            'time_format' => (string) ($s->time_format ?? 'H:i'),
+            'use_ethiopian_calendar' => (bool) ($s->use_ethiopian_calendar ?? false),
+
+            'maintenance_mode' => (bool) ($s->maintenance_mode ?? false),
+            'registration_open' => (bool) ($s->registration_open ?? true),
+            'force_https' => (bool) ($s->force_https ?? false),
+            'mfa_enabled' => (bool) ($s->mfa_enabled ?? false),
+            'mfa_roles' => $roles->where('mfa_required', true)->pluck('id')->map(fn ($id): int => (int) $id)->values()->all(),
+            'session_lifetime' => (string) ($s->session_lifetime ?? 120),
+            'session_warning_minutes' => (string) ($s->session_warning_minutes ?? 5),
+            'session_extend_on_activity' => (bool) ($s->session_extend_on_activity ?? true),
+            'password_min_length' => (string) ($s->password_min_length ?? 8),
+            'password_require_uppercase' => (bool) ($s->password_require_uppercase ?? true),
+            'password_require_number' => (bool) ($s->password_require_number ?? true),
+            'password_require_symbol' => (bool) ($s->password_require_symbol ?? false),
+            'login_max_attempts' => (string) ($s->login_max_attempts ?? 5),
+            'lockout_minutes' => (string) ($s->lockout_minutes ?? 15),
+
+            'accent_palette' => (string) ($s->accent_palette ?? 'blue'),
+            'default_theme' => (string) ($s->default_theme ?? 'system'),
+            'show_banner_on_login' => (bool) ($s->show_banner_on_login ?? true),
+            'custom_css' => (string) $s->custom_css,
+
+            'mail_enabled' => (bool) ($s->mail_enabled ?? false),
+            'mail_mailer' => (string) ($s->mail_mailer ?? 'smtp'),
+            'mail_host' => (string) ($s->mail_host ?? 'smtp.gmail.com'),
+            'mail_port' => (string) ($s->mail_port ?? 587),
+            'mail_username' => (string) $s->mail_username,
+            'mail_encryption' => (string) ($s->mail_encryption ?? 'tls'),
+            'mail_from_address' => (string) ($s->mail_from_address ?? $s->contact_email),
+            'mail_from_name' => (string) ($s->mail_from_name ?? $s->app_name),
+
+            'telegram_enabled' => (bool) ($s->telegram_enabled ?? false),
+            'telegram_default_chat_id' => (string) $s->telegram_default_chat_id,
+
+            'sms_enabled' => (bool) ($s->sms_enabled ?? false),
+            'sms_provider' => (string) $s->sms_provider,
+            'sms_base_url' => (string) $s->sms_base_url,
+            'sms_sender_id' => (string) $s->sms_sender_id,
+
+            'audit_logging_enabled' => (bool) ($s->audit_logging_enabled ?? true),
+            'audit_retention_days' => (string) ($s->audit_retention_days ?? 365),
+
+            'api_enabled' => (bool) ($s->api_enabled ?? false),
+            'api_rate_limit' => (string) ($s->api_rate_limit ?? 60),
+        ];
+    }
+
+    private function assetUrl(?string $path): ?string
+    {
+        return $path ? asset('storage/'.$path) : null;
     }
 
     public function update(UpdateSystemSettingRequest $request): RedirectResponse
@@ -134,18 +251,20 @@ class SystemSettingController extends Controller
             'accent_palette', 'default_theme', 'custom_css', 'api_rate_limit',
             'mail_mailer', 'mail_host', 'mail_port', 'mail_username',
             'mail_encryption', 'mail_from_address', 'mail_from_name',
-            'telegram_bot_token', 'telegram_default_chat_id',
-            'sms_provider', 'sms_api_key', 'sms_api_secret', 'sms_sender_id', 'sms_base_url',
+            'telegram_default_chat_id',
+            'sms_provider', 'sms_sender_id', 'sms_base_url',
         ];
         foreach ($scalar as $field) {
             $settings->$field = $data[$field] ?? null;
         }
 
-        // The SMTP password is never rendered back into the form, so an empty
-        // submission means "leave it alone" rather than "clear it". Only touch
-        // the stored value when a new one is actually supplied.
-        if (filled($data['mail_password'] ?? null)) {
-            $settings->mail_password = $data['mail_password'];
+        // Secrets are never rendered back into the form, so an empty submission
+        // means "leave it alone" rather than "clear it". Only touch the stored
+        // value when a new one is actually supplied.
+        foreach (self::SECRETS as $field) {
+            if (filled($data[$field] ?? null)) {
+                $settings->{$field} = $data[$field];
+            }
         }
 
         // Boolean fields (unchecked checkboxes are absent from request)
