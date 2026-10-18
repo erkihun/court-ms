@@ -4,7 +4,6 @@ import { Fragment, useEffect } from 'react';
 import { useShared } from '@/hooks/useShared';
 import { t } from '@/lib/i18n';
 import { route } from '@/lib/route';
-import { headline } from '@/lib/str';
 import { LanguageSwitch } from '../LanguageSwitch';
 import { ThemeToggle } from '../ThemeToggle';
 import { NotificationBell } from './NotificationBell';
@@ -16,11 +15,21 @@ interface TopbarProps {
     compact: boolean;
 }
 
-/** Breadcrumb from the route name ("cases.show" -> Cases / Show), as in the Blade layout. */
+/** Breadcrumb from the active sidebar entry (group, then link), so it is already translated. */
 function useBreadcrumb(): string[] {
-    const name = route().current() ?? '';
+    const { navigation } = useShared();
 
-    return name.split('.').filter(Boolean).map(headline);
+    for (const section of navigation ?? []) {
+        for (const item of section.items) {
+            if (item.type === 'link' && item.active) return [item.label];
+            if (item.type === 'group' && item.active) {
+                const child = item.children.find((link) => link.active);
+                return child ? [item.label, child.label] : [item.label];
+            }
+        }
+    }
+
+    return [];
 }
 
 export function Topbar({ onOpenMobile, onToggleCompact, compact }: TopbarProps) {
@@ -67,13 +76,13 @@ export function Topbar({ onOpenMobile, onToggleCompact, compact }: TopbarProps) 
                         </Fragment>
                     ))}
                 </nav>
-                <span className="truncate text-[14px] font-semibold text-slate-800 md:hidden dark:text-slate-100">{crumbs.at(-1)}</span>
+                <span className="truncate text-[14px] font-semibold text-slate-800 md:hidden dark:text-slate-100">{crumbs.at(-1) ?? app.shortName}</span>
             </div>
 
             <div className="hidden w-64 shrink-0 md:flex lg:w-80">
-                <Link href={route('cases.index')} className="topnav-search group" title={t('app.Search cases')}>
+                <Link href={route('cases.index')} className="topnav-search group" title={t('app.cases.search_cases')}>
                     <MagnifyingGlassIcon className="h-3.5 w-3.5 shrink-0" />
-                    <span className="flex-1 truncate">{t('app.Search cases')}…</span>
+                    <span className="flex-1 truncate">{t('app.cases.search_cases')}…</span>
                     <kbd className="hidden shrink-0 items-center gap-0.5 rounded-sm border border-slate-300 bg-white px-1.5 py-0.5 font-mono text-[10px] text-slate-400 lg:inline-flex dark:border-slate-600 dark:bg-slate-800 dark:text-slate-500">
                         <span className="text-[11px]">⌘</span>K
                     </kbd>
