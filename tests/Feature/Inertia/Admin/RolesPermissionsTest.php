@@ -82,7 +82,7 @@ test('permissions keep a label and description per locale', function (): void {
 
     $permission = Permission::query()->where('name', 'reports.export')->firstOrFail();
     expect($permission->label)->toBe('Export reports')
-        ->and($permission->label_translations)->toBe(['en' => 'Export reports', 'am' => 'ሪፖርቶችን ላክ'])
+        ->and($permission->label_translations)->toEqual(['en' => 'Export reports', 'am' => 'ሪፖርቶችን ላክ'])
         ->and($permission->description_translations)->toBe(['en' => 'Download reports']);
 
     $this->actingAs($staff)
