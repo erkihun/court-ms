@@ -13,6 +13,7 @@ use App\Support\EthiopianDate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -258,8 +259,14 @@ class CaseSearchController extends Controller
         $caseUrl = route('respondent.cases.show', $case->case_number);
 
         $this->recordRespondentCaseView($case->id, $respondent->id, $case->case_number ?? null);
-        $this->notifyRespondentViewParticipants($case, $respondentName, $caseUrl);
-        ResponseNotificationService::notifyRespondentCaseViewed((int) $case->id, $respondentName);
+
+        // Every view is recorded and audited, but the applicant and the court are
+        // told at most once a day per respondent and case, not on every page load.
+        if (Cache::add("respondent-viewed-notice:{$respondent->id}:{$case->id}", true, now()->addDay())) {
+            $this->notifyRespondentViewParticipants($case, $respondentName, $caseUrl);
+            ResponseNotificationService::notifyRespondentCaseViewed((int) $case->id, $respondentName);
+        }
+
         $this->logRespondentCaseAudit($case->id, $respondent->id, $respondentName);
     }
 

@@ -3,19 +3,30 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Carbon;
 
-class CaseHearingScheduledMail extends Mailable
+/**
+ * Queued: sent by the queue worker so the request that triggers it never waits on SMTP.
+ * The locale is captured here because the worker renders in its own default language.
+ */
+class CaseHearingScheduledMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
+
+    public int $tries = 3;
+
+    /** @var list<int> */
+    public array $backoff = [60, 300];
 
     public $case;
     public $hearing;
 
     public function __construct($case, $hearing)
     {
+        $this->locale(app()->getLocale());
         $this->case = $case;
         $this->hearing = $hearing;
     }
