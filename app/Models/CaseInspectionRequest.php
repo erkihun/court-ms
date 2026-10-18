@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CaseInspectionRequest extends Model
 {
+    public const STATUSES = ['pending', 'in_progress', 'completed', 'cancelled'];
+
     protected $table = 'case_inspection_requests';
 
     protected $fillable = [

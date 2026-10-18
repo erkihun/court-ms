@@ -6,11 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Models\CaseInspectionRequest;
 use App\Models\CourtCase;
 use App\Models\User;
+use App\Support\EthiopianDate;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Validation\Rule;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class CaseInspectionRequestController extends Controller
 {
-    public function index()
+    public function index(): Response
     {
         $query = CaseInspectionRequest::with(['case', 'requestedBy', 'assignedInspector', 'createdBy'])
             ->orderByDesc('request_date')
@@ -37,20 +43,20 @@ class CaseInspectionRequestController extends Controller
             $query->where('status', $status);
         }
 
-        $requests = $query->paginate(12)->withQueryString();
-        $cases = CourtCase::orderBy('case_number')->get(['id', 'case_number', 'title']);
+        $requests = $query->paginate(12)->withQueryString()
+            ->through(fn (CaseInspectionRequest $row): array => $this->presentRow($row));
 
-        return view('admin.case-inspections.requests.index', compact('requests', 'cases', 'caseId', 'status'));
+        return Inertia::render('Admin/CaseInspections/Requests/Index', [
+            'requests' => $requests,
+            'cases' => $this->caseOptions(),
+            'filters' => ['case_id' => $caseId ? (string) $caseId : '', 'status' => $status],
+            'statuses' => CaseInspectionRequest::STATUSES,
+        ]);
     }
 
-    public function create()
+    public function create(): Response
     {
-        $cases = CourtCase::orderBy('case_number')->get(['id', 'case_number', 'title']);
-        $inspectors = $this->inspectorsForAssign();
-        $prefillCaseId = request()->integer('case_id');
-        $prefillInspectorId = request()->integer('assigned_inspector_user_id');
-
-        return view('admin.case-inspections.requests.create', compact('cases', 'inspectors', 'prefillCaseId', 'prefillInspectorId'));
+        return $this->form(null, request()->integer('case_id') ?: null, request()->integer('assigned_inspector_user_id') ?: null);
     }
 
     public function store(Request $request)
@@ -60,7 +66,7 @@ class CaseInspectionRequestController extends Controller
             'request_date' => ['required', 'date'],
             'subject' => ['required', 'string', 'max:255'],
             'request_note' => ['nullable', 'string'],
-            'status' => ['required', 'in:pending,in_progress,completed,cancelled'],
+            'status' => ['required', Rule::in(CaseInspectionRequest::STATUSES)],
         ];
 
         if ($request->user()?->hasPermission('assign.inspections')) {
@@ -86,16 +92,26 @@ class CaseInspectionRequestController extends Controller
         return redirect()->route('case-inspection-requests.index')->with('success', __('case_inspections.requests.created'));
     }
 
-    public function show(CaseInspectionRequest $requestRecord)
+    public function show(CaseInspectionRequest $requestRecord): Response
     {
         $requestRecord->load(['case', 'requestedBy', 'assignedInspector', 'createdBy', 'findings.recordedBy']);
 
-        return view('admin.case-inspections.requests.show', [
-            'requestRecord' => $requestRecord,
+        return Inertia::render('Admin/CaseInspections/Requests/Show', [
+            'request' => [
+                ...$this->presentRow($requestRecord),
+                'caseTitle' => $requestRecord->case?->title,
+                'note' => $requestRecord->request_note,
+                'findings' => $requestRecord->findings->map(fn ($finding): array => [
+                    'id' => (int) $finding->id,
+                    'title' => (string) $finding->title,
+                    'date' => EthiopianDate::format($finding->finding_date),
+                    'severity' => (string) $finding->severity,
+                ])->values(),
+            ],
         ]);
     }
 
-    public function edit(CaseInspectionRequest $requestRecord)
+    public function edit(CaseInspectionRequest $requestRecord): Response|RedirectResponse
     {
         if ($requestRecord->status === 'completed') {
             return redirect()
@@ -103,12 +119,7 @@ class CaseInspectionRequestController extends Controller
                 ->with('error', __('case_inspections.requests.completed_locked'));
         }
 
-        $cases = CourtCase::orderBy('case_number')->get(['id', 'case_number', 'title']);
-        $inspectors = $this->inspectorsForAssign();
-        $prefillCaseId = null;
-        $prefillInspectorId = null;
-
-        return view('admin.case-inspections.requests.edit', compact('requestRecord', 'cases', 'inspectors', 'prefillCaseId', 'prefillInspectorId'));
+        return $this->form($requestRecord, null, null);
     }
 
     public function update(Request $request, CaseInspectionRequest $requestRecord)
@@ -124,7 +135,7 @@ class CaseInspectionRequestController extends Controller
             'request_date' => ['required', 'date'],
             'subject' => ['required', 'string', 'max:255'],
             'request_note' => ['nullable', 'string'],
-            'status' => ['required', 'in:pending,in_progress,completed,cancelled'],
+            'status' => ['required', Rule::in(CaseInspectionRequest::STATUSES)],
         ];
 
         if ($request->user()?->hasPermission('assign.inspections')) {
@@ -159,6 +170,57 @@ class CaseInspectionRequestController extends Controller
         $requestRecord->delete();
 
         return redirect()->route('case-inspection-requests.index')->with('success', __('case_inspections.requests.deleted'));
+    }
+
+    private function form(?CaseInspectionRequest $record, ?int $prefillCaseId, ?int $prefillInspectorId): Response
+    {
+        $canAssign = auth()->user()?->hasPermission('assign.inspections') ?? false;
+
+        return Inertia::render('Admin/CaseInspections/Requests/Form', [
+            'record' => $record ? [
+                'id' => (int) $record->id,
+                'court_case_id' => (string) $record->court_case_id,
+                'request_date' => $record->request_date?->format('Y-m-d') ?? '',
+                'subject' => (string) $record->subject,
+                'request_note' => (string) ($record->request_note ?? ''),
+                'status' => (string) $record->status,
+                'assigned_inspector_user_id' => $record->assigned_inspector_user_id ? (string) $record->assigned_inspector_user_id : '',
+            ] : null,
+            'defaults' => [
+                'court_case_id' => $prefillCaseId ? (string) $prefillCaseId : '',
+                'request_date' => now()->format('Y-m-d'),
+                'assigned_inspector_user_id' => $prefillInspectorId ? (string) $prefillInspectorId : '',
+            ],
+            'cases' => $this->caseOptions(),
+            'inspectors' => $canAssign
+                ? $this->inspectorsForAssign()->map(fn (User $user): array => ['id' => (int) $user->id, 'name' => (string) $user->name])->values()
+                : [],
+            'canAssign' => $canAssign,
+            'statuses' => CaseInspectionRequest::STATUSES,
+        ]);
+    }
+
+    /** @return array<string, mixed> */
+    private function presentRow(CaseInspectionRequest $row): array
+    {
+        return [
+            'id' => (int) $row->id,
+            'caseNumber' => $row->case?->case_number,
+            'subject' => (string) $row->subject,
+            'date' => EthiopianDate::format($row->request_date),
+            'status' => (string) $row->status,
+            'inspector' => $row->assignedInspector?->name,
+            'createdBy' => $row->createdBy?->name,
+            'locked' => $row->status === 'completed',
+        ];
+    }
+
+    /** @return Collection<int, array{id: int, label: string}> */
+    private function caseOptions(): Collection
+    {
+        return CourtCase::orderBy('case_number')->get(['id', 'case_number', 'title'])
+            ->map(fn (CourtCase $case): array => ['id' => (int) $case->id, 'label' => trim($case->case_number.' - '.$case->title)])
+            ->values();
     }
 
     private function inspectorsForAssign()
