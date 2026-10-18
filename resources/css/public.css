@@ -1,0 +1,42 @@
+/* Public pages (Pages/Public/*, layouts/PublicLayout.tsx). Accent comes from <html data-accent> (theme.css). */
+
+.pub-ac-btn { background-color: rgb(var(--ac)); color: #fff; }
+.pub-ac-btn:hover { background-color: rgb(var(--ac) / 0.88); }
+.pub-ac-text { color: rgb(var(--ac)); }
+.pub-ac-soft { background-color: rgb(var(--ac) / 0.1); color: rgb(var(--ac)); }
+
+/* Hero slide progress: one bar per slide interval, paused with the carousel. */
+@keyframes pub-slide-progress {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+}
+.pub-slide-progress { transform-origin: left; animation: pub-slide-progress 6s linear forwards; }
+.pub-slide-progress[data-paused='true'] { animation-play-state: paused; }
+
+/* CMS-authored long-form content (user manual, terms). */
+.pub-prose { color: #334155; font-size: 1rem; line-height: 1.75; overflow-wrap: anywhere; }
+.pub-prose > :first-child { margin-top: 0; }
+.pub-prose > :last-child { margin-bottom: 0; }
+.pub-prose :is(h1, h2, h3, h4, h5, h6) { color: #0f172a; font-weight: 700; line-height: 1.25; margin: 1.75em 0 0.7em; }
+.pub-prose h1 { font-size: 2rem; }
+.pub-prose h2 { font-size: 1.6rem; padding-bottom: 0.35rem; border-bottom: 1px solid #e2e8f0; }
+.pub-prose h3 { font-size: 1.3rem; }
+.pub-prose h4 { font-size: 1.1rem; }
+.pub-prose p { margin: 0.9em 0; }
+.pub-prose :is(ul, ol) { margin: 1em 0; padding-inline-start: 1.75rem; }
+.pub-prose ul { list-style: disc; }
+.pub-prose ol { list-style: decimal; }
+.pub-prose li { margin: 0.35em 0; padding-inline-start: 0.25rem; }
+.pub-prose blockquote { margin: 1.25em 0; border-inline-start: 4px solid #3b82f6; background: #eff6ff; padding: 1rem 1.25rem; }
+.pub-prose a { color: #1d4ed8; text-decoration: underline; text-underline-offset: 2px; }
+.pub-prose :is(strong, b) { color: #0f172a; font-weight: 700; }
+.pub-prose table { width: 100%; margin: 1.5em 0; border-collapse: collapse; display: block; overflow-x: auto; }
+.pub-prose :is(th, td) { min-width: 8rem; border: 1px solid #cbd5e1; padding: 0.7rem 0.8rem; text-align: start; vertical-align: top; }
+.pub-prose th { background: #f1f5f9; color: #0f172a; font-weight: 700; }
+.pub-prose hr { margin: 2rem 0; border: 0; border-top: 1px solid #cbd5e1; }
+.pub-prose img { max-width: 100%; height: auto; margin: 1.25rem auto; border-radius: 0.75rem; }
+
+@media print {
+    .pub-no-print { display: none !important; }
+    .pub-print-plain { border: 0 !important; box-shadow: none !important; }
+}

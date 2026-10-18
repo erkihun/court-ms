@@ -28,6 +28,7 @@ return [
     ],
 
     'meta' => [
+        'page_title' => 'Administrative Justice',
         'title' => 'Administrative Justice | PSHRDBATC',
         'description' => 'The Administrative Tribunal\'s digital gateway for filing cases, following hearings, and reviewing tribunal insights.',
         'keywords' => 'administrative tribunal, case management, justice, hearings, analytics',
@@ -36,6 +37,16 @@ return [
     ],
 
     'accessibility' => [
+        'main_navigation' => 'Main navigation',
+        'close_menu' => 'Close menu',
+        'accent_color' => 'Accent colour',
+        'hero_carousel' => 'Highlights',
+        'slide_of' => 'Slide :current of :total',
+        'previous_slide' => 'Previous slide',
+        'next_slide' => 'Next slide',
+        'go_to_slide' => 'Go to slide :number',
+        'pause_slideshow' => 'Pause slideshow',
+        'play_slideshow' => 'Play slideshow',
         'skip_to_content' => 'Skip to main content',
         'menu_toggle' => 'Toggle navigation menu',
         'scroll_down' => 'Scroll down to the next section',
@@ -314,6 +325,11 @@ return [
     ],
 
     'resources' => [
+        'page_title' => 'Resources & publications',
+        'page_description' => 'Official publications, downloadable forms, court documents and updates.',
+        'filter_label' => 'Filter by type',
+        'filter_all' => 'All',
+        'empty' => 'No resources have been published yet.',
         'section_badge' => 'Court resources',
         'section_title' => 'Resources and updates',
         'section_description' => 'Forms, documents, links, and notices published by the tribunal.',

@@ -6,6 +6,7 @@ import type { ComponentType, ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import AdminLayout from '@/layouts/AdminLayout';
 import PartyLayout from '@/layouts/PartyLayout';
+import PublicLayout from '@/layouts/PublicLayout';
 import { loadTranslations } from '@/lib/i18n';
 import type { SharedProps } from '@/types';
 
@@ -19,6 +20,10 @@ function defaultLayout(name: string): ((page: ReactNode) => ReactNode) | undefin
 
     if (name.startsWith('Applicant/') || name.startsWith('Respondent/')) {
         return (page) => <PartyLayout>{page}</PartyLayout>;
+    }
+
+    if (name.startsWith('Public/')) {
+        return (page) => <PublicLayout>{page}</PublicLayout>;
     }
 
     return undefined;

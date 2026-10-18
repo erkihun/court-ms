@@ -94,7 +94,9 @@ test('administrator can update statistics content displayed on the english home 
     $this->withSession(['app_locale' => 'en'])
         ->get(route('landing.home'))
         ->assertOk()
-        ->assertSee('Registered Tribunal Matters');
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('metrics.0.key', 'total_cases')
+            ->where('metrics.0.label', 'Registered Tribunal Matters'));
 });
 
 test('section settings control metrics and faq headings on the home page', function (): void {
@@ -118,8 +120,9 @@ test('section settings control metrics and faq headings on the home page', funct
     $this->withSession(['app_locale' => 'en'])
         ->get(route('landing.home'))
         ->assertOk()
-        ->assertSee('Current Tribunal Workload')
-        ->assertSee('Portal Help');
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('sections.metrics.title', 'Current Tribunal Workload')
+            ->where('sections.faq.title', 'Portal Help'));
 });
 
 test('administrator manages the user manual opened from localized home navigation', function (): void {
@@ -138,16 +141,21 @@ test('administrator manages the user manual opened from localized home navigatio
     $this->withSession(['app_locale' => 'am'])
         ->get(route('landing.home'))
         ->assertOk()
-        ->assertSee('የተጠቃሚ መመሪያ')
-        ->assertSee(route('landing.user-manual'));
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Public/Home')
+            ->where('userManual.label', 'የተጠቃሚ መመሪያ')
+            ->where('userManual.url', route('landing.user-manual')));
 
     $this->withSession(['app_locale' => 'en'])
         ->get(route('landing.user-manual'))
         ->assertOk()
-        ->assertSee('<h2 style="color:#123456;">Applicant Guide</h2>', false)
-        ->assertSee('<ol><li>Register an account</li>', false)
-        ->assertSee('<table>', false)
-        ->assertDontSee('&lt;h2');
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Public/UserManual')
+            ->where('title', 'User Manual')
+            ->where('contentHtml', fn (string $html): bool => str_contains($html, '<h2 style="color:#123456;">Applicant Guide</h2>')
+                && str_contains($html, '<ol><li>Register an account</li>')
+                && str_contains($html, '<table>')
+                && ! str_contains($html, '&lt;h2')));
 });
 
 test('the user manual is sanitised with HTMLPurifier before it is stored', function (): void {

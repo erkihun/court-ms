@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\HomeSetting;
-use Illuminate\Contracts\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class UserManualController extends Controller
 {
-    public function __invoke(): View
+    public function __invoke(): Response
     {
         $settings = HomeSetting::getJson('user_manual.settings');
         $locale = app()->getLocale() === 'am' ? 'am' : 'en';
@@ -25,9 +26,11 @@ class UserManualController extends Controller
             ));
         }
 
-        return view('user-manual', [
-            'title' => $settings["title_{$locale}"] ?? __('home.nav.user_manual'),
-            'content' => $content,
+        return Inertia::render('Public/UserManual', [
+            'title' => (string) (($settings["title_{$locale}"] ?? null) ?: __('home.nav.user_manual')),
+            // Editor HTML, purified on output. The 'default' profile keeps the
+            // tables, headings and inline styles a manual needs.
+            'contentHtml' => clean($content, 'default'),
         ]);
     }
 }

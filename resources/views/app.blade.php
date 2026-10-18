@@ -11,11 +11,12 @@
     @else
         <link rel="icon" href="{{ asset('favicon.ico') }}">
     @endif
-    {{-- Apply the saved theme before first paint so dark mode never flashes. --}}
+    {{-- Apply the saved theme before first paint so dark mode never flashes. Public pages are always light. --}}
     <script>
         (() => {
             const theme = localStorage.getItem('theme') || 'system';
-            const dark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            const publicPage = @json(str_starts_with($page['component'], 'Public/'));
+            const dark = !publicPage && (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches));
             document.documentElement.classList.toggle('dark', dark);
             document.documentElement.dataset.theme = theme;
             document.documentElement.dataset.accent = localStorage.getItem('accent') || 'blue';

@@ -48,6 +48,7 @@ use App\Http\Controllers\Applicant\ApplicantSessionController;
 use App\Http\Controllers\Applicant\ApplicantVerificationController;
 use App\Http\Controllers\Auth\MfaChallengeController;
 use App\Http\Controllers\Auth\MfaController;
+use App\Http\Controllers\PublicLandingController;
 use App\Http\Controllers\PublicSignageController;
 use App\Http\Controllers\Respondent\CaseSearchController;
 use App\Http\Controllers\Respondent\DashboardController as RespondentDashboardController;
@@ -61,17 +62,8 @@ use App\Http\Controllers\TermsDisplayController;
 use App\Http\Controllers\UserManualController;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\UseGuard;
-use App\Models\HomeFaq;
-use App\Models\HomeResource;
-use App\Models\HomeService;
-use App\Models\HomeSetting;
-use App\Models\HomeSlide;
-use App\Models\HomeTimelineStep;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Schema;
 
 /*
 |--------------------------------------------------------------------------
@@ -104,79 +96,13 @@ Route::middleware(SetLocale::class)->where(array_fill_keys($numericRouteParamete
     Route::get('/language/{locale}', [LanguageController::class, 'switch'])->name('language.switch');
     Route::get('/user-manual', UserManualController::class)->name('landing.user-manual');
 
-    Route::get('/home', function () {
-        $totalCases = DB::table('court_cases')->count();
-        $pendingCases = DB::table('court_cases')->where('status', 'pending')->count();
-        $resolvedCases = DB::table('court_cases')->whereIn('status', ['closed', 'dismissed'])->count();
-        $openCases = max($totalCases - $resolvedCases, 0);
-        $upcomingHearings = DB::table('case_hearings')
-            ->whereBetween('hearing_at', [now(), now()->addDays(30)])
-            ->count();
-        $hearingsThisWeek = DB::table('case_hearings')
-            ->whereBetween('hearing_at', [now()->startOfWeek(), now()->endOfWeek()])
-            ->count();
-        $recentCases = DB::table('court_cases')
-            ->select('case_number', 'title', 'status', 'created_at')
-            ->orderByDesc('created_at')
-            ->limit(6)
-            ->get();
-
-        // Admin-managed landing content
-        $dbSlides = Cache::remember('home_slides', 3600,
-            fn () => Schema::hasTable('home_slides') ? HomeSlide::active()->get() : collect()
-        );
-        $dbFaqs = Cache::remember('home_faqs', 3600,
-            fn () => Schema::hasTable('home_faqs') ? HomeFaq::active()->get() : collect()
-        );
-        $dbServices = Cache::remember('home_services', 3600,
-            fn () => Schema::hasTable('home_services') ? HomeService::active()->get() : collect()
-        );
-        $dbTimeline = Cache::remember('home_timeline', 3600,
-            fn () => Schema::hasTable('home_timeline_steps') ? HomeTimelineStep::active()->get() : collect()
-        );
-        $dbResources = Cache::remember('home_resources', 3600,
-            fn () => Schema::hasTable('home_resources') ? HomeResource::active()->get() : collect()
-        );
-        $dbSections = Cache::remember('home_settings', 3600, function () {
-            if (! Schema::hasTable('home_settings')) {
-                return [];
-            }
-            $keys = ['metrics', 'process', 'services', 'cases', 'resources', 'faq', 'cta'];
-            $out = [];
-            foreach ($keys as $k) {
-                $out[$k] = HomeSetting::getJson("section.{$k}");
-            }
-
-            return $out;
-        });
-        $dbFooter = Cache::remember('home_footer', 3600,
-            fn () => Schema::hasTable('home_settings') ? HomeSetting::getJson('footer.settings') : null
-        );
-        $dbMetrics = Cache::remember('home_metrics', 3600,
-            fn () => Schema::hasTable('home_settings') ? HomeSetting::getJson('metrics.content') : []
-        );
-        $dbUserManual = Cache::remember('home_user_manual', 3600,
-            fn () => Schema::hasTable('home_settings') ? HomeSetting::getJson('user_manual.settings') : []
-        );
-
-        return view('home', compact(
-            'totalCases', 'pendingCases', 'resolvedCases', 'openCases',
-            'upcomingHearings', 'hearingsThisWeek', 'recentCases',
-            'dbSlides', 'dbFaqs', 'dbSections', 'dbServices', 'dbTimeline', 'dbResources', 'dbFooter', 'dbMetrics', 'dbUserManual'
-        ));
-    })->name('landing.home');
+    Route::get('/home', [PublicLandingController::class, 'home'])->name('landing.home');
 
     if (app()->environment('local')) {
         Route::get('/debug-locale', fn () => 'locale='.app()->getLocale());
     }
     Route::get('/', fn () => redirect()->route('applicant.login'))->name('root');
-    Route::get('/resources', function () {
-        $resources = Cache::remember('home_resources', 3600,
-            fn () => Schema::hasTable('home_resources') ? HomeResource::active()->get() : collect()
-        );
-
-        return view('public.resources', compact('resources'));
-    })->name('public.resources');
+    Route::get('/resources', [PublicLandingController::class, 'resources'])->name('public.resources');
     Route::get('/terms', [TermsDisplayController::class, 'show'])->name('public.terms');
     Route::get('/signage', [PublicSignageController::class, 'show'])
         ->middleware(['throttle:30,1'])
