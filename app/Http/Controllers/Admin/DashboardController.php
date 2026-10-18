@@ -6,35 +6,58 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SystemSetting;
-use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class DashboardController extends Controller
 {
     // Cache TTL in seconds — short enough to feel live, long enough to matter
     private const CACHE_TTL = 300; // 5 minutes
 
-    public function index(): View
+    /**
+     * Case statistics need cases.view and the system panels settings.manage;
+     * other staff get an empty dashboard with the calendar.
+     */
+    public function index(): Response
     {
-        $data = Cache::remember('dashboard_index_v3', self::CACHE_TTL, function () {
-            $totalCases    = DB::table('court_cases')->count();
-            $pendingCases  = DB::table('court_cases')->where('status', 'pending')->count();
+        $user = Auth::user();
+        $canSeeCases = $user?->hasPermission('cases.view') ?? false;
+        $canSeeSystem = $user?->hasPermission('settings.manage') ?? false;
+
+        return Inertia::render('Admin/Dashboard', [
+            'cases' => $canSeeCases ? $this->caseStatistics() : null,
+            'system' => $canSeeSystem ? [
+                'health' => $this->serviceHealth(),
+                'storage' => $this->dataStorage(),
+            ] : null,
+        ]);
+    }
+
+    /** @return array<string, mixed> */
+    private function caseStatistics(): array
+    {
+        $data = Cache::remember('dashboard_index_v4', self::CACHE_TTL, function (): array {
+            $counts = DB::table('court_cases')
+                ->selectRaw("COUNT(*) as total, SUM(status = 'pending') as pending, SUM(status = 'active') as active")
+                ->first();
             $resolvedCases = DB::table('decisions')
                 ->where('status', 'published')
                 ->whereNotNull('court_case_id')
                 ->distinct()
                 ->count('court_case_id');
-            $activeUsers   = DB::table('users')->where('status', 'active')->count();
 
             $recent = DB::table('court_cases')
-                ->select('id', 'case_number', 'title', 'status', 'created_at')
+                ->select('id', 'case_number', 'title', 'status')
                 ->orderByDesc('created_at')
-                ->limit(8)
+                ->limit(5)
                 ->get();
 
             // monthly cases (last 6 months) — single query, build labels in PHP
@@ -71,14 +94,14 @@ class DashboardController extends Controller
                         ->where('d.status', '=', 'published');
                 })
                 ->select(
-                    'u.id', 'u.name', 'u.email', 'u.status', 'u.avatar_path',
+                    'u.id', 'u.name', 'u.status', 'u.avatar_path',
                     't.name as team_name',
                     DB::raw('COUNT(DISTINCT c.id) as cases_count'),
                     DB::raw("COUNT(DISTINCT CASE WHEN c.status = 'pending' THEN c.id END) as pending_cases_count"),
                     DB::raw("COUNT(DISTINCT CASE WHEN c.status = 'active' THEN c.id END) as active_cases_count"),
                     DB::raw('COUNT(DISTINCT CASE WHEN d.id IS NOT NULL THEN c.id END) as resolved_cases_count')
                 )
-                ->groupBy('u.id', 'u.name', 'u.email', 'u.status', 'u.avatar_path', 't.name')
+                ->groupBy('u.id', 'u.name', 'u.status', 'u.avatar_path', 't.name')
                 ->orderByDesc('cases_count')
                 ->orderBy('u.name')
                 ->get();
@@ -93,59 +116,81 @@ class DashboardController extends Controller
                         });
                 })
                 ->leftJoin('case_types as ct', 'ct.id', '=', 'c.case_type_id')
-                ->select(
-                    'u.id as user_id',
-                    DB::raw("COALESCE(ct.name, '__unknown__') as case_type"),
-                    DB::raw('COUNT(DISTINCT c.id) as cases_count')
-                )
-                ->groupBy('u.id', 'case_type')
+                ->select('u.id as user_id', 'ct.name as case_type', DB::raw('COUNT(DISTINCT c.id) as cases_count'))
+                ->groupBy('u.id', 'ct.name')
                 ->get()
                 ->groupBy('user_id');
-
-            $memberCaseCounts = $memberCaseCounts->map(function ($member) use ($memberCaseTypeCounts) {
-                $member->case_type_counts = $memberCaseTypeCounts
-                    ->get($member->id, collect())
-                    ->map(fn($row) => ['label' => $row->case_type, 'count' => (int) $row->cases_count])
-                    ->values();
-                return $member;
-            });
 
             $genderCounts = DB::table('applicants')
                 ->select('gender', DB::raw('COUNT(*) as total'))
                 ->groupBy('gender')
-                ->pluck('total', 'gender')
-                ->toArray();
+                ->pluck('total', 'gender');
 
             $caseTypeCounts = DB::table('court_cases as c')
                 ->leftJoin('case_types as t', 't.id', '=', 'c.case_type_id')
-                ->select(DB::raw('COALESCE(t.name, "Unknown") as label'), DB::raw('COUNT(*) as total'))
-                ->groupBy('label')
+                ->select('t.name as label', DB::raw('COUNT(*) as total'))
+                ->groupBy('t.name')
                 ->orderByDesc('total')
                 ->limit(8)
-                ->get()
-                ->mapWithKeys(fn($row) => [$row->label => $row->total])
-                ->toArray();
+                ->get();
 
-            $labels = [];
-            $values = [];
+            $monthLabels = [];
+            $monthValues = [];
             for ($i = 5; $i >= 0; $i--) {
                 $point = $reference->copy()->subMonths($i);
-                $ym = $point->format('Y-m');
-                $labels[] = $point->format('M Y');
-                $values[] = (int) ($months->firstWhere('ym', $ym)->cnt ?? 0);
+                $monthLabels[] = $point->format('M Y');
+                $monthValues[] = (int) ($months->firstWhere('ym', $point->format('Y-m'))->cnt ?? 0);
             }
 
-            return compact(
-                'totalCases', 'pendingCases', 'resolvedCases', 'activeUsers',
-                'recent', 'labels', 'values',
-                'teamCaseCounts', 'memberCaseCounts', 'genderCounts', 'caseTypeCounts'
-            );
+            return [
+                'kpis' => [
+                    'total' => (int) ($counts->total ?? 0),
+                    'pending' => (int) ($counts->pending ?? 0),
+                    'active' => (int) ($counts->active ?? 0),
+                    'resolved' => $resolvedCases,
+                ],
+                'members' => $memberCaseCounts->map(fn (object $member): array => [
+                    'id' => (int) $member->id,
+                    'name' => (string) $member->name,
+                    'teamName' => $member->team_name,
+                    'active' => $member->status === 'active',
+                    'avatarPath' => $member->avatar_path,
+                    'cases' => (int) $member->cases_count,
+                    'pending' => (int) $member->pending_cases_count,
+                    'activeCases' => (int) $member->active_cases_count,
+                    'resolved' => (int) $member->resolved_cases_count,
+                    'types' => $memberCaseTypeCounts->get($member->id, collect())
+                        ->map(fn (object $row): array => ['label' => $row->case_type, 'count' => (int) $row->cases_count])
+                        ->values()
+                        ->all(),
+                ])->values()->all(),
+                'teams' => $teamCaseCounts->map(fn (object $team): array => [
+                    'id' => (int) $team->id,
+                    'name' => (string) $team->name,
+                    'cases' => (int) $team->cases_count,
+                ])->values()->all(),
+                'recent' => $recent->map(fn (object $case): array => [
+                    'id' => (int) $case->id,
+                    'caseNumber' => (string) $case->case_number,
+                    'title' => (string) ($case->title ?? ''),
+                    'status' => (string) $case->status,
+                ])->values()->all(),
+                'monthly' => ['labels' => $monthLabels, 'values' => $monthValues],
+                'gender' => $genderCounts->map(fn ($total, $gender): array => ['gender' => (string) $gender, 'total' => (int) $total])->values()->all(),
+                'types' => $caseTypeCounts->map(fn (object $row): array => ['label' => $row->label, 'total' => (int) $row->total])->values()->all(),
+            ];
         });
 
-        $data['serviceHealth'] = $this->serviceHealth();
-        $data['dataStorage'] = $this->dataStorage();
+        // Avatars are resolved outside the cache so a removed file never lingers.
+        $data['members'] = array_map(function (array $member): array {
+            $path = $member['avatarPath'];
+            unset($member['avatarPath']);
+            $member['avatarUrl'] = filled($path) && Storage::disk('public')->exists($path) ? Storage::disk('public')->url($path) : null;
 
-        return view('admin.dashboard', $data);
+            return $member;
+        }, $data['members']);
+
+        return $data;
     }
 
     /** @return array<string, mixed> */
@@ -210,6 +255,8 @@ class DashboardController extends Controller
      */
     public function stats(Request $request): JsonResponse
     {
+        abort_unless(Auth::user()?->hasPermission('cases.view') ?? false, 403);
+
         $now = Carbon::now();
 
         if ($request->filled('start') && $request->filled('end')) {

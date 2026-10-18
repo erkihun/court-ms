@@ -18,6 +18,7 @@ return [
     'my_dashboard' => 'My Dashboard',
 
     'total_cases' => 'Total Cases',
+    'no_case_access' => 'Case statistics are shown to staff who can view cases.',
     'pending' => 'Pending',
     'resolved' => 'Resolved',
     'active' => 'Active',

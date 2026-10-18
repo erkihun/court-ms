@@ -9,6 +9,7 @@ use App\Models\Team;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use Inertia\Testing\AssertableInertia as Assert;
 
 function dashboardResolvedCase(string $status, User $assignee): CourtCase
 {
@@ -41,7 +42,7 @@ function dashboardDecision(CourtCase $courtCase, string $status): Decision
 test('published decisions define resolved cases across the admin dashboard', function (): void {
     Cache::flush();
 
-    $user = User::factory()->create(['status' => 'active']);
+    $user = inertiaStaff(['cases.view']);
     $team = Team::query()->create(['name' => 'Dashboard team']);
     $team->users()->attach($user);
 
@@ -58,12 +59,10 @@ test('published decisions define resolved cases across the admin dashboard', fun
     $this->actingAs($user)
         ->get(route('admin.dashboard'))
         ->assertOk()
-        ->assertViewHas('resolvedCases', 2)
-        ->assertViewHas('memberCaseCounts', function ($members) use ($user): bool {
-            $member = $members->firstWhere('id', $user->id);
-
-            return $member !== null && (int) $member->resolved_cases_count === 2;
-        });
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Admin/Dashboard')
+            ->where('cases.kpis.resolved', 2)
+            ->where('cases.members', fn ($members): bool => collect($members)->firstWhere('id', $user->id)['resolved'] === 2));
 
     $this->actingAs($user)
         ->getJson(route('admin.dashboard.stats', [
@@ -73,4 +72,24 @@ test('published decisions define resolved cases across the admin dashboard', fun
         ->assertOk()
         ->assertJsonPath('kpis.resolvedCases', 2)
         ->assertJsonPath('memberCaseCounts.0.resolved_cases_count', 2);
+});
+
+test('case statistics and system panels follow permissions', function (): void {
+    Cache::flush();
+
+    $this->actingAs(inertiaStaff([]))
+        ->get(route('admin.dashboard'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->component('Admin/Dashboard')->where('cases', null)->where('system', null));
+
+    $this->actingAs(inertiaStaff([]))
+        ->getJson(route('admin.dashboard.stats'))
+        ->assertForbidden();
+
+    $this->actingAs(inertiaStaff(['cases.view', 'settings.manage']))
+        ->get(route('admin.dashboard'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('cases.kpis')
+            ->has('system.health')
+            ->has('system.storage'));
 });
