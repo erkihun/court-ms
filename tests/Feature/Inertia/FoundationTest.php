@@ -3,26 +3,9 @@
 declare(strict_types=1);
 
 use App\Http\Middleware\HandleInertiaRequests;
-use App\Models\Permission;
-use App\Models\Role;
-use App\Models\User;
 use App\Support\Translations;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
-
-function inertiaStaff(array $permissions, string $roleName = ''): User
-{
-    $role = Role::query()->create(['name' => $roleName !== '' ? $roleName : 'inertia-'.Str::uuid()]);
-    $role->permissions()->sync(collect($permissions)->map(
-        fn (string $name): int => Permission::query()->firstOrCreate(['name' => $name], ['label' => Str::headline($name)])->id,
-    ));
-
-    $user = User::factory()->create(['status' => 'active', 'email_verified_at' => now()]);
-    $user->roles()->attach($role);
-
-    return $user;
-}
 
 /** @return list<array<string, mixed>> */
 function flattenNavigation(array $sections): array

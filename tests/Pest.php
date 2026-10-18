@@ -1,9 +1,13 @@
 <?php
 
 use App\Models\Applicant;
+use App\Models\Permission;
+use App\Models\Role;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 /*
@@ -87,4 +91,18 @@ function partyCase(Applicant $applicant, string $number, array $overrides = []):
         'updated_at' => now(),
         ...$overrides,
     ]);
+}
+
+/** An active, verified staff user holding exactly `$permissions` (role name 'admin' grants everything). */
+function inertiaStaff(array $permissions, string $roleName = ''): User
+{
+    $role = Role::query()->create(['name' => $roleName !== '' ? $roleName : 'inertia-'.Str::uuid()]);
+    $role->permissions()->sync(collect($permissions)->map(
+        fn (string $name): int => Permission::query()->firstOrCreate(['name' => $name], ['label' => Str::headline($name)])->id,
+    ));
+
+    $user = User::factory()->create(['status' => 'active', 'email_verified_at' => now()]);
+    $user->roles()->attach($role);
+
+    return $user;
 }
