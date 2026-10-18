@@ -5,24 +5,25 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\LetterCategory;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class LetterCategoryController extends Controller
 {
-    public function index()
+    public function index(): Response
     {
         $categories = LetterCategory::query()
             ->orderBy('name')
             ->paginate(12)
-            ->withQueryString();
+            ->withQueryString()
+            ->through(fn (LetterCategory $category): array => $this->present($category));
 
-        return view('admin.letter-templates.categories.index', compact('categories'));
+        return Inertia::render('Admin/LetterCategories/Index', ['categories' => $categories]);
     }
 
-    public function create()
+    public function create(): Response
     {
-        $category = new LetterCategory();
-
-        return view('admin.letter-templates.categories.create', compact('category'));
+        return Inertia::render('Admin/LetterCategories/Form', ['category' => null]);
     }
 
     public function store(Request $request)
@@ -39,11 +40,9 @@ class LetterCategoryController extends Controller
             ]);
     }
 
-    public function edit(LetterCategory $letterCategory)
+    public function edit(LetterCategory $letterCategory): Response
     {
-        return view('admin.letter-templates.categories.edit', [
-            'category' => $letterCategory,
-        ]);
+        return Inertia::render('Admin/LetterCategories/Form', ['category' => $this->present($letterCategory)]);
     }
 
     public function update(Request $request, LetterCategory $letterCategory)
@@ -70,6 +69,16 @@ class LetterCategoryController extends Controller
                 'key' => 'messages.success.deleted',
                 'replace' => ['resource' => __('messages.resources.letter_category')],
             ]);
+    }
+
+    /** @return array{id: int, name: string, description: string|null} */
+    private function present(LetterCategory $category): array
+    {
+        return [
+            'id' => (int) $category->id,
+            'name' => (string) $category->name,
+            'description' => $category->description ?: null,
+        ];
     }
 
     private function validateCategory(Request $request, ?int $ignoreId = null): array

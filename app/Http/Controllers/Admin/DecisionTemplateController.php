@@ -4,27 +4,36 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\DecisionTemplate;
+use App\Support\EthiopianDate;
 use App\Support\SafeHtml;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class DecisionTemplateController extends Controller
 {
-    public function index()
+    public function index(): Response
     {
         $templates = DecisionTemplate::query()
             ->orderBy('title')
             ->paginate(12)
-            ->withQueryString();
+            ->withQueryString()
+            ->through(fn (DecisionTemplate $template): array => [
+                'id' => (int) $template->id,
+                'title' => (string) $template->title,
+                'category' => $template->category ?: null,
+                'isDefault' => (bool) $template->is_default,
+                'placeholders' => array_values($template->placeholders ?? []),
+                'updated' => EthiopianDate::smartRelative($template->updated_at),
+            ]);
 
-        return view('admin.decision-templates.index', compact('templates'));
+        return Inertia::render('Admin/DecisionTemplates/Index', ['templates' => $templates]);
     }
 
-    public function create()
+    public function create(): Response
     {
-        $template = new DecisionTemplate();
-
-        return view('admin.decision-templates.create', compact('template'));
+        return $this->form(null);
     }
 
     public function store(Request $request)
@@ -41,11 +50,9 @@ class DecisionTemplateController extends Controller
         ]);
     }
 
-    public function edit(DecisionTemplate $decisionTemplate)
+    public function edit(DecisionTemplate $decisionTemplate): Response
     {
-        return view('admin.decision-templates.edit', [
-            'template' => $decisionTemplate,
-        ]);
+        return $this->form($decisionTemplate);
     }
 
     public function update(Request $request, DecisionTemplate $decisionTemplate)
@@ -77,6 +84,29 @@ class DecisionTemplateController extends Controller
             'key' => 'messages.success.deleted',
             'replace' => ['resource' => __('messages.resources.decision_template')],
         ]);
+    }
+
+    /** Create and edit share one page; `template` is null when creating. */
+    private function form(?DecisionTemplate $template): Response
+    {
+        return Inertia::render('Admin/DecisionTemplates/Form', [
+            'template' => $template === null ? null : [
+                'id' => (int) $template->id,
+                'title' => (string) $template->title,
+                'category' => (string) ($template->category ?? ''),
+                'isDefault' => (bool) $template->is_default,
+                'placeholders' => implode(', ', $template->placeholders ?? []),
+                'body' => (string) $template->body,
+                'headerImage' => $this->image($template->header_image_path),
+                'footerImage' => $this->image($template->footer_image_path),
+            ],
+        ]);
+    }
+
+    /** @return array{url: string, name: string}|null */
+    private function image(?string $path): ?array
+    {
+        return $path ? ['url' => asset('storage/'.$path), 'name' => basename($path)] : null;
     }
 
     /**

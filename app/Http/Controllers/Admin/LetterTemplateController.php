@@ -3,28 +3,36 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\LetterCategory;
 use App\Models\LetterTemplate;
+use App\Support\EthiopianDate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class LetterTemplateController extends Controller
 {
-    public function index()
+    public function index(): Response
     {
         $templates = LetterTemplate::query()
             ->orderBy('title')
             ->paginate(12)
-            ->withQueryString();
+            ->withQueryString()
+            ->through(fn (LetterTemplate $template): array => [
+                'id' => (int) $template->id,
+                'title' => (string) $template->title,
+                'category' => $template->category ?: null,
+                'placeholders' => array_values($template->placeholders ?? []),
+                'updated' => EthiopianDate::smartRelative($template->updated_at),
+            ]);
 
-        return view('admin.letter-templates.index', compact('templates'));
+        return Inertia::render('Admin/LetterTemplates/Index', ['templates' => $templates]);
     }
 
-    public function create()
+    public function create(): Response
     {
-        $template = new LetterTemplate();
-        $categories = \App\Models\LetterCategory::select('name')->orderBy('name')->get();
-
-        return view('admin.letter-templates.create', compact('template', 'categories'));
+        return $this->form(null);
     }
 
     public function store(Request $request)
@@ -40,14 +48,9 @@ class LetterTemplateController extends Controller
         ]);
     }
 
-    public function edit(LetterTemplate $letterTemplate)
+    public function edit(LetterTemplate $letterTemplate): Response
     {
-        $categories = \App\Models\LetterCategory::select('name')->orderBy('name')->get();
-
-        return view('admin.letter-templates.edit', [
-            'template' => $letterTemplate,
-            'categories' => $categories
-        ]);
+        return $this->form($letterTemplate);
     }
 
     public function update(Request $request, LetterTemplate $letterTemplate)
@@ -71,6 +74,29 @@ class LetterTemplateController extends Controller
             'key' => 'messages.success.deleted',
             'replace' => ['resource' => __('messages.resources.letter_template')],
         ]);
+    }
+
+    /** Create and edit share one page; `template` is null when creating. */
+    private function form(?LetterTemplate $template): Response
+    {
+        return Inertia::render('Admin/LetterTemplates/Form', [
+            'template' => $template === null ? null : [
+                'id' => (int) $template->id,
+                'title' => (string) $template->title,
+                'category' => (string) ($template->category ?? ''),
+                'placeholders' => implode(', ', $template->placeholders ?? []),
+                'body' => (string) $template->body,
+                'headerImage' => $this->image($template->header_image_path),
+                'footerImage' => $this->image($template->footer_image_path),
+            ],
+            'categories' => LetterCategory::query()->orderBy('name')->pluck('name')->values(),
+        ]);
+    }
+
+    /** @return array{url: string, name: string}|null */
+    private function image(?string $path): ?array
+    {
+        return $path ? ['url' => asset('storage/'.$path), 'name' => basename($path)] : null;
     }
 
     private function validateTemplate(Request $request): array

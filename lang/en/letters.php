@@ -140,6 +140,32 @@ return [
         'approved_delete_locked' => 'Approved letters cannot be deleted',
     ],
 
+    'categories' => [
+        'title' => 'Letter categories',
+        'description' => 'Manage the categories used by letter templates.',
+        'manage' => 'Manage categories',
+        'back_to_templates' => 'Back to templates',
+        'new' => 'New category',
+        'empty' => 'No categories yet.',
+        'confirm_delete' => 'Delete this category?',
+        'create' => 'Create category',
+        'create_help' => 'Add a category to organize letter templates.',
+        'edit' => 'Edit category',
+        'edit_help' => 'Update the category details.',
+        'save' => 'Save category',
+        'update' => 'Update category',
+        'table' => [
+            'name' => 'Name',
+            'description' => 'Description',
+            'actions' => 'Actions',
+        ],
+        'form' => [
+            'name' => 'Category name',
+            'description' => 'Description',
+            'description_placeholder' => 'Optional short description',
+        ],
+    ],
+
     'templates' => [
         'title' => 'Letter Templates',
         'new' => 'New Letter Template',
@@ -170,6 +196,8 @@ return [
             'title' => 'Title',
             'category' => 'Category',
             'category_placeholder' => 'e.g. Hearing, Appeal',
+            'category_choose' => 'Select or type a category',
+            'no_categories' => 'No categories yet. Create one first.',
             'subject_prefix' => 'Subject Prefix',
             'subject_prefix_placeholder' => 'e.g. LTR-',
             'subject_prefix_help' => 'Optional prefix automatically prepended to letters generated from this template.',
