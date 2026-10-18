@@ -16,7 +16,7 @@ export default defineConfig({
         }),
         react(),
         tailwindcss(),
-        // Self-hosted TinyMCE: node_modules/tinymce -> public/vendor/tinymce
+        // Self-hosted TinyMCE: node_modules/tinymce -> public/build/vendor/tinymce (the version in package.json is the one served)
         viteStaticCopy({
             targets: [{ src: 'node_modules/tinymce', dest: 'vendor' }],
         }),
@@ -37,7 +37,6 @@ export default defineConfig({
                     if (!id.includes('node_modules')) return undefined;
                     if (/node_modules\/(react|react-dom|scheduler|@inertiajs|axios|ziggy-js|qs|side-channel|es-toolkit|nprogress)\//.test(id)) return 'vendor-react';
                     if (/node_modules\/(chart\.js|react-chartjs-2|@kurkle)\//.test(id)) return 'vendor-chart';
-                    if (id.includes('node_modules/alpinejs/')) return 'vendor-alpine';
                     return undefined;
                 },
             },

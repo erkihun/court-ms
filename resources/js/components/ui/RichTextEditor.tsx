@@ -8,7 +8,7 @@ interface RichTextEditorProps {
     disabled?: boolean;
 }
 
-/** Self-hosted TinyMCE (public/vendor/tinymce). Output is sanitised again on the server. */
+/** Self-hosted TinyMCE, copied from node_modules into the build (vite.config.ts). Output is sanitised again on the server. */
 export function RichTextEditor({ id, value, onChange, height = 420, disabled = false }: RichTextEditorProps) {
     // The skin is chosen when the editor mounts; a later theme switch applies on the next page.
     const dark = document.documentElement.classList.contains('dark');
@@ -16,7 +16,7 @@ export function RichTextEditor({ id, value, onChange, height = 420, disabled = f
     return (
         <Editor
             id={id}
-            tinymceScriptSrc="/vendor/tinymce/tinymce.min.js"
+            tinymceScriptSrc="/build/vendor/tinymce/tinymce.min.js"
             licenseKey="gpl"
             value={value}
             disabled={disabled}

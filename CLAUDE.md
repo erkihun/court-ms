@@ -20,7 +20,7 @@ Court/tribunal case management portal. Applicants file cases, respondents respon
 - **Backend:** Laravel 12, PHP 8.2, MySQL
 - **Frontend:** Inertia.js v2 + React 19 + TypeScript (strict) + Tailwind CSS v4; Vite 7 build; Ziggy for typed routes
 - **Charts:** Chart.js via react-chartjs-2
-- **Rich text:** TinyMCE v8 (self-hosted under `public/vendor/tinymce`, wrapped by `components/ui/RichTextEditor.tsx`)
+- **Rich text:** TinyMCE v8 (npm package copied into `public/build/vendor/tinymce` by the build, wrapped by `components/ui/RichTextEditor.tsx`)
 - **PDF:** barryvdh/laravel-dompdf + laravel-snappy/wkhtmltopdf (server-side), html2pdf.js (client-side)
 - **QR codes:** simplesoftwareio/simple-qrcode
 - **Auth:** Custom roles/permissions system (NOT Spatie); Laravel Sanctum for API
