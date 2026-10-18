@@ -27,13 +27,13 @@ return array (
     'back' => 'ወደ ኃላፊነቶች ተመለስ',
     'select_all' => 'ሁሉንም ምረጥ',
     'deselect_all' => 'ሁሉንም አትምረጥ',
-    'description_hint' => 'Description hint',
-    'name_hint' => 'Name hint',
-    'permissions_hint' => 'Permissions hint',
-    'subtitle' => 'Subtitle',
-    'summary_assigned' => 'Summary assigned',
-    'summary_permissions' => 'Summary permissions',
-    'summary_title' => 'Summary title',
+    'description_hint' => 'ይህ ኃላፊነት ምን እንደሚሰራ አጭር ማብራሪያ።',
+    'name_hint' => 'ለኃላፊነቱ ብቸኛ መለያ (ለምሳሌ administrator፣ editor)።',
+    'permissions_hint' => 'ይህ ኃላፊነት የሚሰጣቸውን ፈቃዶች ይምረጡ።',
+    'subtitle' => 'የ:name ዝርዝሮችንና ፈቃዶችን ያዘምኑ።',
+    'summary_assigned' => ':count ተጠቃሚዎች ይህ ኃላፊነት አላቸው',
+    'summary_permissions' => ':count ፈቃዶች ይገኛሉ',
+    'summary_title' => 'ማጠቃለያ',
   ),
   'fields' => 
   array (
@@ -78,6 +78,6 @@ return array (
     'empty' => 'ምንም ኃላፊነቶች አልተገኙም።',
     'more' => 'ተጨማሪ',
     'roles_count' => 'ኃላፊነት(ዎች)',
-    'new_role' => 'New Role',
+    'new_role' => 'አዲስ ኃላፊነት',
   ),
 );

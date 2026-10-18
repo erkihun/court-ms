@@ -70,6 +70,7 @@ return [
     ],
 
     'errors' => [
+        'parent_cycle' => 'A team cannot report to itself or to one of its sub-teams.',
         'fix' => 'Please fix the following:',
     ],
 ];
