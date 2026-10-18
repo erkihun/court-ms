@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\Team;
 use App\Models\User;
 use App\Support\EthiopianDate;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -84,6 +85,17 @@ final class AdminNotificationFeed
         return $ids;
     }
 
+    /**
+     * One page of unseen items of a type, for the full notifications page.
+     */
+    public function paginate(User $user, string $type, int $perPage, string $pageName): LengthAwarePaginator
+    {
+        return $this->ordered($this->unseen($user, $type), $type)
+            ->paginate($perPage, ['*'], $pageName)
+            ->withQueryString()
+            ->through(fn (object $row): array => $this->present($type, $row, 120));
+    }
+
     public static function forgetCount(int $userId): void
     {
         Cache::forget(self::countCacheKey($userId));
@@ -109,29 +121,42 @@ final class AdminNotificationFeed
      */
     private function items(User $user, string $type, int $limit): array
     {
-        $query = $this->unseen($user, $type);
+        return $this->ordered($this->unseen($user, $type), $type)
+            ->limit($limit)
+            ->get()
+            ->map(fn (object $row): array => $this->present($type, $row, 70))
+            ->all();
+    }
 
-        $rows = match ($type) {
+    private function ordered(Builder $query, string $type): Builder
+    {
+        return match ($type) {
             'message' => $query->select('m.id', 'm.body', 'm.created_at', 'c.case_number', 'c.id as case_id')
-                ->orderByDesc('m.created_at')->limit($limit)->get(),
+                ->orderByDesc('m.created_at'),
             'case' => $query->select('c.id', 'c.case_number', 'c.title', 'c.created_at', 'c.id as case_id')
-                ->orderByDesc('c.created_at')->limit($limit)->get(),
+                ->orderByDesc('c.created_at'),
             'hearing' => $query->select('h.id', 'h.hearing_at', 'c.id as case_id', 'c.case_number')
-                ->orderBy('h.hearing_at')->limit($limit)->get(),
+                ->orderBy('h.hearing_at'),
             'respondent_view' => $query->join('respondents as r', 'r.id', '=', 'v.respondent_id')
                 ->select('v.id', 'v.viewed_at', 'v.case_id', 'c.case_number', 'r.first_name', 'r.middle_name', 'r.last_name')
-                ->orderByDesc('v.viewed_at')->limit($limit)->get(),
+                ->orderByDesc('v.viewed_at'),
         };
+    }
 
-        return $rows->map(fn (object $row): array => [
+    /**
+     * @return array<string, mixed>
+     */
+    private function present(string $type, object $row, int $textLimit): array
+    {
+        return [
             'type' => $type,
             'sourceId' => (int) $row->id,
             'caseId' => (int) $row->case_id,
             'caseNumber' => (string) $row->case_number,
             'href' => route('cases.show', $row->case_id),
             'text' => match ($type) {
-                'message' => Str::limit(self::messageBody((string) $row->body), 70),
-                'case' => Str::limit((string) $row->title, 70),
+                'message' => Str::limit(self::messageBody((string) $row->body), $textLimit),
+                'case' => Str::limit((string) $row->title, $textLimit),
                 'hearing' => EthiopianDate::format($row->hearing_at, withTime: true),
                 'respondent_view' => __('app.admin_notifications.respondent_viewed_case', [
                     'name' => trim(implode(' ', array_filter([$row->first_name, $row->middle_name, $row->last_name])))
@@ -144,7 +169,7 @@ final class AdminNotificationFeed
                 'hearing' => null,
                 'respondent_view' => EthiopianDate::smartRelative($row->viewed_at),
             },
-        ])->all();
+        ];
     }
 
     private function unseen(User $user, string $type): Builder

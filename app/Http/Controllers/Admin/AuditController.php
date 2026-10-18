@@ -5,16 +5,18 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Support\EthiopianDate;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 final class AuditController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): Response
     {
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:150'],
@@ -43,11 +45,11 @@ final class AuditController extends Controller
         $events->through(function (object $event) use ($actors, $caseNumbers, $modelCompanions): object {
             $event->actor_type = $this->normalizeActorType($event->actor_type);
             $event->actor_name = $this->actorName($event, $actors);
-            $event->source_label = match ($event->source) {
-                'case' => 'Case activity',
-                'legacy_model' => 'Model history',
-                default => 'System activity',
-            };
+            $event->source_label = __('audit.sources.'.match ($event->source) {
+                'case' => 'case',
+                'legacy_model' => 'legacy_model',
+                default => 'system',
+            });
             $event->details = $this->decodeDetails($event);
             $companion = $event->request_id ? ($modelCompanions[$event->request_id] ?? null) : null;
             $descriptiveDetails = $companion ?: $event->details;
@@ -60,9 +62,38 @@ final class AuditController extends Controller
             return $event;
         });
 
-        return view('admin.audit', [
-            'events' => $events,
-            'filters' => $filters,
+        return Inertia::render('Admin/Audit/Index', [
+            'events' => $events->through(fn (object $event): array => [
+                'key' => "{$event->source}-{$event->id}",
+                'id' => (int) $event->id,
+                'source' => (string) $event->source,
+                'sourceLabel' => (string) $event->source_label,
+                'occurredAt' => EthiopianDate::format($event->occurred_at, withTime: true),
+                'action' => (string) $event->action,
+                'actionLabel' => (string) $event->action_label,
+                'description' => (string) $event->description,
+                'method' => $event->method,
+                'outcome' => (string) $event->outcome,
+                'responseStatus' => $event->response_status !== null ? (int) $event->response_status : null,
+                'actorName' => (string) $event->actor_name,
+                'actorType' => (string) $event->actor_type,
+                'targetLabel' => (string) $event->target_label,
+                'route' => $event->route,
+                'requestId' => $event->request_id,
+                'ip' => $event->ip,
+                'details' => $event->details === []
+                    ? null
+                    : (string) json_encode($event->details, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            ]),
+            'filters' => [
+                'search' => (string) ($filters['search'] ?? ''),
+                'source' => (string) ($filters['source'] ?? ''),
+                'outcome' => (string) ($filters['outcome'] ?? ''),
+                'actor_type' => (string) ($filters['actor_type'] ?? ''),
+                'method' => (string) ($filters['method'] ?? ''),
+                'date_from' => (string) ($filters['date_from'] ?? ''),
+                'date_to' => (string) ($filters['date_to'] ?? ''),
+            ],
         ]);
     }
 

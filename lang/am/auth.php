@@ -213,4 +213,7 @@ return [
     'password_updated_sign_in_again' => 'የይለፍ ቃል ተቀይሯል። እባክዎ እንደገና ይግቡ።',
     'profile_updated' => 'መገለጫው ተዘምኗል።',
     'current_password_required_for_new' => 'አዲስ የይለፍ ቃል ለማዘጋጀት አሁን ያለውን የይለፍ ቃል ያስገቡ።',
+    'signature_admin_only' => 'ፊርማዎን መቀየር የሚችለው ሥልጣን ያለው አስተዳዳሪ ብቻ ነው።',
+    'no_signature_uploaded' => 'ምንም ፊርማ አልተጫነም።',
+    'update_password' => 'የይለፍ ቃል ያዘምኑ',
 ];

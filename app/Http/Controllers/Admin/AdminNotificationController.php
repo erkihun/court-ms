@@ -4,12 +4,13 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 
-use App\Models\Team;
-use App\Services\AdminNotificationFeed;
 use App\Models\User;
+use App\Services\AdminNotificationFeed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class AdminNotificationController extends Controller
 {
@@ -30,91 +31,23 @@ class AdminNotificationController extends Controller
         return response()->json($user instanceof User ? $feed->latest($user) : ['count' => 0, 'groups' => []]);
     }
 
-    public function index(Request $request)
+    public function index(AdminNotificationFeed $feed): Response
     {
-        $uid = auth()->id();
-        abort_if(!$uid, 403);
-        abort_unless($this->canSeeCaseNotifications(), 403);
+        $user = auth()->user();
+        abort_unless($user instanceof User && $feed->canSee($user), 403);
 
-        // Applicant -> Admin messages (last 14 days)
-        $msgs = $this->applyCaseAccessScope(
-            DB::table('case_messages as m')
-                ->join('court_cases as c', 'c.id', '=', 'm.case_id')
-                ->select('m.id', 'm.body', 'm.created_at', 'c.case_number', 'c.id as case_id')
-                ->whereNotNull('m.sender_applicant_id')
-                ->where('m.created_at', '>=', now()->subDays(14))
-                ->whereNotExists(function ($q) use ($uid) {
-                    $q->from('admin_notification_reads as nr')
-                        ->whereColumn('nr.source_id', 'm.id')
-                        ->where('nr.type', 'message')
-                        ->where('nr.user_id', $uid);
-                })
-        )
-            ->orderByDesc('m.created_at')
-            ->paginate(10, ['*'], 'msgs_page');
+        $pageNames = [
+            'message' => 'msgs_page',
+            'case' => 'cases_page',
+            'hearing' => 'hearings_page',
+            'respondent_view' => 'respondent_views_page',
+        ];
 
-        // New & unassigned cases (last 14 days)
-        $cases = $this->applyCaseAccessScope(
-            DB::table('court_cases as c')
-                ->select('c.id', 'c.case_number', 'c.title', 'c.created_at')
-                ->where('c.status', 'pending')
-                ->whereNull('c.assigned_user_id')
-                ->where('c.created_at', '>=', now()->subDays(14))
-                ->whereNotExists(function ($q) use ($uid) {
-                    $q->from('admin_notification_reads as nr')
-                        ->whereColumn('nr.source_id', 'c.id')
-                        ->where('nr.type', 'case')
-                        ->where('nr.user_id', $uid);
-                })
-        )
-            ->orderByDesc('c.created_at')
-            ->paginate(10, ['*'], 'cases_page');
-
-        // Upcoming hearings for my assigned cases (next 14 days)
-        $hearings = $this->applyCaseAccessScope(
-            DB::table('case_hearings as h')
-                ->join('court_cases as c', 'c.id', '=', 'h.case_id')
-                ->select('h.id', 'h.hearing_at', 'c.id as case_id', 'c.case_number')
-                ->where('c.assigned_user_id', $uid)
-                ->whereBetween('h.hearing_at', [now(), now()->addDays(14)])
-                ->whereNotExists(function ($q) use ($uid) {
-                    $q->from('admin_notification_reads as nr')
-                        ->whereColumn('nr.source_id', 'h.id')
-                        ->where('nr.type', 'hearing')
-                        ->where('nr.user_id', $uid);
-                })
-        )
-            ->orderBy('h.hearing_at')
-            ->paginate(10, ['*'], 'hearings_page');
-
-        $respondentViews = $this->applyCaseAccessScope(
-            DB::table('respondent_case_views as v')
-                ->join('court_cases as c', 'c.id', '=', 'v.case_id')
-                ->join('respondents as r', 'r.id', '=', 'v.respondent_id')
-                ->select(
-                    'v.id',
-                    'v.viewed_at',
-                    'v.case_id',
-                    'c.case_number',
-                    'c.title',
-                    DB::raw("TRIM(CONCAT_WS(' ', r.first_name, r.middle_name, r.last_name)) as respondent_name")
-                )
-                ->where(function ($q) use ($uid) {
-                    $q->where('c.assigned_user_id', $uid)
-                        ->orWhereNull('c.assigned_user_id');
-                })
-                ->where('v.viewed_at', '>=', now()->subDays(14))
-                ->whereNotExists(function ($q) use ($uid) {
-                    $q->from('admin_notification_reads as nr')
-                        ->whereColumn('nr.source_id', 'v.id')
-                        ->where('nr.type', 'respondent_view')
-                        ->where('nr.user_id', $uid);
-                })
-        )
-            ->orderByDesc('v.viewed_at')
-            ->paginate(10, ['*'], 'respondent_views_page');
-
-        return view('admin.notifications.index', compact('msgs', 'cases', 'hearings', 'respondentViews'));
+        return Inertia::render('Admin/Notifications/Index', [
+            'sections' => collect(AdminNotificationFeed::TYPES)
+                ->mapWithKeys(fn (string $type): array => [$type => $feed->paginate($user, $type, 10, $pageNames[$type])])
+                ->all(),
+        ]);
     }
 
     public function markOne(Request $request)
@@ -158,70 +91,5 @@ class AdminNotificationController extends Controller
         AdminNotificationFeed::forgetCount($user->id);
 
         return back()->with('success', __('app.admin_notifications.all_marked_as_seen'));
-    }
-
-    private function canSeeCaseNotifications(): bool
-    {
-        $user = auth()->user();
-
-        return $user instanceof User
-            && method_exists($user, 'hasPermission')
-            && $user->hasPermission('cases.view');
-    }
-
-    private function applyCaseAccessScope(\Illuminate\Database\Query\Builder $query, string $caseAlias = 'c'): \Illuminate\Database\Query\Builder
-    {
-        $user = auth()->user();
-        $uid = auth()->id();
-        if (!$user || !$uid) {
-            return $query->whereRaw('1 = 0');
-        }
-
-        $memberScopeIds = $this->teamLeaderAssignmentIds($user);
-        if (!empty($memberScopeIds)) {
-            $leaderTeamId = Team::where('team_leader_id', $uid)->value('id');
-
-            return $query->where(function ($q) use ($caseAlias, $memberScopeIds, $leaderTeamId) {
-                $q->whereIn("{$caseAlias}.assigned_user_id", $memberScopeIds);
-                if ($leaderTeamId) {
-                    $q->orWhere("{$caseAlias}.assigned_team_id", $leaderTeamId);
-                }
-            });
-        }
-
-        $isTeamMember = DB::table('team_user')->where('user_id', $uid)->exists();
-        $isLeader = $user->hasPermission('cases.assign.member');
-        $canAssignTeams = $user->hasPermission('cases.assign.team');
-
-        if ($isTeamMember && !$isLeader && !$canAssignTeams) {
-            return $query->where(function ($q) use ($caseAlias, $uid) {
-                $q->where("{$caseAlias}.assigned_member_user_id", $uid)
-                    ->orWhere("{$caseAlias}.assigned_user_id", $uid);
-            });
-        }
-
-        return $query;
-    }
-
-    private function teamLeaderAssignmentIds(User $user): array
-    {
-        $isLeader = $user->hasPermission('cases.assign.member');
-        $hasAdminAssign = $user->hasPermission('cases.assign.team');
-
-        if (!$isLeader || $hasAdminAssign) {
-            return [];
-        }
-
-        $leaderTeam = Team::with(['users' => fn ($q) => $q->where('status', 'active')->orderBy('name')])
-            ->where('team_leader_id', $user->id)
-            ->first();
-
-        $ids = collect([$user->id]);
-
-        if ($leaderTeam) {
-            $ids = $ids->merge($leaderTeam->users->pluck('id'));
-        }
-
-        return $ids->filter()->unique()->values()->all();
     }
 }

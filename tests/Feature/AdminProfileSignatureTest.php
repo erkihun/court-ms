@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Testing\AssertableInertia as Assert;
 
 uses(RefreshDatabase::class);
 
@@ -46,9 +47,13 @@ test('user cannot replace or remove an existing signature through self profile',
 test('self profile page displays signature as read only', function (): void {
     $user = User::factory()->create(['email_verified_at' => now()]);
 
+    // The page only shows the stored signature; uploads are refused by UpdateProfileRequest (above).
     $this->actingAs($user)->get(route('profile.edit'))
         ->assertOk()
-        ->assertSee('only be changed by an authorized administrator')
-        ->assertDontSee('name="signature"', false)
-        ->assertDontSee('name="remove_signature"', false);
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Admin/Profile/Edit')
+            ->where('profile.signatureUrl', null)
+            ->missing('profile.canChangeSignature'));
+
+    expect(__('auth.signature_admin_only'))->toContain('only be changed by an authorized administrator');
 });
