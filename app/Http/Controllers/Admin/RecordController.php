@@ -6,15 +6,22 @@ use App\Http\Controllers\Controller;
 use App\Models\CourtCase;
 use App\Models\Team;
 use App\Models\User;
+use App\Support\EthiopianDate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class RecordController extends Controller
 {
-    public function index(Request $request)
+    private const CASE_STATUSES = ['pending', 'active', 'adjourned', 'dismissed', 'closed'];
+
+    public function index(Request $request): Response
     {
         $q = trim($request->string('q')->toString());
         $status = $request->string('status')->toString();
@@ -105,35 +112,55 @@ class RecordController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        $types = DB::table('case_types')->orderBy('name')->get(['id', 'name']);
-        $users = User::query()
-            ->where('status', 'active')
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        $cases->through(function (object $case) use ($isReviewer): array {
+            $closedOrDecided = ($case->decisions_count ?? 0) > 0 || in_array($case->status ?? '', ['closed', 'dismissed'], true);
 
-        return view('admin.recordes.index', compact(
-            'cases',
-            'q',
-            'status',
-            'caseTypeId',
-            'assigneeId',
-            'from',
-            'to',
-            'types',
-            'users',
-            'isReviewer'
-        ));
+            return [
+                'id' => (int) $case->id,
+                'caseNumber' => (string) $case->case_number,
+                'title' => Str::limit((string) $case->title, 48),
+                'applicant' => $case->applicant_name ?: null,
+                'caseType' => $case->case_type ?: null,
+                'team' => $case->team_name ?: null,
+                'assignee' => $case->assignee_name ?: null,
+                'status' => (string) $case->status,
+                'filed' => EthiopianDate::format($case->filing_date),
+                'reviewStatus' => $isReviewer ? (string) ($case->review_status ?? 'accepted') : 'accepted',
+                'reviewer' => $case->reviewer_name ?: null,
+                'canAppealPdf' => $closedOrDecided,
+            ];
+        });
+
+        return Inertia::render('Admin/Records/Index', [
+            'cases' => $cases,
+            'filters' => [
+                'q' => $q,
+                'status' => $status,
+                'case_type_id' => $caseTypeId ? (string) $caseTypeId : '',
+                'assignee_id' => $assigneeId ? (string) $assigneeId : '',
+                'from' => $from?->format('Y-m-d') ?? '',
+                'to' => $to?->format('Y-m-d') ?? '',
+            ],
+            'types' => DB::table('case_types')->orderBy('name')->get(['id', 'name'])
+                ->map(fn (object $type): array => ['id' => (int) $type->id, 'name' => (string) $type->name])->values(),
+            'users' => User::query()->where('status', 'active')->orderBy('name')->get(['id', 'name'])
+                ->map(fn (User $user): array => ['id' => (int) $user->id, 'name' => (string) $user->name])->values(),
+            'statuses' => self::CASE_STATUSES,
+        ]);
     }
 
-    public function show(CourtCase $case)
+    public function show(CourtCase $case): Response
     {
-        $data = $this->recordData($case);
+        $this->authorizeRecordAccess($case);
 
-        return view('admin.recordes.record', $data);
+        return Inertia::render('Admin/Records/Show', [
+            'record' => $this->presentRecord($case, $this->recordData($case, withEvidenceEmbed: false)),
+        ]);
     }
 
     public function pdf(CourtCase $case)
     {
+        $this->authorizeRecordAccess($case);
         $data = $this->recordData($case);
         $safeCase = Str::of($case->case_number ?? $case->id)->replace(['/', '\\'], '-')->slug('-');
         $data['pdfFilename'] = 'case-record-' . ($safeCase ?: $case->id) . '.pdf';
@@ -147,6 +174,7 @@ class RecordController extends Controller
      */
     public function appealPdf(CourtCase $case)
     {
+        $this->authorizeRecordAccess($case);
         $data = $this->recordData($case);
         $data['generatedAt'] = now();
 
@@ -160,7 +188,7 @@ class RecordController extends Controller
         return $pdf->download($filename);
     }
 
-    private function recordData(CourtCase $case): array
+    private function recordData(CourtCase $case, bool $withEvidenceEmbed = true): array
     {
         $letters = DB::table('letters as l')
             ->leftJoin('users as u', 'u.id', '=', 'l.user_id')
@@ -223,8 +251,9 @@ class RecordController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
+        // Only the PDF embeds the first evidence file; reading it is wasted work for the page.
         $firstEvidenceEmbed = null;
-        foreach ($evidences as $ev) {
+        foreach ($withEvidenceEmbed ? $evidences : [] as $ev) {
             $path = $ev->file_path ?? $ev->path ?? null;
             if (!$path) {
                 continue;
@@ -318,6 +347,119 @@ class RecordController extends Controller
             'assignedTeams' => $assignedTeams,
             'closedAt' => $closedAt,
             'firstEvidenceEmbed' => $firstEvidenceEmbed,
+        ];
+    }
+
+    /**
+     * The record shows the whole case file, so it follows the case page's rules: the
+     * case policy (unaccepted cases only for reviewers and the assignee) plus the
+     * team scope that limits the record list.
+     */
+    private function authorizeRecordAccess(CourtCase $case): void
+    {
+        $user = Auth::user();
+        abort_unless($user instanceof User && Gate::forUser($user)->allows('view', $case), 403);
+
+        $memberScopeIds = $this->teamLeaderAssignmentIds($user);
+        if (!empty($memberScopeIds)) {
+            $leaderTeamId = Team::where('team_leader_id', $user->id)->value('id');
+            $allowed = in_array((int) $case->assigned_user_id, array_map('intval', $memberScopeIds), true)
+                || ($leaderTeamId && (int) $case->assigned_team_id === (int) $leaderTeamId);
+            abort_unless($allowed, 403);
+
+            return;
+        }
+
+        $isTeamMember = DB::table('team_user')->where('user_id', $user->id)->exists();
+        if ($isTeamMember && !$user->hasPermission('cases.assign.member') && !$user->hasPermission('cases.assign.team')) {
+            $assignedTo = (int) ($case->assigned_member_user_id ?? $case->assigned_user_id ?? 0);
+            abort_unless($assignedTo === (int) $user->id, 403);
+        }
+    }
+
+    /** @return array<string, mixed> */
+    private function presentRecord(CourtCase $case, array $data): array
+    {
+        $html = fn (?string $value): ?string => filled($value) ? clean((string) $value, 'cases') : null;
+        $when = fn ($value): string => $value ? EthiopianDate::smartFormat($value, true, '') : '';
+        $caseFileUrl = fn (object $file): ?string => Route::has('cases.files.download') ? route('cases.files.download', [$case->id, $file->id]) : null;
+
+        return [
+            'id' => (int) $case->id,
+            'caseNumber' => $case->case_number,
+            'title' => $case->title,
+            'status' => (string) $case->status,
+            'caseType' => $case->caseType?->name,
+            'filed' => EthiopianDate::smartFormat($case->filing_date, false, '—'),
+            'firstHearing' => $case->first_hearing_date ? EthiopianDate::smartFormat($case->first_hearing_date, false, '—') : null,
+            'generated' => EthiopianDate::smartFormat(now(), true, ''),
+            'descriptionHtml' => $html($case->description),
+            'reliefHtml' => $html($case->relief_requested),
+            'applicant' => [
+                'name' => $case->applicant?->full_name,
+                'email' => $case->applicant?->email,
+                'phone' => $case->applicant?->phone,
+            ],
+            'respondent' => [
+                'name' => $case->respondent_name,
+                'address' => $case->respondent_address,
+            ],
+            'pdfUrl' => route('recordes.pdf', $case->id),
+            // Same rule as the record list: only once there is a decision or the case is closed.
+            'appealPdfUrl' => $data['decision'] || in_array($case->status, ['closed', 'dismissed'], true) ? route('recordes.appeal-pdf', $case->id) : null,
+            'files' => $data['files']->map(fn (object $file): array => [
+                'id' => (int) $file->id,
+                'label' => $file->label ?: null,
+                'created' => $when($file->created_at),
+                'url' => $caseFileUrl($file),
+            ])->values(),
+            'evidences' => $data['evidences']->map(fn (object $evidence): array => [
+                'id' => (int) $evidence->id,
+                'title' => $evidence->title ?: null,
+                'description' => $evidence->description ?: null,
+                'created' => $when($evidence->created_at),
+            ])->values(),
+            'witnesses' => $data['witnesses']->map(fn (object $witness): array => [
+                'id' => (int) $witness->id,
+                'name' => $witness->full_name,
+                'phone' => $witness->phone,
+                'email' => $witness->email,
+                'address' => $witness->address,
+            ])->values(),
+            'responses' => $data['respondentResponses']->map(fn (object $response): array => [
+                'id' => (int) $response->id,
+                'title' => $response->title ?: null,
+                'number' => $response->response_number ?? null,
+                'excerpt' => filled($response->description) ? Str::limit(strip_tags((string) $response->description), 260) : null,
+                'created' => $when($response->created_at),
+                'downloadUrl' => filled($response->pdf_path) ? $response->download_url : null,
+            ])->values(),
+            'letters' => $data['letters']->map(fn (object $letter): array => [
+                'id' => (int) $letter->id,
+                'subject' => $letter->subject ?: null,
+                'reference' => $letter->reference_number ?: null,
+                'author' => $letter->author_name,
+                'created' => $when($letter->created_at),
+                'bodyHtml' => $html($letter->body),
+            ])->values(),
+            'hearings' => $data['hearings']->map(fn (object $hearing): array => [
+                'id' => (int) $hearing->id,
+                'when' => $hearing->hearing_at ? EthiopianDate::smartFormat($hearing->hearing_at, true, '', 'h:i A', 'F j, Y') : null,
+                'location' => $hearing->location ?: null,
+                'type' => $hearing->type ?: null,
+                'notes' => filled($hearing->notes) ? strip_tags((string) $hearing->notes) : null,
+            ])->values(),
+            'benchNotes' => $data['benchNotes']->map(fn (object $note): array => [
+                'id' => (int) $note->id,
+                'created' => $when($note->created_at),
+                'author' => $note->author,
+                'html' => $html($note->note),
+            ])->values(),
+            'decision' => $data['decision'] ? [
+                'name' => $data['decision']->name ?: null,
+                'created' => $when($data['decision']->created_at),
+                'html' => $html($data['decision']->decision_content),
+            ] : null,
         ];
     }
 
