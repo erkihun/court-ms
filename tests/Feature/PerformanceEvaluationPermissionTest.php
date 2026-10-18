@@ -7,6 +7,7 @@ use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Inertia\Testing\AssertableInertia as Assert;
 
 uses(RefreshDatabase::class);
 
@@ -76,7 +77,10 @@ test('view permission grants read access but not create access', function (): vo
     $this->actingAs($user)
         ->get(route('performance-evaluations.index'))
         ->assertOk()
-        ->assertDontSee(route('performance-evaluations.create'));
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Admin/PerformanceEvaluations/Index')
+            ->where('can.create', false)
+            ->where('can.manageSettings', false));
 
     $this->actingAs($user)
         ->get(route('performance-evaluations.create'))
