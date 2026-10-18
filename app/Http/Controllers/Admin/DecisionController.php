@@ -8,12 +8,20 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreDecisionRequest;
 use App\Models\CourtCase;
 use App\Models\Decision;
-use App\Models\User;
 use App\Models\DecisionReview;
+use App\Models\DecisionTemplate;
+use App\Models\Team;
+use App\Models\User;
+use App\Support\DecisionPdf;
+use App\Support\EthiopianDate;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
+use Inertia\Response;
 use Mews\Purifier\Facades\Purifier;
 
 class DecisionController extends Controller
@@ -27,7 +35,7 @@ class DecisionController extends Controller
 
     private const CASE_LIMIT = 250;
 
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         $search = trim($request->string('q')->toString());
         $decisions = Decision::with(['courtCase.judge', 'reviewer'])
@@ -44,7 +52,52 @@ class DecisionController extends Controller
             ->paginate(12)
             ->withQueryString();
 
-        return view('admin.decisions.index', compact('decisions', 'search'));
+        $offset = ($decisions->firstItem() ?? 1) - 1;
+        $decisions->setCollection($decisions->getCollection()->values()->map(
+            fn (Decision $decision, int $index): array => $this->presentListRow($decision, $offset + $index + 1),
+        ));
+
+        return Inertia::render('Admin/Decisions/Index', [
+            'decisions' => $decisions,
+            'filters' => ['q' => $search],
+        ]);
+    }
+
+    /** @return array<string, mixed> */
+    private function presentListRow(Decision $decision, int $rowNumber): array
+    {
+        $unlocked = $decision->status !== 'published' && $this->isPresidingJudgeOrUnassigned($decision);
+
+        return [
+            'id' => $decision->id,
+            'rowNumber' => $rowNumber,
+            'caseId' => $decision->courtCase?->id,
+            'caseNumber' => $decision->case_number ?: null,
+            'filed' => $decision->case_filed_date ? EthiopianDate::format($decision->case_filed_date) : null,
+            'applicant' => $decision->applicant_full_name ?: ($decision->courtCase?->title ?: null),
+            'respondent' => $decision->respondent_full_name ?: null,
+            'judge' => $decision->reviewing_admin_user_name
+                ?: ($decision->reviewer?->name
+                ?: (($decision->panel_judges[1]['admin_user_name'] ?? null)
+                ?: ($decision->courtCase?->judge?->name ?: null))),
+            'decisionDate' => EthiopianDate::format($decision->decision_date, fallback: '—'),
+            'status' => $decision->status ?: null,
+            'isApproved' => $decision->isApproved(),
+            'canEdit' => $unlocked && userHasPermission('decision.update'),
+            'canDelete' => $unlocked && userHasPermission('decision.delete'),
+        ];
+    }
+
+    /**
+     * Only the presiding (middle) judge may change a decision. Drafts saved
+     * before a panel was mandatory have none, and any authorised editor may
+     * open them to assign one (see ensureMiddleJudge()).
+     */
+    private function isPresidingJudgeOrUnassigned(Decision $decision): bool
+    {
+        $presiding = $decision->presidingJudgeId();
+
+        return $presiding === null || $presiding === auth()->id();
     }
 
     /**
@@ -63,7 +116,7 @@ class DecisionController extends Controller
         $user = auth()->user();
 
         $teamIds = $user
-            ? \App\Models\Team::query()
+            ? Team::query()
                 ->whereHas('users', fn ($q) => $q->where('users.id', $user->id))
                 ->pluck('id')
                 ->all()
@@ -71,6 +124,7 @@ class DecisionController extends Controller
 
         if (empty($teamIds)) {
             $query->whereRaw('1 = 0'); // No team => no decisions.
+
             return;
         }
 
@@ -93,7 +147,7 @@ class DecisionController extends Controller
         }
 
         return $user
-            ? \App\Models\Team::query()
+            ? Team::query()
                 ->where('id', $teamId)
                 ->whereHas('users', fn ($q) => $q->where('users.id', $user->id))
                 ->exists()
@@ -108,21 +162,58 @@ class DecisionController extends Controller
             && ($user->hasRole('admin') || $user->hasPermission(self::VIEW_ALL_PERMISSION));
     }
 
-    public function create()
+    public function create(Request $request): Response
     {
-        $cases = $this->loadCases(status: 'closed');
-        $adminUsers = $this->loadAdminUsers();
-        $judgeUsers = $this->loadJudgeUsers();
-        return view('admin.decisions.create', compact('cases', 'adminUsers', 'judgeUsers'));
+        return Inertia::render('Admin/Decisions/Form', [
+            'decision' => null,
+            'defaultCaseId' => $request->integer('case_id') ?: null,
+            'today' => now()->toDateString(),
+            ...$this->formOptions($this->loadCases(status: 'closed')),
+        ]);
     }
 
-    public function show(Decision $decision)
+    public function show(Decision $decision): Response
     {
-        $decision->loadMissing(['courtCase', 'reviews.reviewer']);
+        $decision->loadMissing(['courtCase', 'reviews.reviewer', 'approver']);
         abort_unless($this->canAccessDecision($decision), 403);
 
-        $templates = \App\Models\DecisionTemplate::orderBy('title')->get(['id', 'title']);
-        return view('admin.decisions.show', compact('decision', 'templates'));
+        $panel = $decision->panelJudgesAuthorFirst();
+        $userId = auth()->id();
+
+        return Inertia::render('Admin/Decisions/Show', [
+            'decision' => [
+                'id' => $decision->id,
+                'name' => $decision->name ?: null,
+                'caseId' => $decision->court_case_id ? (int) $decision->court_case_id : null,
+                'caseNumber' => $decision->case_number ?: null,
+                'caseFileNumber' => $decision->case_file_number ?: ($decision->case_number ?: null),
+                'decisionDate' => EthiopianDate::format($decision->decision_date, fallback: '—'),
+                'applicant' => $decision->applicant_full_name ?: null,
+                'respondent' => $decision->respondent_full_name ?: null,
+                'status' => $decision->status ?: 'draft',
+                'isApproved' => $decision->isApproved(),
+                'approvedBy' => $decision->approver?->name,
+                'approvedAt' => $decision->approved_at ? EthiopianDate::format($decision->approved_at) : null,
+                'isPresidingJudge' => $this->isPresidingJudgeOrUnassigned($decision),
+                // Purified on save; cleaned again on output for rows saved before that.
+                'contentHtml' => clean((string) $decision->decision_content, 'cases'),
+                'panel' => collect(range(0, 2))->map(fn (int $seat): array => [
+                    'name' => $panel[$seat]['admin_user_name'] ?? null,
+                    'vote' => $panel[$seat]['vote'] ?? null,
+                ])->all(),
+            ],
+            'reviews' => $decision->reviews->map(fn (DecisionReview $review): array => [
+                'id' => $review->id,
+                'reviewer' => $review->reviewer?->name,
+                'outcome' => $review->outcome ?: 'pending',
+                'note' => $review->review_note ?: null,
+                'when' => EthiopianDate::smartRelative($review->updated_at),
+                'isOwner' => $review->reviewer_id === $userId,
+            ])->values(),
+            'templates' => DecisionTemplate::orderBy('title')->get(['id', 'title'])
+                ->map(fn (DecisionTemplate $template): array => ['id' => $template->id, 'title' => (string) $template->title])
+                ->values(),
+        ]);
     }
 
     /**
@@ -136,15 +227,15 @@ class DecisionController extends Controller
 
         $validated = $request->validate([
             'template_id' => ['nullable', 'integer', 'exists:decision_templates,id'],
-            'mode'        => ['nullable', 'in:stream,download'],
+            'mode' => ['nullable', 'in:stream,download'],
         ]);
 
         $template = ! empty($validated['template_id'])
-            ? \App\Models\DecisionTemplate::find($validated['template_id'])
+            ? DecisionTemplate::find($validated['template_id'])
             : null;
 
-        $pdf = \App\Support\DecisionPdf::render($decision, $template);
-        $filename = \App\Support\DecisionPdf::filename($decision);
+        $pdf = DecisionPdf::render($decision, $template);
+        $filename = DecisionPdf::filename($decision);
 
         return ($validated['mode'] ?? 'stream') === 'download'
             ? $pdf->download($filename)
@@ -199,30 +290,30 @@ class DecisionController extends Controller
         };
 
         $replacements = [
-            'applicant_name'     => (string) ($decision->applicant_full_name ?? ''),
-            'respondent_name'    => (string) ($decision->respondent_full_name ?? ''),
-            'case_number'        => (string) ($decision->case_number ?? ''),
-            'case_file_number'   => (string) ($decision->case_file_number ?? ''),
-            'judge_name'         => (string) ($decision->courtCase?->judge?->name ?? ''),
-            'decision_date'      => \App\Support\EthiopianDate::format($decision->decision_date, fallback: ''),
-            'decision_content'   => (string) ($decision->decision_content ?? ''),
-            'decision_name'      => (string) ($decision->name ?? ''),
+            'applicant_name' => (string) ($decision->applicant_full_name ?? ''),
+            'respondent_name' => (string) ($decision->respondent_full_name ?? ''),
+            'case_number' => (string) ($decision->case_number ?? ''),
+            'case_file_number' => (string) ($decision->case_file_number ?? ''),
+            'judge_name' => (string) ($decision->courtCase?->judge?->name ?? ''),
+            'decision_date' => EthiopianDate::format($decision->decision_date, fallback: ''),
+            'decision_content' => (string) ($decision->decision_content ?? ''),
+            'decision_name' => (string) ($decision->name ?? ''),
 
             // Panel judges (1 = presiding/first, 2 = middle, 3 = third)
-            'judge_one'          => $judgeName($panel, 0),
-            'judge_two'          => $judgeName($panel, 1),
-            'judge_three'        => $judgeName($panel, 2),
-            'judge_one_vote'     => $judgeVote($panel, 0),
-            'judge_two_vote'     => $judgeVote($panel, 1),
-            'judge_three_vote'   => $judgeVote($panel, 2),
+            'judge_one' => $judgeName($panel, 0),
+            'judge_two' => $judgeName($panel, 1),
+            'judge_three' => $judgeName($panel, 2),
+            'judge_one_vote' => $judgeVote($panel, 0),
+            'judge_two_vote' => $judgeVote($panel, 1),
+            'judge_three_vote' => $judgeVote($panel, 2),
 
             // Signature block for all panel judges (HTML)
-            'judges_signatures'  => $this->buildJudgesSignatures($panel),
+            'judges_signatures' => $this->buildJudgesSignatures($panel),
         ];
 
         foreach ($replacements as $key => $value) {
             // Allow optional spaces inside the braces: {{ key }} or {{key}}
-            $body = preg_replace('/\{\{\s*' . preg_quote($key, '/') . '\s*\}\}/', $value, $body);
+            $body = preg_replace('/\{\{\s*'.preg_quote($key, '/').'\s*\}\}/', $value, $body);
         }
 
         return $body;
@@ -242,17 +333,17 @@ class DecisionController extends Controller
                 continue;
             }
             $cells .= '<td style="width:33%;text-align:center;padding:8px;vertical-align:bottom;">'
-                . '<div style="border-top:1px solid #111827;margin-top:36px;padding-top:4px;">'
-                . '<div style="font-size:9pt;color:#6b7280;">' . e($labels[$i]) . '</div>'
-                . '<div style="font-weight:600;">' . e($name) . '</div>'
-                . '</div></td>';
+                .'<div style="border-top:1px solid #111827;margin-top:36px;padding-top:4px;">'
+                .'<div style="font-size:9pt;color:#6b7280;">'.e($labels[$i]).'</div>'
+                .'<div style="font-weight:600;">'.e($name).'</div>'
+                .'</div></td>';
         }
 
         if ($cells === '') {
             return '';
         }
 
-        return '<table style="width:100%;border-collapse:collapse;margin-top:18px;"><tr>' . $cells . '</tr></table>';
+        return '<table style="width:100%;border-collapse:collapse;margin-top:18px;"><tr>'.$cells.'</tr></table>';
     }
 
     public function store(StoreDecisionRequest $request)
@@ -274,14 +365,53 @@ class DecisionController extends Controller
         ]);
     }
 
-    public function edit(Decision $decision)
+    public function edit(Decision $decision): Response
     {
         $this->ensureMiddleJudge($decision);
         $this->ensureNotPublished($decision);
-        $cases = $this->loadCases($decision);
-        $adminUsers = $this->loadAdminUsers();
-        $judgeUsers = $this->loadJudgeUsers();
-        return view('admin.decisions.edit', compact('decision', 'cases', 'adminUsers', 'judgeUsers'));
+
+        $panel = is_array($decision->panel_judges) ? $decision->panel_judges : [];
+
+        return Inertia::render('Admin/Decisions/Form', [
+            'decision' => [
+                'id' => $decision->id,
+                'name' => $decision->name ?: null,
+                'caseId' => $decision->court_case_id ? (int) $decision->court_case_id : null,
+                'caseFileNumber' => (string) ($decision->case_file_number ?? ''),
+                'decisionDate' => $decision->decision_date?->format('Y-m-d') ?? '',
+                'content' => (string) $decision->decision_content,
+                'judgeIds' => collect(range(0, 2))
+                    ->map(fn (int $seat): ?int => isset($panel[$seat]['admin_user_id']) ? (int) $panel[$seat]['admin_user_id'] : null)
+                    ->all(),
+            ],
+            'defaultCaseId' => null,
+            'today' => now()->toDateString(),
+            ...$this->formOptions($this->loadCases($decision)),
+        ]);
+    }
+
+    /**
+     * Case choices (with the party names the form previews) and the judges
+     * that can sit on the panel.
+     *
+     * @return array<string, mixed>
+     */
+    private function formOptions(Collection $cases): array
+    {
+        $user = auth()->user();
+
+        return [
+            'cases' => $cases->map(fn (CourtCase $case): array => [
+                'id' => $case->id,
+                'label' => $case->case_number.' - '.Str::limit((string) $case->title, 60),
+                'caseNumber' => (string) $case->case_number,
+                // The applicant name is stored on the case as `title`.
+                'applicant' => (string) ($case->title ?: ($case->applicant?->full_name ?? '')),
+                'respondent' => (string) ($case->respondent_name ?? ''),
+            ])->values(),
+            'judges' => $this->loadJudgeUsers()->map(fn (User $judge): array => ['id' => $judge->id, 'name' => $judge->name])->values(),
+            'currentUser' => ['id' => (int) $user->id, 'name' => (string) $user->name],
+        ];
     }
 
     public function update(Request $request, Decision $decision)
@@ -408,14 +538,24 @@ class DecisionController extends Controller
         ]);
     }
 
-    public function editReview(Decision $decision, DecisionReview $review)
+    public function editReview(Decision $decision, DecisionReview $review): Response
     {
         $decision->loadMissing('courtCase');
         abort_unless($this->canAccessDecision($decision), 403);
         abort_if($review->decision_id !== $decision->id, 404);
         abort_if(auth()->id() !== $review->reviewer_id, 403);
 
-        return view('admin.decisions.reviews.edit', compact('decision', 'review'));
+        $review->loadMissing('reviewer');
+
+        return Inertia::render('Admin/Decisions/ReviewEdit', [
+            'decision' => ['id' => $decision->id, 'caseNumber' => $decision->case_number ?: null],
+            'review' => [
+                'id' => $review->id,
+                'outcome' => $review->outcome ?: 'approve',
+                'note' => (string) ($review->review_note ?? ''),
+                'reviewer' => $review->reviewer?->name,
+            ],
+        ]);
     }
 
     public function destroy(Decision $decision)
@@ -423,6 +563,7 @@ class DecisionController extends Controller
         $this->ensureMiddleJudge($decision);
         $this->ensureNotPublished($decision);
         $decision->delete();
+
         return back()->with('success', [
             'key' => 'messages.success.deleted',
             'replace' => ['resource' => __('messages.resources.decision')],
@@ -492,7 +633,7 @@ class DecisionController extends Controller
     {
         if (is_array($raw)) {
             return collect($raw)
-                ->map(fn($value) => trim((string) $value))
+                ->map(fn ($value) => trim((string) $value))
                 ->filter()
                 ->unique()
                 ->values()
@@ -504,7 +645,7 @@ class DecisionController extends Controller
         }
 
         return collect(preg_split('/[\r\n,]+/', $raw))
-            ->map(fn($value) => trim($value))
+            ->map(fn ($value) => trim($value))
             ->filter()
             ->unique()
             ->values()
@@ -522,6 +663,7 @@ class DecisionController extends Controller
 
         return $ordered->map(function ($row, $index) use ($namesById) {
             $id = (int) Arr::get($row, 'admin_user_id');
+
             return [
                 'order' => $index + 1,
                 'admin_user_id' => $id ?: null,
@@ -579,7 +721,7 @@ class DecisionController extends Controller
             ->when($status !== null, fn ($query) => $query->where('status', $status))
             ->get(['id', 'case_number', 'title', 'filing_date', 'applicant_id', 'respondent_name', 'status']);
 
-        if ($decision && $decision->court_case_id && !$cases->contains('id', $decision->court_case_id)) {
+        if ($decision && $decision->court_case_id && ! $cases->contains('id', $decision->court_case_id)) {
             $current = CourtCase::find($decision->court_case_id, ['id', 'case_number', 'title', 'filing_date', 'status']);
             if ($current) {
                 $cases->push($current);
@@ -587,14 +729,6 @@ class DecisionController extends Controller
         }
 
         return $cases;
-    }
-
-    private function loadAdminUsers()
-    {
-        return User::query()
-            ->whereHas('roles', fn($query) => $query->where('name', 'admin'))
-            ->orderBy('name')
-            ->get(['id', 'name']);
     }
 
     private function loadJudgeUsers()
@@ -605,13 +739,13 @@ class DecisionController extends Controller
         $query = User::query()->orderBy('name');
 
         if ($teamIds->isNotEmpty()) {
-            $query->whereHas('teams', fn($q) => $q->whereIn('teams.id', $teamIds));
+            $query->whereHas('teams', fn ($q) => $q->whereIn('teams.id', $teamIds));
         }
 
         $judges = $query->get(['id', 'name']);
 
         // Ensure current user is present
-        if ($user && !$judges->contains('id', $user->id)) {
+        if ($user && ! $judges->contains('id', $user->id)) {
             $judges->push($user);
         }
 

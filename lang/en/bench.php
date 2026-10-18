@@ -3,6 +3,7 @@
 return array (
   'buttons' => 
   array (
+    'view' => 'View',
     'new_note' => 'New note',
     'create_new' => 'Create New Note',
     'back' => 'Back to Notes',
@@ -17,6 +18,7 @@ return array (
   ),
   'confirmations' => 
   array (
+    'delete_title' => 'Delete this note?',
     'delete' => 'Are you sure you want to delete this note? This action cannot be undone.',
   ),
   'descriptions' => 
@@ -56,6 +58,8 @@ return array (
   ),
   'labels' => 
   array (
+    'signature' => 'Judge :number signature',
+    'judge' => 'Judge :number',
     'cases' => 'Cases',
     'case' => 'Case',
     'case_prefix' => 'Case:',
