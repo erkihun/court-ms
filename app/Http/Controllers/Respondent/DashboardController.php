@@ -4,13 +4,18 @@ namespace App\Http\Controllers\Respondent;
 
 use App\Http\Controllers\Controller;
 use App\Models\Respondent;
+use App\Services\Party\RespondentNotificationFeed;
+use App\Support\EthiopianDate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\URL;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(): Response
     {
         Session::put('acting_as_respondent', true);
 
@@ -31,7 +36,7 @@ class DashboardController extends Controller
                 ->where('rr.respondent_id', $respondent->id)
                 ->where('arr.review_status', 'accepted')
                 ->count(),
-            'notifications'=> $this->countUnseenNotifications($respondent->id),
+            'notifications' => app(RespondentNotificationFeed::class)->count($respondent->id),
         ];
 
         $recentCases = DB::table('respondent_case_views as v')
@@ -89,25 +94,37 @@ class DashboardController extends Controller
             )
             ->get();
 
-        return view('applicant.respondent.dashboard', [
-            'stats' => $stats,
-            'recentCases' => $recentCases,
-            'letters' => $letters,
-            'responseReplies' => $responseReplies,
+        return Inertia::render('Respondent/Dashboard', [
+            'stats' => [
+                'cases' => (int) $stats['cases'],
+                'responses' => (int) $stats['responses'],
+                'responseReplies' => (int) $stats['response_replies'],
+                'notifications' => (int) $stats['notifications'],
+            ],
+            'recentCases' => $recentCases->map(fn (object $case): array => [
+                'caseNumber' => (string) $case->case_number,
+                'title' => $case->title,
+                'status' => $case->status,
+                'href' => route('respondent.cases.show', $case->case_number),
+            ])->values(),
+            'letters' => $letters->map(fn (object $letter): array => [
+                'id' => (int) $letter->id,
+                'title' => $letter->subject ?? $letter->template_title ?? __('respondent.letter'),
+                'caseNumber' => $letter->case_number,
+                'referenceNumber' => $letter->reference_number,
+                'templateTitle' => $letter->template_title,
+                'authorName' => $letter->author_name,
+                'date' => EthiopianDate::format($letter->created_at, withTime: true),
+                'previewUrl' => URL::signedRoute('letters.case-preview', ['letter' => $letter->id]),
+            ])->values(),
+            'responseReplies' => $responseReplies->map(fn (object $reply): array => [
+                'id' => (int) $reply->id,
+                'caseNumber' => $reply->case_number,
+                'responseNumber' => $reply->response_number ?: null,
+                'applicantName' => trim(implode(' ', array_filter([$reply->applicant_first_name, $reply->applicant_middle_name, $reply->applicant_last_name]))) ?: null,
+                'href' => route('respondent.response-replies.show', $reply->id),
+            ])->values(),
         ]);
-    }
-
-    private function countUnseenNotifications(int $respondentId): int
-    {
-        return DB::table('respondent_case_views as v')
-            ->where('v.respondent_id', $respondentId)
-            ->whereNotExists(function ($q) use ($respondentId) {
-                $q->from('respondent_notification_reads as r')
-                    ->whereColumn('r.source_id', 'v.id')
-                    ->where('r.type', 'respondent_view')
-                    ->where('r.respondent_id', $respondentId);
-            })
-            ->count();
     }
 
     private function resolveActingRespondent($applicant): Respondent

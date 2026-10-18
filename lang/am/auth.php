@@ -211,4 +211,6 @@ return [
     'signed_in' => 'ገብተዋል።',
     'password_reset_sign_in' => 'የይለፍ ቃል በትክክል ተቀይሯል። እባክዎ ይግቡ።',
     'password_updated_sign_in_again' => 'የይለፍ ቃል ተቀይሯል። እባክዎ እንደገና ይግቡ።',
+    'profile_updated' => 'መገለጫው ተዘምኗል።',
+    'current_password_required_for_new' => 'አዲስ የይለፍ ቃል ለማዘጋጀት አሁን ያለውን የይለፍ ቃል ያስገቡ።',
 ];

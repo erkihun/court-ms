@@ -217,6 +217,7 @@ Route::middleware(SetLocale::class)->where(array_fill_keys($numericRouteParamete
         Route::get('/respondent/profile/sessions', [ApplicantSessionController::class, 'index'])->name('respondent.profile.sessions.index');
         Route::delete('/respondent/profile/sessions/{session}', [ApplicantSessionController::class, 'destroy'])->name('respondent.profile.sessions.destroy');
         Route::delete('/respondent/profile/sessions', [ApplicantSessionController::class, 'destroyOthers'])->name('respondent.profile.sessions.destroyOthers');
+        Route::get('/respondent/notifications/feed', [RespondentNotificationController::class, 'feed'])->name('respondent.notifications.feed');
         Route::post('/respondent/notifications/mark-one', [RespondentNotificationController::class, 'markOne'])->name('respondent.notifications.markOne');
         Route::post('/respondent/notifications/mark-all', [RespondentNotificationController::class, 'markAll'])->name('respondent.notifications.markAll');
         Route::post('/respondent/switch-to-applicant', [RespondentAuthController::class, 'switchToApplicant'])->name('respondent.switchToApplicant');
@@ -380,6 +381,7 @@ Route::middleware(SetLocale::class)->where(array_fill_keys($numericRouteParamete
 
             // Notifications
             Route::get('/applicant/notifications', [ApplicantNotificationController::class, 'index'])->name('applicant.notifications.index');
+            Route::get('/applicant/notifications/feed', [ApplicantNotificationController::class, 'feed'])->name('applicant.notifications.feed');
             Route::post('/applicant/notifications/mark-one', [ApplicantNotificationController::class, 'markOne'])->name('applicant.notifications.markOne');
             Route::post('/applicant/notifications/mark-all', [ApplicantNotificationController::class, 'markAll'])->name('applicant.notifications.markAll');
 

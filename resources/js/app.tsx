@@ -5,6 +5,7 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import type { ComponentType, ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import AdminLayout from '@/layouts/AdminLayout';
+import PartyLayout from '@/layouts/PartyLayout';
 import { loadTranslations } from '@/lib/i18n';
 import type { SharedProps } from '@/types';
 
@@ -14,6 +15,10 @@ type PageModule = { default: ComponentType & { layout?: (page: ReactNode) => Rea
 function defaultLayout(name: string): ((page: ReactNode) => ReactNode) | undefined {
     if (name.startsWith('Admin/')) {
         return (page) => <AdminLayout>{page}</AdminLayout>;
+    }
+
+    if (name.startsWith('Applicant/') || name.startsWith('Respondent/')) {
+        return (page) => <PartyLayout>{page}</PartyLayout>;
     }
 
     return undefined;

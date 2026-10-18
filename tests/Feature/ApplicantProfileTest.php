@@ -3,6 +3,7 @@
 use App\Models\Applicant;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Inertia\Testing\AssertableInertia as Assert;
 
 test('applicant profile page is displayed', function () {
     $applicant = Applicant::create([
@@ -152,9 +153,10 @@ test('applicant profile exposes profile security and sessions navigation', funct
     $this->actingAs($applicant, 'applicant')
         ->get(route('applicant.profile.edit'))
         ->assertOk()
-        ->assertSee('#profile')
-        ->assertSee('#security')
-        ->assertSee(route('applicant.profile.sessions.index'));
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Applicant/Profile/Edit')
+            ->where('portal', 'applicant')
+            ->where('profile.national_id_number', '1234 5678 9012 3456'));
 });
 
 test('applicant can change password from profile security', function () {
@@ -213,14 +215,25 @@ test('applicant can view and revoke another session', function () {
         'last_activity' => now()->getTimestamp(),
     ]);
 
-    $this->actingAs($applicant, 'applicant')
+    $response = $this->actingAs($applicant, 'applicant')
         ->get(route('applicant.profile.sessions.index'))
         ->assertOk()
-        ->assertSee('Windows')
-        ->assertSee('Chrome 150');
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Applicant/Profile/Sessions')
+            ->where('portal', 'applicant')
+            ->where('sessions', fn ($sessions) => collect($sessions)->contains(fn ($row) => $row['deviceName'] === 'Windows' && $row['browserName'] === 'Chrome 150')));
 
+    // The page never carries raw session ids, so a guessed id revokes nothing.
     $this->actingAs($applicant, 'applicant')
         ->delete(route('applicant.profile.sessions.destroy', 'applicant-other-session'))
+        ->assertRedirect();
+    $this->assertDatabaseHas('sessions', ['id' => 'applicant-other-session']);
+
+    $key = collect($response->viewData('page')['props']['sessions'])->firstWhere('isCurrent', false)['key'];
+    expect($key)->not->toContain('applicant-other-session');
+
+    $this->actingAs($applicant, 'applicant')
+        ->delete(route('applicant.profile.sessions.destroy', $key))
         ->assertRedirect();
 
     $this->assertDatabaseMissing('sessions', ['id' => 'applicant-other-session']);

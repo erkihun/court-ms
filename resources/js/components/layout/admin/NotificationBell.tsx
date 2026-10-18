@@ -5,6 +5,7 @@ import { Dropdown } from '@/components/ui/Dropdown';
 import { usePolling } from '@/hooks/usePolling';
 import { useShared } from '@/hooks/useShared';
 import { cn } from '@/lib/cn';
+import { getJson } from '@/lib/http';
 import { t } from '@/lib/i18n';
 import { route } from '@/lib/route';
 import { initials } from '@/lib/str';
@@ -25,15 +26,6 @@ const groupIcons = {
     hearing: { Icon: CalendarDaysIcon, tone: 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400' },
     respondent_view: { Icon: EyeIcon, tone: 'bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400' },
 } as const;
-
-async function getJson<T>(url: string): Promise<T | null> {
-    try {
-        const response = await fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
-        return response.ok ? ((await response.json()) as T) : null;
-    } catch {
-        return null;
-    }
-}
 
 /** Two short rising tones, as in the Blade layout. Silently skipped where audio is unavailable. */
 function chime(): void {

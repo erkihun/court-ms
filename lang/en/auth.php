@@ -211,4 +211,6 @@ return [
     'signed_in' => 'Signed in.',
     'password_reset_sign_in' => 'Password reset successfully. Please sign in.',
     'password_updated_sign_in_again' => 'Password updated. Please log in again.',
+    'profile_updated' => 'Profile updated.',
+    'current_password_required_for_new' => 'Enter your current password to set a new one.',
 ];

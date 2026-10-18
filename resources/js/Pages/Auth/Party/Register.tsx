@@ -5,6 +5,7 @@ import type { FormEvent, ReactNode } from 'react';
 import { PasswordInput } from '@/components/auth/PasswordInput';
 import { useShared } from '@/hooks/useShared';
 import { cn } from '@/lib/cn';
+import { formatNationalId } from '@/lib/format';
 import { t } from '@/lib/i18n';
 import { route } from '@/lib/route';
 import { initials } from '@/lib/str';
@@ -26,17 +27,6 @@ const languages: Array<{ code: Locale; label: string }> = [
     { code: 'en', label: 'EN' },
     { code: 'am', label: 'አማ' },
 ];
-
-/** "1234567812345678" -> "1234 5678 1234 5678" (the server strips the spaces again). */
-function formatNationalId(value: string): string {
-    return (
-        value
-            .replace(/\D/g, '')
-            .slice(0, 16)
-            .match(/.{1,4}/g)
-            ?.join(' ') ?? ''
-    );
-}
 
 /** Applicant self-registration. Respondents use the same account and switch role at sign-in. */
 export default function Register() {

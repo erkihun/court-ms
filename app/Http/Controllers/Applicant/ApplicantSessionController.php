@@ -8,13 +8,15 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 final class ApplicantSessionController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): Response
     {
-        if ($request->routeIs('respondent.profile.*')) {
+        $respondent = $request->routeIs('respondent.profile.*');
+        if ($respondent) {
             $request->session()->put('acting_as_respondent', true);
         }
 
@@ -34,22 +36,34 @@ final class ApplicantSessionController extends Controller
             $sessions->prepend($this->presentCurrent($request));
         }
 
-        return view('applicant.profile.sessions', compact('sessions'));
+        return Inertia::render('Applicant/Profile/Sessions', [
+            'portal' => $respondent ? 'respondent' : 'applicant',
+            'databaseDriver' => config('session.driver') === 'database',
+            'sessions' => $sessions->map(fn (object $session): array => [
+                // Session ids never reach the browser; rows are addressed by a keyed hash.
+                'key' => $this->publicKey((string) $session->id),
+                'deviceName' => $session->device_name,
+                'browserName' => $session->browser_name,
+                'ipAddress' => $session->ip_address,
+                'isCurrent' => $session->is_current,
+                'lastActive' => $session->last_active_at->diffForHumans(),
+            ])->values(),
+        ]);
     }
 
     public function destroy(Request $request, string $session): RedirectResponse
     {
         $user = $request->user('applicant');
         abort_if($user === null, 401);
-        abort_if(hash_equals($request->session()->getId(), $session), 422, __('auth.session_current_cannot_revoke'));
+        abort_if(hash_equals($this->publicKey($request->session()->getId()), $session), 422, __('auth.session_current_cannot_revoke'));
 
         $record = DB::table('sessions')
-            ->where('id', $session)
             ->where('user_id', $user->getAuthIdentifier())
-            ->first(['id', 'payload']);
+            ->get(['id', 'payload'])
+            ->first(fn (object $record): bool => hash_equals($this->publicKey((string) $record->id), $session));
 
         if ($record !== null && $this->belongsToProfileSession($record)) {
-            DB::table('sessions')->where('id', $session)->delete();
+            DB::table('sessions')->where('id', $record->id)->delete();
         }
 
         return back()->with('status', __('auth.session_revoked'));
@@ -72,6 +86,12 @@ final class ApplicantSessionController extends Controller
         }
 
         return back()->with('status', __('auth.other_sessions_revoked'));
+    }
+
+    /** Stable, non-reversible handle for a session row (the raw id would let a script replay the session). */
+    private function publicKey(string $sessionId): string
+    {
+        return substr(hash_hmac('sha256', $sessionId, (string) config('app.key')), 0, 40);
     }
 
     private function present(object $session, string $currentId): object

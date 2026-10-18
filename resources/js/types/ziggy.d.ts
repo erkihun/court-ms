@@ -78,6 +78,7 @@ declare module 'ziggy-js' {
         }
     ],
     "respondent.profile.sessions.destroyOthers": [],
+    "respondent.notifications.feed": [],
     "respondent.notifications.markOne": [],
     "respondent.notifications.markAll": [],
     "respondent.switchToApplicant": [],
@@ -424,6 +425,7 @@ declare module 'ziggy-js' {
         }
     ],
     "applicant.notifications.index": [],
+    "applicant.notifications.feed": [],
     "applicant.notifications.markOne": [],
     "applicant.notifications.markAll": [],
     "applicant.notifications.settings": [],

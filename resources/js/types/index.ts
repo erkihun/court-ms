@@ -21,6 +21,7 @@ export interface AppInfo {
     today: {
         long: string;
         short: string;
+        time: string;
     };
 }
 

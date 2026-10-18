@@ -5,7 +5,10 @@ namespace App\Http\Controllers\Applicant;
 use App\Http\Controllers\Controller;
 use App\Models\Decision;
 use App\Support\DecisionPdf;
+use App\Support\EthiopianDate;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class ApplicantDashboardController extends Controller
 {
@@ -28,7 +31,7 @@ class ApplicantDashboardController extends Controller
         return DecisionPdf::render($decision)->download(DecisionPdf::filename($decision));
     }
 
-    public function index()
+    public function index(): Response
     {
         $applicantId = auth('applicant')->id();
 
@@ -153,20 +156,64 @@ class ApplicantDashboardController extends Controller
             ->limit(6)
             ->get();
 
-        return view('applicant.dashboard', compact(
-            'total',
-            'pending',
-            'active',
-            'closed',
-            'recent',
-            'caseLetters',
-            'caseResponses',
-            'caseDecisions',
-            'responseReplies',
-            'lettersCount',
-            'responsesCount',
-            'decisionsCount',
-            'responseRepliesCount'
-        ));
+        $applicant = auth('applicant')->user();
+        $name = $applicant?->full_name ?: $applicant?->email ?: __('applicant.user');
+        $date = fn ($value): string => $value ? EthiopianDate::format($value) : '';
+
+        return Inertia::render('Applicant/Dashboard', [
+            'greetingName' => $applicant?->is_lawyer ? __('dashboard.lawyer_title').' '.$name : $name,
+            'today' => EthiopianDate::smartFormat(now(), false, '', 'h:i A', 'F j, Y'),
+            'stats' => compact('total', 'pending', 'active', 'closed'),
+            'counts' => [
+                'letters' => $lettersCount,
+                'responses' => $responsesCount,
+                'decisions' => $decisionsCount,
+                'responseReplies' => $responseRepliesCount,
+            ],
+            'recent' => $recent->map(fn (object $case): array => [
+                'id' => (int) $case->id,
+                'caseNumber' => (string) $case->case_number,
+                'title' => (string) $case->title,
+                'status' => (string) $case->status,
+                'caseType' => $case->case_type,
+                'created' => $date($case->created_at),
+                'createdRelative' => EthiopianDate::smartRelative($case->created_at),
+            ])->values(),
+            'letters' => $caseLetters->map(fn (object $letter): array => [
+                'id' => (int) $letter->id,
+                'title' => $letter->subject ?? $letter->template_title ?? __('dashboard.letters'),
+                'caseNumber' => $letter->case_number,
+                'referenceNumber' => $letter->reference_number ?: null,
+                'date' => $date($letter->created_at),
+                'previewUrl' => route('letters.case-preview', $letter->id),
+            ])->values(),
+            'responses' => $caseResponses->map(fn (object $response): array => [
+                'id' => (int) $response->id,
+                'title' => (string) $response->title,
+                'caseNumber' => $response->case_number,
+                'when' => EthiopianDate::smartRelative($response->created_at, ''),
+                'href' => $response->case_id ? route('applicant.cases.respondentResponses.show', [$response->case_id, $response->id]) : null,
+            ])->values(),
+            'responseReplies' => $responseReplies->map(fn (object $reply): array => [
+                'id' => (int) $reply->id,
+                'caseNumber' => (string) $reply->case_number,
+                'responseNumber' => $reply->response_number ?: null,
+                'status' => in_array($reply->review_status, ['accepted', 'returned', 'rejected'], true) ? $reply->review_status : 'awaiting_review',
+                'reviewNote' => $reply->review_note ?: null,
+                'date' => $reply->created_at ? EthiopianDate::format($reply->created_at, withTime: true) : '',
+                'href' => route('applicant.cases.respondentResponses.replies.show', [$reply->case_id, $reply->respondent_response_id, $reply->id]),
+            ])->values(),
+            'decisions' => $caseDecisions->map(fn (object $decision): array => [
+                'id' => (int) $decision->id,
+                'name' => $decision->name ?? __('dashboard.decisions'),
+                'caseNumber' => $decision->case_number,
+                'date' => $date($decision->decision_date ?: $decision->created_at),
+                'status' => $decision->status ?: null,
+                // Same rule as Decision::isDownloadableByParties(), which downloadDecision() enforces.
+                'downloadUrl' => $decision->status === 'published' && $decision->approved_at
+                    ? route('applicant.decisions.download', $decision->id)
+                    : null,
+            ])->values(),
+        ]);
     }
 }

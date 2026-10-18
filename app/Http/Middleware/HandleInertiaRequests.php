@@ -35,6 +35,12 @@ class HandleInertiaRequests extends Middleware
     {
         $response = parent::handle($request, $next);
 
+        // Respondent mode is a navigation flag on the applicant session. Opening
+        // an applicant page leaves it, as the Blade layout did when it rendered.
+        if ($this->rendersPage($request, $response) && $request->is('applicant', 'applicant/*') && $request->hasSession()) {
+            $request->session()->forget('acting_as_respondent');
+        }
+
         // An Inertia visit that reaches a page not yet converted to React (or a
         // download) gets a regular HTML/file response. Tell the client to load
         // it as a full page instead of showing it in Inertia's error modal.
@@ -91,6 +97,7 @@ class HandleInertiaRequests extends Middleware
             'today' => [
                 'long' => $now->translatedFormat('l').', '.EthiopianDate::format($now),
                 'short' => EthiopianDate::formatDate($now),
+                'time' => EthiopianDate::formatTime($now),
             ],
         ];
     }
@@ -111,7 +118,7 @@ class HandleInertiaRequests extends Middleware
                 'firstName' => $applicant->first_name,
                 'email' => $applicant->email,
                 'isLawyer' => (bool) $applicant->is_lawyer,
-                'actingAsRespondent' => $request->hasSession() && (bool) $request->session()->get('acting_as_respondent', false),
+                'actingAsRespondent' => $this->isRespondentArea($request),
             ] : null,
         ];
     }
@@ -134,6 +141,23 @@ class HandleInertiaRequests extends Middleware
             'roles' => $user->roles->sortBy('name')->map($role)->values()->all(),
             'permissions' => $user->effectivePermissionNames(),
         ];
+    }
+
+    /** The respondent pages: /respondent/* and the respondent.* routes. */
+    private function isRespondentArea(Request $request): bool
+    {
+        return $request->is('respondent', 'respondent/*') || $request->routeIs('respondent.*');
+    }
+
+    /** A successful page view (Inertia or HTML), as opposed to a redirect, download or JSON call. */
+    private function rendersPage(Request $request, Response $response): bool
+    {
+        if (! $request->isMethod('GET') || ! $response->isSuccessful()) {
+            return false;
+        }
+
+        return $response->headers->has('X-Inertia')
+            || str_starts_with((string) $response->headers->get('Content-Type'), 'text/html');
     }
 
     private function isPartyArea(Request $request): bool
