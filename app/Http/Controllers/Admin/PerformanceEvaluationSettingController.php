@@ -8,45 +8,56 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StorePerformanceCategoryRequest;
 use App\Http\Requests\Admin\StorePerformanceCriterionRequest;
 use App\Http\Requests\Admin\UpdatePerformanceCriterionRequest;
-use App\Models\PerformanceEvaluationCategory;
 use App\Models\PerformanceCriterion;
+use App\Models\PerformanceEvaluationCategory;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class PerformanceEvaluationSettingController extends Controller
 {
-    public function index(): View
+    public function index(): Response
     {
+        $categories = $this->categories();
+        $labels = $categories->pluck('label', 'value');
+
         $criteria = PerformanceCriterion::query()
             ->withCount('scores')
             ->orderBy('sort_order')
             ->orderBy('id')
-            ->get();
+            ->get()
+            ->map(fn (PerformanceCriterion $criterion): array => [
+                'id' => $criterion->id,
+                'name' => (string) $criterion->name,
+                'nameAm' => $criterion->name_am,
+                'category' => (string) $criterion->category,
+                'categoryLabel' => (string) ($labels[$criterion->category] ?? $criterion->category),
+                'weight' => (int) $criterion->weight,
+                'sortOrder' => (int) $criterion->sort_order,
+                'active' => (bool) $criterion->active,
+                'description' => $criterion->description,
+                'scoresCount' => (int) $criterion->scores_count,
+            ]);
 
-        $categories = $this->categories();
-
-        $totalActiveWeight = (int) PerformanceCriterion::query()
-            ->where('active', true)
-            ->sum('weight');
-
-        return view('admin.settings.performance-evaluation', [
+        return Inertia::render('Admin/PerformanceSettings/Index', [
             'criteria' => $criteria,
             'categories' => $categories,
-            'totalActiveWeight' => $totalActiveWeight,
+            'totalActiveWeight' => (int) PerformanceCriterion::query()->where('active', true)->sum('weight'),
         ]);
     }
 
-    public function createCriterion(): View
+    public function createCriterion(): Response
     {
-        return view('admin.settings.performance-criteria-create', [
+        return Inertia::render('Admin/PerformanceSettings/CreateCriterion', [
             'categories' => $this->categories(),
         ]);
     }
 
-    public function createCategory(): View
+    public function createCategory(): Response
     {
-        return view('admin.settings.performance-category-create');
+        return Inertia::render('Admin/PerformanceSettings/CreateCategory');
     }
 
     public function store(StorePerformanceCriterionRequest $request): RedirectResponse
@@ -112,7 +123,7 @@ class PerformanceEvaluationSettingController extends Controller
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function payload(array $data, bool $active): array
@@ -128,7 +139,13 @@ class PerformanceEvaluationSettingController extends Controller
         ];
     }
 
-    private function categories()
+    /**
+     * Category options for the criterion forms: the configured categories, or the
+     * distinct values already used by criteria when none are configured.
+     *
+     * @return Collection<int, array{value: string, label: string}>
+     */
+    private function categories(): Collection
     {
         $configured = PerformanceEvaluationCategory::query()
             ->where('active', true)
@@ -137,7 +154,9 @@ class PerformanceEvaluationSettingController extends Controller
             ->get();
 
         if ($configured->isNotEmpty()) {
-            return $configured;
+            return $configured
+                ->map(fn (PerformanceEvaluationCategory $category): array => ['value' => (string) $category->slug, 'label' => $category->local_name])
+                ->values();
         }
 
         return PerformanceCriterion::query()
@@ -146,16 +165,32 @@ class PerformanceEvaluationSettingController extends Controller
             ->orderBy('category')
             ->pluck('category')
             ->filter()
-            ->map(fn (string $category): object => (object) [
-                'slug' => $category,
-                'local_name' => $category,
-            ])
+            ->map(fn (string $category): array => ['value' => $category, 'label' => $category])
             ->values();
     }
 
+    /** Only follow `redirect_to` back into this application: a same-origin URL or a root-relative path. */
     private function redirectTarget(mixed $target): string
     {
-        if (is_string($target) && str_starts_with($target, url('/'))) {
+        if (! is_string($target) || $target === '') {
+            return route('settings.performance-evaluation.index');
+        }
+
+        // "/path" is local; "//host" and "/\host" are protocol-relative to another host.
+        if (str_starts_with($target, '/') && ! str_starts_with($target, '//') && ! str_starts_with($target, '/\\')) {
+            return $target;
+        }
+
+        $app = parse_url(url('/'));
+        $parts = parse_url($target);
+
+        if (
+            is_array($parts) && is_array($app)
+            && ($parts['scheme'] ?? null) === ($app['scheme'] ?? null)
+            && ($parts['host'] ?? null) === ($app['host'] ?? null)
+            && ($parts['port'] ?? null) === ($app['port'] ?? null)
+            && ! isset($parts['user'])
+        ) {
             return $target;
         }
 

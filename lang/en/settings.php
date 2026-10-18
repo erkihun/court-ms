@@ -229,4 +229,7 @@ return [
     'unsaved_changes'       => 'You have unsaved changes',
     'tab_has_errors'        => 'This tab has validation errors',
 
+    'show_value' => 'Show value',
+    'hide_value' => 'Hide value',
+    'secret_saved_hint' => 'A value is saved. Leave blank to keep it; the saved value is never displayed.',
 ];

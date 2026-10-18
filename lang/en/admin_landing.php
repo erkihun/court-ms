@@ -102,10 +102,21 @@ return [
         'no_slides' => 'No hero slides have been added.', 'no_steps' => 'No timeline steps have been added.',
         'no_services' => 'No service cards have been added.', 'no_resources' => 'No resources have been added.', 'no_faqs' => 'No FAQs have been added.',
         'confirm_delete' => 'Are you sure you want to delete this item?',
+        'hidden' => 'Hidden', 'show' => 'Show', 'hide' => 'Hide', 'scheduled' => 'Scheduled :date',
+        'no_services_defaults' => 'No service cards saved yet; the home page shows the six built-in cards.',
+        'current_file' => 'Current file',
     ],
     'manual' => [
         'title' => 'User Manual', 'description' => 'Write the localized manual displayed as a web page from the home navigation.',
         'title_en' => 'English title', 'title_am' => 'Amharic title', 'content_en' => 'English manual content', 'content_am' => 'Amharic manual content',
         'show_in_nav' => 'Show User Manual in home navigation', 'save' => 'Save User Manual', 'saved' => 'User manual content saved.',
+    ],
+    'flash' => [
+        'slide_added' => 'Slide added.', 'slide_updated' => 'Slide updated.', 'slide_deleted' => 'Slide deleted.',
+        'step_added' => 'Step added.', 'step_updated' => 'Step updated.', 'step_deleted' => 'Step deleted.',
+        'faq_added' => 'FAQ added.', 'faq_updated' => 'FAQ updated.', 'faq_deleted' => 'FAQ deleted.',
+        'service_added' => 'Service card added.', 'service_updated' => 'Service card updated.', 'service_deleted' => 'Service card deleted.',
+        'resource_added' => 'Resource added.', 'resource_updated' => 'Resource updated.', 'resource_deleted' => 'Resource deleted.',
+        'footer_saved' => 'Footer settings saved.', 'metrics_saved' => 'Statistics content saved.', 'sections_saved' => 'Section settings saved.',
     ],
 ];
