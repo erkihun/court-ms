@@ -224,7 +224,7 @@ class LandingPageController extends Controller
             'secondary_href' => 'nullable|string|max:500',
             'bg_style' => 'required|in:blue,orange,emerald',
             'bg_image' => 'nullable|image|max:3072',
-        ]);
+        ], [], $this->attributeNames());
 
         $data['bg_image'] = $this->storeFile($request, 'bg_image', 'slides');
         $data['sort_order'] = HomeSlide::max('sort_order') + 1;
@@ -246,7 +246,7 @@ class LandingPageController extends Controller
             'secondary_href' => 'nullable|string|max:500',
             'bg_style' => 'required|in:blue,orange,emerald',
             'bg_image' => 'nullable|image|max:3072',
-        ]);
+        ], [], $this->attributeNames());
 
         if ($request->hasFile('bg_image')) {
             $this->deleteFile($slide->bg_image);
@@ -304,7 +304,7 @@ class LandingPageController extends Controller
             'meta' => 'nullable|string|max:120',
             'duration' => 'nullable|string|max:60',
             'color' => 'required|in:blue,orange,emerald,violet,amber',
-        ]);
+        ], [], $this->attributeNames());
 
         $data['sort_order'] = HomeTimelineStep::max('sort_order') + 1;
         HomeTimelineStep::create($data);
@@ -321,7 +321,7 @@ class LandingPageController extends Controller
             'meta' => 'nullable|string|max:120',
             'duration' => 'nullable|string|max:60',
             'color' => 'required|in:blue,orange,emerald,violet,amber',
-        ]);
+        ], [], $this->attributeNames());
 
         $step->update($data);
         $this->flushCache();
@@ -352,7 +352,7 @@ class LandingPageController extends Controller
         $data = $request->validate([
             'question' => 'required|string|max:500',
             'answer' => 'required|string|max:2000',
-        ]);
+        ], [], $this->attributeNames());
         $data['sort_order'] = HomeFaq::max('sort_order') + 1;
         HomeFaq::create($data);
         $this->flushCache();
@@ -365,7 +365,7 @@ class LandingPageController extends Controller
         $faq->update($request->validate([
             'question' => 'required|string|max:500',
             'answer' => 'required|string|max:2000',
-        ]));
+        ], [], $this->attributeNames()));
         $this->flushCache();
 
         return back()->with('success', __('admin_landing.flash.faq_updated'));
@@ -398,7 +398,7 @@ class LandingPageController extends Controller
             'features' => 'nullable|string',
             'icon_type' => 'required|in:document,calendar,lock,chart,database,chat',
             'accent' => 'required|in:blue,orange,emerald,violet,amber,pink',
-        ]);
+        ], [], $this->attributeNames());
         $data['features'] = $this->parseLines($request->input('features', ''));
         $data['sort_order'] = HomeService::max('sort_order') + 1;
         HomeService::create($data);
@@ -416,7 +416,7 @@ class LandingPageController extends Controller
             'features' => 'nullable|string',
             'icon_type' => 'required|in:document,calendar,lock,chart,database,chat',
             'accent' => 'required|in:blue,orange,emerald,violet,amber,pink',
-        ]);
+        ], [], $this->attributeNames());
         $data['features'] = $this->parseLines($request->input('features', ''));
         $service->update($data);
         $this->flushCache();
@@ -453,7 +453,7 @@ class LandingPageController extends Controller
             'published_at' => 'nullable|date',
             'file' => 'nullable|file|max:20480|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip',
             'cover_image' => 'nullable|image|max:2048',
-        ]);
+        ], [], $this->attributeNames());
 
         $data['file_path'] = $this->storeFile($request, 'file', 'resources');
         $data['cover_image'] = $this->storeFile($request, 'cover_image', 'covers');
@@ -476,7 +476,7 @@ class LandingPageController extends Controller
             'published_at' => 'nullable|date',
             'file' => 'nullable|file|max:20480|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip',
             'cover_image' => 'nullable|image|max:2048',
-        ]);
+        ], [], $this->attributeNames());
 
         if ($request->hasFile('file')) {
             $this->deleteFile($resource->file_path);
@@ -622,6 +622,23 @@ class LandingPageController extends Controller
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
+
+    /** Translated field names for validation messages. @return array<string, string> */
+    private function attributeNames(): array
+    {
+        $labels = [
+            'badge' => 'badge_text', 'title' => 'title', 'description' => 'description',
+            'primary_label' => 'primary_button_label', 'primary_href' => 'primary_button_url',
+            'secondary_label' => 'secondary_button_label', 'secondary_href' => 'secondary_button_url',
+            'bg_style' => 'background_style', 'bg_image' => 'background_image',
+            'meta' => 'meta_label', 'duration' => 'duration', 'color' => 'colour_accent',
+            'features' => 'features', 'icon_type' => 'icon', 'accent' => 'accent_colour',
+            'type' => 'type', 'published_at' => 'publish_date', 'external_url' => 'external_url',
+            'file' => 'file', 'cover_image' => 'cover_image', 'question' => 'question', 'answer' => 'answer',
+        ];
+
+        return array_map(fn (string $key): string => __("admin_landing.common.{$key}"), $labels);
+    }
 
     private function parseLines(string $raw): array
     {

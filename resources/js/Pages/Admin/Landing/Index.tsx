@@ -46,9 +46,7 @@ export default function LandingIndex(props: Props) {
                         <ArrowTopRightOnSquareIcon className="h-4 w-4" />
                     </LinkButton>
                 }
-            >
-                <p className="mt-2 text-xs font-semibold tracking-wide text-(--text-subtle) uppercase">{t('admin_landing.eyebrow')}</p>
-            </PageHeader>
+            />
 
             <Tabs
                 label={t('admin_landing.page_title')}
