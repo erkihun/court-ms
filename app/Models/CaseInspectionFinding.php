@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CaseInspectionFinding extends Model
 {
+    public const SEVERITIES = ['low', 'medium', 'high', 'critical'];
+
     protected $table = 'case_inspection_findings';
 
     protected $fillable = [
