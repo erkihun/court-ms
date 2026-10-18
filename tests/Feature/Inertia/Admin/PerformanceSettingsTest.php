@@ -69,6 +69,10 @@ test('redirect_to only returns to this application', function (string $target, b
     'lookalike host' => [fn () => rtrim(url('/'), '/').'.evil.test/phish', false],
     'other host' => ['https://evil.test/phish', false],
     'credentials in url' => [fn () => str_replace('://', '://user@', url('/x')), false],
+    'relative path' => ['/admin/performance-evaluations?page=2', true],
+    'protocol relative' => ['//evil.test/phish', false],
+    'backslash trick' => ['/\\evil.test/phish', false],
+    'javascript' => ['javascript:alert(1)', false],
 ]);
 
 test('the settings pages need settings.manage', function (): void {
