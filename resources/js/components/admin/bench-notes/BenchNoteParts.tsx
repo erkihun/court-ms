@@ -8,6 +8,8 @@ export interface BenchNote {
     caseNumber: string | null;
     caseTitle: string | null;
     author: string | null;
+    /** Written by the viewer, or the viewer is an administrator: may edit or delete. */
+    mine: boolean;
     created: string;
     createdTime: string;
     updated: string | null;

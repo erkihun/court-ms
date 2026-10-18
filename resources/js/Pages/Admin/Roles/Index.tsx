@@ -73,13 +73,16 @@ export default function RolesIndex({ roles }: { roles: Paginated<RoleRow> }) {
                                     <LinkButton href={route('roles.edit', role.id)} size="sm">
                                         {t('roles.index.edit')}
                                     </LinkButton>
-                                    <ConfirmButton
-                                        url={route('roles.destroy', role.id)}
-                                        title={t('roles.index.delete_title')}
-                                        message={`${t('roles.index.delete_confirm')} ${role.name}?`}
-                                    >
-                                        {t('roles.index.delete')}
-                                    </ConfirmButton>
+                                    <span title={deleteBlockedReason(role) ?? undefined}>
+                                        <ConfirmButton
+                                            disabled={deleteBlockedReason(role) !== null}
+                                            title={t('roles.index.delete_title')}
+                                            url={route('roles.destroy', role.id)}
+                                            message={`${t('roles.index.delete_confirm')} ${role.name}?`}
+                                        >
+                                            {t('roles.index.delete')}
+                                        </ConfirmButton>
+                                    </span>
                                 </div>
                             </td>
                         </tr>
@@ -88,4 +91,11 @@ export default function RolesIndex({ roles }: { roles: Paginated<RoleRow> }) {
             </Table>
         </>
     );
+}
+
+/** The server refuses these deletes too; the reason is shown as the button's tooltip. */
+function deleteBlockedReason(role: { name: string; usersCount: number }): string | null {
+    if (role.name === 'admin') return t('roles.index.cannot_delete_admin');
+    if (role.usersCount > 0) return t('roles.index.cannot_delete_assigned', { count: role.usersCount });
+    return null;
 }

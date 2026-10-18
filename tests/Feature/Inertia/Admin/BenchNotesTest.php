@@ -116,3 +116,35 @@ test('a bench note can be edited, viewed and deleted', function (): void {
 
     expect(BenchNote::query()->find($note->id))->toBeNull();
 });
+
+test('the title is stored now that the column exists', function (): void {
+    $user = inertiaStaff($this->allPermissions);
+
+    $this->actingAs($user)
+        ->post(route('bench-notes.store'), ['case_id' => $this->caseId, 'title' => 'Opening remarks', 'note' => '<p>Body</p>'])
+        ->assertRedirect();
+
+    expect(BenchNote::query()->value('title'))->toBe('Opening remarks');
+});
+
+test('only the author or an administrator may edit or delete a bench note', function (): void {
+    $author = inertiaStaff($this->allPermissions);
+    $note = ($this->makeNote)($author, ['title' => 'Mine']);
+    $colleague = inertiaStaff($this->allPermissions);
+    $payload = ['case_id' => $this->caseId, 'title' => 'Changed', 'note' => '<p>Changed</p>'];
+
+    $this->actingAs($colleague)->get(route('bench-notes.edit', $note))->assertForbidden();
+    $this->actingAs($colleague)->patch(route('bench-notes.update', $note), $payload)->assertForbidden();
+    $this->actingAs($colleague)->delete(route('bench-notes.destroy', $note))->assertForbidden();
+    $this->actingAs($colleague)
+        ->get(route('bench-notes.show', $note))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('note.mine', false));
+    expect($note->fresh()->title)->toBe('Mine');
+
+    $this->actingAs($author)->patch(route('bench-notes.update', $note), $payload)->assertRedirect();
+    expect($note->fresh()->title)->toBe('Changed');
+
+    $this->actingAs(inertiaStaff([], 'admin'))->delete(route('bench-notes.destroy', $note))->assertRedirect();
+    expect($note->fresh())->toBeNull();
+});

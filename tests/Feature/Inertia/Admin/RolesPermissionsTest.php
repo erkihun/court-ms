@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Models\Permission;
 use App\Models\Role;
+use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('the roles list and form render grouped permissions', function (): void {
@@ -95,4 +96,23 @@ test('permissions keep a label and description per locale', function (): void {
     $this->actingAs($staff)
         ->post(route('permissions.store'), ['name' => 'bad name!'])
         ->assertSessionHasErrors('name');
+});
+
+test('the admin role and roles still held by staff cannot be deleted', function (): void {
+    $manager = inertiaStaff(['roles.manage']);
+    $admin = Role::query()->firstOrCreate(['name' => 'admin']);
+    $held = Role::query()->create(['name' => 'clerk']);
+    User::factory()->create(['status' => 'active'])->roles()->attach($held);
+    $unused = Role::query()->create(['name' => 'unused']);
+
+    $this->actingAs($manager)->from(route('roles.index'))->delete(route('roles.destroy', $admin))
+        ->assertRedirect(route('roles.index'))
+        ->assertSessionHas('error', 'roles.index.cannot_delete_admin');
+    $this->actingAs($manager)->from(route('roles.index'))->delete(route('roles.destroy', $held))
+        ->assertSessionHas('error', ['key' => 'roles.index.cannot_delete_assigned', 'replace' => ['count' => 1]]);
+    $this->actingAs($manager)->from(route('roles.index'))->delete(route('roles.destroy', $unused))
+        ->assertSessionHas('ok');
+
+    expect(Role::query()->whereKey([$admin->id, $held->id])->count())->toBe(2)
+        ->and(Role::query()->whereKey($unused->id)->exists())->toBeFalse();
 });

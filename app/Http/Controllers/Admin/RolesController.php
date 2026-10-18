@@ -95,6 +95,16 @@ class RolesController extends Controller
 
     public function destroy(Role $role): RedirectResponse
     {
+        // The admin role grants everything and backs the "admin" checks; a role
+        // still held by staff would silently strip their access.
+        if ($role->name === 'admin') {
+            return back()->with('error', 'roles.index.cannot_delete_admin');
+        }
+        $holders = $role->users()->count();
+        if ($holders > 0) {
+            return back()->with('error', ['key' => 'roles.index.cannot_delete_assigned', 'replace' => ['count' => $holders]]);
+        }
+
         $role->delete();
         return back()->with('ok', [
             'key' => 'messages.success.deleted',

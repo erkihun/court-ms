@@ -74,6 +74,8 @@ return array (
     'delete' => 'አጥፋ',
     'delete_title' => 'ኃላፊነትን አጥፋ',
     'delete_confirm' => 'ለማጥፋት እርግጠኛ ነዎት',
+    'cannot_delete_admin' => 'የአስተዳዳሪ ኃላፊነት ሊጠፋ አይችልም።',
+    'cannot_delete_assigned' => 'ይህ ኃላፊነት ለ:count ተጠቃሚ(ዎች) ተሰጥቷል። መጀመሪያ ከእነሱ ያስወግዱት።',
     'cancel' => 'ሰርዝ',
     'empty' => 'ምንም ኃላፊነቶች አልተገኙም።',
     'more' => 'ተጨማሪ',

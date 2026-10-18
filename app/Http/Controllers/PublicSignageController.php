@@ -11,7 +11,6 @@ use App\Support\EthiopianDate;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Mews\Purifier\Facades\Purifier;
@@ -50,7 +49,7 @@ class PublicSignageController extends Controller
             ->limit(6)
             ->get();
 
-        $todayCases = CourtCase::select('id', 'case_number', 'title', 'status', 'case_type_id', 'created_at', 'applicant_id')
+        $todayCases = CourtCase::select('id', 'case_number', 'status', 'case_type_id', 'created_at', 'applicant_id')
             ->with([
                 'caseType:id,name',
                 'applicant:id,first_name,middle_name,last_name',
@@ -85,11 +84,16 @@ class PublicSignageController extends Controller
 
         $settings = SystemSetting::query()->first();
         $statusLabels = (array) __('signage.status_labels');
+        // A public screen shows initials only: the party can recognise their
+        // case next to its number, a passer-by cannot identify anyone.
         $applicantName = function (?CourtCase $case): string {
-            $name = trim((string) ($case?->applicant?->full_name ?? ''));
+            $initials = collect([$case?->applicant?->first_name, $case?->applicant?->middle_name, $case?->applicant?->last_name])
+                ->map(fn (?string $part): string => trim((string) $part))
+                ->filter()
+                ->map(fn (string $part): string => mb_strtoupper(mb_substr($part, 0, 1)).'.')
+                ->implode(' ');
 
-            // Public screen: keep names short.
-            return $name !== '' ? Str::limit($name, 18) : __('signage.unknown_applicant');
+            return $initials !== '' ? $initials : __('signage.unknown_applicant');
         };
 
         return Inertia::render('Public/Signage', [

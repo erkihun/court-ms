@@ -85,7 +85,12 @@ export default function BenchNotesIndex({ notes, cases, filters }: Props) {
             ) : (
                 <div className="space-y-6">
                     {notes.data.map((note) => (
-                        <NoteCard key={note.id} note={note} canUpdate={can('bench-notes.update')} canDelete={can('bench-notes.delete')} />
+                        <NoteCard
+                            key={note.id}
+                            note={note}
+                            canUpdate={note.mine && can('bench-notes.update')}
+                            canDelete={note.mine && can('bench-notes.delete')}
+                        />
                     ))}
                     <Pagination meta={notes} />
                 </div>

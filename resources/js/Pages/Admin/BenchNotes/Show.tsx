@@ -26,7 +26,7 @@ export default function BenchNoteShow({ note }: { note: BenchNote }) {
                             <ArrowLeftIcon className="h-4 w-4" />
                             {t('bench.buttons.back')}
                         </LinkButton>
-                        {can('bench-notes.update') && <LinkButton href={route('bench-notes.edit', note.id)}>{t('bench.buttons.edit')}</LinkButton>}
+                        {note.mine && can('bench-notes.update') && <LinkButton href={route('bench-notes.edit', note.id)}>{t('bench.buttons.edit')}</LinkButton>}
                     </>
                 }
             />

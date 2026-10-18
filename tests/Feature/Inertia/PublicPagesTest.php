@@ -152,3 +152,13 @@ test('the signage display renders for guests and stays rate limited', function (
 
     $this->get(route('public.signage'))->assertTooManyRequests();
 });
+
+test('the signage display shows applicant initials, never full names', function (): void {
+    partyCase(partyApplicant('signage'), 'SG/00001/26');
+
+    $this->get(route('public.signage'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('todayCases.0.caseNumber', 'SG/00001/26')
+            ->where('todayCases.0.applicant', 'H. B. P.'));
+});

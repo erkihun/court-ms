@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -124,6 +125,7 @@ class BenchNoteController extends Controller
     public function edit(BenchNote $benchNote): Response
     {
         $this->authorizeAction('update');
+        $this->authorizeOwnership($benchNote);
 
         $benchNote->load(['case:id,case_number,title', 'user:id,name', ...self::JUDGE_RELATIONS]);
 
@@ -148,6 +150,7 @@ class BenchNoteController extends Controller
     public function update(Request $request, BenchNote $benchNote): RedirectResponse
     {
         $this->authorizeAction('update');
+        $this->authorizeOwnership($benchNote);
 
         $data = $request->validate([
             'case_id' => ['required', 'integer', 'exists:court_cases,id'],
@@ -200,6 +203,7 @@ class BenchNoteController extends Controller
     public function destroy(BenchNote $benchNote): RedirectResponse
     {
         $this->authorizeAction('delete');
+        $this->authorizeOwnership($benchNote);
 
         $caseId = $benchNote->case_id;
         $benchNote->delete();
@@ -217,6 +221,19 @@ class BenchNoteController extends Controller
         abort_unless(userHasPermission('bench-notes.'.$action), 403);
     }
 
+    /** A judge's notes are their own: only the author or an administrator may change or delete one. */
+    private function authorizeOwnership(BenchNote $note): void
+    {
+        abort_unless($this->mayModify($note), 403);
+    }
+
+    private function mayModify(BenchNote $note): bool
+    {
+        $user = Auth::user();
+
+        return $user !== null && ((int) $note->user_id === (int) $user->id || $user->hasRole('admin'));
+    }
+
     /** @return array<string, mixed> */
     private function present(BenchNote $note): array
     {
@@ -227,6 +244,7 @@ class BenchNoteController extends Controller
             'caseNumber' => $note->case?->case_number,
             'caseTitle' => $note->case?->title,
             'author' => $note->user?->name,
+            'mine' => $this->mayModify($note),
             'created' => EthiopianDate::format($note->created_at),
             'createdTime' => EthiopianDate::formatTime($note->created_at, timeFormat: 'g:i A'),
             'updated' => $this->wasEdited($note) ? EthiopianDate::format($note->updated_at, withTime: true) : null,
