@@ -11,8 +11,6 @@ export default defineConfig({
             input: [
                 'resources/css/app.css',
                 'resources/js/app.tsx',
-                // Legacy Blade pages (Alpine). Removed once every page is React.
-                'resources/js/app.js',
             ],
             refresh: true,
         }),
