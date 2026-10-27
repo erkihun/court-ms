@@ -5,6 +5,32 @@ import lang from './lang/am';
 
 export default {
     cm: lang,
+    // The sign-in page's story panel (EUISIS Pages/Auth/Login reads these fixed keys, so they keep EUISIS's
+    // key names while telling the court's own story: a case from filing to appeal, and what the system holds).
+    auth: {
+        stage: {
+            headline: 'አንድ መዝገብ ቤት። እያንዳንዱ መዝገብ።',
+            headlineAccent: 'ከማመልከቻ እስከ ውሳኔ።',
+            steps: {
+                city: { title: 'ማመልከቻ', text: 'አመልካች በመስመር ላይ ወይም በመስኮት መዝገብ ያስከፍታል' },
+                institutions: { title: 'ግምገማ', text: 'መዝገብ ቤቱ ፋይሉን አረጋግጦ ይመድባል' },
+                employees: { title: 'ችሎት', text: 'ቀጠሮዎች ይያዛሉ፣ ተከራካሪዎች ይጠራሉ፣ ማስታወሻ ይያዛል' },
+                card: { title: 'ውሳኔ', text: 'ከቅጽ ተዘጋጅቶ፣ ጸድቆ፣ ይደርሳል' },
+                verified: { title: 'ይግባኝ', text: 'የተቃወሙ ውሳኔዎች እስከ መጨረሻው ይከታተላሉ' },
+            },
+            cardTitle: 'የመዝገብ ፋይል',
+            cardVerified: 'ተወስኗል',
+            services: {
+                cafeteria: 'መዝገቦች',
+                transport: 'ችሎቶች',
+                performance: 'ውሳኔዎች',
+                grievance: 'ደብዳቤዎች',
+                activity: 'ምርመራዎች',
+                reports: 'ሪፖርቶች',
+            },
+            capsLock: 'Caps Lock በርቷል',
+        },
+    },
     court: {
         workspaceName: 'የፍርድ ቤት ጉዳዮች አስተዳደር',
         nav: {

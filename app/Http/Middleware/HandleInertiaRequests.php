@@ -93,6 +93,8 @@ class HandleInertiaRequests extends Middleware
                 'type' => session('flash.type'),
                 'generated_token' => null,
                 'temporary_password' => null,
+                // Shown once, right after the second factor is confirmed (MfaController::confirm).
+                'mfa_recovery_codes_once' => session('mfa_recovery_codes'),
             ],
             'password_policy' => fn (): array => $this->passwordPolicy(),
         ];

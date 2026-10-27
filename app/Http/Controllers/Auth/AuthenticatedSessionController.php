@@ -6,20 +6,24 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class AuthenticatedSessionController extends Controller
 {
     /**
-     * Display the login view.
+     * The sign-in page (React, Auth/Login from EUISIS).
      */
     public function create(): Response
     {
-        return response()
-            ->view('admin.auth.login')
-            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
-            ->header('Pragma', 'no-cache');
+        return Inertia::render('Auth/Login', [
+            'canResetPassword' => Route::has('password.request'),
+            'status' => session('status'),
+            // court-ms times sessions out on the server without naming the reason.
+            'sessionNotice' => null,
+        ]);
     }
 
     /**

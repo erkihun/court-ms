@@ -5,6 +5,32 @@ import lang from './lang/en';
 
 export default {
     cm: lang,
+    // The sign-in page's story panel (EUISIS Pages/Auth/Login reads these fixed keys, so they keep EUISIS's
+    // key names while telling the court's own story: a case from filing to appeal, and what the system holds).
+    auth: {
+        stage: {
+            headline: 'One register. Every case.',
+            headlineAccent: 'From filing to decision.',
+            steps: {
+                city: { title: 'Filing', text: 'An applicant files a case, online or at the counter' },
+                institutions: { title: 'Review', text: 'The registry checks the file and assigns it' },
+                employees: { title: 'Hearing', text: 'Hearings scheduled, parties notified, notes kept' },
+                card: { title: 'Decision', text: 'Drafted from a template, published, served' },
+                verified: { title: 'Appeal', text: 'Contested decisions followed to their end' },
+            },
+            cardTitle: 'Case file',
+            cardVerified: 'Decided',
+            services: {
+                cafeteria: 'Cases',
+                transport: 'Hearings',
+                performance: 'Decisions',
+                grievance: 'Letters',
+                activity: 'Inspections',
+                reports: 'Reports',
+            },
+            capsLock: 'Caps Lock is on',
+        },
+    },
     court: {
         workspaceName: 'Court Case Management',
         nav: {

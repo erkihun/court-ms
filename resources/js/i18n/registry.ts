@@ -11,10 +11,22 @@
 export type Locale = 'en' | 'am';
 export type TranslationTree = Record<string, unknown>;
 
+/** court-ms keys replace EUISIS keys one namespace deep (`auth.stage` as a whole, say), the rest stays. */
+function mergeDictionaries(base: TranslationTree, over: TranslationTree): TranslationTree {
+    const merged: TranslationTree = { ...base };
+    for (const [key, value] of Object.entries(over)) {
+        const current = merged[key];
+        merged[key] = current && typeof current === 'object' && value && typeof value === 'object' && !Array.isArray(value)
+            ? { ...(current as TranslationTree), ...(value as TranslationTree) }
+            : value;
+    }
+    return merged;
+}
+
 const loaders: Record<Locale, () => Promise<{ default: TranslationTree }>> = {
-    // court-ms: its own dictionary (resources/js/court/i18n) on top of the EUISIS one.
-    en: () => Promise.all([import('./bundles/en'), import('@/court/i18n/en')]).then(([base, court]) => ({ default: { ...base.default, ...court.default } })),
-    am: () => Promise.all([import('./bundles/am'), import('@/court/i18n/am')]).then(([base, court]) => ({ default: { ...base.default, ...court.default } })),
+    // court-ms: its own dictionary (resources/js/court/i18n) over the EUISIS one, namespace by namespace.
+    en: () => Promise.all([import('./bundles/en'), import('@/court/i18n/en')]).then(([base, court]) => ({ default: mergeDictionaries(base.default, court.default) })),
+    am: () => Promise.all([import('./bundles/am'), import('@/court/i18n/am')]).then(([base, court]) => ({ default: mergeDictionaries(base.default, court.default) })),
 };
 
 const loaded: Partial<Record<Locale, TranslationTree>> = {};

@@ -75,7 +75,7 @@ export default function DevicesSection({ devices }: { devices: DevicesInfo }) {
         });
         if (!confirmed) return;
 
-        router.delete(route("profile.devices.destroy", session.id), {
+        router.delete(route("profile.sessions.destroy", session.id), {
             preserveScroll: true,
             onStart: () => setBusy(session.id),
             onFinish: () => setBusy(null),
@@ -92,7 +92,7 @@ export default function DevicesSection({ devices }: { devices: DevicesInfo }) {
         });
         if (!confirmed) return;
 
-        router.delete(route("profile.devices.destroy-others"), {
+        router.delete(route("profile.sessions.destroyOthers"), {
             preserveScroll: true,
             onStart: () => setBusy("others"),
             onFinish: () => setBusy(null),

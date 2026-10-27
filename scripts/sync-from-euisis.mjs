@@ -54,6 +54,8 @@ const SEEDS = [
     'Pages/Auth/ForcedPasswordChange.tsx',
     'Pages/Auth/MfaChallenge.tsx',
     'Pages/Auth/MfaSetup.tsx',
+    'Pages/Auth/VerifyEmail.tsx',
+    'Pages/Auth/ConfirmPassword.tsx',
     'Pages/Profile/Edit.tsx',
 ];
 
@@ -129,10 +131,55 @@ const PATCHES = [
         file: 'i18n/registry.ts',
         from: "    en: () => import('./bundles/en'),\n    am: () => import('./bundles/am'),",
         to: [
-            '    // court-ms: its own dictionary (resources/js/court/i18n) on top of the EUISIS one.',
-            "    en: () => Promise.all([import('./bundles/en'), import('@/court/i18n/en')]).then(([base, court]) => ({ default: { ...base.default, ...court.default } })),",
-            "    am: () => Promise.all([import('./bundles/am'), import('@/court/i18n/am')]).then(([base, court]) => ({ default: { ...base.default, ...court.default } })),",
+            '    // court-ms: its own dictionary (resources/js/court/i18n) over the EUISIS one, namespace by namespace.',
+            "    en: () => Promise.all([import('./bundles/en'), import('@/court/i18n/en')]).then(([base, court]) => ({ default: mergeDictionaries(base.default, court.default) })),",
+            "    am: () => Promise.all([import('./bundles/am'), import('@/court/i18n/am')]).then(([base, court]) => ({ default: mergeDictionaries(base.default, court.default) })),",
         ].join('\n'),
+    },
+    {
+        file: 'i18n/registry.ts',
+        from: 'const loaders: Record<Locale, () => Promise<{ default: TranslationTree }>> = {',
+        to: [
+            '/** court-ms keys replace EUISIS keys one namespace deep (`auth.stage` as a whole, say), the rest stays. */',
+            'function mergeDictionaries(base: TranslationTree, over: TranslationTree): TranslationTree {',
+            '    const merged: TranslationTree = { ...base };',
+            '    for (const [key, value] of Object.entries(over)) {',
+            '        const current = merged[key];',
+            '        merged[key] = current && typeof current === \'object\' && value && typeof value === \'object\' && !Array.isArray(value)',
+            '            ? { ...(current as TranslationTree), ...(value as TranslationTree) }',
+            '            : value;',
+            '    }',
+            '    return merged;',
+            '}',
+            '',
+            'const loaders: Record<Locale, () => Promise<{ default: TranslationTree }>> = {',
+        ].join('\n'),
+    },
+    {
+        // court-ms route names for the second factor and the Devices tab.
+        file: 'Pages/Auth/MfaChallenge.tsx',
+        from: "route('mfa.challenge.verify')",
+        to: "route('mfa.challenge.store')",
+    },
+    {
+        file: 'Pages/Profile/Partials/TwoFactorCard.tsx',
+        from: "form.post(route('mfa.disable')",
+        to: "form.delete(route('mfa.setup.destroy')",
+    },
+    {
+        file: 'Pages/Profile/Partials/TwoFactorCard.tsx',
+        from: "route('mfa.setup')",
+        to: "route('mfa.setup.show')",
+    },
+    {
+        file: 'Pages/Profile/Partials/DevicesSection.tsx',
+        from: 'route("profile.devices.destroy", session.id)',
+        to: 'route("profile.sessions.destroy", session.id)',
+    },
+    {
+        file: 'Pages/Profile/Partials/DevicesSection.tsx',
+        from: 'route("profile.devices.destroy-others")',
+        to: 'route("profile.sessions.destroyOthers")',
     },
 ];
 

@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'mfa_code' => 'የማረጋገጫ ኮድ',
+    'password_updated_sign_in_again' => 'የይለፍ ቃልዎ ተቀይሯል። እባክዎ እንደገና ይግቡ።',
     'mfa_title' => 'ባለብዙ ደረጃ ማረጋገጫ',
     'mfa_active' => 'MFA ነቅቷል',
     'mfa_active_hint' => 'መለያዎ በጊዜ ላይ በተመሠረተ የማረጋገጫ ኮድ የተጠበቀ ነው።',

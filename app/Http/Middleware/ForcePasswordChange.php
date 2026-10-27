@@ -26,6 +26,7 @@ class ForcePasswordChange
             'profile.edit',
             'profile.update',
             'password.update',
+            'password.forced.update',
             'logout',
         ];
 

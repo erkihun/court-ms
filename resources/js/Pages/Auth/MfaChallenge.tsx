@@ -20,7 +20,7 @@ export default function MfaChallenge({ user }: Props) {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post(route('mfa.challenge.verify'), {
+        post(route('mfa.challenge.store'), {
             onFinish: () => reset('code', 'recovery_code'),
         });
     };

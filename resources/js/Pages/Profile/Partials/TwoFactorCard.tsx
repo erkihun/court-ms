@@ -22,7 +22,7 @@ export default function TwoFactorCard({ security }: { security: SecurityInfo }) 
 
     function submitTurnOff(e: FormEvent) {
         e.preventDefault();
-        form.post(route('mfa.disable'), {
+        form.delete(route('mfa.setup.destroy'), {
             preserveScroll: true,
             onSuccess: () => { form.reset(); setTurningOff(false); },
             onError: () => form.reset('password'),
@@ -74,7 +74,7 @@ export default function TwoFactorCard({ security }: { security: SecurityInfo }) 
 
                 <div className="flex shrink-0 flex-wrap gap-2">
                     {!enabled && (
-                        <Button as={Link} href={route('mfa.setup')} icon={<ShieldIcon className="h-4 w-4" />}>
+                        <Button as={Link} href={route('mfa.setup.show')} icon={<ShieldIcon className="h-4 w-4" />}>
                             {t('profile.setUpTwoFactor')}
                         </Button>
                     )}
