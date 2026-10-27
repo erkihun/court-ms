@@ -7,6 +7,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Carbon;
+use Inertia\Inertia;
 
 class AppealController extends Controller
 {
@@ -21,7 +23,20 @@ class AppealController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return view('admin.appeals.index', ['appeals' => $appeals]);
+        // The register (React, Court/Appeals/Index).
+        return Inertia::render('Court/Appeals/Index', [
+            'appeals' => $appeals->through(fn (object $row): array => [
+                'id' => (int) $row->id,
+                'appeal_number' => (string) $row->appeal_number,
+                'case_number' => (string) $row->case_number,
+                'title' => $row->title,
+                'status' => (string) $row->status,
+                'decided_by' => $row->decided_by,
+                'created_at' => $row->created_at ? Carbon::parse($row->created_at)->toIso8601String() : null,
+            ]),
+            'filters' => ['status' => (string) $request->query('status', '')],
+            'canCreate' => (bool) ($request->user()?->hasPermission('appeals.create') ?? false),
+        ]);
     }
 
     public function create()

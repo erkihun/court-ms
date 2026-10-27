@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 class CaseTypeController extends Controller
 {
@@ -35,7 +36,16 @@ class CaseTypeController extends Controller
 
         $types = $query->paginate(12)->withQueryString();
 
-        return view('admin.cases.types.index', compact('types', 'q'));
+        // The register (React, Court/CaseTypes/Index).
+        return Inertia::render('Court/CaseTypes/Index', [
+            'types' => $types->through(fn (object $row): array => [
+                'id' => (int) $row->id,
+                'name' => (string) $row->name,
+                'prefix' => $hasPrefix ? ($row->prefix ?? null) : null,
+                'cases_count' => (int) $row->cases_count,
+            ]),
+            'filters' => ['q' => $q],
+        ]);
     }
 
     /**

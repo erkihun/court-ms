@@ -39,6 +39,13 @@ export default {
         decisions: {
             deleteConfirm: 'Delete this decision? This cannot be undone.',
         },
+        appeals: {
+            number: 'Appeal #',
+            decidedBy: 'Decided by',
+            newAppeal: 'New appeal',
+            open: 'Open',
+            empty: 'No appeals yet.',
+        },
         hearings: {
             date: 'Date',
             dateTime: 'Date & time',

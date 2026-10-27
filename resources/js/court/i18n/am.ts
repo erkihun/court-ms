@@ -39,6 +39,13 @@ export default {
         decisions: {
             deleteConfirm: 'ይህ ውሳኔ ይሰረዝ? ይህ ሊቀለበስ አይችልም።',
         },
+        appeals: {
+            number: 'የይግባኝ ቁጥር',
+            decidedBy: 'የወሰነው',
+            newAppeal: 'አዲስ ይግባኝ',
+            open: 'ክፈት',
+            empty: 'እስካሁን ይግባኝ የለም።',
+        },
         hearings: {
             date: 'ቀን',
             dateTime: 'ቀን እና ሰዓት',
