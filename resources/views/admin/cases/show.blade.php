@@ -1068,6 +1068,9 @@
                         </div>
                     </div>
 
+                    {{-- EUISIS: referral source, respondent organization, employee link --}}
+                    <x-euisis.case-panel :case-id="(int) $case->id" />
+
                     {{-- Hearings --}}
                     <div class="pt-4 border-t border-gray-200">
                         <div class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-2">

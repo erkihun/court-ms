@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CaseController;
 use App\Http\Controllers\Api\CaseMessageController;
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\Integration\EuisisReferralController;
 use App\Http\Controllers\Api\LookupController;
 use App\Http\Controllers\Api\RespondentResponseController;
 use Illuminate\Support\Facades\Route;
@@ -34,3 +35,19 @@ Route::prefix('v1')
         Route::post('/responses', [RespondentResponseController::class, 'store']);
     });
 });
+
+// EUISIS integration (docs/euisis-integration.md): machine tokens from
+// `php artisan euisis:integration-token`, never a person's Sanctum token.
+Route::prefix('v1/integration')
+    ->middleware('throttle:120,1')
+    ->group(function () {
+        Route::get('/case-types', [EuisisReferralController::class, 'caseTypes'])
+            ->middleware('integration.client:referrals:read');
+        Route::post('/referrals', [EuisisReferralController::class, 'store'])
+            ->middleware('integration.client:referrals:create');
+        Route::get('/referrals/updates', [EuisisReferralController::class, 'updates'])
+            ->middleware('integration.client:referrals:read');
+        Route::get('/referrals/{referral}', [EuisisReferralController::class, 'show'])
+            ->whereUuid('referral')
+            ->middleware('integration.client:referrals:read');
+    });

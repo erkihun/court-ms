@@ -122,6 +122,8 @@ class ApplicantCaseController extends Controller
             'certify_appeal'     => ['accepted'],
             'respondent_name'    => ['required', 'string', 'max:255'],
             'respondent_address' => ['required', 'string', 'max:500'],
+            // Optional: the respondent organization from the EUISIS city directory.
+            'respondent_organization_uuid' => ['nullable', 'uuid', 'exists:euisis_organizations,uuid'],
             'case_type_id'       => ['required', 'integer', 'exists:case_types,id'],
 
             'filing_date'        => ['required', 'date'],
@@ -180,6 +182,7 @@ class ApplicantCaseController extends Controller
                 'applicant_id'       => $aid,
                 'respondent_name'    => isset($data['respondent_name']) ? strip_tags($data['respondent_name']) : null,
                 'respondent_address' => isset($data['respondent_address']) ? strip_tags($data['respondent_address']) : null,
+                'respondent_organization_uuid' => $data['respondent_organization_uuid'] ?? null,
                 'case_number'        => $finalNumber,
                 'code'               => $this->generateCaseCode(),
                 'title'              => trim($data['title']),
