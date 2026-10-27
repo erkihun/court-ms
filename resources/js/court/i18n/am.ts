@@ -36,6 +36,18 @@ export default {
         nav: {
             landing: 'የመግቢያ ገጽ',
         },
+        decisions: {
+            deleteConfirm: 'ይህ ውሳኔ ይሰረዝ? ይህ ሊቀለበስ አይችልም።',
+        },
+        hearings: {
+            date: 'ቀን',
+            dateTime: 'ቀን እና ሰዓት',
+            type: 'የችሎት ስም',
+            hearing: 'ችሎት',
+            createdBy: 'የተፈጠረው በ',
+            location: 'ቦታ',
+            notes: 'ማስታወሻ',
+        },
         dashboard: {
             period: 'ጊዜ',
             ranges: {

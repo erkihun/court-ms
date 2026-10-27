@@ -36,6 +36,18 @@ export default {
         nav: {
             landing: 'Landing Page',
         },
+        decisions: {
+            deleteConfirm: 'Delete this decision? This cannot be undone.',
+        },
+        hearings: {
+            date: 'Date',
+            dateTime: 'Date & time',
+            type: 'Hearing name',
+            hearing: 'Hearing',
+            createdBy: 'Created by',
+            location: 'Location',
+            notes: 'Notes',
+        },
         dashboard: {
             period: 'Period',
             ranges: {

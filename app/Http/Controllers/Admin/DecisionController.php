@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 use Mews\Purifier\Facades\Purifier;
 
 class DecisionController extends Controller
@@ -44,7 +45,38 @@ class DecisionController extends Controller
             ->paginate(12)
             ->withQueryString();
 
-        return view('admin.decisions.index', compact('decisions', 'search'));
+        // The register (React, Court/Decisions/Index); the row actions follow the Blade page's rules.
+        $user = auth()->user();
+        $canEdit = $user?->hasPermission('decision.update') ?? false;
+        $canDelete = $user?->hasPermission('decision.delete') ?? false;
+
+        return Inertia::render('Court/Decisions/Index', [
+            'decisions' => $decisions->through(function (Decision $decision) use ($user, $canEdit, $canDelete): array {
+                $middleJudgeId = $decision->panel_judges[1]['admin_user_id'] ?? null;
+                $isMiddleJudge = $middleJudgeId && $user?->id === $middleJudgeId;
+                $open = $isMiddleJudge && $decision->status !== 'published';
+
+                return [
+                    'id' => (int) $decision->id,
+                    'case_id' => $decision->courtCase?->id,
+                    'case_number' => $decision->case_number,
+                    'case_filed_date' => $decision->case_filed_date?->toDateString(),
+                    'applicant' => $decision->applicant_full_name ?: ($decision->courtCase?->title ?: null),
+                    'respondent' => $decision->respondent_full_name ?: null,
+                    'judge' => $decision->reviewing_admin_user_name
+                        ?: ($decision->reviewer?->name
+                        ?: (($decision->panel_judges[1]['admin_user_name'] ?? null)
+                        ?: ($decision->courtCase?->judge?->name ?: null))),
+                    'decision_date' => $decision->decision_date?->toDateString(),
+                    'status' => $decision->status,
+                    'approved' => $decision->isApproved(),
+                    'can_edit' => $canEdit && $open,
+                    'can_delete' => $canDelete && $open,
+                ];
+            }),
+            'filters' => ['q' => $search],
+            'canCreate' => $user?->hasPermission('decision.create') ?? false,
+        ]);
     }
 
     /**
