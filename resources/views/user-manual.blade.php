@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $title }} - {{ config('app.name') }}</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/legacy/css/app.css', 'resources/legacy/js/app.js'], 'build-legacy')
     <style>
         .manual-content { color:#334155; font-size:1rem; line-height:1.75; overflow-wrap:anywhere; }
         .manual-content > :first-child { margin-top:0; }

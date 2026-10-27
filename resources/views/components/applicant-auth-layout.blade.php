@@ -172,7 +172,7 @@ $accentColors = match ($accent) {
     <link rel="icon" href="{{ asset('storage/'.$systemSettings->favicon_path) }}">
     @endif
 
-    @vite(['resources/css/app.css','resources/js/app.js'])
+    @vite(['resources/legacy/css/app.css','resources/legacy/js/app.js'], 'build-legacy')
     @stack('head')
 </head>
 

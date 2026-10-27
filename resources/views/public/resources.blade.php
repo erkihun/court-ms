@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Resources – {{ config('app.name', 'Court MS') }}</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/legacy/css/app.css', 'resources/legacy/js/app.js'], 'build-legacy')
     <style>[x-cloak] { display: none !important; }</style>
 </head>
 <body class="bg-slate-950 text-slate-100 antialiased">

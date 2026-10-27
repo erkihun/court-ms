@@ -264,7 +264,7 @@
             }
         }
     </style>
-    @vite(['resources/css/app.css','resources/js/app.js'])
+    @vite(['resources/legacy/css/app.css','resources/legacy/js/app.js'], 'build-legacy')
     @livewireStyles
     @if(app()->getLocale() === 'am')
     <link rel="stylesheet" href="{{ asset('vendor/modern-ethiopian-calendar/css/datepicker.css') }}">

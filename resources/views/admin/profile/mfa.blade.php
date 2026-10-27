@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ __('auth.mfa_title') }} · {{ config('app.name') }}</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/legacy/css/app.css', 'resources/legacy/js/app.js'], 'build-legacy')
     <style>
         :root { color-scheme: light; }
         body { margin:0; min-height:100vh; background:#f8fafc; color:#172033; font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }

@@ -22,7 +22,7 @@
 
     <!-- Scripts -->
 
-    @vite(['resources/css/app.css','resources/js/app.js','resources/js/dashboard.js'])
+    @vite(['resources/legacy/css/app.css','resources/legacy/js/app.js','resources/legacy/js/dashboard.js'], 'build-legacy')
 
 </head>
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Middleware\SetLocale;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -25,6 +26,8 @@ class LanguageController extends Controller
 
         session(['app_locale' => $locale]);
         Cookie::queue('app_locale', $locale, 60 * 24 * 365);
+        // The React screens keep the language in this cookie (unencrypted, as the client writes it).
+        Cookie::queue(Cookie::make(SetLocale::CLIENT_COOKIE, $locale, 60 * 24 * 365, '/', null, null, false, false, 'lax'));
 
         App::setLocale($locale);
 

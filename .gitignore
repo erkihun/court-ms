@@ -41,3 +41,5 @@ lang.zip
 *.png
 *.jpg
 *.jpeg
+/public/build-legacy
+/public/hot-legacy

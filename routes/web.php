@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AboutController;
 use App\Http\Controllers\Admin\ActiveSessionController;
 use App\Http\Controllers\Admin\AdminNotificationController;
+use App\Http\Controllers\Admin\NotificationFeedController;
 use App\Http\Controllers\Admin\AdminRoleSwitchController;
 use App\Http\Controllers\Admin\AnnouncementController;
 use App\Http\Controllers\Admin\AppealController;
@@ -716,6 +717,10 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::get('/notifications/count', [AdminNotificationController::class, 'count'])->name('admin.notifications.count');
             Route::post('/notifications/mark-one', [AdminNotificationController::class, 'markOne'])->name('admin.notifications.markOne');
             Route::post('/notifications/mark-all', [AdminNotificationController::class, 'markAll'])->name('admin.notifications.markAll');
+            // The header bell of the React screens (route names the EUISIS NotificationBell uses)
+            Route::get('/notifications/feed', [NotificationFeedController::class, 'feed'])->name('notifications.feed');
+            Route::post('/notifications/read-all', [NotificationFeedController::class, 'readAll'])->name('notifications.read-all');
+            Route::post('/notifications/{notice}/read', [NotificationFeedController::class, 'read'])->name('notifications.read');
 
             // Case Types (matches admin layout link 'case-types.index')
             Route::get('/case-types', [CaseTypeController::class, 'index'])->name('case-types.index');

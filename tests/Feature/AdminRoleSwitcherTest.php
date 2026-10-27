@@ -6,6 +6,7 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Str;
+use Inertia\Testing\AssertableInertia;
 
 function roleSwitcherRole(string $name, array $permissions): Role
 {
@@ -38,9 +39,13 @@ test('a multi-role admin user can switch the active permission context', functio
         ->get(route('admin.dashboard'))
         ->assertOk()
         ->assertSessionHas(User::ACTIVE_ROLE_SESSION_KEY, $caseRole->id)
-        ->assertSee(route('admin.roles.switch'), false)
-        ->assertSeeText('Case Clerk')
-        ->assertSeeText('Role Manager');
+        // The header's role switcher (ActiveRoleSwitcher) draws these shared props.
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('auth.activeRoleId', $caseRole->id)
+            ->where('auth.roleOptions', [
+                ['id' => $caseRole->id, 'label' => 'Case Clerk'],
+                ['id' => $roleManager->id, 'label' => 'Role Manager'],
+            ]));
 
     $this->actingAs($user)
         ->get(route('roles.index'))
@@ -73,7 +78,7 @@ test('the role switcher is hidden for a user with one role', function (): void {
         ->get(route('admin.dashboard'))
         ->assertOk()
         ->assertSessionHas(User::ACTIVE_ROLE_SESSION_KEY, $role->id)
-        ->assertDontSee(route('admin.roles.switch'), false);
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('auth.roleOptions', []));
 });
 
 test('admin remains the default role before switching to a restricted role', function (): void {

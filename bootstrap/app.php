@@ -12,11 +12,13 @@ use App\Http\Middleware\EnforceSystemAvailability;
 use App\Http\Middleware\EnsureMfaIsVerified;
 use App\Http\Middleware\ForceHttps;
 use App\Http\Middleware\ForcePasswordChange;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\PurgeLegacySessionCookies;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\RequirePermission;
 use App\Http\Middleware\RequireRole;
 use App\Http\Middleware\ResolveAdminRole;
+use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\SetSessionCookieForGuard;
 use App\Http\Middleware\SystemAuditMiddleware;
 use App\Http\Middleware\UseGuard;
@@ -82,7 +84,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // EncryptCookies rewrites them into fresh encrypted payloads and the
         // browser keeps the stale cookie instead of dropping it.
         $middleware->encryptCookies(
-            except: PurgeLegacySessionCookies::legacyNames(),
+            except: [...PurgeLegacySessionCookies::legacyNames(), SetLocale::CLIENT_COOKIE],
         );
         $middleware->prependToGroup('web', AdminSessionTimeout::class);
         $middleware->appendToGroup('web', EnforceSystemAvailability::class);
@@ -90,6 +92,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('web', CaptureClientHints::class);
         $middleware->appendToGroup('web', EnsureMfaIsVerified::class);
         $middleware->appendToGroup('web', SystemAuditMiddleware::class);
+        // Props for the React (Inertia) screens; Blade pages are unaffected.
+        $middleware->appendToGroup('web', HandleInertiaRequests::class);
         $middleware->appendToGroup('api', SystemAuditMiddleware::class);
 
         // If you ever need global middleware:

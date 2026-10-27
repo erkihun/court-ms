@@ -9,6 +9,7 @@ use App\Models\Team;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use Inertia\Testing\AssertableInertia;
 
 function dashboardResolvedCase(string $status, User $assignee): CourtCase
 {
@@ -58,12 +59,10 @@ test('published decisions define resolved cases across the admin dashboard', fun
     $this->actingAs($user)
         ->get(route('admin.dashboard'))
         ->assertOk()
-        ->assertViewHas('resolvedCases', 2)
-        ->assertViewHas('memberCaseCounts', function ($members) use ($user): bool {
-            $member = $members->firstWhere('id', $user->id);
-
-            return $member !== null && (int) $member->resolved_cases_count === 2;
-        });
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('Court/Dashboard')
+            ->where('dashboard.kpis.resolved', 2)
+            ->where('dashboard.members', fn ($members) => collect($members)->firstWhere('id', $user->id)['resolved'] === 2));
 
     $this->actingAs($user)
         ->getJson(route('admin.dashboard.stats', [

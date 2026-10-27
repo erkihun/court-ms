@@ -13,7 +13,7 @@
             document.documentElement.setAttribute('data-accent', a);
         })();
     </script>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/legacy/css/app.css', 'resources/legacy/js/app.js'], 'build-legacy')
     <style>
         [x-cloak] { display: none !important; }
         html { scroll-behavior: smooth; }
