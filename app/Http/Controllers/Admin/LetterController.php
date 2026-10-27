@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
 use Mews\Purifier\Facades\Purifier;
 
 class LetterController extends Controller
@@ -58,7 +59,45 @@ class LetterController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return view('admin.letters.index', compact('letters', 'stats', 'statusFilter'));
+        // The register (React, Court/Letters/Index); the row actions follow the Blade page's permissions.
+        $user = $request->user();
+        $can = fn (string $permission): bool => (bool) ($user?->hasPermission($permission) ?? false);
+        $categories = collect($stats['category_counts']);
+
+        return Inertia::render('Court/Letters/Index', [
+            'letters' => $letters->through(fn (Letter $letter): array => [
+                'id' => (int) $letter->id,
+                'reference_number' => $letter->reference_number,
+                'subject' => $letter->subject,
+                'case_number' => $letter->case_number,
+                'send_to_applicant' => (bool) $letter->send_to_applicant,
+                'send_to_respondent' => (bool) $letter->send_to_respondent,
+                'applicant_name' => $letter->applicant_name,
+                'applicant_lawyer_name' => $letter->applicant_is_lawyer ? $letter->applicant_lawyer_name : null,
+                'respondent_name' => $letter->respondent_name,
+                'author_name' => $letter->author?->name,
+                'author_position' => $letter->author?->position,
+                'category' => $letter->template?->category,
+                'approval_status' => $letter->approval_status ?: null,
+                'approved_by_name' => $letter->approved_by_name,
+                'created_at' => $letter->created_at?->toIso8601String(),
+            ]),
+            'stats' => [
+                'total' => $stats['total'],
+                'approved' => $stats['approved'],
+                'rejected' => $stats['rejected'],
+                'categories' => $categories->count(),
+                'top_category' => $categories->sortDesc()->keys()->first(),
+                'top_category_count' => (int) ($categories->sortDesc()->first() ?? 0),
+            ],
+            'filters' => ['status' => $statusFilter],
+            'can' => [
+                'create' => $can('letters.create'),
+                'update' => $can('letters.update'),
+                'delete' => $can('letters.delete'),
+                'approve' => $can('letters.approve'),
+            ],
+        ]);
     }
 
     public function store(Request $request)
