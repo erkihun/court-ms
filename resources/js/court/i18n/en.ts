@@ -2,6 +2,7 @@
 // `cm.*` is court-ms's own lang/en/*.php, exported by `php artisan court:client-lang`, so a React
 // screen says what the Blade screen it replaces said; `court.*` is text only the React screens need.
 import lang from './lang/en';
+import caseDetail from './caseDetail';
 
 export default {
     cm: lang,
@@ -39,6 +40,10 @@ export default {
         decisions: {
             deleteConfirm: 'Delete this decision? This cannot be undone.',
         },
+        terms: {
+            viewPublic: 'View public page',
+        },
+        caseDetail: caseDetail.en,
         appeals: {
             number: 'Appeal #',
             decidedBy: 'Decided by',

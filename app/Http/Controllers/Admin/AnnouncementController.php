@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Announcement;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class AnnouncementController extends Controller
 {
@@ -12,7 +13,16 @@ class AnnouncementController extends Controller
     {
         $announcements = Announcement::latest()->paginate(15);
 
-        return view('admin.announcements.index', compact('announcements'));
+        // The list (React, Court/Announcements/Index).
+        return Inertia::render('Court/Announcements/Index', [
+            'announcements' => $announcements->through(fn (Announcement $announcement): array => [
+                'id' => (int) $announcement->id,
+                'title' => (string) $announcement->title,
+                'status' => (string) ($announcement->status ?? 'active'),
+                'created_at' => $announcement->created_at?->toIso8601String(),
+                'updated_at' => $announcement->updated_at?->toIso8601String(),
+            ]),
+        ]);
     }
 
     public function create()

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AboutPage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
 
 class AboutController extends Controller
 {
@@ -13,7 +14,16 @@ class AboutController extends Controller
     {
         $aboutPages = AboutPage::orderByDesc('updated_at')->paginate(10);
 
-        return view('admin.about.index', compact('aboutPages'));
+        // The list (React, Court/About/Index).
+        return Inertia::render('Court/About/Index', [
+            'pages' => $aboutPages->through(fn (AboutPage $page): array => [
+                'id' => (int) $page->id,
+                'title' => (string) $page->title,
+                'slug' => (string) $page->slug,
+                'is_published' => (bool) $page->is_published,
+                'updated_at' => $page->updated_at?->toIso8601String(),
+            ]),
+        ]);
     }
 
     public function create()

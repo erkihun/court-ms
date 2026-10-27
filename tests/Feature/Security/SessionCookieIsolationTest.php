@@ -85,7 +85,7 @@ test('admin session remains authenticated on the roles page', function () {
 
     $this->get(route('roles.index'))
         ->assertOk()
-        ->assertViewIs('admin.roles.index');
+        ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page->component('Court/Roles/Index'));
 });
 
 test('applicant login does not flash a cross-portal session notice', function () {

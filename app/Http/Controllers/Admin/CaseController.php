@@ -262,12 +262,31 @@ class CaseController extends Controller
         abort_if(!$case, 404);
 
         $scope = $this->buildAssignmentScope();
+        $leaderTeam = $scope['leaderTeam'];
 
-        return view('admin.cases.assign', [
-            'case' => $case,
+        return Inertia::render('Court/Cases/Assign', [
+            'case' => [
+                'id' => (int) $case->id,
+                'case_number' => (string) $case->case_number,
+                'title' => $case->title ?? null,
+                'status' => (string) ($case->status ?? 'pending'),
+                'assigned_user_id' => isset($case->assigned_user_id) ? (int) $case->assigned_user_id : null,
+                'assignee_name' => $case->assignee_name ?? null,
+                'assignee_email' => $case->assignee_email ?? null,
+                'assigned_at' => $this->isoDate($case->assigned_at ?? null),
+            ],
             'assignmentMode' => $scope['mode'],
-            'teams' => $scope['teams'],
-            'leaderTeam' => $scope['leaderTeam'],
+            'canAssignLeaders' => (bool) (Auth::user()?->hasPermission('cases.assign.team') ?? false),
+            'leaderTeam' => $leaderTeam ? [
+                'id' => (int) $leaderTeam->id,
+                'name' => (string) $leaderTeam->name,
+                'members' => $leaderTeam->users->map(fn ($u) => ['id' => (int) $u->id, 'name' => (string) $u->name, 'email' => (string) $u->email])->values()->all(),
+            ] : null,
+            'teams' => collect($scope['teams'])->filter(fn ($team) => $team->leader !== null)->map(fn ($team) => [
+                'id' => (int) $team->id,
+                'name' => (string) $team->name,
+                'leader' => ['id' => (int) $team->leader->id, 'name' => (string) $team->leader->name, 'email' => (string) $team->leader->email],
+            ])->values()->all(),
         ]);
     }
 
@@ -730,23 +749,401 @@ class CaseController extends Controller
             }, 'case_inspection_findings');
         }
 
-        return view('admin.cases.show', [
-            'case'       => $case,
-            'timeline'   => $timeline,
-            'files'      => $files,
-            'messages'   => $messages,
-            'hearings'   => $hearings,
-            'docs'       => $docs,        // empty collection; Blade stays compatible
-            'witnesses'  => $witnesses,
-            'audits'     => $audits,
-            'letters'    => $letters,
-            'respondentResponses' => $respondentResponses,
-            'applicantResponseReplies' => $applicantResponseReplies,
-            'letterTemplates' => $letterTemplates,
-            'inspectionAssignees' => $inspectionAssignees,
-            'inspectionRequests' => $inspectionRequests,
-            'inspectionFindings' => $inspectionFindings,
-        ]);
+        return Inertia::render('Court/Cases/Show', $this->caseDetailProps(
+            $case,
+            $timeline,
+            $files,
+            $messages,
+            $hearings,
+            $docs,
+            $witnesses,
+            $audits,
+            $letters,
+            $respondentResponses,
+            $applicantResponseReplies,
+            $letterTemplates,
+            $inspectionAssignees,
+            $inspectionRequests,
+            $inspectionFindings,
+        ));
+    }
+
+    /**
+     * The case detail page's props: the Blade page's rows as plain arrays with
+     * ISO 8601 dates, the permission booleans the Blade page checked inline,
+     * and the derived values it computed in @php blocks (lock, terms, next
+     * letter reference, the EUISIS panel).
+     */
+    private function caseDetailProps(
+        object $case,
+        $timeline,
+        $files,
+        $messages,
+        $hearings,
+        $docs,
+        $witnesses,
+        $audits,
+        $letters,
+        $respondentResponses,
+        $applicantResponseReplies,
+        $letterTemplates,
+        $inspectionAssignees,
+        $inspectionRequests,
+        $inspectionFindings,
+    ): array {
+        $user = Auth::user();
+        $can = fn (string $permission): bool => (bool) userHasPermission($permission);
+        $isAdmin = $user?->hasRole('admin') ?? false;
+
+        $hasActiveDecision = false;
+        try {
+            $hasActiveDecision = \App\Models\Decision::where('court_case_id', $case->id)->where('status', 'published')->exists();
+        } catch (\Throwable $e) {
+            $hasActiveDecision = false;
+        }
+        $caseLocked = (($case->status ?? '') === 'closed') && $hasActiveDecision;
+
+        $lawyerName = collect([
+            $case->applicant_first_name ?? null,
+            $case->applicant_middle_name ?? null,
+            $case->applicant_last_name ?? null,
+        ])->map(fn ($part) => trim((string) $part))->filter()->implode(' ');
+        if ($lawyerName === '') {
+            $lawyerName = trim((string) ($case->applicant_name ?? ''));
+        }
+        $applicantAddress = trim((string) ($case->applicant_address ?? ''));
+        if ($applicantAddress === '') {
+            $applicantAddress = trim((string) ($case->applicant_profile_address ?? ''));
+        }
+
+        $descriptionHtml = (string) ($case->description_html ?? '');
+        if ($descriptionHtml === '' && !empty($case->description)) {
+            $descriptionHtml = clean((string) $case->description, 'cases');
+        }
+        $reliefHtml = null;
+        if (!empty($case->relief_requested_html ?? null)) {
+            $reliefHtml = clean($case->relief_requested_html, 'cases');
+        } elseif (!empty($case->relief_requested)) {
+            $reliefHtml = clean($case->relief_requested, 'cases');
+        }
+
+        // Active Terms & Conditions, printed as a list under the respondent section.
+        $termsItems = [];
+        try {
+            $printTerms = \App\Models\TermsAndCondition::published()->orderByDesc('published_at')->first();
+            if ($printTerms && !empty($printTerms->body)) {
+                $termsHtml = clean($printTerms->body, 'cases');
+                if (preg_match_all('/<li\b[^>]*>(.*?)<\/li>/is', $termsHtml, $m) && !empty($m[1])) {
+                    $rows = $m[1];
+                } elseif (preg_match_all('/<p\b[^>]*>(.*?)<\/p>/is', $termsHtml, $m) && !empty($m[1])) {
+                    $rows = $m[1];
+                } else {
+                    $rows = preg_split('/<br\s*\/?>|\r\n|\n/i', $termsHtml) ?: [];
+                }
+                foreach ($rows as $row) {
+                    $row = trim(preg_replace('/\s+/', ' ', strip_tags($row, '<strong><b><em><i><u><a>')));
+                    if ($row !== '') {
+                        $termsItems[] = $row;
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            $termsItems = [];
+        }
+
+        // The next letter reference for this case (the compose panel shows it read-only).
+        $nextReference = null;
+        $caseNumber = (string) ($case->case_number ?? '');
+        if ($caseNumber !== '' && Schema::hasTable('letters')) {
+            $last = DB::table('letters')->where('case_number', $caseNumber)->orderBy('id', 'desc')->first();
+            $nextSeq = ($last && preg_match('/\/(\d{2})$/', (string) $last->reference_number, $m)) ? intval($m[1]) + 1 : 1;
+            $nextReference = $caseNumber . '/' . str_pad((string) $nextSeq, 2, '0', STR_PAD_LEFT);
+        }
+
+        $iso = fn ($value): ?string => $this->isoDate($value);
+        $today = Carbon::today();
+
+        return [
+            'case' => [
+                'id' => (int) $case->id,
+                'case_number' => $caseNumber,
+                'title' => $case->title ?? null,
+                'status' => (string) ($case->status ?? 'pending'),
+                'review_status' => (string) ($case->review_status ?? 'accepted'),
+                'review_note' => $case->review_note ?? null,
+                'case_type' => $case->case_type ?? null,
+                'filing_date' => $iso($case->filing_date ?? null),
+                'created_at' => $iso($case->created_at ?? null),
+                'updated_at' => $iso($case->updated_at ?? null),
+                'assigned_at' => $iso($case->assigned_at ?? null),
+                'assigned_user_id' => isset($case->assigned_user_id) ? (int) $case->assigned_user_id : null,
+                'assignee_name' => $case->assignee_name ?? null,
+                'assignee_team_name' => $case->assignee_team_name ?? null,
+                'applicant_display_name' => trim((string) ($case->title ?? '')),
+                'lawyer_name' => $lawyerName,
+                'submitted_by_lawyer' => !empty($case->applicant_is_lawyer) && $lawyerName !== '',
+                'has_lawyer_document' => !empty($case->applicant_lawyer_document_path),
+                'applicant_address' => $applicantAddress,
+                'applicant_email' => $case->applicant_email ?? null,
+                'respondent_name' => $case->respondent_name ?? null,
+                'respondent_address' => $case->respondent_address ?? null,
+                'description_html' => $descriptionHtml,
+                'relief_html' => $reliefHtml,
+            ],
+            'can' => [
+                'editStatus' => $can('cases.edit'),
+                'assign' => $can('cases.assign.team') || $can('cases.assign.member') || $can('cases.assign'),
+                'review' => $can('cases.review'),
+                'manageResponseReplies' => $can('cases.response-replies.manage'),
+                'writeLetter' => $can('letters.create'),
+                'viewLetters' => $can('letters.view'),
+                'manageBench' => $can('bench-notes.manage'),
+                'viewHearings' => $can('hearing.view'),
+                'createHearings' => $can('hearing.create'),
+                'updateHearings' => $can('hearing.update'),
+                'deleteHearings' => $can('hearing.delete'),
+                'viewFiles' => $can('file.view'),
+                'createFiles' => $can('file.create'),
+                'updateFiles' => $can('file.update'),
+                'deleteFiles' => $can('file.delete'),
+                'manageInspectionRequests' => $can('inspection-requests.manage'),
+                'manageInspectionFindings' => $can('inspection-findings.manage'),
+                'createMessage' => $can('message.create'),
+                'isAdmin' => $isAdmin,
+            ],
+            'caseLocked' => $caseLocked,
+            'statuses' => ['pending', 'active', 'dismissed', 'closed'],
+            'currentUserInitial' => mb_strtoupper(mb_substr((string) ($user?->name ?? 'A'), 0, 1)),
+            'termsItems' => $termsItems,
+            'nextLetterReference' => $nextReference,
+            'timeline' => collect($timeline)->map(fn ($row) => [
+                'id' => (int) $row->id,
+                'from_status' => $row->from_status ?? null,
+                'to_status' => $row->to_status ?? null,
+                'note' => $row->note ?? null,
+                'created_at' => $iso($row->created_at ?? null),
+            ])->values()->all(),
+            'hearings' => collect($hearings)->map(function ($h) use ($iso, $today) {
+                $locked = false;
+                try {
+                    $locked = Carbon::parse($h->hearing_at)->startOfDay()->lte($today);
+                } catch (\Throwable $e) {
+                    $locked = false;
+                }
+
+                return [
+                    'id' => (int) $h->id,
+                    'hearing_at' => $iso($h->hearing_at ?? null),
+                    'type' => $h->type ?? null,
+                    'location' => $h->location ?? null,
+                    'notes' => $h->notes ?? null,
+                    'date_locked' => $locked,
+                ];
+            })->values()->all(),
+            'files' => collect($files)->map(fn ($f) => [
+                'id' => (int) $f->id,
+                'label' => $f->label ?? null,
+                'name' => $f->label ?? basename((string) ($f->path ?? '')),
+                'mime' => $f->mime ?? null,
+                'size' => (int) ($f->size ?? 0),
+                'created_at' => $iso($f->created_at ?? null),
+                'uploaded_by' => ($f->uploader_name ?? null) ?: (trim(($f->first_name ?? '') . ' ' . ($f->last_name ?? '')) ?: null),
+            ])->values()->all(),
+            'messages' => collect($messages)->map(function ($m) use ($iso) {
+                $fromAdmin = !is_null($m->sender_user_id);
+                $fromApplicant = !is_null($m->sender_applicant_id);
+                $who = $fromAdmin
+                    ? (($m->admin_name ?? null) ?: __('cases.messages.court_staff'))
+                    : ($fromApplicant ? trim(($m->first_name ?? '') . ' ' . ($m->last_name ?? '')) : __('cases.messages_section.system'));
+
+                return [
+                    'id' => (int) $m->id,
+                    'body' => (string) ($m->body ?? ''),
+                    'from_admin' => $fromAdmin,
+                    'sender_name' => $who,
+                    'created_at' => $iso($m->created_at ?? null),
+                ];
+            })->values()->all(),
+            'docs' => collect($docs)->map(function ($d) use ($iso) {
+                $filePath = $d->file_path ?? $d->path ?? null;
+
+                return [
+                    'id' => (int) $d->id,
+                    'title' => trim((string) ($d->title ?? '')) ?: ($filePath ? basename((string) $filePath) : null),
+                    'description_html' => !empty($d->description) ? clean((string) $d->description, 'cases') : null,
+                    'mime' => $d->mime ?? null,
+                    'size' => isset($d->size) ? (int) $d->size : null,
+                    'created_at' => $iso($d->created_at ?? null),
+                    'has_file' => !empty($filePath),
+                ];
+            })->values()->all(),
+            'witnesses' => collect($witnesses)->map(fn ($w) => [
+                'id' => (int) $w->id,
+                'full_name' => (string) ($w->full_name ?? ''),
+                'phone' => $w->phone ?? null,
+                'email' => $w->email ?? null,
+                'address' => $w->address ?? null,
+                'notes' => $w->notes ?? null,
+            ])->values()->all(),
+            'audits' => collect($audits)->map(function ($a) use ($iso) {
+                $meta = $a->meta ? json_decode((string) $a->meta, true) : null;
+
+                return [
+                    'id' => (int) $a->id,
+                    'action' => (string) ($a->action ?? ''),
+                    'actor_type' => $a->actor_type ?? null,
+                    'actor_id' => $a->actor_id ?? null,
+                    'actor_name' => $a->actor_name ?? null,
+                    'meta' => $meta ? json_encode($meta, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) : null,
+                    'created_at' => $iso($a->created_at ?? null),
+                ];
+            })->values()->all(),
+            'letters' => collect($letters)->map(fn ($l) => [
+                'id' => (int) $l->id,
+                'subject' => $l->subject ?? null,
+                'reference_number' => $l->reference_number ?? null,
+                'approval_status' => strtolower((string) ($l->approval_status ?? 'pending')),
+                'template_title' => $l->template_title ?? null,
+                'author_name' => $l->author_name ?? null,
+                'created_at' => $iso($l->created_at ?? null),
+            ])->values()->all(),
+            'letterTemplates' => collect($letterTemplates)->map(function ($tpl) {
+                $placeholders = $tpl->placeholders ?? [];
+                if (is_string($placeholders)) {
+                    $decoded = json_decode($placeholders, true);
+                    $placeholders = $decoded ?: [];
+                }
+
+                return [
+                    'id' => (int) $tpl->id,
+                    'title' => (string) ($tpl->title ?? ''),
+                    'body' => (string) ($tpl->body ?? ''),
+                    'category' => $tpl->category ?? null,
+                    'placeholders' => array_values(array_map('strval', is_array($placeholders) ? $placeholders : [])),
+                ];
+            })->values()->all(),
+            'respondentResponses' => collect($respondentResponses)->map(fn ($r) => [
+                'id' => (int) $r->id,
+                'title' => $r->title ?? null,
+                'case_number' => $r->case_number ?? null,
+                'description_html' => !empty($r->description) ? clean((string) $r->description, 'cases') : '',
+                'review_status' => (string) ($r->review_status ?? 'awaiting_review'),
+                'review_note' => $r->review_note ?? null,
+                'pdf_url' => !empty($r->pdf_path) ? route('respondent-responses.download', ['response' => $r->id, 'inline' => 1]) : null,
+                'created_at' => $iso($r->created_at ?? null),
+            ])->values()->all(),
+            'applicantResponseReplies' => collect($applicantResponseReplies)->map(fn ($reply) => [
+                'id' => (int) $reply->id,
+                'respondent_response_id' => (int) $reply->respondent_response_id,
+                'response_number' => $reply->response_number ?? null,
+                'applicant_name' => trim(($reply->applicant_first_name ?? '') . ' ' . ($reply->applicant_middle_name ?? '') . ' ' . ($reply->applicant_last_name ?? '')),
+                'description' => (string) ($reply->description ?? ''),
+                'review_status' => (string) ($reply->review_status ?? 'awaiting_review'),
+                'review_note' => $reply->review_note ?? null,
+                'pdf_url' => !empty($reply->pdf_path)
+                    ? route('admin.applicant-response-replies.download', ['case' => $case->id, 'response' => $reply->respondent_response_id, 'reply' => $reply->id, 'inline' => 1])
+                    : null,
+                'created_at' => $iso($reply->created_at ?? null),
+            ])->values()->all(),
+            'inspectionAssignees' => collect($inspectionAssignees)->map(fn ($u) => ['id' => (int) $u->id, 'name' => (string) $u->name])->values()->all(),
+            'inspectionRequests' => collect($inspectionRequests)->map(fn ($req) => [
+                'id' => (int) $req->id,
+                'subject' => $req->subject ?? null,
+                'status' => (string) ($req->status ?? ''),
+                'request_date' => $iso($req->request_date ?? null),
+                'assigned_inspector_name' => $req->assigned_inspector_name ?? null,
+                'created_by_name' => $req->created_by_name ?? null,
+            ])->values()->all(),
+            'inspectionFindings' => collect($inspectionFindings)->map(fn ($f) => [
+                'id' => (int) $f->id,
+                'title' => $f->title ?? null,
+                'severity' => (string) ($f->severity ?? ''),
+                'finding_date' => $iso($f->finding_date ?? null),
+                'request_subject' => $f->request_subject ?? null,
+                'assigned_inspector_name' => $f->assigned_inspector_name ?? null,
+                'recorded_by_name' => $f->recorded_by_name ?? null,
+                'accepted' => !empty($f->accepted_at),
+                'has_attachment' => !empty($f->attachment_path),
+                'attachment_name' => $f->attachment_original_name ?? null,
+                'details' => $f->details ?? null,
+            ])->values()->all(),
+            'euisis' => $this->euisisPanelProps($case, $can('cases.edit')),
+        ];
+    }
+
+    /** The EUISIS panel the Blade page rendered through <x-euisis.case-panel>; null when it would not render. */
+    private function euisisPanelProps(object $case, bool $canLink): ?array
+    {
+        try {
+            $panel = new \App\View\Components\Euisis\CasePanel((int) $case->id);
+        } catch (\Throwable $e) {
+            Log::warning('EUISIS case panel unavailable', ['case' => $case->id, 'error' => $e->getMessage()]);
+
+            return null;
+        }
+        if (!$panel->shouldRender()) {
+            return null;
+        }
+
+        $referral = $panel->referral;
+        $organization = $panel->organization;
+        $employee = $panel->employee;
+        $hasApplicant = ($panel->case?->applicant_id ?? null) !== null;
+        $lastRun = $panel->lastRun;
+
+        return [
+            'referral' => $referral ? [
+                'grievance_reference' => $referral->grievance_reference ?? null,
+                'tribunal_case_number' => $referral->tribunal_case_number ?? null,
+                'complainant_name' => $referral->complainant_name ?? null,
+                'complainant_contact' => collect([$referral->complainant_phone ?? null, $referral->complainant_email ?? null])->filter()->implode(' · ') ?: null,
+                'referring_officer' => $referral->referring_officer ?? null,
+                'received_at' => $referral->created_at?->format('Y-m-d H:i'),
+            ] : null,
+            'organization' => $organization ? [
+                'name' => $organization->displayName(),
+                'code' => $organization->code ?? null,
+                'active' => $organization->isActive(),
+                'status' => $organization->status ?? null,
+            ] : null,
+            'employee' => $employee ? [
+                'name' => $employee->displayName(),
+                'number' => $employee->employee_number ?? null,
+                'status' => $employee->status ?? null,
+                'position' => $panel->position?->displayTitle(),
+                'organization' => $panel->employeeOrganization?->displayName(),
+            ] : null,
+            'has_applicant' => $hasApplicant,
+            'can_link' => $canLink,
+            'can_link_employee' => $canLink && $panel->enabled && ($hasApplicant || $referral !== null),
+            'enabled' => $panel->enabled,
+            'has_organizations' => $panel->hasOrganizations,
+            'organizations' => ($canLink && $panel->hasOrganizations)
+                ? $panel->organizations()->map(fn ($option) => [
+                    'uuid' => (string) $option->uuid,
+                    'name' => $option->displayName(),
+                    'active' => $option->isActive(),
+                    'status' => $option->status ?? null,
+                ])->values()->all()
+                : [],
+            'selected_organization_uuid' => $organization?->uuid,
+            'last_sync' => $lastRun ? Carbon::parse($lastRun)->diffForHumans() : null,
+            'last_error' => $panel->lastError,
+            'notice' => session('euisis_status'),
+        ];
+    }
+
+    /** A date value from the database as ISO 8601, or null when it is empty or unparseable. */
+    private function isoDate(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        try {
+            return Carbon::parse((string) $value)->toIso8601String();
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     /**
