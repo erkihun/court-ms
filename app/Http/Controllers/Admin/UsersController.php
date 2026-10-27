@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password as PasswordRule;
+use Inertia\Inertia;
 
 class UsersController extends Controller
 {
@@ -36,7 +37,29 @@ class UsersController extends Controller
             ->paginate(12)
             ->withQueryString();
 
-        return view('admin.users.index', compact('users'));
+        // The register (React, Court/Users/Index); each row carries what this viewer may do (UserPolicy).
+        $viewer = $request->user();
+
+        return Inertia::render('Court/Users/Index', [
+            'users' => $users->through(fn (User $user): array => [
+                'id' => (int) $user->id,
+                'name' => (string) $user->name,
+                'email' => (string) $user->email,
+                'avatar_url' => $user->avatar_url,
+                'has_signature' => filled($user->signature_path),
+                'roles' => $user->roles->pluck('name')->values()->all(),
+                'status' => (string) ($user->status ?? 'inactive'),
+                'verified' => $user->hasVerifiedEmail(),
+                'created_at' => $user->created_at?->toIso8601String(),
+                'can' => [
+                    'view' => (bool) $viewer?->can('view', $user),
+                    'update' => (bool) $viewer?->can('update', $user),
+                    'delete' => (bool) $viewer?->can('delete', $user),
+                ],
+            ]),
+            'filters' => ['q' => $q, 'status' => in_array($status, ['active', 'inactive'], true) ? $status : ''],
+            'canCreate' => (bool) ($viewer?->hasPermission('users.manage') ?? false),
+        ]);
     }
 
     /** Show a single profile (policy: view) */
