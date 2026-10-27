@@ -6,6 +6,7 @@ import { KeyIcon } from '@/Components/Icons';
 import { useLocale } from '@/hooks/useLocale';
 import type { PageProps } from '@/types';
 import AccountSection from './Partials/AccountSection';
+import SignatureCard from '@/court/components/SignatureCard';
 import DevicesSection from './Partials/DevicesSection';
 import SectionCard from './Partials/SectionCard';
 import TwoFactorCard from './Partials/TwoFactorCard';
@@ -51,6 +52,7 @@ export default function Edit({
                 {activeTab === 'account' && (
                     <div {...panelProps('account')}>
                         <AccountSection profile={profile} security={security} devices={devices} mustVerifyEmail={mustVerifyEmail} status={status} />
+                        <div className="mt-4"><SignatureCard /></div>
                     </div>
                 )}
 

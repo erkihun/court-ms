@@ -149,7 +149,7 @@ test('another device can be signed out from the Devices tab', function (): void 
 
     $this->actingAs($user)->get(route('profile.edit'))
         ->assertInertia(fn (AssertableInertia $page) => $page
-            ->where('devices.sessions', fn ($sessions) => collect($sessions)->contains(fn ($row) => $row['id'] === 'other-device' && $row['device'] === 'phone' && $row['browser'] === 'Safari')));
+            ->where('devices.sessions', fn ($sessions) => collect($sessions)->contains(fn ($row) => $row['id'] === 'other-device' && $row['device'] === 'phone' && $row['browser'] === 'Safari 17' && $row['os'] === 'iPhone')));
 
     $this->actingAs($user)->delete(route('profile.sessions.destroy', 'other-device'))->assertRedirect();
     expect(DB::table('sessions')->where('id', 'other-device')->exists())->toBeFalse();

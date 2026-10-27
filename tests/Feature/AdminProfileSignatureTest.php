@@ -46,9 +46,13 @@ test('user cannot replace or remove an existing signature through self profile',
 test('self profile page displays signature as read only', function (): void {
     $user = User::factory()->create(['email_verified_at' => now()]);
 
+    // The profile page (Profile/Edit) shows the signature in a read-only card; the form has no signature field.
     $this->actingAs($user)->get(route('profile.edit'))
         ->assertOk()
-        ->assertSee('only be changed by an authorized administrator')
+        ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->component('Profile/Edit')
+            ->where('signature.url', null)
+            ->where('signature.read_only', true))
         ->assertDontSee('name="signature"', false)
         ->assertDontSee('name="remove_signature"', false);
 });

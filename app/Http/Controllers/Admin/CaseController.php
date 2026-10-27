@@ -24,6 +24,7 @@ use App\Models\ApplicantResponseReply;
 use App\Services\ResponseNotificationService;
 use App\Services\SecureUploadService;
 use App\Services\LegalHoldService;
+use Inertia\Inertia;
 
 class CaseController extends Controller
 {
@@ -118,20 +119,36 @@ class CaseController extends Controller
 
         $users  = DB::table('users')->where('status', 'active')->orderBy('name')->get(['id', 'name']);
 
-        return view('admin.cases.index', compact(
-            'cases',
-            'q',
-            'status',
-            'caseTypeId',
-
-            'assigneeId',
-            'from',
-            'to',
-            'types',
-
-            'users',
-            'isReviewer'
-        ));
+        // The register (React, Court/Cases/Index): a non-reviewer sees every case as accepted, as before.
+        return Inertia::render('Court/Cases/Index', [
+            'cases' => $cases->through(fn (object $row): array => [
+                'id' => (int) $row->id,
+                'case_number' => (string) $row->case_number,
+                'title' => $row->title,
+                'applicant_name' => ($row->applicant_name ?? '') !== '' ? $row->applicant_name : null,
+                'applicant_is_lawyer' => (bool) ($row->applicant_is_lawyer ?? false),
+                'case_type' => $row->case_type,
+                'team_name' => $row->team_name,
+                'assignee_name' => $row->assignee_name,
+                'status' => (string) $row->status,
+                'filing_date' => $row->filing_date ? Carbon::parse($row->filing_date)->toDateString() : null,
+                'review_status' => $isReviewer ? (string) ($row->review_status ?? 'accepted') : 'accepted',
+                'reviewer_name' => $row->reviewer_name,
+            ]),
+            'filters' => [
+                'q' => $q,
+                'status' => $status,
+                'case_type_id' => $caseTypeId ? (string) $caseTypeId : '',
+                'assignee_id' => $assigneeId ? (string) $assigneeId : '',
+                'from' => $from?->format('Y-m-d') ?? '',
+                'to' => $to?->format('Y-m-d') ?? '',
+            ],
+            'statuses' => ['pending', 'active', 'adjourned', 'dismissed', 'closed'],
+            'types' => $types,
+            'users' => $users,
+            'isReviewer' => $isReviewer,
+            'canExport' => (bool) (Auth::user()?->hasPermission('reports.export') ?? false),
+        ]);
     }
 
     /**

@@ -47,8 +47,13 @@ class ProfileController extends Controller
             ],
             'devices' => [
                 'supported' => $sessions->supported(),
-                'sessions' => $sessions->forUser($user, $request->session()->getId()),
+                'sessions' => $sessions->forUser($user, $request),
                 'recent_sign_ins' => [],
+            ],
+            // court-ms: the signature on letters and decisions; only an administrator changes it (users.manage).
+            'signature' => [
+                'url' => $user->signature_url,
+                'read_only' => true,
             ],
         ]);
     }

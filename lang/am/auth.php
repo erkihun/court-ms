@@ -2,6 +2,9 @@
 
 return [
     'mfa_code' => 'የማረጋገጫ ኮድ',
+    'signature' => 'ፊርማ',
+    'signature_read_only' => 'ፊርማዎ በደብዳቤዎችና በውሳኔዎች ላይ ይታያል። ሊቀየር የሚችለው በተፈቀደለት አስተዳዳሪ ብቻ ነው።',
+    'signature_none' => 'የተመዘገበ ፊርማ የለም።',
     'password_updated_sign_in_again' => 'የይለፍ ቃልዎ ተቀይሯል። እባክዎ እንደገና ይግቡ።',
     'mfa_title' => 'ባለብዙ ደረጃ ማረጋገጫ',
     'mfa_active' => 'MFA ነቅቷል',

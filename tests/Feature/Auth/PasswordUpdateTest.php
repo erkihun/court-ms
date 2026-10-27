@@ -35,6 +35,7 @@ test('correct password must be provided to update password', function () {
         ]);
 
     $response
-        ->assertSessionHasErrorsIn('updatePassword', 'current_password')
+        // The profile's password form (Profile/Edit, from EUISIS) reads the default bag.
+        ->assertSessionHasErrors('current_password')
         ->assertRedirect('/profile');
 });

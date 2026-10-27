@@ -156,6 +156,17 @@ const PATCHES = [
         ].join('\n'),
     },
     {
+        // The Account tab also shows the person's signature, read-only (resources/js/court/components).
+        file: 'Pages/Profile/Edit.tsx',
+        from: "import AccountSection from './Partials/AccountSection';",
+        to: "import AccountSection from './Partials/AccountSection';\nimport SignatureCard from '@/court/components/SignatureCard';",
+    },
+    {
+        file: 'Pages/Profile/Edit.tsx',
+        from: '<AccountSection profile={profile} security={security} devices={devices} mustVerifyEmail={mustVerifyEmail} status={status} />',
+        to: '<AccountSection profile={profile} security={security} devices={devices} mustVerifyEmail={mustVerifyEmail} status={status} />\n                        <div className="mt-4"><SignatureCard /></div>',
+    },
+    {
         // court-ms route names for the second factor and the Devices tab.
         file: 'Pages/Auth/MfaChallenge.tsx',
         from: "route('mfa.challenge.verify')",

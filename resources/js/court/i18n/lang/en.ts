@@ -492,6 +492,8 @@ const lang: Record<string, unknown> = {
         "session_current_cannot_revoke": "The current session cannot be revoked here.",
         "mfa_invalid_code": "The authentication code is invalid or expired.",
         "mfa_code": "authentication code",
+        "signature_read_only": "Your signature appears on letters and decisions. It can only be changed by an authorized administrator.",
+        "signature_none": "No signature on file.",
         "password_updated_sign_in_again": "Your password was updated. Please sign in again.",
         "address": "Address",
         "admin_access_label": "Administrative Access",

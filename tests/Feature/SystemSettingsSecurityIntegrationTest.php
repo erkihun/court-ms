@@ -31,7 +31,7 @@ test('a poisoned system_settings cache key self-heals instead of crashing', func
     $user = User::factory()->create(['must_change_password' => false]);
 
     $this->actingAs($user)
-        ->get('/profile/sessions')
+        ->get('/profile')
         ->assertOk();
 
     expect(SystemSetting::cached())->toBeInstanceOf(SystemSetting::class);
