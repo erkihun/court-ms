@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 class RolesController extends Controller
 {
@@ -25,7 +26,16 @@ class RolesController extends Controller
             ->orderBy('name')
             ->paginate(10);
 
-        return view('admin.roles.index', compact('roles'));
+        // The register (React, Court/Roles/Index).
+        return Inertia::render('Court/Roles/Index', [
+            'roles' => $roles->through(fn (Role $role): array => [
+                'id' => (int) $role->id,
+                'name' => (string) $role->name,
+                'description' => $role->description,
+                'permissions' => $role->permissions->pluck('name')->values()->all(),
+                'users_count' => (int) $role->users_count,
+            ]),
+        ]);
     }
 
     public function create()

@@ -7,6 +7,7 @@ use App\Models\Team;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class TeamController extends Controller
 {
@@ -14,7 +15,18 @@ class TeamController extends Controller
     {
         $teams = Team::with(['parent', 'children', 'users', 'leader'])->orderBy('name')->get();
 
-        return view('admin.teams.index', compact('teams'));
+        // The register (React, Court/Teams/Index).
+        return Inertia::render('Court/Teams/Index', [
+            'teams' => $teams->map(fn (Team $team): array => [
+                'id' => (int) $team->id,
+                'name' => (string) $team->name,
+                'parent_name' => $team->parent?->name,
+                'description' => $team->description,
+                'members_count' => $team->users->count(),
+                'leader_name' => $team->leader?->name,
+                'leader_email' => $team->leader?->email,
+            ])->values()->all(),
+        ]);
     }
 
     public function create()

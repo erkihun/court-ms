@@ -9,6 +9,7 @@ use App\Models\Permission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 class PermissionController extends Controller
 {
@@ -43,7 +44,19 @@ class PermissionController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
-        return view('admin.permissions.index', compact('permissions', 'q', 'perPage'));
+        // The register (React, Court/Permissions/Index).
+        return Inertia::render('Court/Permissions/Index', [
+            'permissions' => $permissions->through(fn (Permission $permission): array => [
+                'id' => (int) $permission->id,
+                'name' => (string) $permission->name,
+                'label' => $permission->labelLocalized ?: null,
+                'description' => $permission->descriptionLocalized ?: null,
+                'roles' => $permission->roles->pluck('name')->values()->all(),
+                'roles_count' => (int) $permission->roles_count,
+                'users_count' => (int) $permission->users_count,
+            ]),
+            'filters' => ['q' => $q, 'perPage' => $perPage],
+        ]);
     }
 
     public function create()
