@@ -35,4 +35,22 @@ return [
         ],
     ],
 
+    /*
+    | EUISIS (Agelgay) integration — docs/euisis-integration.md.
+    | Outbound: court-ms reads organizations and people from the EUISIS
+    | partner API with a registered-application token. Inbound: EUISIS sends
+    | tribunal referrals with an integration client token (euisis:integration-token).
+    */
+    'euisis' => [
+        'enabled' => (bool) env('EUISIS_ENABLED', false),
+        'url' => rtrim((string) env('EUISIS_URL', ''), '/'),
+        'token' => env('EUISIS_TOKEN'),
+        'timeout' => (int) env('EUISIS_TIMEOUT', 15),
+        'verify_tls' => (bool) env('EUISIS_VERIFY_TLS', true),
+        // Directory page size; the EUISIS API allows at most 100.
+        'per_page' => (int) env('EUISIS_PER_PAGE', 100),
+        // Change-feed pages applied per run; the next scheduled run continues from the cursor.
+        'max_pages_per_run' => (int) env('EUISIS_MAX_PAGES_PER_RUN', 20),
+    ],
+
 ];

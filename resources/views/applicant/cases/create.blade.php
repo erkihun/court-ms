@@ -99,6 +99,31 @@
                     @enderror
                 </div>
             </div>
+
+            {{-- Optional: the respondent organization from the EUISIS city directory (docs/euisis-integration.md) --}}
+            @php
+                $euisisOrganizations = \Illuminate\Support\Facades\Schema::hasTable('euisis_organizations')
+                    ? \App\Models\EuisisOrganization::query()->where(fn ($q) => $q->whereNull('status')->orWhere('status', 'active'))->orderBy('name_en')->get(['uuid', 'name_en', 'name_am', 'status'])
+                    : collect();
+            @endphp
+            @if($euisisOrganizations->isNotEmpty())
+            <div>
+                <label for="respondent_organization_uuid" class="block  font-medium text-slate-700">
+                    {{ __('cases.respondent_organization_directory') }}
+                </label>
+                <select id="respondent_organization_uuid" name="respondent_organization_uuid" class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-300  text-slate-900
+                           focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+                    <option value="">{{ __('cases.respondent_organization_not_listed') }}</option>
+                    @foreach($euisisOrganizations as $org)
+                    <option value="{{ $org->uuid }}" @selected(old('respondent_organization_uuid') === $org->uuid)>{{ $org->displayName() }}</option>
+                    @endforeach
+                </select>
+                <p class="text-xs text-slate-500 mt-1">{{ __('cases.respondent_organization_directory_help') }}</p>
+                @error('respondent_organization_uuid')
+                <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+            @endif
         </section>
 
         {{-- Type / Court --}}

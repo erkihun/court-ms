@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\AppealController;
 use App\Http\Controllers\Admin\ApplicantController;
 use App\Http\Controllers\Admin\AuditController;
 use App\Http\Controllers\Admin\BenchNoteController;
+use App\Http\Controllers\Admin\EuisisCaseLinkController;
 use App\Http\Controllers\Admin\CaseController;
 use App\Http\Controllers\Admin\CaseInspectionFindingController;
 use App\Http\Controllers\Admin\CaseInspectionRequestController;
@@ -516,6 +517,11 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::get('/cases', [CaseController::class, 'index'])->middleware('perm:cases.view')->name('cases.index');
             Route::get('/cases/export', [CaseController::class, 'export'])->middleware('perm:reports.export')->name('cases.export');
             Route::get('/cases/{id}', [CaseController::class, 'show'])->middleware('perm:cases.view')->name('cases.show');
+            // EUISIS links on the case page (docs/euisis-integration.md).
+            Route::patch('/cases/{id}/euisis/organization', [EuisisCaseLinkController::class, 'organization'])
+                ->middleware(['perm:cases.edit', 'throttle:30,1'])->whereNumber('id')->name('cases.euisis.organization');
+            Route::post('/cases/{id}/euisis/employee', [EuisisCaseLinkController::class, 'employee'])
+                ->middleware(['perm:cases.edit', 'throttle:20,1'])->whereNumber('id')->name('cases.euisis.employee');
             Route::get('/cases/{case}/documents/{doc}', [CaseController::class, 'viewDocument'])->middleware('perm:cases.view')->name('cases.documents.view');
             Route::get('/cases/{case}/lawyer-document', [SecureFileController::class, 'lawyerDocument'])->middleware('perm:cases.view')->name('cases.lawyer-document');
 

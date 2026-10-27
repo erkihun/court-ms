@@ -5,6 +5,7 @@ use App\Http\Middleware\AddSecurityHeaders;
 use App\Http\Middleware\AdminOnly;
 use App\Http\Middleware\AdminSessionTimeout;
 use App\Http\Middleware\AssignRequestId;
+use App\Http\Middleware\AuthenticateIntegrationClient;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\CaptureClientHints;
 use App\Http\Middleware\EnforceSystemAvailability;
@@ -67,6 +68,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'act.respondent' => ActAsRespondent::class,
             'use.guard' => UseGuard::class,
             'mfa' => EnsureMfaIsVerified::class,
+            'integration.client' => AuthenticateIntegrationClient::class,
         ]);
 
         $middleware->prependToGroup('web', SetSessionCookieForGuard::class);
