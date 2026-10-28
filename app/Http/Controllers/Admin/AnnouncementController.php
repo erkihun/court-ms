@@ -27,7 +27,7 @@ class AnnouncementController extends Controller
 
     public function create()
     {
-        return view('admin.announcements.create');
+        return Inertia::render('Court/Announcements/Form', ['announcement' => null]);
     }
 
     public function store(Request $request)
@@ -45,12 +45,26 @@ class AnnouncementController extends Controller
 
     public function show(Announcement $announcement)
     {
-        return view('admin.announcements.show', compact('announcement'));
+        return Inertia::render('Court/Announcements/Show', ['announcement' => [
+            ...$this->formProps($announcement),
+            'created_at' => $announcement->created_at?->toIso8601String(),
+        ]]);
     }
 
     public function edit(Announcement $announcement)
     {
-        return view('admin.announcements.edit', compact('announcement'));
+        return Inertia::render('Court/Announcements/Form', ['announcement' => $this->formProps($announcement)]);
+    }
+
+    /** @return array{id: int, title: string, content: string, status: string} */
+    private function formProps(Announcement $announcement): array
+    {
+        return [
+            'id' => (int) $announcement->id,
+            'title' => (string) $announcement->title,
+            'content' => (string) $announcement->content,
+            'status' => (string) ($announcement->status ?? 'active'),
+        ];
     }
 
     public function update(Request $request, Announcement $announcement)

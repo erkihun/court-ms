@@ -28,7 +28,7 @@ class AboutController extends Controller
 
     public function create()
     {
-        return view('admin.about.create');
+        return Inertia::render('Court/About/Form', ['page' => null]);
     }
 
     public function store(Request $request)
@@ -57,12 +57,24 @@ class AboutController extends Controller
 
     public function show(AboutPage $about)
     {
-        return view('admin.about.show', compact('about'));
+        return Inertia::render('Court/About/Show', ['page' => $this->pageProps($about)]);
     }
 
     public function edit(AboutPage $about)
     {
-        return view('admin.about.edit', compact('about'));
+        return Inertia::render('Court/About/Form', ['page' => $this->pageProps($about)]);
+    }
+
+    /** @return array{id: int, title: string, slug: string, body: string, is_published: bool} */
+    private function pageProps(AboutPage $about): array
+    {
+        return [
+            'id' => (int) $about->id,
+            'title' => (string) $about->title,
+            'slug' => (string) $about->slug,
+            'body' => (string) $about->body,
+            'is_published' => (bool) $about->is_published,
+        ];
     }
 
     public function update(Request $request, AboutPage $about)

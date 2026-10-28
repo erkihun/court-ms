@@ -54,7 +54,8 @@ class CaseTypeController extends Controller
     public function create()
     {
         $this->authorizeTypes();
-        return view('admin.cases.types.create');
+
+        return Inertia::render('Court/CaseTypes/Form', ['type' => null, 'hasPrefix' => Schema::hasColumn('case_types', 'prefix')]);
     }
 
     /**
@@ -98,8 +99,12 @@ class CaseTypeController extends Controller
 
         $type = DB::table('case_types')->where('id', $id)->first();
         abort_if(!$type, 404);
+        $hasPrefix = Schema::hasColumn('case_types', 'prefix');
 
-        return view('admin.cases.types.edit', compact('type'));
+        return Inertia::render('Court/CaseTypes/Form', [
+            'type' => ['id' => (int) $type->id, 'name' => (string) $type->name, 'prefix' => $hasPrefix ? ($type->prefix ?? null) : null],
+            'hasPrefix' => $hasPrefix,
+        ]);
     }
 
     /**

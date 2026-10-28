@@ -32,9 +32,9 @@ class TermsAndConditionsController extends Controller
         ]);
     }
 
-    public function create(): View
+    public function create(): Response
     {
-        return view('admin.terms.create');
+        return Inertia::render('Court/Terms/Form', ['term' => null]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -57,9 +57,14 @@ class TermsAndConditionsController extends Controller
         ]);
     }
 
-    public function edit(TermsAndCondition $term): View
+    public function edit(TermsAndCondition $term): Response
     {
-        return view('admin.terms.edit', compact('term'));
+        return Inertia::render('Court/Terms/Form', ['term' => [
+            'id' => (int) $term->id,
+            'title' => (string) $term->title,
+            'body' => (string) $term->body,
+            'is_published' => (bool) $term->is_published,
+        ]]);
     }
 
     public function update(Request $request, TermsAndCondition $term): RedirectResponse
