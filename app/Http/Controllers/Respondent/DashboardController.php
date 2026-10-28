@@ -21,6 +21,8 @@ class DashboardController extends Controller
         abort_unless($applicant, 403);
 
         $respondent = $this->resolveActingRespondent($applicant);
+        // The same unseen items as the header bell; the card counts them all (it used to count only case views).
+        $notifications = $this->unseenNotifications((int) $respondent->id);
 
         $stats = [
             'cases'        => DB::table('respondent_case_views')->where('respondent_id', $respondent->id)->count(),
@@ -34,7 +36,7 @@ class DashboardController extends Controller
                 ->where('rr.respondent_id', $respondent->id)
                 ->where('arr.review_status', 'accepted')
                 ->count(),
-            'notifications'=> $this->countUnseenNotifications($respondent->id),
+            'notifications' => $notifications['count'],
         ];
 
         $recentCases = DB::table('respondent_case_views as v')
@@ -122,8 +124,8 @@ class DashboardController extends Controller
                 'applicant_name' => trim(($reply->applicant_first_name ?? '').' '.($reply->applicant_middle_name ?? '').' '.($reply->applicant_last_name ?? '')),
                 'created_at' => $iso($reply->created_at),
             ])->values()->all(),
-            // The Blade portal header's notification bell; the EUISIS shell has no portal bell, so the home page lists them.
-            'notifications' => $this->unseenNotifications((int) $respondent->id),
+            // The newest unseen items, as the header bell lists them (PortalNotificationFeed).
+            'notifications' => $notifications,
         ]);
     }
 
@@ -199,19 +201,6 @@ class DashboardController extends Controller
         } catch (\Throwable) {
             return url('/case-letters/'.$letterId);
         }
-    }
-
-    private function countUnseenNotifications(int $respondentId): int
-    {
-        return DB::table('respondent_case_views as v')
-            ->where('v.respondent_id', $respondentId)
-            ->whereNotExists(function ($q) use ($respondentId) {
-                $q->from('respondent_notification_reads as r')
-                    ->whereColumn('r.source_id', 'v.id')
-                    ->where('r.type', 'respondent_view')
-                    ->where('r.respondent_id', $respondentId);
-            })
-            ->count();
     }
 
     private function resolveActingRespondent($applicant): Respondent

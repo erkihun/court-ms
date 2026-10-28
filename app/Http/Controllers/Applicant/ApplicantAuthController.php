@@ -207,12 +207,12 @@ class ApplicantAuthController extends Controller
 
         if ($request->expectsJson()) {
             return response()->json([
-                'errors' => ['email' => ['Invalid credentials.']],
+                'errors' => ['email' => [__('auth.failed')]],
             ], 422);
         }
 
         return back()
-            ->withErrors(['email' => 'Invalid credentials.'])
+            ->withErrors(['email' => __('auth.failed')])
             ->withInput($request->only('email', 'login_as'));
     }
 
@@ -221,11 +221,11 @@ class ApplicantAuthController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'redirect' => $target,
-                'message' => 'Signed in.',
+                'message' => __('respondent.login_success'),
             ]);
         }
 
-        return redirect($target)->with('success', 'Signed in.');
+        return redirect($target)->with('success', __('respondent.login_success'));
     }
 
     public function logout(Request $request)

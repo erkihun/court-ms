@@ -119,10 +119,10 @@ final class PortalNotificationFeed
                     ->whereNotExists($unseen('hearing', 'h.id')), 'h.case_id')
                     ->orderBy('h.hearing_at'),
                 'id' => 'h.id',
+                // The notice's date is the hearing's, shown by the bell in the person's calendar.
                 'notice' => fn (object $row): array => $this->notice('hearing', (int) $row->id,
                     $typeTitle('hearing', $row),
-                    trim(__('app.admin_notifications.hearing_on', ['time' => Carbon::parse($row->hearing_at)->translatedFormat('M j, Y H:i')])
-                        .($row->location ? ' · '.$row->location : '')),
+                    AdminNotificationFeed::hearingDetail($row),
                     $caseUrl($row), $row->hearing_at),
             ],
             'message' => [

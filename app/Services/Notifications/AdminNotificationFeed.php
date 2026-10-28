@@ -127,15 +127,17 @@ final class AdminNotificationFeed
             'hearing' => [
                 'query' => $this->scope(DB::table('case_hearings as h')
                     ->join('court_cases as c', 'c.id', '=', 'h.case_id')
-                    ->select('h.id', 'h.hearing_at', 'h.created_at', 'c.id as case_id', 'c.case_number')
+                    ->select('h.id', 'h.hearing_at', 'h.type', 'h.location', 'h.created_at', 'c.id as case_id', 'c.case_number')
                     ->where('c.assigned_user_id', $uid)
                     ->whereBetween('h.hearing_at', [now(), now()->addDays(14)])
                     ->whereNotExists($unseen('hearing', 'h.id')))
                     ->orderBy('h.hearing_at'),
                 'id' => 'h.id',
+                // The notice's date is the hearing's, shown by the bell in the person's calendar;
+                // the text names the kind of hearing and the room.
                 'notice' => fn (object $row): array => $this->notice('hearing', (int) $row->id,
                     __('app.admin_notifications.types.hearing').': '.$row->case_number,
-                    __('app.admin_notifications.hearing_on', ['time' => Carbon::parse($row->hearing_at)->translatedFormat('M j, Y H:i')]),
+                    self::hearingDetail($row),
                     $caseUrl((int) $row->case_id), $row->hearing_at),
             ],
             'respondent_view' => [
@@ -167,6 +169,14 @@ final class AdminNotificationFeed
             'read' => false,
             'created_at' => $at ? Carbon::parse($at)->toIso8601String() : null,
         ];
+    }
+
+    /** "Preliminary · Courtroom 2", or the word "Hearing" when neither is recorded. */
+    public static function hearingDetail(object $row): string
+    {
+        $parts = array_filter([trim((string) ($row->type ?? '')), trim((string) ($row->location ?? ''))], fn (string $part): bool => $part !== '');
+
+        return $parts !== [] ? implode(' · ', $parts) : (string) __('app.admin_notifications.types.hearing');
     }
 
     private function forgetCount(): void
