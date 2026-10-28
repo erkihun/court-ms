@@ -26,11 +26,15 @@
     <title>{{ $t('title') }} — {{ $case->case_number }}</title>
     <style>
         @page { margin: 26mm 16mm 20mm 16mm; }
+        {{-- One face for every style: the font has no italic or bold of its own, and a missing style would
+             fall back to DejaVu, which has no Ethiopic letters (they printed as boxes). --}}
+        @foreach ([['normal', 'normal'], ['italic', 'normal'], ['normal', 'bold'], ['italic', 'bold']] as [$style, $weight])
         @font-face {
             font-family: 'Abyssinica';
             src: url('{{ public_path('fonts/AbyssinicaSIL-Regular.ttf') }}') format('truetype');
-            font-style: normal; font-weight: normal;
+            font-style: {{ $style }}; font-weight: {{ $weight }};
         }
+        @endforeach
         * { font-family: 'Abyssinica', 'DejaVu Serif', serif; }
         body { color: #0f172a; font-size: 10.5pt; line-height: 1.5; }
         .page-header { position: fixed; top: -18mm; left: 0; right: 0; height: 12mm; border-bottom: 1px solid #cbd5e1; font-size: 8.5pt; color: #475569; }
@@ -53,7 +57,7 @@
         .list { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
         .list th, .list td { border: 1px solid #cbd5e1; padding: 1.5mm 2mm; text-align: left; vertical-align: top; }
         .list th { background: #f1f5f9; }
-        .empty { font-size: 9pt; color: #94a3b8; font-style: italic; }
+        .empty { font-size: 9.5pt; color: #64748b; }
         .badge { display: inline-block; border: 1px solid #94a3b8; border-radius: 3px; padding: 0 2mm; font-size: 8.5pt; }
     </style>
 </head>
@@ -106,7 +110,7 @@
     </div>
 
     {{-- 2. The case at this court --}}
-    <div class="section break">
+    <div class="section">
         <h2>{{ $next() }}. {{ $t('the_case') }}</h2>
         <table class="kv">
             <tr><td class="k">{{ $t('case_number') }}</td><td>{{ $case->case_number }}</td></tr>
@@ -152,7 +156,7 @@
     </div>
 
     {{-- 4. Hearings and the bench's signed notes --}}
-    <div class="section break">
+    <div class="section">
         <h2>{{ $next() }}. {{ $t('hearings') }}</h2>
         @forelse($hearings as $hearing)
             <div class="card">
@@ -196,7 +200,7 @@
     </div>
 
     {{-- 6. The decision --}}
-    <div class="section break">
+    <div class="section">
         <h2>{{ $next() }}. {{ $t('decision') }}</h2>
         @if($decision)
             <div class="meta">{{ $decision->name }} · {{ $fmt($decision->decision_date ?? $decision->created_at) }}</div>
@@ -240,7 +244,7 @@
                         <td>{{ $annex['title'] }}</td>
                         <td>{{ $t('stages.'.$annex['stage']) }}</td>
                         <td>{{ $annex['date'] ?? '—' }}</td>
-                        <td>{{ ($annex['page'] ?? null) ? $t('from_page', ['page' => $annex['page'], 'count' => $annex['pages']]) : $t('separately') }}</td>
+                        <td>{{ ($annex['page'] ?? null) ? trans_choice('appeal_records.bundle.from_page', (int) $annex['pages'], ['page' => $annex['page'], 'count' => $annex['pages']]) : $t('separately') }}</td>
                     </tr>
                 @endforeach
             </table>

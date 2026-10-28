@@ -622,7 +622,7 @@ const lang: Record<string, unknown> = {
             "stage": "ደረጃ",
             "date": "ቀን",
             "page": "ገጽ",
-            "from_page": "ገጽ :page (:count ገጾች)",
+            "from_page": "ገጽ :page (:count ገጽ)|ገጽ :page (:count ገጾች)",
             "separately": "ለብቻው የሚሰጥ",
             "no_annexes": "ሰነድ የለም።",
             "stages": {

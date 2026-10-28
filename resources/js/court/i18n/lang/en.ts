@@ -622,7 +622,7 @@ const lang: Record<string, unknown> = {
             "stage": "Stage",
             "date": "Date",
             "page": "Page",
-            "from_page": "Page :page (:count pages)",
+            "from_page": "Page :page (:count page)|Page :page (:count pages)",
             "separately": "Provided separately",
             "no_annexes": "No documents.",
             "stages": {

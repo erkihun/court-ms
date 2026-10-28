@@ -10,6 +10,7 @@ use App\Models\Role;
 use App\Models\User;
 use App\Services\AppealRecordBundle;
 use App\Services\AppealRecords;
+use App\Services\PdfNormalizer;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +19,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia;
 use setasign\Fpdi\Fpdi;
+use setasign\Fpdi\PdfParser\CrossReference\CrossReferenceException;
 use setasign\Fpdi\PdfParser\StreamReader;
 
 /*
@@ -63,6 +65,31 @@ function appealPdf(string $text = 'Annex'): string
 function appealPages(string $pdf): int
 {
     return (new Fpdi)->setSourceFile(StreamReader::createByString($pdf));
+}
+
+/**
+ * A one-page PDF as Word or a scanner saves it (PDF 1.5+): the catalog, page tree and page
+ * kept in a compressed object stream, found through a cross-reference stream.
+ */
+function appealObjectStreamPdf(): string
+{
+    $content = 'BT /F1 12 Tf 20 100 Td (Scanned letter) Tj ET';
+    $inner = ['<< /Type /Catalog /Pages 2 0 R >>', '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+        '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 200] /Contents 4 0 R /Resources << >> >>'];
+    $body = '';
+    $header = '';
+    foreach ($inner as $i => $object) {
+        $header .= ($i + 1).' '.strlen($body).' ';
+        $body .= $object."\n";
+    }
+    $packed = gzcompress($header.$body);
+    $pdf = "%PDF-1.7\n";
+    $pdf .= "4 0 obj\n<< /Length ".strlen($content)." >>\nstream\n{$content}\nendstream\nendobj\n";
+    $pdf .= "5 0 obj\n<< /Type /ObjStm /N 3 /First ".strlen($header).' /Filter /FlateDecode /Length '.strlen($packed)." >>\nstream\n{$packed}\nendstream\nendobj\n";
+    $xref = strlen($pdf);
+    $pdf .= "6 0 obj\n<< /Type /XRef /Size 7 /Root 1 0 R /W [1 4 2] /Length 0 >>\nstream\n\nendstream\nendobj\n";
+
+    return $pdf."startxref\n{$xref}\n%%EOF\n";
 }
 
 /** A case filed from EUISIS with a grievance and a discipline case; returns [case id, the three panel judges]. */
@@ -167,6 +194,15 @@ test('the appeal record merges the documents as annexes and lists the ones it ca
 
     // One page more: the readable annex; the damaged one is listed as provided separately.
     expect(appealPages($bundle->build(CourtCase::query()->findOrFail($caseId))))->toBe($without + 1);
+
+    // A PDF kept in compressed object streams, which the free FPDI parser cannot read, is rewritten plain and merged.
+    $scan = appealObjectStreamPdf();
+    expect(fn () => appealPages($scan))->toThrow(CrossReferenceException::class)
+        ->and(appealPages((string) PdfNormalizer::normalize($scan)))->toBe(1)
+        ->and(PdfNormalizer::normalize('%PDF-1.4 /Encrypt 9 0 R'))->toBeNull();
+    Storage::disk('private')->put('cases/scan.pdf', $scan);
+    DB::table('case_evidences')->insert(['case_id' => $caseId, 'type' => 'document', 'title' => 'Scanned letter', 'path' => 'cases/scan.pdf', 'file_path' => 'cases/scan.pdf', 'mime' => 'application/pdf', 'created_at' => now(), 'updated_at' => now()]);
+    expect(appealPages($bundle->build(CourtCase::query()->findOrFail($caseId))))->toBe($without + 2);
 });
 
 test('the appellate outcome is recorded and scores the judges of the panel in their evaluation', function (): void {

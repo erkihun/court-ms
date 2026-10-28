@@ -144,13 +144,19 @@ final class AppealRecordBundle
 
         return $items->map(function (array $item): array {
             $contents = $this->read((string) $item['path']);
+            $pages = $contents !== null ? $this->pageCount($contents) : null;
+            // Most PDFs saved by Word or a scanner keep their objects in compressed streams,
+            // which the free FPDI parser cannot read: rewritten plain, they merge.
+            if ($contents !== null && $pages === null && ($plain = PdfNormalizer::normalize($contents)) !== null && ($plainPages = $this->pageCount($plain)) !== null) {
+                [$contents, $pages] = [$plain, $plainPages];
+            }
 
             return [
                 'title' => $item['title'],
                 'stage' => $item['stage'],
                 'date' => $item['date'] ? Carbon::parse($item['date'])->toDateString() : null,
-                'contents' => $contents,
-                'pages' => $contents !== null ? $this->pageCount($contents) : null,
+                'contents' => $pages !== null ? $contents : null,
+                'pages' => $pages,
             ];
         })->values()->all();
     }
@@ -202,7 +208,9 @@ final class AppealRecordBundle
                 $pdf->SetFont('Helvetica', '', 8);
                 $pdf->SetTextColor(71, 85, 105);
                 $pdf->SetXY(8, 4);
-                $pdf->Cell($size['width'] - 16, 4, sprintf('Annex %d  |  %s  |  %d/%d', $annex, preg_replace('/[^\x20-\x7E]/', '', $caseNumber), $page, $count), 0, 0, 'R');
+                // The core fonts have no Ethiopic letters: a number such as "ይ/00173/26" is stamped "Case 00173/26".
+                $ascii = trim((string) preg_replace('/[^\x20-\x7E]/', '', $caseNumber), ' /-');
+                $pdf->Cell($size['width'] - 16, 4, sprintf('Annex %d  |  Case %s  |  %d/%d', $annex, $ascii, $page, $count), 0, 0, 'R');
             }
         }
     }
