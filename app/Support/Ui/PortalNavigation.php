@@ -27,6 +27,7 @@ final class PortalNavigation
                 'items' => [
                     ['route' => 'applicant.cases.index', 'label_key' => 'cm.app.my_cases', 'icon' => 'ClipboardListIcon'],
                     ['route' => 'applicant.cases.create', 'label_key' => 'cm.app.new_case', 'icon' => 'FilePenIcon'],
+                    ['route' => 'applicant.response-replies.index', 'label_key' => 'cm.respondent.applicant_response_replies', 'icon' => 'ClipboardTextIcon'],
                     ['route' => 'applicant.notifications.index', 'label_key' => 'cm.app.notifications', 'icon' => 'ClipboardClockIcon'],
                     ['route' => 'applicant.profile.edit', 'label_key' => 'cm.app.profile', 'icon' => 'UserCircleIcon'],
                 ],
