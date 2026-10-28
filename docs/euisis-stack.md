@@ -7,17 +7,15 @@ command palette, language and theme switches). It stays its own application
 with its own database; what it shares with EUISIS is the frontend foundation,
 copied verbatim the way the EUISIS Core platform does it.
 
-## The two builds
+## The build
 
-| | React screens | Blade screens (legacy, until they move) |
-|---|---|---|
-| Config | `vite.config.js` | `vite.legacy.config.js` |
-| Output | `public/build` | `public/build-legacy` |
-| Styles | Tailwind 4 (`resources/css/app.css`, from EUISIS) | Tailwind 3 (`tailwind.config.js`, `resources/legacy/css`) under the npm alias `tailwindcss-v3` |
-| Loaded by | `resources/views/inertia.blade.php` | `@vite([...], 'build-legacy')` in the Blade layouts |
-
-`npm run build` builds both. `npm run dev` serves the React build;
-`npm run dev:legacy` the Blade one.
+One Vite build (`vite.config.js`) into `public/build`: Tailwind 4
+(`resources/css/app.css`, from EUISIS), loaded by
+`resources/views/inertia.blade.php`. `npm run build` type-checks and builds;
+`npm run dev` serves it with hot reload. The Blade/Alpine/Tailwind 3 build
+that served the screens during the move (`vite.legacy.config.js`,
+`resources/legacy`, `public/build-legacy`) is gone, with its layouts,
+components and npm packages.
 
 ## What comes from EUISIS, and how
 
@@ -66,41 +64,51 @@ Everything under `resources/js/court/` and `resources/js/Pages/Court/`:
   keeps development routes out). A route EUISIS has and court-ms does not
   resolves to `#`.
 - `notifications.feed`, `notifications.read`, `notifications.read-all`
-  (`Admin\NotificationFeedController`) feed the header bell with the same
-  items as the Blade notifications page.
+  (`Admin\NotificationFeedController`) feed the staff header bell with the
+  same items as the notifications page. In the portals the bell reads
+  `applicant.notifications.*` or `respondent.notifications.*`
+  (`PortalNotificationFeedController`,
+  `App\Services\Notifications\PortalNotificationFeed`), over the same seen
+  rows as the portal pages; `PortalNavigation::routes()` hands the bell those
+  route names through the shared `portal` prop.
 
 ## Where the move stands
 
-The whole staff application is on the EUISIS stack (React): sign-in and the
-account pages, the dashboard, notifications, every register and its forms
-and pages (cases and the case page, hearings, decisions and decision
-templates, letters, letter templates and categories, appeals, inspections,
-bench notes, records, applicants, users, teams, roles, permissions, case
-types, announcements, terms, About pages), reports, the audit trail and the
-system settings.
+Every screen is on the EUISIS stack (React):
 
-The applicant and respondent portals use the same shell:
-`App\Support\Ui\PortalNavigation` tells `HandleInertiaRequests` which portal a
-request belongs to, the signed-in person comes from the `applicant` guard,
-and the sidebar and the header's home, profile and sign-out are the portal's
-own (shared prop `portal`).
+- the staff application: sign-in and the account pages (forgot password,
+  reset code, reset, registration), the dashboard, notifications, every
+  register and its forms and pages (cases and the case page, hearings,
+  decisions and decision templates, letters, letter templates and categories,
+  appeals, inspections, bench notes, records, applicants, users, teams,
+  roles, permissions, case types, announcements, terms, About pages),
+  reports, the audit trail, the system settings and the landing-page manager;
+- the applicant and respondent portals, in the same shell:
+  `App\Support\Ui\PortalNavigation` tells `HandleInertiaRequests` which
+  portal a request belongs to, the signed-in person comes from the
+  `applicant` guard, and the sidebar and the header's home, profile,
+  sign-out and notification bell are the portal's own (shared prop
+  `portal`). The applicant's printable filing receipt is a React page too;
+- the public site: home, resources, terms, the user manual and the signage
+  board, in `court/public/PublicLayout` (header, footer and manual link from
+  the landing manager's settings, `App\Support\Ui\PublicSiteChrome`).
 
-Kept as Blade on purpose: documents, not screens — mail templates
-(`resources/views/mail`), PDFs (`resources/views/pdf`,
-`admin/recordes/record-pdf`), the printable letter (`admin/letters/preview`
-and its inline partial) and error pages.
+Kept as Blade on purpose: documents, not screens. These are the mail
+templates (`resources/views/mail`), the PDFs (`resources/views/pdf`,
+`admin/recordes/record-pdf`, `applicant/cases/receipt-pdf`), the printable
+letter (`admin/letters/preview` and its inline partial), the Inertia root
+view and the error pages.
 
-## Moving a screen
+## Adding a screen
 
 1. Make the controller `return Inertia::render('Court/<Name>', [...])` with
-   plain arrays (dates as ISO 8601 strings).
-2. Write `resources/js/Pages/Court/<Name>.tsx` on `AuthenticatedLayout`,
-   `PageHeader` and the `@/Components/ui` kit; text through `t('cm.…')`.
+   plain arrays (dates as ISO 8601 strings, rich text cleaned on the server).
+2. Write `resources/js/Pages/Court/<Name>.tsx` on `AuthenticatedLayout`
+   (or `PublicLayout` for a public page), `PageHeader` and the
+   `@/Components/ui` kit; text through `t('cm.…')`.
 3. Add the props type under `court/types/`, run `npm run typecheck`,
+   `php artisan ziggy:generate resources/js/ziggy.js` for new routes,
    `npm run build`, and the feature tests (`DB_DATABASE=court_ms_test`),
-   asserting with `assertInertia` instead of `assertViewHas`.
-4. Delete the Blade view. When the last Blade screen is gone, delete
-   `vite.legacy.config.js`, `resources/legacy`, `tailwind.config.js` and the
-   legacy npm dependencies.
+   asserting with `assertInertia`.
 
 Laravel is upgraded to 13 last, once the production host runs PHP ≥ 8.3.
