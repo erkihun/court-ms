@@ -35,7 +35,7 @@ const sectionFromHash = (): CaseSection | null => {
  * respondent responses and the applicant's replies.
  */
 export default function CaseShow(props: CaseDetailProps) {
-    const { case: kase, can, caseLocked, statuses, euisis } = props;
+    const { case: kase, can, caseLocked, statuses, euisis, euisisRecord } = props;
     const { t } = useCaseText();
     const title = t('cm.cases.case_details');
     const { main, quick } = useSectionItems(can);
@@ -102,7 +102,7 @@ export default function CaseShow(props: CaseDetailProps) {
                         <SectionNav active={active} can={can} onOpen={openSection} />
                     </div>
                     <div className="space-y-6 lg:col-span-9">
-                        {active === 'case-summary' && <SummarySection kase={kase} hearings={props.hearings} euisis={euisis} />}
+                        {active === 'case-summary' && <SummarySection kase={kase} hearings={props.hearings} euisis={euisis} euisisRecord={euisisRecord} />}
                         {active === 'case-details' && <DetailsSection kase={kase} docs={props.docs} witnesses={props.witnesses} termsItems={props.termsItems} canEdit={can.editStatus} caseLocked={caseLocked} />}
                         {active === 'timeline' && <TimelineSection timeline={props.timeline} />}
                         {active === 'audits' && <AuditSection audits={props.audits} />}

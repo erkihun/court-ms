@@ -207,6 +207,25 @@ export interface EuisisPanelData {
     notice: string | null;
 }
 
+/** Flow 5: the grievances an employee attached when filing from the EUISIS employee portal. */
+export interface EuisisGrievanceRecord {
+    id: number;
+    reference: string | null;
+    subject: string;
+    category: string | null;
+    status: string | null;
+    description: string | null;
+    submitted_at: string | null;
+    closed_at: string | null;
+    responses: Array<{ body: string; at: string | null }>;
+    decisions: Array<{ number: string | null; type: string | null; text: string; at: string | null }>;
+}
+
+export interface EuisisRecordData {
+    filed_from_euisis: boolean;
+    grievances: EuisisGrievanceRecord[];
+}
+
 export interface CaseDetailProps {
     case: CaseDetailCase;
     can: CaseDetailPermissions;
@@ -231,6 +250,7 @@ export interface CaseDetailProps {
     inspectionRequests: InspectionRequestRow[];
     inspectionFindings: InspectionFindingRow[];
     euisis: EuisisPanelData | null;
+    euisisRecord: EuisisRecordData | null;
     errors?: Record<string, string> & { euisis?: Record<string, string> };
     [key: string]: unknown;
 }

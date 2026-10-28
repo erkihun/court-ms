@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { StatusBadge as UiStatusBadge } from '@euisis/ui';
 import LocalizedDateDisplay from '@/Components/Calendar/LocalizedDateDisplay';
 import { Alert, buttonClassName } from '@/Components/ui';
-import type { CaseDetailCase, CaseHearing, EuisisPanelData } from '@/court/types/caseDetail';
+import type { CaseDetailCase, CaseHearing, EuisisPanelData, EuisisRecordData } from '@/court/types/caseDetail';
 import EuisisPanel from './EuisisPanel';
+import EuisisRecordPanel from './EuisisRecordPanel';
 import SectionCard, { MetaTile } from './SectionCard';
 import { REVIEW_TONES, STATUS_TONES, useCaseText } from './useCaseText';
 import { CalendarIcon, CloseIcon, ExternalIcon, EyeIcon, FilesIcon, UserIcon, UsersIcon, WarningIcon } from './icons';
@@ -12,13 +13,14 @@ interface Props {
     kase: CaseDetailCase;
     hearings: CaseHearing[];
     euisis: EuisisPanelData | null;
+    euisisRecord?: EuisisRecordData | null;
 }
 
 const stripTags = (html: string): string => html.replace(/<[^>]*>/g, '');
 const limit = (text: string, max: number): string => (text.length > max ? `${text.slice(0, max)}...` : text);
 
 /** The case summary: key facts, the lawyer notice, the parties, the EUISIS panel, hearings, assignment and timestamps. */
-export default function SummarySection({ kase, hearings, euisis }: Props) {
+export default function SummarySection({ kase, hearings, euisis, euisisRecord = null }: Props) {
     const { t, statusLabel, reviewLabel, fill } = useCaseText();
     const [pdfOpen, setPdfOpen] = useState(false);
 
@@ -102,6 +104,7 @@ export default function SummarySection({ kase, hearings, euisis }: Props) {
             </div>
 
             {euisis && <EuisisPanel caseId={kase.id} panel={euisis} />}
+            {euisisRecord && <EuisisRecordPanel record={euisisRecord} />}
 
             <div className="border-t border-(--app-border) pt-4">
                 <div className="mb-2 text-xs font-medium uppercase tracking-wide text-(--app-muted-foreground)">{t('cm.cases.summary.hearings')}</div>

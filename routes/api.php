@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CaseController;
 use App\Http\Controllers\Api\CaseMessageController;
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\Integration\EuisisLetterController;
 use App\Http\Controllers\Api\Integration\EuisisPeopleController;
 use App\Http\Controllers\Api\Integration\EuisisReferralController;
 use App\Http\Controllers\Api\LookupController;
@@ -57,4 +58,13 @@ Route::prefix('v1/integration')
             ->middleware('integration.client:people:read');
         Route::post('/people/sign-in-tickets', [EuisisPeopleController::class, 'signInTicket'])
             ->middleware(['integration.client:people:sign-in', 'throttle:60,1']);
+
+        // Flow 5: employees file from the EUISIS employee portal; court letters for EUISIS institutions.
+        Route::post('/people/cases', [EuisisPeopleController::class, 'fileCase'])
+            ->middleware(['integration.client:people:file', 'throttle:30,1']);
+        Route::get('/letters/updates', [EuisisLetterController::class, 'updates'])
+            ->middleware('integration.client:letters:read');
+        Route::get('/letters/{letter}/pdf', [EuisisLetterController::class, 'pdf'])
+            ->whereNumber('letter')
+            ->middleware('integration.client:letters:read');
     });

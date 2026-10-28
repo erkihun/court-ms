@@ -1336,6 +1336,20 @@ const lang: Record<string, unknown> = {
         },
         "errors": {
             "no_case_access": "You do not have access to this case."
+        },
+        "file_in_euisis": "New cases are filed from your EUISIS employee portal (My Portal > My court cases). Only employees and institutions registered in EUISIS can sue or be sued.",
+        "euisis_record": {
+            "title": "EUISIS grievance record",
+            "description": "The grievances the employee raised in EUISIS before filing, with the answers and decisions they received.",
+            "reference": "Reference",
+            "submitted": "Submitted",
+            "closed": "Closed",
+            "status": "Status",
+            "category": "Category",
+            "responses": "Responses",
+            "decisions": "Decisions",
+            "none": "No grievance record came with this case.",
+            "filed_from_euisis": "Filed by the employee from the EUISIS employee portal."
         }
     },
     "chat": {

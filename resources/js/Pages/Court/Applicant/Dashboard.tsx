@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { useState, type ReactNode } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import PageHeader from '@/Components/PageHeader';
@@ -57,6 +57,8 @@ function Empty({ children }: { children: ReactNode }) {
  */
 export default function ApplicantDashboard({ applicant, today, counts, recent, letters, responses, responseReplies, decisions }: ApplicantDashboardProps) {
     const { t, tx } = useApplicantPagesText();
+    // Only EUISIS employees and institutions are parties: new cases are filed from the EUISIS employee portal.
+    const filesInEuisis = Boolean((usePage().props as { portal?: { filesInEuisis?: boolean } | null }).portal?.filesInEuisis);
     const [panel, setPanel] = useState<Panel>('recent');
 
     const name = applicant.name ?? t('cm.applicant.user');
@@ -101,9 +103,13 @@ export default function ApplicantDashboard({ applicant, today, counts, recent, l
                     <Card className="h-fit">
                         <h3 className="mb-4 text-base font-semibold text-(--app-foreground)">{t('cm.dashboard.quick_actions')}</h3>
                         <div className="space-y-2">
-                            <a href={route('applicant.cases.create')} className={buttonClassName({ variant: 'primary', className: 'w-full justify-start gap-2' })}>
-                                <Plus className="h-5 w-5" /><span>{t('cm.dashboard.submit_new_case')}</span>
-                            </a>
+                            {filesInEuisis ? (
+                                <p className="rounded-lg border border-(--app-border) bg-(--app-surface-muted) p-3 text-sm text-(--app-muted-foreground)">{t('cm.cases.file_in_euisis')}</p>
+                            ) : (
+                                <a href={route('applicant.cases.create')} className={buttonClassName({ variant: 'primary', className: 'w-full justify-start gap-2' })}>
+                                    <Plus className="h-5 w-5" /><span>{t('cm.dashboard.submit_new_case')}</span>
+                                </a>
+                            )}
                             {actions.map((action) => (
                                 <button
                                     key={action.id}
@@ -132,7 +138,9 @@ export default function ApplicantDashboard({ applicant, today, counts, recent, l
                                         <ClipboardListIcon className="mx-auto h-12 w-12 text-(--app-muted-foreground) opacity-40" />
                                         <h4 className="mt-4 text-lg font-medium text-(--app-foreground)">{t('cm.dashboard.no_cases_yet')}</h4>
                                         <p className="mx-auto mt-2 max-w-sm text-sm text-(--app-muted-foreground)">{t('cm.dashboard.no_cases_description')}</p>
-                                        <a href={route('applicant.cases.create')} className={buttonClassName({ variant: 'primary', className: 'mt-6 gap-2' })}><Plus className="h-5 w-5" />{t('cm.dashboard.submit_first_case')}</a>
+                                        {filesInEuisis
+                                            ? <p className="mx-auto mt-4 max-w-sm text-sm text-(--app-muted-foreground)">{t('cm.cases.file_in_euisis')}</p>
+                                            : <a href={route('applicant.cases.create')} className={buttonClassName({ variant: 'primary', className: 'mt-6 gap-2' })}><Plus className="h-5 w-5" />{t('cm.dashboard.submit_first_case')}</a>}
                                     </div>
                                 ) : (
                                     <>

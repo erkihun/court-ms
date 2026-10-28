@@ -10,6 +10,7 @@ use App\Models\EuisisReferral;
 use App\Models\IntegrationClient;
 use App\Services\Euisis\CaseUpdateRecorder;
 use App\Services\Euisis\ReferralService;
+use App\Support\EuisisParties;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -41,12 +42,13 @@ class EuisisReferralController extends Controller
             'relief_requested' => ['nullable', 'string', 'max:5000'],
             'complainant' => ['required', 'array'],
             'complainant.name' => ['required', 'string', 'max:255'],
-            'complainant.employee_uuid' => ['nullable', 'uuid'],
+            // With EUISIS parties only, the complainant is an EUISIS employee and the respondent an EUISIS institution.
+            'complainant.employee_uuid' => [EuisisParties::only() ? 'required' : 'nullable', 'uuid'],
             'complainant.phone' => ['nullable', 'string', 'max:40'],
             'complainant.email' => ['nullable', 'email', 'max:255'],
             'respondent' => ['required', 'array'],
             'respondent.name' => ['required', 'string', 'max:255'],
-            'respondent.organization_uuid' => ['nullable', 'uuid'],
+            'respondent.organization_uuid' => [EuisisParties::only() ? 'required' : 'nullable', 'uuid'],
             'respondent.address' => ['nullable', 'string', 'max:500'],
             'referring_officer' => ['nullable', 'string', 'max:255'],
             'documents' => ['nullable', 'array', 'max:10'],

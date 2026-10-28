@@ -257,7 +257,7 @@ class LetterController extends Controller
     {
         // An approved letter has been sent to the parties; it is no longer editable.
         if ($letter->approval_status === 'approved') {
-            return redirect()->route('letters.index')->with('error', 'messages.error.approved_letter_update_locked');
+            return redirect()->route('letters.index')->with('error', __('messages.error.approved_letter_update_locked'));
         }
 
         $letter->load('template');
@@ -296,7 +296,7 @@ class LetterController extends Controller
     public function update(Request $request, Letter $letter)
     {
         if ($letter->approval_status === 'approved') {
-            return back()->with('error', 'messages.error.approved_letter_update_locked');
+            return back()->with('error', __('messages.error.approved_letter_update_locked'));
         }
 
         $data = $request->validate([
@@ -479,7 +479,7 @@ class LetterController extends Controller
         // An approved letter has been sent to the parties; it can no longer change state
         // (deciding it again re-sent the approval emails).
         if ($letter->approval_status === 'approved') {
-            return back()->with('error', 'messages.error.approved_letter_update_locked');
+            return back()->with('error', __('messages.error.approved_letter_update_locked'));
         }
 
         $letter->update([
@@ -491,6 +491,8 @@ class LetterController extends Controller
         if ($data['status'] === 'approved') {
             $this->notifyPartiesOfApprovedLetter($letter);
             $this->createSystemCaseMessage($letter, $user?->id);
+            // A letter to an EUISIS institution also goes to EUISIS, which delivers it (Flow 5).
+            app(\App\Services\Euisis\LetterDeliveries::class)->record($letter);
         }
 
         return redirect()->route('letters.index')->with('success', [

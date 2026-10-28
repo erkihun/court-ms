@@ -78,6 +78,11 @@ class ApplicantCaseController extends Controller
      */
     public function create()
     {
+        // With EUISIS parties only, employees file from the EUISIS employee portal (Flow 5).
+        if (\App\Support\EuisisParties::only()) {
+            return redirect()->route('applicant.cases.index')->with('info', __('cases.file_in_euisis'));
+        }
+
         $types  = DB::table('case_types')->orderBy('name')->get(['id', 'name', 'prefix']);
         $activeTerms = TermsAndCondition::published()->orderByDesc('published_at')->first();
         $applicant = auth('applicant')->user();
@@ -154,6 +159,11 @@ class ApplicantCaseController extends Controller
     {
         $aid = auth('applicant')->id();
         abort_if(!$aid, 403);
+
+        // With EUISIS parties only, employees file from the EUISIS employee portal (Flow 5).
+        if (\App\Support\EuisisParties::only()) {
+            return redirect()->route('applicant.cases.index')->with('info', __('cases.file_in_euisis'));
+        }
 
         $activeTerms = TermsAndCondition::published()->orderByDesc('published_at')->first();
 

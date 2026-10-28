@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import PageHeader from '@/Components/PageHeader';
@@ -20,6 +20,8 @@ import { EyeIcon, PlusIcon, TrashIcon } from '../../Cases/Show/icons';
  */
 export default function ApplicantCasesIndex({ cases }: ApplicantCaseIndexProps) {
     const { t, text, statusLabel, reviewLabel } = useApplicantCaseText();
+    // Only EUISIS employees and institutions are parties: new cases are filed from the EUISIS employee portal.
+    const filesInEuisis = Boolean((usePage().props as { portal?: { filesInEuisis?: boolean } | null }).portal?.filesInEuisis);
     const { confirm } = useConfirm();
     const [deleting, setDeleting] = useState<number | null>(null);
     const title = t('cm.cases.my_cases');
@@ -47,7 +49,7 @@ export default function ApplicantCasesIndex({ cases }: ApplicantCaseIndexProps) 
                 actions={(
                     <>
                         <Link href={route('applicant.response-replies.index')} className={buttonClassName({ variant: 'outline' })}>{t('cm.respondent.applicant_response_replies')}</Link>
-                        <Link href={route('applicant.cases.create')} className={buttonClassName({ variant: 'primary' })}><PlusIcon className="mr-1.5 h-4 w-4" />{t('cm.cases.new_case')}</Link>
+                        {!filesInEuisis && <Link href={route('applicant.cases.create')} className={buttonClassName({ variant: 'primary' })}><PlusIcon className="mr-1.5 h-4 w-4" />{t('cm.cases.new_case')}</Link>}
                     </>
                 )}
             />

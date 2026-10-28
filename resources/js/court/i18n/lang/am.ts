@@ -1341,6 +1341,20 @@ const lang: Record<string, unknown> = {
         "errors": {
             "no_case_access": "ይህን መዝገብ የማየት ወይም የመቀየር ፈቃድ የለዎትም።"
         },
+        "file_in_euisis": "አዲስ ክስ የሚቀርበው ከEUISIS የሠራተኛ ፖርታልዎ ነው (የእኔ ፖርታል > የፍርድ ቤት ጉዳዮቼ)። በEUISIS የተመዘገቡ ሠራተኞችና ተቋማት ብቻ መክሰስና መከሰስ ይችላሉ።",
+        "euisis_record": {
+            "title": "የEUISIS የቅሬታ መዝገብ",
+            "description": "ሠራተኛው ክስ ከማቅረቡ በፊት በEUISIS ያቀረባቸው ቅሬታዎች፣ የተሰጡት ምላሾችና ውሳኔዎች።",
+            "reference": "መለያ ቁጥር",
+            "submitted": "የቀረበበት ቀን",
+            "closed": "የተዘጋበት ቀን",
+            "status": "ሁኔታ",
+            "category": "ዓይነት",
+            "responses": "ምላሾች",
+            "decisions": "ውሳኔዎች",
+            "none": "ከዚህ ክስ ጋር የመጣ የቅሬታ መዝገብ የለም።",
+            "filed_from_euisis": "ሠራተኛው ከEUISIS የሠራተኛ ፖርታል ያቀረበው ክስ።"
+        },
         "not_available": "የለም"
     },
     "chat": {

@@ -233,10 +233,11 @@ final class EmployeeCourtAccess
             'first_name' => (string) $employee['first_name'],
             'middle_name' => (string) ($employee['middle_name'] ?? ''),
             'last_name' => (string) $employee['last_name'],
-            'gender' => in_array($employee['gender'] ?? null, ['male', 'female'], true) ? $employee['gender'] : null,
+            // Gender and address are required columns (2026_02_04 migration: 'other' and '' when unknown).
+            'gender' => in_array($employee['gender'] ?? null, ['male', 'female'], true) ? $employee['gender'] : 'other',
             'position' => $employee['position'] ?? null,
             'organization_name' => $employee['organization_name'] ?? null,
-            'address' => $employee['address'] ?? null,
+            'address' => (string) ($employee['address'] ?? ''),
             'phone' => $phone,
             'email' => $email,
             'national_id_number' => $nationalId,

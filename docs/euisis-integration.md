@@ -23,13 +23,14 @@ EUISIS_URL=https://euisis.example.gov.et
 EUISIS_TOKEN=<token of the court-ms application registered in EUISIS API Management>
 EUISIS_TIMEOUT=15
 EUISIS_VERIFY_TLS=true
+# EUISIS_PARTIES_ONLY=true   # on with EUISIS_ENABLED; see "Filing from EUISIS (Flow 5)"
 ```
 
 ```bash
 php artisan migrate
 php artisan euisis:sync            # first run bootstraps the organization cache
 php artisan euisis:integration-token --ip=<EUISIS server IP>   # prints the EUISIS token once
-php artisan euisis:integration-token --refresh-abilities      # an older token gains the Flow 4 abilities, unchanged
+php artisan euisis:integration-token --refresh-abilities      # an older token gains the Flow 4 and 5 abilities, unchanged
 ```
 
 The scheduler must run (`* * * * * php artisan schedule:run`); it runs `euisis:sync`
@@ -76,6 +77,9 @@ Errors are `{message, error_code, request_id}`; `401 unauthenticated`,
 | `GET /api/v1/integration/referrals/updates?since=&limit=` | `referrals:read` | `{data: [{cursor, referral_id, case_number, review_status, review_reason, status, hearing_at, decision_date, decision_summary, changed, occurred_at}], next_cursor, has_more}` |
 | `POST /api/v1/integration/people/court-summary` | `people:read` | Body `{employee: {uuid, national_id?, email?}}`. `{data: {linked: false}}`, or `{data: {linked: true, applicant, counts{cases, open, awaiting_review, upcoming_hearings, unread_notices}, cases[{id, case_number, title, case_type, status, review_status, filed_at, next_hearing_at}], notices[{id, title, message, created_at}]}}`. Reads only |
 | `POST /api/v1/integration/people/sign-in-tickets` | `people:sign-in` | Body `{employee: {uuid, national_id, first_name, middle_name?, last_name, gender?, email, phone, position?, organization_name?, address?}, target}`; `target` is `dashboard`, `cases`, `new_case`, `notifications`, `profile` or `case:<id>` of the employee's own case. `201 {data: {url, expires_at}}`. `409` with `error_code` `linked_to_another_employee`, `identity_mismatch`, `employee_record_incomplete`, `phone_in_use` or `account_inactive`; `404 unknown_target` |
+| `POST /api/v1/integration/people/cases` | `people:file` | Multipart. The employee files a case from the EUISIS employee portal. `employee{…}` as for tickets, `filing_id` (UUID, the idempotency key: `201` the first time, `200` with the same case after), `case_type_id`, `title`, `description`, `relief_requested?`, `respondent{organization_uuid, name, address?}`, `grievances` (a JSON string, ≤ 20: `[{uuid, reference?, subject, category?, status?, description?, submitted_at?, closed_at?, responses[{body, at?}], decisions[{number?, type?, text, at?}]}]`), `documents[]` (PDF, ≤ 10 MB, ≤ 20) with `document_titles[]` and `document_sources[]`. `{data: {case_id, case_number, review_status, status}}`; `409` as for tickets |
+| `GET /api/v1/integration/letters/updates?since=&limit=` | `letters:read` | Approved letters for EUISIS institutions: `{data: [{cursor, letter_id, organization_uuid, case_number, case_title, subject, reference_number, recipient, approved_by, approved_at, pdf_url}], next_cursor, has_more}` |
+| `GET /api/v1/integration/letters/{letter}/pdf` | `letters:read` | The approved letter as a PDF; `404` unless it is in the delivery queue |
 
 How updates are found: the admin screens write cases with query-builder updates, which
 fire no model events, so before each poll (and in `euisis:sync`) court-ms compares each
@@ -104,9 +108,31 @@ file, follow or answer something, asks for a ticket and sends the browser to its
 - **Reading never writes**: the summary links nothing and opens no account. Notices carry
   no links; every link goes through a ticket.
 
+## Filing from EUISIS (Flow 5)
+
+Employees file from their EUISIS employee portal, not from court-ms; a grievance officer
+still refers cases (Flow 2). Only employees and institutions registered in EUISIS may sue
+or be sued.
+
+- **Parties only** (`EUISIS_PARTIES_ONLY`, on with `EUISIS_ENABLED`): the applicant
+  portal hides "New case" and sends `applicant.cases.create`/`store` back to the case list
+  with a notice; a referral needs `complainant.employee_uuid` and
+  `respondent.organization_uuid`. The portal still follows, answers and messages cases.
+- **The filing** (`POST /people/cases`): the employee's court account is found or opened
+  as in Flow 4; the respondent must be in the mirrored EUISIS directory once court-ms has
+  one. The case starts `pending`, `awaiting_review`, with `source = euisis_employee`,
+  `euisis_filing_id` and `respondent_organization_uuid`.
+- **The grievance record**: each attached grievance, with its responses and decisions as
+  plain text, is a row of `case_euisis_grievances`; staff see it on the case summary
+  ("EUISIS grievance record"). The PDFs (complaint evidence, decision letters, the
+  employee's documents) are case documents.
+- **Letters to the institution**: when a letter on a case against an EUISIS institution
+  is approved with "send to respondent", it joins `euisis_letter_deliveries`; EUISIS reads
+  the queue after its cursor with each PDF and delivers it to that institution.
+
 ## Tests
 
-`tests/Feature/Euisis/IntegrationApiTest.php`, `EuisisSyncTest.php` and `EmployeeCourtAccessTest.php`. They run on the
+`tests/Feature/Euisis/IntegrationApiTest.php`, `EuisisSyncTest.php`, `EmployeeCourtAccessTest.php` and `EmployeeFilingTest.php`. They run on the
 `court_ms_test` database from `.env.testing`:
 
 ```bash

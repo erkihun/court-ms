@@ -45,7 +45,7 @@ test('an approved letter cannot be decided again', function (): void {
             ->from(route('letters.index'))
             ->post(route('letters.approve', $letter), ['status' => $status])
             ->assertRedirect(route('letters.index'))
-            ->assertSessionHas('error', 'messages.error.approved_letter_update_locked');
+            ->assertSessionHas('error', __('messages.error.approved_letter_update_locked'));
     }
 
     expect($letter->fresh()->approval_status)->toBe('approved')
@@ -70,7 +70,7 @@ test('the edit page of an approved letter redirects back with a notice', functio
     $this->actingAs($clerk)
         ->get(route('letters.edit', $approved))
         ->assertRedirect(route('letters.index'))
-        ->assertSessionHas('error', 'messages.error.approved_letter_update_locked');
+        ->assertSessionHas('error', __('messages.error.approved_letter_update_locked'));
 
     $this->actingAs($clerk)->get(route('letters.edit', $pending))->assertOk();
 });

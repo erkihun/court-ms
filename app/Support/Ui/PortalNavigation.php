@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Support\Ui;
 
 use App\Models\Applicant;
+use App\Support\EuisisParties;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -92,16 +93,18 @@ final class PortalNavigation
             ->map(fn (array $section): array => [
                 ...$section,
                 'groups' => collect($section['groups'])
-                    ->map(fn (array $group): array => [...$group, 'items' => array_values(array_filter($group['items'], fn (array $item): bool => Route::has($item['route'])))])
+                    // With EUISIS parties only, new cases are filed from the EUISIS employee portal.
+                    ->map(fn (array $group): array => [...$group, 'items' => array_values(array_filter($group['items'], fn (array $item): bool => Route::has($item['route'])
+                        && ! ($item['route'] === 'applicant.cases.create' && EuisisParties::only())))])
                     ->filter(fn (array $group): bool => $group['items'] !== [])
                     ->values()->all(),
             ])
             ->values()->all();
     }
 
-    /** @return array{name: string, home: string, profile: string, logout: string, switch: ?string, feed: string, read: string, readAll: string, viewAll: string} */
+    /** @return array{name: string, home: string, profile: string, logout: string, switch: ?string, feed: string, read: string, readAll: string, viewAll: string, filesInEuisis: bool} */
     public static function routes(string $portal): array
     {
-        return ['name' => $portal, ...self::ROUTES[$portal]];
+        return ['name' => $portal, ...self::ROUTES[$portal], 'filesInEuisis' => EuisisParties::only()];
     }
 }

@@ -1,0 +1,20 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Support;
+
+/**
+ * Only employees and institutions registered in EUISIS may sue or be sued
+ * (services.euisis.parties_only, on with the EUISIS connection). New cases then
+ * come from EUISIS: an employee files from the EUISIS employee portal (Flow 5)
+ * or a grievance officer refers one (Flow 2), always against an EUISIS
+ * institution. The applicant portal keeps following and answering cases.
+ */
+final class EuisisParties
+{
+    public static function only(): bool
+    {
+        return (bool) config('services.euisis.parties_only', false);
+    }
+}

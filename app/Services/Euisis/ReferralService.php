@@ -6,10 +6,8 @@ namespace App\Services\Euisis;
 
 use App\Models\EuisisReferral;
 use App\Models\IntegrationClient;
-use App\Services\SecureUploadService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 /**
  * Opens a court case from an EUISIS tribunal referral
@@ -23,6 +21,7 @@ final class ReferralService
     public function __construct(
         private readonly CaseNumbers $numbers,
         private readonly CaseUpdateRecorder $updates,
+        private readonly CaseDocuments $documents,
     ) {}
 
     /**
@@ -64,7 +63,7 @@ final class ReferralService
             ]);
 
             foreach ($documents as $document) {
-                $this->storeDocument($caseId, $document['file'], $document['title']);
+                $this->documents->store($caseId, $document['file'], $document['title'], 'EUISIS referral');
             }
 
             $complainant = (array) ($data['complainant'] ?? []);
@@ -97,35 +96,5 @@ final class ReferralService
         $parts = preg_split('/\R{2,}/', trim($text)) ?: [];
 
         return implode('', array_map(fn (string $p): string => '<p>'.nl2br(e(trim($p)), false).'</p>', array_filter($parts, fn ($p) => trim($p) !== '')));
-    }
-
-    /** As an applicant's evidence PDF (ApplicantCaseController::store, step 4). */
-    private function storeDocument(int $caseId, UploadedFile $file, string $title): void
-    {
-        $stored = app(SecureUploadService::class)->store($file, 'evidences', 'private', [
-            'related_type' => 'court_case',
-            'related_id' => $caseId,
-        ]);
-
-        $insert = ['case_id' => $caseId, 'type' => 'document', 'created_at' => now(), 'updated_at' => now()];
-        if (Schema::hasColumn('case_evidences', 'file_path')) {
-            $insert['file_path'] = $stored;
-        } elseif (Schema::hasColumn('case_evidences', 'path')) {
-            $insert['path'] = $stored;
-        }
-        if (Schema::hasColumn('case_evidences', 'title')) {
-            $insert['title'] = $title;
-        }
-        if (Schema::hasColumn('case_evidences', 'description')) {
-            $insert['description'] = 'EUISIS referral';
-        }
-        if (Schema::hasColumn('case_evidences', 'mime')) {
-            $insert['mime'] = $file->getClientMimeType() ?: 'application/pdf';
-        }
-        if (Schema::hasColumn('case_evidences', 'size')) {
-            $insert['size'] = $file->getSize();
-        }
-
-        DB::table('case_evidences')->insert($insert);
     }
 }

@@ -24,8 +24,18 @@ class IntegrationClient extends Model
     /** Ask for a one-time ticket that signs an employee into the applicant portal (Flow 4). */
     public const ABILITY_PEOPLE_SIGN_IN = 'people:sign-in';
 
+    /** File a case for an employee from the EUISIS employee portal (Flow 5). */
+    public const ABILITY_PEOPLE_FILE = 'people:file';
+
+    /** Read the letters to deliver to EUISIS institutions (Flow 5). */
+    public const ABILITY_LETTERS_READ = 'letters:read';
+
     /** What a token issued by `euisis:integration-token` may do. */
-    public const DEFAULT_ABILITIES = [self::ABILITY_REFERRALS_CREATE, self::ABILITY_REFERRALS_READ, self::ABILITY_PEOPLE_READ, self::ABILITY_PEOPLE_SIGN_IN];
+    public const DEFAULT_ABILITIES = [
+        self::ABILITY_REFERRALS_CREATE, self::ABILITY_REFERRALS_READ,
+        self::ABILITY_PEOPLE_READ, self::ABILITY_PEOPLE_SIGN_IN, self::ABILITY_PEOPLE_FILE,
+        self::ABILITY_LETTERS_READ,
+    ];
 
     protected $guarded = [];
 

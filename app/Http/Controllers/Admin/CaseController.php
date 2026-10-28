@@ -1056,7 +1056,56 @@ class CaseController extends Controller
                 'details' => $f->details ?? null,
             ])->values()->all(),
             'euisis' => $this->euisisPanelProps($case, $can('cases.edit')),
+            'euisisRecord' => $this->euisisRecordProps($case),
         ];
+    }
+
+    /**
+     * Flow 5: the grievances an employee attached when filing from the EUISIS
+     * employee portal, with the responses and decisions they received there.
+     * Null for a case that did not come from EUISIS and carries no record.
+     */
+    private function euisisRecordProps(object $case): ?array
+    {
+        $filed = ($case->source ?? null) === 'euisis_employee';
+        if (!Schema::hasTable('case_euisis_grievances')) {
+            return $filed ? ['filed_from_euisis' => true, 'grievances' => []] : null;
+        }
+
+        $decode = fn (?string $json): array => array_values(array_filter((array) json_decode((string) $json, true), 'is_array'));
+        $grievances = DB::table('case_euisis_grievances')
+            ->where('court_case_id', $case->id)
+            ->orderBy('submitted_at')
+            ->orderBy('id')
+            ->get()
+            ->map(fn (object $row): array => [
+                'id' => (int) $row->id,
+                'reference' => $row->reference,
+                'subject' => $row->subject,
+                'category' => $row->category,
+                'status' => $row->status,
+                'description' => $row->description,
+                'submitted_at' => $row->submitted_at ? Carbon::parse($row->submitted_at)->format('Y-m-d H:i') : null,
+                'closed_at' => $row->closed_at ? Carbon::parse($row->closed_at)->format('Y-m-d H:i') : null,
+                'responses' => array_map(fn (array $r): array => [
+                    'body' => (string) ($r['body'] ?? ''),
+                    'at' => $r['at'] ?? null,
+                ], $decode($row->responses)),
+                'decisions' => array_map(fn (array $d): array => [
+                    'number' => $d['number'] ?? null,
+                    'type' => $d['type'] ?? null,
+                    'text' => (string) ($d['text'] ?? ''),
+                    'at' => $d['at'] ?? null,
+                ], $decode($row->decisions)),
+            ])
+            ->values()
+            ->all();
+
+        if (!$filed && $grievances === []) {
+            return null;
+        }
+
+        return ['filed_from_euisis' => $filed, 'grievances' => $grievances];
     }
 
     /** The EUISIS panel the Blade page rendered through <x-euisis.case-panel>; null when it would not render. */
