@@ -5,6 +5,7 @@ import lang from './lang/am';
 import caseDetail from './caseDetail';
 import access from './access';
 import decisionForms from './decisions';
+import letterForms from './letters';
 
 export default {
     cm: lang,
@@ -66,6 +67,14 @@ export default {
         caseDetail: caseDetail.am,
         accessForms: access.am,
         decisionForms: decisionForms.am,
+        letterForms: letterForms.am,
+        settings: {
+            secretSaved: 'ተቀምጧል',
+            secretNotSet: 'አልተዘጋጀም',
+            secretRemove: 'የተቀመጠውን እሴት አስወግድ',
+            secretKeep: 'የተቀመጠውን እሴት ለማቆየት ባዶ ይተዉት። እሴቱ በፍጹም አይታይም።',
+            none: 'የለም',
+        },
         appeals: {
             number: 'የይግባኝ ቁጥር',
             decidedBy: 'የወሰነው',

@@ -236,11 +236,43 @@ class LetterController extends Controller
         ]);
     }
 
+    /**
+     * The edit page (React, Court/Letters/Edit): the letter's fields as last
+     * submitted when a save was refused, else as stored, and its template.
+     */
     public function edit(Letter $letter)
     {
         $letter->load('template');
+        $template = $letter->template;
 
-        return view('admin.letters.edit', compact('letter'));
+        $nextSeq = ($template?->reference_sequence ?? 0) + 1;
+        $nextReference = implode('/', array_filter([
+            $template?->subject_prefix,
+            str_pad((string) $nextSeq, 4, '0', STR_PAD_LEFT),
+        ]));
+
+        return Inertia::render('Court/Letters/Edit', [
+            'letter' => [
+                'id' => (int) $letter->id,
+                'reference_number' => $letter->reference_number,
+                'approval_status' => $letter->approval_status ?: null,
+                'recipient_name' => (string) old('recipient_name', $letter->recipient_name ?? ''),
+                'recipient_title' => (string) old('recipient_title', $letter->recipient_title ?? ''),
+                'recipient_company' => (string) old('recipient_company', $letter->recipient_company ?? ''),
+                'case_number' => (string) old('case_number', $letter->case_number ?? ''),
+                'cc' => (string) old('cc', $letter->cc ?? ''),
+                'send_to_applicant' => filter_var(old('send_to_applicant', $letter->send_to_applicant ?? true), FILTER_VALIDATE_BOOLEAN),
+                'send_to_respondent' => filter_var(old('send_to_respondent', $letter->send_to_respondent ?? true), FILTER_VALIDATE_BOOLEAN),
+                'subject' => (string) old('subject', $letter->subject ?? ''),
+                'body' => (string) old('body', $letter->body ?? ''),
+            ],
+            'template' => [
+                'id' => (int) ($template?->id ?? 0),
+                'title' => (string) ($template?->title ?? ''),
+                'subject_prefix' => $template?->subject_prefix ?: null,
+                'next_reference' => $nextReference,
+            ],
+        ]);
     }
 
     public function update(Request $request, Letter $letter)

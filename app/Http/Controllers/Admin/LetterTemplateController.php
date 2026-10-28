@@ -3,28 +3,50 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\LetterCategory;
 use App\Models\LetterTemplate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class LetterTemplateController extends Controller
 {
-    public function index()
+    /** The register (React, Court/LetterTemplates/Index); the actions follow the Blade page's permissions. */
+    public function index(Request $request): Response
     {
         $templates = LetterTemplate::query()
             ->orderBy('title')
             ->paginate(12)
             ->withQueryString();
 
-        return view('admin.letter-templates.index', compact('templates'));
+        $user = $request->user();
+        $can = fn (string $permission): bool => (bool) ($user?->hasPermission($permission) ?? false);
+
+        return Inertia::render('Court/LetterTemplates/Index', [
+            'templates' => $templates->through(fn (LetterTemplate $template): array => [
+                'id' => (int) $template->id,
+                'title' => (string) $template->title,
+                'category' => $template->category ?: null,
+                'placeholders' => $this->placeholderList($template),
+                'updated_at' => $template->updated_at?->toIso8601String(),
+            ]),
+            'can' => [
+                'create' => $can('letters.templet.create'),
+                'update' => $can('letters.templet.update'),
+                'delete' => $can('letters.templet.delete'),
+                'compose' => $can('letters.create'),
+                'categories' => $can('letters.templet.view'),
+            ],
+        ]);
     }
 
-    public function create()
+    public function create(): Response
     {
-        $template = new LetterTemplate();
-        $categories = \App\Models\LetterCategory::select('name')->orderBy('name')->get();
-
-        return view('admin.letter-templates.create', compact('template', 'categories'));
+        return Inertia::render('Court/LetterTemplates/Form', [
+            'template' => null,
+            'categories' => $this->categoryNames(),
+        ]);
     }
 
     public function store(Request $request)
@@ -40,13 +62,23 @@ class LetterTemplateController extends Controller
         ]);
     }
 
-    public function edit(LetterTemplate $letterTemplate)
+    public function edit(LetterTemplate $letterTemplate): Response
     {
-        $categories = \App\Models\LetterCategory::select('name')->orderBy('name')->get();
+        $disk = Storage::disk('public');
 
-        return view('admin.letter-templates.edit', [
-            'template' => $letterTemplate,
-            'categories' => $categories
+        return Inertia::render('Court/LetterTemplates/Form', [
+            'template' => [
+                'id' => (int) $letterTemplate->id,
+                'title' => (string) $letterTemplate->title,
+                'category' => $letterTemplate->category ?: null,
+                'placeholders' => implode(', ', $this->placeholderList($letterTemplate)),
+                'body' => (string) ($letterTemplate->body ?? ''),
+                'header_image_url' => $letterTemplate->header_image_path ? $disk->url($letterTemplate->header_image_path) : null,
+                'header_image_name' => $letterTemplate->header_image_path ? basename($letterTemplate->header_image_path) : null,
+                'footer_image_url' => $letterTemplate->footer_image_path ? $disk->url($letterTemplate->footer_image_path) : null,
+                'footer_image_name' => $letterTemplate->footer_image_path ? basename($letterTemplate->footer_image_path) : null,
+            ],
+            'categories' => $this->categoryNames(),
         ]);
     }
 
@@ -71,6 +103,23 @@ class LetterTemplateController extends Controller
             'key' => 'messages.success.deleted',
             'replace' => ['resource' => __('messages.resources.letter_template')],
         ]);
+    }
+
+    /** @return list<string> */
+    private function categoryNames(): array
+    {
+        return LetterCategory::query()->orderBy('name')->pluck('name')->map(fn ($name): string => (string) $name)->values()->all();
+    }
+
+    /** @return list<string> */
+    private function placeholderList(LetterTemplate $template): array
+    {
+        $placeholders = $template->placeholders ?? [];
+        if (is_string($placeholders)) {
+            $placeholders = json_decode($placeholders, true) ?: [];
+        }
+
+        return array_values(array_map('strval', is_array($placeholders) ? $placeholders : []));
     }
 
     private function validateTemplate(Request $request): array

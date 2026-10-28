@@ -5,6 +5,7 @@ import lang from './lang/en';
 import caseDetail from './caseDetail';
 import access from './access';
 import decisionForms from './decisions';
+import letterForms from './letters';
 
 export default {
     cm: lang,
@@ -66,6 +67,14 @@ export default {
         caseDetail: caseDetail.en,
         accessForms: access.en,
         decisionForms: decisionForms.en,
+        letterForms: letterForms.en,
+        settings: {
+            secretSaved: 'Saved',
+            secretNotSet: 'Not set',
+            secretRemove: 'Remove the saved value',
+            secretKeep: 'Leave blank to keep the saved value. It is never displayed.',
+            none: 'None',
+        },
         appeals: {
             number: 'Appeal #',
             decidedBy: 'Decided by',
