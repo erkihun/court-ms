@@ -46,7 +46,7 @@ class AppealController extends Controller
             ->limit(50)
             ->get(['id', 'case_number', 'title']);
 
-        return view('admin.appeals.create', compact('cases'));
+        return Inertia::render('Court/Appeals/Form', ['appeal' => null, 'cases' => $cases]);
     }
 
     public function store(Request $request)
@@ -104,7 +104,29 @@ class AppealController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        return view('admin.appeals.show', compact('appeal', 'docs'));
+        $user = auth()->user();
+        $can = fn (string $permission): bool => (bool) ($user?->hasPermission($permission) ?? false);
+        $iso = fn (mixed $value): ?string => $value ? Carbon::parse($value)->toIso8601String() : null;
+
+        return Inertia::render('Court/Appeals/Show', [
+            'appeal' => [
+                'id' => (int) $appeal->id,
+                'appeal_number' => (string) $appeal->appeal_number,
+                'title' => (string) $appeal->title,
+                'grounds' => $appeal->grounds,
+                'status' => (string) $appeal->status,
+                'case_id' => (int) $appeal->court_case_id,
+                'case_number' => (string) $appeal->case_number,
+                'case_title' => $appeal->case_title,
+                'decided_by' => $appeal->decided_by,
+                'decision_notes' => $appeal->decision_notes ?? null,
+                'submitted_at' => $iso($appeal->submitted_at ?? null),
+                'decided_at' => $iso($appeal->decided_at ?? null),
+                'created_at' => $iso($appeal->created_at),
+            ],
+            'documents' => $docs->map(fn (object $doc): array => ['id' => (int) $doc->id, 'label' => $doc->label, 'created_at' => $iso($doc->created_at)])->values()->all(),
+            'can' => ['edit' => $can('appeals.edit'), 'decide' => $can('appeals.decide'), 'upload' => $can('appeals.edit')],
+        ]);
     }
 
     public function edit($appealId)
@@ -117,7 +139,10 @@ class AppealController extends Controller
                 ->with('error', 'messages.error.cannot_edit_stage');
         }
 
-        return view('admin.appeals.edit', compact('appeal'));
+        return Inertia::render('Court/Appeals/Form', [
+            'appeal' => ['id' => (int) $appeal->id, 'appeal_number' => (string) $appeal->appeal_number, 'title' => (string) $appeal->title, 'grounds' => $appeal->grounds],
+            'cases' => [],
+        ]);
     }
 
     public function update(Request $request, $appealId)
