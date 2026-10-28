@@ -5,6 +5,10 @@ export interface User {
     email_verified_at?: string;
     profile_photo_url?: string | null;
     initials?: string;
+    /** Portal accounts: a lawyer (verified or not). */
+    is_lawyer?: boolean;
+    /** Portal accounts: a verified lawyer, who files cases for clients. */
+    can_file_for_client?: boolean;
 }
 
 export type CalendarSystem = 'gregorian' | 'ethiopian';

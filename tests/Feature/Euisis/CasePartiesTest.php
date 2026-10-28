@@ -328,6 +328,9 @@ test('a verified lawyer files for a client found in EUISIS, works in the closed 
         ->assertInertia(fn (AssertableInertia $page) => $page->component('Court/Lawyer/FileCase')->where('organizations.0.uuid', PARTIES_RESPONDENT));
     expect(collect(PortalNavigation::sections('applicant'))->flatMap(fn (array $section) => collect($section['groups'])->flatMap(fn (array $group) => collect($group['items'])->pluck('route')))->all())
         ->toContain('applicant.lawyer.file');
+    // The dashboard and the case list show "File for a client" from this flag.
+    $this->actingAs($lawyer, 'applicant')->get(route('applicant.cases.index'))->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('auth.user.can_file_for_client', true));
 
     $this->actingAs($lawyer, 'applicant')->postJson(route('applicant.lawyer.client'), ['employee_number' => 'AA-2001'])->assertOk()->assertJsonPath('data.name', 'Tigist A Haile');
     $this->actingAs($lawyer, 'applicant')->postJson(route('applicant.lawyer.client'), ['employee_number' => 'AA-9999'])->assertNotFound();
@@ -362,6 +365,8 @@ test('only a verified lawyer files for a client, and an employee account gets no
     $this->actingAs($unverified, 'applicant')->get(route('applicant.lawyer.file'))->assertForbidden();
     expect(collect(PortalNavigation::sections('applicant'))->flatMap(fn (array $section) => collect($section['groups'])->flatMap(fn (array $group) => collect($group['items'])->pluck('route')))->all())
         ->not->toContain('applicant.lawyer.file');
+    $this->actingAs($unverified, 'applicant')->get(route('applicant.cases.index'))->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('auth.user.can_file_for_client', false));
 
     // With the portal closed, an account that is not a verified lawyer has no court portal at all.
     config(['services.euisis.portal_in_euisis' => true]);

@@ -21,7 +21,10 @@ import { EyeIcon, PlusIcon, TrashIcon } from '../../Cases/Show/icons';
 export default function ApplicantCasesIndex({ cases }: ApplicantCaseIndexProps) {
     const { t, text, statusLabel, reviewLabel } = useApplicantCaseText();
     // Only EUISIS employees and institutions are parties: new cases are filed from the EUISIS employee portal.
-    const filesInEuisis = Boolean((usePage().props as { portal?: { filesInEuisis?: boolean } | null }).portal?.filesInEuisis);
+    const shared = usePage().props as { portal?: { filesInEuisis?: boolean } | null; auth?: { user?: { can_file_for_client?: boolean } | null } };
+    const filesInEuisis = Boolean(shared.portal?.filesInEuisis);
+    // A verified lawyer files for a client whatever the filing mode (EUISIS ADR 0013 #13).
+    const filesForClients = Boolean(shared.auth?.user?.can_file_for_client);
     const { confirm } = useConfirm();
     const [deleting, setDeleting] = useState<number | null>(null);
     const title = t('cm.cases.my_cases');
@@ -49,7 +52,8 @@ export default function ApplicantCasesIndex({ cases }: ApplicantCaseIndexProps) 
                 actions={(
                     <>
                         <Link href={route('applicant.response-replies.index')} className={buttonClassName({ variant: 'outline' })}>{t('cm.respondent.applicant_response_replies')}</Link>
-                        {!filesInEuisis && <Link href={route('applicant.cases.create')} className={buttonClassName({ variant: 'primary' })}><PlusIcon className="mr-1.5 h-4 w-4" />{t('cm.cases.new_case')}</Link>}
+                        {!filesInEuisis && <Link href={route('applicant.cases.create')} className={buttonClassName({ variant: filesForClients ? 'outline' : 'primary' })}><PlusIcon className="mr-1.5 h-4 w-4" />{t('cm.cases.new_case')}</Link>}
+                        {filesForClients && <Link href={route('applicant.lawyer.file')} className={buttonClassName({ variant: 'primary' })}><PlusIcon className="mr-1.5 h-4 w-4" />{t('cm.lawyer.file.nav')}</Link>}
                     </>
                 )}
             />

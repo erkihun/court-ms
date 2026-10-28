@@ -4,7 +4,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import PageHeader from '@/Components/PageHeader';
 import StatCard from '@/Components/StatCard';
 import LocalizedDateDisplay from '@/Components/Calendar/LocalizedDateDisplay';
-import { CheckCircle, ClipboardListIcon, ClockIcon, InfoIcon, Plus, ScaleIcon, ScrollText, MessageSquareIcon, ArchiveIcon } from '@/Components/Icons';
+import { Briefcase, CheckCircle, ClipboardListIcon, ClockIcon, InfoIcon, Plus, ScaleIcon, ScrollText, MessageSquareIcon, ArchiveIcon } from '@/Components/Icons';
 import { Card, TBody, THead, Table, Td, Th, Tr, actionLinkClassName, badgeClassName, buttonClassName, cx, type Tone } from '@/Components/ui';
 import { useApplicantPagesText } from '@/court/i18n/useApplicantPagesText';
 import type { ApplicantDashboardProps } from '@/court/types/applicant';
@@ -58,7 +58,10 @@ function Empty({ children }: { children: ReactNode }) {
 export default function ApplicantDashboard({ applicant, today, counts, recent, letters, responses, responseReplies, decisions }: ApplicantDashboardProps) {
     const { t, tx } = useApplicantPagesText();
     // Only EUISIS employees and institutions are parties: new cases are filed from the EUISIS employee portal.
-    const filesInEuisis = Boolean((usePage().props as { portal?: { filesInEuisis?: boolean } | null }).portal?.filesInEuisis);
+    const shared = usePage().props as { portal?: { filesInEuisis?: boolean } | null; auth?: { user?: { can_file_for_client?: boolean } | null } };
+    const filesInEuisis = Boolean(shared.portal?.filesInEuisis);
+    // A verified lawyer files for a client whatever the filing mode (EUISIS ADR 0013 #13).
+    const filesForClients = Boolean(shared.auth?.user?.can_file_for_client);
     const [panel, setPanel] = useState<Panel>('recent');
 
     const name = applicant.name ?? t('cm.applicant.user');
@@ -103,11 +106,17 @@ export default function ApplicantDashboard({ applicant, today, counts, recent, l
                     <Card className="h-fit">
                         <h3 className="mb-4 text-base font-semibold text-(--app-foreground)">{t('cm.dashboard.quick_actions')}</h3>
                         <div className="space-y-2">
+                            {/* The "file in EUISIS" note is for employees; a lawyer files here, for a client. */}
                             {filesInEuisis ? (
-                                <p className="rounded-lg border border-(--app-border) bg-(--app-surface-muted) p-3 text-sm text-(--app-muted-foreground)">{t('cm.cases.file_in_euisis')}</p>
+                                !filesForClients && <p className="rounded-lg border border-(--app-border) bg-(--app-surface-muted) p-3 text-sm text-(--app-muted-foreground)">{t('cm.cases.file_in_euisis')}</p>
                             ) : (
-                                <a href={route('applicant.cases.create')} className={buttonClassName({ variant: 'primary', className: 'w-full justify-start gap-2' })}>
-                                    <Plus className="h-5 w-5" /><span>{t('cm.dashboard.submit_new_case')}</span>
+                                <a href={route('applicant.cases.create')} className={buttonClassName({ variant: filesForClients ? 'outline' : 'primary', className: 'w-full justify-start gap-2' })}>
+                                    <Plus className="h-5 w-5 shrink-0" /><span className="min-w-0 text-left">{t('cm.dashboard.submit_new_case')}</span>
+                                </a>
+                            )}
+                            {filesForClients && (
+                                <a href={route('applicant.lawyer.file')} className={buttonClassName({ variant: 'primary', className: 'h-auto min-h-10 w-full justify-start gap-2 py-2' })}>
+                                    <Briefcase className="h-5 w-5 shrink-0" /><span className="min-w-0 text-left">{t('cm.lawyer.file.nav')}</span>
                                 </a>
                             )}
                             {actions.map((action) => (
@@ -138,9 +147,11 @@ export default function ApplicantDashboard({ applicant, today, counts, recent, l
                                         <ClipboardListIcon className="mx-auto h-12 w-12 text-(--app-muted-foreground) opacity-40" />
                                         <h4 className="mt-4 text-lg font-medium text-(--app-foreground)">{t('cm.dashboard.no_cases_yet')}</h4>
                                         <p className="mx-auto mt-2 max-w-sm text-sm text-(--app-muted-foreground)">{t('cm.dashboard.no_cases_description')}</p>
-                                        {filesInEuisis
-                                            ? <p className="mx-auto mt-4 max-w-sm text-sm text-(--app-muted-foreground)">{t('cm.cases.file_in_euisis')}</p>
-                                            : <a href={route('applicant.cases.create')} className={buttonClassName({ variant: 'primary', className: 'mt-6 gap-2' })}><Plus className="h-5 w-5" />{t('cm.dashboard.submit_first_case')}</a>}
+                                        {filesForClients
+                                            ? <a href={route('applicant.lawyer.file')} className={buttonClassName({ variant: 'primary', className: 'mt-6 gap-2' })}><Briefcase className="h-5 w-5" />{t('cm.lawyer.file.nav')}</a>
+                                            : filesInEuisis
+                                                ? <p className="mx-auto mt-4 max-w-sm text-sm text-(--app-muted-foreground)">{t('cm.cases.file_in_euisis')}</p>
+                                                : <a href={route('applicant.cases.create')} className={buttonClassName({ variant: 'primary', className: 'mt-6 gap-2' })}><Plus className="h-5 w-5" />{t('cm.dashboard.submit_first_case')}</a>}
                                     </div>
                                 ) : (
                                     <>

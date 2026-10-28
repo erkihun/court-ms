@@ -6,6 +6,7 @@ namespace App\Http\Middleware;
 
 use App\Models\SystemSetting;
 use App\Models\User;
+use App\Services\CaseParties;
 use App\Support\Ui\CourtNavigation;
 use App\Support\Ui\PortalNavigation;
 use App\Support\Ui\SharedSettings;
@@ -139,6 +140,8 @@ class HandleInertiaRequests extends Middleware
                 'profile_photo_url' => null,
                 'initials' => $this->initials((string) $user->full_name),
                 'is_lawyer' => (bool) $user->is_lawyer,
+                // A verified lawyer files cases for clients (the portal menu's "File for a client").
+                'can_file_for_client' => CaseParties::isVerifiedLawyer($user),
             ] : null,
             'roles' => [],
             'activeRoleId' => null,

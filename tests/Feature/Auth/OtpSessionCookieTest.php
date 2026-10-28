@@ -69,4 +69,9 @@ test('each portal still gets its own distinct cookie', function () {
 
     expect($resolve('/password-otp'))->toBe('pscourt-session-admin')
         ->and($resolve('/applicant/verify-otp'))->toBe('pscourt-session-applicant');
+
+    // A lawyer signs in on the applicant guard at /lawyer/login and works in the applicant
+    // portal: the sign-in must land on the portal's cookie, or the portal never sees it.
+    expect($resolve('/lawyer/login'))->toBe($resolve('/applicant/cases'))
+        ->and($resolve('/lawyer/logout'))->toBe('pscourt-session-applicant');
 });
