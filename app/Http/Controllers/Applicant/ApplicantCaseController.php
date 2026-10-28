@@ -1236,7 +1236,57 @@ class ApplicantCaseController extends Controller
             ->orderBy('hearing_at')
             ->get();
 
-        return view('applicant.cases.receipt', compact('case', 'evidenceDocs', 'witnesses', 'files', 'hearings'));
+        $at = fn (mixed $value): ?string => $value ? Carbon::parse($value)->toIso8601String() : null;
+
+        // The printable receipt (React, Court/Applicant/Cases/Receipt); the PDF stays receiptPdf().
+        return Inertia::render('Court/Applicant/Cases/Receipt', [
+            'receipt' => [
+                'id' => (int) $case->id,
+                'case_number' => (string) $case->case_number,
+                'code' => $case->code ?: null,
+                'status' => (string) $case->status,
+                'title' => (string) $case->title,
+                'filed_at' => $at($case->filing_date ?? $case->created_at),
+                'case_type' => $case->case_type ?: null,
+                'court_name' => ($case->court_name ?? null) ?: null,
+                'applicant' => [
+                    'name' => trim(preg_replace('/\s+/', ' ', $case->first_name.' '.($case->middle_name ?? '').' '.$case->last_name)),
+                    'email' => $case->email ?: null,
+                    'phone' => $case->phone ?: null,
+                ],
+                'respondent' => ($case->respondent_name || $case->respondent_address)
+                    ? ['name' => $case->respondent_name ?: null, 'address' => $case->respondent_address ?: null]
+                    : null,
+                // The details are the editor's HTML; the Blade page printed the tags as text.
+                'description_html' => clean((string) ($case->description ?? ''), 'cases'),
+                'relief_html' => ! empty($case->relief_requested) ? clean((string) $case->relief_requested, 'cases') : null,
+            ],
+            'witnesses' => $witnesses->map(fn (object $w): array => [
+                'id' => (int) $w->id,
+                'name' => (string) $w->full_name,
+                'phone' => $w->phone ?: null,
+                'email' => $w->email ?: null,
+            ])->values(),
+            'documents' => $evidenceDocs->map(fn (object $d): array => [
+                'id' => (int) $d->id,
+                'title' => (string) ($d->title ?? basename((string) $d->file_path)),
+                'url' => $d->file_path ? route('applicant.cases.evidences.download', ['id' => $case->id, 'evidenceId' => $d->id]) : null,
+            ])->values(),
+            'files' => $files->map(fn (object $f): array => [
+                'id' => (int) $f->id,
+                'label' => (string) ($f->label ?? basename((string) $f->path)),
+                'extension' => strtoupper(pathinfo((string) $f->path, PATHINFO_EXTENSION)),
+                'uploaded_at' => $at($f->created_at),
+            ])->values(),
+            'hearings' => $hearings->map(fn (object $h): array => [
+                'id' => (int) $h->id,
+                'at' => $at($h->hearing_at),
+                'type' => $h->type ?: null,
+                'location' => $h->location ?: null,
+                'ics_url' => route('applicant.cases.hearings.ics', [$case->id, $h->id]),
+            ])->values(),
+            'generatedAt' => now()->toIso8601String(),
+        ]);
     }
 
     /**

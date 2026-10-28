@@ -276,3 +276,27 @@ export interface ApplicantReplyShowProps {
 }
 
 export type ApplicantReplyEditProps = ApplicantReplyShowProps;
+
+/** The printable filing receipt (ApplicantCaseController::receipt). */
+export interface ApplicantCaseReceiptProps {
+    receipt: {
+        id: number;
+        case_number: string;
+        code: string | null;
+        status: string;
+        title: string;
+        filed_at: string | null;
+        case_type: string | null;
+        court_name: string | null;
+        applicant: { name: string; email: string | null; phone: string | null };
+        respondent: { name: string | null; address: string | null } | null;
+        /** Cleaned on the server. */
+        description_html: string;
+        relief_html: string | null;
+    };
+    witnesses: { id: number; name: string; phone: string | null; email: string | null }[];
+    documents: { id: number; title: string; url: string | null }[];
+    files: { id: number; label: string; extension: string; uploaded_at: string | null }[];
+    hearings: { id: number; at: string | null; type: string | null; location: string | null; ics_url: string }[];
+    generatedAt: string;
+}

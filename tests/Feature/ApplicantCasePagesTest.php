@@ -410,10 +410,19 @@ test('a pending case is deleted from the list, and the receipt and calendar down
     $caseId = acpCase($applicant);
     $hearingId = DB::table('case_hearings')->insertGetId(['case_id' => $caseId, 'hearing_at' => now()->addDays(3)->format('Y-m-d H:i:s'), 'type' => 'Hearing', 'location' => 'Room 2', 'created_at' => now(), 'updated_at' => now()]);
 
-    // The printable receipt is a document page and stays Blade.
+    // The printable receipt: the case, its hearings with calendar links, and the details as cleaned HTML.
+    DB::table('court_cases')->where('id', $caseId)->update(['description' => '<p>Facts of the case</p><script>alert(1)</script>']);
     $this->actingAs($applicant, 'applicant')->get(route('applicant.cases.receipt', $caseId))
         ->assertOk()
-        ->assertViewIs('applicant.cases.receipt');
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('Court/Applicant/Cases/Receipt')
+            ->where('receipt.id', $caseId)
+            ->where('receipt.description_html', fn (string $html): bool => str_contains($html, 'Facts of the case') && ! str_contains($html, 'script'))
+            ->where('receipt.applicant.email', $applicant->email)
+            ->has('hearings', 1)
+            ->where('hearings.0.location', 'Room 2')
+            ->where('hearings.0.ics_url', route('applicant.cases.hearings.ics', [$caseId, $hearingId]))
+            ->has('generatedAt'));
     $ics = $this->actingAs($applicant, 'applicant')->get(route('applicant.cases.hearings.ics', [$caseId, $hearingId]));
     $ics->assertOk();
     expect($ics->headers->get('Content-Type'))->toContain('text/calendar')
