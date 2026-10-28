@@ -30,11 +30,14 @@ class IntegrationClient extends Model
     /** Read the letters to deliver to EUISIS institutions (Flow 5). */
     public const ABILITY_LETTERS_READ = 'letters:read';
 
+    /** Work on an employee's own case from the EUISIS employee portal: messages, files, replies, corrections (Flow 6). */
+    public const ABILITY_PEOPLE_ACT = 'people:act';
+
     /** What a token issued by `euisis:integration-token` may do. */
     public const DEFAULT_ABILITIES = [
         self::ABILITY_REFERRALS_CREATE, self::ABILITY_REFERRALS_READ,
         self::ABILITY_PEOPLE_READ, self::ABILITY_PEOPLE_SIGN_IN, self::ABILITY_PEOPLE_FILE,
-        self::ABILITY_LETTERS_READ,
+        self::ABILITY_PEOPLE_ACT, self::ABILITY_LETTERS_READ,
     ];
 
     protected $guarded = [];

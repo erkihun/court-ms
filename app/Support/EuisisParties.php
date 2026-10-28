@@ -17,4 +17,22 @@ final class EuisisParties
     {
         return (bool) config('services.euisis.parties_only', false);
     }
+
+    /**
+     * Flow 6: employees file, follow and answer their cases in the EUISIS employee
+     * portal, so court-ms's applicant and respondent portal and their sign-in,
+     * registration and password pages are closed (CourtPortalInEuisis).
+     */
+    public static function portalClosed(): bool
+    {
+        return (bool) config('services.euisis.portal_in_euisis', false);
+    }
+
+    /** Where employees follow their cases (EUISIS My Portal › My court cases), when set. */
+    public static function portalUrl(): ?string
+    {
+        $url = trim((string) config('services.euisis.portal_url', ''));
+
+        return $url !== '' && preg_match('#^https?://#i', $url) === 1 ? $url : null;
+    }
 }

@@ -24,12 +24,15 @@ function accountAdmin(array $attributes = []): User
     return $user;
 }
 
-test('the sign-in page is the EUISIS login with the reset link', function (): void {
+test('the sign-in page is the court staff sign-in with the reset link', function (): void {
+    config(['services.euisis.portal_url' => 'https://euisis.example.test/my-portal/court-cases']);
+
     $this->get(route('login'))
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page
-            ->component('Auth/Login')
+            ->component('Court/Auth/Login')
             ->where('canResetPassword', true)
+            ->where('portalUrl', 'https://euisis.example.test/my-portal/court-cases')
             ->where('registration_enabled', false));
 });
 

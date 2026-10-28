@@ -93,6 +93,8 @@ class HandleInertiaRequests extends Middleware
                 'mfa_recovery_codes_once' => session('mfa_recovery_codes'),
             ],
             'password_policy' => fn (): array => $this->passwordPolicy(),
+            // Flow 6: whether the applicant/respondent portal is closed, and where employees go instead.
+            'courtPortal' => fn (): array => ['closed' => \App\Support\EuisisParties::portalClosed(), 'url' => \App\Support\EuisisParties::portalUrl()],
         ];
     }
 

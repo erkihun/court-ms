@@ -14,15 +14,18 @@ use Inertia\Response;
 class AuthenticatedSessionController extends Controller
 {
     /**
-     * The sign-in page (React, Auth/Login from EUISIS).
+     * The court staff sign-in page (React, Court/Auth/Login).
      */
     public function create(): Response
     {
-        return Inertia::render('Auth/Login', [
+        // The court's own sign-in (Pages/Court/Auth/Login), posting the same form as the EUISIS one.
+        return Inertia::render('Court/Auth/Login', [
             'canResetPassword' => Route::has('password.request'),
             'status' => session('status'),
             // court-ms times sessions out on the server without naming the reason.
             'sessionNotice' => null,
+            // Applicants and respondents are pointed to the EUISIS employee portal.
+            'portalUrl' => \App\Support\EuisisParties::portalUrl(),
         ]);
     }
 

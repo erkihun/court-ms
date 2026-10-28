@@ -127,12 +127,13 @@ final class EmployeeCourtAccess
                 'filed_at' => $iso($case->filing_date ?? $case->created_at),
                 'next_hearing_at' => $iso($nextHearings[$case->id] ?? null),
             ])->values()->all(),
-            // Titles and text only: every link goes through a sign-in ticket.
+            // Titles and text only, with the case each concerns: EUISIS opens it in My Portal.
             'notices' => collect($feed['items'])->map(fn (array $item): array => [
                 'id' => $item['id'],
                 'title' => $item['title'],
                 'message' => $item['message'],
                 'created_at' => $item['created_at'],
+                'case_id' => $item['case_id'] ?? null,
             ])->values()->all(),
         ];
     }

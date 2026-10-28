@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CaseController;
 use App\Http\Controllers\Api\CaseMessageController;
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\Integration\EuisisCaseWorkspaceController;
 use App\Http\Controllers\Api\Integration\EuisisLetterController;
 use App\Http\Controllers\Api\Integration\EuisisPeopleController;
 use App\Http\Controllers\Api\Integration\EuisisReferralController;
@@ -67,4 +68,29 @@ Route::prefix('v1/integration')
         Route::get('/letters/{letter}/pdf', [EuisisLetterController::class, 'pdf'])
             ->whereNumber('letter')
             ->middleware('integration.client:letters:read');
+
+        // Flow 6: the employee's case workspace in the EUISIS employee portal. POST throughout,
+        // so the employee identity travels in the body, never in a URL.
+        Route::prefix('/people')->whereNumber(['case', 'file', 'evidence', 'witness', 'response', 'reply'])->group(function (): void {
+            Route::middleware(['integration.client:people:read', 'throttle:120,1'])->group(function (): void {
+                Route::post('/cases/{case}/workspace', [EuisisCaseWorkspaceController::class, 'workspace']);
+                Route::post('/cases/{case}/edit', [EuisisCaseWorkspaceController::class, 'edit']);
+                Route::post('/cases/{case}/responses/{response}', [EuisisCaseWorkspaceController::class, 'response']);
+                Route::post('/cases/{case}/responses/{response}/replies/{reply}', [EuisisCaseWorkspaceController::class, 'reply']);
+                Route::post('/cases/{case}/download', [EuisisCaseWorkspaceController::class, 'download']);
+                Route::post('/notices', [EuisisCaseWorkspaceController::class, 'notices']);
+            });
+            Route::middleware(['integration.client:people:act', 'throttle:60,1'])->group(function (): void {
+                Route::post('/cases/{case}/correct', [EuisisCaseWorkspaceController::class, 'correct']);
+                Route::post('/cases/{case}/messages', [EuisisCaseWorkspaceController::class, 'postMessage']);
+                Route::post('/cases/{case}/files', [EuisisCaseWorkspaceController::class, 'uploadFile']);
+                Route::post('/cases/{case}/files/{file}/delete', [EuisisCaseWorkspaceController::class, 'deleteFile']);
+                Route::post('/cases/{case}/evidences/{evidence}/delete', [EuisisCaseWorkspaceController::class, 'deleteEvidence']);
+                Route::post('/cases/{case}/witnesses/{witness}/delete', [EuisisCaseWorkspaceController::class, 'deleteWitness']);
+                Route::post('/cases/{case}/responses/{response}/replies', [EuisisCaseWorkspaceController::class, 'storeReply']);
+                Route::post('/cases/{case}/responses/{response}/replies/{reply}/update', [EuisisCaseWorkspaceController::class, 'updateReply']);
+                Route::post('/cases/{case}/responses/{response}/replies/{reply}/delete', [EuisisCaseWorkspaceController::class, 'destroyReply']);
+                Route::post('/notices/read', [EuisisCaseWorkspaceController::class, 'readNotices']);
+            });
+        });
     });

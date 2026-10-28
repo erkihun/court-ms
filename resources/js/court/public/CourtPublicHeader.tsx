@@ -55,6 +55,8 @@ export default function CourtPublicHeader({ userManualEnabled, userManualTitle =
     const path = page.url.split('?')[0].split('#')[0] || '/';
     // Off the portals the shared `auth` is the staff (web) session.
     const user = page.props.auth?.user ?? null;
+    // Flow 6: with the portal in EUISIS, employees go to My Portal and the court keeps a staff sign-in.
+    const portal = (page.props as { courtPortal?: { closed: boolean; url: string | null } }).courtPortal;
 
     useEffect(() => router.on('navigate', () => setMenuOpen(false)), []);
 
@@ -80,12 +82,29 @@ export default function CourtPublicHeader({ userManualEnabled, userManualTitle =
                     {t('nav.dashboard')}
                 </Link>
             ) : null}
-            <a href={route('applicant.login')} className={buttonClassName({ variant: 'outline', size: 'sm' })}>
-                {t('cm.home.nav.applicant_portal')}
-            </a>
-            <a href={route('applicant.login', { login_as: 'respondent' })} className={buttonClassName({ variant: 'primary', size: 'sm' })}>
-                {t('cm.home.nav.respondent_portal')}
-            </a>
+            {portal?.closed ? (
+                <>
+                    {!user && (
+                        <a href={route('login')} className={buttonClassName({ variant: 'outline', size: 'sm' })}>
+                            {t('court.signIn.staffLink')}
+                        </a>
+                    )}
+                    {portal.url && (
+                        <a href={portal.url} className={buttonClassName({ variant: 'primary', size: 'sm' })}>
+                            {t('court.signIn.partiesLink')}
+                        </a>
+                    )}
+                </>
+            ) : (
+                <>
+                    <a href={route('applicant.login')} className={buttonClassName({ variant: 'outline', size: 'sm' })}>
+                        {t('cm.home.nav.applicant_portal')}
+                    </a>
+                    <a href={route('applicant.login', { login_as: 'respondent' })} className={buttonClassName({ variant: 'primary', size: 'sm' })}>
+                        {t('cm.home.nav.respondent_portal')}
+                    </a>
+                </>
+            )}
         </>
     );
 

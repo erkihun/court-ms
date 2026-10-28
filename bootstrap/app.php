@@ -16,6 +16,7 @@ use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\PurgeLegacySessionCookies;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\RequirePermission;
+use App\Http\Middleware\CourtPortalInEuisis;
 use App\Http\Middleware\RequireRole;
 use App\Http\Middleware\ResolveAdminRole;
 use App\Http\Middleware\SetLocale;
@@ -94,6 +95,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('web', SystemAuditMiddleware::class);
         // Props for the React (Inertia) screens; Blade pages are unaffected.
         $middleware->appendToGroup('web', HandleInertiaRequests::class);
+        // Flow 6: the applicant and respondent portal is closed while employees work in EUISIS.
+        $middleware->appendToGroup('web', CourtPortalInEuisis::class);
         $middleware->appendToGroup('api', SystemAuditMiddleware::class);
 
         // If you ever need global middleware:

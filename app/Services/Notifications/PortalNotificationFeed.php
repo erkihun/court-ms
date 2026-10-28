@@ -82,7 +82,8 @@ final class PortalNotificationFeed
         $items = collect();
         foreach ($this->sources() as $source) {
             foreach ($source['query']->limit(50)->get() as $row) {
-                $items->push($source['notice']($row));
+                // The case it concerns, so a notice shown elsewhere (EUISIS My Portal) can open it.
+                $items->push([...$source['notice']($row), 'case_id' => isset($row->case_id) ? (int) $row->case_id : null]);
             }
         }
 

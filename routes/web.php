@@ -105,7 +105,8 @@ Route::middleware(SetLocale::class)->where(array_fill_keys($numericRouteParamete
     if (app()->environment('local')) {
         Route::get('/debug-locale', fn () => 'locale='.app()->getLocale());
     }
-    Route::get('/', fn () => redirect()->route('applicant.login'))->name('root');
+    // With the portal in EUISIS (Flow 6) the court's home is its public site.
+    Route::get('/', fn () => redirect()->route(\App\Support\EuisisParties::portalClosed() ? 'landing.home' : 'applicant.login'))->name('root');
     Route::get('/resources', [PublicHomeController::class, 'resources'])->name('public.resources');
     Route::get('/terms', [TermsDisplayController::class, 'show'])->name('public.terms');
     Route::get('/signage', [PublicSignageController::class, 'show'])

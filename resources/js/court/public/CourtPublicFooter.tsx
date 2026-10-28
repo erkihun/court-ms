@@ -1,3 +1,4 @@
+import { usePage } from '@inertiajs/react';
 import { useLocale } from '@/hooks/useLocale';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { useBranding } from '@/hooks/useBranding';
@@ -34,6 +35,8 @@ export default function CourtPublicFooter({ footer, userManualEnabled, userManua
     const { getString } = useSystemSettings();
     const { brandName } = useBranding();
     const links = useCourtPublicLinks(userManualEnabled, userManualTitle);
+    // Flow 6: with the portal in EUISIS the footer points employees to My Portal.
+    const portal = (usePage().props as { courtPortal?: { closed: boolean; url: string | null } }).courtPortal;
 
     const organization = getString('general.organization_name') || brandName;
     const description = footer?.description || t('cm.home.footer.description');
@@ -83,9 +86,15 @@ export default function CourtPublicFooter({ footer, userManualEnabled, userManua
                 <nav aria-label={t('cm.home.footer.portals')}>
                     <p className={heading}>{t('cm.home.footer.portals')}</p>
                     <ul>
-                        <li><a href={route('applicant.login')} className={linkClass}>{t('cm.home.nav.applicant_portal')}</a></li>
-                        <li><a href={route('applicant.register')} className={linkClass}>{t('cm.respondent.register_action')}</a></li>
-                        <li><a href={route('applicant.login', { login_as: 'respondent' })} className={linkClass}>{t('cm.home.nav.respondent_portal')}</a></li>
+                        {portal?.closed ? (
+                            portal.url && <li><a href={portal.url} className={linkClass}>{t('court.signIn.partiesLink')}</a></li>
+                        ) : (
+                            <>
+                                <li><a href={route('applicant.login')} className={linkClass}>{t('cm.home.nav.applicant_portal')}</a></li>
+                                <li><a href={route('applicant.register')} className={linkClass}>{t('cm.respondent.register_action')}</a></li>
+                                <li><a href={route('applicant.login', { login_as: 'respondent' })} className={linkClass}>{t('cm.home.nav.respondent_portal')}</a></li>
+                            </>
+                        )}
                         <li><a href={route('login')} className={linkClass}>{text('staff_sign_in')}</a></li>
                     </ul>
                 </nav>

@@ -9,6 +9,7 @@ use App\Models\IntegrationClient;
 use App\Services\Euisis\EmployeeCourtAccess;
 use App\Services\Euisis\EmployeeCourtAccessException;
 use App\Services\Euisis\EmployeeFilingService;
+use App\Support\EuisisParties;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -45,6 +46,15 @@ class EuisisPeopleController extends Controller
     /** A one-time URL that signs the employee into the applicant portal (opening their court account on first use). */
     public function signInTicket(Request $request, EmployeeCourtAccess $access): JsonResponse
     {
+        // Flow 6: with the portal in EUISIS there is nothing here to sign in to.
+        if (EuisisParties::portalClosed()) {
+            return response()->json([
+                'message' => 'Court cases are managed in the EUISIS employee portal.',
+                'error_code' => 'portal_in_euisis',
+                'request_id' => $request->attributes->get('request_id'),
+            ], 410);
+        }
+
         $data = $request->validate([
             ...$this->identityRules(),
             'employee.first_name' => ['required', 'string', 'max:100'],
