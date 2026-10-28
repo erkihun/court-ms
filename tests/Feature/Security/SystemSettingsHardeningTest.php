@@ -10,8 +10,8 @@ use Inertia\Testing\AssertableInertia;
 /*
  * System settings secrets (SMTP password, Telegram bot token, SMS key and
  * secret) are write-only: no page, shared prop or flashed old input ever
- * carries them back; a blank field keeps the stored value and only the
- * remove box clears it.
+ * carries them back; a blank field keeps the stored value and only `clear`
+ * removes it (#3, d732138).
  */
 
 const SETTINGS_HARDENING_SECRETS = [
@@ -33,52 +33,45 @@ test('stored secrets never reach the settings page or any shared page props', fu
     SystemSetting::query()->create(['app_name' => 'Court MS', ...SETTINGS_HARDENING_SECRETS]);
     $admin = settingsHardeningAdmin();
 
-    foreach (['general', 'notifications', 'security'] as $tab) {
-        $response = $this->actingAs($admin)->get(route('settings.system.edit', ['tab' => $tab]))->assertOk();
-        foreach (SETTINGS_HARDENING_SECRETS as $secret) {
-            $response->assertDontSee($secret, false);
-        }
-    }
-
-    $this->actingAs($admin)->get(route('settings.system.edit', ['tab' => 'notifications']))
-        ->assertInertia(fn (AssertableInertia $page) => $page
-            ->where('secretsSet', ['mail_password' => true, 'telegram_bot_token' => true, 'sms_api_key' => true, 'sms_api_secret' => true])
-            ->missing('settings.mail_password')
-            ->missing('settings.telegram_bot_token')
-            ->missing('settings.sms_api_key')
-            ->missing('settings.sms_api_secret'));
-
-    // The settings every page shares (SharedSettings) carry none of them either.
-    foreach ([route('admin.dashboard'), route('landing.home')] as $url) {
+    foreach ([route('settings.system.edit'), route('settings.maintenance'), route('admin.dashboard'), route('landing.home')] as $url) {
         $response = $this->actingAs($admin)->get($url)->assertOk();
         foreach (SETTINGS_HARDENING_SECRETS as $secret) {
             $response->assertDontSee($secret, false);
         }
     }
+
+    // The page learns only that each secret is set.
+    $this->actingAs($admin)->get(route('settings.system.edit'))->assertInertia(function (AssertableInertia $page) {
+        $fields = collect($page->toArray()['props']['settingGroups'])->flatMap(fn (array $group) => $group['fields'])->keyBy('key');
+        foreach (array_keys(SETTINGS_HARDENING_SECRETS) as $key) {
+            expect($fields[$key])->toMatchArray(['is_encrypted' => true, 'configured' => true, 'value' => null]);
+        }
+
+        return $page;
+    });
 });
 
 test('secrets are not flashed back after a validation error, and blank keeps them', function (): void {
     $settings = SystemSetting::query()->create(['app_name' => 'Court MS', ...SETTINGS_HARDENING_SECRETS]);
     $admin = settingsHardeningAdmin();
 
-    $this->actingAs($admin)->from(route('settings.system.edit', ['tab' => 'notifications']))
-        ->post(route('settings.system.update'), [
-            'app_name' => '',
-            'telegram_bot_token' => 'typed-telegram-token',
-            'sms_api_key' => 'typed-sms-key',
-            'sms_api_secret' => 'typed-sms-secret',
-            'mail_password' => 'typed-smtp-password',
-        ])
-        ->assertSessionHasErrors('app_name');
+    $this->actingAs($admin)->from(route('settings.system.edit'))
+        ->patch(route('system-settings.sms.update'), ['sms_api_url' => 'not a url', 'sms_api_key' => 'typed-sms-key', 'sms_api_secret' => 'typed-sms-secret'])
+        ->assertSessionHasErrors('sms_api_url');
+    $this->actingAs($admin)->from(route('settings.system.edit'))
+        ->patch(route('system-settings.email.update'), ['mail_port' => 'x', 'mail_password' => 'typed-smtp-password'])
+        ->assertSessionHasErrors('mail_port');
+    $this->actingAs($admin)->from(route('settings.system.edit'))
+        ->patch(route('system-settings.telegram.update'), ['telegram_default_chat_id' => str_repeat('9', 200), 'telegram_bot_token' => 'typed-telegram-token'])
+        ->assertSessionHasErrors('telegram_default_chat_id');
 
     foreach (['telegram_bot_token', 'sms_api_key', 'sms_api_secret', 'mail_password'] as $field) {
         expect(session()->getOldInput($field))->toBeNull();
     }
 
-    $this->actingAs($admin)->post(route('settings.system.update'), [
-        'app_name' => 'Court MS', 'telegram_bot_token' => '', 'sms_api_key' => '', 'sms_api_secret' => '', 'mail_password' => '',
-        'clear_secrets' => ['sms_api_secret'], 'tab' => 'notifications',
-    ])->assertSessionHasNoErrors();
+    $this->actingAs($admin)->patch(route('system-settings.telegram.update'), ['telegram_bot_token' => ''])->assertSessionHasNoErrors();
+    $this->actingAs($admin)->patch(route('system-settings.email.update'), ['mail_password' => ''])->assertSessionHasNoErrors();
+    $this->actingAs($admin)->patch(route('system-settings.sms.update'), ['sms_api_key' => '', 'sms_api_secret' => '', 'clear' => ['sms_api_secret']])->assertSessionHasNoErrors();
 
     $settings->refresh();
     expect($settings->telegram_bot_token)->toBe(SETTINGS_HARDENING_SECRETS['telegram_bot_token'])

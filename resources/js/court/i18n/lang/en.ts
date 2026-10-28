@@ -3348,7 +3348,12 @@ const lang: Record<string, unknown> = {
         "saving": "Saving…",
         "discard": "Discard",
         "unsaved_changes": "You have unsaved changes",
-        "tab_has_errors": "This tab has validation errors"
+        "tab_has_errors": "This tab has validation errors",
+        "cache_cleared": "Caches cleared.",
+        "telegram_test_message": "Test message from :app: the Telegram connection works.",
+        "telegram_test_sent": "Telegram accepted the test message.",
+        "telegram_test_failed": "Telegram did not accept the test message. Check the bot token and the default chat ID.",
+        "maintenance": "Maintenance and status"
     },
     "signage": {
         "across_departments": "Across all departments",

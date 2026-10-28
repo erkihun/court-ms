@@ -382,26 +382,21 @@ Route::middleware(SetLocale::class)->where(array_fill_keys($numericRouteParamete
             Route::get('/dashboard/stats', [DashboardController::class, 'stats'])
                 ->name('admin.dashboard.stats');
 
-            // System settings
-            Route::get('/settings/system', [SystemSettingController::class, 'edit'])
-                ->middleware('perm:settings.manage')
-                ->name('settings.system.edit');
-
-            Route::post('/settings/system', [SystemSettingController::class, 'update'])
-                ->middleware('perm:settings.manage')
-                ->name('settings.system.update');
-
-            Route::post('/settings/system/clear-cache', [SystemSettingController::class, 'clearCache'])
-                ->middleware('perm:settings.manage')
-                ->name('settings.system.clearCache');
-
-            Route::post('/settings/system/test-smtp', [SystemSettingController::class, 'testSmtp'])
-                ->middleware('perm:settings.manage')
-                ->name('settings.system.testSmtp');
-
-            Route::post('/settings/system/database-backup', [SystemSettingController::class, 'downloadDatabaseBackup'])
-                ->middleware('perm:settings.manage')
-                ->name('settings.system.databaseBackup');
+            // System settings: the EUISIS settings page (SystemSettings/Index); each section saves on its own,
+            // under the route names that page uses (system-settings.*).
+            Route::middleware('perm:settings.manage')->group(function () {
+                Route::get('/settings/system', [SystemSettingController::class, 'edit'])->name('settings.system.edit');
+                foreach (['general', 'localization', 'appearance', 'notifications', 'email', 'sms', 'telegram', 'security'] as $section) {
+                    Route::patch('/settings/system/'.$section, [SystemSettingController::class, 'updateSection'])
+                        ->defaults('section', $section)
+                        ->name('system-settings.'.$section.'.update');
+                }
+                Route::post('/settings/system/clear-cache', [SystemSettingController::class, 'clearCache'])->name('system-settings.clear-cache');
+                Route::post('/settings/system/test-email', [SystemSettingController::class, 'testEmail'])->middleware('throttle:6,1')->name('system-settings.test-email');
+                Route::post('/settings/system/test-telegram', [SystemSettingController::class, 'testTelegram'])->middleware('throttle:6,1')->name('system-settings.test-telegram');
+                Route::get('/settings/system/maintenance', [SystemSettingController::class, 'maintenance'])->name('settings.maintenance');
+                Route::post('/settings/system/database-backup', [SystemSettingController::class, 'downloadDatabaseBackup'])->name('settings.system.databaseBackup');
+            });
 
             Route::get('/settings/performance-evaluation', [PerformanceEvaluationSettingController::class, 'index'])
                 ->middleware('perm:settings.manage')

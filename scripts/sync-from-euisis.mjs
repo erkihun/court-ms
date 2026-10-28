@@ -57,6 +57,8 @@ const SEEDS = [
     'Pages/Auth/VerifyEmail.tsx',
     'Pages/Auth/ConfirmPassword.tsx',
     'Pages/Profile/Edit.tsx',
+    // The system settings page: court-ms describes its settings in the same field schema (CourtSettingsSchema).
+    'Pages/SystemSettings/Index.tsx',
 ];
 
 /** Copied whole: every language file and type declaration. */
@@ -205,6 +207,30 @@ const PATCHES = [
             '}',
             '',
             'const loaders: Record<Locale, () => Promise<{ default: TranslationTree }>> = {',
+        ].join('\n'),
+    },
+    {
+        // court-ms could always remove its SMS and Telegram secrets as well as the SMTP password.
+        file: 'Pages/SystemSettings/Index.tsx',
+        from: "const REMOVABLE_SECRETS = ['email'];",
+        to: "const REMOVABLE_SECRETS = ['email', 'sms', 'telegram'];",
+    },
+    {
+        // court-ms can test email and Telegram, not SMS: a channel's Test button shows only when its route exists.
+        file: 'Pages/SystemSettings/Index.tsx',
+        from: 'canTest={can.testChannels && current.id in CHANNEL_TESTS}',
+        to: 'canTest={can.testChannels && current.id in CHANNEL_TESTS && route().has(CHANNEL_TESTS[current.id])}',
+    },
+    {
+        // court-ms: the backup, the security status and the system information have their own page.
+        file: 'Pages/SystemSettings/Index.tsx',
+        from: "            ...(group === 'security' && can.integrations\n",
+        to: [
+            "            // court-ms: the database backup, the security status and the system information (Court/Settings/Maintenance).",
+            "            ...(group === 'security' && route().has('settings.maintenance')",
+            "                ? [{ id: 'maintenance', label: t('cm.settings.maintenance'), icon: ShieldCheck, href: route('settings.maintenance') }]",
+            "                : []),",
+            "            ...(group === 'security' && can.integrations\n",
         ].join('\n'),
     },
     {

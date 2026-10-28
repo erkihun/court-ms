@@ -3353,7 +3353,12 @@ const lang: Record<string, unknown> = {
         "saving": "እየተቀመጠ…",
         "discard": "ሰርዝ",
         "unsaved_changes": "ያልተቀመጡ ለውጦች አሉ",
-        "tab_has_errors": "ይህ ትር የማረጋገጫ ስህተቶች አሉት"
+        "tab_has_errors": "ይህ ትር የማረጋገጫ ስህተቶች አሉት",
+        "cache_cleared": "የተሸጎጡ መረጃዎች ጸድተዋል።",
+        "telegram_test_message": "ከ:app የተላከ የሙከራ መልእክት፦ የቴሌግራም ግንኙነቱ ይሠራል።",
+        "telegram_test_sent": "ቴሌግራም የሙከራ መልእክቱን ተቀብሏል።",
+        "telegram_test_failed": "ቴሌግራም የሙከራ መልእክቱን አልተቀበለም። የቦት ቶክኑንና ነባሪውን የቻት መለያ ያረጋግጡ።",
+        "maintenance": "ጥገናና ሁኔታ"
     },
     "signage": {
         "across_departments": "በሁሉም ችሎቶች",
