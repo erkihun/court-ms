@@ -24,6 +24,9 @@ use App\Services\SecureUploadService;
 use App\Services\LegalHoldService;
 use Mews\Purifier\Facades\Purifier;
 use App\Models\CourtCase;
+use App\Models\EuisisOrganization;
+use Illuminate\Support\Facades\URL;
+use Inertia\Inertia;
 
 class ApplicantCaseController extends Controller
 {
@@ -53,7 +56,20 @@ class ApplicantCaseController extends Controller
             ->orderByDesc('c.created_at')
             ->paginate(10);
 
-        return view('applicant.cases.index', compact('cases'));
+        // React page Court/Applicant/Cases/Index; a case without a review state reads as accepted, as on the Blade list.
+        return Inertia::render('Court/Applicant/Cases/Index', [
+            'cases' => $cases->through(fn (object $c): array => [
+                'id' => (int) $c->id,
+                'case_number' => (string) $c->case_number,
+                'title' => $c->title,
+                'case_type' => $c->case_type,
+                'status' => (string) $c->status,
+                'review_status' => (string) ($c->review_status ?? 'accepted'),
+                'review_note' => $c->review_note,
+                'filing_date' => $this->isoDay($c->filing_date ?? null),
+                'can_delete' => $c->status === 'pending' && ($c->review_status ?? null) !== 'accepted',
+            ]),
+        ]);
     }
 
     /**
@@ -63,8 +79,33 @@ class ApplicantCaseController extends Controller
     {
         $types  = DB::table('case_types')->orderBy('name')->get(['id', 'name', 'prefix']);
         $activeTerms = TermsAndCondition::published()->orderByDesc('published_at')->first();
+        $applicant = auth('applicant')->user();
 
-        return view('applicant.cases.create', compact('types', 'activeTerms'));
+        // The respondent organization picker reads the EUISIS city directory (docs/euisis-integration.md), as the Blade form did.
+        $organizations = Schema::hasTable('euisis_organizations')
+            ? EuisisOrganization::query()
+                ->where(fn ($q) => $q->whereNull('status')->orWhere('status', 'active'))
+                ->orderBy('name_en')
+                ->get(['uuid', 'name_en', 'name_am', 'status'])
+                ->map(fn (EuisisOrganization $org): array => ['uuid' => (string) $org->uuid, 'name' => $org->displayName()])
+                ->values()
+                ->all()
+            : [];
+
+        return Inertia::render('Court/Applicant/Cases/Create', [
+            'types' => $this->caseTypeOptions($types),
+            'terms' => $activeTerms ? [
+                'id' => (int) $activeTerms->id,
+                'body_html' => clean(nl2br(e((string) $activeTerms->body)), 'cases'),
+            ] : null,
+            'applicant' => [
+                'is_lawyer' => (bool) ($applicant?->is_lawyer),
+                'name' => (string) ($applicant->full_name ?? $applicant->name ?? ''),
+                'address' => (string) ($applicant->address ?? ''),
+            ],
+            'organizations' => $organizations,
+            'today' => now()->toDateString(),
+        ]);
     }
 
     private function generateCaseNumber($caseTypeId)
@@ -472,18 +513,110 @@ class ApplicantCaseController extends Controller
             }
         }
 
-        return view('applicant.cases.show', compact(
-            'case',
-            'timeline',
-            'letters',
-            'respondentResponses',
-            'files',
-            'msgs',
-            'hearings',
-            'docs',
-            'witnesses',
-            'audits'
-        ));
+        // React page Court/Applicant/Cases/Show: the Blade page's rows as plain arrays, dates as ISO 8601.
+        $applicantUser = auth('applicant')->user();
+        $iso = fn ($value): ?string => $this->isoDate($value);
+
+        return Inertia::render('Court/Applicant/Cases/Show', [
+            'case' => [
+                'id' => (int) $case->id,
+                'case_number' => (string) $case->case_number,
+                'code' => !empty($case->code) ? (string) $case->code : null,
+                'title' => $case->title ?? null,
+                'status' => (string) ($case->status ?? 'pending'),
+                'review_status' => (string) ($case->review_status ?? 'accepted'),
+                'review_note' => !empty($case->review_note) ? (string) $case->review_note : null,
+                'case_type' => $case->case_type ?? null,
+                'filed_at' => $iso($case->filing_date ?? $case->created_at ?? null),
+                'respondent_name' => $case->respondent_name ?? null,
+                'respondent_address' => $case->respondent_address ?? null,
+                'description_html' => clean((string) ($case->description ?? ''), 'cases'),
+                'relief_html' => !empty($case->relief_requested) ? clean((string) $case->relief_requested, 'cases') : null,
+            ],
+            'applicant' => [
+                // The case title doubles as the applicant's name, as on the Blade page.
+                'name' => ($case->title ?? '') !== '' ? (string) $case->title : (string) ($applicantUser->full_name ?? $applicantUser->name ?? '-'),
+                'address' => (string) ($applicantUser->address ?? '-'),
+            ],
+            'docs' => $docs->map(function ($d) use ($iso): array {
+                $docPath = $d->file_path ?? $d->path ?? null;
+
+                return [
+                    'id' => (int) $d->id,
+                    'title' => ($d->title ?? null) ?: (($d->label ?? null) ?: ($docPath ? basename((string) $docPath) : null)),
+                    'mime' => $d->mime ?? null,
+                    'size' => isset($d->size) ? max(0, (int) $d->size) : null,
+                    'created_at' => $iso($d->created_at ?? null),
+                    'description_html' => !empty($d->description) ? clean((string) $d->description, 'cases') : null,
+                    'has_file' => !empty($docPath),
+                ];
+            })->values()->all(),
+            'witnesses' => $this->witnessRows($witnesses),
+            'hearings' => $hearings->map(fn ($h): array => [
+                'id' => (int) $h->id,
+                'hearing_at' => $iso($h->hearing_at ?? null),
+                'type' => $h->type ?? null,
+                'location' => $h->location ?? null,
+                'notes' => $h->notes ?? null,
+            ])->values()->all(),
+            'letters' => $letters->map(function ($letter) use ($iso): array {
+                try {
+                    $previewUrl = URL::signedRoute('letters.case-preview', ['letter' => $letter->id]);
+                } catch (\Throwable $e) {
+                    $previewUrl = url('/case-letters/' . $letter->id);
+                }
+
+                return [
+                    'id' => (int) $letter->id,
+                    'subject' => $letter->subject ?? null,
+                    'reference_number' => $letter->reference_number ?? null,
+                    'approval_status' => (string) ($letter->approval_status ?? 'draft'),
+                    'template_title' => $letter->template_title ?? null,
+                    'author_name' => $letter->author_name ?? null,
+                    'created_at' => $iso($letter->created_at ?? null),
+                    'preview_url' => $previewUrl,
+                ];
+            })->values()->all(),
+            'respondentResponses' => $respondentResponses->map(fn ($r): array => [
+                'id' => (int) $r->id,
+                'title' => $r->title ?? null,
+                'case_number' => (string) ($r->case_number ?? $case->case_number),
+                'response_number' => !empty($r->response_number) ? (string) $r->response_number : null,
+                'created_at' => $iso($r->created_at ?? null),
+                'excerpt' => !empty($r->description) ? Str::limit(strip_tags((string) $r->description), 180) : null,
+                'has_pdf' => !empty($r->pdf_path),
+            ])->values()->all(),
+            'messages' => $msgs->map(fn ($m): array => [
+                'id' => (int) $m->id,
+                'body' => (string) ($m->body ?? ''),
+                'mine' => !empty($m->sender_applicant_id),
+                // Null for a court message without a named sender: the page shows "Court staff".
+                'sender_name' => !empty($m->sender_applicant_id) ? null : ($m->admin_name ?? null),
+                'created_at' => $iso($m->created_at ?? null),
+            ])->values()->all(),
+            'files' => $files->map(fn ($f): array => [
+                'id' => (int) $f->id,
+                'name' => ($f->label ?? null) ?: basename((string) ($f->path ?? '')),
+                'mime' => $f->mime ?? null,
+                'size' => (int) ($f->size ?? 0),
+                'created_at' => $iso($f->created_at ?? null),
+                // ApplicantCaseController::deleteFile removes only the applicant's own uploads.
+                'can_delete' => (int) ($f->uploaded_by_applicant_id ?? 0) === (int) $aid,
+            ])->values()->all(),
+            'audits' => $audits->map(function ($a) use ($iso): array {
+                $meta = $a->meta ? json_decode((string) $a->meta, true) : null;
+
+                return [
+                    'id' => (int) $a->id,
+                    'action' => (string) ($a->action ?? ''),
+                    'actor_type' => $a->actor_type ?? null,
+                    'actor_id' => isset($a->actor_id) ? (int) $a->actor_id : null,
+                    'actor_name' => ($a->actor_name ?? null) ?: null,
+                    'meta' => $meta ? json_encode($meta, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : null,
+                    'created_at' => $iso($a->created_at ?? null),
+                ];
+            })->values()->all(),
+        ]);
     }
 
     public function showRespondentResponse(int $caseId, int $responseId)
@@ -519,7 +652,29 @@ class ApplicantCaseController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        return view('applicant.cases.respondent-response', compact('case', 'response', 'replies'));
+        return Inertia::render('Court/Applicant/Cases/RespondentResponse', [
+            'case' => ['id' => (int) $case->id, 'case_number' => (string) $case->case_number],
+            'response' => array_merge($this->respondentResponseSummary($response), [
+                'title' => $response->title ?? null,
+                'case_number' => (string) ($response->case_number ?? $case->case_number),
+                'respondent_email' => !empty($response->respondent_email) ? (string) $response->respondent_email : null,
+                'respondent_phone' => !empty($response->respondent_phone) ? (string) $response->respondent_phone : null,
+                'respondent_org' => !empty($response->respondent_org) ? (string) $response->respondent_org : null,
+                'created_at' => $this->isoDate($response->created_at ?? null),
+                'summary' => !empty($response->summary) ? (string) $response->summary : null,
+                'description_html' => clean((string) ($response->description ?? ''), 'cases'),
+                'pdf_name' => !empty($response->pdf_path) ? basename((string) $response->pdf_path) : null,
+            ]),
+            'replies' => $replies->map(fn ($reply): array => [
+                'id' => (int) $reply->id,
+                'review_status' => (string) ($reply->review_status ?? 'awaiting_review'),
+                'review_note' => !empty($reply->review_note) ? (string) $reply->review_note : null,
+                'excerpt' => Str::limit((string) ($reply->description ?? ''), 180),
+                'created_at' => $this->isoDate($reply->created_at ?? null),
+                // An accepted reply is locked (ApplicantResponseReplyController::ensureEditableReply).
+                'editable' => ($reply->review_status ?? null) !== 'accepted',
+            ])->values()->all(),
+        ]);
     }
 
     public function replyRespondentResponse(int $caseId, int $responseId)
@@ -548,7 +703,14 @@ class ApplicantCaseController extends Controller
 
         abort_if(!$response, 404);
 
-        return view('applicant.responses.create', compact('case', 'response'));
+        // Same page as ApplicantResponseReplyController::create.
+        $applicant = auth('applicant')->user();
+
+        return Inertia::render('Court/Applicant/Replies/Create', [
+            'case' => ['id' => (int) $case->id, 'case_number' => (string) $case->case_number],
+            'response' => $this->respondentResponseSummary($response),
+            'applicantName' => trim(implode(' ', array_filter([$applicant->first_name ?? '', $applicant->middle_name ?? '', $applicant->last_name ?? ''], fn ($part) => trim((string) $part) !== ''))),
+        ]);
     }
 
     /**
@@ -583,7 +745,37 @@ class ApplicantCaseController extends Controller
             ->orderBy('id')
             ->get();
 
-        return view('applicant.cases.edit', compact('case', 'types', 'docs', 'witnesses'));
+        $editable = $case->status === 'pending' && ($case->review_status ?? null) !== 'accepted';
+
+        return Inertia::render('Court/Applicant/Cases/Edit', [
+            'case' => [
+                'id' => (int) $case->id,
+                'case_number' => (string) $case->case_number,
+                'status' => (string) $case->status,
+                'review_status' => (string) ($case->review_status ?? 'accepted'),
+                'title' => (string) ($case->title ?? ''),
+                'filing_date' => $this->isoDay($case->filing_date ?? null),
+                'case_type_id' => $case->case_type_id !== null ? (int) $case->case_type_id : null,
+                'respondent_name' => (string) ($case->respondent_name ?? ''),
+                'respondent_address' => (string) ($case->respondent_address ?? ''),
+                'description' => clean((string) ($case->description ?? ''), 'cases'),
+                'relief_requested' => clean((string) ($case->relief_requested ?? ''), 'cases'),
+            ],
+            'editable' => $editable,
+            'types' => $this->caseTypeOptions($types),
+            'docs' => $docs->map(function ($d): array {
+                $docPath = $d->file_path ?? $d->path ?? null;
+
+                return [
+                    'id' => (int) $d->id,
+                    'title' => ($d->title ?? null) ?: ($docPath ? basename((string) $docPath) : null),
+                    'has_file' => !empty($docPath),
+                ];
+            })->values()->all(),
+            'witnesses' => $this->witnessRows($witnesses),
+            // The case number format hint: type prefix / 5-digit sequence / last 2 digits of the year.
+            'yearSuffix' => now()->format('y'),
+        ]);
     }
     public function destroy($id)
     {
@@ -1251,6 +1443,68 @@ class ApplicantCaseController extends Controller
         $clean = trim($clean, "- \t\n\r\0\x0B");
 
         return $clean !== '' ? $clean : $fallback;
+    }
+
+    /** A database date/time as ISO 8601, or null when it is empty or unparseable. */
+    private function isoDate(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        try {
+            return Carbon::parse((string) $value)->toIso8601String();
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /** A database date as an ISO 8601 calendar date (YYYY-MM-DD), or null. */
+    private function isoDay(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        try {
+            return Carbon::parse((string) $value)->toDateString();
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /** The case type options of the filing and edit forms. @return list<array{id: int, name: string, prefix: ?string}> */
+    private function caseTypeOptions($types): array
+    {
+        return collect($types)->map(fn ($t): array => [
+            'id' => (int) $t->id,
+            'name' => (string) $t->name,
+            'prefix' => isset($t->prefix) && $t->prefix !== '' ? (string) $t->prefix : null,
+        ])->values()->all();
+    }
+
+    /** @return list<array{id: int, full_name: string, phone: ?string, email: ?string, address: ?string}> */
+    private function witnessRows($witnesses): array
+    {
+        return collect($witnesses)->map(fn ($w): array => [
+            'id' => (int) $w->id,
+            'full_name' => (string) ($w->full_name ?? ''),
+            'phone' => !empty($w->phone) ? (string) $w->phone : null,
+            'email' => !empty($w->email) ? (string) $w->email : null,
+            'address' => !empty($w->address) ? (string) $w->address : null,
+        ])->values()->all();
+    }
+
+    /** The respondent response as the reply pages show it: number and respondent's name. @return array<string, mixed> */
+    private function respondentResponseSummary(object $response): array
+    {
+        $name = collect([$response->first_name ?? null, $response->middle_name ?? null, $response->last_name ?? null])
+            ->map(fn ($part) => trim((string) $part))->filter()->implode(' ');
+
+        return [
+            'id' => (int) $response->id,
+            'response_number' => !empty($response->response_number) ? (string) $response->response_number : null,
+            'respondent_name' => $name !== '' ? $name : null,
+            'has_pdf' => !empty($response->pdf_path),
+        ];
     }
 
     /**

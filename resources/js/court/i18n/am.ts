@@ -8,6 +8,7 @@ import decisionForms from './decisions';
 import letterForms from './letters';
 import inspectionPages from './inspections';
 import performancePages from './performance';
+import applicantCases from './applicantCases';
 
 export default {
     cm: lang,
@@ -72,6 +73,7 @@ export default {
         letterForms: letterForms.am,
         inspectionPages: inspectionPages.am,
         performancePages: performancePages.am,
+        applicantCases: applicantCases.am,
         settings: {
             secretSaved: 'ተቀምጧል',
             secretNotSet: 'አልተዘጋጀም',
