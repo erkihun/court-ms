@@ -87,7 +87,11 @@ test('administrator can update statistics content displayed on the english home 
     $this->withSession(['app_locale' => 'en'])
         ->get(route('landing.home'))
         ->assertOk()
-        ->assertSee('Registered Tribunal Matters');
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('Court/Public/Home')
+            ->where('metrics.0.key', 'total_cases')
+            ->where('metrics.0.label', 'Registered Tribunal Matters')
+            ->where('metrics.0.description', 'All matters currently registered by the tribunal.'));
 });
 
 test('section settings control metrics and faq headings on the home page', function (): void {
@@ -111,8 +115,12 @@ test('section settings control metrics and faq headings on the home page', funct
     $this->withSession(['app_locale' => 'en'])
         ->get(route('landing.home'))
         ->assertOk()
-        ->assertSee('Current Tribunal Workload')
-        ->assertSee('Portal Help');
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('Court/Public/Home')
+            ->where('sections.metrics.title', 'Current Tribunal Workload')
+            ->where('sections.metrics.subtitle', 'Live operational totals.')
+            ->where('sections.faq.title', 'Portal Help')
+            ->where('sections.faq.subtitle', 'Answers for applicants and respondents.'));
 });
 
 test('administrator manages the user manual opened from localized home navigation', function (): void {
@@ -128,11 +136,14 @@ test('administrator manages the user manual opened from localized home navigatio
 
     $settings = HomeSetting::getJson('user_manual.settings');
 
+    // The header and footer link the manual (route landing.user-manual) under its Amharic title.
     $this->withSession(['app_locale' => 'am'])
         ->get(route('landing.home'))
         ->assertOk()
-        ->assertSee('የተጠቃሚ መመሪያ')
-        ->assertSee(route('landing.user-manual'));
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('Court/Public/Home')
+            ->where('publicSite.userManualEnabled', true)
+            ->where('publicSite.userManualTitle', 'የተጠቃሚ መመሪያ'));
 
     $this->withSession(['app_locale' => 'en'])
         ->get(route('landing.user-manual'))

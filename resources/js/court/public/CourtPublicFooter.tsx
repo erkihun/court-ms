@@ -24,12 +24,16 @@ const heading = 'mb-3 text-sm font-semibold text-white';
  * landing-page manager (the same footer settings the home page shows). A
  * column renders only when it has content; nothing is filled with placeholders.
  */
-export default function CourtPublicFooter({ footer, userManualEnabled }: { footer: LandingFooter | null; userManualEnabled: boolean }) {
+export default function CourtPublicFooter({ footer, userManualEnabled, userManualTitle = null }: {
+    footer: LandingFooter | null;
+    userManualEnabled: boolean;
+    userManualTitle?: string | null;
+}) {
     const { t } = useLocale();
     const { text } = usePublicText();
     const { getString } = useSystemSettings();
     const { brandName } = useBranding();
-    const links = useCourtPublicLinks(userManualEnabled);
+    const links = useCourtPublicLinks(userManualEnabled, userManualTitle);
 
     const organization = getString('general.organization_name') || brandName;
     const description = footer?.description || t('cm.home.footer.description');
@@ -80,6 +84,7 @@ export default function CourtPublicFooter({ footer, userManualEnabled }: { foote
                     <p className={heading}>{t('cm.home.footer.portals')}</p>
                     <ul>
                         <li><a href={route('applicant.login')} className={linkClass}>{t('cm.home.nav.applicant_portal')}</a></li>
+                        <li><a href={route('applicant.register')} className={linkClass}>{t('cm.respondent.register_action')}</a></li>
                         <li><a href={route('applicant.login', { login_as: 'respondent' })} className={linkClass}>{t('cm.home.nav.respondent_portal')}</a></li>
                         <li><a href={route('login')} className={linkClass}>{text('staff_sign_in')}</a></li>
                     </ul>

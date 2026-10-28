@@ -47,13 +47,17 @@ export default function PublicLayout({ title, description, publicSite = null, ch
                     {t('publicSite.skipToContent')}
                 </a>
 
-                <CourtPublicHeader userManualEnabled={publicSite?.userManualEnabled ?? false} />
+                <CourtPublicHeader userManualEnabled={publicSite?.userManualEnabled ?? false} userManualTitle={publicSite?.userManualTitle ?? null} />
 
                 <main id="main-content" tabIndex={-1} className="flex-1 focus:outline-hidden">
                     {children}
                 </main>
 
-                <CourtPublicFooter footer={publicSite?.footer ?? null} userManualEnabled={publicSite?.userManualEnabled ?? false} />
+                <CourtPublicFooter
+                    footer={publicSite?.footer ?? null}
+                    userManualEnabled={publicSite?.userManualEnabled ?? false}
+                    userManualTitle={publicSite?.userManualTitle ?? null}
+                />
             </div>
 
             <AppToaster />

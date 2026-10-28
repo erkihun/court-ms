@@ -10,10 +10,13 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * What the React public layout (resources/js/court/public/PublicLayout.tsx)
- * shows around a page: the landing manager's footer settings and whether the
- * user manual is linked. Read through the same cache keys, with the same
- * values, as the home page (routes/web.php `landing.home`), so the landing
- * manager's flush refreshes both.
+ * shows around a page: the landing manager's footer settings and the user
+ * manual link. Read through the same cache keys, with the same values, as
+ * the home page (PublicHomeController), so the landing manager's flush
+ * refreshes both. The Blade home page's rules hold on every public page: the
+ * footer description is English-only text, so Amharic falls back to the
+ * translation, and the manual is linked once it is switched on and has
+ * content, under the title saved for the request's language.
  */
 final class PublicSiteChrome
 {
@@ -22,7 +25,7 @@ final class PublicSiteChrome
         'social_facebook', 'social_twitter', 'social_linkedin', 'social_youtube', 'social_telegram', 'social_instagram',
     ];
 
-    /** @return array{footer: array<string, string|null>|null, userManualEnabled: bool} */
+    /** @return array{footer: array<string, string|null>|null, userManualEnabled: bool, userManualTitle: string|null} */
     public static function props(): array
     {
         $footer = Cache::remember('home_footer', 3600,
@@ -31,13 +34,23 @@ final class PublicSiteChrome
         $manual = Cache::remember('home_user_manual', 3600,
             fn () => Schema::hasTable('home_settings') ? HomeSetting::getJson('user_manual.settings') : []
         );
+        $manual = is_array($manual) ? $manual : [];
+        $locale = app()->getLocale() === 'am' ? 'am' : 'en';
+
+        $footer = $footer ? array_combine(
+            self::FOOTER_FIELDS,
+            array_map(fn (string $field): ?string => isset($footer[$field]) && $footer[$field] !== '' ? (string) $footer[$field] : null, self::FOOTER_FIELDS),
+        ) : null;
+        if ($footer !== null && $locale === 'am') {
+            $footer['description'] = null;
+        }
+        $title = trim((string) ($manual["title_{$locale}"] ?? ''));
 
         return [
-            'footer' => $footer ? array_combine(
-                self::FOOTER_FIELDS,
-                array_map(fn (string $field): ?string => isset($footer[$field]) && $footer[$field] !== '' ? (string) $footer[$field] : null, self::FOOTER_FIELDS),
-            ) : null,
-            'userManualEnabled' => (bool) ($manual['is_active'] ?? false),
+            'footer' => $footer,
+            'userManualEnabled' => (bool) ($manual['is_active'] ?? false)
+                && (! empty($manual['content_en']) || ! empty($manual['content_am'])),
+            'userManualTitle' => $title !== '' ? $title : null,
         ];
     }
 }

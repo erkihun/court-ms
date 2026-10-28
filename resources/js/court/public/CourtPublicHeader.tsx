@@ -17,16 +17,16 @@ export interface CourtPublicLink {
 }
 
 /**
- * The public pages' links. The home page and the resources page are still
- * Blade, so every link is a plain anchor (a full visit), never an Inertia one.
+ * The public pages' links, as plain anchors (full visits). The manual is
+ * listed under the title the landing manager saved for the language.
  */
-export function useCourtPublicLinks(userManualEnabled: boolean): CourtPublicLink[] {
+export function useCourtPublicLinks(userManualEnabled: boolean, userManualTitle: string | null = null): CourtPublicLink[] {
     const { t } = usePublicText();
 
     return [
         { key: 'home', label: t('cm.home.nav.home'), href: route('landing.home') },
         { key: 'resources', label: t('cm.home.nav.resources'), href: route('public.resources') },
-        ...(userManualEnabled ? [{ key: 'manual', label: t('cm.home.nav.user_manual'), href: route('landing.user-manual') }] : []),
+        ...(userManualEnabled ? [{ key: 'manual', label: userManualTitle || t('cm.home.nav.user_manual'), href: route('landing.user-manual') }] : []),
         { key: 'terms', label: t('cm.home.footer.terms_of_service'), href: route('public.terms') },
     ];
 }
@@ -44,13 +44,13 @@ function pathOf(href: string): string {
  * public navigation, language and theme, and the applicant and respondent
  * portals. One breakpoint (`lg`) switches to the menu button and its dialog.
  */
-export default function CourtPublicHeader({ userManualEnabled }: { userManualEnabled: boolean }) {
+export default function CourtPublicHeader({ userManualEnabled, userManualTitle = null }: { userManualEnabled: boolean; userManualTitle?: string | null }) {
     const { t } = usePublicText();
     const page = usePage<PageProps>();
     const { getString } = useSystemSettings();
     const { brandName } = useBranding();
     const [menuOpen, setMenuOpen] = useState(false);
-    const links = useCourtPublicLinks(userManualEnabled);
+    const links = useCourtPublicLinks(userManualEnabled, userManualTitle);
     const logoUrl = getString('general.identity_system_logo_url');
     const path = page.url.split('?')[0].split('#')[0] || '/';
     // Off the portals the shared `auth` is the staff (web) session.

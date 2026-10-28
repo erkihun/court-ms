@@ -23,7 +23,7 @@ export function CourtPublicContainer({ children, narrow = false, className = '' 
 
 export type CourtCrumb = { label: string; href?: string };
 
-/** Home → Page, on the hero band. The home page is Blade, so its link is a plain anchor. */
+/** Home → Page, on the hero band; plain anchors, as the header's links. */
 export function CourtPublicBreadcrumbs({ items }: { items: CourtCrumb[] }) {
     const { t } = useLocale();
 
