@@ -138,7 +138,11 @@ test('respondent response of response list and download include accepted records
     $this->actingAs($viewerApplicant, 'applicant')
         ->get(route('respondent.response-replies.index'))
         ->assertOk()
-        ->assertSee('AcceptedApplicant')
+        ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->component('Court/Respondent/ResponseReplies/Index')
+            ->has('replies.data', 1)
+            ->where('replies.data.0.id', $acceptedReplyId)
+            ->where('replies.data.0.applicant_name', fn (string $name): bool => str_contains($name, 'AcceptedApplicant')))
         ->assertDontSee('AwaitingApplicant');
 
     $this->actingAs($viewerApplicant, 'applicant')

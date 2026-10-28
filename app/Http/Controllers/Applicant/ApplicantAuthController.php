@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Applicant;
 
 use App\Http\Controllers\Controller;
+use App\Models\AboutPage;
 use App\Models\Applicant;
 use App\Models\SystemSetting;
 use Illuminate\Http\Request;
@@ -12,13 +13,15 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
+use Inertia\Inertia;
 
 class ApplicantAuthController extends Controller
 {
-    public function showRegister()
+    public function showRegister(Request $request)
     {
-        return response()
-            ->view('applicant.auth.register')
+        // The registration page (React, Court/Applicant/Register).
+        return Inertia::render('Court/Applicant/Register')
+            ->toResponse($request)
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
             ->header('Pragma', 'no-cache');
     }
@@ -83,14 +86,31 @@ class ApplicantAuthController extends Controller
             ->with('success', __('auth.email_verified_welcome'));
     }
 
-    public function showLogin()
+    public function showLogin(Request $request)
     {
         // Always reset acting-as flag on login screen
         session()->forget('acting_as_respondent');
-        $asRespondentNav = request('login_as') === 'respondent';
+        $loginAs = old('login_as', $request->query('login_as', 'applicant')) === 'respondent' ? 'respondent' : 'applicant';
 
-        return response()
-            ->view('applicant.auth.login', compact('asRespondentNav'))
+        $settings = rescue(fn () => SystemSetting::cached(), null, false);
+        $bannerPath = ($settings?->show_banner_on_login ?? true) ? ($settings?->banner_path ?? null) : null;
+        $aboutPage = rescue(fn () => AboutPage::query()
+            ->where('is_published', true)
+            ->orderByDesc('updated_at')
+            ->first(), null, false);
+
+        // The sign-in page (React, Court/Applicant/Login): the form beside the published About page.
+        return Inertia::render('Court/Applicant/Login', [
+            'loginAs' => $loginAs,
+            'email' => (string) old('email', ''),
+            'bannerUrl' => $bannerPath ? asset('storage/'.$bannerPath) : null,
+            'about' => $aboutPage ? [
+                'title' => (string) $aboutPage->title,
+                // Sanitised as the Blade page printed it.
+                'body' => (string) clean($aboutPage->body ?? '', 'cases'),
+            ] : null,
+        ])
+            ->toResponse($request)
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
             ->header('Pragma', 'no-cache');
     }

@@ -4,6 +4,7 @@ use App\Models\Applicant;
 use App\Models\Respondent;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Inertia\Testing\AssertableInertia;
 
 function respondentProfileApplicant(): Applicant
 {
@@ -57,12 +58,23 @@ test('applicant and respondent logout both return to the plain applicant login',
 test('respondent profile exposes the same profile security and sessions navigation', function () {
     $applicant = respondentProfileApplicant();
 
+    // The React page (Court/Respondent/Profile) posts to respondent.profile.update and .password and opens
+    // respondent.profile.sessions.index for its Sessions tab; the portal shell is the respondent's.
     $this->actingAs($applicant, 'applicant')
         ->get(route('respondent.profile.edit'))
         ->assertOk()
-        ->assertSee(route('respondent.profile.update'))
-        ->assertSee(route('respondent.profile.password'))
-        ->assertSee(route('respondent.profile.sessions.index'));
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('Court/Respondent/Profile')
+            ->where('tab', 'profile')
+            ->where('sessions', null)
+            ->where('user.email', $applicant->email)
+            ->where('user.national_id_number', '1234 5678 9012 3456')
+            ->where('portal.name', 'respondent')
+            ->where('portal.profile', 'respondent.profile.edit'));
+
+    $this->actingAs($applicant, 'applicant')
+        ->get(route('respondent.profile.edit', ['tab' => 'security']))
+        ->assertInertia(fn (AssertableInertia $page) => $page->component('Court/Respondent/Profile')->where('tab', 'security'));
 });
 
 test('respondent profile updates linked profile records and password', function () {
@@ -114,8 +126,14 @@ test('respondent can view and revoke another respondent session', function () {
     $this->actingAs($applicant, 'applicant')
         ->get(route('respondent.profile.sessions.index'))
         ->assertOk()
-        ->assertSee('Windows')
-        ->assertSee('Chrome 150');
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('Court/Respondent/Profile')
+            ->where('tab', 'devices')
+            ->where('sessions', fn ($sessions) => collect($sessions)->contains(fn (array $session): bool => $session['id'] === 'respondent-other-session'
+                && str_contains($session['device_name'], 'Windows')
+                && str_contains($session['browser_name'], 'Chrome 150')
+                && $session['is_current'] === false
+                && $session['ip_address'] === '203.0.113.25')));
 
     $this->actingAs($applicant, 'applicant')
         ->delete(route('respondent.profile.sessions.destroy', 'respondent-other-session'))

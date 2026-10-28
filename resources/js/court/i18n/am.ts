@@ -9,6 +9,8 @@ import letterForms from './letters';
 import inspectionPages from './inspections';
 import performancePages from './performance';
 import applicantCases from './applicantCases';
+import respondentPages from './respondent';
+import applicantPages from './applicant';
 
 export default {
     cm: lang,
@@ -74,6 +76,8 @@ export default {
         inspectionPages: inspectionPages.am,
         performancePages: performancePages.am,
         applicantCases: applicantCases.am,
+        respondentPages: respondentPages.am,
+        applicantPages: applicantPages.am,
         settings: {
             secretSaved: 'ተቀምጧል',
             secretNotSet: 'አልተዘጋጀም',

@@ -9,11 +9,14 @@ use App\Models\Respondent;
 use App\Services\ResponseNotificationService;
 use App\Support\DecisionPdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\URL;
+use Inertia\Inertia;
 
 class CaseSearchController extends Controller
 {
@@ -61,12 +64,42 @@ class CaseSearchController extends Controller
             }
         }
 
-        return view('applicant.respondent.cases.search', [
+        // The case finder (React, Court/Respondent/CaseSearch). The stored access code never leaves the server.
+        return Inertia::render('Court/Respondent/CaseSearch', [
             'caseNumber' => $caseNumber,
             'caseCode' => $caseCode,
-            'case' => $case,
+            'case' => $case ? [
+                'case_number' => (string) $case->case_number,
+                'title' => $case->title,
+                'status' => $case->status,
+                'created_at' => $this->iso($case->created_at),
+                'show_url' => route('respondent.cases.show', ['caseNumber' => $case->case_number, 'case_code' => $caseCode]),
+            ] : null,
             'codeError' => $codeError,
         ]);
+    }
+
+    private function iso(mixed $value): ?string
+    {
+        return $value ? Carbon::parse($value)->toIso8601String() : null;
+    }
+
+    /** The signed public preview of an approved letter (the Blade page built it the same way). */
+    private function letterPreviewUrl(int $letterId): string
+    {
+        try {
+            return URL::signedRoute('letters.case-preview', ['letter' => $letterId]);
+        } catch (\Throwable) {
+            return url('/case-letters/'.$letterId);
+        }
+    }
+
+    /** Stored rich text, cleaned the way the Blade page printed it. */
+    private function cleanHtml(?string $html): ?string
+    {
+        $html = (string) ($html ?? '');
+
+        return $html === '' ? null : (string) clean($html, 'cases');
     }
 
     public function show(string $caseNumber)
@@ -121,23 +154,8 @@ class CaseSearchController extends Controller
 
         $caseId = $case->id;
 
-        $timeline = DB::table('case_status_logs')
-            ->where('case_id', $caseId)
-            ->orderBy('created_at')
-            ->get();
-
-        $files = DB::table('case_files')
-            ->where('case_id', $caseId)
-            ->orderByDesc('created_at')
-            ->get();
-
-        $msgs = DB::table('case_messages as m')
-            ->leftJoin('users as u', 'u.id', '=', 'm.sender_user_id')
-            ->select('m.*', 'u.name as admin_name')
-            ->where('m.case_id', $caseId)
-            ->orderBy('m.created_at')
-            ->get();
-
+        // The status timeline, case files and staff messages were loaded here for the Blade page but never
+        // shown to the respondent; the React page receives only what it shows.
         $hearings = DB::table('case_hearings')
             ->where('case_id', $caseId)
             ->orderBy('hearing_at')
@@ -176,16 +194,66 @@ class CaseSearchController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        return view('applicant.respondent.cases.show', compact(
-            'case',
-            'timeline',
-            'letters',
-            'files',
-            'msgs',
-            'hearings',
-            'docs',
-            'decisions'
-        ) + ['witnesses' => collect(), 'audits' => collect()]);
+        $status = (string) ($case->status ?? 'pending');
+
+        // The case as the respondent sees it (React, Court/Respondent/CaseShow). Named fields only: the
+        // access code and the staff-side columns of court_cases stay on the server.
+        return Inertia::render('Court/Respondent/CaseShow', [
+            'case' => [
+                'id' => (int) $case->id,
+                'case_number' => (string) $case->case_number,
+                'status' => $status === '' ? 'pending' : $status,
+                'review_status' => (string) ($case->review_status ?? 'accepted') ?: 'accepted',
+                'review_note' => $case->review_note ?? null,
+                'case_type' => $case->case_type ?? null,
+                'filed_at' => $this->iso($case->filing_date ?? $case->created_at ?? null),
+                'applicant_name' => $case->applicant_name ?? $case->title ?? null,
+                'applicant_email' => $case->applicant_email ?? null,
+                'respondent_name' => $case->respondent_name ?? null,
+                'respondent_address' => $case->respondent_address ?? null,
+                'description_html' => $this->cleanHtml($case->description ?? null),
+                'relief_requested_html' => $this->cleanHtml($case->relief_requested ?? null),
+            ],
+            'docs' => $docs->map(function (object $doc) use ($case): array {
+                $path = $doc->file_path ?? $doc->path ?? null;
+
+                return [
+                    'id' => (int) $doc->id,
+                    'title' => $doc->title ?? $doc->label ?? ($path ? basename((string) $path) : null),
+                    'mime' => $doc->mime ?? null,
+                    'size' => isset($doc->size) ? max(0, (int) $doc->size) : null,
+                    'created_at' => $this->iso($doc->created_at ?? null),
+                    'description_html' => $this->cleanHtml($doc->description ?? null),
+                    'download_url' => $path ? route('applicant.cases.evidences.download', ['id' => $case->id, 'evidenceId' => $doc->id]) : null,
+                ];
+            })->values()->all(),
+            'hearings' => $hearings->map(fn (object $hearing): array => [
+                'id' => (int) $hearing->id,
+                'hearing_at' => $this->iso($hearing->hearing_at ?? null),
+                'type' => $hearing->type ?? null,
+                'location' => $hearing->location ?? null,
+                'notes' => $hearing->notes ?? null,
+            ])->values()->all(),
+            'letters' => $letters->map(fn (object $letter): array => [
+                'id' => (int) $letter->id,
+                'subject' => $letter->subject,
+                'reference_number' => $letter->reference_number,
+                'approval_status' => (string) ($letter->approval_status ?? 'draft'),
+                'created_at' => $this->iso($letter->created_at),
+                'template_title' => $letter->template_title,
+                'author_name' => $letter->author_name,
+                'preview_url' => $this->letterPreviewUrl((int) $letter->id),
+            ])->values()->all(),
+            'decisions' => $decisions->map(fn (object $decision): array => [
+                'id' => (int) $decision->id,
+                'name' => $decision->name,
+                'date' => $this->iso($decision->decision_date ?: $decision->created_at),
+                'download_url' => route('respondent.decisions.download', $decision->id),
+            ])->values()->all(),
+            // The Blade page always showed these two sections empty for a respondent.
+            'witnesses' => [],
+            'audits' => [],
+        ]);
     }
 
     /**
@@ -327,8 +395,17 @@ class CaseSearchController extends Controller
                 ->get();
         }
 
-        return view('applicant.respondent.cases.my', [
-            'cases' => $cases,
+        // The cases this respondent has opened (React, Court/Respondent/MyCases).
+        return Inertia::render('Court/Respondent/MyCases', [
+            'cases' => $cases->map(fn (object $case): array => [
+                'id' => (int) $case->id,
+                'case_number' => (string) $case->case_number,
+                'status' => (string) ($case->status ?? 'pending') ?: 'pending',
+                'case_type' => $case->case_type ?? null,
+                'viewed_at' => $this->iso($case->viewed_at ?? null),
+                // The Blade list linked with the case's code, as here.
+                'show_url' => route('respondent.cases.show', ['caseNumber' => $case->case_number, 'case_code' => $case->code ?? null]),
+            ])->values()->all(),
         ]);
     }
 

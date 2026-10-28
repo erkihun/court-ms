@@ -339,13 +339,13 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::middleware('throttle:30,1')->group(function () {
                 Route::get('/applicant/respondent/case-search', [CaseSearchController::class, 'index'])
                     ->name('applicant.respondent.cases.search');
+                // Before the catch-all case route below, which would otherwise read "my" as a case number.
+                Route::get('/applicant/respondent/cases/my', [CaseSearchController::class, 'myCases'])
+                    ->name('applicant.respondent.cases.my');
                 Route::get('/applicant/respondent/cases/{caseNumber}', [CaseSearchController::class, 'show'])
                     ->name('applicant.respondent.cases.show')
                     ->where('caseNumber', '.*');
             });
-            Route::get('/applicant/respondent/cases/my', [CaseSearchController::class, 'myCases'])
-                ->middleware('throttle:30,1')
-                ->name('applicant.respondent.cases.my');
 
             Route::get('/applicant/respondent/responses', [ResponseController::class, 'index'])
                 ->name('applicant.respondent.responses.index');

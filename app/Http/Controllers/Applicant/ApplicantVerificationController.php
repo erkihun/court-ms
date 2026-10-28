@@ -9,6 +9,7 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
 
 class ApplicantVerificationController extends Controller
 {
@@ -50,7 +51,8 @@ class ApplicantVerificationController extends Controller
             }
         }
 
-        return view('applicant.auth.email-verify-otp');
+        // React, Court/Applicant/VerifyEmail.
+        return Inertia::render('Court/Applicant/VerifyEmail');
     }
 
     /** Resend a fresh OTP code to the authenticated applicant. */

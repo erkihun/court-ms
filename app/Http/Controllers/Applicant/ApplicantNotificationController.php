@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Applicant;
 
 use App\Http\Controllers\Controller;
-
+use App\Support\EthiopianDate;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Inertia\Inertia;
 
 class ApplicantNotificationController extends Controller
 {
@@ -21,7 +24,7 @@ class ApplicantNotificationController extends Controller
         // Unseen hearings (next 60d + last 1d)
         $unseenHearings = DB::table('case_hearings as h')
             ->join('court_cases as c', 'c.id', '=', 'h.case_id')
-            ->select('h.id', 'h.hearing_at', 'c.id as case_id', 'c.case_number')
+            ->select('h.id', 'h.hearing_at', 'h.type', 'h.location', 'c.id as case_id', 'c.case_number')
             ->where('c.applicant_id', $aid)
             ->whereBetween('h.hearing_at', [now()->subDay(), now()->addDays(60)])
             ->whereNotExists(function ($q) use ($aid) {
@@ -33,7 +36,8 @@ class ApplicantNotificationController extends Controller
             ->orderBy('h.hearing_at')
             ->paginate(
                 perPage: 10,
-                columns: ['h.id', 'h.hearing_at', 'c.id as case_id', 'c.case_number'],
+                // The page shows each hearing's type and room, as the Blade list meant to.
+                columns: ['h.id', 'h.hearing_at', 'h.type', 'h.location', 'c.id as case_id', 'c.case_number'],
                 pageName: 'hearings_page'
             );
 
@@ -97,7 +101,57 @@ class ApplicantNotificationController extends Controller
             ->orderByDesc('v.viewed_at')
             ->paginate(10, ['*'], 'respondent_views_page');
 
-        return view('applicant.notifications.index', compact('unseenHearings', 'unseenMsgs', 'unseenStatus', 'respondentViews'));
+        $at = fn (mixed $value): ?string => $value ? Carbon::parse($value)->toIso8601String() : null;
+        $legacyApplicantUpdate = 'Applicant updated the case details. Please review the submission.';
+        $statusLabel = function (?string $status): string {
+            $key = "app.status.{$status}";
+
+            return trans()->has($key) ? (string) __($key) : Str::headline($status ?? '-');
+        };
+
+        // The page (React, Court/Applicant/Notifications): four lists, each paged on its own.
+        return Inertia::render('Court/Applicant/Notifications', [
+            'hearings' => $unseenHearings->onEachSide(0)->through(fn (object $row): array => [
+                'id' => (int) $row->id,
+                'case_id' => (int) $row->case_id,
+                'case_number' => (string) $row->case_number,
+                'type' => $row->type ?: null,
+                'location' => $row->location ?: null,
+                'at' => $at($row->hearing_at),
+            ]),
+            'messages' => $unseenMsgs->onEachSide(0)->through(function (object $row) use ($at, $legacyApplicantUpdate): array {
+                $body = trim((string) $row->body);
+                $isUrl = filter_var($body, FILTER_VALIDATE_URL) !== false;
+
+                return [
+                    'id' => (int) $row->id,
+                    'case_id' => (int) $row->case_id,
+                    'case_number' => (string) $row->case_number,
+                    // A message that is a link (a letter preview) is shown as that link.
+                    'url' => $isUrl ? $body : null,
+                    'excerpt' => $isUrl ? null : Str::limit($body === $legacyApplicantUpdate ? (string) __('cases.notifications.applicant_updated_submission') : $body, 80),
+                    'at' => $at($row->created_at),
+                    'relative' => EthiopianDate::smartRelative($row->created_at),
+                ];
+            }),
+            'respondentViews' => $respondentViews->onEachSide(0)->through(fn (object $row): array => [
+                'id' => (int) $row->id,
+                'case_id' => (int) $row->case_id,
+                'case_number' => (string) $row->case_number,
+                'respondent_name' => $row->respondent_name ?: null,
+                'at' => $at($row->viewed_at),
+                'relative' => EthiopianDate::smartRelative($row->viewed_at),
+            ]),
+            'statusChanges' => $unseenStatus->onEachSide(0)->through(fn (object $row): array => [
+                'id' => (int) $row->id,
+                'case_id' => (int) $row->case_id,
+                'case_number' => (string) $row->case_number,
+                'from' => $statusLabel($row->from_status),
+                'to' => $statusLabel($row->to_status),
+                'at' => $at($row->created_at),
+                'relative' => EthiopianDate::smartRelative($row->created_at),
+            ]),
+        ]);
     }
 
     /**
@@ -261,7 +315,15 @@ class ApplicantNotificationController extends Controller
             ];
         }
 
-        return view('applicant.notifications.settings', compact('prefs'));
+        // React, Court/Applicant/NotificationSettings.
+        return Inertia::render('Court/Applicant/NotificationSettings', [
+            'prefs' => [
+                'email_status' => (bool) ($prefs->email_status ?? 1),
+                'email_hearing' => (bool) ($prefs->email_hearing ?? 1),
+                'email_message' => (bool) ($prefs->email_message ?? 1),
+                'email_weekly_digest' => (bool) ($prefs->email_weekly_digest ?? 0),
+            ],
+        ]);
     }
 
     /**

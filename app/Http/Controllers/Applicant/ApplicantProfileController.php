@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
+use Inertia\Inertia;
 
 class ApplicantProfileController extends Controller
 {
@@ -18,9 +19,33 @@ class ApplicantProfileController extends Controller
     {
         if ($request->routeIs('respondent.profile.*')) {
             $request->session()->put('acting_as_respondent', true);
+
+            // The respondent portal's profile is its own React page (Court/Respondent/Profile).
+            return \App\Http\Controllers\Respondent\RespondentProfilePage::render($request);
         }
 
-        return view('applicant.profile.edit', ['user' => $request->user('applicant')]);
+        $user = $request->user('applicant');
+
+        // The applicant's profile (React, Court/Applicant/Profile): account and security tabs, sessions beside them.
+        return Inertia::render('Court/Applicant/Profile', [
+            'profile' => [
+                'first_name' => (string) $user->first_name,
+                'middle_name' => (string) ($user->middle_name ?? ''),
+                'last_name' => (string) $user->last_name,
+                'gender' => $user->gender,
+                'phone' => (string) ($user->phone ?? ''),
+                // Presented as "0000 0000 0000 0000" by the model; stored as digits.
+                'national_id_number' => (string) ($user->national_id_number ?? ''),
+                'email' => (string) $user->email,
+                'address' => (string) ($user->address ?? ''),
+                'position' => (string) ($user->position ?? ''),
+                'organization_name' => (string) ($user->organization_name ?? ''),
+                'is_lawyer' => (bool) $user->is_lawyer,
+                'has_lawyer_document' => ! empty($user->lawyer_document_path),
+            ],
+            // Flashed by updatePassword under a key the shared flash does not carry.
+            'securitySuccess' => $request->session()->get('security_success'),
+        ]);
     }
 
     public function update(Request $request)

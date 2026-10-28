@@ -12,7 +12,7 @@ use Illuminate\View\View;
 
 final class ApplicantSessionController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): View|\Inertia\Response
     {
         if ($request->routeIs('respondent.profile.*')) {
             $request->session()->put('acting_as_respondent', true);
@@ -34,7 +34,26 @@ final class ApplicantSessionController extends Controller
             $sessions->prepend($this->presentCurrent($request));
         }
 
-        return view('applicant.profile.sessions', compact('sessions'));
+        if ($request->routeIs('respondent.profile.*')) {
+            // The respondent portal's profile is its own React page (Court/Respondent/Profile), on its devices tab.
+            return \App\Http\Controllers\Respondent\RespondentProfilePage::render($request, $sessions);
+        }
+
+        // The applicant's signed-in sessions (React, Court/Applicant/Sessions), beside the profile and security tabs.
+        return \Inertia\Inertia::render('Court/Applicant/Sessions', [
+            'sessions' => $sessions->map(fn (object $session): array => [
+                'id' => (string) $session->id,
+                'ip_address' => $session->ip_address ?: null,
+                'device_name' => (string) $session->device_name,
+                'browser_name' => (string) $session->browser_name,
+                'is_current' => (bool) $session->is_current,
+                'last_active_at' => $session->last_active_at->toIso8601String(),
+                'last_active_relative' => $session->last_active_at->diffForHumans(),
+            ])->values()->all(),
+            'supported' => config('session.driver') === 'database',
+            // Flashed by destroy/destroyOthers under a key the shared flash does not carry.
+            'status' => $request->session()->get('status'),
+        ]);
     }
 
     public function destroy(Request $request, string $session): RedirectResponse

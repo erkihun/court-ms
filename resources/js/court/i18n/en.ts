@@ -9,6 +9,8 @@ import letterForms from './letters';
 import inspectionPages from './inspections';
 import performancePages from './performance';
 import applicantCases from './applicantCases';
+import respondentPages from './respondent';
+import applicantPages from './applicant';
 
 export default {
     cm: lang,
@@ -74,6 +76,8 @@ export default {
         inspectionPages: inspectionPages.en,
         performancePages: performancePages.en,
         applicantCases: applicantCases.en,
+        respondentPages: respondentPages.en,
+        applicantPages: applicantPages.en,
         settings: {
             secretSaved: 'Saved',
             secretNotSet: 'Not set',
