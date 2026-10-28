@@ -3,8 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\EuisisEmployee;
+use App\Models\EuisisOrganizationUnit;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\Euisis\EuisisClient;
+use App\Services\Euisis\EuisisException;
+use App\Services\Euisis\StaffLink;
+use App\Services\Euisis\StaffLinkException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -80,16 +86,71 @@ class UsersController extends Controller
                 'created_at' => $user->created_at?->toIso8601String(),
                 'updated_at' => $user->updated_at?->toIso8601String(),
             ],
-            'can' => ['update' => (bool) $request->user()?->can('update', $user)],
+            'can' => [
+                'update' => (bool) $request->user()?->can('update', $user),
+                'linkEuisis' => $this->canManage($request->user()) && (bool) $request->user()?->can('update', $user),
+            ],
+            'euisis' => $this->euisisPanel($user),
         ]);
+    }
+
+    /**
+     * The account's EUISIS employee, read-only (docs/euisis-integration.md, "Staff
+     * accounts"): who EUISIS says they are and where they work, and whether the
+     * EUISIS staff check suspended the account.
+     */
+    private function euisisPanel(User $user): array
+    {
+        $staff = app(StaffLink::class);
+        $employee = $user->euisis_employee_uuid !== null
+            ? EuisisEmployee::query()->with(['organization', 'position'])->find($user->euisis_employee_uuid)
+            : null;
+        $unit = $employee?->unit_uuid !== null ? EuisisOrganizationUnit::query()->find($employee->unit_uuid) : null;
+
+        return [
+            'enabled' => app(EuisisClient::class)->enabled(),
+            'linked' => $user->euisis_employee_uuid !== null,
+            'employee' => $employee === null ? null : [
+                'employee_number' => $employee->employee_number,
+                'name' => $employee->displayName(),
+                'name_en' => $employee->full_name_en,
+                'status' => $employee->status,
+                'position' => $employee->position?->displayTitle(),
+                'unit' => $unit !== null ? $staff->unitName($unit) : null,
+                'organization' => $employee->organization?->displayName(),
+                'in_court' => $staff->standing($employee) === null,
+                'synced_at' => $employee->synced_at?->toIso8601String(),
+            ],
+            'linked_at' => $user->euisis_linked_at?->toIso8601String(),
+            'suspended_at' => $user->euisis_suspended_at?->toIso8601String(),
+            'suspension_reason' => $user->euisis_suspension_reason !== null ? (string) __('euisis_staff.reasons.'.$user->euisis_suspension_reason) : null,
+        ];
     }
 
     /** Create form (requires users.manage via routes) */
     public function create(Request $request)
     {
-        // The create form (React, Court/Users/Create).
+        // The create form (React, Court/Users/Create); from the EUISIS staff roster,
+        // `?euisis_employee=<uuid>` fills in the employee's name and number.
+        $prefill = null;
+        $prefillError = null;
+        $uuid = (string) $request->query('euisis_employee', '');
+        if ($uuid !== '' && Str::isUuid($uuid)) {
+            try {
+                $row = app(StaffLink::class)->eligibleByUuid($uuid);
+                $name = (string) ($row['full_name'] ?? $row['full_name_en'] ?? '');
+                $prefill = ['employee_number' => (string) ($row['employee_number'] ?? ''), 'name' => $name, ...$this->nameParts($name)];
+            } catch (StaffLinkException $e) {
+                $prefillError = (string) __('euisis_staff.errors.'.$e->reason);
+            } catch (EuisisException) {
+                $prefillError = (string) __('euisis_staff.errors.euisis_unavailable');
+            }
+        }
+
         return Inertia::render('Court/Users/Create', [
             'roles' => $this->roleOptions($request->user()),
+            'euisisPrefill' => $prefill,
+            'euisisPrefillError' => $prefillError,
         ]);
     }
 
@@ -118,9 +179,22 @@ class UsersController extends Controller
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'signature' => ['nullable', 'image', 'mimes:png,webp,jpg,jpeg', 'max:2048'],
             'stamp' => ['nullable', 'image', 'mimes:png,webp,jpg,jpeg', 'max:2048'],
+            // From the EUISIS staff roster: the account is linked to this employee.
+            'euisis_employee_number' => ['nullable', 'string', 'max:50'],
         ]);
 
         $this->ensureAssignableRoles($request->user(), $data['roles'] ?? []);
+
+        $euisisEmployee = null;
+        if (filled($data['euisis_employee_number'] ?? null)) {
+            try {
+                $euisisEmployee = app(StaffLink::class)->eligible((string) $data['euisis_employee_number']);
+            } catch (StaffLinkException $e) {
+                throw ValidationException::withMessages(['euisis_employee_number' => __('euisis_staff.errors.'.$e->reason)]);
+            } catch (EuisisException) {
+                throw ValidationException::withMessages(['euisis_employee_number' => __('euisis_staff.errors.euisis_unavailable')]);
+            }
+        }
 
         // Use a random password and force reset via email.
         $rawPassword = Str::random(32);
@@ -162,6 +236,15 @@ class UsersController extends Controller
 
         if (! empty($data['roles'])) {
             $user->roles()->sync($data['roles']);
+        }
+
+        if ($euisisEmployee !== null) {
+            try {
+                app(StaffLink::class)->attach($user, $euisisEmployee);
+            } catch (EuisisException $e) {
+                // The account stands; the link can be made again from its page.
+                Log::warning('EUISIS staff link failed after the account was created', ['user_id' => $user->id, 'error' => $e->getMessage()]);
+            }
         }
 
         try {
@@ -266,17 +349,25 @@ class UsersController extends Controller
      */
     private function userIdentity(User $user): array
     {
-        $parts = preg_split('/\s+/', trim((string) ($user->name ?? '')), 3) ?: [];
-        $parts = array_values(array_filter($parts, fn ($part) => $part !== ''));
-
         return [
             'id' => (int) $user->id,
             'name' => (string) $user->name,
+            ...$this->nameParts((string) ($user->name ?? '')),
+            'email' => (string) $user->email,
+            'status' => (string) ($user->status ?? 'inactive'),
+        ];
+    }
+
+    /** @return array{first_name: string, middle_name: string, last_name: string} */
+    private function nameParts(string $name): array
+    {
+        $parts = preg_split('/\s+/', trim($name), 3) ?: [];
+        $parts = array_values(array_filter($parts, fn ($part) => $part !== ''));
+
+        return [
             'first_name' => $parts[0] ?? '',
             'middle_name' => count($parts) >= 3 ? $parts[1] : '',
             'last_name' => count($parts) >= 3 ? $parts[2] : ($parts[1] ?? ''),
-            'email' => (string) $user->email,
-            'status' => (string) ($user->status ?? 'inactive'),
         ];
     }
 
@@ -367,6 +458,12 @@ class UsersController extends Controller
             $data['middle_name'] ?? null,
             $data['last_name'] ?? null,
         ])));
+
+        // A manager setting the account active overrides an EUISIS staff suspension; while the
+        // account stays linked to an employee outside the court, the next check suspends it again.
+        if ($canManage && $data['status'] === 'active' && $user->euisis_suspended_at !== null) {
+            $user->forceFill(['euisis_suspended_at' => null, 'euisis_suspension_reason' => null]);
+        }
 
         // Fill basic fields
         $user->fill([

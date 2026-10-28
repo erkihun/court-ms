@@ -7,6 +7,7 @@ import UserAvatar from '@/Components/UserAvatar';
 import { Card, CardTitle, badgeClassName, buttonClassName } from '@/Components/ui';
 import { useLocale } from '@/hooks/useLocale';
 import type { UsersShowProps } from '@/court/types/people';
+import EuisisStaffCard from '@/court/components/EuisisStaffCard';
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
     return (
@@ -17,8 +18,8 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
     );
 }
 
-/** A staff profile: who they are, when the account was made, their signature, stamp and roles. */
-export default function UsersShow({ user, can }: UsersShowProps) {
+/** A staff profile: who they are, when the account was made, their signature, stamp and roles, and their EUISIS employee. */
+export default function UsersShow({ user, can, euisis }: UsersShowProps) {
     const { t } = useLocale();
     const title = t('cm.users.profile_title');
     const active = user.status === 'active';
@@ -83,6 +84,8 @@ export default function UsersShow({ user, can }: UsersShowProps) {
                         </div>
                     </dl>
                 </Card>
+
+                <EuisisStaffCard userId={user.id} euisis={euisis} canLink={can.linkEuisis} />
             </div>
         </AuthenticatedLayout>
     );

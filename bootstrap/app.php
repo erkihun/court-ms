@@ -8,6 +8,7 @@ use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\AuthenticateIntegrationClient;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\CaptureClientHints;
+use App\Http\Middleware\EndSuspendedStaffSessions;
 use App\Http\Middleware\EnforceSystemAvailability;
 use App\Http\Middleware\EnsureMfaIsVerified;
 use App\Http\Middleware\ForceHttps;
@@ -91,6 +92,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('web', EnforceSystemAvailability::class);
         $middleware->appendToGroup('web', ForceHttps::class);
         $middleware->appendToGroup('web', CaptureClientHints::class);
+        $middleware->appendToGroup('web', EndSuspendedStaffSessions::class);
         $middleware->appendToGroup('web', EnsureMfaIsVerified::class);
         $middleware->appendToGroup('web', SystemAuditMiddleware::class);
         // Props for the React (Inertia) screens; Blade pages are unaffected.

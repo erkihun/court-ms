@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\DB;
  */
 final class AdminNotificationFeed
 {
-    public const TYPES = ['message', 'case', 'hearing', 'respondent_view'];
+    public const TYPES = ['message', 'case', 'hearing', 'respondent_view', 'staff_account'];
 
     public function __construct(private readonly User $user)
     {
@@ -70,9 +70,6 @@ final class AdminNotificationFeed
     /** Newest first; every item is unseen, as a seen one leaves the feed. @return Collection<int, array<string, mixed>> */
     private function items(): Collection
     {
-        if (! $this->user->hasPermission('cases.view')) {
-            return collect();
-        }
         $items = collect();
         foreach ($this->sources() as $type => $source) {
             foreach ($source['query']->limit(50)->get() as $row) {
@@ -84,8 +81,9 @@ final class AdminNotificationFeed
     }
 
     /**
-     * The four sources: each an unseen-rows query, the column its ids live in,
-     * and how a row becomes a notice.
+     * The sources: each an unseen-rows query, the column its ids live in, and how
+     * a row becomes a notice. The four case sources need `cases.view`; staff
+     * accounts the EUISIS staff check suspended or restored need `users.manage`.
      *
      * @return array<string, array{query: Builder, id: string, notice: callable(object): array<string, mixed>}>
      */
@@ -95,6 +93,33 @@ final class AdminNotificationFeed
         $unseen = fn (string $type, string $column) => fn (Builder $q) => $q->from('admin_notification_reads as nr')
             ->whereColumn('nr.source_id', $column)->where('nr.type', $type)->where('nr.user_id', $uid);
         $caseUrl = fn (int $caseId): string => route('cases.show', $caseId);
+
+        $sources = $this->user->hasPermission('cases.view') ? $this->caseSources($unseen, $caseUrl) : [];
+        if ($this->user->hasPermission('users.manage')) {
+            $sources['staff_account'] = [
+                'query' => DB::table('euisis_staff_notices as s')
+                    ->join('users as u', 'u.id', '=', 's.user_id')
+                    ->select('s.id', 's.event', 's.reason', 's.created_at', 's.user_id', 'u.name')
+                    ->where('s.created_at', '>=', now()->subDays(14))
+                    ->whereNotExists($unseen('staff_account', 's.id'))
+                    ->orderByDesc('s.created_at'),
+                'id' => 's.id',
+                'notice' => fn (object $row): array => $this->notice('staff_account', (int) $row->id,
+                    __('euisis_staff.notice.'.$row->event, ['name' => $row->name]),
+                    $row->event === 'suspended' ? (string) __('euisis_staff.reasons.'.$row->reason) : (string) __('euisis_staff.notice.restored_detail'),
+                    route('users.show', (int) $row->user_id), $row->created_at),
+            ];
+        }
+
+        return $sources;
+    }
+
+    /**
+     * @return array<string, array{query: Builder, id: string, notice: callable(object): array<string, mixed>}>
+     */
+    private function caseSources(callable $unseen, callable $caseUrl): array
+    {
+        $uid = $this->user->id;
 
         return [
             'message' => [

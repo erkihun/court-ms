@@ -50,6 +50,15 @@ class LoginRequest extends FormRequest
         }
 
         $this->throttle()->clear();
+
+        // An account the EUISIS staff check suspended (the employee left the court's units).
+        if (Auth::guard('web')->user()?->euisis_suspended_at !== null) {
+            Auth::guard('web')->logout();
+
+            throw ValidationException::withMessages([
+                'email' => trans('euisis_staff.sign_in_suspended'),
+            ]);
+        }
     }
 
     /**

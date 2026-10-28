@@ -68,6 +68,8 @@ class User extends Authenticatable implements MustVerifyEmailContract, Auditable
             'mfa_secret' => 'encrypted',
             'mfa_recovery_codes' => 'encrypted:array',
             'mfa_confirmed_at' => 'datetime',
+            'euisis_linked_at' => 'datetime',
+            'euisis_suspended_at' => 'datetime',
         ];
     }
 

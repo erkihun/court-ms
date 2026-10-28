@@ -43,7 +43,12 @@ export default function UsersIndex({ users, filters, canCreate }: UsersIndexProp
     return (
         <AuthenticatedLayout header={(
             <PageHeader title={title} description={t('cm.users.management_subtitle')}
-                actions={canCreate ? <Link href={route('users.create')} className={buttonClassName({})}>{t('cm.users.new_user')}</Link> : undefined} />
+                actions={canCreate ? (
+                    <div className="flex flex-wrap gap-2">
+                        <Link href={route('users.euisis.index')} className={buttonClassName({ variant: 'outline' })}>{t('cm.euisis_staff.roster_link')}</Link>
+                        <Link href={route('users.create')} className={buttonClassName({})}>{t('cm.users.new_user')}</Link>
+                    </div>
+                ) : undefined} />
         )}>
             <Head title={title} />
 

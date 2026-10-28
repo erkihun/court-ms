@@ -4,7 +4,7 @@ import LocalizedDatePicker from '@/Components/Calendar/LocalizedDatePicker';
 import { Alert, Button, Card, CardTitle, FieldError, FileUpload, FormField, Input, Select, buttonClassName, cx } from '@/Components/ui';
 import { useLocale } from '@/hooks/useLocale';
 import { useAccessForms } from '@/court/i18n/useAccessForms';
-import type { RoleOption, UserFormUser } from '@/court/types/people';
+import type { EuisisPrefill, RoleOption, UserFormUser } from '@/court/types/people';
 
 interface UserFormData {
     first_name: string;
@@ -28,11 +28,13 @@ interface UserFormData {
     remove_avatar: boolean;
     remove_signature: boolean;
     remove_stamp: boolean;
+    /** Create only, from the EUISIS staff roster: the account is linked to this employee. */
+    euisis_employee_number: string;
 }
 
 type Props =
-    | { mode: 'create'; roles: RoleOption[]; user?: undefined; canManage?: undefined }
-    | { mode: 'edit'; roles: RoleOption[]; user: UserFormUser; canManage: boolean };
+    | { mode: 'create'; roles: RoleOption[]; user?: undefined; canManage?: undefined; euisisPrefill?: EuisisPrefill | null }
+    | { mode: 'edit'; roles: RoleOption[]; user: UserFormUser; canManage: boolean; euisisPrefill?: undefined };
 
 /** The national ID as typed: 16 letters or digits, upper-cased, in groups of four. */
 export function formatNationalId(value: string): string {
@@ -107,11 +109,12 @@ export default function UserForm(props: Props) {
     const { mode, roles } = props;
     const user = props.mode === 'edit' ? props.user : null;
     const canManage = props.mode === 'create' || props.canManage;
+    const prefill = props.euisisPrefill ?? null;
 
     const form = useForm<UserFormData>({
-        first_name: user?.first_name ?? '',
-        middle_name: user?.middle_name ?? '',
-        last_name: user?.last_name ?? '',
+        first_name: user?.first_name ?? prefill?.first_name ?? '',
+        middle_name: user?.middle_name ?? prefill?.middle_name ?? '',
+        last_name: user?.last_name ?? prefill?.last_name ?? '',
         email: user?.email ?? '',
         status: user?.status === 'inactive' ? 'inactive' : 'active',
         gender: user?.gender === 'male' || user?.gender === 'female' ? user.gender : '',
@@ -129,6 +132,7 @@ export default function UserForm(props: Props) {
         remove_avatar: false,
         remove_signature: false,
         remove_stamp: false,
+        euisis_employee_number: prefill?.employee_number ?? '',
     });
     const toggleRole = (id: number, checked: boolean) => {
         form.setData('roles', checked ? [...form.data.roles, id].filter((v, i, a) => a.indexOf(v) === i) : form.data.roles.filter((r) => r !== id));
@@ -144,6 +148,7 @@ export default function UserForm(props: Props) {
                 delete payload.remove_avatar;
                 delete payload.remove_signature;
                 delete payload.remove_stamp;
+                if (!payload.euisis_employee_number) delete payload.euisis_employee_number;
                 return payload;
             });
             form.post(route('users.store'), { forceFormData: true });
@@ -158,6 +163,7 @@ export default function UserForm(props: Props) {
                 remove_signature: data.remove_signature ? 1 : 0,
                 remove_stamp: data.remove_stamp ? 1 : 0,
             };
+            delete payload.euisis_employee_number;
             if (!canManage) {
                 for (const field of ['status', 'roles', 'password', 'password_confirmation', 'signature', 'stamp', 'remove_signature', 'remove_stamp']) {
                     delete payload[field];
@@ -181,6 +187,14 @@ export default function UserForm(props: Props) {
     return (
         <form onSubmit={submit} className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <Card className="space-y-5 lg:col-span-2">
+                {mode === 'create' && prefill && (
+                    <FormField id="user-euisis_employee_number" label={t('cm.euisis_staff.create.employee_number')} error={form.errors.euisis_employee_number}>
+                        {({ id, describedBy, invalid }) => (
+                            <Input id={id} value={form.data.euisis_employee_number} readOnly aria-describedby={describedBy} aria-invalid={invalid || undefined} />
+                        )}
+                    </FormField>
+                )}
+
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                     {text('first_name', t('cm.users.first_name'))}
                     {text('middle_name', t('cm.users.middle_name'))}

@@ -50,6 +50,8 @@ All schema changes are additive and reversible:
 | `respondents` | `euisis_organization_uuid`, `euisis_employee_uuid` (nullable) |
 | `applicants` | `euisis_employee_uuid` (nullable) |
 | `court_cases` | `source`, `euisis_referral_id` (unique), `respondent_organization_uuid` (nullable) |
+| `users` | `euisis_employee_uuid` (nullable, unique), `euisis_linked_at`, `euisis_suspended_at`, `euisis_suspension_reason` (migration `2026_10_28_000006`) |
+| `euisis_staff_units`, `euisis_staff_notices` | New: the EUISIS units the court counts as its own; staff accounts the check suspended or restored. `admin_notification_reads.type` gains `staff_account` |
 | `integration_clients` | New: machine tokens for `/api/v1/integration/*`, stored as SHA-256 hashes |
 | `euisis_referrals`, `euisis_case_updates` | New: what EUISIS sent, and the change list it polls |
 
@@ -166,6 +168,66 @@ applicant portal is not used (owner decision, EUISIS ADR 0013 #12).
   and, while the portal is closed, a note sending parties to My Portal. The public site
   does not link to it.
 
+## Staff accounts
+
+The court's staff (judges, registrars, inspectors and the rest) are EUISIS employees of the
+court's own unit inside its institution. A staff account (`users`) is linked to its EUISIS
+employee; the court roles stay in court-ms. There is no single sign-on: staff still sign in
+with their court-ms email and password.
+
+- **The court's units** (Users > EUISIS staff > Court units): chosen from the mirrored
+  `euisis_organization_units`, each with or without its sub-units (the mirrored
+  `parent_unit_uuid` tree). Changing them needs `settings.manage` as well as `users.manage`.
+- **Linking** (the account's page, EUISIS employee panel, `users.manage`): by employee
+  number through `GET /api/v1/employees?employee_number=`, the only identifier the EUISIS
+  directory shares with court-ms (it never returns email, phone or national ID). Only an
+  employee whose status is `active` and whose current assignment is in one of the court's
+  units is accepted, and one employee links to one account. The employee is cached in
+  `euisis_employees`, and the page shows their EUISIS name, position, unit, institution and
+  status read-only. Unlinking takes the link away and nothing else.
+- **Roster** (Users > EUISIS staff): the court units' employees, read from
+  `GET /api/v1/employees?organization_code=&organization_unit_code=` for each unit (unit
+  codes are unique only inside an institution, so both are sent; a unit without a code in
+  the mirror cannot be listed and is named on the page). Each row says whether a staff
+  account is linked; "Create account" opens the new-account form with the name split into
+  first, middle and last and the employee number filled in; the administrator adds the
+  email and the court roles, and the account is linked when it is created.
+- **The check** (`euisis:sync`, after the change feed; `App\Services\Euisis\StaffLink::review`):
+  the change feed already keeps cached employees current. A linked account whose employee is
+  no longer `active`, is no longer placed in the court's units, or is gone from EUISIS is
+  suspended: `status = inactive`, `euisis_suspended_at` and the reason are set, its API
+  tokens are revoked, "remember me" ends, an open session ends at its next request
+  (`EndSuspendedStaffSessions`) and sign-in is refused. The account is never deleted, as
+  case history refers to it. Administrators (`users.manage`) see the change in the header
+  bell and on the roster page (`euisis_staff_notices`). When the employee is back, the
+  suspension is lifted (`status = active`). Without the change feed, linked employees'
+  records older than an hour are read again before the check. A failed read never suspends
+  anyone, and nothing happens while no court unit is chosen.
+- **Overrides**: a manager setting a suspended account active on its edit form lifts the
+  suspension; while it is still linked to an employee outside the court, the next check
+  suspends it again, so unlink first to keep such an account. An account an administrator
+  set inactive by hand is never touched by the check.
+
+Defaults taken for the owner to change (none needs a code change beyond the noted one):
+
+| Decision | Default |
+| --- | --- |
+| Where the court's units are kept | A court-ms table chosen on the roster page, not `.env` |
+| Sub-units | Included unless unticked, per unit |
+| Who chooses the units | `settings.manage` (and `users.manage` to open the page) |
+| Who links, unlinks and sees the roster | `users.manage`, within the account policy (non-admins cannot link admin accounts) |
+| What counts as court staff | EUISIS status `active` and a current assignment in the court's units |
+| What happens to a leaver | Suspended (inactive), never deleted; lifted when they come back |
+| Who is told | Holders of `users.manage`, in the header bell (no email) |
+| Sign-in of other inactive accounts | Unchanged: court-ms's own staff sign-in refuses only EUISIS-suspended accounts (code change to widen it) |
+
+EUISIS side: the court-ms application registered in EUISIS API Management (EUISIS
+`docs/integration/court-ms.md`) already has city-wide organization access and the
+`employees.basic_read` scope, and `GET /api/v1/employees` is among its endpoints, so the
+roster and the link need no change there. `employee_assignments.read` is not used by this
+feature (the employee record carries `active_assignment`). Binding the application to the
+court's institution only would break Flows 1, 4 and 5, which read every institution.
+
 ## Public site
 
 The public site (`/home`, `/news`, `/resources`, `/terms`, `/user-manual`) is laid out as
@@ -186,7 +248,7 @@ reviewed built-in Amharic of `lang/am/home.php`.
 
 ## Tests
 
-`tests/Feature/Euisis/IntegrationApiTest.php`, `EuisisSyncTest.php`, `EmployeeCourtAccessTest.php`, `EmployeeFilingTest.php`, `CaseWorkspaceTest.php` and `PortalInEuisisTest.php`. They run on the
+`tests/Feature/Euisis/IntegrationApiTest.php`, `EuisisSyncTest.php`, `EmployeeCourtAccessTest.php`, `EmployeeFilingTest.php`, `CaseWorkspaceTest.php`, `PortalInEuisisTest.php` and `StaffLinkTest.php`. They run on the
 `court_ms_test` database from `.env.testing`:
 
 ```bash

@@ -77,8 +77,19 @@ export interface UserFormUser extends UserIdentity {
     role_ids: number[];
 }
 
+/** The EUISIS employee a new account is made for, from the EUISIS staff roster. */
+export interface EuisisPrefill {
+    employee_number: string;
+    name: string;
+    first_name: string;
+    middle_name: string;
+    last_name: string;
+}
+
 export interface UsersCreateProps {
     roles: RoleOption[];
+    euisisPrefill?: EuisisPrefill | null;
+    euisisPrefillError?: string | null;
 }
 
 export interface UsersEditProps {
@@ -100,7 +111,65 @@ export interface UserProfile extends UserIdentity {
     updated_at: string | null;
 }
 
+/** The account's EUISIS employee, read-only (UsersController::euisisPanel). */
+export interface EuisisStaffPanel {
+    enabled: boolean;
+    linked: boolean;
+    employee: {
+        employee_number: string | null;
+        name: string;
+        name_en: string | null;
+        status: string | null;
+        position: string | null;
+        unit: string | null;
+        organization: string | null;
+        /** Active and placed in the court units. */
+        in_court: boolean;
+        /** ISO 8601. */
+        synced_at: string | null;
+    } | null;
+    /** ISO 8601. */
+    linked_at: string | null;
+    /** ISO 8601; set when the EUISIS staff check suspended the account. */
+    suspended_at: string | null;
+    suspension_reason: string | null;
+}
+
 export interface UsersShowProps {
     user: UserProfile;
-    can: { update: boolean };
+    can: { update: boolean; linkEuisis: boolean };
+    euisis: EuisisStaffPanel;
+}
+
+/** One employee of the court units as EUISIS lists them (StaffLink::roster). */
+export interface EuisisStaffRow {
+    id: string;
+    employee_number: string;
+    name: string;
+    name_en: string | null;
+    status: string | null;
+    unit: string | null;
+    position: string | null;
+    account: { id: number; name: string; email: string; status: string; suspended: boolean } | null;
+}
+
+export interface EuisisStaffUnitRow {
+    unit_uuid: string;
+    organization_uuid: string;
+    name: string;
+    organization: string | null;
+    include_sub_units: boolean;
+}
+
+/** Users > EUISIS staff (Admin\EuisisStaffController::index). */
+export interface EuisisStaffProps {
+    enabled: boolean;
+    units: EuisisStaffUnitRow[];
+    organizations: { uuid: string; name: string }[];
+    organization: string;
+    unitOptions: { uuid: string; name: string; code: string | null }[];
+    roster: { employees: EuisisStaffRow[]; skipped_units: string[] } | null;
+    rosterError: string | null;
+    notices: { id: number; user_id: number; name: string; event: 'suspended' | 'restored'; reason: string | null; at: string | null }[];
+    canManageUnits: boolean;
 }

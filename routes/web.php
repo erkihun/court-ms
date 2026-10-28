@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\ApplicantController;
 use App\Http\Controllers\Admin\AuditController;
 use App\Http\Controllers\Admin\BenchNoteController;
 use App\Http\Controllers\Admin\EuisisCaseLinkController;
+use App\Http\Controllers\Admin\EuisisStaffController;
 use App\Http\Controllers\Admin\CaseController;
 use App\Http\Controllers\Admin\CaseInspectionFindingController;
 use App\Http\Controllers\Admin\CaseInspectionRequestController;
@@ -878,6 +879,12 @@ Route::middleware(SetLocale::class)->where(array_fill_keys($numericRouteParamete
             Route::get('users', [UsersController::class, 'index'])->name('users.index');
             Route::get('users/create', [UsersController::class, 'create'])->name('users.create');
             Route::post('users', [UsersController::class, 'store'])->name('users.store');
+
+            // Staff accounts and their EUISIS employees (docs/euisis-integration.md, "Staff accounts").
+            Route::get('users/euisis-staff', [EuisisStaffController::class, 'index'])->name('users.euisis.index');
+            Route::put('users/euisis-staff/units', [EuisisStaffController::class, 'units'])->middleware('throttle:20,1')->name('users.euisis.units');
+            Route::post('users/{user}/euisis', [EuisisStaffController::class, 'link'])->middleware('throttle:20,1')->whereNumber('user')->name('users.euisis.link');
+            Route::delete('users/{user}/euisis', [EuisisStaffController::class, 'unlink'])->whereNumber('user')->name('users.euisis.unlink');
         });
 
         Route::get('users/{user}', [UsersController::class, 'show'])->middleware('can:view,user')->name('users.show');
