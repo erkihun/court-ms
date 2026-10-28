@@ -752,6 +752,24 @@ html[data-button-style="soft"]    { --radius-control: 8px; }
     .rich-text th, .rich-text td { border: 1px solid var(--app-border-strong); padding: 0.4em 0.65em; text-align: start; vertical-align: top; min-width: 4rem; }
     .rich-text th { background: var(--app-surface-muted); font-weight: 600; }
 
+    /* A filed document read on the case page (the claim, the relief, a response): a sheet in the
+       formal document face, justified like the paper it came from. Text pasted from Word carries
+       its own 12pt sizes and line heights on every span; the sheet's own size and leading win,
+       while a paragraph's own alignment (a centred heading) is kept. */
+    .case-doc {
+        font-family: var(--font-document-am);
+        font-size: 1rem;
+        line-height: 1.95;
+        text-align: justify;
+        text-justify: inter-word;
+        overflow-wrap: break-word;
+    }
+    .case-doc:lang(en) { font-family: var(--font-document-en); line-height: 1.75; }
+    .case-doc span, .case-doc font { font-size: inherit !important; line-height: inherit !important; font-family: inherit !important; }
+    .case-doc p { margin: 0; }
+    .case-doc p + p, .case-doc p + ol, .case-doc p + ul, .case-doc ol + p, .case-doc ul + p { margin-top: 0.4em; }
+    .case-doc li { text-align: justify; }
+
 }
 
 /* ── Rich-text editor chrome (RichTextEditor) ─────────────────

@@ -7,6 +7,7 @@ import { useConfirm } from '@/hooks/useConfirm';
 import { useCalendarSystem } from '@/lib/calendar/calendarSystem';
 import { formatDateDisplay, formatDateTimeDisplay } from '@/lib/calendar/dateFormat';
 import type { CaseDetailCase, CaseDocument, CaseWitness } from '@/court/types/caseDetail';
+import DocumentSheet from './DocumentSheet';
 import { printCaseOverview } from './printCaseOverview';
 import SectionCard, { EmptyBox } from './SectionCard';
 import { useCaseText } from './useCaseText';
@@ -21,16 +22,10 @@ interface Props {
     caseLocked: boolean;
 }
 
-/** Purified HTML from the server (mews/purifier, the `cases` profile), shown as the Blade page showed it. */
-function RichHtml({ html, className }: { html: string; className?: string }) {
-    // The server purified this on save and again when building the page props.
-    return <div className={cx('rich-text rounded-control border border-(--app-border) bg-(--app-surface-muted) px-4 py-3 text-[15px] leading-relaxed', className)} dangerouslySetInnerHTML={{ __html: html }} />;
-}
-
 /**
  * The case details overview: the parties, the case details and relief as
- * written, the submitted documents, the witnesses (with their register), and
- * the printable Word-style copy.
+ * filed (justified document sheets), the submitted documents, the witnesses
+ * (with their register), and the printable A4 copy.
  */
 export default function DetailsSection({ kase, docs, witnesses, termsItems, canEdit, caseLocked }: Props) {
     const { t, text, fill, locale } = useCaseText();
@@ -101,14 +96,14 @@ export default function DetailsSection({ kase, docs, witnesses, termsItems, canE
                 </div>
             </div>
 
-            <div className="space-y-4">
-                <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-(--app-muted-foreground)">{t('cm.cases.details.case_details')}</p>
-                    <RichHtml className="mt-2" html={kase.description_html !== '' ? kase.description_html : t('cm.cases.details.no_details')} />
+            <div className="space-y-5 rounded-card bg-(--app-surface-muted) p-3 sm:p-5">
+                <div className="space-y-2">
+                    <h4 className="flex items-center gap-2 text-sm font-semibold text-(--app-foreground)"><span aria-hidden="true" className="h-4 w-1 rounded-full bg-primary" />{t('cm.cases.details.case_details')}</h4>
+                    <DocumentSheet html={kase.description_html} empty={t('cm.cases.details.no_details')} foldAt={36} />
                 </div>
-                <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-(--app-muted-foreground)">{t('cm.cases.details.relief_requested')}</p>
-                    <RichHtml className="mt-2" html={kase.relief_html ?? t('cm.cases.details.no_relief_specified')} />
+                <div className="space-y-2">
+                    <h4 className="flex items-center gap-2 text-sm font-semibold text-(--app-foreground)"><span aria-hidden="true" className="h-4 w-1 rounded-full bg-(--court-brass,#c8a14a)" />{t('cm.cases.details.relief_requested')}</h4>
+                    <DocumentSheet html={kase.relief_html ?? ''} empty={t('cm.cases.details.no_relief_specified')} foldAt={24} />
                 </div>
             </div>
 

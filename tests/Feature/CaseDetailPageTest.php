@@ -5,10 +5,13 @@ declare(strict_types=1);
 use App\Models\CaseType;
 use App\Models\CourtCase;
 use App\Models\Permission;
+use App\Models\Respondent;
+use App\Models\RespondentResponse;
 use App\Models\Role;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia;
 
@@ -163,4 +166,29 @@ test('the assign page renders for an admin with the team leaders to choose from'
         ->patch(route('cases.assign.update', $case->id), ['assigned_user_id' => $leader->id, 'unassign' => 0])
         ->assertRedirect(route('cases.index'));
     $this->assertDatabaseHas('court_cases', ['id' => $case->id, 'assigned_user_id' => $leader->id, 'assigned_team_id' => $team->id]);
+});
+
+test('a respondent response carries its response number to the case page', function (): void {
+    $viewer = caseDetailUser(['cases.view']);
+    $case = caseDetailCase();
+    $respondent = Respondent::query()->create([
+        'first_name' => 'Ruth', 'middle_name' => 'M', 'last_name' => 'Tadesse', 'gender' => 'female',
+        'position' => 'Legal officer', 'organization_name' => 'Example Bureau', 'address' => 'Kirkos',
+        'phone' => '09'.random_int(10000000, 99999999), 'email' => 'cd-resp-'.Str::lower(Str::random(8)).'@example.com',
+        'password' => Hash::make(Str::random(16)),
+    ]);
+    RespondentResponse::query()->create([
+        'respondent_id' => $respondent->id, 'case_number' => $case->case_number, 'response_number' => 'R/'.$case->case_number,
+        'title' => 'Statement of defence', 'description' => '<p>We dispute the claim.</p>', 'review_status' => 'awaiting_review',
+    ]);
+
+    $this->actingAs($viewer)->get(route('cases.show', $case->id))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->has('respondentResponses', 1, fn (AssertableInertia $response) => $response
+                ->where('response_number', 'R/'.$case->case_number)
+                ->where('title', 'Statement of defence')
+                ->where('pdf_url', null)
+                ->etc())
+            ->etc());
 });

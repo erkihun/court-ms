@@ -22,6 +22,13 @@ const caseDetail = {
         open_pdf: 'Open PDF',
         replies_count: 'replies',
         organization_status: 'Status',
+        show_full_text: 'Show the full text',
+        show_less: 'Show less',
+        view_pdf: 'Filed PDF',
+        view_text: 'Text',
+        open_new_tab: 'Open in a new tab',
+        response_number: 'Response no.',
+        review_title: 'Review',
     },
     am: {
         hearing_locked: 'ተቆልፏል (ዛሬ/ያለፈ)',
@@ -41,6 +48,13 @@ const caseDetail = {
         open_pdf: 'PDF ክፈት',
         replies_count: 'ምላሾች',
         organization_status: 'ሁኔታ',
+        show_full_text: 'ሙሉ ጽሑፉን አሳይ',
+        show_less: 'አሳጥር',
+        view_pdf: 'የቀረበው PDF',
+        view_text: 'ጽሑፍ',
+        open_new_tab: 'በአዲስ ትር ክፈት',
+        response_number: 'የመልስ ቁጥር',
+        review_title: 'ግምገማ',
     },
 } as const;
 

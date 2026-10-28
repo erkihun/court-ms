@@ -142,6 +142,7 @@ export interface RespondentResponseRow {
     id: number;
     title: string | null;
     case_number: string | null;
+    response_number: string | null;
     description_html: string;
     review_status: ReviewStatus;
     review_note: string | null;

@@ -1014,6 +1014,7 @@ class CaseController extends Controller
                 'id' => (int) $r->id,
                 'title' => $r->title ?? null,
                 'case_number' => $r->case_number ?? null,
+                'response_number' => isset($r->response_number) && $r->response_number !== '' ? (string) $r->response_number : null,
                 'description_html' => !empty($r->description) ? clean((string) $r->description, 'cases') : '',
                 'review_status' => (string) ($r->review_status ?? 'awaiting_review'),
                 'review_note' => $r->review_note ?? null,
