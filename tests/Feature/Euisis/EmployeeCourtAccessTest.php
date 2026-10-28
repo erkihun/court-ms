@@ -97,7 +97,7 @@ test('the summary lists the linked employee\'s cases, hearings and unseen notice
     $caseId = DB::table('court_cases')->insertGetId([
         'applicant_id' => $applicant->id, 'case_number' => 'EMP-'.Str::upper(Str::random(5)), 'code' => 'EM1234', 'title' => 'Unpaid allowance',
         'case_type_id' => $typeId, 'filing_date' => now()->toDateString(), 'status' => 'active', 'review_status' => 'accepted',
-        'created_at' => now(), 'updated_at' => now(),
+        'respondent_name' => 'Bureau of Finance', 'created_at' => now(), 'updated_at' => now(),
     ]);
     DB::table('case_hearings')->insert(['case_id' => $caseId, 'hearing_at' => now()->addDays(3), 'type' => 'Preliminary', 'location' => 'Room 1', 'created_at' => now(), 'updated_at' => now()]);
 
@@ -107,6 +107,7 @@ test('the summary lists the linked employee\'s cases, hearings and unseen notice
     expect($data['linked'])->toBeTrue()
         ->and($data['counts'])->toMatchArray(['cases' => 1, 'open' => 1, 'upcoming_hearings' => 1, 'unread_notices' => 1])
         ->and($data['cases'][0]['title'])->toBe('Unpaid allowance')
+        ->and($data['cases'][0]['respondent'])->toBe('Bureau of Finance')
         ->and($data['cases'][0]['next_hearing_at'])->not->toBeNull()
         ->and($data['notices'][0])->toHaveKeys(['id', 'title', 'message', 'created_at'])
         ->and($data['notices'][0])->not->toHaveKey('url')

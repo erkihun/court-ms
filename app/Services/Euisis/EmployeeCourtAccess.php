@@ -93,7 +93,7 @@ final class EmployeeCourtAccess
             ->where('c.applicant_id', $applicant->id)
             ->orderByDesc('c.created_at')
             ->limit(25)
-            ->get(['c.id', 'c.case_number', 'c.title', 'c.status', 'c.review_status', 'c.filing_date', 'c.created_at', 'ct.name as case_type']);
+            ->get(['c.id', 'c.case_number', 'c.title', 'c.respondent_name', 'c.status', 'c.review_status', 'c.filing_date', 'c.created_at', 'ct.name as case_type']);
 
         $nextHearings = DB::table('case_hearings')
             ->whereIn('case_id', $cases->pluck('id')->all())
@@ -119,6 +119,8 @@ final class EmployeeCourtAccess
                 'id' => (int) $case->id,
                 'case_number' => (string) $case->case_number,
                 'title' => (string) $case->title,
+                // The case title is the applicant's own name; the employee's list names the other party.
+                'respondent' => $case->respondent_name !== null && trim((string) $case->respondent_name) !== '' ? (string) $case->respondent_name : null,
                 'case_type' => $case->case_type,
                 'status' => (string) ($case->status ?? 'pending'),
                 'review_status' => (string) ($case->review_status ?? 'accepted'),
