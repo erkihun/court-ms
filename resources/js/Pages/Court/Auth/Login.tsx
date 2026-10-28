@@ -46,7 +46,7 @@ export default function CourtLogin({ status, canResetPassword, sessionNotice, po
             <Head title={text('title')} />
 
             <div ref={cardRef} className="login-rise overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-[0_24px_60px_-30px_rgba(12,26,49,0.45)] dark:border-slate-800 dark:bg-[#0f1b31]">
-                <div aria-hidden="true" className="h-1 bg-gradient-to-r from-(--court-navy) via-(--court-brass) to-(--court-navy)" />
+                <div aria-hidden="true" className="login-sheen h-1 bg-gradient-to-r from-(--court-navy) via-(--court-brass) to-(--court-navy)" />
                 <div className="px-6 pb-7 pt-6 sm:px-8">
                     <div className="mb-6 flex items-center gap-3">
                         <span className="flex h-11 w-11 items-center justify-center rounded-full bg-(--court-ink) text-(--court-brass)"><CourtEmblem className="h-8 w-8" /></span>
