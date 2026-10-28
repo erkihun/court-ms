@@ -4,6 +4,7 @@
 import lang from './lang/am';
 import caseDetail from './caseDetail';
 import access from './access';
+import decisionForms from './decisions';
 
 export default {
     cm: lang,
@@ -64,6 +65,7 @@ export default {
         },
         caseDetail: caseDetail.am,
         accessForms: access.am,
+        decisionForms: decisionForms.am,
         appeals: {
             number: 'የይግባኝ ቁጥር',
             decidedBy: 'የወሰነው',

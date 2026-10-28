@@ -4,6 +4,7 @@
 import lang from './lang/en';
 import caseDetail from './caseDetail';
 import access from './access';
+import decisionForms from './decisions';
 
 export default {
     cm: lang,
@@ -64,6 +65,7 @@ export default {
         },
         caseDetail: caseDetail.en,
         accessForms: access.en,
+        decisionForms: decisionForms.en,
         appeals: {
             number: 'Appeal #',
             decidedBy: 'Decided by',

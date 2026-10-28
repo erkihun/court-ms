@@ -105,7 +105,11 @@ test('decision view all bypasses team scope for a permitted user without a team'
     $this->actingAs($user)
         ->get(route('decisions.show', $decision))
         ->assertOk()
-        ->assertViewIs('admin.decisions.show');
+        ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->component('Court/Decisions/Show')
+            ->where('decision.id', $decision->id)
+            ->where('decision.status', 'draft')
+            ->etc());
 });
 
 test('decision index displays each decision approval status', function (): void {

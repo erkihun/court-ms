@@ -46,8 +46,11 @@ test('a decision can only be created for a closed case', function (): void {
     $this->actingAs($creator)
         ->get(route('decisions.create'))
         ->assertOk()
-        ->assertSee($closedCase->case_number)
-        ->assertDontSee($activeCase->case_number);
+        ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->component('Court/Decisions/Create')
+            ->where('cases', fn ($cases) => collect($cases)->pluck('case_number')->contains($closedCase->case_number)
+                && ! collect($cases)->pluck('case_number')->contains($activeCase->case_number))
+            ->etc());
 
     $this->actingAs($creator)
         ->post(route('decisions.store'), [

@@ -7,6 +7,7 @@ use App\Models\DecisionTemplate;
 use App\Support\SafeHtml;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 class DecisionTemplateController extends Controller
 {
@@ -17,14 +18,46 @@ class DecisionTemplateController extends Controller
             ->paginate(12)
             ->withQueryString();
 
-        return view('admin.decision-templates.index', compact('templates'));
+        $user = auth()->user();
+
+        // The register (React, Court/DecisionTemplates/Index).
+        return Inertia::render('Court/DecisionTemplates/Index', [
+            'templates' => $templates->through(fn (DecisionTemplate $template): array => [
+                'id' => (int) $template->id,
+                'title' => $template->title,
+                'category' => $template->category ?: null,
+                'is_default' => (bool) $template->is_default,
+                'placeholders' => $template->placeholders ? implode(', ', $template->placeholders) : null,
+                'updated_at' => $template->updated_at?->toIso8601String(),
+            ]),
+            'can' => [
+                'create' => $user?->hasPermission('decision.templet.create') ?? false,
+                'update' => $user?->hasPermission('decision.templet.update') ?? false,
+                'delete' => $user?->hasPermission('decision.templet.delete') ?? false,
+            ],
+        ]);
     }
 
     public function create()
     {
-        $template = new DecisionTemplate();
+        return Inertia::render('Court/DecisionTemplates/Create', ['template' => null]);
+    }
 
-        return view('admin.decision-templates.create', compact('template'));
+    /** The form's view of one template (React, Court/DecisionTemplates/<Create|Edit>). */
+    private function templateProps(DecisionTemplate $template): array
+    {
+        return [
+            'id' => (int) $template->id,
+            'title' => $template->title ?? '',
+            'category' => $template->category ?? '',
+            'is_default' => (bool) $template->is_default,
+            'placeholders' => $template->placeholders ? implode(', ', $template->placeholders) : '',
+            'body' => $template->body ?? '',
+            'header_image_name' => $template->header_image_path ? basename($template->header_image_path) : null,
+            'header_image_url' => $template->header_image_path ? asset('storage/'.$template->header_image_path) : null,
+            'footer_image_name' => $template->footer_image_path ? basename($template->footer_image_path) : null,
+            'footer_image_url' => $template->footer_image_path ? asset('storage/'.$template->footer_image_path) : null,
+        ];
     }
 
     public function store(Request $request)
@@ -43,8 +76,8 @@ class DecisionTemplateController extends Controller
 
     public function edit(DecisionTemplate $decisionTemplate)
     {
-        return view('admin.decision-templates.edit', [
-            'template' => $decisionTemplate,
+        return Inertia::render('Court/DecisionTemplates/Edit', [
+            'template' => $this->templateProps($decisionTemplate),
         ]);
     }
 

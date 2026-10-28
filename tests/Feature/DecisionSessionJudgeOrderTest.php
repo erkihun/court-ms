@@ -10,6 +10,7 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Inertia\Testing\AssertableInertia;
 
 function decisionUiOrderRole(): Role
 {
@@ -48,19 +49,21 @@ function decisionUiOrderCase(): CourtCase
     ]);
 }
 
-test('create form displays the session judge first while retaining the original field slot', function (): void {
+test('create form seats the session judge in the middle slot while the page shows that seat first', function (): void {
     $role = decisionUiOrderRole();
     $creator = decisionUiOrderUser($role, 'Session Judge');
 
-    $html = $this->actingAs($creator)
+    // The React form draws the seats in the order [1, 0, 2]: the middle seat (storage index 1) is shown first and is the signed-in judge.
+    $this->actingAs($creator)
         ->get(route('decisions.create'))
         ->assertOk()
-        ->getContent();
-
-    $sessionField = 'name="judges[1][admin_user_id]" value="'.$creator->id.'"';
-
-    expect(strpos($html, $sessionField))->not->toBeFalse()
-        ->and(strpos($html, $sessionField))->toBeLessThan(strpos($html, 'name="judges[0][admin_user_id]"'));
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('Court/Decisions/Create')
+            ->where('decision', null)
+            ->where('currentUser.id', $creator->id)
+            ->where('currentUser.name', 'Session Judge')
+            ->where('defaults.judges', [null, $creator->id, null])
+            ->etc());
 });
 
 test('decision view always displays the decision author first without changing stored panel order', function (): void {
@@ -90,12 +93,15 @@ test('decision view always displays the decision author first without changing s
         'status' => 'published',
     ]);
 
-    $html = $this->actingAs($viewer)
+    $this->actingAs($viewer)
         ->get(route('decisions.show', $decision))
         ->assertOk()
-        ->getContent();
+        ->assertDontSee(Storage::disk('public')->url($author->signature_path))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('Court/Decisions/Show')
+            ->where('decision.panel', fn ($panel) => collect($panel)->pluck('name')->all() === ['Decision Author', 'First Stored Judge', 'Third Judge']
+                && collect($panel)->pluck('number')->all() === [1, 2, 3])
+            ->etc());
 
-    expect($html)->toMatch('/Judge 1.*Decision Author.*Judge 2.*First Stored Judge.*Judge 3.*Third Judge/s')
-        ->and($html)->not->toContain(Storage::disk('public')->url($author->signature_path))
-        ->and($decision->fresh()->panel_judges)->toBe($storedPanel);
+    expect($decision->fresh()->panel_judges)->toBe($storedPanel);
 });
