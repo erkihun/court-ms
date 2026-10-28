@@ -31,25 +31,66 @@ class TeamController extends Controller
 
     public function create()
     {
-        $teams = Team::orderBy('name')->get();
-        $users = $this->availableUsers();
-
-        return view('admin.teams.create', compact('teams', 'users'));
+        // The create form (React, Court/Teams/Create): possible parents and the people free to lead.
+        return Inertia::render('Court/Teams/Create', [
+            'teams' => $this->teamOptions(Team::orderBy('name')->get()),
+            'users' => $this->userOptions($this->availableUsers()),
+        ]);
     }
 
     public function show(Team $team)
     {
         $team->load(['parent', 'children', 'users', 'leader']);
 
-        return view('admin.teams.show', compact('team'));
+        // The team page (React, Court/Teams/Show) with its members.
+        return Inertia::render('Court/Teams/Show', [
+            'team' => [
+                'id' => (int) $team->id,
+                'name' => (string) $team->name,
+                'parent_name' => $team->parent?->name,
+                'description' => $team->description,
+                'leader_name' => $team->leader?->name,
+                'members' => $this->userOptions($team->users),
+            ],
+        ]);
     }
 
     public function edit(Team $team)
     {
-        $teams = Team::where('id', '!=', $team->id)->orderBy('name')->get();
-        $users = $this->availableUsers($team);
+        $team->load('users');
 
-        return view('admin.teams.edit', compact('team', 'teams', 'users'));
+        // The edit form (React, Court/Teams/Edit): details on one side, membership on the other.
+        // The people offered are those in no other team, so the current members stay listed.
+        return Inertia::render('Court/Teams/Edit', [
+            'team' => [
+                'id' => (int) $team->id,
+                'name' => (string) $team->name,
+                'parent_id' => $team->parent_id !== null ? (int) $team->parent_id : null,
+                'description' => $team->description,
+                'team_leader_id' => $team->team_leader_id !== null ? (int) $team->team_leader_id : null,
+                'user_ids' => $team->users->pluck('id')->map(fn ($id) => (int) $id)->values()->all(),
+            ],
+            'teams' => $this->teamOptions(Team::where('id', '!=', $team->id)->orderBy('name')->get()),
+            'users' => $this->userOptions($this->availableUsers($team)),
+        ]);
+    }
+
+    /** Teams as select options. */
+    private function teamOptions($teams): array
+    {
+        return collect($teams)
+            ->map(fn (Team $team): array => ['id' => (int) $team->id, 'name' => (string) $team->name])
+            ->values()
+            ->all();
+    }
+
+    /** People as select options and member rows. */
+    private function userOptions($users): array
+    {
+        return collect($users)
+            ->map(fn (User $user): array => ['id' => (int) $user->id, 'name' => (string) $user->name, 'email' => (string) $user->email])
+            ->values()
+            ->all();
     }
 
     public function store(Request $request)

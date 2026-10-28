@@ -42,3 +42,63 @@ export interface UsersIndexProps {
     filters: { q: string; status: '' | 'active' | 'inactive' };
     canCreate: boolean;
 }
+
+/** A role to tick on the account forms (Admin\UsersController::create, edit). */
+export interface RoleOption {
+    id: number;
+    name: string;
+}
+
+/** Who the account is, as the forms and profile read it (UsersController::userIdentity). */
+export interface UserIdentity {
+    id: number;
+    name: string;
+    first_name: string;
+    middle_name: string;
+    last_name: string;
+    email: string;
+    status: string;
+}
+
+/** The account the edit form changes (Admin\UsersController::edit). */
+export interface UserFormUser extends UserIdentity {
+    gender: string | null;
+    /** Gregorian Y-m-d. */
+    date_of_birth: string | null;
+    national_id: string | null;
+    position: string | null;
+    phone: string | null;
+    address: string | null;
+    avatar_url: string | null;
+    signature_url: string | null;
+    stamp_url: string | null;
+    role_ids: number[];
+}
+
+export interface UsersCreateProps {
+    roles: RoleOption[];
+    /** The password the notice names (config auth.default_user_password). */
+    defaultPassword: string;
+}
+
+export interface UsersEditProps {
+    user: UserFormUser;
+    roles: RoleOption[];
+}
+
+/** The profile page (Admin\UsersController::show). */
+export interface UserProfile extends UserIdentity {
+    avatar_url: string | null;
+    signature_url: string | null;
+    stamp_url: string | null;
+    roles: string[];
+    /** ISO 8601. */
+    created_at: string | null;
+    /** ISO 8601. */
+    updated_at: string | null;
+}
+
+export interface UsersShowProps {
+    user: UserProfile;
+    can: { update: boolean };
+}

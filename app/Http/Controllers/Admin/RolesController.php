@@ -41,9 +41,11 @@ class RolesController extends Controller
     public function create()
     {
         $perms = Permission::orderBy('name')->get();
-        return view('admin.roles.create', [
-            'perms' => $perms,
-            'permissionGroups' => $this->groupPermissions($perms),
+
+        // The create form (React, Court/Roles/Create) with the permissions grouped by module.
+        return Inertia::render('Court/Roles/Create', [
+            'permissionsCount' => $perms->count(),
+            'permissionGroups' => $this->permissionGroupsPayload($perms),
         ]);
     }
 
@@ -74,11 +76,38 @@ class RolesController extends Controller
         $role->load('permissions');
         $perms = Permission::orderBy('name')->get();
 
-        return view('admin.roles.edit', [
-            'role' => $role,
-            'perms' => $perms,
-            'permissionGroups' => $this->groupPermissions($perms),
+        // The edit form (React, Court/Roles/Edit): the role, its permissions ticked among all of them.
+        return Inertia::render('Court/Roles/Edit', [
+            'role' => [
+                'id' => (int) $role->id,
+                'name' => (string) $role->name,
+                'description' => $role->description,
+                'permission_ids' => $role->permissions->pluck('id')->map(fn ($id) => (int) $id)->values()->all(),
+                'users_count' => (int) $role->users()->count(),
+            ],
+            'permissionsCount' => $perms->count(),
+            'permissionGroups' => $this->permissionGroupsPayload($perms),
         ]);
+    }
+
+    /** The grouped permissions as plain arrays for the React forms. */
+    private function permissionGroupsPayload(Collection $perms): array
+    {
+        return $this->groupPermissions($perms)
+            ->map(fn (array $group): array => [
+                'key' => (string) $group['key'],
+                'label' => (string) $group['label'],
+                'permissions' => collect($group['permissions'])
+                    ->map(fn (Permission $perm): array => [
+                        'id' => (int) $perm->id,
+                        'name' => (string) $perm->name,
+                        'label' => $perm->labelLocalized ?: null,
+                    ])
+                    ->values()
+                    ->all(),
+            ])
+            ->values()
+            ->all();
     }
 
     public function update(Request $request, Role $role)

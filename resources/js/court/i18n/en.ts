@@ -3,6 +3,7 @@
 // screen says what the Blade screen it replaces said; `court.*` is text only the React screens need.
 import lang from './lang/en';
 import caseDetail from './caseDetail';
+import access from './access';
 
 export default {
     cm: lang,
@@ -62,6 +63,7 @@ export default {
             empty: 'No audit events match.',
         },
         caseDetail: caseDetail.en,
+        accessForms: access.en,
         appeals: {
             number: 'Appeal #',
             decidedBy: 'Decided by',

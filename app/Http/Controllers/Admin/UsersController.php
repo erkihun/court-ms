@@ -63,20 +63,34 @@ class UsersController extends Controller
     }
 
     /** Show a single profile (policy: view) */
-    public function show(User $user)
+    public function show(Request $request, User $user)
     {
         $this->authorize('view', $user);
         $user->load('roles');
 
-        return view('admin.users.show', compact('user'));
+        // The profile page (React, Court/Users/Show).
+        return Inertia::render('Court/Users/Show', [
+            'user' => [
+                ...$this->userIdentity($user),
+                'avatar_url' => $user->avatar_url,
+                'signature_url' => $user->signature_url,
+                'stamp_url' => $user->stamp_url,
+                'roles' => $user->roles->pluck('name')->values()->all(),
+                'created_at' => $user->created_at?->toIso8601String(),
+                'updated_at' => $user->updated_at?->toIso8601String(),
+            ],
+            'can' => ['update' => (bool) $request->user()?->can('update', $user)],
+        ]);
     }
 
     /** Create form (requires users.manage via routes) */
     public function create()
     {
-        $roles = Role::orderBy('name')->get();
-
-        return view('admin.users.create', compact('roles'));
+        // The create form (React, Court/Users/Create).
+        return Inertia::render('Court/Users/Create', [
+            'roles' => $this->roleOptions(),
+            'defaultPassword' => (string) config('auth.default_user_password', 'ChangeMe123!'),
+        ]);
     }
 
     /** Store (requires users.manage via routes) */
@@ -168,10 +182,55 @@ class UsersController extends Controller
     {
         $this->authorize('update', $user);
 
-        $roles = Role::orderBy('name')->get();
         $user->load('roles');
 
-        return view('admin.users.edit', compact('user', 'roles'));
+        // The edit form (React, Court/Users/Edit): the form's fields with their current values.
+        return Inertia::render('Court/Users/Edit', [
+            'user' => [
+                ...$this->userIdentity($user),
+                'gender' => $user->gender,
+                'date_of_birth' => $user->date_of_birth?->format('Y-m-d'),
+                'national_id' => $user->national_id,
+                'position' => $user->position,
+                'phone' => $user->phone,
+                'address' => $user->address,
+                'avatar_url' => $user->avatar_url,
+                'signature_url' => $user->signature_url,
+                'stamp_url' => $user->stamp_url,
+                'role_ids' => $user->roles->pluck('id')->map(fn ($id) => (int) $id)->values()->all(),
+            ],
+            'roles' => $this->roleOptions(),
+        ]);
+    }
+
+    /** Every role, for the role checkboxes. */
+    private function roleOptions(): array
+    {
+        return Role::orderBy('name')->get()
+            ->map(fn (Role $role): array => ['id' => (int) $role->id, 'name' => (string) $role->name])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Who the account is: the stored full name split into first, middle and last
+     * the way the forms read it back (one word is a first name, two are first and
+     * last, three or more are first, middle and the rest).
+     */
+    private function userIdentity(User $user): array
+    {
+        $parts = preg_split('/\s+/', trim((string) ($user->name ?? '')), 3) ?: [];
+        $parts = array_values(array_filter($parts, fn ($part) => $part !== ''));
+
+        return [
+            'id' => (int) $user->id,
+            'name' => (string) $user->name,
+            'first_name' => $parts[0] ?? '',
+            'middle_name' => count($parts) >= 3 ? $parts[1] : '',
+            'last_name' => count($parts) >= 3 ? $parts[2] : ($parts[1] ?? ''),
+            'email' => (string) $user->email,
+            'status' => (string) ($user->status ?? 'inactive'),
+        ];
     }
 
     /** Update (policy: update) */
@@ -272,9 +331,10 @@ class UsersController extends Controller
             'position' => $data['position'] ?? null,
             'phone' => $data['phone'] ?? null,
             'address' => $data['address'] ?? null,
-            'avatar_path' => $data['avatar_path'] ?? $user->avatar_path,
-            'signature_path' => $data['signature_path'] ?? $user->signature_path,
-            'stamp_path' => $data['stamp_path'] ?? $user->stamp_path,
+            // A removed image leaves null in $data; `??` would keep the deleted file's path on the row.
+            'avatar_path' => array_key_exists('avatar_path', $data) ? $data['avatar_path'] : $user->avatar_path,
+            'signature_path' => array_key_exists('signature_path', $data) ? $data['signature_path'] : $user->signature_path,
+            'stamp_path' => array_key_exists('stamp_path', $data) ? $data['stamp_path'] : $user->stamp_path,
         ])->save();
 
         // Sync roles if provided

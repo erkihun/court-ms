@@ -3,6 +3,7 @@
 // screen says what the Blade screen it replaces said; `court.*` is text only the React screens need.
 import lang from './lang/am';
 import caseDetail from './caseDetail';
+import access from './access';
 
 export default {
     cm: lang,
@@ -62,6 +63,7 @@ export default {
             empty: 'ተዛማጅ የኦዲት ክስተት የለም።',
         },
         caseDetail: caseDetail.am,
+        accessForms: access.am,
         appeals: {
             number: 'የይግባኝ ቁጥር',
             decidedBy: 'የወሰነው',
