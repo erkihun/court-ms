@@ -11,12 +11,15 @@ use App\Http\Requests\Admin\UpdatePerformanceCriterionRequest;
 use App\Models\PerformanceEvaluationCategory;
 use App\Models\PerformanceCriterion;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class PerformanceEvaluationSettingController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): Response
     {
         $criteria = PerformanceCriterion::query()
             ->withCount('scores')
@@ -30,23 +33,52 @@ class PerformanceEvaluationSettingController extends Controller
             ->where('active', true)
             ->sum('weight');
 
-        return view('admin.settings.performance-evaluation', [
-            'criteria' => $criteria,
-            'categories' => $categories,
+        // The criteria and their weights (React, Court/PerformanceSettings/Index).
+        return Inertia::render('Court/PerformanceSettings/Index', [
+            'criteria' => $criteria->map(fn (PerformanceCriterion $criterion): array => [
+                'id' => (int) $criterion->id,
+                'name' => (string) $criterion->name,
+                'name_am' => $criterion->name_am,
+                'category' => (string) $criterion->category,
+                'category_label' => (string) ($categories->firstWhere('slug', $criterion->category)?->local_name ?? $criterion->category),
+                'weight' => (int) $criterion->weight,
+                'sort_order' => (int) $criterion->sort_order,
+                'active' => (bool) $criterion->active,
+                'description' => $criterion->description,
+                'scores_count' => (int) ($criterion->scores_count ?? $criterion->scores()->count()),
+            ])->values()->all(),
+            'categories' => $this->categoryOptions($categories),
             'totalActiveWeight' => $totalActiveWeight,
+            // The Add Criterion / Add Category dialogs come back here (redirect_to).
+            'returnUrl' => $request->fullUrl(),
         ]);
     }
 
-    public function createCriterion(): View
+    public function createCriterion(): Response
     {
-        return view('admin.settings.performance-criteria-create', [
-            'categories' => $this->categories(),
+        // The Add Criterion page (React, Court/PerformanceSettings/CreateCriterion).
+        return Inertia::render('Court/PerformanceSettings/CreateCriterion', [
+            'categories' => $this->categoryOptions($this->categories()),
         ]);
     }
 
-    public function createCategory(): View
+    public function createCategory(): Response
     {
-        return view('admin.settings.performance-category-create');
+        // The Add Category page (React, Court/PerformanceSettings/CreateCategory).
+        return Inertia::render('Court/PerformanceSettings/CreateCategory');
+    }
+
+    /**
+     * The category picker: each category's slug and its name in the current language.
+     *
+     * @return list<array{slug: string, name: string}>
+     */
+    private function categoryOptions(Collection $categories): array
+    {
+        return $categories->map(fn (object $category): array => [
+            'slug' => (string) $category->slug,
+            'name' => (string) $category->local_name,
+        ])->values()->all();
     }
 
     public function store(StorePerformanceCriterionRequest $request): RedirectResponse

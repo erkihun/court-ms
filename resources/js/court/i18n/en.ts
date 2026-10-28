@@ -7,6 +7,7 @@ import access from './access';
 import decisionForms from './decisions';
 import letterForms from './letters';
 import inspectionPages from './inspections';
+import performancePages from './performance';
 
 export default {
     cm: lang,
@@ -70,6 +71,7 @@ export default {
         decisionForms: decisionForms.en,
         letterForms: letterForms.en,
         inspectionPages: inspectionPages.en,
+        performancePages: performancePages.en,
         settings: {
             secretSaved: 'Saved',
             secretNotSet: 'Not set',
