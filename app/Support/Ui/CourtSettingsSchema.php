@@ -18,7 +18,7 @@ use Illuminate\Http\Request;
  *
  * Each field: [key, column, type, rules, label key in lang/{en,am}/settings.php, options].
  * Types are the EUISIS ones: string, text, email, url, phone, integer, boolean,
- * select, timezone, password (a write-only secret), image and json.
+ * select, color, timezone, password (a write-only secret), image and json.
  */
 final class CourtSettingsSchema
 {
@@ -47,11 +47,23 @@ final class CourtSettingsSchema
             ['time_format', 'time_format', 'select', ['nullable', 'string', 'in:H:i,h:i A'], 'time_format', ['H:i', 'h:i A']],
             ['use_ethiopian_calendar', 'use_ethiopian_calendar', 'boolean', ['nullable', 'boolean'], 'ethiopian_calendar'],
         ],
+        // The EUISIS appearance settings the copied shell reads (EUISIS SystemSettingsRegistry, group appearance).
         'appearance' => [
-            ['default_theme', 'default_theme', 'select', ['nullable', 'string', 'in:light,dark,system'], 'default_theme', ['light', 'dark', 'system']],
+            ['primary_color', 'primary_color', 'color', ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'], 'primary_color'],
+            ['secondary_color', 'secondary_color', 'color', ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'], 'secondary_color'],
+            ['accent_color', 'accent_color', 'color', ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'], 'accent_color'],
+            ['sidebar_color', 'sidebar_color', 'color', ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'], 'sidebar_color'],
+            ['default_theme', 'default_theme', 'select', ['required', 'string', 'in:light,dark,system'], 'default_theme', ['light', 'dark', 'system']],
+            ['allow_user_theme_switching', 'allow_user_theme_switching', 'boolean', ['nullable', 'boolean'], 'allow_user_theme_switching'],
+            ['enable_ui_animations', 'enable_ui_animations', 'boolean', ['nullable', 'boolean'], 'enable_ui_animations'],
+            ['table_density', 'table_density', 'select', ['required', 'string', 'in:compact,comfortable,spacious'], 'table_density', ['compact', 'comfortable', 'spacious']],
+            ['button_style', 'button_style', 'select', ['required', 'string', 'in:rounded,soft,square'], 'button_style', ['rounded', 'soft', 'square']],
+            ['card_radius', 'card_radius', 'select', ['required', 'string', 'in:sm,md,lg,xl,2xl'], 'card_radius', ['sm', 'md', 'lg', 'xl', '2xl']],
+            ['logo_position', 'logo_position', 'select', ['required', 'string', 'in:start,center'], 'logo_position', ['start', 'center']],
+            ['sidebar_compact_default', 'sidebar_compact_default', 'boolean', ['nullable', 'boolean'], 'sidebar_compact_default'],
+            ['show_breadcrumbs', 'show_breadcrumbs', 'boolean', ['nullable', 'boolean'], 'show_breadcrumbs'],
             ['show_language_switcher', 'show_language_switcher', 'boolean', ['nullable', 'boolean'], 'show_lang_switcher'],
-            ['accent_palette', 'accent_palette', 'select', ['nullable', 'string', 'in:blue,teal,violet,emerald,rose'], 'accent_palette', ['blue', 'teal', 'violet', 'emerald', 'rose']],
-            ['custom_css', 'custom_css', 'text', ['nullable', 'string', 'max:10000'], 'custom_css'],
+            ['sticky_table_headers', 'sticky_table_headers', 'boolean', ['nullable', 'boolean'], 'sticky_table_headers'],
         ],
         'notifications' => [
             ['email_notifications_enabled', 'mail_enabled', 'boolean', ['nullable', 'boolean'], 'email_smtp'],
@@ -100,6 +112,30 @@ final class CourtSettingsSchema
             ['maintenance_mode', 'maintenance_mode', 'boolean', ['nullable', 'boolean'], 'maintenance_mode'],
             ['registration_open', 'registration_open', 'boolean', ['nullable', 'boolean'], 'registration_open'],
         ],
+    ];
+
+    /**
+     * EUISIS's appearance defaults (SystemSettingsRegistry), used while court-ms has
+     * no value of its own: the page shows them and the shell applies them.
+     *
+     * @var array<string, string|bool>
+     */
+    public const APPEARANCE_DEFAULTS = [
+        'primary_color' => '#122170',
+        'secondary_color' => '#1D3084',
+        'accent_color' => '#D12908',
+        'sidebar_color' => '#FFFFFF',
+        'default_theme' => 'system',
+        'allow_user_theme_switching' => true,
+        'enable_ui_animations' => true,
+        'table_density' => 'comfortable',
+        'button_style' => 'rounded',
+        'card_radius' => 'xl',
+        'logo_position' => 'start',
+        'sidebar_compact_default' => false,
+        'show_breadcrumbs' => true,
+        'show_language_switcher' => true,
+        'sticky_table_headers' => true,
     ];
 
     /** @return list<string> */
@@ -192,7 +228,8 @@ final class CourtSettingsSchema
     private static function payload(string $section, array $field, int $order, SystemSetting $settings, array $mfaRoleIds): array
     {
         [$key, $column, $type, $rules, $labelKey] = $field;
-        $stored = $column !== null ? $settings->{$column} : null;
+        $default = $section === 'appearance' ? (self::APPEARANCE_DEFAULTS[$key] ?? null) : null;
+        $stored = $column !== null ? ($settings->{$column} ?? $default) : null;
         $isSecret = $type === 'password';
 
         $value = match ($type) {
@@ -218,7 +255,7 @@ final class CourtSettingsSchema
             'description_en' => self::description($labelKey, 'en'),
             'description_am' => self::description($labelKey, 'am'),
             'sort_order' => $order,
-            'default' => null,
+            'default' => $default,
             'validation_rules' => $rules,
             'is_required' => in_array('required', $rules, true),
             'asset_url' => $type === 'image' && filled($stored) ? asset('storage/'.$stored) : null,

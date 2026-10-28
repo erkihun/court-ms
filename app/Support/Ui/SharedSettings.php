@@ -48,21 +48,7 @@ final class SharedSettings
         'localization.organization_name_display' => 'english',
         'localization.employee_name_display' => 'full_name',
         'localization.calendar_system_mode' => 'locale_based',
-        'appearance.default_theme' => 'system',
-        'appearance.primary_color' => null,
-        'appearance.secondary_color' => null,
-        'appearance.accent_color' => null,
-        'appearance.sidebar_color' => null,
-        'appearance.table_density' => 'comfortable',
-        'appearance.button_style' => 'rounded',
-        'appearance.card_radius' => 'md',
-        'appearance.allow_user_theme_switching' => true,
-        'appearance.sidebar_compact_default' => false,
-        'appearance.logo_position' => 'sidebar',
-        'appearance.show_breadcrumbs' => true,
-        'appearance.sticky_table_headers' => true,
-        'appearance.show_language_switcher' => true,
-        'appearance.enable_ui_animations' => true,
+        // appearance.* (bar these three) come from CourtSettingsSchema::APPEARANCE_DEFAULTS.
         'appearance.default_page_size' => 25,
         'appearance.dashboard_layout' => 'executive',
         'appearance.dashboard_refresh_seconds' => 60,
@@ -79,12 +65,12 @@ final class SharedSettings
     /** @return array<string, mixed> */
     public function all(): array
     {
+        $settings = [...self::DEFAULTS, ...$this->appearance()];
         $row = $this->row();
         if ($row === null) {
-            return self::DEFAULTS;
+            return $settings;
         }
 
-        $settings = self::DEFAULTS;
         $set = function (string $key, mixed $value) use (&$settings): void {
             if ($value !== null && $value !== '') {
                 $settings[$key] = $value;
@@ -101,8 +87,6 @@ final class SharedSettings
         $set('localization.default_locale', in_array($row->default_locale, ['en', 'am'], true) ? $row->default_locale : null);
         $set('localization.timezone', $row->timezone);
         $set('localization.calendar_system_mode', $row->use_ethiopian_calendar ? 'locale_based' : 'gregorian');
-        $set('appearance.default_theme', in_array($row->default_theme, ['light', 'dark', 'system'], true) ? $row->default_theme : null);
-        $settings['appearance.show_language_switcher'] = (bool) ($row->show_language_switcher ?? true);
         $settings['security.maintenance_banner_enabled'] = (bool) ($row->maintenance_mode ?? false);
 
         return $settings;
@@ -125,6 +109,24 @@ final class SharedSettings
             'logoUrl' => $settings['general.identity_system_logo_url'],
             'faviconUrl' => $settings['general.favicon_url'],
         ];
+    }
+
+    /**
+     * The appearance settings (System Settings > Appearance), each falling back to
+     * the EUISIS default while court-ms has no value of its own.
+     *
+     * @return array<string, mixed>
+     */
+    private function appearance(): array
+    {
+        $row = $this->row();
+        $values = [];
+        foreach (CourtSettingsSchema::APPEARANCE_DEFAULTS as $key => $default) {
+            $stored = $row?->{$key};
+            $values['appearance.'.$key] = $stored === null || $stored === '' ? $default : (is_bool($default) ? (bool) $stored : (string) $stored);
+        }
+
+        return $values;
     }
 
     private function row(): ?SystemSetting

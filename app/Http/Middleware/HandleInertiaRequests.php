@@ -77,7 +77,9 @@ class HandleInertiaRequests extends Middleware
             'has_employee_record' => false,
             // court-ms times admin sessions out on the server (AdminSessionTimeout); the EUISIS idle dialog needs routes it does not have yet.
             'session_policy' => null,
-            'flash' => [
+            // Lazy, like the rest: SetLocale is route middleware and runs after this one, so an
+            // eager flash was translated in the default language (a half-Amharic toast on English pages).
+            'flash' => fn (): array => [
                 // Some court-ms controllers flash `ok` for a success.
                 'success' => $this->flashText(session('success') ?? session('ok')),
                 'error' => $this->flashText(session('error')),

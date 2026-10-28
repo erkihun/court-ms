@@ -55,7 +55,14 @@ Everything under `resources/js/court/` and `resources/js/Pages/Court/`:
   sidebar is `App\Support\Ui\CourtNavigation` (the Blade sidebar's items,
   labels and permissions), filtered per person on the server.
 - `App\Support\Ui\SharedSettings` maps court-ms System Settings onto the
-  EUISIS settings keys.
+  EUISIS settings keys. System Settings > Appearance is the EUISIS section
+  (brand, secondary, accent and sidebar colours, theme, density, button style,
+  card radius, logo position, shell switches), stored in `system_settings`
+  columns; an empty value means the EUISIS default
+  (`CourtSettingsSchema::APPEARANCE_DEFAULTS`). EUISIS's page size and
+  dashboard settings are left out: no court-ms screen reads them.
+- The shared `flash` prop is lazy like the others: `SetLocale` is route
+  middleware and runs after `HandleInertiaRequests`.
 - `SetLocale` reads the React client's `euisis_locale` cookie (unencrypted,
   as EUISIS does) ahead of court-ms's `app_locale`; the Blade language switch
   writes both, so the language follows the person across both kinds of screen.

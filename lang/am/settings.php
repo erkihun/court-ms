@@ -234,4 +234,20 @@ return [
     'telegram_test_failed'  => 'ቴሌግራም የሙከራ መልእክቱን አልተቀበለም። የቦት ቶክኑንና ነባሪውን የቻት መለያ ያረጋግጡ።',
     'maintenance'           => 'ጥገናና ሁኔታ',
 
+    // ገጽታ፦ እንደ EUISIS የቅንብሮች ገጽ።
+    'primary_color'              => 'ዋና ቀለም',
+    'secondary_color'            => 'ሁለተኛ ቀለም',
+    'accent_color'               => 'አክሰንት ቀለም',
+    'sidebar_color'              => 'የጎን አሞሌ ቀለም',
+    'sidebar_color_desc'         => 'የዋናው የዳሰሳ ጎን አሞሌ ዳራ። ጽሑፍና አዶዎች ለንጽጽር በራስ-ሰር ይስተካከላሉ።',
+    'table_density'              => 'የሰንጠረዥ ጥግግት',
+    'button_style'               => 'የአዝራር ቅጥ',
+    'card_radius'                => 'የካርድ ክብ መጠን',
+    'logo_position'              => 'የአርማ ቦታ',
+    'allow_user_theme_switching' => 'የተጠቃሚ ገጽታ መቀየር ይፈቀድ',
+    'enable_ui_animations'       => 'የUI እነማዎች ይንቁ',
+    'sidebar_compact_default'    => 'ነባሪ የጎን አሞሌ ጥቅጥቅ',
+    'show_breadcrumbs'           => 'የመንገድ አሻራዎች ይታዩ',
+    'sticky_table_headers'       => 'የሚቆዩ የሰንጠረዥ ራሶች',
+
 ];

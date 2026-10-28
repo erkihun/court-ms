@@ -234,4 +234,20 @@ return [
     'telegram_test_failed'  => 'Telegram did not accept the test message. Check the bot token and the default chat ID.',
     'maintenance'           => 'Maintenance and status',
 
+    // Appearance, as on the EUISIS settings page.
+    'primary_color'              => 'Primary Color',
+    'secondary_color'            => 'Secondary Color',
+    'accent_color'               => 'Accent Color',
+    'sidebar_color'              => 'Sidebar Color',
+    'sidebar_color_desc'         => 'Background of the main navigation sidebar. Text and icons adjust automatically for contrast.',
+    'table_density'              => 'Table Density',
+    'button_style'               => 'Button Style',
+    'card_radius'                => 'Card Radius',
+    'logo_position'              => 'Logo Position',
+    'allow_user_theme_switching' => 'Allow User Theme Switching',
+    'enable_ui_animations'       => 'Enable UI Animations',
+    'sidebar_compact_default'    => 'Sidebar Compact Default',
+    'show_breadcrumbs'           => 'Show Breadcrumbs',
+    'sticky_table_headers'       => 'Sticky Table Headers',
+
 ];
