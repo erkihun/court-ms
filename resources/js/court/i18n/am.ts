@@ -11,6 +11,7 @@ import performancePages from './performance';
 import applicantCases from './applicantCases';
 import respondentPages from './respondent';
 import applicantPages from './applicant';
+import publicPages from './public';
 
 export default {
     cm: lang,
@@ -76,6 +77,7 @@ export default {
         inspectionPages: inspectionPages.am,
         performancePages: performancePages.am,
         applicantCases: applicantCases.am,
+        publicPages: publicPages.am,
         respondentPages: respondentPages.am,
         applicantPages: applicantPages.am,
         settings: {

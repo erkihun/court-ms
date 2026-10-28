@@ -3,7 +3,8 @@
 test('registration screen can be rendered', function () {
     $response = $this->get('/register');
 
-    $response->assertStatus(200);
+    $response->assertStatus(200)
+        ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page->component('Court/Auth/Register'));
 });
 
 test('new users can register', function () {

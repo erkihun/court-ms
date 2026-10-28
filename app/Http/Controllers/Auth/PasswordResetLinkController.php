@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Notifications\PasswordResetOtp;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
 
 class PasswordResetLinkController extends Controller
 {
@@ -14,8 +15,11 @@ class PasswordResetLinkController extends Controller
 
     public function create()
     {
-        return response()
-            ->view('admin.auth.forgot-password')
+        return Inertia::render('Court/Auth/ForgotPassword', [
+            'status' => session('status'),
+            'email' => (string) old('email', ''),
+        ])
+            ->toResponse(request())
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
             ->header('Pragma', 'no-cache');
     }
@@ -69,8 +73,8 @@ class PasswordResetLinkController extends Controller
             return redirect()->route('password.request');
         }
 
-        return response()
-            ->view('admin.auth.password-otp')
+        return Inertia::render('Court/Auth/PasswordOtp')
+            ->toResponse(request())
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
             ->header('Pragma', 'no-cache');
     }

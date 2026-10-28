@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 class LandingPageController extends Controller
 {
@@ -91,10 +92,94 @@ class LandingPageController extends Controller
             ->whereBetween('hearing_at', [now()->startOfWeek(), now()->endOfWeek()])
             ->count();
 
-        return view('admin.landing.index', compact(
-            'slides', 'faqs', 'services', 'steps', 'resources', 'userManual', 'sections', 'metrics', 'footer',
-            'totalCases', 'resolvedCases', 'pendingCases', 'openCases', 'upcomingHearings', 'hearingsThisWeek'
-        ));
+        $metricKeys = ['total_cases', 'resolved_cases', 'pending_cases', 'active_caseload', 'hearings_this_week', 'avg_resolution_time'];
+        $footerFields = ['description', 'contact_phone', 'contact_email', 'contact_address', 'social_facebook', 'social_twitter', 'social_linkedin', 'social_youtube', 'social_telegram', 'social_instagram'];
+        $tab = (string) session('landing_tab', 'slides');
+
+        return Inertia::render('Court/Landing/Index', [
+            'initialTab' => in_array($tab, ['slides', 'metrics', 'timeline', 'services', 'resources', 'manual', 'faqs', 'footer', 'sections'], true) ? $tab : 'slides',
+            'homeUrl' => route('landing.home'),
+            'slides' => $slides->map(fn (HomeSlide $slide): array => [
+                'id' => $slide->id,
+                'badge' => $slide->badge,
+                'title' => (string) $slide->title,
+                'description' => $slide->description,
+                'primary_label' => (string) $slide->primary_label,
+                'primary_href' => (string) $slide->primary_href,
+                'secondary_label' => $slide->secondary_label,
+                'secondary_href' => $slide->secondary_href,
+                'bg_style' => $slide->bg_style ?: 'blue',
+                'bg_image' => $slide->bg_image,
+                'bg_image_url' => $slide->bg_image ? asset('storage/'.$slide->bg_image) : null,
+                'is_active' => (bool) $slide->is_active,
+            ])->values(),
+            'steps' => $steps->map(fn (HomeTimelineStep $step): array => [
+                'id' => $step->id,
+                'title' => (string) $step->title,
+                'description' => $step->description,
+                'meta' => $step->meta,
+                'duration' => $step->duration,
+                'color' => $step->color ?: 'blue',
+                'is_active' => (bool) $step->is_active,
+            ])->values(),
+            'services' => $services->map(fn (HomeService $service): array => [
+                'id' => $service->id,
+                'title' => (string) $service->title,
+                'description' => $service->description,
+                'meta' => $service->meta,
+                'features' => array_values($service->features ?? []),
+                'icon_type' => $service->icon_type ?: 'document',
+                'accent' => $service->accent ?: 'blue',
+                'is_active' => (bool) $service->is_active,
+            ])->values(),
+            'resources' => $resources->map(fn (HomeResource $resource): array => [
+                'id' => $resource->id,
+                'title' => (string) $resource->title,
+                'type' => $resource->type,
+                'description' => $resource->description,
+                'external_url' => $resource->external_url,
+                'is_featured' => (bool) $resource->is_featured,
+                'is_active' => (bool) $resource->is_active,
+                'published_at' => $resource->published_at?->toIso8601String(),
+                'published_at_local' => $resource->published_at?->format('Y-m-d\TH:i'),
+                'is_scheduled' => (bool) $resource->published_at?->isFuture(),
+                'file_path' => $resource->file_path,
+                'cover_image' => $resource->cover_image,
+                'cover_image_url' => $resource->cover_image ? asset('storage/'.$resource->cover_image) : null,
+            ])->values(),
+            'faqs' => $faqs->map(fn (HomeFaq $faq): array => [
+                'id' => $faq->id,
+                'question' => (string) $faq->question,
+                'answer' => (string) $faq->answer,
+                'is_active' => (bool) $faq->is_active,
+            ])->values(),
+            'stats' => [
+                'total_cases' => $totalCases,
+                'resolved_cases' => $resolvedCases,
+                'pending_cases' => $pendingCases,
+                'active_caseload' => $openCases,
+                'hearings_this_week' => $hearingsThisWeek,
+                // The Blade card showed upcoming hearings under this key, as the home page does.
+                'avg_resolution_time' => $upcomingHearings,
+            ],
+            'metrics' => collect($metricKeys)->mapWithKeys(fn (string $key): array => [$key => [
+                'label' => (string) ($metrics[$key]['label'] ?? ''),
+                'description' => (string) ($metrics[$key]['description'] ?? ''),
+            ]])->all(),
+            'metricDefaults' => collect($metricKeys)->mapWithKeys(fn (string $key): array => [$key => [
+                'label' => __("home.metrics.cards.{$key}.label", [], 'en'),
+                'description' => __("home.metrics.cards.{$key}.description", [], 'en'),
+            ]])->all(),
+            'sections' => $sections,
+            'footer' => collect($footerFields)->mapWithKeys(fn (string $field): array => [$field => (string) ($footer[$field] ?? '')])->all(),
+            'userManual' => [
+                'title_en' => (string) ($userManual['title_en'] ?? 'User Manual'),
+                'title_am' => (string) ($userManual['title_am'] ?? __('home.nav.user_manual', [], 'am')),
+                'content_en' => (string) ($userManual['content_en'] ?? ''),
+                'content_am' => (string) ($userManual['content_am'] ?? ''),
+                'is_active' => (bool) ($userManual['is_active'] ?? true),
+            ],
+        ]);
     }
 
     // ── Slides ────────────────────────────────────────────────────────────────

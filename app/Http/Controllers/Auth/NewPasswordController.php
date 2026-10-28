@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
+use Inertia\Inertia;
 
 class NewPasswordController extends Controller
 {
@@ -20,8 +21,8 @@ class NewPasswordController extends Controller
             return redirect()->route('password.request');
         }
 
-        return response()
-            ->view('admin.auth.reset-password')
+        return Inertia::render('Court/Auth/ResetPassword')
+            ->toResponse(request())
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
             ->header('Pragma', 'no-cache');
     }

@@ -5,24 +5,31 @@ declare(strict_types=1);
 use App\Models\HomeSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia;
 
 uses(RefreshDatabase::class);
 
 test('landing manager exposes controls for every home page section', function (): void {
     $admin = User::factory()->create(['email_verified_at' => now()]);
 
+    // The React page (Court/Landing/Index) draws a tab per section from these props;
+    // its labels are the admin_landing.* keys, read in the browser as cm.admin_landing.*.
     $this->actingAs($admin)
         ->get(route('admin.landing.index'))
         ->assertOk()
-        ->assertSee('Hero Slides')
-        ->assertSee('Statistics')
-        ->assertSee('Timeline')
-        ->assertSee('Services')
-        ->assertSee('Resources')
-        ->assertSee('FAQ')
-        ->assertSee('Footer')
-        ->assertSee('Sections')
-        ->assertSee('Preview home page');
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('Court/Landing/Index')
+            ->where('initialTab', 'slides')
+            ->where('homeUrl', route('landing.home'))
+            ->has('slides')->has('steps')->has('services')->has('resources')->has('faqs')
+            ->has('stats')->has('metrics.total_cases')->has('metricDefaults.avg_resolution_time')
+            ->has('sections.cta')->has('footer.social_telegram')->has('userManual'));
+
+    expect([
+        __('admin_landing.tabs.slides', [], 'en'), __('admin_landing.tabs.metrics', [], 'en'), __('admin_landing.tabs.timeline', [], 'en'),
+        __('admin_landing.tabs.services', [], 'en'), __('admin_landing.tabs.resources', [], 'en'), __('admin_landing.tabs.faqs', [], 'en'),
+        __('admin_landing.tabs.footer', [], 'en'), __('admin_landing.tabs.sections', [], 'en'), __('admin_landing.preview', [], 'en'),
+    ])->toBe(['Hero Slides', 'Statistics', 'Timeline', 'Services', 'Resources', 'FAQ', 'Footer', 'Sections', 'Preview home page']);
 });
 
 test('landing manager uses formal amharic labels in the amharic locale', function (): void {
@@ -32,22 +39,31 @@ test('landing manager uses formal amharic labels in the amharic locale', functio
         ->withSession(['app_locale' => 'am'])
         ->get(route('admin.landing.index'))
         ->assertOk()
-        ->assertSee('ዋና ማስታወቂያዎች')
-        ->assertSee('አጠቃላይ መረጃ')
-        ->assertSee('የጉዳይ ሂደት')
-        ->assertSee('አገልግሎቶች')
-        ->assertSee('ሰነዶችና መረጃዎች')
-        ->assertSee('ተደጋጋሚ ጥያቄዎች')
-        ->assertSee('የገጽ ግርጌ')
-        ->assertSee('የገጽ ክፍሎች')
-        ->assertSee('አጭር መለያ ጽሑፍ')
-        ->assertSee('የዋና አዝራር ጽሑፍ')
-        ->assertSee('የሚፈጀው ጊዜ')
-        ->assertSee('ዋና ባህሪያት')
-        ->assertSee('የሚታተምበት ቀን')
-        ->assertSee('ጥያቄ')
-        ->assertSee('የግንኙነት መረጃ')
-        ->assertSee('የክፍሉ ርዕስ');
+        ->assertInertia(fn (AssertableInertia $page) => $page->component('Court/Landing/Index')->where('locale', 'am'));
+
+    // The labels the React page shows in Amharic (cm.admin_landing.* from lang/am/admin_landing.php).
+    $labels = [
+        'tabs.slides' => 'ዋና ማስታወቂያዎች',
+        'tabs.metrics' => 'አጠቃላይ መረጃ',
+        'tabs.timeline' => 'የጉዳይ ሂደት',
+        'tabs.services' => 'አገልግሎቶች',
+        'tabs.resources' => 'ሰነዶችና መረጃዎች',
+        'tabs.faqs' => 'ተደጋጋሚ ጥያቄዎች',
+        'tabs.footer' => 'የገጽ ግርጌ',
+        'tabs.sections' => 'የገጽ ክፍሎች',
+        'common.badge_text' => 'አጭር መለያ ጽሑፍ',
+        'common.primary_button_label' => 'የዋና አዝራር ጽሑፍ',
+        'common.duration' => 'የሚፈጀው ጊዜ',
+        'common.features' => 'ዋና ባህሪያት',
+        'common.publish_date' => 'የሚታተምበት ቀን',
+        'common.question' => 'ጥያቄ',
+        'footer.contact' => 'የግንኙነት መረጃ',
+        'sections.section_title' => 'የክፍሉ ርዕስ',
+    ];
+
+    foreach ($labels as $key => $amharic) {
+        expect(__("admin_landing.{$key}", [], 'am'))->toBe($amharic);
+    }
 });
 
 test('administrator can update statistics content displayed on the english home page', function (): void {
@@ -121,8 +137,11 @@ test('administrator manages the user manual opened from localized home navigatio
     $this->withSession(['app_locale' => 'en'])
         ->get(route('landing.user-manual'))
         ->assertOk()
-        ->assertSee('<h2 style="color: #123456;">Applicant Guide</h2>', false)
-        ->assertSee('<ol><li>Register an account</li>', false)
-        ->assertSee('<table>', false)
-        ->assertDontSee('&lt;h2');
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('Court/Public/UserManual')
+            ->where('title', 'User Manual')
+            ->where('content', fn (string $content): bool => str_contains($content, '<h2 style="color: #123456;">Applicant Guide</h2>')
+                && str_contains($content, '<ol><li>Register an account</li>')
+                && str_contains($content, '<table>')
+                && ! str_contains($content, '&lt;h2')));
 });

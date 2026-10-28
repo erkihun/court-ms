@@ -9,6 +9,9 @@ use App\Models\SystemSetting;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
+use Mews\Purifier\Facades\Purifier;
 
 class PublicSignageController extends Controller
 {
@@ -79,16 +82,53 @@ class PublicSignageController extends Controller
 
         $settings = SystemSetting::query()->first();
 
-        return view('public.signage', [
-            'now' => $now,
-            'settings' => $settings,
-            'totalCases' => $totalCases,
-            'statusCounts' => $statusCounts,
-            'categoryCounts' => $categoryCounts,
-            'todayCases' => $todayCases,
-            'todayHearings' => $todayHearings,
-            'activeAnnouncements' => $activeAnnouncements,
-            'activeStaff' => $activeStaff,
+        return Inertia::render('Court/Public/Signage', [
+            'now' => $now->toIso8601String(),
+            'appName' => (string) ($settings->app_name ?? config('app.name', 'Justice Portal')),
+            'logoUrl' => $settings?->logo_path ? Storage::url($settings->logo_path) : asset('favicon.ico'),
+            'totalCases' => (int) $totalCases,
+            'statusCounts' => $statusCounts->map(fn ($stat): array => ['label' => (string) $stat->label, 'total' => (int) $stat->total])->values(),
+            'categoryCounts' => $categoryCounts->map(fn ($cat): array => ['name' => (string) $cat->name, 'total' => (int) $cat->total])->values(),
+            'todayCases' => $todayCases->map(function (CourtCase $case): array {
+                $applicant = trim((string) ($case->applicant?->full_name ?? ''));
+                if ($applicant === '') {
+                    $applicant = (string) ($case->applicant_name ?? $case->applicant?->name ?? '');
+                }
+
+                return [
+                    'id' => $case->id,
+                    'case_number' => $case->case_number,
+                    'applicant' => $applicant !== '' ? $applicant : null,
+                    'case_type' => $case->caseType?->name,
+                ];
+            })->values(),
+            'todayHearings' => $todayHearings->map(function (CaseHearing $hearing): array {
+                $raw = (string) ($hearing->getRawOriginal('hearing_at') ?? '');
+
+                return [
+                    'id' => $hearing->id,
+                    'case_id' => $hearing->case_id,
+                    'case_number' => $hearing->courtCase?->case_number,
+                    'case_type' => $hearing->courtCase?->caseType?->name,
+                    'hearing_at' => $hearing->hearing_at ? Carbon::parse($hearing->hearing_at)->toIso8601String() : null,
+                    'time' => strlen($raw) >= 19 ? substr($raw, 11, 8) : null,
+                ];
+            })->values(),
+            'activeAnnouncements' => $activeAnnouncements->map(fn (Announcement $announcement): array => [
+                'id' => $announcement->id,
+                'title' => (string) $announcement->title,
+                // Keep announcement HTML within the configured default profile.
+                'content' => (string) Purifier::clean($announcement->content ?? '', 'default'),
+                'created_at' => $announcement->created_at?->toIso8601String(),
+            ])->values(),
+            'activeStaff' => $activeStaff->map(fn (User $person): array => [
+                'id' => $person->id,
+                'name' => (string) $person->name,
+                'position' => $person->position,
+                'avatar_url' => $person->avatar_path ? Storage::url($person->avatar_path) : null,
+            ])->values(),
+            // The Blade board refreshed itself every 120 seconds (meta refresh).
+            'refreshSeconds' => 120,
         ]);
     }
 }
