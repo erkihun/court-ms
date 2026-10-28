@@ -85,7 +85,8 @@ class HandleInertiaRequests extends Middleware
             // court-ms times admin sessions out on the server (AdminSessionTimeout); the EUISIS idle dialog needs routes it does not have yet.
             'session_policy' => null,
             'flash' => [
-                'success' => $this->flashText(session('success')),
+                // Some court-ms controllers flash `ok` for a success.
+                'success' => $this->flashText(session('success') ?? session('ok')),
                 'error' => $this->flashText(session('error')),
                 'warning' => $this->flashText(session('warning')),
                 'info' => $this->flashText(session('info')),

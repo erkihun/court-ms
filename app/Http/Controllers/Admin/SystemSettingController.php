@@ -18,25 +18,79 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
 class SystemSettingController extends Controller
 {
-    public function edit(): View
+    /** The settings fields the page edits, as stored (secrets excluded: they never reach the browser). */
+    private const FORM_FIELDS = [
+        'app_name', 'short_name', 'welcome_message', 'about', 'footer_text', 'address', 'website_url', 'contact_email', 'contact_phone',
+        'default_locale', 'timezone', 'date_format', 'time_format',
+        'session_lifetime', 'session_warning_minutes', 'password_min_length', 'login_max_attempts', 'lockout_minutes', 'audit_retention_days',
+        'accent_palette', 'default_theme', 'custom_css', 'api_rate_limit',
+        'mail_mailer', 'mail_host', 'mail_port', 'mail_username', 'mail_encryption', 'mail_from_address', 'mail_from_name',
+        'telegram_default_chat_id', 'sms_provider', 'sms_sender_id', 'sms_base_url',
+    ];
+
+    /** Stored secrets: the page only learns whether one is set; blank keeps it, `clear_secrets[]` removes it. */
+    private const SECRET_FIELDS = ['mail_password', 'telegram_bot_token', 'sms_api_key', 'sms_api_secret'];
+
+    private const BOOLEAN_FIELDS = [
+        'maintenance_mode', 'registration_open', 'force_https', 'mfa_enabled',
+        'audit_logging_enabled', 'session_extend_on_activity',
+        'use_ethiopian_calendar', 'show_language_switcher',
+        'password_require_uppercase', 'password_require_number', 'password_require_symbol',
+        'show_banner_on_login', 'api_enabled',
+        'mail_enabled', 'telegram_enabled', 'sms_enabled',
+    ];
+
+    /**
+     * The system settings page (React, Court/Settings/System), tab by tab as
+     * the Blade page had them.
+     */
+    public function edit(Request $request): Response
     {
         $settings = SystemSetting::current();
+        $asset = fn (?string $path): ?string => filled($path) ? asset('storage/'.$path) : null;
 
-        $timezones = \DateTimeZone::listIdentifiers();
-        $locales = config('app.locales', ['en', 'am']);
-        $localeNames = config('app.locale_names', ['en' => 'English', 'am' => 'Amharic']);
-        $databaseMetrics = $this->databaseMetrics();
-        $roles = Role::query()->orderBy('name')->get(['id', 'name', 'description', 'mfa_required']);
-
-        $securityMetrics = $this->securityMetrics($settings);
-
-        return view('admin.settings.system', compact('settings', 'timezones', 'locales', 'localeNames', 'databaseMetrics', 'securityMetrics', 'roles'));
+        return Inertia::render('Court/Settings/System', [
+            'tab' => $this->activeTab($request),
+            'settings' => [
+                ...collect(self::FORM_FIELDS)->mapWithKeys(fn (string $field): array => [$field => $settings->{$field}])->all(),
+                ...collect(self::BOOLEAN_FIELDS)->mapWithKeys(fn (string $field): array => [$field => (bool) $settings->{$field}])->all(),
+            ],
+            'secretsSet' => collect(self::SECRET_FIELDS)->mapWithKeys(fn (string $field): array => [$field => filled($settings->{$field})])->all(),
+            'assets' => [
+                'logo' => $asset($settings->logo_path),
+                'banner' => $asset($settings->banner_path),
+                'favicon' => $asset($settings->favicon_path),
+                'seal' => $asset($settings->seal_path),
+            ],
+            'timezones' => \DateTimeZone::listIdentifiers(),
+            'locales' => collect(config('app.locales', ['en', 'am']))
+                ->map(fn (string $code): array => ['code' => $code, 'name' => (string) (config('app.locale_names', ['en' => 'English', 'am' => 'Amharic'])[$code] ?? $code)])
+                ->values()->all(),
+            'roles' => Role::query()->orderBy('name')->get(['id', 'name', 'description', 'mfa_required'])
+                ->map(fn (Role $role): array => ['id' => (int) $role->id, 'name' => (string) $role->name, 'description' => $role->description, 'mfa_required' => (bool) $role->mfa_required])
+                ->values()->all(),
+            'databaseMetrics' => $this->databaseMetrics(),
+            'securityMetrics' => $this->securityMetrics($settings),
+            'systemInfo' => [
+                'info_laravel' => app()->version(),
+                'info_php' => PHP_VERSION,
+                'info_environment' => app()->environment(),
+                'info_debug' => (bool) config('app.debug'),
+                'info_cache' => (string) config('cache.default'),
+                'info_session' => (string) config('session.driver'),
+                'info_queue' => (string) config('queue.default'),
+                'info_db' => (string) config('database.default'),
+                'info_timezone' => (string) config('app.timezone'),
+                'info_server_time' => now()->toIso8601String(),
+            ],
+        ]);
     }
 
     public function update(UpdateSystemSettingRequest $request): RedirectResponse
@@ -119,46 +173,32 @@ class SystemSettingController extends Controller
             'sms_api_secret' => ['nullable', 'string', 'max:500'],
             'sms_sender_id' => ['nullable', 'string', 'max:20'],
             'sms_base_url' => ['nullable', 'url', 'max:255'],
+
+            'clear_secrets' => ['nullable', 'array'],
+            'clear_secrets.*' => ['string', 'in:'.implode(',', self::SECRET_FIELDS)],
         ]);
 
         $settings = SystemSetting::first() ?? new SystemSetting;
 
         // Scalar fields
-        $scalar = [
-            'app_name', 'short_name', 'welcome_message', 'about', 'footer_text',
-            'address', 'website_url', 'contact_email', 'contact_phone',
-            'default_locale', 'timezone', 'date_format', 'time_format',
-            'session_lifetime', 'password_min_length',
-            'session_warning_minutes', 'audit_retention_days',
-            'login_max_attempts', 'lockout_minutes',
-            'accent_palette', 'default_theme', 'custom_css', 'api_rate_limit',
-            'mail_mailer', 'mail_host', 'mail_port', 'mail_username',
-            'mail_encryption', 'mail_from_address', 'mail_from_name',
-            'telegram_bot_token', 'telegram_default_chat_id',
-            'sms_provider', 'sms_api_key', 'sms_api_secret', 'sms_sender_id', 'sms_base_url',
-        ];
-        foreach ($scalar as $field) {
+        foreach (self::FORM_FIELDS as $field) {
             $settings->$field = $data[$field] ?? null;
         }
 
-        // The SMTP password is never rendered back into the form, so an empty
+        // Secrets are never rendered back into the form, so an empty
         // submission means "leave it alone" rather than "clear it". Only touch
-        // the stored value when a new one is actually supplied.
-        if (filled($data['mail_password'] ?? null)) {
-            $settings->mail_password = $data['mail_password'];
+        // a stored value when a new one is supplied, or when it is removed on purpose.
+        $clear = $data['clear_secrets'] ?? [];
+        foreach (self::SECRET_FIELDS as $field) {
+            if (filled($data[$field] ?? null)) {
+                $settings->$field = $data[$field];
+            } elseif (in_array($field, $clear, true)) {
+                $settings->$field = null;
+            }
         }
 
         // Boolean fields (unchecked checkboxes are absent from request)
-        $booleans = [
-            'maintenance_mode', 'registration_open', 'force_https',
-            'mfa_enabled',
-            'audit_logging_enabled', 'session_extend_on_activity',
-            'use_ethiopian_calendar', 'show_language_switcher',
-            'password_require_uppercase', 'password_require_number', 'password_require_symbol',
-            'show_banner_on_login', 'api_enabled',
-            'mail_enabled', 'telegram_enabled', 'sms_enabled',
-        ];
-        foreach ($booleans as $field) {
+        foreach (self::BOOLEAN_FIELDS as $field) {
             $settings->$field = $request->boolean($field);
         }
 

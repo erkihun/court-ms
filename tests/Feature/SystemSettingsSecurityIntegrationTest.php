@@ -61,8 +61,13 @@ test('security tab displays live integrated protection status', function () {
     $this->actingAs(systemSettingsAdministrator())
         ->get(route('settings.system.edit', ['tab' => 'security']))
         ->assertOk()
-        ->assertSee(__('settings.security_posture'))
-        ->assertSee(__('settings.password_strength'));
+        // The page (Court/Settings/System) draws the posture card from these metrics.
+        ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->component('Court/Settings/System')
+            ->where('tab', 'security')
+            ->where('securityMetrics.strong_password', true)
+            ->where('securityMetrics.strict_lockout', true)
+            ->has('securityMetrics.score'));
 
     expect(config('session.lifetime'))->toBe(45);
 });
@@ -78,7 +83,43 @@ test('saved SMTP password is never rendered into the settings page', function ()
     $this->actingAs(systemSettingsAdministrator())
         ->get(route('settings.system.edit', ['tab' => 'notifications']))
         ->assertOk()
-        ->assertDontSee('smtp-secret-value', false);
+        ->assertDontSee('smtp-secret-value', false)
+        ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page->where('secretsSet.mail_password', true));
+});
+
+test('Telegram and SMS secrets never reach the page; blank keeps them and the remove box clears them', function () {
+    $settings = SystemSetting::query()->create([
+        'app_name' => 'Court MS',
+        'telegram_bot_token' => 'telegram-secret-value',
+        'sms_api_key' => 'sms-key-value',
+        'sms_api_secret' => 'sms-secret-value',
+    ]);
+    $admin = systemSettingsAdministrator();
+
+    $this->actingAs($admin)
+        ->get(route('settings.system.edit', ['tab' => 'notifications']))
+        ->assertOk()
+        ->assertDontSee('telegram-secret-value', false)
+        ->assertDontSee('sms-key-value', false)
+        ->assertDontSee('sms-secret-value', false)
+        ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->where('secretsSet.telegram_bot_token', true)
+            ->where('secretsSet.sms_api_key', true)
+            ->missing('settings.telegram_bot_token')
+            ->missing('settings.sms_api_secret'));
+
+    $this->actingAs($admin)->post(route('settings.system.update'), [
+        'app_name' => 'Court MS',
+        'telegram_bot_token' => '',
+        'sms_api_key' => 'new-sms-key',
+        'clear_secrets' => ['sms_api_secret'],
+        'tab' => 'notifications',
+    ])->assertRedirect(route('settings.system.edit', ['tab' => 'notifications']));
+
+    $settings->refresh();
+    expect($settings->telegram_bot_token)->toBe('telegram-secret-value')
+        ->and($settings->sms_api_key)->toBe('new-sms-key')
+        ->and($settings->sms_api_secret)->toBeNull();
 });
 
 test('SMTP secrets are not flashed back after validation errors', function () {
