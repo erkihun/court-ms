@@ -16,6 +16,10 @@ use App\Http\Controllers\Admin\BenchNoteController;
 use App\Http\Controllers\Admin\EuisisCaseLinkController;
 use App\Http\Controllers\Admin\EuisisStaffController;
 use App\Http\Controllers\Admin\CaseController;
+use App\Http\Controllers\Admin\LawyerController;
+use App\Http\Controllers\Lawyer\LawyerAuthController;
+use App\Http\Controllers\Lawyer\LawyerCaseController;
+use App\Http\Controllers\Admin\CasePartiesController;
 use App\Http\Controllers\Admin\CaseInspectionFindingController;
 use App\Http\Controllers\Admin\CaseInspectionRequestController;
 use App\Http\Controllers\Admin\CaseTypeController;
@@ -201,6 +205,19 @@ Route::middleware(SetLocale::class)->where(array_fill_keys($numericRouteParamete
         ->where('ticket', '[A-Za-z0-9]{64}')
         ->name('applicant.euisis.sign-in');
 
+    // Lawyers (EUISIS ADR 0013 #13): their own sign-in; they then work in the court portal on the cases they represent.
+    Route::prefix('/lawyer')->name('lawyer.')->group(function () {
+        Route::middleware(['guest:applicant', UseGuard::class.':applicant'])->group(function () {
+            Route::get('/login', [LawyerAuthController::class, 'showLogin'])->name('login');
+            Route::post('/login', [LawyerAuthController::class, 'login'])->middleware('throttle:10,1')->name('login.submit');
+            Route::get('/forgot-password', [LawyerAuthController::class, 'showForgot'])->name('password.request');
+            Route::post('/forgot-password', [LawyerAuthController::class, 'sendResetLink'])->middleware('throttle:5,1')->name('password.email');
+            Route::get('/reset-password/{token}', [LawyerAuthController::class, 'showReset'])->name('password.reset');
+            Route::post('/reset-password', [LawyerAuthController::class, 'reset'])->middleware('throttle:10,1')->name('password.update');
+        });
+        Route::post('/logout', [LawyerAuthController::class, 'logout'])->middleware('auth:applicant')->name('logout');
+    });
+
     Route::middleware(['guest:applicant', UseGuard::class.':applicant'])->group(function () {
         // Register
         Route::get('/applicant/register', [ApplicantAuthController::class, 'showRegister'])->name('applicant.register');
@@ -257,6 +274,10 @@ Route::middleware(SetLocale::class)->where(array_fill_keys($numericRouteParamete
             // Cases (only applicant's own)
             Route::get('/applicant/cases', [ApplicantCaseController::class, 'index'])->name('applicant.cases.index');
             Route::get('/applicant/cases/create', [ApplicantCaseController::class, 'create'])->name('applicant.cases.create');
+            // A verified lawyer files a case for a client (App\Http\Controllers\Lawyer\LawyerCaseController).
+            Route::get('/applicant/lawyer/file', [LawyerCaseController::class, 'create'])->name('applicant.lawyer.file');
+            Route::post('/applicant/lawyer/file', [LawyerCaseController::class, 'store'])->middleware('throttle:10,1')->name('applicant.lawyer.file.store');
+            Route::post('/applicant/lawyer/client', [LawyerCaseController::class, 'client'])->middleware('throttle:30,1')->name('applicant.lawyer.client');
             Route::post('/applicant/cases', [ApplicantCaseController::class, 'store'])->name('applicant.cases.store');
             Route::get('/applicant/cases/{id}', [ApplicantCaseController::class, 'show'])->name('applicant.cases.show');
             Route::get('/applicant/cases/{case}/respondent-responses/{response}', [ApplicantCaseController::class, 'showRespondentResponse'])->name('applicant.cases.respondentResponses.show');
@@ -502,6 +523,12 @@ Route::middleware(SetLocale::class)->where(array_fill_keys($numericRouteParamete
 
             Route::patch('/cases/{id}/status', [CaseController::class, 'updateStatus'])->middleware('perm:cases.edit')->name('cases.status.update');
             Route::post('/cases/{id}/messages', [CaseController::class, 'postAdminMessage'])->middleware('perm:cases.edit')->name('cases.messages.post');
+            // Parties and representation (App\Services\CaseParties): the judge decides an intervention inside the controller.
+            Route::post('/cases/{id}/parties/{party}/decision', [CasePartiesController::class, 'decide'])->middleware(['perm:cases.view', 'throttle:30,1'])->whereNumber(['id', 'party'])->name('cases.parties.decide');
+            Route::get('/cases/{id}/parties/{party}/attachment', [CasePartiesController::class, 'attachment'])->middleware('perm:cases.view')->whereNumber(['id', 'party'])->name('cases.parties.attachment');
+            Route::post('/cases/{id}/representatives/{representative}/verification', [CasePartiesController::class, 'verify'])->middleware(['perm:cases.edit', 'throttle:30,1'])->whereNumber(['id', 'representative'])->name('cases.representatives.verify');
+            Route::get('/cases/{id}/representatives/{representative}/power-of-attorney', [CasePartiesController::class, 'powerOfAttorney'])->middleware('perm:cases.view')->whereNumber(['id', 'representative'])->name('cases.representatives.power-of-attorney');
+            Route::post('/cases/{id}/merge', [CasePartiesController::class, 'merge'])->middleware(['perm:cases.merge', 'throttle:10,1'])->whereNumber('id')->name('cases.merge');
 
             // Registrar review (accept/reject) - route used by index blade
             Route::post('/cases/review', [CaseController::class, 'review'])->middleware('perm:cases.review')->name('cases.review');
@@ -541,6 +568,10 @@ Route::middleware(SetLocale::class)->where(array_fill_keys($numericRouteParamete
             });
 
             // Applicants
+            // The court's register of lawyers (App\Http\Controllers\Admin\LawyerController).
+            Route::get('/lawyers', [LawyerController::class, 'index'])->middleware('perm:applicants.view')->name('lawyers.index');
+            Route::post('/lawyers', [LawyerController::class, 'store'])->middleware(['perm:applicants.manage', 'throttle:20,1'])->name('lawyers.store');
+            Route::patch('/lawyers/{applicant}/verification', [LawyerController::class, 'verify'])->middleware(['perm:applicants.manage', 'throttle:30,1'])->name('lawyers.verify');
             Route::get('/applicants', [ApplicantController::class, 'index'])
                 ->middleware('perm:applicants.view')
                 ->name('applicants.index');

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services\Euisis;
 
+use App\Models\Applicant;
+use App\Services\CaseParties;
+use App\Services\SecureUploadService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -13,8 +16,11 @@ use Illuminate\Support\Facades\DB;
  * employee portal. The employee is the applicant (their court account is linked,
  * or opened, as in Flow 4); the respondent is the EUISIS institution they chose;
  * the grievances they attach travel with the case (their responses and decisions
- * in case_euisis_grievances, their PDFs as case documents). The case starts in
- * intake review like any filing. Idempotent on the EUISIS filing id.
+ * in case_euisis_grievances, their PDFs as case documents). Other employees named
+ * as co-applicants are invited (they confirm in the EUISIS employee portal); a
+ * lawyer from the court's register represents the applicant once the registry
+ * accepts the power of attorney. The case starts in intake review like any
+ * filing. Idempotent on the EUISIS filing id.
  */
 final class EmployeeFilingService
 {
@@ -22,6 +28,7 @@ final class EmployeeFilingService
         private readonly EmployeeCourtAccess $access,
         private readonly CaseNumbers $numbers,
         private readonly CaseDocuments $documents,
+        private readonly CaseParties $parties,
     ) {}
 
     /**
@@ -31,7 +38,7 @@ final class EmployeeFilingService
      *
      * @throws EmployeeCourtAccessException
      */
-    public function file(array $data, array $documents): array
+    public function file(array $data, array $documents, ?UploadedFile $powerOfAttorney = null): array
     {
         $existing = DB::table('court_cases')->where('euisis_filing_id', $data['filing_id'])->first();
         if ($existing !== null) {
@@ -43,7 +50,7 @@ final class EmployeeFilingService
             throw new EmployeeCourtAccessException('account_inactive', 'The court account is deactivated.');
         }
 
-        $caseId = DB::transaction(function () use ($data, $documents, $applicant): int {
+        $caseId = DB::transaction(function () use ($data, $documents, $applicant, $powerOfAttorney): int {
             $caseId = DB::table('court_cases')->insertGetId([
                 'applicant_id' => $applicant->id,
                 'case_number' => $this->numbers->next((int) $data['case_type_id']),
@@ -90,6 +97,17 @@ final class EmployeeFilingService
 
             foreach ($documents as $document) {
                 $this->documents->store($caseId, $document['file'], $document['title'], $document['source']);
+            }
+
+            $lead = $this->parties->addLead($caseId, (int) $applicant->id, $applicant->euisis_employee_uuid,
+                (string) preg_replace('/ {2,}/', ' ', $applicant->full_name), 'filing');
+            foreach ((array) ($data['co_applicants'] ?? []) as $coApplicant) {
+                $this->parties->invite($caseId, (string) $coApplicant['uuid'], trim(strip_tags((string) $coApplicant['name'])), (int) $applicant->id);
+            }
+            if (filled($data['lawyer_license_number'] ?? null) && $powerOfAttorney !== null) {
+                $lawyer = Applicant::query()->where('is_lawyer', true)->where('lawyer_license_number', trim((string) $data['lawyer_license_number']))->firstOrFail();
+                $path = app(SecureUploadService::class)->store($powerOfAttorney, 'powers-of-attorney', 'private', ['related_type' => 'court_case', 'related_id' => $caseId]);
+                $this->parties->addRepresentative($lead, $lawyer, $path, confirmedByParty: true);
             }
 
             return $caseId;

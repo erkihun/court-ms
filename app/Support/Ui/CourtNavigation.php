@@ -33,6 +33,7 @@ final class CourtNavigation
                         ['route' => 'recordes.index', 'label_key' => 'cm.app.Records', 'icon' => 'PrinterIcon', 'permission' => 'cases.view'],
                         ['route' => 'appeals.index', 'label_key' => 'cm.app.Appeals', 'icon' => 'RestartIcon', 'permission' => 'appeals.view'],
                         ['route' => 'applicants.index', 'label_key' => 'cm.app.Applicant', 'icon' => 'Users', 'permission' => 'applicants.view'],
+                        ['route' => 'lawyers.index', 'label_key' => 'cm.lawyer.register.nav', 'icon' => 'Briefcase', 'permission' => 'applicants.view'],
                         ['route' => 'case-types.index', 'label_key' => 'cm.app.case_types', 'icon' => 'TagsIcon', 'permission' => 'cases.types'],
                     ],
                 ],

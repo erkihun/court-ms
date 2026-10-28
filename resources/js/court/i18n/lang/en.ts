@@ -938,6 +938,96 @@ const lang: Record<string, unknown> = {
             }
         }
     },
+    "case_parties": {
+        "errors": {
+            "not_invited": "This invitation has already been answered.",
+            "case_not_open": "That case is closed or was merged into another; it cannot take an intervener.",
+            "already_party": "You are already a party to that case, or your application is waiting for the judge.",
+            "not_requested": "This application has already been decided.",
+            "judge_only": "Only the judge of the case decides an intervention.",
+            "reason_required": "Give the reason for a refusal.",
+            "lawyer_not_verified": "No verified lawyer in the court's register has this licence number.",
+            "unknown_case": "No case has this number."
+        },
+        "merge": {
+            "not_found": "One of the chosen cases no longer exists.",
+            "same_case": "A case cannot be merged into itself.",
+            "already_merged": "Case :number was already merged.",
+            "not_open": "Case :number is closed or dismissed; only open cases are merged.",
+            "other_respondent": "Case :number is against another respondent; only cases against the same respondent are merged."
+        },
+        "flash": {
+            "admitted": "The intervener is admitted as a party.",
+            "refused": "The application to intervene is refused.",
+            "representation_accept": "The power of attorney is accepted; the lawyer represents the party.",
+            "representation_refuse": "The power of attorney is refused.",
+            "representation_revoke": "The lawyer no longer represents the party.",
+            "merged": "Merged into this case: :numbers."
+        },
+        "panel": {
+            "nav": "Parties",
+            "title": "Parties and representation",
+            "none": "No other parties on the applicant's side.",
+            "roles": {
+                "lead": "Applicant",
+                "co_applicant": "Co-applicant",
+                "intervener": "Intervener",
+                "lawyer": "Lawyer"
+            },
+            "statuses": {
+                "active": "Party",
+                "invited": "Invited, awaiting confirmation",
+                "declined": "Declined",
+                "requested": "Asks to intervene",
+                "admitted": "Admitted",
+                "refused": "Refused",
+                "removed": "Removed"
+            },
+            "representation": {
+                "pending": "Power of attorney to check",
+                "accepted": "Represents",
+                "refused": "Refused",
+                "revoked": "Revoked"
+            },
+            "sources": {
+                "filing": "Filed the case",
+                "lawyer": "Filed by their lawyer",
+                "registry": "Added by the registry",
+                "intervention": "Applied to intervene",
+                "merge": "From merged case :number",
+                "backfill": "Filed the case"
+            },
+            "no_account": "No court account yet: joins when they confirm in the employee portal.",
+            "grounds": "Grounds",
+            "attachment": "Supporting document",
+            "decision_note": "Decision",
+            "decided_by": "Decided by",
+            "admit": "Admit",
+            "refuse": "Refuse",
+            "reason": "Reason",
+            "judge_only": "Only the judge of the case decides an intervention.",
+            "lawyers": "Lawyers",
+            "license": "Licence",
+            "power_of_attorney": "Power of attorney",
+            "accept": "Accept",
+            "revoke": "Revoke",
+            "not_confirmed": "The client has not confirmed yet",
+            "cancel": "Cancel",
+            "merge": {
+                "title": "Merge cases into this one",
+                "help": "Open cases against the same respondent. Their parties join this case; their documents, witnesses and coming hearings move here; each is closed as merged. Nothing is deleted.",
+                "pick": "Cases to merge",
+                "note": "Reason for merging",
+                "submit": "Merge",
+                "confirm_title": "Merge cases",
+                "confirm": "Merge :count case(s) into :number? This cannot be undone.",
+                "none": "No other open case against this respondent.",
+                "merged_into": "This case was merged into :number.",
+                "merged_from": "Merged into this case",
+                "open": "Open"
+            }
+        }
+    },
     "cases": {
         "certify_appeal": "I certify the validity of my appeal in accordance with F/S/S/No. 92.",
         "certify_evidence": "I certify that the evidence I have presented is true in accordance with F.S./S.H./No. 92.",
@@ -2399,6 +2489,98 @@ const lang: Record<string, unknown> = {
                 "description": "Decisions are served on the parties; the court publishes its forms, rules and guides here.",
                 "meta": "Publications"
             }
+        }
+    },
+    "lawyer": {
+        "failed": "These details do not match a verified lawyer's account.",
+        "reset_link_sent": "If the email belongs to a registered lawyer, a link to choose a password has been sent.",
+        "password_set": "Your password is set. Sign in.",
+        "mail": {
+            "subject": "Your court portal password",
+            "intro": "Use the link below to choose your password for the court portal.",
+            "action": "Choose a password",
+            "outro": "If you did not expect this email, you can ignore it."
+        },
+        "login": {
+            "title": "Lawyers' sign-in",
+            "subtitle": "For lawyers registered with the court who represent parties to its cases.",
+            "email": "Email address",
+            "password": "Password",
+            "remember": "Keep me signed in",
+            "forgot": "Forgot your password?",
+            "submit": "Sign in",
+            "not_registered": "Not registered? The court registry opens lawyers' accounts and verifies their licence."
+        },
+        "forgot": {
+            "title": "Reset your password",
+            "text": "Enter your email. If it belongs to a registered lawyer, we send a link to choose a new password.",
+            "submit": "Send the link",
+            "back": "Back to sign-in"
+        },
+        "reset": {
+            "title": "Choose your password",
+            "password": "New password",
+            "confirm": "Repeat the password",
+            "submit": "Save the password"
+        },
+        "file": {
+            "nav": "File for a client",
+            "title": "File a case for a client",
+            "description": "Your client must be an employee registered in Agelgay and the respondent an institution registered there. Your client confirms the case in their employee portal.",
+            "client": "Client's employee number",
+            "check": "Find",
+            "client_found": "Client: :name",
+            "client_not_found": "No active employee has this number.",
+            "euisis_unavailable": "The employee directory cannot be reached. Try again shortly.",
+            "case_type": "Case type",
+            "select": "Select…",
+            "respondent": "Respondent institution",
+            "respondent_address": "Address (optional)",
+            "description_label": "What happened",
+            "relief": "What your client asks the court for",
+            "power_of_attorney": "Power of attorney (PDF)",
+            "documents": "Other documents (PDF)",
+            "submit": "File the case",
+            "document_source": "Filed by the lawyer",
+            "filed": "The case is filed. Your client confirms it in their employee portal; the registry reviews it."
+        },
+        "register": {
+            "nav": "Lawyers",
+            "title": "Lawyers",
+            "description": "The court's register of lawyers. A verified lawyer signs in at /lawyer/login, represents employees and files cases for them.",
+            "search": "Search by name, licence or email",
+            "add": "Add a lawyer",
+            "none": "No lawyers yet.",
+            "name": "Name",
+            "license": "Licence",
+            "contact": "Contact",
+            "status": "Status",
+            "cases": "Cases",
+            "actions": "Actions",
+            "verified": "Verified",
+            "unverified": "Not verified",
+            "inactive": "Inactive",
+            "verify": "Verify",
+            "unverify": "Withdraw verification",
+            "license_prompt": "Licence number",
+            "first_name": "First name",
+            "middle_name": "Father's name",
+            "last_name": "Grandfather's name",
+            "gender": "Gender",
+            "male": "Male",
+            "female": "Female",
+            "email": "Email",
+            "phone": "Phone",
+            "national_id": "National ID number",
+            "address": "Address",
+            "license_number": "Licence number",
+            "license_document": "Licence (PDF, optional)",
+            "save": "Open the account",
+            "help": "The lawyer gets an email with a link to choose their password.",
+            "cancel": "Cancel",
+            "created": "The account of :name is open; a link to choose a password was emailed.",
+            "verified_flash": "The lawyer is verified.",
+            "unverified_flash": "The verification is withdrawn."
         }
     },
     "letters": {

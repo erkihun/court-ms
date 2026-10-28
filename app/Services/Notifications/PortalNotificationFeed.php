@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Notifications;
 
+use App\Services\CaseParties;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -26,8 +27,7 @@ final class PortalNotificationFeed
     private function __construct(
         private readonly string $portal,
         private readonly int $ownerId,
-    ) {
-    }
+    ) {}
 
     public static function forApplicant(int $applicantId): self
     {
@@ -101,9 +101,9 @@ final class PortalNotificationFeed
         $owner = $this->ownerId;
         $unseen = fn (string $type, string $column) => fn (Builder $q) => $q->from($this->readsTable().' as nr')
             ->whereColumn('nr.source_id', $column)->where('nr.type', $type)->where('nr.'.$this->ownerColumn(), $owner);
-        // An applicant's own cases; a respondent's are those they opened (respondent_case_views).
+        // The cases an applicant is a party to (CaseParties); a respondent's are those they opened (respondent_case_views).
         $cases = fn (Builder $q, string $caseColumn) => $applicant
-            ? $q->where('c.applicant_id', $owner)
+            ? $q->whereIn('c.id', CaseParties::caseIdsFor((int) $owner))
             : $q->whereIn($caseColumn, DB::table('respondent_case_views')->where('respondent_id', $owner)->select('case_id'));
         $caseUrl = fn (object $row): ?string => $applicant
             ? route('applicant.cases.show', (int) $row->case_id)
@@ -169,7 +169,7 @@ final class PortalNotificationFeed
                     ->join('court_cases as c', 'c.id', '=', 'v.case_id')
                     ->join('respondents as r', 'r.id', '=', 'v.respondent_id')
                     ->select('v.id', 'v.viewed_at', 'v.case_id', 'c.case_number', DB::raw("TRIM(CONCAT_WS(' ', r.first_name, r.middle_name, r.last_name)) as respondent_name"))
-                    ->where('c.applicant_id', $owner)
+                    ->whereIn('c.id', CaseParties::caseIdsFor((int) $owner))
                     ->where('v.viewed_at', '>=', now()->subDays(14))
                     ->whereNotExists($unseen('respondent_view', 'v.id'))
                     ->orderByDesc('v.viewed_at'),

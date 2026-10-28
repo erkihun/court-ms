@@ -7,6 +7,7 @@ namespace App\Services\Euisis;
 use App\Models\Applicant;
 use App\Models\ApplicantSignInTicket;
 use App\Models\IntegrationClient;
+use App\Services\CaseParties;
 use App\Services\Notifications\PortalNotificationFeed;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -90,10 +91,12 @@ final class EmployeeCourtAccess
     {
         $cases = DB::table('court_cases as c')
             ->leftJoin('case_types as ct', 'ct.id', '=', 'c.case_type_id')
-            ->where('c.applicant_id', $applicant->id)
+            ->leftJoin('court_cases as mc', 'mc.id', '=', 'c.merged_into_case_id')
+            ->whereIn('c.id', CaseParties::caseIdsFor((int) $applicant->id))
             ->orderByDesc('c.created_at')
             ->limit(25)
-            ->get(['c.id', 'c.case_number', 'c.title', 'c.respondent_name', 'c.status', 'c.review_status', 'c.filing_date', 'c.created_at', 'ct.name as case_type']);
+            ->get(['c.id', 'c.case_number', 'c.title', 'c.respondent_name', 'c.status', 'c.review_status', 'c.filing_date', 'c.created_at', 'ct.name as case_type',
+                'c.merged_into_case_id', 'mc.case_number as merged_into_number']);
 
         $nextHearings = DB::table('case_hearings')
             ->whereIn('case_id', $cases->pluck('id')->all())
@@ -108,11 +111,11 @@ final class EmployeeCourtAccess
         return [
             'applicant' => ['name' => trim(preg_replace('/\s+/', ' ', $applicant->first_name.' '.$applicant->middle_name.' '.$applicant->last_name)), 'is_active' => (bool) $applicant->is_active],
             'counts' => [
-                'cases' => (int) DB::table('court_cases')->where('applicant_id', $applicant->id)->count(),
-                'open' => (int) DB::table('court_cases')->where('applicant_id', $applicant->id)->whereNotIn('status', ['closed', 'dismissed'])->count(),
-                'awaiting_review' => (int) DB::table('court_cases')->where('applicant_id', $applicant->id)->whereIn('review_status', ['awaiting_review', 'returned'])->count(),
+                'cases' => (int) DB::table('court_cases')->whereIn('id', CaseParties::caseIdsFor((int) $applicant->id))->count(),
+                'open' => (int) DB::table('court_cases')->whereIn('id', CaseParties::caseIdsFor((int) $applicant->id))->whereNotIn('status', ['closed', 'dismissed'])->count(),
+                'awaiting_review' => (int) DB::table('court_cases')->whereIn('id', CaseParties::caseIdsFor((int) $applicant->id))->whereIn('review_status', ['awaiting_review', 'returned'])->count(),
                 'upcoming_hearings' => (int) DB::table('case_hearings as h')->join('court_cases as c', 'c.id', '=', 'h.case_id')
-                    ->where('c.applicant_id', $applicant->id)->where('h.hearing_at', '>=', now())->count(),
+                    ->whereIn('c.id', CaseParties::caseIdsFor((int) $applicant->id))->where('h.hearing_at', '>=', now())->count(),
                 'unread_notices' => (int) $feed['unread_count'],
             ],
             'cases' => $cases->map(fn (object $case): array => [
@@ -126,6 +129,9 @@ final class EmployeeCourtAccess
                 'review_status' => (string) ($case->review_status ?? 'accepted'),
                 'filed_at' => $iso($case->filing_date ?? $case->created_at),
                 'next_hearing_at' => $iso($nextHearings[$case->id] ?? null),
+                // lead, co_applicant, intervener or lawyer; a merged case names the case it joined.
+                'role' => CaseParties::roleOf((int) $applicant->id, (int) $case->id),
+                'merged_into' => $case->merged_into_case_id !== null ? ['id' => (int) $case->merged_into_case_id, 'case_number' => (string) $case->merged_into_number] : null,
             ])->values()->all(),
             // Titles and text only, with the case each concerns: EUISIS opens it in My Portal.
             'notices' => collect($feed['items'])->map(fn (array $item): array => [
@@ -264,7 +270,7 @@ final class EmployeeCourtAccess
             return;
         }
         if (preg_match('/^case:(\d+)$/', $target, $m) === 1
-            && DB::table('court_cases')->where('id', (int) $m[1])->where('applicant_id', $applicant->id)->exists()) {
+            && CaseParties::canFollow((int) $applicant->id, (int) $m[1])) {
             return;
         }
 
@@ -274,7 +280,7 @@ final class EmployeeCourtAccess
     private function targetUrl(Applicant $applicant, string $target): string
     {
         if (preg_match('/^case:(\d+)$/', $target, $m) === 1
-            && DB::table('court_cases')->where('id', (int) $m[1])->where('applicant_id', $applicant->id)->exists()) {
+            && CaseParties::canFollow((int) $applicant->id, (int) $m[1])) {
             return route('applicant.cases.show', (int) $m[1]);
         }
 

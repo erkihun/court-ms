@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Decision;
 use App\Support\DecisionPdf;
 use App\Support\EthiopianDate;
+use App\Services\CaseParties;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -21,7 +22,7 @@ class ApplicantDashboardController extends Controller
         $applicantId = auth('applicant')->id();
 
         $ownsCase = DB::table('court_cases')
-            ->where('applicant_id', $applicantId)
+            ->whereIn('id', CaseParties::caseIdsFor((int) $applicantId))
             ->where('case_number', $decision->case_number)
             ->exists();
 
@@ -36,7 +37,7 @@ class ApplicantDashboardController extends Controller
         $applicantId = auth('applicant')->id();
 
         $counts = DB::table('court_cases')
-            ->where('applicant_id', $applicantId)
+            ->whereIn('id', CaseParties::caseIdsFor((int) $applicantId))
             ->selectRaw("
                 COUNT(*) as total,
                 SUM(status = 'pending') as pending,
@@ -51,7 +52,7 @@ class ApplicantDashboardController extends Controller
         $closed  = (int) ($counts->closed ?? 0);
 
         $caseNumbers = DB::table('court_cases')
-            ->where('applicant_id', $applicantId)
+            ->whereIn('id', CaseParties::caseIdsFor((int) $applicantId))
             ->pluck('case_number')
             ->filter()
             ->values();
@@ -142,7 +143,7 @@ class ApplicantDashboardController extends Controller
         $recent = DB::table('court_cases')
             ->leftJoin('case_types', 'case_types.id', '=', 'court_cases.case_type_id')
 
-            ->where('court_cases.applicant_id', $applicantId)
+            ->whereIn('court_cases.id', CaseParties::caseIdsFor((int) $applicantId))
             ->select(
                 'court_cases.id',
                 'court_cases.case_number',

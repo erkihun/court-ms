@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CaseController;
 use App\Http\Controllers\Api\CaseMessageController;
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\Integration\EuisisCasePartiesController;
 use App\Http\Controllers\Api\Integration\EuisisCaseWorkspaceController;
 use App\Http\Controllers\Api\Integration\EuisisLetterController;
 use App\Http\Controllers\Api\Integration\EuisisPeopleController;
@@ -79,8 +80,12 @@ Route::prefix('v1/integration')
                 Route::post('/cases/{case}/responses/{response}/replies/{reply}', [EuisisCaseWorkspaceController::class, 'reply']);
                 Route::post('/cases/{case}/download', [EuisisCaseWorkspaceController::class, 'download']);
                 Route::post('/notices', [EuisisCaseWorkspaceController::class, 'notices']);
+                Route::post('/parties', [EuisisCasePartiesController::class, 'index']);
+                Route::post('/lawyers', [EuisisCasePartiesController::class, 'lawyers']);
             });
             Route::middleware(['integration.client:people:act', 'throttle:60,1'])->group(function (): void {
+                Route::post('/parties/{party}/respond', [EuisisCasePartiesController::class, 'respond'])->whereNumber('party');
+                Route::post('/interventions', [EuisisCasePartiesController::class, 'intervene']);
                 Route::post('/cases/{case}/correct', [EuisisCaseWorkspaceController::class, 'correct']);
                 Route::post('/cases/{case}/messages', [EuisisCaseWorkspaceController::class, 'postMessage']);
                 Route::post('/cases/{case}/files', [EuisisCaseWorkspaceController::class, 'uploadFile']);

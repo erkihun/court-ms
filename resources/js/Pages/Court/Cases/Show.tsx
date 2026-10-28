@@ -11,6 +11,7 @@ import HearingsSection from './Show/HearingsSection';
 import { InspectionFindingsSection, InspectionRequestsSection } from './Show/InspectionSections';
 import { LetterComposeSection, LettersSection } from './Show/LettersSection';
 import MessagesSection from './Show/MessagesSection';
+import PartiesSection, { MergedBanner } from './Show/PartiesSection';
 import { RespondentResponsesSection, ResponseRepliesSection } from './Show/ResponsesSection';
 import ReviewDialog from './Show/ReviewDialog';
 import SectionNav, { QuickAccessBar, useSectionItems } from './Show/SectionNav';
@@ -20,7 +21,7 @@ import { useCaseText } from './Show/useCaseText';
 
 const SECTIONS: CaseSection[] = [
     'case-summary', 'case-details', 'timeline', 'letters', 'letters-compose', 'audits', 'inspection-requests', 'inspection-findings',
-    'uploaded-files', 'hearings', 'messages', 'respondent-responses', 'response-of-response',
+    'uploaded-files', 'hearings', 'messages', 'respondent-responses', 'response-of-response', 'parties',
 ];
 const isSection = (value: string): value is CaseSection => (SECTIONS as string[]).includes(value);
 const sectionFromHash = (): CaseSection | null => {
@@ -91,6 +92,7 @@ export default function CaseShow(props: CaseDetailProps) {
 
             <div className="space-y-5">
                 <HeaderCard kase={kase} can={can} caseLocked={caseLocked} onOpenSection={openSection} onReview={review} />
+                {props.parties.mergedInto && <MergedBanner mergedInto={props.parties.mergedInto} />}
                 <QuickAccessBar can={can} onOpen={openSection} />
 
                 {can.review && <ReviewDialog caseId={kase.id} decision={reviewDecision} initialNote={kase.review_note ?? ''} onClose={() => setReviewDecision(null)} />}
@@ -104,6 +106,7 @@ export default function CaseShow(props: CaseDetailProps) {
                     <div className="space-y-6 lg:col-span-9">
                         {active === 'case-summary' && <SummarySection kase={kase} hearings={props.hearings} euisis={euisis} euisisRecord={euisisRecord} />}
                         {active === 'case-details' && <DetailsSection kase={kase} docs={props.docs} witnesses={props.witnesses} termsItems={props.termsItems} canEdit={can.editStatus} caseLocked={caseLocked} />}
+                        {active === 'parties' && <PartiesSection caseId={kase.id} caseNumber={kase.case_number} parties={props.parties} />}
                         {active === 'timeline' && <TimelineSection timeline={props.timeline} />}
                         {active === 'audits' && <AuditSection audits={props.audits} />}
                         {active === 'inspection-requests' && can.manageInspectionRequests && <InspectionRequestsSection requests={props.inspectionRequests} />}

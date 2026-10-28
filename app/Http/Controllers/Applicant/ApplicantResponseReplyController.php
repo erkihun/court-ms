@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ApplicantResponseReply;
 use App\Models\RespondentResponse;
 use App\Services\ResponseNotificationService;
+use App\Services\CaseParties;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -210,7 +211,7 @@ class ApplicantResponseReplyController extends Controller
             ->leftJoin('case_types as ct', 'ct.id', '=', 'cc.case_type_id')
             ->select('cc.*', 'ct.name as case_type_name')
             ->where('cc.id', $caseId)
-            ->where('cc.applicant_id', $applicantId)
+            ->whereIn('cc.id', CaseParties::caseIdsFor($applicantId))
             ->first();
 
         abort_if(!$case, 404);

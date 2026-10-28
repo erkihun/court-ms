@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ApplicantTermAcceptance;
 use App\Models\TermsAndCondition;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
+use App\Services\CaseParties;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -53,7 +54,7 @@ class ApplicantCaseController extends Controller
 
             )
             // Always the signed-in applicant's own cases (a schema check used to list every case when it failed).
-            ->where('c.applicant_id', $me)
+            ->whereIn('c.id', CaseParties::caseIdsFor((int) $me))
             ->orderByDesc('c.created_at')
             ->paginate(10);
 
@@ -253,6 +254,9 @@ class ApplicantCaseController extends Controller
                 'updated_at'         => now(),
             ]);
 
+            // The applicant is the case's lead party (App\Services\CaseParties).
+            app(CaseParties::class)->ensureLead((int) $caseId);
+
             // 2) Initial status log
             DB::table('case_status_logs')->insert([
                 'case_id'            => $caseId,
@@ -371,7 +375,7 @@ class ApplicantCaseController extends Controller
 
             ->select('c.*', 'ct.name as case_type')
             ->where('c.id', $id)
-            ->where('c.applicant_id', $aid)
+            ->whereIn('c.id', CaseParties::caseIdsFor((int) $aid))
             ->first();
 
         abort_if(!$case, 404);
@@ -411,7 +415,8 @@ class ApplicantCaseController extends Controller
 
         $msgs = DB::table('case_messages as m')
             ->leftJoin('users as u', 'u.id', '=', 'm.sender_user_id')
-            ->select('m.*', 'u.name as admin_name')
+            ->leftJoin('applicants as sa', 'sa.id', '=', 'm.sender_applicant_id')
+            ->select('m.*', 'u.name as admin_name', 'sa.first_name as sender_first_name', 'sa.middle_name as sender_middle_name', 'sa.last_name as sender_last_name')
             ->where('m.case_id', $id)
             ->orderBy('m.created_at')
             ->get();
@@ -600,9 +605,11 @@ class ApplicantCaseController extends Controller
             'messages' => $msgs->map(fn ($m): array => [
                 'id' => (int) $m->id,
                 'body' => (string) ($m->body ?? ''),
-                'mine' => !empty($m->sender_applicant_id),
-                // Null for a court message without a named sender: the page shows "Court staff".
-                'sender_name' => !empty($m->sender_applicant_id) ? null : ($m->admin_name ?? null),
+                'mine' => (int) ($m->sender_applicant_id ?? 0) === (int) $aid,
+                // Another party's name; null for a court message without a named sender: the page shows "Court staff".
+                'sender_name' => !empty($m->sender_applicant_id)
+                    ? ((int) $m->sender_applicant_id === (int) $aid ? null : trim(implode(' ', array_filter([$m->sender_first_name ?? null, $m->sender_middle_name ?? null, $m->sender_last_name ?? null]))))
+                    : ($m->admin_name ?? null),
                 'created_at' => $iso($m->created_at ?? null),
             ])->values()->all(),
             'files' => $files->map(fn ($f): array => [
@@ -656,10 +663,10 @@ class ApplicantCaseController extends Controller
 
         abort_if(!$response, 404);
 
+        // Every party's replies on this side of the case; each is changed by its own author only.
         $replies = DB::table('applicant_response_replies')
             ->where('case_id', $case->id)
             ->where('respondent_response_id', $response->id)
-            ->where('applicant_id', $aid)
             ->orderByDesc('created_at')
             ->get();
 
@@ -683,7 +690,8 @@ class ApplicantCaseController extends Controller
                 'excerpt' => Str::limit((string) ($reply->description ?? ''), 180),
                 'created_at' => $this->isoDate($reply->created_at ?? null),
                 // An accepted reply is locked (ApplicantResponseReplyController::ensureEditableReply).
-                'editable' => ($reply->review_status ?? null) !== 'accepted',
+                'editable' => (int) $reply->applicant_id === (int) $aid && ($reply->review_status ?? null) !== 'accepted',
+                'mine' => (int) $reply->applicant_id === (int) $aid,
             ])->values()->all(),
         ]);
     }
@@ -733,7 +741,7 @@ class ApplicantCaseController extends Controller
 
         $case = DB::table('court_cases')
             ->where('id', $id)
-            ->where('applicant_id', $me)
+            ->whereIn('id', CaseParties::leadCaseIdsFor((int) $me))
             ->first();
 
         abort_if(!$case, 404);
@@ -793,7 +801,7 @@ class ApplicantCaseController extends Controller
         $applicantId = auth('applicant')->id();
 
         // Ensure the case belongs to this applicant
-        $case = CourtCase::where('applicant_id', $applicantId)->findOrFail($id);
+        $case = CourtCase::query()->whereIn('id', CaseParties::leadCaseIdsFor((int) $applicantId))->findOrFail($id);
 
         // Only allow deletion if status is pending
         if ($case->status !== 'pending' || ($case->review_status ?? null) === 'accepted') {
@@ -816,7 +824,7 @@ class ApplicantCaseController extends Controller
 
         $case = DB::table('court_cases')
             ->where('id', $id)
-            ->where('applicant_id', $me)
+            ->whereIn('id', CaseParties::leadCaseIdsFor((int) $me))
             ->first();
 
         abort_if(!$case, 404);
@@ -1035,7 +1043,7 @@ class ApplicantCaseController extends Controller
 
         $case = DB::table('court_cases')
             ->where('id', $id)
-            ->where('applicant_id', $applicantId)
+            ->whereIn('id', CaseParties::leadCaseIdsFor((int) $applicantId))
             ->first();
         abort_if(!$case, 404);
 
@@ -1067,7 +1075,7 @@ class ApplicantCaseController extends Controller
         // enforce ownership + pending
         $case = DB::table('court_cases')
             ->where('id', $id)
-            ->where('applicant_id', $applicantId)
+            ->whereIn('id', CaseParties::leadCaseIdsFor((int) $applicantId))
             ->first();
 
         abort_if(!$case, 404);
@@ -1098,7 +1106,7 @@ class ApplicantCaseController extends Controller
     {
         $applicantId = auth('applicant')->id();
 
-        $own = DB::table('court_cases')->where('id', $id)->where('applicant_id', $applicantId)->exists();
+        $own = CaseParties::canFollow((int) $applicantId, (int) $id);
         abort_unless($own, 403);
 
         $data = $request->validate([
@@ -1165,7 +1173,7 @@ class ApplicantCaseController extends Controller
     {
         $applicantId = auth('applicant')->id();
 
-        $own = DB::table('court_cases')->where('id', $id)->where('applicant_id', $applicantId)->exists();
+        $own = CaseParties::canFollow((int) $applicantId, (int) $id);
         abort_unless($own, 403);
 
         $data = $request->validate([
@@ -1234,7 +1242,7 @@ class ApplicantCaseController extends Controller
                 'a.phone'
             )
             ->where('c.id', $id)
-            ->where('c.applicant_id', $me)
+            ->whereIn('c.id', CaseParties::caseIdsFor((int) $me))
             ->first();
 
         abort_if(!$case, 404);
@@ -1321,7 +1329,7 @@ class ApplicantCaseController extends Controller
     {
         $aid = auth('applicant')->id();
 
-        $case = DB::table('court_cases')->where('id', $id)->where('applicant_id', $aid)->first();
+        $case = DB::table('court_cases')->where('id', $id)->whereIn('id', CaseParties::caseIdsFor((int) $aid))->first();
         abort_if(!$case, 404);
 
         $hearing = DB::table('case_hearings')->where('id', $hearingId)->where('case_id', $id)->first();
@@ -1400,7 +1408,7 @@ class ApplicantCaseController extends Controller
                 'a.phone'
             )
             ->where('c.id', $id)
-            ->where('c.applicant_id', $me)
+            ->whereIn('c.id', CaseParties::caseIdsFor((int) $me))
             ->first();
 
         abort_if(!$case, 404);
@@ -1449,7 +1457,7 @@ class ApplicantCaseController extends Controller
                 'a.phone'
             )
             ->where('c.id', $id)
-            ->where('c.applicant_id', $me)
+            ->whereIn('c.id', CaseParties::caseIdsFor((int) $me))
             ->first();
 
         abort_if(!$case, 404);
@@ -1632,7 +1640,7 @@ class ApplicantCaseController extends Controller
             ->leftJoin('case_types as ct', 'ct.id', '=', 'cc.case_type_id')
             ->select('cc.*', 'ct.name as case_type_name')
             ->where('cc.id', $caseId)
-            ->where('cc.applicant_id', $applicantId)
+            ->whereIn('cc.id', CaseParties::caseIdsFor((int) $applicantId))
             ->first();
     }
 

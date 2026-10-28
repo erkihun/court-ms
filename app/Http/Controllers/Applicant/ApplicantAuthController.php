@@ -205,6 +205,7 @@ class ApplicantAuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('applicant.login');
+        // With the portal in EUISIS only lawyers sign in here, at /lawyer/login.
+        return redirect()->route(\App\Support\EuisisParties::portalClosed() ? 'lawyer.login' : 'applicant.login');
     }
 }

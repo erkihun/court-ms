@@ -228,8 +228,51 @@ export interface EuisisRecordData {
     grievances: EuisisGrievanceRecord[];
 }
 
+/** A lawyer on a party's side (case_representatives). */
+export interface CasePartyRepresentative {
+    id: number;
+    name: string;
+    license_number: string | null;
+    phone: string | null;
+    email: string | null;
+    status: 'pending' | 'accepted' | 'refused' | 'revoked';
+    confirmed_by_party: boolean;
+    power_of_attorney_url: string | null;
+    note: string | null;
+    verified_at: string | null;
+}
+
+/** A party on the applicant's side (case_applicants): the applicant, a co-applicant or an intervener. */
+export interface CaseParty {
+    id: number;
+    name: string;
+    role: 'lead' | 'co_applicant' | 'intervener';
+    status: 'active' | 'invited' | 'declined' | 'requested' | 'admitted' | 'refused' | 'removed';
+    source: string;
+    linked: boolean;
+    statement: string | null;
+    attachment_url: string | null;
+    decision_note: string | null;
+    decided_at: string | null;
+    decided_by: string | null;
+    merged_from: string | null;
+    created_at: string | null;
+    representatives: CasePartyRepresentative[];
+}
+
+/** The "Parties and representation" section (Admin\CasePartiesController::props). */
+export interface CaseParties {
+    rows: CaseParty[];
+    can: { decide: boolean; verify: boolean; merge: boolean };
+    mergedInto: { id: number; case_number: string; note: string | null; at: string | null } | null;
+    mergedFrom: { id: number; case_number: string; at: string | null }[];
+    candidates: { id: number; case_number: string; title: string; filed_at: string | null; status: string }[];
+}
+
 export interface CaseDetailProps {
     case: CaseDetailCase;
+    /** The applicant's side: parties, lawyers and merges (EUISIS ADR 0013 #13). */
+    parties: CaseParties;
     can: CaseDetailPermissions;
     /** Closed with a published decision: every action is locked. */
     caseLocked: boolean;
@@ -271,7 +314,8 @@ export type CaseSection =
     | 'hearings'
     | 'messages'
     | 'respondent-responses'
-    | 'response-of-response';
+    | 'response-of-response'
+    | 'parties';
 
 export interface AssignPageCase {
     id: number;

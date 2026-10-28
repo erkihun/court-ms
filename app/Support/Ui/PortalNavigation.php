@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Support\Ui;
 
 use App\Models\Applicant;
+use App\Services\CaseParties;
 use App\Support\EuisisParties;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -28,6 +29,7 @@ final class PortalNavigation
                 'items' => [
                     ['route' => 'applicant.cases.index', 'label_key' => 'cm.app.my_cases', 'icon' => 'ClipboardListIcon'],
                     ['route' => 'applicant.cases.create', 'label_key' => 'cm.app.new_case', 'icon' => 'FilePenIcon'],
+                    ['route' => 'applicant.lawyer.file', 'label_key' => 'cm.lawyer.file.nav', 'icon' => 'Briefcase', 'lawyer' => true],
                     ['route' => 'applicant.response-replies.index', 'label_key' => 'cm.respondent.applicant_response_replies', 'icon' => 'ClipboardTextIcon'],
                     ['route' => 'applicant.notifications.index', 'label_key' => 'cm.app.notifications', 'icon' => 'ClipboardClockIcon'],
                     ['route' => 'applicant.profile.edit', 'label_key' => 'cm.app.profile', 'icon' => 'UserCircleIcon'],
@@ -89,13 +91,21 @@ final class PortalNavigation
     /** @return list<array<string, mixed>> */
     public static function sections(string $portal): array
     {
+        $user = self::user();
+        $lawyer = $user !== null && CaseParties::isVerifiedLawyer($user);
+
         return collect(self::SECTIONS[$portal] ?? [])
             ->map(fn (array $section): array => [
                 ...$section,
                 'groups' => collect($section['groups'])
-                    // With EUISIS parties only, new cases are filed from the EUISIS employee portal.
-                    ->map(fn (array $group): array => [...$group, 'items' => array_values(array_filter($group['items'], fn (array $item): bool => Route::has($item['route'])
-                        && ! ($item['route'] === 'applicant.cases.create' && EuisisParties::only())))])
+                    // With EUISIS parties only, new cases are filed from the EUISIS employee portal;
+                    // a verified lawyer files for a client (EUISIS ADR 0013 #13).
+                    ->map(fn (array $group): array => [...$group, 'items' => array_values(array_map(
+                        fn (array $item): array => array_diff_key($item, ['lawyer' => true]),
+                        array_filter($group['items'], fn (array $item): bool => Route::has($item['route'])
+                            && ! ($item['route'] === 'applicant.cases.create' && EuisisParties::only())
+                            && (! ($item['lawyer'] ?? false) || $lawyer)),
+                    ))])
                     ->filter(fn (array $group): bool => $group['items'] !== [])
                     ->values()->all(),
             ])

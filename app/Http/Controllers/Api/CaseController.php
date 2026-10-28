@@ -118,6 +118,8 @@ class CaseController extends Controller
             ]);
 
             $this->storeStatusLog($case->id, 'pending');
+            // The applicant is the case's lead party (App\Services\CaseParties).
+            app(\App\Services\CaseParties::class)->ensureLead((int) $case->id);
             $this->storeEvidence($case->id, $request, (int) $actor->id);
             $this->storeWitnesses($case->id, $request);
 

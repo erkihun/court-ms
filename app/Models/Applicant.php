@@ -39,6 +39,7 @@ class Applicant extends Authenticatable implements MustVerifyEmailContract
             'password' => 'hashed',
             'is_active' => 'boolean',
             'is_lawyer' => 'boolean',
+            'lawyer_verified_at' => 'datetime',
         ];
     }
 

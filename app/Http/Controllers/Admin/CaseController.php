@@ -736,7 +736,7 @@ class CaseController extends Controller
             }, 'case_inspection_findings');
         }
 
-        return Inertia::render('Court/Cases/Show', $this->caseDetailProps(
+        return Inertia::render('Court/Cases/Show', ['parties' => CasePartiesController::props((int) $case->id, auth()->user())] + $this->caseDetailProps(
             $case,
             $timeline,
             $files,

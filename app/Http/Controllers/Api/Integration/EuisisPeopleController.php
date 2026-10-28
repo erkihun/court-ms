@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\Integration;
 
 use App\Http\Controllers\Controller;
+use App\Models\Applicant;
 use App\Models\IntegrationClient;
 use App\Services\Euisis\EmployeeCourtAccess;
 use App\Services\Euisis\EmployeeCourtAccessException;
@@ -117,6 +118,18 @@ class EuisisPeopleController extends Controller
             'document_titles.*' => ['nullable', 'string', 'max:255'],
             'document_sources' => ['nullable', 'array', 'max:20'],
             'document_sources.*' => ['nullable', 'string', 'max:120'],
+            // Other employees filing with the applicant: each confirms in the EUISIS employee portal.
+            'co_applicants' => ['nullable', 'array', 'max:20'],
+            'co_applicants.*.uuid' => ['required', 'uuid', 'distinct', 'different:employee.uuid'],
+            'co_applicants.*.name' => ['required', 'string', 'max:255'],
+            // A lawyer from the court's register of verified lawyers, with the power of attorney.
+            'lawyer_license_number' => ['nullable', 'string', 'max:80', function (string $attribute, mixed $value, \Closure $fail): void {
+                if (Applicant::query()->where('is_lawyer', true)->where('is_active', true)->whereNotNull('lawyer_verified_at')
+                    ->where('lawyer_license_number', trim((string) $value))->doesntExist()) {
+                    $fail(__('case_parties.errors.lawyer_not_verified'));
+                }
+            }],
+            'power_of_attorney' => ['nullable', 'required_with:lawyer_license_number', 'file', 'mimes:pdf', 'max:10240'],
         ]);
 
         $grievances = $this->grievances((string) ($data['grievances'] ?? '[]'));
@@ -137,7 +150,7 @@ class EuisisPeopleController extends Controller
         }
 
         try {
-            [$case, $created] = $filings->file($data, $documents);
+            [$case, $created] = $filings->file($data, $documents, $request->file('power_of_attorney'));
         } catch (EmployeeCourtAccessException $e) {
             return $this->refuse($request, 409, $e);
         }

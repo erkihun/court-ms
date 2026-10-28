@@ -11,9 +11,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\SecureFileController;
 use App\Models\Applicant;
 use App\Models\ApplicantResponseReply;
+use App\Models\CaseApplicant;
 use App\Models\Decision;
 use App\Models\Letter;
 use App\Models\RespondentResponse;
+use App\Services\CaseParties;
 use App\Services\Notifications\PortalNotificationFeed;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Closure;
@@ -61,12 +63,50 @@ class EuisisCaseWorkspaceController extends Controller
             }, array_filter((array) ($props['letters'] ?? []), fn (array $letter): bool => ($letter['approval_status'] ?? null) === 'approved')));
             $props['review'] = ['status' => $row->review_status, 'note' => $row->review_note];
             $props['can'] = [
-                // As the applicant portal: a pending case not yet accepted may be corrected.
-                'modify' => $row->status === 'pending' && $row->review_status !== 'accepted',
+                // As the applicant portal: a pending case not yet accepted may be corrected, by its lead applicant.
+                'modify' => $row->status === 'pending' && $row->review_status !== 'accepted' && CaseParties::canChange((int) $applicant->id, $case),
             ];
+            $props += $this->partiesOf($case, (int) $applicant->id);
 
             return response()->json(['data' => $props]);
         });
+    }
+
+    /**
+     * Who is on the applicant's side of the case (lead, co-applicants who joined or are
+     * invited, admitted interveners) and their lawyers; the viewer's own role; and the
+     * case it was merged into, or those merged into it.
+     *
+     * @return array<string, mixed>
+     */
+    private function partiesOf(int $caseId, int $applicantId): array
+    {
+        app(CaseParties::class)->ensureLead($caseId);
+        $parties = CaseApplicant::query()->where('case_id', $caseId)
+            ->whereIn('status', ['active', 'admitted', 'invited'])
+            ->orderByRaw("FIELD(role, 'lead', 'co_applicant', 'intervener')")->orderBy('id')
+            ->with(['representatives' => fn ($q) => $q->whereIn('status', ['pending', 'accepted'])->with('lawyer:id,first_name,middle_name,last_name,lawyer_license_number')])
+            ->get();
+        $merge = DB::table('court_cases as c')->leftJoin('court_cases as m', 'm.id', '=', 'c.merged_into_case_id')
+            ->where('c.id', $caseId)->first(['c.merged_into_case_id', 'm.case_number as merged_into_number', 'c.merged_at', 'c.merge_note']);
+
+        return [
+            'parties' => $parties->map(fn (CaseApplicant $party): array => [
+                'id' => (int) $party->id,
+                'name' => (string) $party->name,
+                'role' => (string) $party->role,
+                'status' => (string) $party->status,
+                'is_you' => (int) $party->applicant_id === $applicantId,
+                'lawyers' => $party->representatives->map(fn ($representative): array => [
+                    'name' => CaseParties::fullName($representative->lawyer),
+                    'license_number' => $representative->lawyer?->lawyer_license_number,
+                    'status' => (string) $representative->status,
+                ])->values()->all(),
+            ])->values()->all(),
+            'role' => CaseParties::roleOf($applicantId, $caseId),
+            'merged_into' => $merge?->merged_into_case_id ? ['id' => (int) $merge->merged_into_case_id, 'case_number' => (string) $merge->merged_into_number, 'note' => $merge->merge_note] : null,
+            'merged_from' => DB::table('court_cases')->where('merged_into_case_id', $caseId)->orderBy('merged_at')->pluck('case_number')->values()->all(),
+        ];
     }
 
     /** The correction form of a case review sent back: its current values and options. */
@@ -145,7 +185,7 @@ class EuisisCaseWorkspaceController extends Controller
         $id = (int) ($data['id'] ?? 0);
 
         return $this->asApplicant($request, function (Applicant $applicant) use ($data, $id, $case, $request): SymfonyResponse {
-            $caseRow = DB::table('court_cases')->where('id', $case)->where('applicant_id', $applicant->id)->first();
+            $caseRow = DB::table('court_cases')->where('id', $case)->whereIn('id', CaseParties::caseIdsFor((int) $applicant->id))->first();
             abort_if($caseRow === null, 404);
             $files = app(SecureFileController::class);
 

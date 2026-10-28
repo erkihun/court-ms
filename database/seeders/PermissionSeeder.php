@@ -57,6 +57,11 @@ class PermissionSeeder extends Seeder
                 'description' => null,
             ],
             [
+                'name' => 'cases.merge',
+                'label' => 'Merge cases',
+                'description' => 'Merge open cases against the same respondent into one',
+            ],
+            [
                 'name' => 'cases.assign.team',
                 'label' => 'Assign case to team leaders',
                 'description' => null,

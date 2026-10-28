@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { cx } from '@/Components/ui';
 import type { CaseDetailPermissions, CaseSection } from '@/court/types/caseDetail';
 import { useCaseText } from './useCaseText';
-import { AuditIcon, CalendarIcon, ChatIcon, ClockIcon, DetailsIcon, FilesIcon, MailIcon, RepliesIcon, ResponsesIcon, SummaryIcon } from './icons';
+import { AuditIcon, CalendarIcon, ChatIcon, ClockIcon, DetailsIcon, FilesIcon, MailIcon, RepliesIcon, ResponsesIcon, SummaryIcon, UsersIcon } from './icons';
 
 interface Props {
     active: CaseSection;
@@ -26,6 +26,7 @@ export function useSectionItems(can: CaseDetailPermissions): { main: NavItem[]; 
     const main: NavItem[] = [
         { id: 'case-summary', label: t('cm.cases.navigation.case_summary'), icon: <SummaryIcon />, show: true },
         { id: 'case-details', label: t('cm.cases.navigation.case_details'), icon: <DetailsIcon />, show: true },
+        { id: 'parties', label: t('cm.case_parties.panel.nav'), icon: <UsersIcon />, show: true },
         { id: 'letters', label: t('cm.cases.navigation.letters'), icon: <MailIcon />, show: true },
         { id: 'timeline', label: text('timeline_title'), icon: <ClockIcon />, show: true },
         { id: 'audits', label: t('cm.cases.navigation.case_audits'), icon: <AuditIcon />, show: true },

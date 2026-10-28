@@ -6,6 +6,7 @@ use App\Models\ApplicantResponseReply;
 use App\Models\Respondent;
 use App\Models\RespondentResponse;
 use App\Support\CaseScope;
+use App\Services\CaseParties;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -82,9 +83,10 @@ class SecureFileController extends Controller
         $applicant = auth('applicant')->user();
         abort_unless($applicant, 403);
 
+        // Any party on the applicant's side of the case (App\Services\CaseParties).
         $ownsCase = DB::table('court_cases')
             ->where('case_number', $response->case_number)
-            ->where('applicant_id', $applicant->id)
+            ->whereIn('id', CaseParties::caseIdsFor((int) $applicant->id))
             ->exists();
 
         if ($ownsCase) {
@@ -119,12 +121,12 @@ class SecureFileController extends Controller
 
         abort_unless($matchesTarget, 404);
 
+        // A reply on a case the account is a party to: the parties see each other's replies.
         $applicantOwnsReply = DB::table('applicant_response_replies')
             ->where('id', $reply->id)
             ->where('case_id', $caseId)
             ->where('respondent_response_id', $responseId)
-            ->where('applicant_id', $applicant->id)
-            ->exists();
+            ->exists() && CaseParties::canFollow((int) $applicant->id, $caseId);
 
         if ($applicantOwnsReply) {
             return $this->downloadFile($reply->pdf_path, basename((string) $reply->pdf_path), null, $inline);
@@ -238,9 +240,7 @@ class SecureFileController extends Controller
             return false;
         }
 
-        $owner = DB::table('court_cases')->where('id', $caseId)->value('applicant_id');
-
-        return $owner && (int) $owner === (int) $aid;
+        return CaseParties::canFollow((int) $aid, $caseId);
     }
 
     private function respondentHasViewedCase(int $caseId): bool
