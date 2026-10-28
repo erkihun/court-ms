@@ -1189,9 +1189,17 @@ class ApplicantCaseController extends Controller
         }
         $to = $assigneeEmail ?: config('mail.from.address');
 
+        // The message is posted: a mail server that refuses must not undo the audit and notices below.
         if ($to) {
-            $preview = mb_strimwidth($data['body'], 0, 180, '...');
-            Mail::to($to)->send(new CaseMessageMail($caseRow, __('cases.summary.applicant'), $preview));
+            try {
+                $preview = mb_strimwidth($data['body'], 0, 180, '...');
+                Mail::to($to)->send(new CaseMessageMail($caseRow, __('cases.summary.applicant'), $preview));
+            } catch (\Throwable $e) {
+                Log::error('Failed sending case message notification', [
+                    'case_id' => $id,
+                    'error'   => $e->getMessage(),
+                ]);
+            }
         }
 
         $this->logCaseAudit($id, 'message_posted', [
