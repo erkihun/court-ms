@@ -24,7 +24,8 @@ export interface LetterRow {
 export interface LettersIndexProps {
     letters: LaravelPageMeta & { data: LetterRow[] };
     stats: { total: number; approved: number; rejected: number; categories: number; top_category: string | null; top_category_count: number };
-    filters: { status: '' | 'pending' | 'approved' | 'rejected' };
+    /** `q` searches reference, subject, case number and party names. */
+    filters: { status: '' | 'pending' | 'approved' | 'rejected'; q: string };
     can: { create: boolean; update: boolean; delete: boolean; approve: boolean };
 }
 

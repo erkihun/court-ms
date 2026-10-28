@@ -229,12 +229,12 @@ test('applicant can view and revoke another session', function () {
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('Court/Applicant/Sessions')
-            ->where('sessions', fn ($sessions) => collect($sessions)->contains(fn ($session) => $session['id'] === 'applicant-other-session'
+            ->where('sessions', fn ($sessions) => collect($sessions)->contains(fn ($session) => $session['id'] === \App\Support\SessionRows::publicKey('applicant-other-session')
                 && $session['device_name'] === 'Windows'
                 && $session['browser_name'] === 'Chrome 150')));
 
     $this->actingAs($applicant, 'applicant')
-        ->delete(route('applicant.profile.sessions.destroy', 'applicant-other-session'))
+        ->delete(route('applicant.profile.sessions.destroy', \App\Support\SessionRows::publicKey('applicant-other-session')))
         ->assertRedirect();
 
     $this->assertDatabaseMissing('sessions', ['id' => 'applicant-other-session']);

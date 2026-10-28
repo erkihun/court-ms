@@ -13,16 +13,17 @@ import { useStatusLabels } from './Partials/status';
  * Find a case by its number and access code. A match opens the case to this respondent (and lists it under
  * My Cases); a wrong code and an unknown number get different messages, as on the Blade page.
  */
-export default function RespondentCaseSearch({ caseNumber, caseCode, case: found, codeError }: RespondentCaseSearchProps) {
+export default function RespondentCaseSearch({ caseNumber, case: found, codeError }: RespondentCaseSearchProps) {
     const { t } = useRespondentText();
     const { caseStatus } = useStatusLabels();
-    const [values, setValues] = useState({ case_number: caseNumber, case_code: caseCode });
+    // The access code is never sent back to the page or put in a URL: the form posts and is redirected.
+    const [values, setValues] = useState({ case_number: caseNumber, case_code: '' });
     const [searching, setSearching] = useState(false);
     const title = t('cm.respondent.find_case_title');
 
     const submit = (event: FormEvent) => {
         event.preventDefault();
-        router.get(route('respondent.case.search'), values, {
+        router.post(route('respondent.case.search.submit'), values, {
             preserveScroll: true,
             onStart: () => setSearching(true),
             onFinish: () => setSearching(false),

@@ -72,6 +72,8 @@ export interface RoleRow {
     description: string | null;
     permissions: string[];
     users_count: number;
+    /** Why Delete is disabled: the admin role, or a role still held by staff (the server refuses both). */
+    delete_blocked: 'admin' | 'assigned' | null;
 }
 
 export interface RolesIndexProps {

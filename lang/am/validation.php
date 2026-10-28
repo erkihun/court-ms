@@ -6,6 +6,7 @@ return [
     'email' => 'እባክዎ ትክክለኛ የኢሜይል አድራሻ ያስገቡ።',
     'unique' => 'ይህ :attribute ቀድሞውኑ ተመዝግቧል።',
     'confirmed' => ':attribute ማረጋገጫው አይዛመድም።',
+    'current_password' => 'የይለፍ ቃሉ ትክክል አይደለም።',
     'string' => ':attribute ጽሑፍ መሆን አለበት።',
     'boolean' => ':attribute አዎ ወይም አይ መሆን አለበት።',
     'in' => 'የተመረጠው :attribute ትክክለኛ አይደለም።',

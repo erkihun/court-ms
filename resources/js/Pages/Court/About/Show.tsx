@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import PageHeader from '@/Components/PageHeader';
+import RichTextViewer from '@/Components/forms/RichTextViewer';
 import { Card, badgeClassName, buttonClassName } from '@/Components/ui';
 import { useLocale } from '@/hooks/useLocale';
 
@@ -29,7 +30,7 @@ export default function AboutShow({ page }: Props) {
                         <span className={badgeClassName(page.is_published ? 'success' : 'neutral')}>{page.is_published ? t('cm.about.status_published') : t('cm.about.status_draft')}</span>
                     </p>
                 </div>
-                <div className="whitespace-pre-line text-sm leading-relaxed text-(--app-foreground)">{page.body}</div>
+                <RichTextViewer html={page.body} />
             </Card>
         </AuthenticatedLayout>
     );

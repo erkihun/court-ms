@@ -8,11 +8,18 @@ use App\Models\CourtCase;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Inertia\Response;
 use Mews\Purifier\Facades\Purifier;
 
+/**
+ * Routes are gated by perm:bench-notes.manage; each action additionally needs
+ * its own bench-notes.{view,create,update,delete} permission, which the pages
+ * only enforced by hiding buttons. Only the author or an administrator may
+ * edit or delete a note.
+ */
 class BenchNoteController extends Controller
 {
     /**
@@ -20,6 +27,8 @@ class BenchNoteController extends Controller
      */
     public function index(Request $request): Response
     {
+        $this->authorizeAction('view');
+
         $caseId = $request->integer('case_id') ?: null;
 
         $benchNotes = BenchNote::query()
@@ -49,6 +58,8 @@ class BenchNoteController extends Controller
      */
     public function create(Request $request): Response
     {
+        $this->authorizeAction('create');
+
         $caseId = $request->integer('case_id') ?: null;
 
         return Inertia::render('Court/BenchNotes/Form', $this->formProps(null, $caseId));
@@ -56,6 +67,8 @@ class BenchNoteController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorizeAction('create');
+
         $data = $request->validate([
             'case_id' => ['required', 'integer', 'exists:court_cases,id'],
             'title' => ['required', 'string', 'max:255'],
@@ -106,6 +119,8 @@ class BenchNoteController extends Controller
      */
     public function show(BenchNote $benchNote): Response
     {
+        $this->authorizeAction('view');
+
         $benchNote->load([
             'case:id,case_number,title',
             'user:id,name',
@@ -125,6 +140,9 @@ class BenchNoteController extends Controller
      */
     public function edit(BenchNote $benchNote): Response
     {
+        $this->authorizeAction('update');
+        $this->authorizeOwnership($benchNote);
+
         $benchNote->load([
             'case:id,case_number,title',
             'user:id,name',
@@ -138,6 +156,9 @@ class BenchNoteController extends Controller
 
     public function update(Request $request, BenchNote $benchNote)
     {
+        $this->authorizeAction('update');
+        $this->authorizeOwnership($benchNote);
+
         $data = $request->validate([
             'case_id' => ['required', 'integer', 'exists:court_cases,id'],
             'title' => ['required', 'string', 'max:255'],
@@ -188,6 +209,9 @@ class BenchNoteController extends Controller
 
     public function destroy(BenchNote $benchNote)
     {
+        $this->authorizeAction('delete');
+        $this->authorizeOwnership($benchNote);
+
         $caseId = $benchNote->case_id;
         $benchNote->delete();
 
@@ -223,6 +247,8 @@ class BenchNoteController extends Controller
             'note_date' => $noteDate ? $noteDate->toDateString() : null,
             'note' => $note->note ? Purifier::clean((string) $note->note, 'default') : '',
             'author_name' => $note->user?->name,
+            // The author or an administrator; the edit and delete buttons follow it.
+            'mine' => $this->mayModify($note),
             'created_at' => $note->created_at?->toIso8601String(),
             'updated_at' => $note->updated_at && $note->updated_at->ne($note->created_at) ? $note->updated_at->toIso8601String() : null,
             'judges' => [$judge($note->judgeOne), $judge($note->judgeTwo), $judge($note->judgeThree)],
@@ -252,6 +278,24 @@ class BenchNoteController extends Controller
             'currentUser' => $user ? ['id' => (int) $user->id, 'name' => (string) $user->name] : null,
             'prefill' => ['case_id' => $prefillCaseId ? (string) $prefillCaseId : ''],
         ];
+    }
+
+    private function authorizeAction(string $action): void
+    {
+        abort_unless(userHasPermission('bench-notes.'.$action), 403);
+    }
+
+    /** A judge's notes are their own: only the author or an administrator may change or delete one. */
+    private function authorizeOwnership(BenchNote $note): void
+    {
+        abort_unless($this->mayModify($note), 403);
+    }
+
+    private function mayModify(BenchNote $note): bool
+    {
+        $user = Auth::user();
+
+        return $user !== null && ((int) $note->user_id === (int) $user->id || $user->hasRole('admin'));
     }
 
     private function permissions(): array

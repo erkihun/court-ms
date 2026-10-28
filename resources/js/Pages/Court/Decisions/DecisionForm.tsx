@@ -4,7 +4,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import PageHeader from '@/Components/PageHeader';
 import RichTextEditor from '@/Components/forms/RichTextEditor';
 import LocalizedDatePicker from '@/Components/Calendar/LocalizedDatePicker';
-import { Button, Card, FormField, Input, Select, buttonClassName } from '@/Components/ui';
+import { Button, Card, FieldError, FormField, Input, Select, buttonClassName } from '@/Components/ui';
 import { isRichTextEmpty } from '@/richtext/policy';
 import type { DecisionFormProps } from '@/court/types/decisions';
 import { useDecisionText } from './useDecisionText';
@@ -126,6 +126,7 @@ export default function DecisionForm({ decision, cases, judgeUsers, currentUser,
                             <h2 className="text-base font-semibold text-(--app-foreground)">{t('cm.decisions.judges.heading')}</h2>
                             <span className="text-xs uppercase tracking-wide text-(--app-muted-foreground)">{t('cm.decisions.judges.order_hint')}</span>
                         </div>
+                        <FieldError>{errors.judges}</FieldError>
                         <div className="grid gap-3 md:grid-cols-3">
                             {DISPLAY_ORDER.map((seatIndex, displayIndex) => {
                                 const label = fill(t('cm.decisions.judges.judge'), { number: String(displayIndex + 1) });

@@ -216,7 +216,10 @@ export default function DecisionShow({ decision, reviews, templates, statuses, c
                         </div>
                     </section>
 
-                    {pageErrors.approve && <Alert tone="danger">{pageErrors.approve}</Alert>}
+                    {(pageErrors.approve || pageErrors.status) && <Alert tone="danger">{pageErrors.approve ?? pageErrors.status}</Alert>}
+                    {!decision.panel_complete && !pageErrors.approve && !pageErrors.status && (can.changeStatus || can.approve) && (
+                        <Alert tone="warning">{t('cm.decisions.validation.publish_requires_panel')}</Alert>
+                    )}
 
                     <section className="rounded-control border border-(--app-border) bg-(--app-surface-muted) p-4">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">

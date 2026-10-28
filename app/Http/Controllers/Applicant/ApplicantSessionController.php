@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Applicant;
 
 use App\Http\Controllers\Controller;
+use App\Support\SessionRows;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -60,15 +61,16 @@ final class ApplicantSessionController extends Controller
     {
         $user = $request->user('applicant');
         abort_if($user === null, 401);
-        abort_if(hash_equals($request->session()->getId(), $session), 422, __('auth.session_current_cannot_revoke'));
+        // `{session}` is the row's keyed hash (SessionRows::publicKey), as the page names it.
+        abort_if(hash_equals(SessionRows::publicKey($request->session()->getId()), $session), 422, __('auth.session_current_cannot_revoke'));
 
         $record = DB::table('sessions')
-            ->where('id', $session)
             ->where('user_id', $user->getAuthIdentifier())
-            ->first(['id', 'payload']);
+            ->get(['id', 'payload'])
+            ->first(fn (object $row): bool => $this->belongsToProfileSession($row) && hash_equals(SessionRows::publicKey((string) $row->id), $session));
 
-        if ($record !== null && $this->belongsToProfileSession($record)) {
-            DB::table('sessions')->where('id', $session)->delete();
+        if ($record !== null) {
+            DB::table('sessions')->where('id', $record->id)->delete();
         }
 
         return back()->with('status', __('auth.session_revoked'));
@@ -99,7 +101,8 @@ final class ApplicantSessionController extends Controller
         $userAgent = (string) $session->user_agent;
 
         return (object) [
-            'id' => $session->id,
+            // Session ids never reach the browser; a row is addressed by its keyed hash.
+            'id' => SessionRows::publicKey((string) $session->id),
             'ip_address' => $session->ip_address,
             'user_agent' => $userAgent,
             'device_name' => ($hints ? $this->deviceFromHints($hints) : null) ?? $this->deviceName($userAgent),
@@ -117,7 +120,7 @@ final class ApplicantSessionController extends Controller
         $hints = is_array($hints) ? $hints : null;
 
         return (object) [
-            'id' => $request->session()->getId(),
+            'id' => SessionRows::publicKey($request->session()->getId()),
             'ip_address' => $request->ip(),
             'user_agent' => $userAgent,
             'device_name' => ($hints ? $this->deviceFromHints($hints) : null) ?? $this->deviceName($userAgent),

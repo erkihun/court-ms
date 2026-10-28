@@ -51,10 +51,8 @@ class DecisionController extends Controller
         $canDelete = $user?->hasPermission('decision.delete') ?? false;
 
         return Inertia::render('Court/Decisions/Index', [
-            'decisions' => $decisions->through(function (Decision $decision) use ($user, $canEdit, $canDelete): array {
-                $middleJudgeId = $decision->panel_judges[1]['admin_user_id'] ?? null;
-                $isMiddleJudge = $middleJudgeId && $user?->id === $middleJudgeId;
-                $open = $isMiddleJudge && $decision->status !== 'published';
+            'decisions' => $decisions->through(function (Decision $decision) use ($canEdit, $canDelete): array {
+                $open = $this->isPresidingJudgeOrUnassigned($decision) && $decision->status !== 'published';
 
                 return [
                     'id' => (int) $decision->id,
@@ -77,6 +75,18 @@ class DecisionController extends Controller
             'filters' => ['q' => $search],
             'canCreate' => $user?->hasPermission('decision.create') ?? false,
         ]);
+    }
+
+    /**
+     * Only the presiding (middle) judge may change a decision. Drafts saved
+     * before a panel was mandatory have none, and any authorised editor may
+     * open them to assign one (see ensureMiddleJudge()).
+     */
+    private function isPresidingJudgeOrUnassigned(Decision $decision): bool
+    {
+        $presiding = $decision->presidingJudgeId();
+
+        return $presiding === null || $presiding === (int) auth()->id();
     }
 
     /**
@@ -156,8 +166,7 @@ class DecisionController extends Controller
         abort_unless($this->canAccessDecision($decision), 403);
 
         $user = auth()->user();
-        $middleJudgeId = $decision->panel_judges[1]['admin_user_id'] ?? null;
-        $isMiddleJudge = $middleJudgeId && $user?->id === $middleJudgeId;
+        $isMiddleJudge = $this->isPresidingJudgeOrUnassigned($decision);
         $isPublished = $decision->isPublished();
         $canUpdate = $user?->hasPermission('decision.update') ?? false;
 
@@ -183,8 +192,10 @@ class DecisionController extends Controller
                 'approved' => $decision->isApproved(),
                 'approved_at' => $decision->approved_at?->toIso8601String(),
                 'approver_name' => $decision->approver?->name,
-                'decision_content' => $decision->decision_content,
+                // Purified on save; cleaned again on output for rows saved before that.
+                'decision_content' => clean((string) $decision->decision_content, 'cases'),
                 'panel' => $panel,
+                'panel_complete' => $decision->hasCompletePanel(),
             ],
             'reviews' => $decision->reviews->map(fn (DecisionReview $review): array => [
                 'id' => (int) $review->id,
@@ -216,8 +227,10 @@ class DecisionController extends Controller
     {
         $user = auth()->user();
 
-        $judges = collect($decision?->panel_judges ?? [])->pad(3, [])->take(3)->values()
-            ->map(fn ($judge, int $index) => ($judge['admin_user_id'] ?? null) ? (int) $judge['admin_user_id'] : null)
+        // Seats by storage index (1 = presiding judge), as normalizePanelJudges() stores them.
+        $panel = is_array($decision?->panel_judges) ? $decision->panel_judges : [];
+        $judges = collect(range(0, 2))
+            ->map(fn (int $seat): ?int => ! empty($panel[$seat]['admin_user_id']) ? (int) $panel[$seat]['admin_user_id'] : null)
             ->all();
         // The session judge holds the middle seat on a new decision.
         $judges[1] ??= $user?->id;
@@ -290,6 +303,10 @@ class DecisionController extends Controller
         // A decision can only be approved after it has been published.
         if (! $decision->isPublished()) {
             return back()->withErrors(['approve' => __('decisions.approve_requires_published')]);
+        }
+
+        if (! $decision->hasCompletePanel()) {
+            return back()->withErrors(['approve' => __('decisions.validation.publish_requires_panel')]);
         }
 
         if ($decision->isApproved()) {
@@ -409,7 +426,9 @@ class DecisionController extends Controller
     {
         $this->ensureMiddleJudge($decision);
         $this->ensureNotPublished($decision);
-        $payload = $this->preparePayload($request->validate($this->rules()));
+        $payload = $this->preparePayload(
+            $request->validate($this->rules(), StoreDecisionRequest::panelMessages())
+        );
         $case = CourtCase::with('applicant')->findOrFail($payload['case_id']);
         $decision->update($this->hydrateCaseData($payload, $case));
 
@@ -433,6 +452,10 @@ class DecisionController extends Controller
         $data = $request->validate([
             'status' => ['required', 'string', 'max:32', Rule::in(self::STATUS_OPTIONS)],
         ]);
+
+        if ($data['status'] === 'published' && ! $decision->hasCompletePanel()) {
+            return back()->withErrors(['status' => __('decisions.validation.publish_requires_panel')]);
+        }
 
         $decision->update(['status' => $data['status']]);
 
@@ -565,8 +588,7 @@ class DecisionController extends Controller
             'reviewing_admin_user_names' => ['nullable', 'array'],
             'reviewing_admin_user_names.*' => ['string', 'max:255'],
             'judges_comments' => ['nullable', 'string', 'max:5000'],
-            'judges' => ['nullable', 'array', 'size:3'],
-            'judges.*.admin_user_id' => ['nullable', 'integer', 'exists:users,id'],
+            ...StoreDecisionRequest::panelRules(),
         ];
     }
 
@@ -638,7 +660,10 @@ class DecisionController extends Controller
 
     private function normalizePanelJudges(array $panel): array
     {
-        $ordered = collect($panel)->pad(3, [])->take(3)->values();
+        // Seats are addressed by storage index (1 = presiding judge). Read them
+        // by key rather than array order: validated() may rebuild the array in
+        // rule order, and re-indexing that would silently reassign the seats.
+        $ordered = collect(range(0, 2))->map(fn (int $seat): array => (array) ($panel[$seat] ?? []));
         $ids = $ordered->pluck('admin_user_id')->filter()->unique();
         $namesById = User::whereIn('id', $ids)->pluck('name', 'id');
 
@@ -655,8 +680,20 @@ class DecisionController extends Controller
 
     private function ensureMiddleJudge(Decision $decision): void
     {
-        $middleJudgeId = $decision->panel_judges[1]['admin_user_id'] ?? null;
-        if (!$middleJudgeId || $middleJudgeId !== auth()->id()) {
+        $middleJudgeId = $decision->presidingJudgeId();
+
+        // Drafts saved before a panel was mandatory have no presiding judge,
+        // which would leave them permanently uneditable. Let a user who can
+        // access the decision open it; saving requires a complete panel with
+        // that user in the presiding seat (see StoreDecisionRequest::panelRules).
+        if ($middleJudgeId === null) {
+            $decision->loadMissing('courtCase');
+            abort_unless($this->canAccessDecision($decision), 403);
+
+            return;
+        }
+
+        if ($middleJudgeId !== (int) auth()->id()) {
             abort(403, 'Only the middle judge can modify this decision.');
         }
     }

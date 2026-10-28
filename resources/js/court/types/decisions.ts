@@ -98,6 +98,8 @@ export interface DecisionDetail {
     /** Sanitized HTML (or legacy plain text). */
     decision_content: string | null;
     panel: DecisionPanelSeat[];
+    /** Three distinct judges hold the seats; publishing and approving need it. */
+    panel_complete: boolean;
 }
 
 export interface DecisionReviewRow {

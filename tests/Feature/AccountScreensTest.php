@@ -78,7 +78,10 @@ test('opening the second-factor setup starts the enrolment and confirming it sho
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('Auth/MfaSetup')
             // (Inertia hands a closure a Collection for an array prop.)
-            ->where('flash.mfa_recovery_codes_once', fn ($codes) => count($codes) === 8));
+            ->where('flash.mfa_recovery_codes_once', fn ($codes) => count($codes) === 8)
+            // A confirmed account is never sent its secret again (#3, 1fc9fc5).
+            ->where('secretKey', '')
+            ->where('qrCodeUri', ''));
 
     // Confirmed and no codes to show: the Security tab takes over.
     $this->actingAs($user)->get(route('mfa.setup.show'))->assertRedirect(route('profile.edit').'#security');
@@ -149,9 +152,9 @@ test('another device can be signed out from the Devices tab', function (): void 
 
     $this->actingAs($user)->get(route('profile.edit'))
         ->assertInertia(fn (AssertableInertia $page) => $page
-            ->where('devices.sessions', fn ($sessions) => collect($sessions)->contains(fn ($row) => $row['id'] === 'other-device' && $row['device'] === 'phone' && $row['browser'] === 'Safari 17' && $row['os'] === 'iPhone')));
+            ->where('devices.sessions', fn ($sessions) => collect($sessions)->contains(fn ($row) => $row['id'] === \App\Support\SessionRows::publicKey('other-device') && $row['device'] === 'phone' && $row['browser'] === 'Safari 17' && $row['os'] === 'iPhone')));
 
-    $this->actingAs($user)->delete(route('profile.sessions.destroy', 'other-device'))->assertRedirect();
+    $this->actingAs($user)->delete(route('profile.sessions.destroy', \App\Support\SessionRows::publicKey('other-device')))->assertRedirect();
     expect(DB::table('sessions')->where('id', 'other-device')->exists())->toBeFalse();
 
     $this->actingAs($user)->get(route('profile.sessions.index'))->assertRedirect(route('profile.edit').'#devices');

@@ -9,6 +9,7 @@ use App\Models\HomeService;
 use App\Models\HomeSetting;
 use App\Models\HomeSlide;
 use App\Models\HomeTimelineStep;
+use App\Support\Ui\EditorLink;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -184,41 +185,37 @@ class LandingPageController extends Controller
 
     // ── Slides ────────────────────────────────────────────────────────────────
 
-    public function storeSlide(Request $request)
+    /** The slide form: its button links are http(s), # anchors or site paths only (EditorLink). */
+    private function slideRules(): array
     {
-        $data = $request->validate([
+        return [
             'badge'           => 'nullable|string|max:120',
             'title'           => 'required|string|max:255',
             'description'     => 'nullable|string|max:1000',
             'primary_label'   => 'required|string|max:120',
-            'primary_href'    => 'required|string|max:500',
+            'primary_href'    => ['required', 'string', 'max:500', EditorLink::rule()],
             'secondary_label' => 'nullable|string|max:120',
-            'secondary_href'  => 'nullable|string|max:500',
+            'secondary_href'  => ['nullable', 'string', 'max:500', EditorLink::rule()],
             'bg_style'        => 'required|in:blue,orange,emerald',
             'bg_image'        => 'nullable|image|max:3072',
-        ]);
+        ];
+    }
+
+    public function storeSlide(Request $request)
+    {
+        $data = $request->validate($this->slideRules(), [], $this->attributeNames());
 
         $data['bg_image']    = $this->storeFile($request, 'bg_image', 'slides');
         $data['sort_order']  = HomeSlide::max('sort_order') + 1;
         HomeSlide::create($data);
         $this->flushCache();
 
-        return back()->with('success', 'Slide added.');
+        return back()->with('success', __('admin_landing.flash.slide_added'));
     }
 
     public function updateSlide(Request $request, HomeSlide $slide)
     {
-        $data = $request->validate([
-            'badge'           => 'nullable|string|max:120',
-            'title'           => 'required|string|max:255',
-            'description'     => 'nullable|string|max:1000',
-            'primary_label'   => 'required|string|max:120',
-            'primary_href'    => 'required|string|max:500',
-            'secondary_label' => 'nullable|string|max:120',
-            'secondary_href'  => 'nullable|string|max:500',
-            'bg_style'        => 'required|in:blue,orange,emerald',
-            'bg_image'        => 'nullable|image|max:3072',
-        ]);
+        $data = $request->validate($this->slideRules(), [], $this->attributeNames());
 
         if ($request->hasFile('bg_image')) {
             $this->deleteFile($slide->bg_image);
@@ -235,7 +232,7 @@ class LandingPageController extends Controller
         $slide->update($data);
         $this->flushCache();
 
-        return back()->with('success', 'Slide updated.');
+        return back()->with('success', __('admin_landing.flash.slide_updated'));
     }
 
     public function destroySlide(HomeSlide $slide)
@@ -244,7 +241,7 @@ class LandingPageController extends Controller
         $slide->delete();
         $this->flushCache();
 
-        return back()->with('success', 'Slide deleted.');
+        return back()->with('success', __('admin_landing.flash.slide_deleted'));
     }
 
     public function toggleSlide(HomeSlide $slide)
@@ -274,13 +271,13 @@ class LandingPageController extends Controller
             'meta'        => 'nullable|string|max:120',
             'duration'    => 'nullable|string|max:60',
             'color'       => 'required|in:blue,orange,emerald,violet,amber',
-        ]);
+        ], [], $this->attributeNames());
 
         $data['sort_order'] = HomeTimelineStep::max('sort_order') + 1;
         HomeTimelineStep::create($data);
         $this->flushCache();
 
-        return back()->with('success', 'Step added.');
+        return back()->with('success', __('admin_landing.flash.step_added'));
     }
 
     public function updateStep(Request $request, HomeTimelineStep $step)
@@ -291,19 +288,19 @@ class LandingPageController extends Controller
             'meta'        => 'nullable|string|max:120',
             'duration'    => 'nullable|string|max:60',
             'color'       => 'required|in:blue,orange,emerald,violet,amber',
-        ]);
+        ], [], $this->attributeNames());
 
         $step->update($data);
         $this->flushCache();
 
-        return back()->with('success', 'Step updated.');
+        return back()->with('success', __('admin_landing.flash.step_updated'));
     }
 
     public function destroyStep(HomeTimelineStep $step)
     {
         $step->delete();
         $this->flushCache();
-        return back()->with('success', 'Step deleted.');
+        return back()->with('success', __('admin_landing.flash.step_deleted'));
     }
 
     public function toggleStep(HomeTimelineStep $step)
@@ -320,11 +317,11 @@ class LandingPageController extends Controller
         $data = $request->validate([
             'question' => 'required|string|max:500',
             'answer'   => 'required|string|max:2000',
-        ]);
+        ], [], $this->attributeNames());
         $data['sort_order'] = HomeFaq::max('sort_order') + 1;
         HomeFaq::create($data);
         $this->flushCache();
-        return back()->with('success', 'FAQ added.');
+        return back()->with('success', __('admin_landing.flash.faq_added'));
     }
 
     public function updateFaq(Request $request, HomeFaq $faq)
@@ -332,16 +329,16 @@ class LandingPageController extends Controller
         $faq->update($request->validate([
             'question' => 'required|string|max:500',
             'answer'   => 'required|string|max:2000',
-        ]));
+        ], [], $this->attributeNames()));
         $this->flushCache();
-        return back()->with('success', 'FAQ updated.');
+        return back()->with('success', __('admin_landing.flash.faq_updated'));
     }
 
     public function destroyFaq(HomeFaq $faq)
     {
         $faq->delete();
         $this->flushCache();
-        return back()->with('success', 'FAQ deleted.');
+        return back()->with('success', __('admin_landing.flash.faq_deleted'));
     }
 
     public function toggleFaq(HomeFaq $faq)
@@ -362,12 +359,12 @@ class LandingPageController extends Controller
             'features'    => 'nullable|string',
             'icon_type'   => 'required|in:document,calendar,lock,chart,database,chat',
             'accent'      => 'required|in:blue,orange,emerald,violet,amber,pink',
-        ]);
+        ], [], $this->attributeNames());
         $data['features']   = $this->parseLines($request->input('features', ''));
         $data['sort_order'] = HomeService::max('sort_order') + 1;
         HomeService::create($data);
         $this->flushCache();
-        return back()->with('success', 'Service card added.');
+        return back()->with('success', __('admin_landing.flash.service_added'));
     }
 
     public function updateService(Request $request, HomeService $service)
@@ -379,18 +376,18 @@ class LandingPageController extends Controller
             'features'    => 'nullable|string',
             'icon_type'   => 'required|in:document,calendar,lock,chart,database,chat',
             'accent'      => 'required|in:blue,orange,emerald,violet,amber,pink',
-        ]);
+        ], [], $this->attributeNames());
         $data['features'] = $this->parseLines($request->input('features', ''));
         $service->update($data);
         $this->flushCache();
-        return back()->with('success', 'Service card updated.');
+        return back()->with('success', __('admin_landing.flash.service_updated'));
     }
 
     public function destroyService(HomeService $service)
     {
         $service->delete();
         $this->flushCache();
-        return back()->with('success', 'Service deleted.');
+        return back()->with('success', __('admin_landing.flash.service_deleted'));
     }
 
     public function toggleService(HomeService $service)
@@ -402,18 +399,24 @@ class LandingPageController extends Controller
 
     // ── Resources ────────────────────────────────────────────────────────────
 
-    public function storeResource(Request $request)
+    /** The resource form: an external link is an http(s) address only (EditorLink). */
+    private function resourceRules(): array
     {
-        $data = $request->validate([
+        return [
             'title'        => 'required|string|max:255',
             'type'         => 'required|in:post,form,document,link',
             'description'  => 'nullable|string|max:2000',
-            'external_url' => 'nullable|url|max:500',
+            'external_url' => ['nullable', 'string', 'max:500', EditorLink::rule(allowRelative: false)],
             'is_featured'  => 'boolean',
             'published_at' => 'nullable|date',
             'file'         => 'nullable|file|max:20480|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip',
             'cover_image'  => 'nullable|image|max:2048',
-        ]);
+        ];
+    }
+
+    public function storeResource(Request $request)
+    {
+        $data = $request->validate($this->resourceRules(), [], $this->attributeNames());
 
         $data['file_path']    = $this->storeFile($request, 'file', 'resources');
         $data['cover_image']  = $this->storeFile($request, 'cover_image', 'covers');
@@ -422,21 +425,12 @@ class LandingPageController extends Controller
         HomeResource::create($data);
         $this->flushCache();
 
-        return back()->with('success', 'Resource added.');
+        return back()->with('success', __('admin_landing.flash.resource_added'));
     }
 
     public function updateResource(Request $request, HomeResource $resource)
     {
-        $data = $request->validate([
-            'title'        => 'required|string|max:255',
-            'type'         => 'required|in:post,form,document,link',
-            'description'  => 'nullable|string|max:2000',
-            'external_url' => 'nullable|url|max:500',
-            'is_featured'  => 'boolean',
-            'published_at' => 'nullable|date',
-            'file'         => 'nullable|file|max:20480|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip',
-            'cover_image'  => 'nullable|image|max:2048',
-        ]);
+        $data = $request->validate($this->resourceRules(), [], $this->attributeNames());
 
         if ($request->hasFile('file')) {
             $this->deleteFile($resource->file_path);
@@ -461,7 +455,7 @@ class LandingPageController extends Controller
         $resource->update($data);
         $this->flushCache();
 
-        return back()->with('success', 'Resource updated.');
+        return back()->with('success', __('admin_landing.flash.resource_updated'));
     }
 
     public function destroyResource(HomeResource $resource)
@@ -470,7 +464,7 @@ class LandingPageController extends Controller
         $this->deleteFile($resource->cover_image);
         $resource->delete();
         $this->flushCache();
-        return back()->with('success', 'Resource deleted.');
+        return back()->with('success', __('admin_landing.flash.resource_deleted'));
     }
 
     public function toggleResource(HomeResource $resource)
@@ -488,7 +482,7 @@ class LandingPageController extends Controller
             'content_en' => 'required|string|max:50000',
             'content_am' => 'required|string|max:50000',
             'is_active' => 'boolean',
-        ]);
+        ], [], $this->attributeNames());
         $data['content_en'] = $this->sanitizeManualHtml($data['content_en']);
         $data['content_am'] = $this->sanitizeManualHtml($data['content_am']);
         $data['is_active'] = $request->boolean('is_active');
@@ -502,23 +496,26 @@ class LandingPageController extends Controller
 
     public function updateFooter(Request $request)
     {
+        // Social links are http(s) addresses only (EditorLink): Laravel's `url`
+        // rule alone lets through a scheme such as "javascript://…".
+        $social = ['nullable', 'string', 'max:300', EditorLink::rule(allowRelative: false)];
         $data = $request->validate([
             'description'         => 'nullable|string|max:500',
             'contact_phone'       => 'nullable|string|max:60',
             'contact_email'       => 'nullable|email|max:120',
             'contact_address'     => 'nullable|string|max:255',
-            'social_facebook'     => 'nullable|url|max:300',
-            'social_twitter'      => 'nullable|url|max:300',
-            'social_linkedin'     => 'nullable|url|max:300',
-            'social_youtube'      => 'nullable|url|max:300',
-            'social_telegram'     => 'nullable|url|max:300',
-            'social_instagram'    => 'nullable|url|max:300',
-        ]);
+            'social_facebook'     => $social,
+            'social_twitter'      => $social,
+            'social_linkedin'     => $social,
+            'social_youtube'      => $social,
+            'social_telegram'     => $social,
+            'social_instagram'    => $social,
+        ], [], $this->attributeNames());
 
         HomeSetting::setJson('footer.settings', $data);
         $this->flushCache();
 
-        return back()->with('success', 'Footer settings saved.');
+        return back()->with('success', __('admin_landing.flash.footer_saved'));
     }
 
     // ── Metrics content ──────────────────────────────────────────────────────
@@ -544,7 +541,7 @@ class LandingPageController extends Controller
         $this->flushCache();
 
         return back()
-            ->with('success', 'Metrics content saved.')
+            ->with('success', __('admin_landing.flash.metrics_saved'))
             ->with('landing_tab', 'metrics');
     }
 
@@ -552,7 +549,7 @@ class LandingPageController extends Controller
 
     public function updateSections(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'metrics.visible'          => 'boolean',
             'metrics.title'            => 'nullable|string|max:255',
             'metrics.subtitle'         => 'nullable|string|max:500',
@@ -573,18 +570,21 @@ class LandingPageController extends Controller
             'cta.title'                => 'nullable|string|max:255',
             'cta.description'          => 'nullable|string|max:500',
             'cta.primary_label'        => 'nullable|string|max:120',
-            'cta.primary_href'         => 'nullable|string|max:500',
+            'cta.primary_href'         => ['nullable', 'string', 'max:500', EditorLink::rule()],
             'cta.secondary_label'      => 'nullable|string|max:120',
-            'cta.secondary_href'       => 'nullable|string|max:500',
-        ]);
+            'cta.secondary_href'       => ['nullable', 'string', 'max:500', EditorLink::rule()],
+        ], [], $this->attributeNames());
 
-        foreach ($request->only(['metrics','process','services','cases','resources','faq','cta']) as $key => $value) {
+        // Only the validated keys are stored: the request's own section arrays
+        // could carry any other key into the settings rows.
+        foreach ($validated as $key => $value) {
+            $value = is_array($value) ? $value : [];
             $value['visible'] = (bool) ($value['visible'] ?? false);
             HomeSetting::setJson("section.{$key}", $value);
         }
 
         $this->flushCache();
-        return back()->with('success', 'Settings saved.');
+        return back()->with('success', __('admin_landing.flash.sections_saved'));
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
@@ -596,12 +596,53 @@ class LandingPageController extends Controller
         ));
     }
 
+    /**
+     * The manual is public HTML. strip_tags plus regexes let an entity-encoded
+     * `javascript:` link through, so it goes through HTMLPurifier's default
+     * profile, which keeps the headings, lists, tables and inline styles a
+     * manual needs. UserManualController purifies it again on output.
+     */
     private function sanitizeManualHtml(string $html): string
     {
-        $clean = strip_tags($html, '<p><br><h1><h2><h3><h4><h5><h6><strong><b><em><i><u><s><sub><sup><pre><code><ul><ol><li><blockquote><a><table><caption><colgroup><col><thead><tbody><tfoot><tr><th><td><hr><div><span><figure><figcaption>');
-        $clean = preg_replace('/\s+on[a-z]+\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)/iu', '', $clean) ?? '';
-        $clean = preg_replace('/(href|src)\s*=\s*(["\'])\s*javascript:[^"\']*\2/iu', '$1="#"', $clean) ?? '';
+        // HTMLPurifier writes the platform's line endings; store "\n" everywhere.
+        return trim((string) preg_replace('/\r\n?/', "\n", (string) clean($html, 'default')));
+    }
 
-        return trim($clean);
+    /**
+     * Field names for the validation messages, in the request's language.
+     *
+     * @return array<string, string>
+     */
+    private function attributeNames(): array
+    {
+        $common = [
+            'badge' => 'badge_text', 'title' => 'title', 'description' => 'description',
+            'primary_label' => 'primary_button_label', 'primary_href' => 'primary_button_url',
+            'secondary_label' => 'secondary_button_label', 'secondary_href' => 'secondary_button_url',
+            'bg_style' => 'background_style', 'bg_image' => 'background_image',
+            'meta' => 'meta_label', 'duration' => 'duration', 'color' => 'colour_accent',
+            'features' => 'features', 'icon_type' => 'icon', 'accent' => 'accent_colour',
+            'type' => 'type', 'published_at' => 'publish_date', 'external_url' => 'external_url',
+            'file' => 'file', 'cover_image' => 'cover_image', 'question' => 'question', 'answer' => 'answer',
+            'contact_phone' => 'phone', 'contact_email' => 'email', 'contact_address' => 'physical_address',
+            'cta.title' => 'banner_title', 'cta.description' => 'banner_description',
+            'cta.primary_label' => 'primary_button_label', 'cta.primary_href' => 'primary_button_url',
+            'cta.secondary_label' => 'secondary_button_label', 'cta.secondary_href' => 'secondary_button_url',
+        ];
+        $names = array_map(fn (string $key): string => (string) __("admin_landing.common.{$key}"), $common);
+
+        foreach (['metrics', 'process', 'services', 'resources', 'faq'] as $section) {
+            $names["{$section}.title"] = (string) __('admin_landing.sections.section_title');
+            $names["{$section}.subtitle"] = (string) __('admin_landing.sections.subtitle');
+        }
+        foreach (['title_en', 'title_am', 'content_en', 'content_am'] as $field) {
+            $names[$field] = (string) __("admin_landing.manual.{$field}");
+        }
+        // The networks are proper names, the same in both languages.
+        foreach (['facebook' => 'Facebook', 'twitter' => 'Twitter / X', 'linkedin' => 'LinkedIn', 'youtube' => 'YouTube', 'telegram' => 'Telegram', 'instagram' => 'Instagram'] as $network => $label) {
+            $names["social_{$network}"] = $label;
+        }
+
+        return $names;
     }
 }

@@ -76,6 +76,8 @@ return array (
     'delete' => 'Delete',
     'delete_title' => 'Delete role',
     'delete_confirm' => 'Are you sure you want to delete',
+    'cannot_delete_admin' => 'The administrator role cannot be deleted.',
+    'cannot_delete_assigned' => 'This role is assigned to :count user(s). Remove it from them first.',
     'cancel' => 'Cancel',
     'empty' => 'No roles found.',
     'more' => 'more',

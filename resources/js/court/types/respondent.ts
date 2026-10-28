@@ -31,7 +31,6 @@ export interface RespondentNotification {
 /** Respondent\CaseSearchController::index. */
 export interface RespondentCaseSearchProps {
     caseNumber: string;
-    caseCode: string;
     /** Set when the number and access code matched a case the person may answer. */
     case: { case_number: string; title: string | null; status: string | null; created_at: string | null; show_url: string } | null;
     /** The case exists but the access code did not match. */

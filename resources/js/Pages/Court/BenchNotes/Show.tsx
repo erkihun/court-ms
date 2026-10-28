@@ -16,7 +16,7 @@ export default function BenchNoteShow({ note, can }: BenchNoteShowProps) {
         <AuthenticatedLayout header={(
             <PageHeader title={t('cm.bench.page_header.show')} description={[note.case_number, note.title].filter(Boolean).join(' — ')} backHref={listHref} actions={(
                 <div className="flex flex-wrap items-center gap-2">
-                    {can.update && <Link href={route('bench-notes.edit', note.id)} className={buttonClassName({ variant: 'outline' })}>{t('cm.bench.buttons.edit')}</Link>}
+                    {can.update && note.mine && <Link href={route('bench-notes.edit', note.id)} className={buttonClassName({ variant: 'outline' })}>{t('cm.bench.buttons.edit')}</Link>}
                     <Link href={listHref} className={buttonClassName({ variant: 'outline' })}>{text('back')}</Link>
                 </div>
             )} />

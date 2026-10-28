@@ -197,6 +197,30 @@ const lang: Record<string, unknown> = {
             "show_in_nav": "የተጠቃሚ መመሪያን በመነሻ ገጽ ማውጫ አሳይ",
             "save": "የተጠቃሚ መመሪያን አስቀምጥ",
             "saved": "የተጠቃሚ መመሪያ ቅንብር ተቀምጧል።"
+        },
+        "validation": {
+            "safe_link": ":attribute በ http:// ወይም https:// የሚጀምር የድረ ገጽ አድራሻ፣ በ # የሚጀምር የገጽ ውስጥ ማመላከቻ ወይም በ / የሚጀምር የዚህ ድረ ገጽ መንገድ መሆን አለበት።",
+            "safe_web_link": ":attribute በ http:// ወይም https:// የሚጀምር የድረ ገጽ አድራሻ መሆን አለበት።"
+        },
+        "flash": {
+            "slide_added": "ማስታወቂያው ታክሏል።",
+            "slide_updated": "ማስታወቂያው ተሻሽሏል።",
+            "slide_deleted": "ማስታወቂያው ተሰርዟል።",
+            "step_added": "የሂደት ደረጃው ታክሏል።",
+            "step_updated": "የሂደት ደረጃው ተሻሽሏል።",
+            "step_deleted": "የሂደት ደረጃው ተሰርዟል።",
+            "faq_added": "ጥያቄና መልሱ ታክሏል።",
+            "faq_updated": "ጥያቄና መልሱ ተሻሽሏል።",
+            "faq_deleted": "ጥያቄና መልሱ ተሰርዟል።",
+            "service_added": "የአገልግሎት ካርዱ ታክሏል።",
+            "service_updated": "የአገልግሎት ካርዱ ተሻሽሏል።",
+            "service_deleted": "የአገልግሎት ካርዱ ተሰርዟል።",
+            "resource_added": "መረጃው ታክሏል።",
+            "resource_updated": "መረጃው ተሻሽሏል።",
+            "resource_deleted": "መረጃው ተሰርዟል።",
+            "footer_saved": "የገጽ ግርጌ ቅንብሮች ተቀምጠዋል።",
+            "metrics_saved": "የአጠቃላይ መረጃ ይዘት ተቀምጧል።",
+            "sections_saved": "የገጽ ክፍሎች ቅንብሮች ተቀምጠዋል።"
         }
     },
     "announcements": {
@@ -1309,6 +1333,13 @@ const lang: Record<string, unknown> = {
             "empty": "ምንም የመዝገብ አይነት አልተገኘም።",
             "adjust_search_hint": "የፍለጋዎን መስፈርት በማስተካከል ይሞክሩ።"
         },
+        "messages_flash": {
+            "evidence_removed": "ማስረጃው ተወግዷል።",
+            "witness_removed": "ምስክሩ ተወግዷል።"
+        },
+        "errors": {
+            "no_case_access": "ይህን መዝገብ የማየት ወይም የመቀየር ፈቃድ የለዎትም።"
+        },
         "not_available": "የለም"
     },
     "chat": {
@@ -1342,6 +1373,7 @@ const lang: Record<string, unknown> = {
         "Dashboard": "ዳሽቦርድ",
         "my_dashboard": "ዳሽቦርድ",
         "total_cases": "ጠቅላላ መዝገቦች",
+        "no_case_access": "የመዝገብ ስታቲስቲክስ መዝገቦችን ማየት ለሚችሉ ሠራተኞች ብቻ ይታያል።",
         "pending": "በመጠባበቅ ላይ",
         "resolved": "ምላሽ ያገኙ",
         "active": "ንቁ",
@@ -1624,7 +1656,11 @@ const lang: Record<string, unknown> = {
         "download": "ውሳኔ አውርድ",
         "download_unavailable": "የውሳኔው PDF ከጸደቀና ከታተመ በኋላ ይገኛል።",
         "validation": {
-            "closed_case_required": "ውሳኔ መፍጠር የሚቻለው ለተዘጋ ጉዳይ ብቻ ነው።"
+            "closed_case_required": "ውሳኔ መፍጠር የሚቻለው ለተዘጋ ጉዳይ ብቻ ነው።",
+            "panel_required": "ሦስቱንም ዳኞች ለችሎቱ ይመድቡ።",
+            "panel_distinct": "በችሎቱ ላይ ያለ እያንዳንዱ ዳኛ የተለየ ሰው መሆን አለበት።",
+            "presiding_judge_must_be_you": "የችሎቱን ሰብሳቢ ዳኛ ቦታ እርስዎ መያዝ አለብዎት።",
+            "publish_requires_panel": "ውሳኔ ሊታተም ወይም ሊጸድቅ የሚችለው ሦስቱም ዳኞች ከተመደቡ በኋላ ብቻ ነው።"
         }
     },
     "euisis": {
@@ -3029,7 +3065,8 @@ const lang: Record<string, unknown> = {
         "case_not_authorized": "ለዚህ መዝገብ መልስ ለመስጠት ስልጣን የለዎትም።",
         "cannot_respond_own_case": "ለራስዎ መዝገብ መልስ ማስገባት አይችሉም።",
         "review_status_label": "የግምገማ ሁኔታ",
-        "start_first_response": "የመጀመሪያ የመልስ ሰነድዎን በመፍጠር ይጀምሩ።"
+        "start_first_response": "የመጀመሪያ የመልስ ሰነድዎን በመፍጠር ይጀምሩ።",
+        "response_locked": "ተቀባይነት ያገኘ መልስ የመዝገቡ አካል በመሆኑ ሊቀየር አይችልም።"
     },
     "roles": {
         "create": {
@@ -3102,6 +3139,8 @@ const lang: Record<string, unknown> = {
             "delete": "አጥፋ",
             "delete_title": "ኃላፊነትን አጥፋ",
             "delete_confirm": "ለማጥፋት እርግጠኛ ነዎት",
+            "cannot_delete_admin": "የአስተዳዳሪ ኃላፊነት ሊጠፋ አይችልም።",
+            "cannot_delete_assigned": "ይህ ኃላፊነት ለ:count ተጠቃሚ(ዎች) ተሰጥቷል። መጀመሪያ ከእነሱ ያስወግዱት።",
             "cancel": "ሰርዝ",
             "empty": "ምንም ኃላፊነቶች አልተገኙም።",
             "more": "ተጨማሪ",
@@ -3426,6 +3465,7 @@ const lang: Record<string, unknown> = {
             "unknown_email": ""
         },
         "errors": {
+            "parent_cycle": "ቡድን ለራሱ ወይም ከሥሩ ላሉ ንዑስ ቡድኖች ተጠሪ ሊሆን አይችልም።",
             "fix": "እባክዎን የሚከተሉትን ያርሙ:"
         }
     },
@@ -3497,6 +3537,7 @@ const lang: Record<string, unknown> = {
         "position": "የሥራ መደብ",
         "phone": "ስልክ",
         "address": "አድራሻ",
+        "reset_link_notice": "የይለፍ ቃል ለማዘጋጀት የሚያስችል ደህንነቱ የተጠበቀ ሊንክ ለተጠቃሚው በኢሜይል ይላካል፤ ተጠቃሚው ከመግባቱ በፊት የራሱን የይለፍ ቃል መምረጥ አለበት።",
         "default_password_notice": "ተጠቃሚው በነባሪ የይለፍ ቃል :password ይፈጠራል፤ በመጀመሪያ መግቢያውም መቀየር አለበት።",
         "assign_roles": "ሚናዎችን መድብ",
         "avatar": "የመገለጫ ምስል",
@@ -3524,7 +3565,9 @@ const lang: Record<string, unknown> = {
         "created_at": "የተፈጠረበት ጊዜ",
         "updated_at": "የተዘመነበት ጊዜ",
         "assigned_roles": "የተመደቡ ሚናዎች",
-        "no_roles_assigned": "ምንም ሚና አልተመደበም"
+        "no_roles_assigned": "ምንም ሚና አልተመደበም",
+        "admin_role_admin_only": "የአስተዳዳሪ ሚናን መመደብ የሚችለው አስተዳዳሪ ብቻ ነው።",
+        "self_edit_notice": "ሚናዎች፣ ሁኔታ፣ የይለፍ ቃል፣ ፊርማና ማኅተም ሊቀየሩ የሚችሉት በተጠቃሚ አስተዳዳሪ ብቻ ነው።"
     },
     "json": {
         "Add Case Type": "Add Case Type",

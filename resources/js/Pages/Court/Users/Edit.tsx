@@ -7,7 +7,7 @@ import type { UsersEditProps } from '@/court/types/people';
 import UserForm from './Partials/UserForm';
 
 /** An existing account: identity, contact details, status, an optional new password, roles and profile images. */
-export default function UsersEdit({ user, roles }: UsersEditProps) {
+export default function UsersEdit({ user, roles, canManage }: UsersEditProps) {
     const { t } = useLocale();
 
     return (
@@ -16,7 +16,7 @@ export default function UsersEdit({ user, roles }: UsersEditProps) {
                 actions={<Link href={route('users.show', user.id)} className={buttonClassName({ variant: 'outline' })}>{t('cm.users.view_profile')}</Link>} />
         )}>
             <Head title={t('cm.users.edit_user_title')} />
-            <UserForm mode="edit" roles={roles} user={user} />
+            <UserForm mode="edit" roles={roles} user={user} canManage={canManage} />
         </AuthenticatedLayout>
     );
 }

@@ -104,7 +104,7 @@ final class CourtNavigation
                         ['route' => 'settings.performance-evaluation.index', 'label_key' => 'cm.performance.settings.title', 'icon' => 'RankingIcon', 'permission' => 'settings.manage'],
                         ['route' => 'terms.index', 'label_key' => 'cm.app.Terms', 'icon' => 'ClipboardTextIcon', 'permission' => 'settings.manage'],
                         ['route' => 'about.index', 'label_key' => 'cm.app.About', 'icon' => 'CityIcon', 'permission' => 'about.manage'],
-                        ['route' => 'admin.landing.index', 'label_key' => 'court.nav.landing', 'icon' => 'PaletteIcon', 'permission' => null],
+                        ['route' => 'admin.landing.index', 'label_key' => 'court.nav.landing', 'icon' => 'PaletteIcon', 'permission' => 'settings.manage'],
                         ['route' => 'admin.audit', 'label_key' => 'cm.app.System_Audit', 'icon' => 'EyeScanIcon', 'permission' => 'audit.view'],
                     ],
                 ],

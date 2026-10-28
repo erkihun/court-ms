@@ -108,4 +108,16 @@ return [
         'title_en' => 'የእንግሊዝኛ ርዕስ', 'title_am' => 'የአማርኛ ርዕስ', 'content_en' => 'የእንግሊዝኛ መመሪያ ይዘት', 'content_am' => 'የአማርኛ መመሪያ ይዘት',
         'show_in_nav' => 'የተጠቃሚ መመሪያን በመነሻ ገጽ ማውጫ አሳይ', 'save' => 'የተጠቃሚ መመሪያን አስቀምጥ', 'saved' => 'የተጠቃሚ መመሪያ ቅንብር ተቀምጧል።',
     ],
+    'validation' => [
+        'safe_link' => ':attribute በ http:// ወይም https:// የሚጀምር የድረ ገጽ አድራሻ፣ በ # የሚጀምር የገጽ ውስጥ ማመላከቻ ወይም በ / የሚጀምር የዚህ ድረ ገጽ መንገድ መሆን አለበት።',
+        'safe_web_link' => ':attribute በ http:// ወይም https:// የሚጀምር የድረ ገጽ አድራሻ መሆን አለበት።',
+    ],
+    'flash' => [
+        'slide_added' => 'ማስታወቂያው ታክሏል።', 'slide_updated' => 'ማስታወቂያው ተሻሽሏል።', 'slide_deleted' => 'ማስታወቂያው ተሰርዟል።',
+        'step_added' => 'የሂደት ደረጃው ታክሏል።', 'step_updated' => 'የሂደት ደረጃው ተሻሽሏል።', 'step_deleted' => 'የሂደት ደረጃው ተሰርዟል።',
+        'faq_added' => 'ጥያቄና መልሱ ታክሏል።', 'faq_updated' => 'ጥያቄና መልሱ ተሻሽሏል።', 'faq_deleted' => 'ጥያቄና መልሱ ተሰርዟል።',
+        'service_added' => 'የአገልግሎት ካርዱ ታክሏል።', 'service_updated' => 'የአገልግሎት ካርዱ ተሻሽሏል።', 'service_deleted' => 'የአገልግሎት ካርዱ ተሰርዟል።',
+        'resource_added' => 'መረጃው ታክሏል።', 'resource_updated' => 'መረጃው ተሻሽሏል።', 'resource_deleted' => 'መረጃው ተሰርዟል።',
+        'footer_saved' => 'የገጽ ግርጌ ቅንብሮች ተቀምጠዋል።', 'metrics_saved' => 'የአጠቃላይ መረጃ ይዘት ተቀምጧል።', 'sections_saved' => 'የገጽ ክፍሎች ቅንብሮች ተቀምጠዋል።',
+    ],
 ];

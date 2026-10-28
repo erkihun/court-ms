@@ -1,9 +1,9 @@
 import { Link, useForm } from '@inertiajs/react';
 import { useEffect, useMemo, type FormEvent, type ReactNode } from 'react';
 import LocalizedDatePicker from '@/Components/Calendar/LocalizedDatePicker';
-import { Alert, Button, Card, CardTitle, FieldError, FileUpload, FormField, Input, Select, buttonClassName } from '@/Components/ui';
+import { Alert, Button, Card, CardTitle, FieldError, FileUpload, FormField, Input, Select, buttonClassName, cx } from '@/Components/ui';
 import { useLocale } from '@/hooks/useLocale';
-import { fill, useAccessForms } from '@/court/i18n/useAccessForms';
+import { useAccessForms } from '@/court/i18n/useAccessForms';
 import type { RoleOption, UserFormUser } from '@/court/types/people';
 
 interface UserFormData {
@@ -31,8 +31,8 @@ interface UserFormData {
 }
 
 type Props =
-    | { mode: 'create'; roles: RoleOption[]; defaultPassword: string; user?: undefined }
-    | { mode: 'edit'; roles: RoleOption[]; user: UserFormUser; defaultPassword?: undefined };
+    | { mode: 'create'; roles: RoleOption[]; user?: undefined; canManage?: undefined }
+    | { mode: 'edit'; roles: RoleOption[]; user: UserFormUser; canManage: boolean };
 
 /** The national ID as typed: 16 letters or digits, upper-cased, in groups of four. */
 export function formatNationalId(value: string): string {
@@ -98,12 +98,15 @@ function ImageField({ label, current, file, onFile, error, removeChecked, onRemo
  * contact details, status, role assignments and the avatar, signature and stamp
  * images (admin-only uploads). Edit also sets a new password. Files go up as
  * multipart; Inertia turns the PATCH into a POST with `_method` for them.
+ * Someone editing only their own record (`canManage` false) gets the identity,
+ * contact and avatar fields; the server ignores the rest from them anyway.
  */
 export default function UserForm(props: Props) {
     const { t } = useLocale();
     const access = useAccessForms();
     const { mode, roles } = props;
     const user = props.mode === 'edit' ? props.user : null;
+    const canManage = props.mode === 'create' || props.canManage;
 
     const form = useForm<UserFormData>({
         first_name: user?.first_name ?? '',
@@ -146,14 +149,22 @@ export default function UserForm(props: Props) {
             form.post(route('users.store'), { forceFormData: true });
             return;
         }
-        form.transform((data) => ({
-            ...data,
-            password: data.password === '' ? null : data.password,
-            password_confirmation: data.password === '' ? null : data.password_confirmation,
-            remove_avatar: data.remove_avatar ? 1 : 0,
-            remove_signature: data.remove_signature ? 1 : 0,
-            remove_stamp: data.remove_stamp ? 1 : 0,
-        }));
+        form.transform((data) => {
+            const payload: Record<string, unknown> = {
+                ...data,
+                password: data.password === '' ? null : data.password,
+                password_confirmation: data.password === '' ? null : data.password_confirmation,
+                remove_avatar: data.remove_avatar ? 1 : 0,
+                remove_signature: data.remove_signature ? 1 : 0,
+                remove_stamp: data.remove_stamp ? 1 : 0,
+            };
+            if (!canManage) {
+                for (const field of ['status', 'roles', 'password', 'password_confirmation', 'signature', 'stamp', 'remove_signature', 'remove_stamp']) {
+                    delete payload[field];
+                }
+            }
+            return payload as unknown as UserFormData;
+        });
         form.patch(route('users.update', user!.id), { forceFormData: true });
     };
 
@@ -209,20 +220,23 @@ export default function UserForm(props: Props) {
                     {text('address', t('cm.users.address'))}
                 </div>
 
-                {mode === 'create' && (
-                    <Alert tone="warning">{fill(t('cm.users.default_password_notice'), { password: props.defaultPassword })}</Alert>
+                {/* store() sets a random password and emails a link to choose one. */}
+                {mode === 'create' && <Alert tone="info">{t('cm.users.reset_link_notice')}</Alert>}
+
+                {!canManage && <Alert tone="info">{t('cm.users.self_edit_notice')}</Alert>}
+
+                {canManage && (
+                    <FormField id="user-status" label={t('cm.users.status')} error={form.errors.status}>
+                        {({ id, describedBy, invalid }) => (
+                            <Select id={id} value={form.data.status} aria-describedby={describedBy} aria-invalid={invalid || undefined} onChange={(event) => form.setData('status', event.target.value as UserFormData['status'])}>
+                                <option value="active">{t('cm.users.active')}</option>
+                                <option value="inactive">{t('cm.users.inactive')}</option>
+                            </Select>
+                        )}
+                    </FormField>
                 )}
 
-                <FormField id="user-status" label={t('cm.users.status')} error={form.errors.status}>
-                    {({ id, describedBy, invalid }) => (
-                        <Select id={id} value={form.data.status} aria-describedby={describedBy} aria-invalid={invalid || undefined} onChange={(event) => form.setData('status', event.target.value as UserFormData['status'])}>
-                            <option value="active">{t('cm.users.active')}</option>
-                            <option value="inactive">{t('cm.users.inactive')}</option>
-                        </Select>
-                    )}
-                </FormField>
-
-                {mode === 'edit' && (
+                {mode === 'edit' && canManage && (
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <FormField id="user-password" label={t('cm.users.new_password_optional')} error={form.errors.password}>
                             {({ id, describedBy, invalid }) => (
@@ -239,34 +253,46 @@ export default function UserForm(props: Props) {
             </Card>
 
             <div className="space-y-6">
-                <Card className="space-y-4">
-                    <CardTitle className="text-sm">{mode === 'create' ? t('cm.users.assign_roles') : t('cm.users.roles')}</CardTitle>
-                    <div className="max-h-80 space-y-2 overflow-auto pr-1">
-                        {roles.map((role) => (
-                            <label key={role.id} className="flex items-center gap-3 rounded-control border border-(--app-border) px-3 py-2 text-sm text-(--app-foreground) hover:bg-(--app-surface-muted)">
-                                <input type="checkbox" className="h-4 w-4 rounded border-(--app-border) text-primary focus:ring-primary" checked={form.data.roles.includes(role.id)} onChange={(event) => toggleRole(role.id, event.target.checked)} />
-                                <span>{role.name}</span>
-                            </label>
-                        ))}
-                    </div>
-                    <p className="text-xs text-(--app-muted-foreground)">{access('selectedCount', { count: form.data.roles.length })}</p>
-                    <FieldError>{form.errors.roles}</FieldError>
-                </Card>
+                {canManage && (
+                    <Card className="space-y-4">
+                        <CardTitle className="text-sm">{mode === 'create' ? t('cm.users.assign_roles') : t('cm.users.roles')}</CardTitle>
+                        <div className="max-h-80 space-y-2 overflow-auto pr-1">
+                            {roles.map((role) => {
+                                const checked = form.data.roles.includes(role.id);
+                                // The admin role is the administrators' to grant; one already held can still be removed.
+                                const locked = Boolean(role.disabled) && !checked;
+                                return (
+                                    <label key={role.id} className={cx('flex items-center gap-3 rounded-control border border-(--app-border) px-3 py-2 text-sm text-(--app-foreground) hover:bg-(--app-surface-muted)', locked && 'cursor-not-allowed opacity-60')}
+                                        title={locked ? t('cm.users.admin_role_admin_only') : undefined}>
+                                        <input type="checkbox" className="h-4 w-4 rounded border-(--app-border) text-primary focus:ring-primary" checked={checked} disabled={locked} onChange={(event) => toggleRole(role.id, event.target.checked)} />
+                                        <span>{role.name}</span>
+                                    </label>
+                                );
+                            })}
+                        </div>
+                        <p className="text-xs text-(--app-muted-foreground)">{access('selectedCount', { count: form.data.roles.length })}</p>
+                        <FieldError>{form.errors.roles}</FieldError>
+                    </Card>
+                )}
 
                 <Card className="space-y-4">
                     <ImageField round label={t('cm.users.avatar')} accept="image/*" alt={t('cm.users.avatar_preview')} noImageText={t('cm.users.no_image')}
                         current={user?.avatar_url ?? null} file={form.data.avatar} onFile={(file) => form.setData('avatar', file)} error={form.errors.avatar}
                         removeChecked={form.data.remove_avatar} onRemove={mode === 'edit' ? (checked) => form.setData('remove_avatar', checked) : undefined} />
-                    <ImageField label={t('cm.users.signature')} accept="image/png,image/webp,image/jpeg" alt={t('cm.users.signature_preview')} noImageText={t('cm.users.no_signature')}
-                        current={user?.signature_url ?? null} file={form.data.signature} onFile={(file) => form.setData('signature', file)} error={form.errors.signature}
-                        removeChecked={form.data.remove_signature} onRemove={mode === 'edit' ? (checked) => form.setData('remove_signature', checked) : undefined} />
-                    <ImageField label={t('cm.users.stamp')} accept="image/png,image/webp,image/jpeg" alt={t('cm.users.stamp_preview')} noImageText={t('cm.users.no_stamp')}
-                        current={user?.stamp_url ?? null} file={form.data.stamp} onFile={(file) => form.setData('stamp', file)} error={form.errors.stamp}
-                        removeChecked={form.data.remove_stamp} onRemove={mode === 'edit' ? (checked) => form.setData('remove_stamp', checked) : undefined} />
+                    {canManage && (
+                        <>
+                            <ImageField label={t('cm.users.signature')} accept="image/png,image/webp,image/jpeg" alt={t('cm.users.signature_preview')} noImageText={t('cm.users.no_signature')}
+                                current={user?.signature_url ?? null} file={form.data.signature} onFile={(file) => form.setData('signature', file)} error={form.errors.signature}
+                                removeChecked={form.data.remove_signature} onRemove={mode === 'edit' ? (checked) => form.setData('remove_signature', checked) : undefined} />
+                            <ImageField label={t('cm.users.stamp')} accept="image/png,image/webp,image/jpeg" alt={t('cm.users.stamp_preview')} noImageText={t('cm.users.no_stamp')}
+                                current={user?.stamp_url ?? null} file={form.data.stamp} onFile={(file) => form.setData('stamp', file)} error={form.errors.stamp}
+                                removeChecked={form.data.remove_stamp} onRemove={mode === 'edit' ? (checked) => form.setData('remove_stamp', checked) : undefined} />
+                        </>
+                    )}
                 </Card>
 
                 <div className="flex flex-wrap items-center justify-end gap-2">
-                    <Link href={route('users.index')} className={buttonClassName({ variant: 'outline' })}>{t('cm.users.cancel')}</Link>
+                    <Link href={canManage || !user ? route('users.index') : route('users.show', user.id)} className={buttonClassName({ variant: 'outline' })}>{t('cm.users.cancel')}</Link>
                     <Button type="submit" variant="primary" loading={form.processing}>{mode === 'create' ? t('cm.users.create_user') : t('cm.users.save')}</Button>
                 </div>
             </div>

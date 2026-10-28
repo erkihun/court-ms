@@ -83,6 +83,8 @@ test('the create page offers the closed cases, the judges and the signed-in judg
 test('a decision is still stored from the form payload', function (): void {
     $judge = decisionFormsUser(['decision.view', 'decision.view.all', 'decision.create']);
     $other = User::factory()->create(['status' => 'active']);
+    // A decision needs a complete panel of three different judges.
+    $third = User::factory()->create(['status' => 'active']);
     $case = decisionFormsCase('closed');
 
     $this->actingAs($judge)
@@ -95,7 +97,7 @@ test('a decision is still stored from the form payload', function (): void {
             'judges' => [
                 ['admin_user_id' => $other->id],
                 ['admin_user_id' => $judge->id],
-                ['admin_user_id' => null],
+                ['admin_user_id' => $third->id],
             ],
         ])
         ->assertRedirect(route('decisions.index'))
@@ -114,8 +116,14 @@ test('the show page carries the decision, its panel, the reviews, the templates 
     $judge = decisionFormsUser(['decision.view', 'decision.view.all', 'decision.update', 'decision.approve']);
     $colleague = User::factory()->create(['name' => 'Second Reviewer', 'status' => 'active']);
     $case = decisionFormsCase('closed');
-    $decision = decisionFormsDecision($case, $judge);
-    $template = DecisionTemplate::query()->create(['title' => 'Standard layout', 'body' => '<p>{{decision_content}}</p>', 'is_default' => true]);
+    // Publishing and approving need a complete panel: three different judges, the author presiding.
+    [$first, $third] = User::factory()->count(2)->create(['status' => 'active'])->all();
+    $decision = decisionFormsDecision($case, $judge, ['panel_judges' => [
+        ['order' => 1, 'admin_user_id' => $first->id, 'admin_user_name' => $first->name, 'vote' => null],
+        ['order' => 2, 'admin_user_id' => $judge->id, 'admin_user_name' => $judge->name, 'vote' => null],
+        ['order' => 3, 'admin_user_id' => $third->id, 'admin_user_name' => $third->name, 'vote' => null],
+    ]]);
+    $template =DecisionTemplate::query()->create(['title' => 'Standard layout', 'body' => '<p>{{decision_content}}</p>', 'is_default' => true]);
     $own = DecisionReview::query()->create(['decision_id' => $decision->id, 'case_number' => $decision->case_number, 'reviewer_id' => $judge->id, 'outcome' => 'improve', 'review_note' => 'Tighten the reasoning.']);
     DecisionReview::query()->create(['decision_id' => $decision->id, 'case_number' => $decision->case_number, 'reviewer_id' => $colleague->id, 'outcome' => 'approve']);
 

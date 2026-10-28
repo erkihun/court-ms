@@ -1,11 +1,11 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import PageHeader from '@/Components/PageHeader';
 import EmptyState from '@/Components/EmptyState';
 import LocalizedDateDisplay from '@/Components/Calendar/LocalizedDateDisplay';
 import {
-    AppActionMenu, AppMetricCard, ListPagination, badgeClassName, buttonClassName, cx,
+    AppActionMenu, AppMetricCard, FilterField, FilterPanel, Input, ListPagination, badgeClassName, buttonClassName, cx,
     tableBodyClassName, tableCellClassName, tableClassName, tableContainerClassName, tableHeadClassName, tableHeaderCellClassName, tableRowClassName,
     type AppActionItem,
 } from '@/Components/ui';
@@ -26,7 +26,16 @@ export default function LettersIndex({ letters, stats, filters, can }: LettersIn
     const { t } = useLocale();
     const { confirm } = useConfirm();
     const [busy, setBusy] = useState<number | null>(null);
+    const [q, setQ] = useState(filters.q);
     const title = t('cm.letters.titles.index');
+    // The status links keep the search, and the search keeps the status.
+    const searchParams = filters.q ? { q: filters.q } : {};
+    const statusParams = filters.status ? { status: filters.status } : {};
+
+    const search = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        router.get(route('letters.index'), { ...statusParams, ...(q.trim() ? { q: q.trim() } : {}) }, { preserveState: true });
+    };
 
     const decide = (letter: LetterRow, status: 'approved' | 'returned' | 'rejected') =>
         router.post(route('letters.approve', letter.id), { status }, { preserveScroll: true, onStart: () => setBusy(letter.id), onFinish: () => setBusy(null) });
@@ -44,7 +53,8 @@ export default function LettersIndex({ letters, stats, filters, can }: LettersIn
         // The letter preview is a document page of its own, opened in a new tab as before.
         const items: AppActionItem[] = [{ label: t('cm.letters.actions.view'), onClick: () => window.open(route('letters.show', letter.id), '_blank', 'noopener') }];
         if (letter.approval_status !== 'approved' && can.update) items.push({ label: t('cm.letters.actions.edit'), href: route('letters.edit', letter.id) });
-        if (can.approve) {
+        // An approved letter has gone to the parties; it is not decided again.
+        if (can.approve && letter.approval_status !== 'approved') {
             items.push({ label: t('cm.letters.table.status_approved'), onClick: () => decide(letter, 'approved') });
             items.push({ label: t('cm.letters.table.status_returned'), onClick: () => decide(letter, 'returned') });
             items.push({ label: t('cm.letters.table.status_rejected'), onClick: () => decide(letter, 'rejected') });
@@ -69,10 +79,16 @@ export default function LettersIndex({ letters, stats, filters, can }: LettersIn
                         detail={stats.top_category ? t('cm.letters.cards.top_category').replace(':category', stats.top_category) : t('cm.letters.cards.empty_top_category')} variant="neutral" />
                 </div>
 
+                <FilterPanel onSubmit={search} onReset={() => router.get(route('letters.index', statusParams))} hasActiveFilters={Boolean(filters.q)} label={title}>
+                    <FilterField label={t('cm.app.Search')} className="sm:col-span-2">
+                        <Input value={q} onChange={(event) => setQ(event.target.value)} placeholder={t('cm.letters.table.search_placeholder')} />
+                    </FilterField>
+                </FilterPanel>
+
                 <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t('cm.letters.table.filter')}>
-                    <Link href={route('letters.index')} className={buttonClassName({ variant: filters.status === '' ? 'primary' : 'outline', size: 'sm' })} preserveScroll>{t('cm.letters.table.all_letters')}</Link>
+                    <Link href={route('letters.index', searchParams)} className={buttonClassName({ variant: filters.status === '' ? 'primary' : 'outline', size: 'sm' })} preserveScroll>{t('cm.letters.table.all_letters')}</Link>
                     {FILTERS.map((status) => (
-                        <Link key={status} href={route('letters.index', { status })} className={buttonClassName({ variant: filters.status === status ? 'primary' : 'outline', size: 'sm' })} preserveScroll>
+                        <Link key={status} href={route('letters.index', { ...searchParams, status })} className={buttonClassName({ variant: filters.status === status ? 'primary' : 'outline', size: 'sm' })} preserveScroll>
                             {t(`cm.letters.table.status_${status}`)}
                         </Link>
                     ))}

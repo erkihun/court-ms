@@ -121,7 +121,8 @@ class ApplicantNotificationController extends Controller
             ]),
             'messages' => $unseenMsgs->onEachSide(0)->through(function (object $row) use ($at, $legacyApplicantUpdate): array {
                 $body = trim((string) $row->body);
-                $isUrl = filter_var($body, FILTER_VALIDATE_URL) !== false;
+                // Only an http(s) address becomes a link (FILTER_VALIDATE_URL alone lets javascript: through).
+                $isUrl = filter_var($body, FILTER_VALIDATE_URL) !== false && preg_match('#^https?://#i', $body) === 1;
 
                 return [
                     'id' => (int) $row->id,

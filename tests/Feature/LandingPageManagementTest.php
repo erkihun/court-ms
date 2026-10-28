@@ -3,14 +3,38 @@
 declare(strict_types=1);
 
 use App\Models\HomeSetting;
+use App\Models\Permission;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia;
 
 uses(RefreshDatabase::class);
 
+/** The landing manager is part of the system settings (routes: perm:settings.manage). */
+function landingManagementEditor(): User
+{
+    $role = Role::query()->create(['name' => 'landing-editor-'.Str::lower(Str::random(6))]);
+    $role->permissions()->sync([Permission::query()->firstOrCreate(['name' => 'settings.manage'], ['label' => 'Manage settings'])->id]);
+    $user = User::factory()->create(['status' => 'active', 'email_verified_at' => now()]);
+    $user->roles()->sync([$role->id]);
+
+    return $user;
+}
+
+test('the landing manager is refused to staff without settings.manage', function (): void {
+    $staff = User::factory()->create(['status' => 'active', 'email_verified_at' => now()]);
+
+    // RequirePermission sends the person to their dashboard instead of the page.
+    $this->actingAs($staff)->get(route('admin.landing.index'))->assertRedirect(route('dashboard'));
+    $this->actingAs($staff)->put(route('admin.landing.footer.update'), ['description' => 'Defaced'])->assertRedirect(route('dashboard'));
+
+    expect(HomeSetting::getJson('footer.settings'))->toBeEmpty();
+});
+
 test('landing manager exposes controls for every home page section', function (): void {
-    $admin = User::factory()->create(['email_verified_at' => now()]);
+    $admin = landingManagementEditor();
 
     // The React page (Court/Landing/Index) draws a tab per section from these props;
     // its labels are the admin_landing.* keys, read in the browser as cm.admin_landing.*.
@@ -33,7 +57,7 @@ test('landing manager exposes controls for every home page section', function ()
 });
 
 test('landing manager uses formal amharic labels in the amharic locale', function (): void {
-    $admin = User::factory()->create(['email_verified_at' => now()]);
+    $admin = landingManagementEditor();
 
     $this->actingAs($admin)
         ->withSession(['app_locale' => 'am'])
@@ -67,7 +91,7 @@ test('landing manager uses formal amharic labels in the amharic locale', functio
 });
 
 test('administrator can update statistics content displayed on the english home page', function (): void {
-    $admin = User::factory()->create(['email_verified_at' => now()]);
+    $admin = landingManagementEditor();
 
     $payload = [
         'total_cases' => [
@@ -95,7 +119,7 @@ test('administrator can update statistics content displayed on the english home 
 });
 
 test('section settings control metrics and faq headings on the home page', function (): void {
-    $admin = User::factory()->create(['email_verified_at' => now()]);
+    $admin = landingManagementEditor();
 
     $this->actingAs($admin)
         ->put(route('admin.landing.sections.update'), [
@@ -124,7 +148,7 @@ test('section settings control metrics and faq headings on the home page', funct
 });
 
 test('administrator manages the user manual opened from localized home navigation', function (): void {
-    $admin = User::factory()->create(['email_verified_at' => now()]);
+    $admin = landingManagementEditor();
 
     $this->actingAs($admin)->put(route('admin.landing.user-manual.update'), [
         'title_en' => 'User Manual',
@@ -151,7 +175,8 @@ test('administrator manages the user manual opened from localized home navigatio
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('Court/Public/UserManual')
             ->where('title', 'User Manual')
-            ->where('content', fn (string $content): bool => str_contains($content, '<h2 style="color: #123456;">Applicant Guide</h2>')
+            // HTMLPurifier keeps the inline style, normalised.
+            ->where('content', fn (string $content): bool => str_contains($content, '<h2 style="color:#123456;">Applicant Guide</h2>')
                 && str_contains($content, '<ol><li>Register an account</li>')
                 && str_contains($content, '<table>')
                 && ! str_contains($content, '&lt;h2')));

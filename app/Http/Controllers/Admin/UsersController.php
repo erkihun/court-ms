@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password as PasswordRule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class UsersController extends Controller
@@ -84,12 +85,11 @@ class UsersController extends Controller
     }
 
     /** Create form (requires users.manage via routes) */
-    public function create()
+    public function create(Request $request)
     {
         // The create form (React, Court/Users/Create).
         return Inertia::render('Court/Users/Create', [
-            'roles' => $this->roleOptions(),
-            'defaultPassword' => (string) config('auth.default_user_password', 'ChangeMe123!'),
+            'roles' => $this->roleOptions($request->user()),
         ]);
     }
 
@@ -119,6 +119,8 @@ class UsersController extends Controller
             'signature' => ['nullable', 'image', 'mimes:png,webp,jpg,jpeg', 'max:2048'],
             'stamp' => ['nullable', 'image', 'mimes:png,webp,jpg,jpeg', 'max:2048'],
         ]);
+
+        $this->ensureAssignableRoles($request->user(), $data['roles'] ?? []);
 
         // Use a random password and force reset via email.
         $rawPassword = Str::random(32);
@@ -178,7 +180,7 @@ class UsersController extends Controller
     }
 
     /** Edit form (policy: update) */
-    public function edit(User $user)
+    public function edit(Request $request, User $user)
     {
         $this->authorize('update', $user);
 
@@ -199,17 +201,62 @@ class UsersController extends Controller
                 'stamp_url' => $user->stamp_url,
                 'role_ids' => $user->roles->pluck('id')->map(fn ($id) => (int) $id)->values()->all(),
             ],
-            'roles' => $this->roleOptions(),
+            'roles' => $this->roleOptions($request->user()),
+            // Someone editing only their own record (no users.manage) sees the
+            // contact fields; roles, status, password, signature and stamp stay hidden.
+            'canManage' => $this->canManage($request->user()),
         ]);
     }
 
-    /** Every role, for the role checkboxes. */
-    private function roleOptions(): array
+    /**
+     * Every role, for the role checkboxes. The admin role is offered only to
+     * administrators: anyone else holding users.manage could hand it out.
+     */
+    private function roleOptions(?User $actor): array
     {
+        $isAdmin = (bool) $actor?->hasRole('admin');
+
         return Role::orderBy('name')->get()
-            ->map(fn (Role $role): array => ['id' => (int) $role->id, 'name' => (string) $role->name])
+            ->map(fn (Role $role): array => [
+                'id' => (int) $role->id,
+                'name' => (string) $role->name,
+                'disabled' => ! $isAdmin && $this->isAdminRole($role),
+            ])
             ->values()
             ->all();
+    }
+
+    /** Roles, status, password, signature and stamp belong to administrators and users.manage holders. */
+    private function canManage(?User $actor): bool
+    {
+        return $actor !== null && ($actor->hasRole('admin') || $actor->hasPermission('users.manage'));
+    }
+
+    private function isAdminRole(Role $role): bool
+    {
+        return mb_strtolower(trim((string) $role->name)) === 'admin';
+    }
+
+    /**
+     * Only administrators may grant the admin role; a users.manage holder could
+     * otherwise promote themselves or anyone else. A role the account already
+     * holds may stay (the policy keeps non-admins away from admin accounts).
+     *
+     * @param  array<int, int|string>  $roleIds
+     */
+    private function ensureAssignableRoles(?User $actor, array $roleIds, ?User $target = null): void
+    {
+        if ($actor?->hasRole('admin')) {
+            return;
+        }
+
+        $adminRoleIds = Role::query()->whereRaw('LOWER(name) = ?', ['admin'])->pluck('id')->map(fn ($id): int => (int) $id);
+        $requested = collect($roleIds)->map(fn ($id): int => (int) $id);
+        $alreadyHeld = $target?->roles()->pluck('roles.id')->map(fn ($id): int => (int) $id) ?? collect();
+
+        if ($requested->intersect($adminRoleIds)->diff($alreadyHeld)->isNotEmpty()) {
+            throw ValidationException::withMessages(['roles' => __('users.admin_role_admin_only')]);
+        }
     }
 
     /**
@@ -238,39 +285,50 @@ class UsersController extends Controller
     {
         $this->authorize('update', $user);
 
+        // UserPolicy lets staff edit their own record. Without users.manage that
+        // covers their contact details only: roles, status, password and the
+        // signature/stamp printed on official documents stay with administrators,
+        // so those fields are neither validated nor read for such a request.
+        $canManage = $this->canManage($request->user());
+
         // Normalize national ID (strip spaces/non-digits before validation)
         $normalizedNationalId = preg_replace('/\D+/', '', (string) $request->input('national_id'));
         $request->merge(['national_id' => $normalizedNationalId ?: null]);
 
-        $data = $request->validate([
+        $rules = [
             'first_name' => ['required', 'string', 'max:255'],
             'middle_name' => ['nullable', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
-            'status' => ['required', Rule::in(['active', 'inactive'])],
-
-            'password' => ['nullable', 'confirmed', PasswordRule::defaults()],
             'gender' => ['nullable', Rule::in(['male', 'female'])],
             'date_of_birth' => ['nullable', 'date'],
             'national_id' => ['nullable', 'digits:16'],
             'position' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:255'],
             'address' => ['nullable', 'string'],
-
-            'roles' => ['nullable', 'array'],
-            'roles.*' => ['integer', 'exists:roles,id'],
-
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
-            'signature' => ['nullable', 'image', 'mimes:png,webp,jpg,jpeg', 'max:2048'],
-            'stamp' => ['nullable', 'image', 'mimes:png,webp,jpg,jpeg', 'max:2048'],
-
             'remove_avatar' => ['nullable', 'boolean'],
-            'remove_signature' => ['nullable', 'boolean'],
-            'remove_stamp' => ['nullable', 'boolean'],
-        ]);
+        ];
+        if ($canManage) {
+            $rules += [
+                'status' => ['required', Rule::in(['active', 'inactive'])],
+                'password' => ['nullable', 'confirmed', PasswordRule::defaults()],
+                'roles' => ['nullable', 'array'],
+                'roles.*' => ['integer', 'exists:roles,id'],
+                'signature' => ['nullable', 'image', 'mimes:png,webp,jpg,jpeg', 'max:2048'],
+                'stamp' => ['nullable', 'image', 'mimes:png,webp,jpg,jpeg', 'max:2048'],
+                'remove_signature' => ['nullable', 'boolean'],
+                'remove_stamp' => ['nullable', 'boolean'],
+            ];
+        }
+        $data = $request->validate($rules);
+
+        if ($canManage) {
+            $this->ensureAssignableRoles($request->user(), $data['roles'] ?? [], $user);
+        }
 
         // Update password if provided
-        if (! empty($data['password'])) {
+        if ($canManage && ! empty($data['password'])) {
             $user->password = Hash::make($data['password']);
             $user->must_change_password = true;
         }
@@ -288,30 +346,20 @@ class UsersController extends Controller
             $data['avatar_path'] = $request->file('avatar')->store('avatars', 'public');
         }
 
-        // Signature remove / replace
-        if ($request->boolean('remove_signature')) {
-            if ($user->signature_path) {
-                Storage::disk('public')->delete($user->signature_path);
+        // Signature and stamp remove / replace (managers only; otherwise left as they are)
+        foreach ($canManage ? ['signature' => 'signatures', 'stamp' => 'stamps'] : [] as $asset => $directory) {
+            $column = "{$asset}_path";
+            if ($request->boolean("remove_{$asset}")) {
+                if ($user->{$column}) {
+                    Storage::disk('public')->delete($user->{$column});
+                }
+                $data[$column] = null;
+            } elseif ($request->hasFile($asset)) {
+                if ($user->{$column}) {
+                    Storage::disk('public')->delete($user->{$column});
+                }
+                $data[$column] = $request->file($asset)->store($directory, 'public');
             }
-            $data['signature_path'] = null;
-        } elseif ($request->hasFile('signature')) {
-            if ($user->signature_path) {
-                Storage::disk('public')->delete($user->signature_path);
-            }
-            $data['signature_path'] = $request->file('signature')->store('signatures', 'public');
-        }
-
-        // Stamp remove / replace
-        if ($request->boolean('remove_stamp')) {
-            if ($user->stamp_path) {
-                Storage::disk('public')->delete($user->stamp_path);
-            }
-            $data['stamp_path'] = null;
-        } elseif ($request->hasFile('stamp')) {
-            if ($user->stamp_path) {
-                Storage::disk('public')->delete($user->stamp_path);
-            }
-            $data['stamp_path'] = $request->file('stamp')->store('stamps', 'public');
         }
 
         $fullName = trim(implode(' ', array_filter([
@@ -324,7 +372,7 @@ class UsersController extends Controller
         $user->fill([
             'name' => $fullName,
             'email' => $data['email'],
-            'status' => $data['status'],
+            'status' => $canManage ? $data['status'] : $user->status,
             'gender' => $data['gender'] ?? null,
             'date_of_birth' => $data['date_of_birth'] ?? null,
             'national_id' => $data['national_id'] ?? null,
@@ -337,12 +385,15 @@ class UsersController extends Controller
             'stamp_path' => array_key_exists('stamp_path', $data) ? $data['stamp_path'] : $user->stamp_path,
         ])->save();
 
-        // Sync roles if provided
-        if (array_key_exists('roles', $data)) {
+        // The form always carries the full role selection, and an empty one is
+        // sent as no field at all (multipart cannot express an empty list), so
+        // a manager's submission without roles clears them.
+        if ($canManage) {
             $user->roles()->sync($data['roles'] ?? []);
         }
 
-        return redirect()->route('users.index')->with('success', [
+        // The register needs users.manage; someone editing their own record goes back to it.
+        return ($canManage ? redirect()->route('users.index') : redirect()->route('users.show', $user))->with('success', [
             'key' => 'messages.success.updated',
             'replace' => ['resource' => __('messages.resources.user')],
         ]);

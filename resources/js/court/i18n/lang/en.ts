@@ -197,6 +197,30 @@ const lang: Record<string, unknown> = {
             "show_in_nav": "Show User Manual in home navigation",
             "save": "Save User Manual",
             "saved": "User manual content saved."
+        },
+        "validation": {
+            "safe_link": "The :attribute must be a web address starting with http:// or https://, a # anchor, or a path on this site starting with /.",
+            "safe_web_link": "The :attribute must be a web address starting with http:// or https://."
+        },
+        "flash": {
+            "slide_added": "Slide added.",
+            "slide_updated": "Slide updated.",
+            "slide_deleted": "Slide deleted.",
+            "step_added": "Step added.",
+            "step_updated": "Step updated.",
+            "step_deleted": "Step deleted.",
+            "faq_added": "FAQ added.",
+            "faq_updated": "FAQ updated.",
+            "faq_deleted": "FAQ deleted.",
+            "service_added": "Service card added.",
+            "service_updated": "Service card updated.",
+            "service_deleted": "Service card deleted.",
+            "resource_added": "Resource added.",
+            "resource_updated": "Resource updated.",
+            "resource_deleted": "Resource deleted.",
+            "footer_saved": "Footer settings saved.",
+            "metrics_saved": "Statistics content saved.",
+            "sections_saved": "Section settings saved."
         }
     },
     "announcements": {
@@ -1304,6 +1328,13 @@ const lang: Record<string, unknown> = {
         "types": {
             "empty": "No case types found.",
             "adjust_search_hint": "Try adjusting your search criteria."
+        },
+        "messages_flash": {
+            "evidence_removed": "Evidence removed.",
+            "witness_removed": "Witness removed."
+        },
+        "errors": {
+            "no_case_access": "You do not have access to this case."
         }
     },
     "chat": {
@@ -1337,6 +1368,7 @@ const lang: Record<string, unknown> = {
         "Dashboard": "Dashboard",
         "my_dashboard": "My Dashboard",
         "total_cases": "Total Cases",
+        "no_case_access": "Case statistics are shown to staff who can view cases.",
         "pending": "Pending",
         "resolved": "Resolved",
         "active": "Active",
@@ -1619,7 +1651,11 @@ const lang: Record<string, unknown> = {
         "download": "Download decision",
         "download_unavailable": "The decision PDF will be available once it is approved and published.",
         "validation": {
-            "closed_case_required": "A decision can only be created for a closed case."
+            "closed_case_required": "A decision can only be created for a closed case.",
+            "panel_required": "Assign all three judges to the panel.",
+            "panel_distinct": "Each judge on the panel must be a different person.",
+            "presiding_judge_must_be_you": "You must hold the presiding (session) judge seat on the panel.",
+            "publish_requires_panel": "A decision can only be published or approved once all three judges are assigned."
         }
     },
     "euisis": {
@@ -3024,7 +3060,8 @@ const lang: Record<string, unknown> = {
         "case_not_authorized": "You are not authorized to respond to this case.",
         "cannot_respond_own_case": "You cannot submit a response to your own case.",
         "review_status_label": "Review status",
-        "start_first_response": "Start by creating your first response document."
+        "start_first_response": "Start by creating your first response document.",
+        "response_locked": "An accepted response is part of the case record and can no longer be changed."
     },
     "roles": {
         "create": {
@@ -3097,6 +3134,8 @@ const lang: Record<string, unknown> = {
             "delete": "Delete",
             "delete_title": "Delete role",
             "delete_confirm": "Are you sure you want to delete",
+            "cannot_delete_admin": "The administrator role cannot be deleted.",
+            "cannot_delete_assigned": "This role is assigned to :count user(s). Remove it from them first.",
             "cancel": "Cancel",
             "empty": "No roles found.",
             "more": "more",
@@ -3420,6 +3459,7 @@ const lang: Record<string, unknown> = {
             "unknown_email": ""
         },
         "errors": {
+            "parent_cycle": "A team cannot report to itself or to one of its sub-teams.",
             "fix": "Please fix the following:"
         }
     },
@@ -3491,6 +3531,7 @@ const lang: Record<string, unknown> = {
         "position": "Position",
         "phone": "Phone",
         "address": "Address",
+        "reset_link_notice": "A secure link to set a password is emailed to the user, who must choose their own password before signing in.",
         "default_password_notice": "The user will be created with the default password :password and must change it at first login.",
         "assign_roles": "Assign Roles",
         "avatar": "Avatar",
@@ -3518,7 +3559,9 @@ const lang: Record<string, unknown> = {
         "created_at": "Created At",
         "updated_at": "Updated At",
         "assigned_roles": "Assigned Roles",
-        "no_roles_assigned": "No roles assigned"
+        "no_roles_assigned": "No roles assigned",
+        "admin_role_admin_only": "Only an administrator can assign the admin role.",
+        "self_edit_notice": "Roles, status, password, signature and stamp can only be changed by a user administrator."
     },
     "json": {
         "Add Case Type": "Add Case Type",

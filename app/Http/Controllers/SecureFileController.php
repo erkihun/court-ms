@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ApplicantResponseReply;
 use App\Models\Respondent;
 use App\Models\RespondentResponse;
+use App\Support\CaseScope;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -54,6 +55,7 @@ class SecureFileController extends Controller
     {
         // Staff only — lawyer credential documents are reviewed by court staff.
         abort_unless($this->staffCan('cases.view'), 403);
+        $this->ensureStaffScope(DB::table('court_cases')->where('id', $caseId)->first());
 
         $path = DB::table('court_cases as c')
             ->leftJoin('applicants as a', 'a.id', '=', 'c.applicant_id')
@@ -70,6 +72,10 @@ class SecureFileController extends Controller
         $inline = $request->boolean('inline');
 
         if ($this->staffCan('cases.view')) {
+            if ($response->case_number) {
+                $this->ensureStaffScope(DB::table('court_cases')->where('case_number', $response->case_number)->first());
+            }
+
             return $this->downloadFile($response->pdf_path, basename((string) $response->pdf_path), null, $inline);
         }
 
@@ -97,6 +103,8 @@ class SecureFileController extends Controller
         $inline = $request->boolean('inline');
 
         if ($this->staffCan('cases.view')) {
+            $this->ensureStaffScope(DB::table('court_cases')->where('id', $reply->case_id)->first());
+
             return $this->downloadFile($reply->pdf_path, basename((string) $reply->pdf_path), null, $inline);
         }
 
@@ -150,6 +158,8 @@ class SecureFileController extends Controller
         $inline = $request->boolean('inline');
 
         if ($this->staffCan('cases.view')) {
+            $this->ensureStaffScope(DB::table('court_cases')->where('id', $reply->case_id)->first());
+
             return $this->downloadFile($reply->pdf_path, basename((string) $reply->pdf_path), null, $inline);
         }
 
@@ -195,9 +205,18 @@ class SecureFileController extends Controller
         );
     }
 
+    /** Staff with cases.view reach a case's files only within their team scope (CaseScope). */
+    private function ensureStaffScope(?object $case): void
+    {
+        abort_if($case === null, 404);
+        CaseScope::ensure($case);
+    }
+
     private function authorizeCaseAccess(int $caseId): void
     {
         if ($this->staffCan('cases.view')) {
+            $this->ensureStaffScope(DB::table('court_cases')->where('id', $caseId)->first());
+
             return;
         }
 

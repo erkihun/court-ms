@@ -24,6 +24,7 @@ class LetterController extends Controller
         if (!in_array($statusFilter, ['', 'pending', 'approved', 'rejected'], true)) {
             $statusFilter = '';
         }
+        $search = trim((string) $request->query('q', ''));
 
         $baseQuery = Letter::query();
 
@@ -54,8 +55,20 @@ class LetterController extends Controller
                     ->orWhere('letters.approval_status', '')
                     ->orWhere('letters.approval_status', 'pending');
             }))
+            // Reference, subject, case number and the parties (recipient, applicant, respondent).
+            ->when($search !== '', function ($query) use ($search) {
+                $like = '%'.addcslashes($search, '%_\\').'%';
+                $query->where(function ($inner) use ($like) {
+                    $inner->where('letters.reference_number', 'like', $like)
+                        ->orWhere('letters.subject', 'like', $like)
+                        ->orWhere('letters.case_number', 'like', $like)
+                        ->orWhere('letters.recipient_name', 'like', $like)
+                        ->orWhere('c.title', 'like', $like)
+                        ->orWhere('c.respondent_name', 'like', $like);
+                });
+            })
             ->with(['template', 'author'])
-            ->latest()
+            ->latest('letters.created_at')
             ->paginate(10)
             ->withQueryString();
 
@@ -90,7 +103,7 @@ class LetterController extends Controller
                 'top_category' => $categories->sortDesc()->keys()->first(),
                 'top_category_count' => (int) ($categories->sortDesc()->first() ?? 0),
             ],
-            'filters' => ['status' => $statusFilter],
+            'filters' => ['status' => $statusFilter, 'q' => $search],
             'can' => [
                 'create' => $can('letters.create'),
                 'update' => $can('letters.update'),
@@ -242,6 +255,11 @@ class LetterController extends Controller
      */
     public function edit(Letter $letter)
     {
+        // An approved letter has been sent to the parties; it is no longer editable.
+        if ($letter->approval_status === 'approved') {
+            return redirect()->route('letters.index')->with('error', 'messages.error.approved_letter_update_locked');
+        }
+
         $letter->load('template');
         $template = $letter->template;
 
@@ -457,6 +475,12 @@ class LetterController extends Controller
         $data = $request->validate([
             'status' => 'required|in:approved,returned,rejected',
         ]);
+
+        // An approved letter has been sent to the parties; it can no longer change state
+        // (deciding it again re-sent the approval emails).
+        if ($letter->approval_status === 'approved') {
+            return back()->with('error', 'messages.error.approved_letter_update_locked');
+        }
 
         $letter->update([
             'approved_by_name'  => $user?->name,

@@ -16,8 +16,16 @@ class HearingController extends Controller
      */
     public function index(Request $request): Response
     {
-        $caseNumber = trim((string) $request->query('case_number', ''));
-        $hearingDate = (string) $request->query('hearing_date', '');
+        // Query strings are user input: anything but a string is ignored, and a date
+        // that is not a real Y-m-d calendar date is dropped instead of reaching the
+        // query (MySQL rejects an invalid DATE literal with a server error).
+        $caseNumberInput = $request->query('case_number');
+        $caseNumber = is_string($caseNumberInput) ? trim($caseNumberInput) : '';
+        $hearingDateInput = $request->query('hearing_date');
+        $hearingDate = is_string($hearingDateInput) ? trim($hearingDateInput) : '';
+        if ($hearingDate !== '' && ! $this->isCalendarDate($hearingDate)) {
+            $hearingDate = '';
+        }
 
         $hearings = DB::table('case_hearings as h')
             ->select('h.*', 'c.case_number', 'c.title', 'creator.name as creator_name')
@@ -44,5 +52,14 @@ class HearingController extends Controller
             'hearings' => $hearings,
             'filters' => ['case_number' => $caseNumber, 'hearing_date' => $hearingDate],
         ]);
+    }
+
+    private function isCalendarDate(string $value): bool
+    {
+        if (! preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $value, $parts)) {
+            return false;
+        }
+
+        return checkdate((int) $parts[2], (int) $parts[3], (int) $parts[1]);
     }
 }

@@ -28,22 +28,33 @@ class DashboardController extends Controller
      * The admin dashboard (React, Court/Dashboard). Without `range` the figures
      * are all time and the chart covers six months, as on the Blade page it
      * replaces; with a range every figure covers that period (the `stats` data).
+     *
+     * Case statistics (counts, workload by person and team, recent case
+     * titles) need cases.view, and service health and storage settings.manage;
+     * any other staff member gets the page with neither (null props).
      */
     public function index(Request $request): Response
     {
-        $range = $request->query('range');
-        if (is_string($range) && in_array($range, self::RANGES, true)) {
-            [$start, $end] = $this->rangeBounds($range);
-            $dashboard = $this->fromRange($range, $this->rangeStats($start, $end));
-        } else {
-            $dashboard = $this->fromAllTime($this->allTime());
+        $user = $request->user();
+        $canSeeCases = (bool) $user?->hasPermission('cases.view');
+        $canSeeSystem = (bool) $user?->hasPermission('settings.manage');
+
+        $dashboard = null;
+        if ($canSeeCases) {
+            $range = $request->query('range');
+            if (is_string($range) && in_array($range, self::RANGES, true)) {
+                [$start, $end] = $this->rangeBounds($range);
+                $dashboard = $this->fromRange($range, $this->rangeStats($start, $end));
+            } else {
+                $dashboard = $this->fromAllTime($this->allTime());
+            }
         }
 
         return Inertia::render('Court/Dashboard', [
             'dashboard' => $dashboard,
             'ranges' => self::RANGES,
-            'serviceHealth' => $this->serviceHealth(),
-            'dataStorage' => $this->dataStorage(),
+            'serviceHealth' => $canSeeSystem ? $this->serviceHealth() : null,
+            'dataStorage' => $canSeeSystem ? $this->dataStorage() : null,
         ]);
     }
 
@@ -389,6 +400,9 @@ class DashboardController extends Controller
      */
     public function stats(Request $request): JsonResponse
     {
+        // The same case statistics the dashboard shows only to cases.view holders.
+        abort_unless((bool) $request->user()?->hasPermission('cases.view'), 403);
+
         if ($request->filled('start') && $request->filled('end')) {
             try {
                 $start = Carbon::parse($request->input('start'))->startOfDay();

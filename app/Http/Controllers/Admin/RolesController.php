@@ -34,8 +34,31 @@ class RolesController extends Controller
                 'description' => $role->description,
                 'permissions' => $role->permissions->pluck('name')->values()->all(),
                 'users_count' => (int) $role->users_count,
+                // Why Delete is disabled: the page shows roles.index.cannot_delete_{admin,assigned}.
+                'delete_blocked' => match ($this->deleteBlockedReason($role, (int) $role->users_count)['key'] ?? null) {
+                    'roles.index.cannot_delete_admin' => 'admin',
+                    'roles.index.cannot_delete_assigned' => 'assigned',
+                    default => null,
+                },
             ]),
         ]);
+    }
+
+    /**
+     * Why a role cannot be deleted, as a flash translation, or null when it can.
+     *
+     * @return array{key: string, replace: array<string, int>}|null
+     */
+    private function deleteBlockedReason(Role $role, int $holders): ?array
+    {
+        if (mb_strtolower(trim((string) $role->name)) === 'admin') {
+            return ['key' => 'roles.index.cannot_delete_admin', 'replace' => []];
+        }
+        if ($holders > 0) {
+            return ['key' => 'roles.index.cannot_delete_assigned', 'replace' => ['count' => $holders]];
+        }
+
+        return null;
     }
 
     public function create()
@@ -134,6 +157,13 @@ class RolesController extends Controller
 
     public function destroy(Role $role)
     {
+        // The admin role grants everything and backs every "admin" check; a role
+        // still held by staff would silently strip their access. The list
+        // disables Delete for both (RolesController::index sends why).
+        if ($reason = $this->deleteBlockedReason($role, $role->users()->count())) {
+            return back()->with('error', $reason);
+        }
+
         $role->delete();
         return back()->with('ok', [
             'key' => 'messages.success.deleted',

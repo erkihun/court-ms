@@ -40,8 +40,7 @@ class StoreDecisionRequest extends FormRequest
             'reviewing_admin_user_names' => ['nullable', 'array'],
             'reviewing_admin_user_names.*' => ['string', 'max:255'],
             'judges_comments' => ['nullable', 'string', 'max:5000'],
-            'judges' => ['nullable', 'array', 'size:3'],
-            'judges.*.admin_user_id' => ['nullable', 'integer', 'exists:users,id'],
+            ...self::panelRules(),
         ];
     }
 
@@ -50,6 +49,37 @@ class StoreDecisionRequest extends FormRequest
     {
         return [
             'case_id.exists' => __('decisions.validation.closed_case_required'),
+            ...self::panelMessages(),
+        ];
+    }
+
+    /**
+     * A decision must name three different judges, and the presiding (middle)
+     * seat must be held by the judge submitting it. Shared with the update
+     * path so a panel can never be emptied after creation.
+     *
+     * @return array<string, array<int, mixed>>
+     */
+    public static function panelRules(): array
+    {
+        return [
+            'judges' => ['required', 'array', 'size:3'],
+            'judges.*' => ['required', 'array'],
+            'judges.*.admin_user_id' => ['required', 'integer', 'distinct', 'exists:users,id'],
+            'judges.1.admin_user_id' => [Rule::in([auth()->id()])],
+        ];
+    }
+
+    /** @return array<string, string> */
+    public static function panelMessages(): array
+    {
+        return [
+            'judges.required' => __('decisions.validation.panel_required'),
+            'judges.size' => __('decisions.validation.panel_required'),
+            'judges.*.required' => __('decisions.validation.panel_required'),
+            'judges.*.admin_user_id.required' => __('decisions.validation.panel_required'),
+            'judges.*.admin_user_id.distinct' => __('decisions.validation.panel_distinct'),
+            'judges.1.admin_user_id.in' => __('decisions.validation.presiding_judge_must_be_you'),
         ];
     }
 }

@@ -47,7 +47,7 @@ class PublicSignageController extends Controller
             ->limit(6)
             ->get();
 
-        $todayCases = CourtCase::select('id', 'case_number', 'title', 'status', 'case_type_id', 'created_at', 'applicant_id')
+        $todayCases = CourtCase::select('id', 'case_number', 'status', 'case_type_id', 'created_at', 'applicant_id')
             ->with([
                 'caseType:id,name',
                 'applicant:id,first_name,middle_name,last_name',
@@ -90,10 +90,13 @@ class PublicSignageController extends Controller
             'statusCounts' => $statusCounts->map(fn ($stat): array => ['label' => (string) $stat->label, 'total' => (int) $stat->total])->values(),
             'categoryCounts' => $categoryCounts->map(fn ($cat): array => ['name' => (string) $cat->name, 'total' => (int) $cat->total])->values(),
             'todayCases' => $todayCases->map(function (CourtCase $case): array {
-                $applicant = trim((string) ($case->applicant?->full_name ?? ''));
-                if ($applicant === '') {
-                    $applicant = (string) ($case->applicant_name ?? $case->applicant?->name ?? '');
-                }
+                // A public screen shows initials only: the party can recognise
+                // their case next to its number, a passer-by cannot identify anyone.
+                $applicant = collect([$case->applicant?->first_name, $case->applicant?->middle_name, $case->applicant?->last_name])
+                    ->map(fn (?string $part): string => trim((string) $part))
+                    ->filter(fn (string $part): bool => $part !== '')
+                    ->map(fn (string $part): string => mb_strtoupper(mb_substr($part, 0, 1)).'.')
+                    ->implode(' ');
 
                 return [
                     'id' => $case->id,

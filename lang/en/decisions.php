@@ -134,5 +134,9 @@ return array (
   'validation' =>
   array (
     'closed_case_required' => 'A decision can only be created for a closed case.',
+    'panel_required' => 'Assign all three judges to the panel.',
+    'panel_distinct' => 'Each judge on the panel must be a different person.',
+    'presiding_judge_must_be_you' => 'You must hold the presiding (session) judge seat on the panel.',
+    'publish_requires_panel' => 'A decision can only be published or approved once all three judges are assigned.',
   ),
 );

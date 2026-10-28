@@ -29,7 +29,8 @@ test('the new user form lists every role and the default password notice, and th
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('Court/Users/Create')
-            ->where('defaultPassword', 'Welcome123!')
+            // No default password is shown: store() sets a random one and emails a setup link.
+            ->missing('defaultPassword')
             ->where('roles', fn ($roles) => collect($roles)->contains(fn ($row) => $row['id'] === $clerk->id && $row['name'] === $clerk->name)));
 
     $email = 'abebe-'.Str::lower(Str::random(6)).'@example.com';

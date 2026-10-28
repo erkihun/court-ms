@@ -10,6 +10,7 @@ import {
 import { useConfirm } from '@/hooks/useConfirm';
 import { useLocale } from '@/hooks/useLocale';
 import { formatNumber } from '@/utils/displayFormat';
+import { fill } from '@/court/i18n/useAccessForms';
 import type { RoleRow, RolesIndexProps } from '@/court/types/access';
 
 const CHIP_LIMIT = 6;
@@ -48,6 +49,12 @@ export default function RolesIndex({ roles }: RolesIndexProps) {
         });
         if (confirmed) router.delete(route('roles.destroy', role.id), { preserveScroll: true, onStart: () => setBusy(role.id), onFinish: () => setBusy(null) });
     };
+    // The server refuses these deletes too; the reason is the disabled button's tooltip.
+    const blockedReason = (role: RoleRow): string | null => {
+        if (role.delete_blocked === 'admin') return t('cm.roles.index.cannot_delete_admin');
+        if (role.delete_blocked === 'assigned') return fill(t('cm.roles.index.cannot_delete_assigned'), { count: formatNumber(role.users_count) });
+        return null;
+    };
 
     return (
         <AuthenticatedLayout header={(
@@ -78,9 +85,12 @@ export default function RolesIndex({ roles }: RolesIndexProps) {
                                     <td className={cx(tableCellClassName, 'align-top')}>
                                         <div className="flex flex-wrap gap-1.5">
                                             <Link href={route('roles.edit', role.id)} className={buttonClassName({ size: 'sm' })}>{t('cm.permissions.index.edit')}</Link>
-                                            <button type="button" disabled={busy === role.id} onClick={() => void remove(role)} className={buttonClassName({ variant: 'destructiveOutline', size: 'sm' })}>
-                                                {t('cm.roles.index.delete')}
-                                            </button>
+                                            <span title={blockedReason(role) ?? undefined}>
+                                                <button type="button" disabled={busy === role.id || blockedReason(role) !== null} aria-label={blockedReason(role) ? `${t('cm.roles.index.delete')}: ${blockedReason(role)}` : undefined}
+                                                    onClick={() => void remove(role)} className={buttonClassName({ variant: 'destructiveOutline', size: 'sm' })}>
+                                                    {t('cm.roles.index.delete')}
+                                                </button>
+                                            </span>
                                         </div>
                                     </td>
                                 </tr>

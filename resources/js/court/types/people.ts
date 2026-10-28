@@ -47,6 +47,8 @@ export interface UsersIndexProps {
 export interface RoleOption {
     id: number;
     name: string;
+    /** The admin role, for anyone who is not an administrator: the server refuses to grant it. */
+    disabled?: boolean;
 }
 
 /** Who the account is, as the forms and profile read it (UsersController::userIdentity). */
@@ -77,13 +79,13 @@ export interface UserFormUser extends UserIdentity {
 
 export interface UsersCreateProps {
     roles: RoleOption[];
-    /** The password the notice names (config auth.default_user_password). */
-    defaultPassword: string;
 }
 
 export interface UsersEditProps {
     user: UserFormUser;
     roles: RoleOption[];
+    /** False for someone editing only their own record: roles, status, password, signature and stamp are not theirs to change. */
+    canManage: boolean;
 }
 
 /** The profile page (Admin\UsersController::show). */

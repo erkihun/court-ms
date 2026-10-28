@@ -19,15 +19,23 @@ class AddSecurityHeaders
     {
         $response = $next($request);
 
-        if (! config('compliance.security.app_headers_enabled', false)) {
-            return $response;
+        // public/.htaccess already sends these three on Apache. The application
+        // copies are for deployments without that layer (e.g. Nginx only), and
+        // stay opt-in so Apache deployments do not receive duplicate headers.
+        if (config('compliance.security.app_headers_enabled', false)) {
+            $response->headers->set('X-Content-Type-Options', 'nosniff');
+            $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
+            $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         }
 
-        $response->headers->set('X-Content-Type-Options', 'nosniff');
-        $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
-        $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
-        $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+        // No web-server layer sends this, and the application uses none of these
+        // browser features, so it is always safe to deny them.
+        if (! $response->headers->has('Permissions-Policy')) {
+            $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+        }
 
+        // HSTS and CSP have their own switches, independent of the baseline set
+        // above, so they can be enabled without duplicating Apache's headers.
         if ($request->isSecure() && config('compliance.security.hsts_enabled', false)) {
             $response->headers->set(
                 'Strict-Transport-Security',

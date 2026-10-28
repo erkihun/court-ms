@@ -64,11 +64,19 @@ test('a decision can only be created for a closed case', function (): void {
         'court_case_id' => $activeCase->id,
     ]);
 
+    // A decision needs a complete panel, with the creator in the presiding seat.
+    $wingJudges = User::factory()->count(2)->create(['status' => 'active']);
+
     $this->actingAs($creator)
         ->post(route('decisions.store'), [
             'case_id' => $closedCase->id,
             'decision_date' => now()->toDateString(),
             'decision_content' => 'Closed cases can receive decisions.',
+            'judges' => [
+                ['admin_user_id' => $wingJudges[0]->id],
+                ['admin_user_id' => $creator->id],
+                ['admin_user_id' => $wingJudges[1]->id],
+            ],
         ])
         ->assertRedirect(route('decisions.index'));
 

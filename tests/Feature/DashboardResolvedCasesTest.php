@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Models\CaseType;
 use App\Models\CourtCase;
 use App\Models\Decision;
+use App\Models\Permission;
+use App\Models\Role;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
@@ -42,7 +44,11 @@ function dashboardDecision(CourtCase $courtCase, string $status): Decision
 test('published decisions define resolved cases across the admin dashboard', function (): void {
     Cache::flush();
 
+    // Case statistics are shown to staff who can view cases.
     $user = User::factory()->create(['status' => 'active']);
+    $role = Role::query()->create(['name' => 'dashboard-reader']);
+    $role->permissions()->sync([Permission::query()->firstOrCreate(['name' => 'cases.view'], ['label' => 'View cases'])->id]);
+    $user->roles()->sync([$role->id]);
     $team = Team::query()->create(['name' => 'Dashboard team']);
     $team->users()->attach($user);
 

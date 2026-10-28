@@ -123,4 +123,5 @@ return array (
   'cannot_respond_own_case' => 'You cannot submit a response to your own case.',
   'review_status_label' => 'Review status',
   'start_first_response' => 'Start by creating your first response document.',
+  'response_locked' => 'An accepted response is part of the case record and can no longer be changed.',
 );

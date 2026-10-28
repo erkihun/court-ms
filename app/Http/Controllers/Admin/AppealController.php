@@ -150,6 +150,12 @@ class AppealController extends Controller
         $appeal = DB::table('appeals')->where('id', $appealId)->first();
         abort_if(!$appeal, 404);
 
+        // Same stage rule as edit(): a decided appeal is a record and must not change.
+        if (!in_array($appeal->status, ['draft', 'submitted'], true)) {
+            return redirect()->route('appeals.show', $appealId)
+                ->with('error', 'messages.error.cannot_edit_stage');
+        }
+
         $data = $request->validate([
             'title'   => ['required', 'string', 'max:255'],
             'grounds' => ['nullable', 'string', 'max:10000'],

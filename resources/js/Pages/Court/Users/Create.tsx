@@ -7,7 +7,7 @@ import type { UsersCreateProps } from '@/court/types/people';
 import UserForm from './Partials/UserForm';
 
 /** A new staff account: identity, contact details, roles and profile images; the person gets a reset link. */
-export default function UsersCreate({ roles, defaultPassword }: UsersCreateProps) {
+export default function UsersCreate({ roles }: UsersCreateProps) {
     const { t } = useLocale();
 
     return (
@@ -16,7 +16,7 @@ export default function UsersCreate({ roles, defaultPassword }: UsersCreateProps
                 actions={<Link href={route('users.index')} className={buttonClassName({ variant: 'outline' })}>{t('cm.users.back_to_users')}</Link>} />
         )}>
             <Head title={t('cm.users.new_user_title')} />
-            <UserForm mode="create" roles={roles} defaultPassword={defaultPassword} />
+            <UserForm mode="create" roles={roles} />
         </AuthenticatedLayout>
     );
 }

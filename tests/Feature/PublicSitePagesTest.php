@@ -11,6 +11,8 @@ use App\Models\HomeService;
 use App\Models\HomeSetting;
 use App\Models\HomeSlide;
 use App\Models\HomeTimelineStep;
+use App\Models\Permission;
+use App\Models\Role;
 use App\Models\TermsAndCondition;
 use App\Models\User;
 use App\Notifications\PasswordResetOtp;
@@ -20,6 +22,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia;
 
 /*
@@ -28,9 +31,15 @@ use Inertia\Testing\AssertableInertia;
  * the React payloads (nested JSON, booleans, multipart with `_method`).
  */
 
+/** A landing-page editor: the manager's routes need settings.manage. */
 function publicSiteStaff(): User
 {
-    return User::factory()->create(['status' => 'active', 'email_verified_at' => now()]);
+    $role = Role::query()->create(['name' => 'site-editor-'.Str::lower(Str::random(6))]);
+    $role->permissions()->sync([Permission::query()->firstOrCreate(['name' => 'settings.manage'], ['label' => 'Manage settings'])->id]);
+    $user = User::factory()->create(['status' => 'active', 'email_verified_at' => now()]);
+    $user->roles()->sync([$role->id]);
+
+    return $user;
 }
 
 /* ── Public pages ─────────────────────────────────────────────────────── */
@@ -350,15 +359,14 @@ test('the forgot-password page shows the message of an expired later step', func
         ->assertInertia(fn (AssertableInertia $page) => $page->component('Court/Auth/ForgotPassword')->where('errors.code', __('auth.password_reset_session_expired')));
 });
 
-test('staff registration renders on React and creates the account from the page payload', function (): void {
-    $this->get(route('register'))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->component('Court/Auth/Register'));
-
-    // The page formats the national ID in groups of four; the server keeps the digits.
-    $this->post(route('register'), [
+test('there is no public staff self-registration', function (): void {
+    // Staff accounts are created by a user administrator (users.store), never from the public site.
+    $this->get('/register')->assertNotFound();
+    $this->post('/register', [
         'name' => 'New Clerk', 'email' => 'new.clerk@court.test', 'national_id_number' => '1234 5678 9012 3456',
         'password' => 'NewPassword123', 'password_confirmation' => 'NewPassword123',
-    ])->assertRedirect(route('dashboard', absolute: false));
+    ])->assertNotFound();
 
-    $this->assertAuthenticated();
-    expect(User::query()->firstWhere('email', 'new.clerk@court.test')->national_id)->toBe('1234567890123456');
+    $this->assertGuest();
+    expect(User::query()->where('email', 'new.clerk@court.test')->exists())->toBeFalse();
 });

@@ -37,9 +37,14 @@ final class PublicSiteChrome
         $manual = is_array($manual) ? $manual : [];
         $locale = app()->getLocale() === 'am' ? 'am' : 'en';
 
-        $footer = $footer ? array_combine(
+        $footer = is_array($footer) && $footer !== [] ? array_combine(
             self::FOOTER_FIELDS,
-            array_map(fn (string $field): ?string => isset($footer[$field]) && $footer[$field] !== '' ? (string) $footer[$field] : null, self::FOOTER_FIELDS),
+            array_map(fn (string $field): ?string => match (true) {
+                ! isset($footer[$field]) || $footer[$field] === '' || ! is_scalar($footer[$field]) => null,
+                // Social links land in an href: http(s) only, whatever was stored (EditorLink).
+                str_starts_with($field, 'social_') => EditorLink::safe((string) $footer[$field], allowRelative: false),
+                default => (string) $footer[$field],
+            }, self::FOOTER_FIELDS),
         ) : null;
         if ($footer !== null && $locale === 'am') {
             $footer['description'] = null;

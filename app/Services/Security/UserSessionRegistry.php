@@ -6,6 +6,7 @@ namespace App\Services\Security;
 
 use App\Models\User;
 use App\Support\ClientHints;
+use App\Support\SessionRows;
 use App\Support\UserAgent;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
@@ -34,11 +35,10 @@ final class UserSessionRegistry
         }
 
         $currentId = $request->session()->getId();
-        $sessions = $this->liveRows($user)
-            ->orderByDesc('last_activity')
-            ->get(['id', 'ip_address', 'user_agent', 'last_activity', 'payload'])
+        $sessions = $this->staffRows($this->liveRows($user)->orderByDesc('last_activity'))
             ->map(fn (object $row): array => [
-                'id' => (string) $row->id,
+                // Session ids never reach the browser; a row is addressed by its keyed hash.
+                'id' => SessionRows::publicKey((string) $row->id),
                 'ip_address' => $row->ip_address !== null ? (string) $row->ip_address : null,
                 ...$this->describe((string) $row->user_agent, ClientHints::fromSessionPayload((string) $row->payload)),
                 'last_active_at' => CarbonImmutable::createFromTimestamp((int) $row->last_activity)->toIso8601String(),
@@ -52,7 +52,7 @@ final class UserSessionRegistry
         $sessions = $sessions->map(fn (array $session): array => $session['current'] ? [...$session, ...$live] : $session);
         if (! $sessions->contains(fn (array $session): bool => $session['current'])) {
             $sessions->prepend([
-                'id' => $currentId,
+                'id' => SessionRows::publicKey($currentId),
                 'ip_address' => $request->ip(),
                 ...$live,
                 'last_active_at' => now()->toIso8601String(),
@@ -63,22 +63,39 @@ final class UserSessionRegistry
         return $sessions->values()->all();
     }
 
-    public function revoke(User $user, string $sessionId, string $currentSessionId): bool
+    /** Ends one of the account's other staff sessions, named by its keyed hash. */
+    public function revoke(User $user, string $key, string $currentSessionId): bool
     {
-        if (! $this->supported() || hash_equals($currentSessionId, $sessionId)) {
+        if (hash_equals(SessionRows::publicKey($currentSessionId), $key)) {
             return false;
         }
 
-        return $this->table()->where('user_id', (string) $user->getKey())->where('id', $sessionId)->delete() > 0;
+        $row = $this->staffRows($this->table()->where('user_id', (string) $user->getKey()))
+            ->first(fn (object $row): bool => hash_equals(SessionRows::publicKey((string) $row->id), $key));
+
+        return $row !== null && $this->table()->where('id', $row->id)->delete() > 0;
     }
 
     public function revokeOthers(User $user, string $currentSessionId): int
     {
-        if (! $this->supported()) {
-            return 0;
-        }
+        $ids = $this->staffRows($this->table()->where('user_id', (string) $user->getKey()))
+            ->reject(fn (object $row): bool => hash_equals($currentSessionId, (string) $row->id))
+            ->pluck('id');
 
-        return $this->table()->where('user_id', (string) $user->getKey())->where('id', '!=', $currentSessionId)->delete();
+        return $ids->isEmpty() ? 0 : $this->table()->whereIn('id', $ids->all())->delete();
+    }
+
+    /**
+     * The staff sessions among the rows: the table is shared with the applicant portal and
+     * user_id is only unique per guard, so rows of the applicant and respondent guards are left out.
+     *
+     * @return \Illuminate\Support\Collection<int, object>
+     */
+    private function staffRows(Builder $query): \Illuminate\Support\Collection
+    {
+        return $query->get(['id', 'ip_address', 'user_agent', 'last_activity', 'payload'])
+            ->reject(fn (object $row): bool => SessionRows::isPortal((string) $row->payload))
+            ->values();
     }
 
     /**

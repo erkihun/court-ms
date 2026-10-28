@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use Mews\Purifier\Facades\Purifier;
 
 class LetterTemplateController extends Controller
 {
@@ -137,6 +138,10 @@ class LetterTemplateController extends Controller
 
         // Clean placeholders into array format
         $data['placeholders'] = $this->normalizePlaceholders($data['placeholders'] ?? null);
+
+        // Sanitize the user-supplied HTML body before storing, with the profile a
+        // letter written from it is saved with ({{ placeholder }} tokens are text).
+        $data['body'] = Purifier::clean((string) $data['body'], 'default');
 
         return $data;
     }

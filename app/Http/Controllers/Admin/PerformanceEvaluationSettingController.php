@@ -185,9 +185,28 @@ class PerformanceEvaluationSettingController extends Controller
             ->values();
     }
 
+    /** Only follow `redirect_to` back into this application: a same-origin URL or a root-relative path. */
     private function redirectTarget(mixed $target): string
     {
-        if (is_string($target) && str_starts_with($target, url('/'))) {
+        if (! is_string($target) || $target === '') {
+            return route('settings.performance-evaluation.index');
+        }
+
+        // "/path" is local; "//host" and "/\host" are protocol-relative to another host.
+        if (str_starts_with($target, '/') && ! str_starts_with($target, '//') && ! str_starts_with($target, '/\\')) {
+            return $target;
+        }
+
+        $app = parse_url(url('/'));
+        $parts = parse_url($target);
+
+        if (
+            is_array($parts) && is_array($app)
+            && ($parts['scheme'] ?? null) === ($app['scheme'] ?? null)
+            && ($parts['host'] ?? null) === ($app['host'] ?? null)
+            && ($parts['port'] ?? null) === ($app['port'] ?? null)
+            && ! isset($parts['user'])
+        ) {
             return $target;
         }
 

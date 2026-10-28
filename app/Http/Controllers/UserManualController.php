@@ -29,7 +29,11 @@ class UserManualController extends Controller
 
         return Inertia::render('Court/Public/UserManual', [
             'title' => (string) ($settings["title_{$locale}"] ?? __('home.nav.user_manual')),
-            'content' => $content,
+            // Editor HTML, purified on output as well as on save (a manual saved
+            // before HTMLPurifier was used may still hold anything). The default
+            // profile keeps the tables, headings and inline styles a manual needs
+            // (HTMLPurifier writes the platform's line endings; the page gets "\n").
+            'content' => $content !== '' ? (string) preg_replace('/\r\n?/', "\n", (string) clean($content, 'default')) : '',
             'publicSite' => PublicSiteChrome::props(),
         ]);
     }

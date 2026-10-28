@@ -108,4 +108,16 @@ return [
         'title_en' => 'English title', 'title_am' => 'Amharic title', 'content_en' => 'English manual content', 'content_am' => 'Amharic manual content',
         'show_in_nav' => 'Show User Manual in home navigation', 'save' => 'Save User Manual', 'saved' => 'User manual content saved.',
     ],
+    'validation' => [
+        'safe_link' => 'The :attribute must be a web address starting with http:// or https://, a # anchor, or a path on this site starting with /.',
+        'safe_web_link' => 'The :attribute must be a web address starting with http:// or https://.',
+    ],
+    'flash' => [
+        'slide_added' => 'Slide added.', 'slide_updated' => 'Slide updated.', 'slide_deleted' => 'Slide deleted.',
+        'step_added' => 'Step added.', 'step_updated' => 'Step updated.', 'step_deleted' => 'Step deleted.',
+        'faq_added' => 'FAQ added.', 'faq_updated' => 'FAQ updated.', 'faq_deleted' => 'FAQ deleted.',
+        'service_added' => 'Service card added.', 'service_updated' => 'Service card updated.', 'service_deleted' => 'Service card deleted.',
+        'resource_added' => 'Resource added.', 'resource_updated' => 'Resource updated.', 'resource_deleted' => 'Resource deleted.',
+        'footer_saved' => 'Footer settings saved.', 'metrics_saved' => 'Statistics content saved.', 'sections_saved' => 'Section settings saved.',
+    ],
 ];

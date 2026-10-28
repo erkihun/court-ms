@@ -123,4 +123,5 @@ return array (
   'cannot_respond_own_case' => 'ለራስዎ መዝገብ መልስ ማስገባት አይችሉም።',
   'review_status_label' => 'የግምገማ ሁኔታ',
   'start_first_response' => 'የመጀመሪያ የመልስ ሰነድዎን በመፍጠር ይጀምሩ።',
+  'response_locked' => 'ተቀባይነት ያገኘ መልስ የመዝገቡ አካል በመሆኑ ሊቀየር አይችልም።',
 );

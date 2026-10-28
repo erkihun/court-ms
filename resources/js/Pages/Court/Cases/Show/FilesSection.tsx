@@ -12,10 +12,12 @@ interface Props {
     caseId: number;
     files: CaseFile[];
     can: CaseDetailPermissions;
+    /** A closed case with a published decision takes no new files and loses none. */
+    caseLocked: boolean;
 }
 
 /** The files uploaded to the case (by the court or the applicant): upload, view, remove. */
-export default function FilesSection({ caseId, files, can }: Props) {
+export default function FilesSection({ caseId, files, can, caseLocked }: Props) {
     const { t } = useCaseText();
     const { confirm } = useConfirm();
     const fileInput = useRef<HTMLInputElement>(null);
@@ -42,7 +44,7 @@ export default function FilesSection({ caseId, files, can }: Props) {
 
     return (
         <SectionCard id="uploaded-files" title={t('cm.cases.files.title')} icon={<FilesIcon />} count={`${files.length} ${t('cm.cases.files.total')}`}>
-            {can.createFiles && (
+            {!caseLocked && can.createFiles && (
                 <form onSubmit={upload} className="grid grid-cols-1 gap-3 rounded-control border border-(--app-border) bg-(--app-surface-muted) p-4 sm:grid-cols-[1fr_auto_auto] sm:items-end">
                     <FormField id="file-label" label={t('cm.cases.files.label_placeholder')} error={form.errors.label}>
                         {({ id, describedBy, invalid }) => <Input id={id} value={form.data.label} onChange={(e) => form.setData('label', e.target.value)} placeholder={t('cm.cases.files.label_placeholder')} aria-describedby={describedBy} aria-invalid={invalid || undefined} className="w-full" />}
@@ -80,7 +82,7 @@ export default function FilesSection({ caseId, files, can }: Props) {
                                 {can.viewFiles && (
                                     <a href={route('cases.files.download', [caseId, file.id])} className={buttonClassName({ variant: 'outline', size: 'xs' })}><EyeIcon className="h-3 w-3" /> {t('cm.cases.documents.view')}</a>
                                 )}
-                                {can.deleteFiles && (
+                                {!caseLocked && can.deleteFiles && (
                                     <button type="button" onClick={() => remove(file)} disabled={removing === file.id} className={actionLinkClassName({ tone: 'danger' })}><TrashIcon className="h-3 w-3" /> {t('cm.cases.general.delete')}</button>
                                 )}
                             </div>

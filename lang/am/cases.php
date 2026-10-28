@@ -484,4 +484,11 @@ return array (
     'empty' => 'ምንም የመዝገብ አይነት አልተገኘም።',
     'adjust_search_hint' => 'የፍለጋዎን መስፈርት በማስተካከል ይሞክሩ።',
   ),
+  'messages_flash' => array (
+    'evidence_removed' => 'ማስረጃው ተወግዷል።',
+    'witness_removed' => 'ምስክሩ ተወግዷል።',
+  ),
+  'errors' => array (
+    'no_case_access' => 'ይህን መዝገብ የማየት ወይም የመቀየር ፈቃድ የለዎትም።',
+  ),
 );

@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class TeamController extends Controller
@@ -70,7 +72,8 @@ class TeamController extends Controller
                 'team_leader_id' => $team->team_leader_id !== null ? (int) $team->team_leader_id : null,
                 'user_ids' => $team->users->pluck('id')->map(fn ($id) => (int) $id)->values()->all(),
             ],
-            'teams' => $this->teamOptions(Team::where('id', '!=', $team->id)->orderBy('name')->get()),
+            // A team cannot report to itself or to one of its own sub-teams.
+            'teams' => $this->teamOptions(Team::whereNotIn('id', $this->descendantIds($team)->push((int) $team->id)->all())->orderBy('name')->get()),
             'users' => $this->userOptions($this->availableUsers($team)),
         ]);
     }
@@ -123,6 +126,12 @@ class TeamController extends Controller
             'description' => ['nullable', 'string'],
             'team_leader_id' => ['nullable', 'exists:users,id'],
         ]);
+
+        // A team cannot report to itself or to one of its sub-teams: the
+        // hierarchy would loop and the team would drop out of the tree.
+        if (! empty($data['parent_id']) && $this->descendantIds($team)->push((int) $team->id)->contains((int) $data['parent_id'])) {
+            throw ValidationException::withMessages(['parent_id' => __('teams.errors.parent_cycle')]);
+        }
 
         $team->update($data);
 
@@ -184,6 +193,34 @@ class TeamController extends Controller
             : 'messages.success.team_membership_updated';
 
         return redirect()->route('teams.edit', $team)->with('success', $message);
+    }
+
+    /**
+     * Every team below this one, however deep (breadth-first over parent_id;
+     * the visited set stops at a loop already stored).
+     *
+     * @return Collection<int, int>
+     */
+    private function descendantIds(Team $team): Collection
+    {
+        $seen = [(int) $team->id => true];
+        $found = [];
+        $frontier = [(int) $team->id];
+
+        while ($frontier !== []) {
+            $children = Team::whereIn('parent_id', $frontier)->pluck('id')
+                ->map(fn ($id): int => (int) $id)
+                ->reject(fn (int $id): bool => isset($seen[$id]))
+                ->values()
+                ->all();
+            foreach ($children as $id) {
+                $seen[$id] = true;
+                $found[] = $id;
+            }
+            $frontier = $children;
+        }
+
+        return collect($found);
     }
 
     private function ensureSingleTeamForUser(int $userId, ?int $currentTeamId = null): void

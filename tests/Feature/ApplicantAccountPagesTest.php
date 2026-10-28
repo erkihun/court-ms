@@ -440,7 +440,7 @@ test('the sessions page lists the applicant sessions and ends another one from t
             ->component('Court/Applicant/Sessions')
             ->where('supported', config('session.driver') === 'database')
             ->where('status', null)
-            ->where('sessions', fn ($sessions) => collect($sessions)->contains(fn ($session) => $session['id'] === 'aap-other-session'
+            ->where('sessions', fn ($sessions) => collect($sessions)->contains(fn ($session) => $session['id'] === \App\Support\SessionRows::publicKey('aap-other-session')
                 && $session['device_name'] === 'Windows'
                 && $session['browser_name'] === 'Chrome 150'
                 && $session['ip_address'] === '203.0.113.30'
@@ -450,7 +450,7 @@ test('the sessions page lists the applicant sessions and ends another one from t
 
     $this->actingAs($applicant, 'applicant')
         ->from(route('applicant.profile.sessions.index'))
-        ->delete(route('applicant.profile.sessions.destroy', 'aap-other-session'))
+        ->delete(route('applicant.profile.sessions.destroy', \App\Support\SessionRows::publicKey('aap-other-session')))
         ->assertRedirect(route('applicant.profile.sessions.index'));
 
     $this->assertDatabaseMissing('sessions', ['id' => 'aap-other-session']);

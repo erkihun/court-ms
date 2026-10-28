@@ -8,9 +8,11 @@ use App\Models\Decision;
 use App\Models\Respondent;
 use App\Services\ResponseNotificationService;
 use App\Support\DecisionPdf;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -20,63 +22,90 @@ use Inertia\Inertia;
 
 class CaseSearchController extends Controller
 {
+    /**
+     * The case finder (React, Court/Respondent/CaseSearch). The search form posts
+     * to submit(), which redirects here with the number only, so the access code
+     * never appears in a URL or in browser history (#3, 58e8368). An old
+     * ?case_code= link still works once; the stored code never leaves the server.
+     */
     public function index(Request $request)
     {
         Session::put('acting_as_respondent', true);
         $caseNumber = trim((string) $request->get('case_number', ''));
-        $caseCode = trim((string) $request->get('case_code', ''));
         $case = null;
-        $codeError = false;
+        $codeError = (bool) session('respondent_search_failed', false);
 
-        if ($caseNumber !== '') {
-            $case = $this->findCaseForSearch($caseNumber);
-
-            // Prevent applicants from viewing/searching their own cases while in respondent mode.
-            $applicantId = Auth::guard('applicant')->id();
-            if ($case && $applicantId && (int) $case->applicant_id === (int) $applicantId) {
-                $case = null;
-            }
-
-            if ($case) {
-                if (!$this->caseCodeMatches($case, $caseCode)) {
-                    $case = null;
-                    $codeError = true;
-                }
-            }
-
-            if ($case) {
-                $this->grantCaseAccess($case->id);
-                $history = collect(session('respondent_viewed_cases', []));
-                $history = $history->prepend($caseNumber)->unique()->take(12);
-                session(['respondent_viewed_cases' => $history->values()->all()]);
-
-                // If the respondent is signed in, immediately record the view so it appears in "My Cases".
-                if (auth('applicant')->check()) {
-                    $respondent = $this->resolveActingRespondent();
-                    if ($respondent) {
-                        $this->recordRespondentCaseView(
-                            $case->id,
-                            $respondent->id,
-                            $case->case_number ?? null
-                        );
-                    }
-                }
-            }
+        if ($caseNumber !== '' && $request->filled('case_code')) {
+            [$case, $codeError] = $this->attempt($caseNumber, trim((string) $request->get('case_code')));
+        } elseif ($caseNumber !== '') {
+            // After submit(): the case is shown when this session was granted access to it.
+            $found = $this->findCaseForSearch($caseNumber);
+            $case = $found && $this->hasCaseAccess((int) $found->id) ? $found : null;
         }
 
-        // The case finder (React, Court/Respondent/CaseSearch). The stored access code never leaves the server.
         return Inertia::render('Court/Respondent/CaseSearch', [
             'caseNumber' => $caseNumber,
-            'caseCode' => $caseCode,
             'case' => $case ? [
                 'case_number' => (string) $case->case_number,
                 'title' => $case->title,
                 'status' => $case->status,
                 'created_at' => $this->iso($case->created_at),
-                'show_url' => route('respondent.cases.show', ['caseNumber' => $case->case_number, 'case_code' => $caseCode]),
+                // The access granted in attempt() opens the case page without the code.
+                'show_url' => route('respondent.cases.show', ['caseNumber' => $case->case_number]),
             ] : null,
             'codeError' => $codeError,
         ]);
+    }
+
+    /** The search form: checks the number and access code, then redirects without the code. */
+    public function submit(Request $request): RedirectResponse
+    {
+        Session::put('acting_as_respondent', true);
+        $data = $request->validate([
+            'case_number' => ['required', 'string', 'max:64'],
+            'case_code' => ['required', 'string', 'max:32'],
+        ]);
+        $caseNumber = trim($data['case_number']);
+
+        [$case, $codeError] = $this->attempt($caseNumber, trim($data['case_code']));
+
+        return redirect()
+            ->route('respondent.case.search', ['case_number' => $caseNumber])
+            ->with('respondent_search_failed', $case === null && $codeError);
+    }
+
+    /**
+     * Looks a case up by number and access code; on success grants this session
+     * access and records the view (which is what "My cases" and later visits use).
+     *
+     * @return array{0: object|null, 1: bool} [case, wrong code]
+     */
+    private function attempt(string $caseNumber, string $caseCode): array
+    {
+        $case = $this->findCaseForSearch($caseNumber);
+
+        // Applicants cannot look up their own cases while in respondent mode.
+        $applicantId = Auth::guard('applicant')->id();
+        if ($case && $applicantId && (int) $case->applicant_id === (int) $applicantId) {
+            $case = null;
+        }
+
+        if ($case && ! $this->caseCodeMatches($case, $caseCode)) {
+            return [null, true];
+        }
+
+        if ($case) {
+            $this->grantCaseAccess($case->id);
+            $history = collect(session('respondent_viewed_cases', []))->prepend($caseNumber)->unique()->take(12);
+            session(['respondent_viewed_cases' => $history->values()->all()]);
+
+            $respondent = $this->resolveActingRespondent();
+            if ($respondent) {
+                $this->recordRespondentCaseView($case->id, $respondent->id, $case->case_number ?? null);
+            }
+        }
+
+        return [$case, false];
     }
 
     private function iso(mixed $value): ?string
@@ -282,8 +311,12 @@ class CaseSearchController extends Controller
         $caseUrl = route('respondent.cases.show', $case->case_number);
 
         $this->recordRespondentCaseView($case->id, $respondent->id, $case->case_number ?? null);
-        $this->notifyRespondentViewParticipants($case, $respondentName, $caseUrl);
-        ResponseNotificationService::notifyRespondentCaseViewed((int) $case->id, $respondentName);
+        // Every view is recorded and audited, but the applicant and the court are told
+        // at most once a day per respondent and case, not on every page load (#3, 4dd634b).
+        if (Cache::add("respondent-viewed-notice:{$respondent->id}:{$case->id}", true, now()->addDay())) {
+            $this->notifyRespondentViewParticipants($case, $respondentName, $caseUrl);
+            ResponseNotificationService::notifyRespondentCaseViewed((int) $case->id, $respondentName);
+        }
         $this->logRespondentCaseAudit($case->id, $respondent->id, $respondentName);
     }
 
@@ -403,8 +436,8 @@ class CaseSearchController extends Controller
                 'status' => (string) ($case->status ?? 'pending') ?: 'pending',
                 'case_type' => $case->case_type ?? null,
                 'viewed_at' => $this->iso($case->viewed_at ?? null),
-                // The Blade list linked with the case's code, as here.
-                'show_url' => route('respondent.cases.show', ['caseNumber' => $case->case_number, 'case_code' => $case->code ?? null]),
+                // The recorded view opens the case page; the access code stays out of the link.
+                'show_url' => route('respondent.cases.show', ['caseNumber' => $case->case_number]),
             ])->values()->all(),
         ]);
     }

@@ -26,6 +26,8 @@ export interface BenchNoteRow {
     /** Sanitized HTML. */
     note: string;
     author_name: string | null;
+    /** The viewer wrote the note or is an administrator: only then may they edit or delete it. */
+    mine: boolean;
     /** ISO 8601. */
     created_at: string | null;
     /** ISO 8601; null when the note was never changed after it was written. */

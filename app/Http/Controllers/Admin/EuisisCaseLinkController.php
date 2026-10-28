@@ -9,6 +9,8 @@ use App\Models\EuisisReferral;
 use App\Services\Euisis\EuisisClient;
 use App\Services\Euisis\EuisisException;
 use App\Services\Euisis\EuisisSync;
+use App\Support\CaseScope;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +25,7 @@ class EuisisCaseLinkController extends Controller
 {
     public function organization(Request $request, int $id): RedirectResponse
     {
-        abort_unless(DB::table('court_cases')->where('id', $id)->exists(), 404);
+        $this->writableCase($id);
         $data = $request->validateWithBag('euisis', [
             'organization_uuid' => ['nullable', 'uuid', 'exists:euisis_organizations,uuid'],
         ]);
@@ -38,8 +40,7 @@ class EuisisCaseLinkController extends Controller
 
     public function employee(Request $request, int $id, EuisisClient $client, EuisisSync $sync): RedirectResponse
     {
-        $case = DB::table('court_cases')->where('id', $id)->first(['id', 'applicant_id']);
-        abort_unless($case !== null, 404);
+        $case = $this->writableCase($id);
         $data = $request->validateWithBag('euisis', ['employee_number' => ['required', 'string', 'max:60']]);
         $referral = EuisisReferral::query()->where('court_case_id', $id)->first();
 
@@ -79,5 +80,18 @@ class EuisisCaseLinkController extends Controller
     private function fail(int $id, string $message): RedirectResponse
     {
         return redirect()->to(route('cases.show', $id).'#euisis-panel')->withErrors(['employee_number' => $message], 'euisis')->withInput();
+    }
+
+    /** The case within the staff member's team scope and not frozen by a published decision (CaseScope). */
+    private function writableCase(int $id): object
+    {
+        $case = DB::table('court_cases')->where('id', $id)->first();
+        abort_unless($case !== null, 404);
+        CaseScope::ensure($case);
+        if (CaseScope::isLocked($case)) {
+            throw new HttpResponseException(back()->with('error', __('cases.show.actions_locked')));
+        }
+
+        return $case;
     }
 }

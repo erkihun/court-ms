@@ -262,6 +262,7 @@ class CaseController extends Controller
         abort_if(!$case, 404);
 
         $scope = $this->buildAssignmentScope();
+        $this->ensureCaseAccess($case);
         $leaderTeam = $scope['leaderTeam'];
 
         return Inertia::render('Court/Cases/Assign', [
@@ -314,6 +315,7 @@ class CaseController extends Controller
 
         $case = DB::table('court_cases')->where('id', $caseId)->first();
         abort_if(!$case, 404);
+        $this->ensureCaseAccess($case);
 
         $assigning = !$request->boolean('unassign') && !empty($validated['assigned_user_id']);
         $assignedUserId = $assigning ? (int) $validated['assigned_user_id'] : null;
@@ -453,24 +455,9 @@ class CaseController extends Controller
 
         abort_if(!$case, 404, 'Case not found.');
 
-        $memberScopeIds = $this->teamLeaderAssignmentIds(Auth::user());
-        if (!empty($memberScopeIds)) {
-            $leaderTeamId = Team::where('team_leader_id', Auth::id())->value('id');
-            $allowed = in_array($case->assigned_user_id, $memberScopeIds, true)
-                || ($leaderTeamId && (int) $case->assigned_team_id === (int) $leaderTeamId);
-            abort_if(!$allowed, 403, 'You do not have access to this case.');
-        } else {
-            $uid = Auth::id();
-            $isTeamMember = $uid && DB::table('team_user')->where('user_id', $uid)->exists();
-            $isLeader = Auth::user()?->hasPermission('cases.assign.member') ?? false;
-            $canAssignTeams = Auth::user()?->hasPermission('cases.assign.team') ?? false;
-
-            if ($isTeamMember && !$isLeader && !$canAssignTeams) {
-                // Backward compatibility: many cases are assigned via assigned_user_id only.
-                $assignedTo = (int) ($case->assigned_member_user_id ?? $case->assigned_user_id ?? 0);
-                abort_if($assignedTo !== (int) $uid, 403, 'You do not have access to this case.');
-            }
-        }
+        // A case awaiting review opens only for reviewers and its assignee, as on the record page (CourtCasePolicy::view).
+        $this->authorize('view', \App\Models\CourtCase::query()->findOrFail($id));
+        $this->ensureCaseAccess($case);
 
         // Make HTML fields explicit for Blade raw rendering
         $case->description_html        = (string) ($case->description ?? '');
@@ -897,7 +884,8 @@ class CaseController extends Controller
                 'manageResponseReplies' => $can('cases.response-replies.manage'),
                 'writeLetter' => $can('letters.create'),
                 'viewLetters' => $can('letters.view'),
-                'manageBench' => $can('bench-notes.manage'),
+                // The button opens the bench notes list, which needs both (BenchNoteController).
+                'manageBench' => $can('bench-notes.manage') && $can('bench-notes.view'),
                 'viewHearings' => $can('hearing.view'),
                 'createHearings' => $can('hearing.create'),
                 'updateHearings' => $can('hearing.update'),
@@ -1153,6 +1141,7 @@ class CaseController extends Controller
     {
         $case = DB::table('court_cases')->where('id', $id)->first();
         abort_if(!$case, 404, 'Case not found.');
+        $this->ensureCaseAccess($case);
 
         $data = $request->validate([
             'decision' => ['required', 'in:accept,return,reject'],
@@ -1219,6 +1208,9 @@ class CaseController extends Controller
     {
         $response = RespondentResponse::find($responseId);
         abort_if(!$response, 404, __('respondent.response_not_found'));
+        $responseCase = DB::table('court_cases')->where('case_number', $response->case_number)->first();
+        abort_if(!$responseCase, 404);
+        $this->ensureCaseAccess($responseCase);
 
         $data = $request->validate([
             'decision'    => ['required', 'in:accept,return'],
@@ -1253,6 +1245,9 @@ class CaseController extends Controller
     {
         $reply = ApplicantResponseReply::find($replyId);
         abort_if(!$reply, 404, __('respondent.response_reply_not_found'));
+        $replyCase = DB::table('court_cases')->where('id', $reply->case_id)->first();
+        abort_if(!$replyCase, 404);
+        $this->ensureCaseAccess($replyCase);
 
         $data = $request->validate([
             'decision'    => ['required', 'in:accept,return'],
@@ -1300,6 +1295,7 @@ class CaseController extends Controller
 
         $case = DB::table('court_cases')->where('id', $id)->first();
         abort_if(!$case, 404);
+        $this->ensureCaseAccess($case);
 
         $old = $case->status;
         $new = $data['status'];
@@ -1407,12 +1403,11 @@ class CaseController extends Controller
      */
     public function postAdminMessage(Request $request, int $id)
     {
+        $case = $this->writableCase($id, 'message.create');
+
         $data = $request->validate([
             'body' => ['required', 'string', 'max:5000'],
         ]);
-
-        $case = DB::table('court_cases')->where('id', $id)->first();
-        abort_if(!$case, 404);
 
         DB::table('case_messages')->insert([
             'case_id'             => $id,
@@ -1461,8 +1456,7 @@ class CaseController extends Controller
      */
     public function storeHearing(Request $request, int $case)
     {
-        $c = DB::table('court_cases')->where('id', $case)->first();
-        abort_if(!$c, 404);
+        $c = $this->writableCase($case, 'hearing.create');
 
         $data = $request->validate([
             'hearing_at' => ['required', 'date'], // expect normalized datetime string (Y-m-d H:i:s)
@@ -1532,6 +1526,7 @@ class CaseController extends Controller
     {
         $h = DB::table('case_hearings')->where('id', $hearing)->first();
         abort_if(!$h, 404);
+        $this->writableCase((int) $h->case_id, 'hearing.update');
         $existingHearingDate = Carbon::parse($h->hearing_at)->startOfDay();
         if ($existingHearingDate->lte(Carbon::today())) {
             return back()->with('error', 'messages.error.past_hearing_edit_locked');
@@ -1583,6 +1578,7 @@ class CaseController extends Controller
     {
         $row = DB::table('case_hearings')->where('id', $hearing)->first();
         abort_if(!$row, 404);
+        $this->writableCase((int) $row->case_id, 'hearing.delete');
         $existingHearingDate = Carbon::parse($row->hearing_at)->startOfDay();
         if ($existingHearingDate->lte(Carbon::today())) {
             return back()->with('error', 'messages.error.past_hearing_delete_locked');
@@ -1606,8 +1602,7 @@ class CaseController extends Controller
      */
     public function storeFile(Request $request, int $case, SecureUploadService $uploads)
     {
-        $c = DB::table('court_cases')->where('id', $case)->first();
-        abort_if(!$c, 404);
+        $this->writableCase($case, 'file.create');
 
         $data = $request->validate([
             'label' => ['nullable', 'string', 'max:255'],
@@ -1648,7 +1643,8 @@ class CaseController extends Controller
      */
     public function deleteFile(int $case, int $file, LegalHoldService $legalHolds)
     {
-        $row = DB::table('case_files')->where('id', $file)->where('case_id', $case)->first();
+        $this->writableCase($case, 'file.delete');
+        $row =DB::table('case_files')->where('id', $file)->where('case_id', $case)->first();
         abort_if(!$row, 404);
 
         $legalHolds->assertFileMayBeDeleted((string) $row->path);
@@ -1675,6 +1671,11 @@ class CaseController extends Controller
     public function viewDocument(int $caseId, int $docId)
     {
         $this->authorizeView();
+
+        // A submitted document is part of the case file: same team scope as the case page.
+        $case = DB::table('court_cases')->where('id', $caseId)->first();
+        abort_if(!$case, 404, 'Case not found.');
+        $this->ensureCaseAccess($case);
 
         $doc = DB::table('case_evidences')
             ->where('id', $docId)
@@ -1726,8 +1727,7 @@ class CaseController extends Controller
      */
     public function storeWitness(Request $request, int $case)
     {
-        $c = DB::table('court_cases')->where('id', $case)->first();
-        abort_if(!$c, 404);
+        $this->writableCase($case);
 
         $data = $request->validate([
             'full_name' => ['required', 'string', 'max:255'],
@@ -1761,7 +1761,8 @@ class CaseController extends Controller
      */
     public function updateWitness(Request $request, int $case, int $witness)
     {
-        $exists = DB::table('case_witnesses')
+        $this->writableCase($case);
+        $exists =DB::table('case_witnesses')
             ->where('id', $witness)
             ->where('case_id', $case)
             ->exists();
@@ -1796,6 +1797,7 @@ class CaseController extends Controller
      */
     public function deleteWitness(int $case, int $witness)
     {
+        $this->writableCase($case);
         DB::table('case_witnesses')
             ->where('id', $witness)
             ->where('case_id', $case)
@@ -1805,6 +1807,41 @@ class CaseController extends Controller
             'key' => 'messages.success.deleted',
             'replace' => ['resource' => __('messages.resources.witness')],
         ]);
+    }
+
+    /**
+     * Team leaders only reach their team's cases and plain team members only
+     * the cases assigned to them; everyone else with cases.view sees all.
+     */
+    /** Team leaders reach their team's cases, plain team members only theirs (CaseScope). */
+    private function ensureCaseAccess(object $case): void
+    {
+        \App\Support\CaseScope::ensure($case);
+    }
+
+    /** A published decision on a closed case freezes the file. */
+    private function isCaseLocked(object $case): bool
+    {
+        return \App\Support\CaseScope::isLocked($case);
+    }
+
+    /**
+     * Case a staff member may change: it exists, is within their scope, is not
+     * locked by a published decision, and (when given) they hold $permission.
+     * The page hides these actions already; this is the server-side check.
+     */
+    private function writableCase(int $caseId, ?string $permission = null): object
+    {
+        $case = DB::table('court_cases')->where('id', $caseId)->first();
+        abort_if(!$case, 404);
+        abort_if($permission !== null && !(Auth::user()?->hasPermission($permission) ?? false), 403);
+        $this->ensureCaseAccess($case);
+
+        if ($this->isCaseLocked($case)) {
+            throw new HttpResponseException(back()->with('error', __('cases.show.actions_locked')));
+        }
+
+        return $case;
     }
 
     /**

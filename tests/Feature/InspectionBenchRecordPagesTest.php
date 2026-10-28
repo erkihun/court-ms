@@ -332,7 +332,8 @@ test('the bench notes list renders with its cards, the case filter and the permi
 });
 
 test('the bench note form renders and the store, update and delete actions still work', function (): void {
-    $judge = ibrUser(['bench-notes.manage']);
+    // Each action checks its own bench-notes.* permission on top of bench-notes.manage.
+    $judge = ibrUser(['bench-notes.manage', 'bench-notes.view', 'bench-notes.create', 'bench-notes.update', 'bench-notes.delete']);
     $colleague = User::factory()->create(['status' => 'active']);
     $case = ibrCase();
 

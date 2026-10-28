@@ -480,4 +480,11 @@ return array (
     'empty' => 'No case types found.',
     'adjust_search_hint' => 'Try adjusting your search criteria.',
   ),
+  'messages_flash' => array (
+    'evidence_removed' => 'Evidence removed.',
+    'witness_removed' => 'Witness removed.',
+  ),
+  'errors' => array (
+    'no_case_access' => 'You do not have access to this case.',
+  ),
 );

@@ -2,7 +2,8 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import PageHeader from '@/Components/PageHeader';
-import { Button, Card, FormField, Input, Textarea, buttonClassName } from '@/Components/ui';
+import RichTextEditor from '@/Components/forms/RichTextEditor';
+import { Button, Card, FormField, Input, buttonClassName } from '@/Components/ui';
 import { useLocale } from '@/hooks/useLocale';
 
 interface Props {
@@ -36,9 +37,8 @@ export default function AboutForm({ page }: Props) {
                     <FormField label={t('cm.about.form_slug_label')} error={form.errors.slug}>
                         {({ id }) => <Input id={id} value={form.data.slug} onChange={(event) => form.setData('slug', event.target.value)} />}
                     </FormField>
-                    <FormField label={t('cm.about.form_body_label')} required error={form.errors.body}>
-                        {({ id }) => <Textarea id={id} rows={12} value={form.data.body} onChange={(event) => form.setData('body', event.target.value)} required />}
-                    </FormField>
+                    {/* The body is HTML (the applicant sign-in page shows it as such), purified on save. */}
+                    <RichTextEditor label={t('cm.about.form_body_label')} value={form.data.body} onChange={(html) => form.setData('body', html)} error={form.errors.body} required />
                     <label className="flex items-center gap-2 text-sm text-(--app-foreground)">
                         <input type="checkbox" checked={form.data.is_published} onChange={(event) => form.setData('is_published', event.target.checked)} className="h-4 w-4 rounded border-(--app-border)" />
                         {t('cm.about.form_published_label')}

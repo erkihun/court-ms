@@ -10,6 +10,7 @@ use App\Models\HomeService;
 use App\Models\HomeSetting;
 use App\Models\HomeSlide;
 use App\Models\HomeTimelineStep;
+use App\Support\Ui\EditorLink;
 use App\Support\Ui\PublicSiteChrome;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -185,9 +186,10 @@ class PublicHomeController extends Controller
             'title' => (string) $slide->title,
             'description' => (string) ($slide->description ?? ''),
             'primary_label' => (string) $slide->primary_label,
-            'primary_href' => $slide->primary_href ?: '#',
+            // Editor links: http(s), # anchors and site paths only; anything else becomes '#'.
+            'primary_href' => EditorLink::safe($slide->primary_href) ?? '#',
             'secondary_label' => (string) ($slide->secondary_label ?? ''),
-            'secondary_href' => $slide->secondary_href ?: '#',
+            'secondary_href' => EditorLink::safe($slide->secondary_href) ?? '#',
             'style' => in_array($slide->bg_style, self::SLIDE_STYLES, true) ? $slide->bg_style : 'blue',
             'image_url' => $slide->bg_image ? asset('storage/'.$slide->bg_image) : null,
         ];
@@ -283,7 +285,7 @@ class PublicHomeController extends Controller
             'is_featured' => (bool) $resource->is_featured,
             'published_at' => $resource->published_at?->toIso8601String(),
             'download_url' => $resource->isDownloadable() ? asset('storage/'.$resource->file_path) : null,
-            'external_url' => $resource->external_url ?: null,
+            'external_url' => EditorLink::safe($resource->external_url, allowRelative: false),
             'cover_image_url' => $resource->cover_image ? asset('storage/'.$resource->cover_image) : null,
         ];
     }

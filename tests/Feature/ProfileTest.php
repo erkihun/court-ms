@@ -87,7 +87,7 @@ test('sessions page shows real device and browser info from stored sessions', fu
         ->assertOk()
         ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
             ->where('devices.sessions', fn ($sessions) => collect($sessions)->contains(
-                fn ($row) => $row['id'] === 'other-session-id' && $row['os'] === 'macOS' && $row['browser'] === 'Safari 17' && $row['ip_address'] === '203.0.113.7'
+                fn ($row) => $row['id'] === \App\Support\SessionRows::publicKey('other-session-id') && $row['os'] === 'macOS' && $row['browser'] === 'Safari 17' && $row['ip_address'] === '203.0.113.7'
             )));
 });
 
@@ -113,7 +113,7 @@ test('sessions page shows exact os and browser version from stored client hints'
         ->assertOk()
         ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
             ->where('devices.sessions', fn ($sessions) => collect($sessions)->contains(
-                fn ($row) => $row['id'] === 'hinted-session-id' && $row['os'] === 'Windows 11' && $row['browser'] === 'Microsoft Edge 150.0.3595.20'
+                fn ($row) => $row['id'] === \App\Support\SessionRows::publicKey('hinted-session-id') && $row['os'] === 'Windows 11' && $row['browser'] === 'Microsoft Edge 150.0.3595.20'
             )));
 });
 
@@ -151,7 +151,7 @@ test('user can revoke another session but not the current one', function () {
     ]);
 
     $this->actingAs($user)
-        ->delete('/profile/sessions/other-session-id')
+        ->delete('/profile/sessions/'.\App\Support\SessionRows::publicKey('other-session-id'))
         ->assertRedirect();
 
     $this->assertDatabaseMissing('sessions', ['id' => 'other-session-id']);

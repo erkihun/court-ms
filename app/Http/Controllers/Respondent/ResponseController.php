@@ -109,6 +109,9 @@ class ResponseController extends Controller
     public function edit(RespondentResponse $response)
     {
         $this->authorizeOwnership($response);
+        if ($this->isLocked($response)) {
+            return redirect()->route('respondent.responses.show', $response)->with('error', __('respondent.response_locked'));
+        }
 
         return Inertia::render('Court/Respondent/Responses/Form', [
             'response' => $this->present($response, withDescription: true),
@@ -128,17 +131,19 @@ class ResponseController extends Controller
             'response_number' => $response->response_number,
             'review_status' => $reviewStatus,
             'review_note' => $response->review_note,
-            // Accepted responses are read only (the Blade list hid edit and delete for them).
-            'locked' => in_array($reviewStatus, ['accepted', 'accept'], true),
+            // Accepted responses are read only, on the server too (update and destroy refuse them).
+            'locked' => $this->isLocked($response),
             'has_pdf' => ! empty($response->pdf_path),
             'created_at' => $response->created_at?->toIso8601String(),
-            ...($withDescription ? ['description' => $response->description] : []),
+            // Purified on save; cleaned again on the way out, as the other rich text is.
+            ...($withDescription ? ['description' => $response->description ? (string) clean($response->description, 'cases') : null] : []),
         ];
     }
 
     public function update(Request $request, RespondentResponse $response)
     {
         $this->authorizeOwnership($response);
+        $this->ensureEditable($response);
         $applicant = Auth::guard('applicant')->user();
         abort_unless($applicant, 403);
 
@@ -180,6 +185,11 @@ class ResponseController extends Controller
                     : $response->response_number,
                 'title' => $data['title'],
                 'description' => $descHtml ?: null,
+                // A changed response goes back to the court for review.
+                'review_status' => 'awaiting_review',
+                'review_note' => null,
+                'reviewed_by_user_id' => null,
+                'reviewed_at' => null,
             ]);
             $response->save();
         });
@@ -190,12 +200,24 @@ class ResponseController extends Controller
     public function destroy(RespondentResponse $response)
     {
         $this->authorizeOwnership($response);
+        $this->ensureEditable($response);
         app(\App\Services\LegalHoldService::class)->assertFileMayBeDeleted((string) $response->pdf_path);
         Storage::disk('private')->delete($response->pdf_path);
         Storage::disk('public')->delete($response->pdf_path); // legacy cleanup
         $response->delete();
 
         return redirect()->route('respondent.responses.index');
+    }
+
+    /** Once the court accepts a response it is part of the case record and cannot change. */
+    private function isLocked(RespondentResponse $response): bool
+    {
+        return in_array($response->review_status, ['accepted', 'accept'], true);
+    }
+
+    private function ensureEditable(RespondentResponse $response): void
+    {
+        abort_if($this->isLocked($response), 403, __('respondent.response_locked'));
     }
 
     private function authorizeOwnership(RespondentResponse $response): void

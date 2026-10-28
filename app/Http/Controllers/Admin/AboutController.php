@@ -46,7 +46,7 @@ class AboutController extends Controller
         AboutPage::create([
             'title' => $data['title'],
             'slug' => $slug,
-            'body' => $data['body'],
+            'body' => $this->cleanBody($data['body']),
             'is_published' => (bool) ($data['is_published'] ?? false),
             'created_by_user_id' => $request->user()?->id,
             'updated_by_user_id' => $request->user()?->id,
@@ -72,7 +72,8 @@ class AboutController extends Controller
             'id' => (int) $about->id,
             'title' => (string) $about->title,
             'slug' => (string) $about->slug,
-            'body' => (string) $about->body,
+            // Purified on save; cleaned again for the page, which shows it as rich text.
+            'body' => $this->cleanBody((string) $about->body),
             'is_published' => (bool) $about->is_published,
         ];
     }
@@ -92,7 +93,7 @@ class AboutController extends Controller
         $about->update([
             'title' => $data['title'],
             'slug' => $slug,
-            'body' => $data['body'],
+            'body' => $this->cleanBody($data['body']),
             'is_published' => (bool) ($data['is_published'] ?? false),
             'updated_by_user_id' => $request->user()?->id,
         ]);
@@ -105,6 +106,16 @@ class AboutController extends Controller
         $about->delete();
 
         return redirect()->route('about.index')->with('success', __('about.deleted'));
+    }
+
+    /**
+     * The body is shown as HTML on the applicant sign-in page, which purifies it
+     * with the same profile on output (ApplicantAuthController); it is purified
+     * before it is stored as well.
+     */
+    private function cleanBody(string $html): string
+    {
+        return trim((string) clean($html, 'cases'));
     }
 
     private function uniqueSlug(string $slug, ?int $ignoreId = null): string

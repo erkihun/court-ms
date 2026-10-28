@@ -45,11 +45,13 @@ class MfaController extends Controller
         }
 
         $issuer = (string) $settings->branding()['brandNameEn'];
-        $svg = (string) QrCode::format('svg')->size(220)->margin(1)->generate($mfa->provisioningUri($user, (string) $user->mfa_secret));
+        // Once confirmed the page only shows the recovery codes: the secret never leaves the server again.
+        $confirmed = $user->hasConfirmedMfa();
+        $svg = $confirmed ? '' : (string) QrCode::format('svg')->size(220)->margin(1)->generate($mfa->provisioningUri($user, (string) $user->mfa_secret));
 
         return Inertia::render('Auth/MfaSetup', [
-            'qrCodeUri' => 'data:image/svg+xml;base64,'.base64_encode($svg),
-            'secretKey' => (string) $user->mfa_secret,
+            'qrCodeUri' => $confirmed ? '' : 'data:image/svg+xml;base64,'.base64_encode($svg),
+            'secretKey' => $confirmed ? '' : (string) $user->mfa_secret,
             'user' => ['name' => $user->name, 'email' => $user->email],
             'issuer' => $issuer,
         ]);

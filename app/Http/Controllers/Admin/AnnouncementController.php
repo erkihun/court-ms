@@ -32,13 +32,7 @@ class AnnouncementController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'content' => ['required', 'string'],
-            'status' => ['required', 'in:active,inactive'],
-        ]);
-
-        Announcement::create($data);
+        Announcement::create($this->validated($request));
 
         return redirect()->route('announcements.index')->with('success', __('announcements.status_saved'));
     }
@@ -47,6 +41,8 @@ class AnnouncementController extends Controller
     {
         return Inertia::render('Court/Announcements/Show', ['announcement' => [
             ...$this->formProps($announcement),
+            // Purified on output too: an announcement saved before content was cleaned on save may hold anything.
+            'content' => $this->cleanContent((string) $announcement->content),
             'created_at' => $announcement->created_at?->toIso8601String(),
         ]]);
     }
@@ -69,15 +65,33 @@ class AnnouncementController extends Controller
 
     public function update(Request $request, Announcement $announcement)
     {
+        $announcement->update($this->validated($request));
+
+        return redirect()->route('announcements.index')->with('success', __('announcements.status_updated'));
+    }
+
+    /**
+     * The form's fields, with the rich text purified before it is stored (the
+     * public signage board and this page clean it again when they show it).
+     *
+     * @return array{title: string, content: string, status: string}
+     */
+    private function validated(Request $request): array
+    {
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'content' => ['required', 'string'],
             'status' => ['required', 'in:active,inactive'],
         ]);
+        $data['content'] = $this->cleanContent($data['content']);
 
-        $announcement->update($data);
+        return $data;
+    }
 
-        return redirect()->route('announcements.index')->with('success', __('announcements.status_updated'));
+    /** The profile the signage board shows announcements with (PublicSignageController). */
+    private function cleanContent(string $html): string
+    {
+        return trim((string) clean($html, 'default'));
     }
 
     public function destroy(Announcement $announcement)

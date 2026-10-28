@@ -142,7 +142,8 @@ test('searching a case by number and access code opens it and lists it under my 
             ->where('codeError', false)
             ->where('case.case_number', $case['number'])
             ->where('case.status', 'pending')
-            ->where('case.show_url', route('respondent.cases.show', ['caseNumber' => $case['number'], 'case_code' => $case['code']]))
+            // The session was granted access, so the link carries no access code.
+            ->where('case.show_url', route('respondent.cases.show', ['caseNumber' => $case['number']]))
             ->missing('case.code')
             ->missing('case.applicant_id')
             ->where('portal.name', 'respondent'));

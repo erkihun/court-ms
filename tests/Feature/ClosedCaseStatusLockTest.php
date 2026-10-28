@@ -40,6 +40,8 @@ function closedCaseStatusRecord(): CourtCase
         'case_type_id' => $caseType->id,
         'filing_date' => now()->toDateString(),
         'status' => 'closed',
+        // A closed case was accepted first; an unreviewed one only opens for reviewers (CourtCasePolicy::view).
+        'review_status' => 'accepted',
     ]);
 }
 

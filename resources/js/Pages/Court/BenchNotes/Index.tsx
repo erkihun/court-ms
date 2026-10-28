@@ -121,8 +121,8 @@ function NoteCard({ note, can }: { note: BenchNoteRow; can: BenchNotesIndexProps
                 <JudgeSignature judge={note.judges[0]} />
                 <div className="flex flex-wrap justify-end gap-2">
                     <Link href={route('bench-notes.show', note.id)} className={buttonClassName({ variant: 'outline', size: 'sm' })}>{text('view')}</Link>
-                    {can.update && <Link href={route('bench-notes.edit', note.id)} className={buttonClassName({ variant: 'secondary', size: 'sm' })}>{t('cm.bench.buttons.edit')}</Link>}
-                    {can.delete && <Button type="button" variant="destructiveOutline" size="sm" onClick={destroy} disabled={deleting}>{t('cm.bench.buttons.delete')}</Button>}
+                    {can.update && note.mine && <Link href={route('bench-notes.edit', note.id)} className={buttonClassName({ variant: 'secondary', size: 'sm' })}>{t('cm.bench.buttons.edit')}</Link>}
+                    {can.delete && note.mine && <Button type="button" variant="destructiveOutline" size="sm" onClick={destroy} disabled={deleting}>{t('cm.bench.buttons.delete')}</Button>}
                 </div>
             </div>
         </Card>

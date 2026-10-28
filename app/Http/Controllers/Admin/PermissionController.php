@@ -16,7 +16,8 @@ class PermissionController extends Controller
     public function index(Request $request)
     {
         $q       = trim((string) $request->get('q', ''));
-        $perPage = (int) $request->input('perPage', 15);
+        // Bounded: an unbounded perPage would let one request load the whole table.
+        $perPage = max(5, min(100, (int) $request->input('perPage', 15)));
 
         $permissions = Permission::query()
             ->with(['roles:id,name'])   // to render role chips

@@ -39,6 +39,7 @@ return [
     'position' => 'Position',
     'phone' => 'Phone',
     'address' => 'Address',
+    'reset_link_notice' => 'A secure link to set a password is emailed to the user, who must choose their own password before signing in.',
     'default_password_notice' => 'The user will be created with the default password :password and must change it at first login.',
     'assign_roles' => 'Assign Roles',
     'avatar' => 'Avatar',
@@ -67,4 +68,6 @@ return [
     'updated_at' => 'Updated At',
     'assigned_roles' => 'Assigned Roles',
     'no_roles_assigned' => 'No roles assigned',
+    'admin_role_admin_only' => 'Only an administrator can assign the admin role.',
+    'self_edit_notice' => 'Roles, status, password, signature and stamp can only be changed by a user administrator.',
 ];

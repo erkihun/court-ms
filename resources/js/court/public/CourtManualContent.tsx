@@ -3,12 +3,12 @@ import DOMPurify from 'dompurify';
 import { cx } from '@/Components/ui';
 
 /*
- * The user manual's own allowlist: the tags LandingPageController::
- * sanitizeManualHtml() keeps when the manual is saved, with the attributes the
- * manual's editor writes (inline colours, direction, table spans, links).
+ * The user manual's own allowlist: the tags the manual's editor writes, with
+ * their attributes (inline colours, direction, table spans, links).
  * The shared rich-text policy is narrower (no colours, no direction), so the
- * manual keeps this one: the server cleaned the HTML on save, and the browser
- * cleans it again here before it reaches the DOM.
+ * manual keeps this one: the server purifies the HTML (HTMLPurifier) when it is
+ * saved and again when it is sent, and the browser cleans it once more here
+ * before it reaches the DOM.
  */
 const MANUAL_TAGS = [
     'p', 'br', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'b', 'em', 'i', 'u', 's', 'sub', 'sup', 'pre', 'code',

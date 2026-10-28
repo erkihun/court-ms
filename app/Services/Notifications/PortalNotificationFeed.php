@@ -137,7 +137,8 @@ final class PortalNotificationFeed
                 'notice' => function (object $row) use ($typeTitle, $caseUrl): array {
                     $body = trim((string) $row->body);
                     // A message that is a link (a letter preview) opens that link, as the notifications page does.
-                    $isUrl = filter_var($body, FILTER_VALIDATE_URL) !== false;
+                    // Only an http(s) address becomes a link (FILTER_VALIDATE_URL alone lets javascript: through).
+                    $isUrl = filter_var($body, FILTER_VALIDATE_URL) !== false && preg_match('#^https?://#i', $body) === 1;
 
                     return $this->notice('message', (int) $row->id,
                         $typeTitle('message', $row),

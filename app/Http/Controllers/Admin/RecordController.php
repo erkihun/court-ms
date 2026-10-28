@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -166,11 +167,14 @@ class RecordController extends Controller
      */
     public function show(CourtCase $case): Response
     {
-        return Inertia::render('Court/Records/Show', $this->recordPageProps($case, $this->recordData($case)));
+        $this->authorizeRecordAccess($case);
+
+        return Inertia::render('Court/Records/Show', $this->recordPageProps($case, $this->recordData($case, withEvidenceEmbed: false)));
     }
 
     public function pdf(CourtCase $case)
     {
+        $this->authorizeRecordAccess($case);
         $data = $this->recordData($case);
         $safeCase = Str::of($case->case_number ?? $case->id)->replace(['/', '\\'], '-')->slug('-');
         $data['pdfFilename'] = 'case-record-' . ($safeCase ?: $case->id) . '.pdf';
@@ -184,6 +188,7 @@ class RecordController extends Controller
      */
     public function appealPdf(CourtCase $case)
     {
+        $this->authorizeRecordAccess($case);
         $data = $this->recordData($case);
         $data['generatedAt'] = now();
 
@@ -302,7 +307,7 @@ class RecordController extends Controller
         ];
     }
 
-    private function recordData(CourtCase $case): array
+    private function recordData(CourtCase $case, bool $withEvidenceEmbed = true): array
     {
         $letters = DB::table('letters as l')
             ->leftJoin('users as u', 'u.id', '=', 'l.user_id')
@@ -365,8 +370,9 @@ class RecordController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
+        // Only the PDF embeds the first evidence file; reading it is wasted work for the page.
         $firstEvidenceEmbed = null;
-        foreach ($evidences as $ev) {
+        foreach ($withEvidenceEmbed ? $evidences : [] as $ev) {
             $path = $ev->file_path ?? $ev->path ?? null;
             if (!$path) {
                 continue;
@@ -461,6 +467,19 @@ class RecordController extends Controller
             'closedAt' => $closedAt,
             'firstEvidenceEmbed' => $firstEvidenceEmbed,
         ];
+    }
+
+    /**
+     * The record shows the whole case file, so it follows the case page's rules: the
+     * case policy (unaccepted cases only for reviewers and the assignee) plus the
+     * team scope that limits the record list.
+     */
+    private function authorizeRecordAccess(CourtCase $case): void
+    {
+        $user = Auth::user();
+        abort_unless($user instanceof User && Gate::forUser($user)->allows('view', $case), 403);
+        // The team scope of the record list and the case page (CaseScope).
+        abort_unless(\App\Support\CaseScope::allows($user, $case), 403);
     }
 
     private function teamLeaderAssignmentIds(?User $user): array

@@ -52,7 +52,8 @@ class ApplicantCaseController extends Controller
                 'ct.name as case_type',
 
             )
-            ->when(Schema::hasColumn('court_cases', 'applicant_id'), fn($q) => $q->where('c.applicant_id', $me))
+            // Always the signed-in applicant's own cases (a schema check used to list every case when it failed).
+            ->where('c.applicant_id', $me)
             ->orderByDesc('c.created_at')
             ->paginate(10);
 
@@ -1012,6 +1013,12 @@ class ApplicantCaseController extends Controller
         }
     }
 
+    /** One rule for every change an applicant makes to a case: pending, and not yet accepted by the court. */
+    private function applicantMayModify(object $case): bool
+    {
+        return $case->status === 'pending' && ($case->review_status ?? null) !== 'accepted';
+    }
+
     public function deleteEvidence(int $id, int $evidenceId)
     {
         $applicantId = auth('applicant')->id();
@@ -1022,8 +1029,8 @@ class ApplicantCaseController extends Controller
             ->first();
         abort_if(!$case, 404);
 
-        if ($case->status !== 'pending') {
-            return back()->with('error', 'You can only remove evidence on pending cases.');
+        if (! $this->applicantMayModify($case)) {
+            return back()->with('error', __('cases.hints.edit_only_pending'));
         }
 
         $ev = DB::table('case_evidences')
@@ -1040,7 +1047,7 @@ class ApplicantCaseController extends Controller
 
         DB::table('case_evidences')->where('id', $evidenceId)->delete();
 
-        return back()->with('success', 'Evidence removed.');
+        return back()->with('success', __('cases.messages_flash.evidence_removed'));
     }
 
     public function deleteWitness(int $id, int $witnessId)
@@ -1055,8 +1062,8 @@ class ApplicantCaseController extends Controller
 
         abort_if(!$case, 404);
 
-        if ($case->status !== 'pending') {
-            return back()->with('error', 'You can only remove witnesses on pending cases.');
+        if (! $this->applicantMayModify($case)) {
+            return back()->with('error', __('cases.hints.edit_only_pending'));
         }
 
         $exists = DB::table('case_witnesses')
@@ -1071,7 +1078,7 @@ class ApplicantCaseController extends Controller
             ->where('case_id', $id)
             ->delete();
 
-        return back()->with('success', 'Witness removed.');
+        return back()->with('success', __('cases.messages_flash.witness_removed'));
     }
 
     /**

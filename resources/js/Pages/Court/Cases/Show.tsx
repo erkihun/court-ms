@@ -120,7 +120,7 @@ export default function CaseShow(props: CaseDetailProps) {
                         {active === 'messages' && (
                             <MessagesSection caseId={kase.id} caseNumber={kase.case_number} messages={props.messages} canCreate={can.createMessage} caseLocked={caseLocked} currentUserInitial={props.currentUserInitial} />
                         )}
-                        {active === 'uploaded-files' && <FilesSection caseId={kase.id} files={props.files} can={can} />}
+                        {active === 'uploaded-files' && <FilesSection caseId={kase.id} files={props.files} can={can} caseLocked={caseLocked} />}
                     </div>
                 </div>
             </div>
