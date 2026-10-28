@@ -49,7 +49,7 @@ final class EmployeeFilingService
                 'case_number' => $this->numbers->next((int) $data['case_type_id']),
                 'code' => $this->numbers->code(),
                 // court_cases.title is the applicant's name (the applicant form fills it the same way).
-                'title' => $applicant->full_name,
+                'title' => preg_replace('/ {2,}/', ' ', $applicant->full_name),
                 'respondent_name' => trim(strip_tags((string) $data['respondent']['name'])),
                 'respondent_address' => isset($data['respondent']['address']) ? trim(strip_tags((string) $data['respondent']['address'])) : null,
                 'respondent_organization_uuid' => $data['respondent']['organization_uuid'],
