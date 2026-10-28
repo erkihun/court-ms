@@ -6,6 +6,7 @@ import caseDetail from './caseDetail';
 import access from './access';
 import decisionForms from './decisions';
 import letterForms from './letters';
+import inspectionPages from './inspections';
 
 export default {
     cm: lang,
@@ -68,6 +69,7 @@ export default {
         accessForms: access.am,
         decisionForms: decisionForms.am,
         letterForms: letterForms.am,
+        inspectionPages: inspectionPages.am,
         settings: {
             secretSaved: 'ተቀምጧል',
             secretNotSet: 'አልተዘጋጀም',

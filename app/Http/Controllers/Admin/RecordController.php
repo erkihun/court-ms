@@ -7,14 +7,24 @@ use App\Models\CourtCase;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
+use Inertia\Response;
+use Mews\Purifier\Facades\Purifier;
 
 class RecordController extends Controller
 {
-    public function index(Request $request)
+    /** The case statuses the list filters by, in the Blade page's order. */
+    private const STATUSES = ['pending', 'active', 'adjourned', 'dismissed', 'closed'];
+
+    /**
+     * The case records register (React, Court/Records/Index).
+     */
+    public function index(Request $request): Response
     {
         $q = trim($request->string('q')->toString());
         $status = $request->string('status')->toString();
@@ -103,33 +113,60 @@ class RecordController extends Controller
         $cases = $builder
             ->orderByRaw('COALESCE(c.created_at, c.filing_date) DESC')
             ->paginate(10)
-            ->withQueryString();
+            ->withQueryString()
+            ->through(function (object $row) use ($isReviewer): array {
+                $reviewStatus = $row->review_status ?? 'accepted';
 
-        $types = DB::table('case_types')->orderBy('name')->get(['id', 'name']);
+                return [
+                    'id' => (int) $row->id,
+                    'case_number' => (string) $row->case_number,
+                    'title' => $row->title,
+                    'applicant_name' => $row->applicant_name !== null && $row->applicant_name !== '' ? $row->applicant_name : null,
+                    'case_type' => $row->case_type,
+                    'team_name' => $row->team_name,
+                    'assignee_name' => $row->assignee_name,
+                    'status' => (string) $row->status,
+                    'filing_date' => $row->filing_date ? Carbon::parse($row->filing_date)->toDateString() : null,
+                    // A non-reviewer always sees "accepted", as on the Blade page.
+                    'review_status' => $isReviewer ? (string) $reviewStatus : 'accepted',
+                    'reviewer_name' => $row->reviewer_name,
+                    'decisions_count' => (int) ($row->decisions_count ?? 0),
+                    // The appeal record exists once the case has a decision or is closed/dismissed.
+                    'has_appeal_record' => (int) ($row->decisions_count ?? 0) > 0 || in_array($row->status ?? '', ['closed', 'dismissed'], true),
+                ];
+            });
+
+        $types = DB::table('case_types')->orderBy('name')->get(['id', 'name'])
+            ->map(fn (object $type): array => ['id' => (int) $type->id, 'name' => (string) $type->name])->all();
         $users = User::query()
             ->where('status', 'active')
             ->orderBy('name')
-            ->get(['id', 'name']);
+            ->get(['id', 'name'])
+            ->map(fn (User $user): array => ['id' => (int) $user->id, 'name' => (string) $user->name])->all();
 
-        return view('admin.recordes.index', compact(
-            'cases',
-            'q',
-            'status',
-            'caseTypeId',
-            'assigneeId',
-            'from',
-            'to',
-            'types',
-            'users',
-            'isReviewer'
-        ));
+        return Inertia::render('Court/Records/Index', [
+            'cases' => $cases,
+            'filters' => [
+                'q' => $q,
+                'status' => $status,
+                'case_type_id' => $caseTypeId ? (string) $caseTypeId : '',
+                'assignee_id' => $assigneeId ? (string) $assigneeId : '',
+                'from' => $from ? $from->format('Y-m-d') : '',
+                'to' => $to ? $to->format('Y-m-d') : '',
+            ],
+            'statuses' => self::STATUSES,
+            'types' => $types,
+            'users' => $users,
+            'isReviewer' => $isReviewer,
+        ]);
     }
 
-    public function show(CourtCase $case)
+    /**
+     * One case's consolidated record, section by section (React, Court/Records/Show).
+     */
+    public function show(CourtCase $case): Response
     {
-        $data = $this->recordData($case);
-
-        return view('admin.recordes.record', $data);
+        return Inertia::render('Court/Records/Show', $this->recordPageProps($case, $this->recordData($case)));
     }
 
     public function pdf(CourtCase $case)
@@ -158,6 +195,111 @@ class RecordController extends Controller
             ->setOption('isRemoteEnabled', true);
 
         return $pdf->download($filename);
+    }
+
+    /**
+     * The record page's props: the Blade page's rows as plain arrays with ISO
+     * 8601 dates, formatted text cleaned once more on the way out, and the
+     * derived values the Blade page computed in its @php block.
+     */
+    private function recordPageProps(CourtCase $case, array $data): array
+    {
+        $iso = fn ($value): ?string => $value ? Carbon::parse($value)->toIso8601String() : null;
+        $date = fn ($value): ?string => $value ? Carbon::parse($value)->toDateString() : null;
+        $clean = fn (?string $html): ?string => $html !== null && $html !== '' ? Purifier::clean($html, 'default') : null;
+
+        // The Blade page listed the case's submitted documents, or, when it had none, the case files in their place.
+        $submittedDocuments = collect($case->submitted_documents ?? []);
+        $otherDocuments = collect($data['files'] ?? []);
+        if ($submittedDocuments->isEmpty() && $otherDocuments->isNotEmpty()) {
+            $submittedDocuments = $otherDocuments;
+            $otherDocuments = collect();
+        }
+        $document = fn ($doc): array => [
+            'id' => isset($doc->id) ? (int) $doc->id : null,
+            'label' => $doc->label ?? $doc->title ?? null,
+            'path' => $doc->path ?? $doc->file_path ?? null,
+            'created_at' => $iso($doc->created_at ?? null),
+        ];
+
+        $decision = $data['decision'];
+        $applicant = $case->applicant;
+
+        return [
+            'case' => [
+                'id' => (int) $case->id,
+                'case_number' => $case->case_number,
+                'title' => $case->title,
+                'status' => $case->status,
+                'case_type' => $case->caseType?->name ?? ($case->case_type ?? null),
+                'filing_date' => $date($case->filing_date),
+                'first_hearing_date' => $date($case->first_hearing_date),
+                'applicant_name' => $applicant?->full_name ?: ($case->applicant_name ?? null),
+                'applicant_email' => $applicant?->email,
+                'applicant_phone' => $applicant?->phone,
+                'respondent_name' => $case->respondent_name,
+                'respondent_address' => $case->respondent_address,
+                'description' => $clean($case->description),
+                'relief_requested' => $clean($case->relief_requested),
+            ],
+            'generatedAt' => now()->toIso8601String(),
+            'benchNotes' => collect($data['benchNotes'])->map(fn ($note): array => [
+                'id' => (int) $note->id,
+                'title' => $note->title ?? null,
+                'note' => $clean($note->note ?? $note->body ?? null),
+                'author' => $note->author ?? null,
+                'created_at' => $iso($note->created_at ?? null),
+            ])->values()->all(),
+            'submittedDocuments' => $submittedDocuments->map($document)->values()->all(),
+            'otherDocuments' => $otherDocuments->map($document)->values()->all(),
+            'witnesses' => collect($data['witnesses'])->map(fn ($witness): array => [
+                'id' => (int) $witness->id,
+                'full_name' => $witness->full_name ?? null,
+                'phone' => $witness->phone ?? null,
+                'email' => $witness->email ?? null,
+                'address' => $witness->address ?? null,
+            ])->values()->all(),
+            'respondentResponses' => collect($data['respondentResponses'])->map(fn ($response): array => [
+                'id' => (int) $response->id,
+                'title' => $response->title ?? null,
+                'case_number' => $response->case_number ?? null,
+                'description' => $response->description ? Str::limit(strip_tags((string) $response->description), 260) : null,
+                'pdf_path' => $response->pdf_path ?? null,
+                'download_url' => $response->download_url ?? null,
+                'created_at' => $iso($response->created_at ?? null),
+            ])->values()->all(),
+            'letters' => collect($data['letters'])->map(fn ($letter): array => [
+                'id' => (int) $letter->id,
+                'subject' => $letter->subject ?? null,
+                'reference_number' => $letter->reference_number ?? null,
+                'approval_status' => $letter->approval_status ?? null,
+                'author_name' => $letter->author_name ?? null,
+                'body' => $clean($letter->body ?? null),
+                'created_at' => $iso($letter->created_at ?? null),
+            ])->values()->all(),
+            'hearings' => collect($data['hearings'])->map(fn ($hearing): array => [
+                'id' => (int) $hearing->id,
+                'hearing_at' => $iso($hearing->hearing_at ?? null),
+                'type' => $hearing->type ?? null,
+                'location' => $hearing->location ?? null,
+                'judge_notes' => isset($hearing->judge_notes) && $hearing->judge_notes !== '' ? strip_tags((string) $hearing->judge_notes) : null,
+                'notes' => isset($hearing->notes) && $hearing->notes !== '' ? strip_tags((string) $hearing->notes) : null,
+            ])->values()->all(),
+            'decision' => $decision ? [
+                'id' => (int) $decision->id,
+                'title' => $decision->title ?? null,
+                'content' => $clean($decision->decision_content ?? $decision->body ?? null),
+                'created_at' => $iso($decision->created_at ?? null),
+            ] : null,
+            'evidences' => collect($data['evidences'])->map(fn ($evidence): array => [
+                'id' => (int) $evidence->id,
+                'title' => $evidence->title ?? null,
+                'description' => $evidence->description ?? null,
+                'created_at' => $iso($evidence->created_at ?? null),
+            ])->values()->all(),
+            'filesCount' => collect($data['files'])->count() + collect($data['evidences'])->count(),
+            'hasAppealRecord' => $decision !== null || in_array($case->status ?? '', ['closed', 'dismissed'], true),
+        ];
     }
 
     private function recordData(CourtCase $case): array

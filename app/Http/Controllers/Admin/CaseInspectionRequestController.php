@@ -3,14 +3,23 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\CaseInspectionFinding;
 use App\Models\CaseInspectionRequest;
 use App\Models\CourtCase;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class CaseInspectionRequestController extends Controller
 {
-    public function index()
+    /** The request statuses, in the order the form offers them. */
+    private const STATUSES = ['pending', 'in_progress', 'completed', 'cancelled'];
+
+    /**
+     * Every inspection request this user may see (React, Court/Inspections/RequestsIndex).
+     */
+    public function index(): Response
     {
         $query = CaseInspectionRequest::with(['case', 'requestedBy', 'assignedInspector', 'createdBy'])
             ->orderByDesc('request_date')
@@ -37,20 +46,30 @@ class CaseInspectionRequestController extends Controller
             $query->where('status', $status);
         }
 
-        $requests = $query->paginate(12)->withQueryString();
-        $cases = CourtCase::orderBy('case_number')->get(['id', 'case_number', 'title']);
+        $requests = $query->paginate(12)->withQueryString()
+            ->through(fn (CaseInspectionRequest $request): array => $this->requestRow($request));
 
-        return view('admin.case-inspections.requests.index', compact('requests', 'cases', 'caseId', 'status'));
+        return Inertia::render('Court/Inspections/RequestsIndex', [
+            'requests' => $requests,
+            'cases' => $this->caseOptions(),
+            'filters' => ['case_id' => $caseId ? (string) $caseId : '', 'status' => $status],
+            'statuses' => self::STATUSES,
+            'nav' => [
+                'requests' => $canManage,
+                'findings' => $user?->hasPermission('inspection-findings.manage') ?? false,
+            ],
+        ]);
     }
 
-    public function create()
+    /**
+     * The new-request form (React, Court/Inspections/RequestForm with a null request).
+     */
+    public function create(): Response
     {
-        $cases = CourtCase::orderBy('case_number')->get(['id', 'case_number', 'title']);
-        $inspectors = $this->inspectorsForAssign();
         $prefillCaseId = request()->integer('case_id');
         $prefillInspectorId = request()->integer('assigned_inspector_user_id');
 
-        return view('admin.case-inspections.requests.create', compact('cases', 'inspectors', 'prefillCaseId', 'prefillInspectorId'));
+        return Inertia::render('Court/Inspections/RequestForm', $this->formProps(null, $prefillCaseId, $prefillInspectorId));
     }
 
     public function store(Request $request)
@@ -86,15 +105,36 @@ class CaseInspectionRequestController extends Controller
         return redirect()->route('case-inspection-requests.index')->with('success', __('case_inspections.requests.created'));
     }
 
-    public function show(CaseInspectionRequest $requestRecord)
+    /**
+     * One request with its findings (React, Court/Inspections/RequestShow).
+     */
+    public function show(CaseInspectionRequest $requestRecord): Response
     {
         $requestRecord->load(['case', 'requestedBy', 'assignedInspector', 'createdBy', 'findings.recordedBy']);
 
-        return view('admin.case-inspections.requests.show', [
-            'requestRecord' => $requestRecord,
+        return Inertia::render('Court/Inspections/RequestShow', [
+            'request' => $this->requestRow($requestRecord) + [
+                'request_note' => $requestRecord->request_note,
+                'requested_by_name' => $requestRecord->requestedBy?->name,
+                'findings' => $requestRecord->findings
+                    ->sortByDesc('finding_date')
+                    ->values()
+                    ->map(fn (CaseInspectionFinding $finding): array => [
+                        'id' => (int) $finding->id,
+                        'title' => $finding->title,
+                        'finding_date' => $finding->finding_date?->toDateString(),
+                        'severity' => (string) $finding->severity,
+                        'recorded_by_name' => $finding->recordedBy?->name,
+                    ])
+                    ->all(),
+            ],
+            'canEdit' => $requestRecord->status !== 'completed',
         ]);
     }
 
+    /**
+     * The edit form (React, Court/Inspections/RequestForm with the request).
+     */
     public function edit(CaseInspectionRequest $requestRecord)
     {
         if ($requestRecord->status === 'completed') {
@@ -103,12 +143,7 @@ class CaseInspectionRequestController extends Controller
                 ->with('error', __('case_inspections.requests.completed_locked'));
         }
 
-        $cases = CourtCase::orderBy('case_number')->get(['id', 'case_number', 'title']);
-        $inspectors = $this->inspectorsForAssign();
-        $prefillCaseId = null;
-        $prefillInspectorId = null;
-
-        return view('admin.case-inspections.requests.edit', compact('requestRecord', 'cases', 'inspectors', 'prefillCaseId', 'prefillInspectorId'));
+        return Inertia::render('Court/Inspections/RequestForm', $this->formProps($requestRecord, 0, 0));
     }
 
     public function update(Request $request, CaseInspectionRequest $requestRecord)
@@ -161,12 +196,57 @@ class CaseInspectionRequestController extends Controller
         return redirect()->route('case-inspection-requests.index')->with('success', __('case_inspections.requests.deleted'));
     }
 
-    private function inspectorsForAssign()
+    /** The row of a request as the list, the show page and the form read it. */
+    private function requestRow(CaseInspectionRequest $request): array
+    {
+        return [
+            'id' => (int) $request->id,
+            'case_id' => $request->court_case_id !== null ? (int) $request->court_case_id : null,
+            'case_number' => $request->case?->case_number,
+            'case_title' => $request->case?->title,
+            'subject' => $request->subject,
+            'request_date' => $request->request_date?->toDateString(),
+            'status' => (string) $request->status,
+            'assigned_inspector_user_id' => $request->assigned_inspector_user_id !== null ? (int) $request->assigned_inspector_user_id : null,
+            'assigned_inspector_name' => $request->assignedInspector?->name,
+            'created_by_name' => $request->createdBy?->name,
+        ];
+    }
+
+    /** The props of the create and edit form: the request (null when new), the choices and the prefills. */
+    private function formProps(?CaseInspectionRequest $request, int $prefillCaseId, int $prefillInspectorId): array
+    {
+        $canAssign = auth()->user()?->hasPermission('assign.inspections') ?? false;
+
+        return [
+            'request' => $request ? $this->requestRow($request) + ['request_note' => $request->request_note] : null,
+            'cases' => $this->caseOptions(),
+            'inspectors' => $canAssign ? $this->inspectorsForAssign() : [],
+            'canAssign' => $canAssign,
+            'prefill' => [
+                'case_id' => $prefillCaseId ? (string) $prefillCaseId : '',
+                'assigned_inspector_user_id' => $prefillInspectorId ? (string) $prefillInspectorId : '',
+            ],
+            'statuses' => self::STATUSES,
+            'today' => now()->toDateString(),
+        ];
+    }
+
+    private function caseOptions(): array
+    {
+        return CourtCase::orderBy('case_number')->get(['id', 'case_number', 'title'])
+            ->map(fn (CourtCase $case): array => ['id' => (int) $case->id, 'case_number' => (string) $case->case_number, 'title' => $case->title])
+            ->all();
+    }
+
+    private function inspectorsForAssign(): array
     {
         return User::query()
             ->where('status', 'active')
             ->whereHas('roles.permissions', fn($q) => $q->where('name', 'inspection-findings.manage'))
             ->orderBy('name')
-            ->get(['id', 'name']);
+            ->get(['id', 'name'])
+            ->map(fn (User $user): array => ['id' => (int) $user->id, 'name' => (string) $user->name])
+            ->all();
     }
 }
