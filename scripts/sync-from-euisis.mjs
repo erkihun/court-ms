@@ -94,6 +94,37 @@ const PATCHES = [
         to: "t(coreSections ? 'court.workspaceName'",
     },
     {
+        // The sidebar's home link is the workspace's own (the staff dashboard, or a portal's dashboard).
+        file: 'Components/AppSidebar.tsx',
+        from: 'const homeNav = coreSections ? coreHomeNav :',
+        to: 'const homeNav = coreSections ? { ...coreHomeNav, routeName: (workspace as { home?: string } | null)?.home ?? coreHomeNav.routeName } :',
+    },
+    {
+        // The applicant and respondent portals have their own profile and sign-out, and no staff notification feed.
+        file: 'Components/AppHeader.tsx',
+        from: '    const { auth } = usePage<PageProps>().props;',
+        to: [
+            '    const { auth } = usePage<PageProps>().props;',
+            '    // court-ms: the applicant and respondent portals (HandleInertiaRequests `portal`).',
+            '    const portal = (usePage().props as { portal?: { profile: string; logout: string } | null }).portal ?? null;',
+        ].join('\n'),
+    },
+    {
+        file: 'Components/AppHeader.tsx',
+        from: '<NotificationBell />',
+        to: '{!portal && <NotificationBell />}',
+    },
+    {
+        file: 'Components/AppHeader.tsx',
+        from: "route('profile.edit')",
+        to: "route(portal?.profile ?? 'profile.edit')",
+    },
+    {
+        file: 'Components/AppHeader.tsx',
+        from: "route('logout')",
+        to: "route(portal?.logout ?? 'logout')",
+    },
+    {
         // The account menu offers court-ms's active-role switch (resources/js/court/components).
         file: 'Components/AppHeader.tsx',
         from: "import NotificationBell from '@/Components/NotificationBell';",

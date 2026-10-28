@@ -911,7 +911,7 @@ export default function AppSidebar({ onClose, collapsed = false, onToggleCollaps
         : isEmployeeUser
             ? visiblePortalSections.flatMap((section) => section.groups)
             : [...visibleGroups, ...(visibleAdminNav.length ? [adminGroup] : [])];
-    const homeNav = coreSections ? coreHomeNav : isEmployeeUser || !canViewDashboard ? portalDashboard : dashboardNav;
+    const homeNav = coreSections ? { ...coreHomeNav, routeName: (workspace as { home?: string } | null)?.home ?? coreHomeNav.routeName } : isEmployeeUser || !canViewDashboard ? portalDashboard : dashboardNav;
     // My Portal and Core are short enough to show every group open until the person collapses one.
     const groupsOpenByDefault = isEmployeeUser || coreSections !== null;
     const currentRoute = String(route().current() ?? '');

@@ -7,8 +7,10 @@ namespace App\Http\Middleware;
 use App\Models\SystemSetting;
 use App\Models\User;
 use App\Support\Ui\CourtNavigation;
+use App\Support\Ui\PortalNavigation;
 use App\Support\Ui\SharedSettings;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Inertia\Middleware;
 
@@ -31,45 +33,36 @@ class HandleInertiaRequests extends Middleware
 
     public function share(Request $request): array
     {
-        $user = $request->user();
-        $user = $user instanceof User ? $user : null;
         $shared = app(SharedSettings::class);
-        // share() runs before the route's SetLocale, so anything that reads the
-        // language (or touches the database) is a closure, resolved at render time.
+        // share() runs before the route's SetLocale and guard middleware, so anything
+        // that reads the language, the signed-in person or the database is a closure,
+        // resolved at render time.
         $locale = fn (): string => app()->getLocale() === 'am' ? 'am' : 'en';
+        // The applicant/respondent portals sign in on their own guard; staff on `web`.
+        $portal = fn (): ?string => PortalNavigation::portalFor($request);
+        $staff = function () use ($portal): ?User {
+            $user = $portal() === null ? Auth::guard('web')->user() : null;
+
+            return $user instanceof User ? $user : null;
+        };
 
         return [
             ...parent::share($request),
-            'auth' => [
-                'user' => $user ? [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'status' => (string) ($user->status ?? 'active'),
-                    'profile_photo_url' => $user->avatar_url,
-                    'initials' => $this->initials((string) $user->name),
-                ] : null,
-                'roles' => fn (): array => $user ? $user->roles()->pluck('name')->all() : [],
-                // court-ms: a person with several roles works under one at a time (ResolveAdminRole, admin.roles.switch).
-                'activeRoleId' => fn (): ?int => $user?->activeRole()?->id,
-                'roleOptions' => function () use ($user): array {
-                    $roles = $user ? $user->roles()->orderByRaw("CASE WHEN LOWER(roles.name) = 'admin' THEN 0 ELSE 1 END")->orderBy('roles.name')->get() : collect();
-
-                    return $roles->count() > 1
-                        ? $roles->map(fn ($role): array => ['id' => (int) $role->id, 'label' => Str::headline((string) $role->name)])->values()->all()
-                        : [];
-                },
-                'permissions' => fn (): array => CourtNavigation::permissionNames($user),
-                'isSuperAdmin' => fn (): bool => $user?->hasRole('admin') ?? false,
-                'canViewDashboard' => $user !== null,
-                'unrestrictedScope' => true,
-            ],
+            'auth' => fn (): array => $portal() !== null ? $this->portalAuth() : $this->staffAuth($staff()),
+            'portal' => fn (): ?array => ($name = $portal()) !== null ? PortalNavigation::routes($name) : null,
             'cafeteriaProviderAuth' => null,
             'features' => [],
             'assistant' => ['enabled' => false],
             'publicAssistant' => ['enabled' => false],
             'communication' => null,
-            'workspace' => fn (): ?array => $user ? ['name' => 'core', 'nav' => app(CourtNavigation::class)->for($user)] : null,
+            'workspace' => function () use ($portal, $staff): ?array {
+                if (($name = $portal()) !== null) {
+                    return PortalNavigation::user() ? ['name' => 'core', 'home' => PortalNavigation::routes($name)['home'], 'nav' => PortalNavigation::sections($name)] : null;
+                }
+                $user = $staff();
+
+                return $user ? ['name' => 'core', 'home' => 'admin.dashboard', 'nav' => app(CourtNavigation::class)->for($user)] : null;
+            },
             'locale' => $locale,
             'richText' => null,
             'textLocale' => fn (): string => app()->getLocale(),
@@ -98,6 +91,58 @@ class HandleInertiaRequests extends Middleware
                 'mfa_recovery_codes_once' => session('mfa_recovery_codes'),
             ],
             'password_policy' => fn (): array => $this->passwordPolicy(),
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function staffAuth(?User $user): array
+    {
+        $roles = $user ? $user->roles()->orderByRaw("CASE WHEN LOWER(roles.name) = 'admin' THEN 0 ELSE 1 END")->orderBy('roles.name')->get() : collect();
+
+        return [
+            'user' => $user ? [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'status' => (string) ($user->status ?? 'active'),
+                'profile_photo_url' => $user->avatar_url,
+                'initials' => $this->initials((string) $user->name),
+            ] : null,
+            'roles' => $roles->pluck('name')->values()->all(),
+            // court-ms: a person with several roles works under one at a time (ResolveAdminRole, admin.roles.switch).
+            'activeRoleId' => $user?->activeRole()?->id,
+            'roleOptions' => $roles->count() > 1
+                ? $roles->map(fn ($role): array => ['id' => (int) $role->id, 'label' => Str::headline((string) $role->name)])->values()->all()
+                : [],
+            'permissions' => CourtNavigation::permissionNames($user),
+            'isSuperAdmin' => $user?->hasRole('admin') ?? false,
+            'canViewDashboard' => $user !== null,
+            'unrestrictedScope' => true,
+        ];
+    }
+
+    /** An applicant (or the same person acting as respondent): no roles or staff permissions. @return array<string, mixed> */
+    private function portalAuth(): array
+    {
+        $user = PortalNavigation::user();
+
+        return [
+            'user' => $user ? [
+                'id' => $user->id,
+                'name' => $user->full_name,
+                'email' => $user->email,
+                'status' => $user->is_active ? 'active' : 'inactive',
+                'profile_photo_url' => null,
+                'initials' => $this->initials((string) $user->full_name),
+                'is_lawyer' => (bool) $user->is_lawyer,
+            ] : null,
+            'roles' => [],
+            'activeRoleId' => null,
+            'roleOptions' => [],
+            'permissions' => [],
+            'isSuperAdmin' => false,
+            'canViewDashboard' => $user !== null,
+            'unrestrictedScope' => false,
         ];
     }
 

@@ -26,6 +26,8 @@ const iconButton = 'flex h-9 w-9 shrink-0 items-center justify-center rounded-md
 
 export default function AppHeader({ onMenuClick, onToggleSidebar, sidebarCollapsed = false }: Props) {
     const { auth } = usePage<PageProps>().props;
+    // court-ms: the applicant and respondent portals (HandleInertiaRequests `portal`).
+    const portal = (usePage().props as { portal?: { profile: string; logout: string } | null }).portal ?? null;
     const user = auth.user;
     const roles = auth.roles ?? [];
     const { t } = useLocale();
@@ -83,7 +85,7 @@ export default function AppHeader({ onMenuClick, onToggleSidebar, sidebarCollaps
 
                 <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
                     <CommunicationButton />
-                    <NotificationBell />
+                    {!portal && <NotificationBell />}
                     <ThemeToggle variant="toolbar" />
                     <LanguageSwitcher variant="toolbar" />
                     <span aria-hidden="true" className="mx-1 hidden h-6 w-px bg-(--app-border) sm:block" />
@@ -115,7 +117,7 @@ export default function AppHeader({ onMenuClick, onToggleSidebar, sidebarCollaps
                             </div>
                             <div className="p-1.5">
                                 <MenuItem>
-                                    <Link href={route('profile.edit')} className="flex min-h-10 items-center gap-3 rounded-md px-3 text-sm data-focus:bg-(--app-surface-muted)">
+                                    <Link href={route(portal?.profile ?? 'profile.edit')} className="flex min-h-10 items-center gap-3 rounded-md px-3 text-sm data-focus:bg-(--app-surface-muted)">
                                         <SettingsIcon className="h-[18px] w-[18px] text-(--app-muted-foreground)" aria-hidden="true" />
                                         {t('common.profileSettings')}
                                     </Link>
@@ -123,7 +125,7 @@ export default function AppHeader({ onMenuClick, onToggleSidebar, sidebarCollaps
                             </div>
                             <div className="border-t border-(--app-border) p-1.5">
                                 <MenuItem>
-                                    <Link href={route('logout')} method="post" as="button" className="flex min-h-10 w-full items-center gap-3 rounded-md px-3 text-start text-sm text-red-700 data-focus:bg-red-50 dark:text-red-400 dark:data-focus:bg-red-950/40">
+                                    <Link href={route(portal?.logout ?? 'logout')} method="post" as="button" className="flex min-h-10 w-full items-center gap-3 rounded-md px-3 text-start text-sm text-red-700 data-focus:bg-red-50 dark:text-red-400 dark:data-focus:bg-red-950/40">
                                         <LogOut className="h-[18px] w-[18px]" aria-hidden="true" />
                                         {t('common.signOut')}
                                     </Link>
