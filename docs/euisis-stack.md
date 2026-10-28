@@ -1,0 +1,106 @@
+# court-ms on the EUISIS stack
+
+court-ms is moving, screen by screen, from Blade + Alpine + Tailwind 3 to the
+stack and user interface of EUISIS: Inertia, React 19, TypeScript, Tailwind 4
+and the `@euisis/ui` kit, inside the EUISIS application shell (sidebar, header,
+command palette, language and theme switches). It stays its own application
+with its own database; what it shares with EUISIS is the frontend foundation,
+copied verbatim the way the EUISIS Core platform does it.
+
+## The two builds
+
+| | React screens | Blade screens (legacy, until they move) |
+|---|---|---|
+| Config | `vite.config.js` | `vite.legacy.config.js` |
+| Output | `public/build` | `public/build-legacy` |
+| Styles | Tailwind 4 (`resources/css/app.css`, from EUISIS) | Tailwind 3 (`tailwind.config.js`, `resources/legacy/css`) under the npm alias `tailwindcss-v3` |
+| Loaded by | `resources/views/inertia.blade.php` | `@vite([...], 'build-legacy')` in the Blade layouts |
+
+`npm run build` builds both. `npm run dev` serves the React build;
+`npm run dev:legacy` the Blade one.
+
+## What comes from EUISIS, and how
+
+`node scripts/sync-from-euisis.mjs [path to EUISIS]` copies the EUISIS entry
+(`resources/js/app.tsx`), every file it imports, the SEEDS listed in the script
+(layouts, shared components, hooks, the sign-in and profile pages), the whole
+`i18n` and `types` folders, `resources/css` and `packages/euisis-ui`. The copied
+files are listed in `resources/js/.euisis-sync.json`; a sync removes and
+replaces only those, never court-ms's own files. **Do not edit a copied file**:
+change it in EUISIS and re-sync, or add a PATCH to the script. The PATCHES are
+the complete list of differences from EUISIS (a dozen one-line changes: route
+names, the workspace name, the merged dictionary).
+
+Run the sync whenever EUISIS changes its foundation, then `npm run typecheck`
+and `npm run build`.
+
+## court-ms's own frontend code
+
+Everything under `resources/js/court/` and `resources/js/Pages/Court/`:
+
+- `court/i18n/{en,am}.ts` — the dictionary merged over the EUISIS one.
+  `cm.*` is court-ms's `lang/{en,am}/*.php`, exported by
+  `php artisan court:client-lang` into `court/i18n/lang/` (committed; the
+  test suite fails when it is out of date), so a React screen says exactly what
+  the Blade screen it replaces said: `__('cases.status.pending')` is
+  `t('cm.cases.status.pending')`. `court.*` is text only the React screens need.
+- `court/components/` — court-ms-only components the shell shows
+  (the active-role switcher in the account menu).
+- `court/types/` — the TypeScript shape of each page's props.
+- `Pages/Court/*.tsx` — the screens.
+
+## The server side
+
+- `App\Http\Middleware\HandleInertiaRequests` shares the props every EUISIS
+  component expects, in the EUISIS shape (`auth`, `settings`, `branding`,
+  `workspace`, `flash`, …). court-ms is always in its own workspace: the
+  sidebar is `App\Support\Ui\CourtNavigation` (the Blade sidebar's items,
+  labels and permissions), filtered per person on the server.
+- `App\Support\Ui\SharedSettings` maps court-ms System Settings onto the
+  EUISIS settings keys.
+- `SetLocale` reads the React client's `euisis_locale` cookie (unencrypted,
+  as EUISIS does) ahead of court-ms's `app_locale`; the Blade language switch
+  writes both, so the language follows the person across both kinds of screen.
+- The route list the client uses is `resources/js/ziggy.js`
+  (`php artisan ziggy:generate resources/js/ziggy.js`; `config/ziggy.php`
+  keeps development routes out). A route EUISIS has and court-ms does not
+  resolves to `#`.
+- `notifications.feed`, `notifications.read`, `notifications.read-all`
+  (`Admin\NotificationFeedController`) feed the header bell with the same
+  items as the Blade notifications page.
+
+## Where the move stands
+
+The whole staff application is on the EUISIS stack (React): sign-in and the
+account pages, the dashboard, notifications, every register and its forms
+and pages (cases and the case page, hearings, decisions and decision
+templates, letters, letter templates and categories, appeals, inspections,
+bench notes, records, applicants, users, teams, roles, permissions, case
+types, announcements, terms, About pages), reports, the audit trail and the
+system settings.
+
+The applicant and respondent portals use the same shell:
+`App\Support\Ui\PortalNavigation` tells `HandleInertiaRequests` which portal a
+request belongs to, the signed-in person comes from the `applicant` guard,
+and the sidebar and the header's home, profile and sign-out are the portal's
+own (shared prop `portal`).
+
+Kept as Blade on purpose: documents, not screens — mail templates
+(`resources/views/mail`), PDFs (`resources/views/pdf`,
+`admin/recordes/record-pdf`), the printable letter (`admin/letters/preview`
+and its inline partial) and error pages.
+
+## Moving a screen
+
+1. Make the controller `return Inertia::render('Court/<Name>', [...])` with
+   plain arrays (dates as ISO 8601 strings).
+2. Write `resources/js/Pages/Court/<Name>.tsx` on `AuthenticatedLayout`,
+   `PageHeader` and the `@/Components/ui` kit; text through `t('cm.…')`.
+3. Add the props type under `court/types/`, run `npm run typecheck`,
+   `npm run build`, and the feature tests (`DB_DATABASE=court_ms_test`),
+   asserting with `assertInertia` instead of `assertViewHas`.
+4. Delete the Blade view. When the last Blade screen is gone, delete
+   `vite.legacy.config.js`, `resources/legacy`, `tailwind.config.js` and the
+   legacy npm dependencies.
+
+Laravel is upgraded to 13 last, once the production host runs PHP ≥ 8.3.
