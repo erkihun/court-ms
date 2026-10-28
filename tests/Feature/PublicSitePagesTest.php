@@ -18,6 +18,7 @@ use App\Models\TermsAndCondition;
 use App\Models\User;
 use App\Notifications\PasswordResetOtp;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -124,6 +125,28 @@ test('the signage board renders the live figures, today\'s activity, announcemen
             ->where('activeStaff', fn ($staff): bool => collect($staff)->contains(fn (array $person): bool => $person['name'] === 'Abebe Kebede' && $person['position'] === 'Registrar'))
             ->where('refreshSeconds', 120)
             ->has('now')->has('appName')->has('logoUrl'));
+});
+
+test('the signage board\'s today is the day in Addis Ababa, evening included', function (): void {
+    $type = CaseType::query()->create(['name' => 'Labour']);
+    $file = fn (string $number, string $at) => tap(CourtCase::query()->create([
+        'case_number' => $number, 'title' => $number, 'case_type_id' => $type->id, 'filing_date' => substr($at, 0, 10), 'status' => 'pending',
+    ]))->forceFill(['created_at' => $at])->save();
+
+    // Late in the evening: past 21:00, where a window in UTC used to end.
+    $this->travelTo(Carbon::parse('2026-10-28 22:30:00', 'Africa/Addis_Ababa'));
+    $file('SG-YESTERDAY', '2026-10-27 23:50:00');
+    $file('SG-MORNING', '2026-10-28 08:15:00');
+    $file('SG-EVENING', '2026-10-28 21:45:00');
+
+    $this->get(route('public.signage'))->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('todayCases', fn ($cases): bool => collect($cases)->pluck('case_number')->all() === ['SG-EVENING', 'SG-MORNING']));
+
+    // Just after midnight the new day starts empty, and yesterday's evening case is gone.
+    $this->travelTo(Carbon::parse('2026-10-29 00:10:00', 'Africa/Addis_Ababa'));
+    $this->get(route('public.signage'))->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('todayCases', []));
 });
 
 /* ── Landing-page manager ─────────────────────────────────────────────── */

@@ -22,8 +22,10 @@ class PublicSignageController extends Controller
     {
         $tz = config('app.timezone', 'UTC');
         $now = Carbon::now($tz);
-        $startOfDay = $now->copy()->startOfDay()->timezone('UTC');
-        $endOfDay = $now->copy()->endOfDay()->timezone('UTC');
+        // Timestamps are stored in the app's time zone, so today is bounded there too: converted
+        // to UTC, the window lost every case filed after 21:00 in Addis Ababa.
+        $startOfDay = $now->copy()->startOfDay();
+        $endOfDay = $now->copy()->endOfDay();
         $todayDate = $now->toDateString();
 
         $totalCases = CourtCase::count();
