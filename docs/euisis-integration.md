@@ -201,6 +201,43 @@ Owner decision, EUISIS ADR 0013 #13 (`App\Services\CaseParties`).
   `merged_into_case_id` and the note. Nothing is deleted; both case pages and the EUISIS
   workspace show where a case went.
 
+## Cases against institutions and appeals (Flow 7)
+
+Owner decision, EUISIS ADR 0013 #14 (`App\Services\AppealRecords`, `App\Services\AppealRecordBundle`).
+
+- **Cases against an EUISIS institution** (`respondent_organization_uuid` set), however they
+  were filed, are listed to EUISIS after a cursor (`POST /institutions/cases/new`,
+  `institutions:read`); EUISIS gives each to the institution's court case officer.
+  `POST /institutions/cases/{case}` shows one case to that institution (course, hearings,
+  published decision, appeals); a case against another institution is not found.
+- **Appeals to the appellate court** (outside this system): once a case is closed with a
+  published decision, a party asks for its record: the employee from EUISIS
+  (`POST /people/cases/{case}/appeal`, `people:act`; any party on the applicant's side,
+  once for that side), the institution (`POST /institutions/cases/{case}/appeal`,
+  `institutions:act`), or the registry for a party (Appeals > Record a request). The
+  registry (`appeals.decide`) releases it, which sets `court_cases.appealed_at`, or
+  refuses it with a reason, on the case record page or the appeal's page. The party then
+  downloads the record (`kind=appeal_record` in the workspace download, or
+  `POST /institutions/cases/{case}/appeal-record`); before the release it is `403`.
+- **The appeal record** is one PDF (`pdf.appeal-bundle`): the EUISIS proceeding the case
+  started from (`case_euisis_grievances`, `kind` grievance or discipline: Flow 5 now takes
+  `disciplines` in the grievances' form), the case and its parties, the accepted responses
+  and replies, hearings and the bench's signed notes, witnesses, approved letters, the
+  published decision, the appeal, and an index of the documents, which follow as annexes
+  (evidence, response and reply PDFs, PDF case files), each page stamped with its annex
+  number. A document FPDI cannot read is listed as provided separately. Staff read it at
+  any time from the record page (`recordes.appeal-pdf`).
+- **The outcome** (`POST /appeals/{appeal}/outcome`: confirmed, modified or reversed, its
+  date, the appellate court and case number, an optional PDF) closes the appeal and sets
+  `court_cases.appeal_outcome`. It counts for every judge of the panel that decided
+  (`appeals.judge_user_ids`): the evaluation criterion "Decisions upheld on appeal"
+  (`performance_evaluation_criteria.source = appeal_outcomes`, weight 15) is worked out
+  on save from the outcomes in the period (confirmed 10, modified 5, reversed 0) and left
+  out when there are none; the form shows it before saving.
+- **Records** (`/admin/recordes`): the register shows and filters whether a case is at the
+  appellate court; the record page reads in the bundle's order with the appeal section,
+  where the registry releases, refuses and records the outcome.
+
 ## Staff accounts
 
 The court's staff (judges, registrars, inspectors and the rest) are EUISIS employees of the
@@ -281,7 +318,7 @@ reviewed built-in Amharic of `lang/am/home.php`.
 
 ## Tests
 
-`tests/Feature/Euisis/IntegrationApiTest.php`, `EuisisSyncTest.php`, `EmployeeCourtAccessTest.php`, `EmployeeFilingTest.php`, `CaseWorkspaceTest.php`, `PortalInEuisisTest.php`, `CasePartiesTest.php` and `StaffLinkTest.php`. They run on the
+`tests/Feature/Euisis/IntegrationApiTest.php`, `EuisisSyncTest.php`, `EmployeeCourtAccessTest.php`, `EmployeeFilingTest.php`, `CaseWorkspaceTest.php`, `PortalInEuisisTest.php`, `CasePartiesTest.php`, `AppealRecordsTest.php` and `StaffLinkTest.php`. They run on the
 `court_ms_test` database from `.env.testing`:
 
 ```bash

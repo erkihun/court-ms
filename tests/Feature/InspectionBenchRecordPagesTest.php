@@ -409,7 +409,7 @@ test('the case records register renders with its rows, filters and choices', fun
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('Court/Records/Index')
-            ->where('filters', ['q' => $case->case_number, 'status' => 'closed', 'case_type_id' => '', 'assignee_id' => '', 'from' => '', 'to' => ''])
+            ->where('filters', ['q' => $case->case_number, 'status' => 'closed', 'case_type_id' => '', 'assignee_id' => '', 'from' => '', 'to' => '', 'appeal' => ''])
             ->where('statuses', ['pending', 'active', 'adjourned', 'dismissed', 'closed'])
             ->where('isReviewer', false)
             ->has('types', 2)

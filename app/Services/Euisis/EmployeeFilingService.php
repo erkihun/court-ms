@@ -77,9 +77,15 @@ final class EmployeeFilingService
                 'created_at' => now(), 'updated_at' => now(),
             ]);
 
-            foreach ((array) ($data['grievances'] ?? []) as $grievance) {
+            // The EUISIS proceedings the case started from: grievances and discipline cases, in one form.
+            $proceedings = [
+                ...array_map(fn (array $row): array => [...$row, 'kind' => 'grievance'], (array) ($data['grievances'] ?? [])),
+                ...array_map(fn (array $row): array => [...$row, 'kind' => 'discipline'], (array) ($data['disciplines'] ?? [])),
+            ];
+            foreach ($proceedings as $grievance) {
                 DB::table('case_euisis_grievances')->insert([
                     'court_case_id' => $caseId,
+                    'kind' => $grievance['kind'],
                     'grievance_uuid' => $grievance['uuid'],
                     'reference' => $grievance['reference'] ?? null,
                     'subject' => mb_substr(strip_tags((string) $grievance['subject']), 0, 500),

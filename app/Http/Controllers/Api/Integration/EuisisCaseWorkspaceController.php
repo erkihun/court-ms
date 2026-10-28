@@ -12,9 +12,12 @@ use App\Http\Controllers\SecureFileController;
 use App\Models\Applicant;
 use App\Models\ApplicantResponseReply;
 use App\Models\CaseApplicant;
+use App\Models\CourtCase;
 use App\Models\Decision;
 use App\Models\Letter;
 use App\Models\RespondentResponse;
+use App\Services\AppealRecordBundle;
+use App\Services\AppealRecords;
 use App\Services\CaseParties;
 use App\Services\Notifications\PortalNotificationFeed;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -67,6 +70,13 @@ class EuisisCaseWorkspaceController extends Controller
                 'modify' => $row->status === 'pending' && $row->review_status !== 'accepted' && CaseParties::canChange((int) $applicant->id, $case),
             ];
             $props += $this->partiesOf($case, (int) $applicant->id);
+            // Appeals to the appellate court (EUISIS ADR 0013 #14): may this side ask, its requests, and the released record.
+            $appeals = app(AppealRecords::class);
+            $props['appeal'] = [
+                'appealable' => $appeals->appealableDecision($case) !== null,
+                'requests' => $appeals->forSide($case, 'applicant'),
+                'released' => $appeals->released($case, 'applicant'),
+            ];
 
             return response()->json(['data' => $props]);
         });
@@ -178,7 +188,7 @@ class EuisisCaseWorkspaceController extends Controller
     public function download(Request $request, int $case): SymfonyResponse
     {
         $data = $request->validate([
-            'kind' => ['required', 'string', 'in:evidence,file,response,reply,decision,letter,receipt,hearing'],
+            'kind' => ['required', 'string', 'in:evidence,file,response,reply,decision,letter,receipt,hearing,appeal_record'],
             'id' => ['nullable', 'integer', 'min:1'],
             'response_id' => ['nullable', 'integer', 'min:1'],
         ]);
@@ -198,8 +208,39 @@ class EuisisCaseWorkspaceController extends Controller
                 'letter' => $this->letterPdf($caseRow, $id),
                 'receipt' => app(ApplicantCaseController::class)->receiptPdf($case),
                 'hearing' => app(ApplicantCaseController::class)->downloadHearingIcs($case, $id),
+                'appeal_record' => $this->appealRecord($case),
             };
         });
+    }
+
+    /**
+     * The employee asks for the record to take to the appellate court (EUISIS ADR 0013 #14);
+     * the registry releases it. Any party on the applicant's side may ask, once for that side.
+     */
+    public function appeal(Request $request, int $case): SymfonyResponse
+    {
+        $data = $request->validate(['grounds' => ['required', 'string', 'max:10000']]);
+
+        return $this->asApplicant($request, function (Applicant $applicant) use ($data, $case): JsonResponse {
+            abort_unless(CaseParties::canFollow((int) $applicant->id, $case), 404);
+            $appeal = app(AppealRecords::class)->request($case, 'applicant', CaseParties::fullName($applicant), trim(strip_tags($data['grounds'])),
+                'euisis_employee', (string) $applicant->euisis_employee_uuid, (int) $applicant->id);
+
+            return response()->json(['data' => ['ok' => true, 'appeal_number' => (string) $appeal->appeal_number, 'status' => (string) $appeal->status]], 201);
+        });
+    }
+
+    /** The appeal record, once the registry released it to the applicant's side. */
+    private function appealRecord(int $case): SymfonyResponse
+    {
+        abort_unless(app(AppealRecords::class)->released($case, 'applicant'), 403, __('appeal_records.errors.not_released'));
+        $courtCase = CourtCase::query()->findOrFail($case);
+        $bundle = app(AppealRecordBundle::class);
+
+        return response($bundle->build($courtCase), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$bundle->filename($courtCase).'"',
+        ]);
     }
 
     /** The employee's court notices, newest first. */

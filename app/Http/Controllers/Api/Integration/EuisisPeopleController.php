@@ -112,6 +112,8 @@ class EuisisPeopleController extends Controller
             'respondent.name' => ['required', 'string', 'max:255'],
             'respondent.address' => ['nullable', 'string', 'max:500'],
             'grievances' => ['nullable', 'json'],
+            // The employee's EUISIS discipline cases the case concerns, in the grievances' form (EUISIS ADR 0013 #14).
+            'disciplines' => ['nullable', 'json'],
             'documents' => ['nullable', 'array', 'max:20'],
             'documents.*' => ['file', 'mimes:pdf', 'max:10240'],
             'document_titles' => ['nullable', 'array', 'max:20'],
@@ -137,6 +139,11 @@ class EuisisPeopleController extends Controller
             return response()->json(['message' => 'The grievances are not in the expected form.', 'errors' => ['grievances' => ['invalid']], 'request_id' => $request->attributes->get('request_id')], 422);
         }
         $data['grievances'] = $grievances;
+        $disciplines = $this->grievances((string) ($data['disciplines'] ?? '[]'));
+        if ($disciplines === null) {
+            return response()->json(['message' => 'The discipline cases are not in the expected form.', 'errors' => ['disciplines' => ['invalid']], 'request_id' => $request->attributes->get('request_id')], 422);
+        }
+        $data['disciplines'] = $disciplines;
 
         $titles = (array) $request->input('document_titles', []);
         $sources = (array) $request->input('document_sources', []);

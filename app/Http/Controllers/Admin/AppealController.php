@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-
+use App\Services\AppealRecords;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -39,53 +39,36 @@ class AppealController extends Controller
         ]);
     }
 
-    public function create()
+    /** The registry records a party's request to appeal (EUISIS ADR 0013 #14): only closed cases with a published decision. */
+    public function create(Request $request, AppealRecords $appeals)
     {
         $cases = DB::table('court_cases')
-            ->orderByDesc('created_at')
-            ->limit(50)
-            ->get(['id', 'case_number', 'title']);
+            ->whereIn('status', ['closed', 'dismissed'])->whereNull('merged_into_case_id')
+            ->whereExists(fn ($q) => $q->selectRaw('1')->from('decisions as d')->whereColumn('d.court_case_id', 'court_cases.id')->where('d.status', 'published')->whereNotNull('d.approved_at'))
+            ->orderByDesc('updated_at')
+            ->limit(100)
+            ->get(['id', 'case_number', 'title', 'respondent_name']);
 
-        return Inertia::render('Court/Appeals/Form', ['appeal' => null, 'cases' => $cases]);
+        return Inertia::render('Court/Appeals/Form', [
+            'appeal' => null,
+            'cases' => $cases,
+            'caseId' => $request->integer('case') ?: null,
+            'sides' => AppealRecords::SIDES,
+        ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, AppealRecords $appeals)
     {
         $data = $request->validate([
             'court_case_id' => ['required', 'integer', 'exists:court_cases,id'],
-            'title'         => ['required', 'string', 'max:255'],
-            'grounds'       => ['nullable', 'string', 'max:10000'],
+            'appellant_type' => ['required', 'in:'.implode(',', AppealRecords::SIDES)],
+            'appellant_name' => ['required', 'string', 'max:255'],
+            'grounds' => ['required', 'string', 'max:10000'],
         ]);
 
-        return DB::transaction(function () use ($data) {
-            // 1) Insert draft to get the ID
-            $appealId = DB::table('appeals')->insertGetId([
-                'court_case_id'         => $data['court_case_id'],
-                'applicant_id'          => null,
-                'submitted_by_user_id'  => auth()->id(),
-                'appeal_number'         => 'TMP-' . uniqid(), // temporary to satisfy NOT NULL+UNIQUE
-                'title'                 => $data['title'],
-                'grounds'               => $data['grounds'] ?? null,
-                'status'                => 'draft',
-                'created_at'            => now(),
-                'updated_at'            => now(),
-            ]);
+        $appeal = $appeals->request((int) $data['court_case_id'], $data['appellant_type'], trim($data['appellant_name']), trim($data['grounds']), 'registry', by: $request->user());
 
-            // 2) Generate final number using the ID
-            $finalNumber = 'APL-' . now()->format('Y') . '-' . str_pad((string)$appealId, 4, '0', STR_PAD_LEFT);
-
-            DB::table('appeals')->where('id', $appealId)->update([
-                'appeal_number' => $finalNumber,
-                'updated_at'    => now(),
-            ]);
-
-            return redirect()
-                ->route('appeals.show', $appealId)
-                ->with('success', [
-                    'key' => 'messages.success.created',
-                    'replace' => ['resource' => __('messages.resources.appeal')],
-                ]);
-        });
+        return redirect()->route('appeals.show', $appeal->id)->with('success', __('appeal_records.flash.requested'));
     }
 
     public function show($appealId)
@@ -123,9 +106,21 @@ class AppealController extends Controller
                 'submitted_at' => $iso($appeal->submitted_at ?? null),
                 'decided_at' => $iso($appeal->decided_at ?? null),
                 'created_at' => $iso($appeal->created_at),
+                // EUISIS ADR 0013 #14: who appeals, how the request came, the release and the appellate outcome.
+                'side' => $appeal->appellant_type ?? null,
+                'appellant' => $appeal->appellant_name ?? null,
+                'via' => $appeal->requested_via ?? null,
+                'released_at' => $iso($appeal->released_at ?? null),
+                'outcome' => $appeal->outcome ?? null,
+                'outcome_date' => $appeal->outcome_date ?? null,
+                'appellate_court' => $appeal->appellate_court ?? null,
+                'appellate_case_number' => $appeal->appellate_case_number ?? null,
+                'outcome_notes' => $appeal->outcome_notes ?? null,
+                'outcome_document_url' => ! empty($appeal->outcome_document_path) ? route('appeals.outcome-document', $appeal->id) : null,
             ],
             'documents' => $docs->map(fn (object $doc): array => ['id' => (int) $doc->id, 'label' => $doc->label, 'created_at' => $iso($doc->created_at)])->values()->all(),
-            'can' => ['edit' => $can('appeals.edit'), 'decide' => $can('appeals.decide'), 'upload' => $can('appeals.edit')],
+            'can' => ['edit' => $can('appeals.edit'), 'decide' => $can('appeals.decide'), 'upload' => $can('appeals.edit'), 'outcome' => $can('appeals.decide')],
+            'outcomes' => AppealRecords::OUTCOMES,
         ]);
     }
 
@@ -194,7 +189,11 @@ class AppealController extends Controller
         ]);
     }
 
-    public function decide(Request $request, $appealId)
+    /**
+     * The registry answers a request: approved releases the record to the party (the
+     * case is then marked as appealed), rejected refuses it with the reason.
+     */
+    public function decide(Request $request, $appealId, AppealRecords $appeals)
     {
         $appeal = DB::table('appeals')->where('id', $appealId)->first();
         abort_if(!$appeal, 404);
@@ -208,18 +207,50 @@ class AppealController extends Controller
             return back()->with('error', 'messages.error.not_decidable');
         }
 
-        DB::table('appeals')->where('id', $appealId)->update([
-            'status'             => $data['decision'],
-            'decided_by_user_id' => auth()->id(),
-            'decided_at'         => now(),
-            'decision_notes'     => $data['decision_notes'] ?? null,
-            'updated_at'         => now(),
-        ]);
+        match ($data['decision']) {
+            'approved' => $appeals->release($appeal, $request->user(), $data['decision_notes'] ?? null),
+            'rejected' => $appeals->refuse($appeal, $request->user(), $data['decision_notes'] ?? null),
+            default => DB::table('appeals')->where('id', $appealId)->update([
+                'status' => 'closed', 'decided_by_user_id' => auth()->id(), 'decided_at' => now(),
+                'decision_notes' => $data['decision_notes'] ?? null, 'updated_at' => now(),
+            ]),
+        };
 
-        return back()->with('success', [
-            'key' => 'messages.success.recorded',
-            'replace' => ['resource' => __('messages.resources.decision')],
+        return back()->with('success', match ($data['decision']) {
+            'approved' => __('appeal_records.flash.released'),
+            'rejected' => __('appeal_records.flash.refused'),
+            default => ['key' => 'messages.success.recorded', 'replace' => ['resource' => __('messages.resources.decision')]],
+        });
+    }
+
+    /** What the appellate court decided on a released record; it scores the judges of the panel. */
+    public function outcome(Request $request, $appealId, AppealRecords $appeals)
+    {
+        $appeal = DB::table('appeals')->where('id', $appealId)->first();
+        abort_if(!$appeal, 404);
+
+        $data = $request->validate([
+            'outcome' => ['required', 'in:'.implode(',', AppealRecords::OUTCOMES)],
+            'outcome_date' => ['required', 'date', 'before_or_equal:today'],
+            'appellate_court' => ['nullable', 'string', 'max:255'],
+            'appellate_case_number' => ['nullable', 'string', 'max:120'],
+            'outcome_notes' => ['nullable', 'string', 'max:5000'],
+            'document' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
         ]);
+        $path = $request->hasFile('document')
+            ? app(\App\Services\SecureUploadService::class)->store($request->file('document'), 'appeals', 'private', ['related_type' => 'appeal', 'related_id' => $appeal->id, 'user_id' => auth()->id()])
+            : null;
+        $appeals->recordOutcome($appeal, $request->user(), $data, $path);
+
+        return back()->with('success', __('appeal_records.flash.outcome'));
+    }
+
+    public function outcomeDocument($appealId)
+    {
+        $path = DB::table('appeals')->where('id', $appealId)->value('outcome_document_path');
+        abort_if(! $path || ! Storage::disk('private')->exists($path), 404);
+
+        return Storage::disk('private')->download($path, 'appellate-decision-'.$appealId.'.pdf');
     }
 
     public function uploadDoc(Request $request, $appealId)

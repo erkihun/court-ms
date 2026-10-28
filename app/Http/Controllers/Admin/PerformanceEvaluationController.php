@@ -10,6 +10,8 @@ use App\Models\PerformanceEvaluation;
 use App\Models\PerformanceEvaluationCategory;
 use App\Models\PerformanceEvaluationScore;
 use App\Models\User;
+use App\Services\AppealRecords;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -136,14 +138,7 @@ class PerformanceEvaluationController extends Controller
                 'status'            => $data['action'],
             ]);
 
-            foreach ($data['scores'] as $scoreData) {
-                PerformanceEvaluationScore::create([
-                    'evaluation_id' => $evaluation->id,
-                    'criterion_id'  => $scoreData['criterion_id'],
-                    'score'         => $scoreData['score'],
-                    'comment'       => $scoreData['comment'] ?? null,
-                ]);
-            }
+            $this->saveScores($evaluation, $data['scores']);
 
             $evaluation->recalculateScore();
         });
@@ -263,14 +258,7 @@ class PerformanceEvaluationController extends Controller
 
             // Replace all scores
             $performanceEvaluation->scores()->delete();
-            foreach ($data['scores'] as $scoreData) {
-                PerformanceEvaluationScore::create([
-                    'evaluation_id' => $performanceEvaluation->id,
-                    'criterion_id'  => $scoreData['criterion_id'],
-                    'score'         => $scoreData['score'],
-                    'comment'       => $scoreData['comment'] ?? null,
-                ]);
-            }
+            $this->saveScores($performanceEvaluation, $data['scores']);
 
             $performanceEvaluation->recalculateScore();
         });
@@ -336,7 +324,56 @@ class PerformanceEvaluationController extends Controller
             'category_label' => $this->categoryLabel($criterion->category, $categoryNames),
             'weight' => (int) $criterion->weight,
             'description' => $criterion->description,
+            // appeal_outcomes: worked out from the appellate court's outcomes, never typed in.
+            'source' => $criterion->source,
         ])->values()->all();
+    }
+
+    /**
+     * The evaluator's scores, then the criteria worked out from the record: the
+     * appellate court's outcomes on decisions the member gave on a panel, over the
+     * period (EUISIS ADR 0013 #14). With no outcome in the period, that criterion
+     * is left out and the others carry the overall score.
+     *
+     * @param  list<array{criterion_id: int|string, score: int|string, comment?: ?string}>  $scores
+     */
+    private function saveScores(PerformanceEvaluation $evaluation, array $scores): void
+    {
+        $automatic = PerformanceCriterion::query()->where('active', true)->whereNotNull('source')->get()->keyBy('id');
+        foreach ($scores as $scoreData) {
+            if ($automatic->has((int) $scoreData['criterion_id'])) {
+                continue;
+            }
+            PerformanceEvaluationScore::create([
+                'evaluation_id' => $evaluation->id,
+                'criterion_id' => $scoreData['criterion_id'],
+                'score' => $scoreData['score'],
+                'comment' => $scoreData['comment'] ?? null,
+            ]);
+        }
+        foreach ($automatic->where('source', 'appeal_outcomes') as $criterion) {
+            $record = AppealRecords::judgeRecord((int) $evaluation->evaluated_user_id, (string) $evaluation->period_start, (string) $evaluation->period_end);
+            if ($record['score'] !== null) {
+                PerformanceEvaluationScore::create([
+                    'evaluation_id' => $evaluation->id,
+                    'criterion_id' => $criterion->id,
+                    'score' => $record['score'],
+                    'comment' => __('performance.appeal_outcomes.comment', $record),
+                ]);
+            }
+        }
+    }
+
+    /** The appeal outcomes a member's evaluation would count, for the form to show before saving. */
+    public function appealRecord(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'user' => ['required', 'integer', 'exists:users,id'],
+            'start' => ['required', 'date'],
+            'end' => ['required', 'date', 'after_or_equal:start'],
+        ]);
+
+        return response()->json(['data' => AppealRecords::judgeRecord((int) $data['user'], $data['start'], $data['end'])]);
     }
 
     /** @return Collection<string, string> category slug => its name in the current language */

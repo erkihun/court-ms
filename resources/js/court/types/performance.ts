@@ -56,6 +56,8 @@ export interface PerformanceCriterionOption {
     category_label: string | null;
     weight: number;
     description: string | null;
+    /** appeal_outcomes: worked out from the appellate court's outcomes, never typed in (EUISIS ADR 0013 #14). */
+    source?: string | null;
 }
 
 /** A criterion's saved score (edit form). */

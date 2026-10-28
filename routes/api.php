@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\CaseMessageController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\Integration\EuisisCasePartiesController;
 use App\Http\Controllers\Api\Integration\EuisisCaseWorkspaceController;
+use App\Http\Controllers\Api\Integration\EuisisInstitutionCaseController;
 use App\Http\Controllers\Api\Integration\EuisisLetterController;
 use App\Http\Controllers\Api\Integration\EuisisPeopleController;
 use App\Http\Controllers\Api\Integration\EuisisReferralController;
@@ -96,6 +97,19 @@ Route::prefix('v1/integration')
                 Route::post('/cases/{case}/responses/{response}/replies/{reply}/update', [EuisisCaseWorkspaceController::class, 'updateReply']);
                 Route::post('/cases/{case}/responses/{response}/replies/{reply}/delete', [EuisisCaseWorkspaceController::class, 'destroyReply']);
                 Route::post('/notices/read', [EuisisCaseWorkspaceController::class, 'readNotices']);
+                // An appeal to the appellate court (EUISIS ADR 0013 #14).
+                Route::post('/cases/{case}/appeal', [EuisisCaseWorkspaceController::class, 'appeal']);
             });
+        });
+
+        // Flow 7: cases against EUISIS institutions, for the officer who follows them, and their appeals.
+        Route::prefix('/institutions')->whereNumber('case')->group(function (): void {
+            Route::middleware(['integration.client:institutions:read', 'throttle:120,1'])->group(function (): void {
+                Route::post('/cases/new', [EuisisInstitutionCaseController::class, 'newCases']);
+                Route::post('/cases/{case}', [EuisisInstitutionCaseController::class, 'show']);
+                Route::post('/cases/{case}/appeal-record', [EuisisInstitutionCaseController::class, 'appealRecord']);
+            });
+            Route::post('/cases/{case}/appeal', [EuisisInstitutionCaseController::class, 'appeal'])
+                ->middleware(['integration.client:institutions:act', 'throttle:60,1']);
         });
     });

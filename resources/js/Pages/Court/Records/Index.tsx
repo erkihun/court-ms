@@ -14,15 +14,19 @@ import {
 import { useInspectionPagesText } from '@/court/i18n/useInspectionPagesText';
 import type { RecordListFilters, RecordsIndexProps } from '@/court/types/records';
 
-const EMPTY: RecordListFilters = { q: '', status: '', case_type_id: '', assignee_id: '', from: '', to: '' };
+const EMPTY: RecordListFilters = { q: '', status: '', case_type_id: '', assignee_id: '', from: '', to: '', appeal: '' };
+
+/** The tone of the appellate court's outcome. */
+const OUTCOME_TONES: Record<string, Tone> = { confirmed: 'success', modified: 'warning', reversed: 'danger' };
 
 /** The tone of each review state, as the Blade list coloured it. */
 const REVIEW_TONES: Record<string, Tone> = { awaiting_review: 'warning', accepted: 'success', returned: 'warning', rejected: 'danger' };
 
 /**
  * The case records register: search and filters, one row per case with its
- * applicant, type, team, member, status, filing date and review state, and the
- * record, PDF and appeal-record actions.
+ * applicant, type, team, member, status, filing date and review state, whether
+ * it went to the appellate court and with what outcome (EUISIS ADR 0013 #14),
+ * and the record, PDF and appeal-record actions.
  */
 export default function RecordsIndex({ cases, filters, statuses, types, users }: RecordsIndexProps) {
     const { t, tx, fill } = useInspectionPagesText();
@@ -76,6 +80,12 @@ export default function RecordsIndex({ cases, filters, statuses, types, users }:
                             {users.map((user) => <option key={user.id} value={String(user.id)}>{user.name}</option>)}
                         </Select>
                     </FilterField>
+                    <FilterField label={t('cm.appeal_records.register.filter')} htmlFor="filter-appeal">
+                        <Select id="filter-appeal" value={form.appeal} onChange={(event) => set('appeal')(event.target.value)}>
+                            <option value="">{t('cm.appeal_records.register.all')}</option>
+                            {(['appealed', 'requested', 'none'] as const).map((value) => <option key={value} value={value}>{t(`cm.appeal_records.register.${value}`)}</option>)}
+                        </Select>
+                    </FilterField>
                     <FilterField label={t('cm.cases.filters.from')} htmlFor="filter-from">
                         <LocalizedDatePicker id="filter-from" value={form.from} onChange={set('from')} />
                     </FilterField>
@@ -91,7 +101,7 @@ export default function RecordsIndex({ cases, filters, statuses, types, users }:
                                 <tr>
                                     {[
                                         t('cm.cases.table.number'), t('cm.cases.table.case_number'), t('cm.cases.applicant_name'), t('cm.cases.table.type'), t('cm.cases.table.team'),
-                                        t('cm.cases.table.team_member'), t('cm.cases.table.status'), t('cm.cases.table.filing_date'), t('cm.cases.show.review_actions'), t('cm.recordes.labels.title'),
+                                        t('cm.cases.table.team_member'), t('cm.cases.table.status'), t('cm.cases.table.filing_date'), t('cm.cases.show.review_actions'), t('cm.appeal_records.register.column'), t('cm.recordes.labels.title'),
                                     ].map((heading) => <th key={heading} className={cx(tableHeaderCellClassName, 'whitespace-nowrap text-left')}>{heading}</th>)}
                                     <th className={cx(tableHeaderCellClassName, 'text-right')}>{t('cm.cases.table.actions')}</th>
                                 </tr>
@@ -112,6 +122,16 @@ export default function RecordsIndex({ cases, filters, statuses, types, users }:
                                         <td className={tableCellClassName}>
                                             <span className={badgeClassName(REVIEW_TONES[row.review_status] ?? 'neutral')}>{tx(`cm.cases.review_status.${row.review_status}`, row.review_status)}</span>
                                             {row.reviewer_name && <div className="mt-1 text-xs text-(--app-muted-foreground)">{fill(t('cm.cases.reviewed_by'), { name: row.reviewer_name })}</div>}
+                                        </td>
+                                        <td className={tableCellClassName}>
+                                            {row.appealed_at ? (
+                                                <div className="flex flex-wrap gap-1">
+                                                    <span className={badgeClassName('warning')}>{t('cm.appeal_records.register.appealed')}</span>
+                                                    {row.appeal_outcome && <span className={badgeClassName(OUTCOME_TONES[row.appeal_outcome] ?? 'neutral')}>{t(`cm.appeal_records.outcomes.${row.appeal_outcome}`)}</span>}
+                                                </div>
+                                            ) : row.appeal_requests > 0
+                                                ? <span className={badgeClassName('info')}>{t('cm.appeal_records.register.requested')}</span>
+                                                : <span className="text-(--app-muted-foreground)">-</span>}
                                         </td>
                                         <td className={tableCellClassName}>{shorten(row.title, 48)}</td>
                                         <td className={cx(tableCellClassName, 'text-right whitespace-nowrap')}>

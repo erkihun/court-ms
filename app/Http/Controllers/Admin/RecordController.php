@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\CourtCase;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\AppealRecordBundle;
+use App\Services\AppealRecords;
+use App\Services\CaseParties;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -33,6 +36,8 @@ class RecordController extends Controller
         $assigneeId = $request->integer('assignee_id');
         $from = $request->date('from');
         $to = $request->date('to');
+        // appealed: at the appellate court; requested: a party asked and the registry has yet to answer; none: never appealed.
+        $appeal = in_array($request->string('appeal')->toString(), ['appealed', 'requested', 'none'], true) ? $request->string('appeal')->toString() : '';
 
         $isReviewer = false;
         if (function_exists('userHasPermission')) {
@@ -59,9 +64,18 @@ class RecordController extends Controller
                 DB::raw("TRIM(CONCAT(COALESCE(ap.first_name,''),' ',COALESCE(ap.middle_name,''),' ',COALESCE(ap.last_name,''))) as applicant_name"),
                 'ass.name as assignee_name',
                 'reviewer.name as reviewer_name',
-                DB::raw('(SELECT COUNT(*) FROM decisions d WHERE d.court_case_id = c.id) as decisions_count')
+                DB::raw('(SELECT COUNT(*) FROM decisions d WHERE d.court_case_id = c.id) as decisions_count'),
+                DB::raw("(SELECT COUNT(*) FROM appeals apr WHERE apr.court_case_id = c.id AND apr.status IN ('submitted', 'under_review')) as appeal_requests")
             )
             ->selectSub($teamNameSubquery, 'team_name');
+
+        if ($appeal === 'appealed') {
+            $builder->whereNotNull('c.appealed_at');
+        } elseif ($appeal === 'requested') {
+            $builder->whereExists(fn ($q) => $q->selectRaw('1')->from('appeals as apf')->whereColumn('apf.court_case_id', 'c.id')->whereIn('apf.status', ['submitted', 'under_review']));
+        } elseif ($appeal === 'none') {
+            $builder->whereNull('c.appealed_at')->whereNotExists(fn ($q) => $q->selectRaw('1')->from('appeals as apn')->whereColumn('apn.court_case_id', 'c.id'));
+        }
 
         if ($q !== '') {
             $builder->where(function ($inner) use ($q) {
@@ -134,6 +148,10 @@ class RecordController extends Controller
                     'decisions_count' => (int) ($row->decisions_count ?? 0),
                     // The appeal record exists once the case has a decision or is closed/dismissed.
                     'has_appeal_record' => (int) ($row->decisions_count ?? 0) > 0 || in_array($row->status ?? '', ['closed', 'dismissed'], true),
+                    // At the appellate court since (EUISIS ADR 0013 #14), its outcome, and requests waiting for the registry.
+                    'appealed_at' => $row->appealed_at ? Carbon::parse($row->appealed_at)->toIso8601String() : null,
+                    'appeal_outcome' => $row->appeal_outcome,
+                    'appeal_requests' => (int) ($row->appeal_requests ?? 0),
                 ];
             });
 
@@ -154,6 +172,7 @@ class RecordController extends Controller
                 'assignee_id' => $assigneeId ? (string) $assigneeId : '',
                 'from' => $from ? $from->format('Y-m-d') : '',
                 'to' => $to ? $to->format('Y-m-d') : '',
+                'appeal' => $appeal,
             ],
             'statuses' => self::STATUSES,
             'types' => $types,
@@ -165,11 +184,15 @@ class RecordController extends Controller
     /**
      * One case's consolidated record, section by section (React, Court/Records/Show).
      */
-    public function show(CourtCase $case): Response
+    public function show(CourtCase $case, AppealRecords $appeals): Response
     {
         $this->authorizeRecordAccess($case);
 
-        return Inertia::render('Court/Records/Show', $this->recordPageProps($case, $this->recordData($case, withEvidenceEmbed: false)));
+        return Inertia::render('Court/Records/Show', [
+            ...$this->recordPageProps($case, $this->recordData($case, withEvidenceEmbed: false)),
+            ...$this->proceedingProps($case),
+            'appeal' => $this->appealProps($case, $appeals),
+        ]);
     }
 
     public function pdf(CourtCase $case)
@@ -183,23 +206,116 @@ class RecordController extends Controller
     }
 
     /**
-     * Server-side, consolidated "appeal record" PDF — the entire court process
-     * from start to finish, for a party appealing to a higher court.
+     * The appeal record (App\Services\AppealRecordBundle): one PDF of the whole
+     * proceeding, from the EUISIS grievance or discipline case to the decision
+     * and the appeal, with the documents as annexes. Staff may read it at any
+     * time; a party gets it once the registry releases it.
      */
-    public function appealPdf(CourtCase $case)
+    public function appealPdf(CourtCase $case, AppealRecordBundle $bundle)
     {
         $this->authorizeRecordAccess($case);
-        $data = $this->recordData($case);
-        $data['generatedAt'] = now();
 
-        $safeCase = Str::of($case->case_number ?? $case->id)->replace(['/', '\\'], '-')->slug('-');
-        $filename = 'appeal-record-' . ($safeCase ?: $case->id) . '.pdf';
+        return response($bundle->build($case), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$bundle->filename($case).'"',
+        ]);
+    }
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.appeal-record', $data)
-            ->setPaper('a4')
-            ->setOption('isRemoteEnabled', true);
+    /**
+     * What the record page adds to the case file (EUISIS ADR 0013 #13 and #14): the
+     * EUISIS proceeding the case started from, the parties on the applicant's side
+     * and the replies the court accepted.
+     *
+     * @return array<string, mixed>
+     */
+    private function proceedingProps(CourtCase $case): array
+    {
+        $iso = fn ($value): ?string => $value ? Carbon::parse($value)->toIso8601String() : null;
+        app(CaseParties::class)->ensureLead((int) $case->id);
+        $lawyers = DB::table('case_representatives as r')->join('applicants as a', 'a.id', '=', 'r.lawyer_applicant_id')
+            ->where('r.case_id', $case->id)->where('r.status', 'accepted')
+            ->get(['r.case_applicant_id', 'a.first_name', 'a.middle_name', 'a.last_name', 'a.lawyer_license_number'])->groupBy('case_applicant_id');
 
-        return $pdf->download($filename);
+        return [
+            'origins' => DB::table('case_euisis_grievances')->where('court_case_id', $case->id)->orderBy('submitted_at')->get()
+                ->map(fn (object $row): array => [
+                    'id' => (int) $row->id,
+                    'kind' => (string) ($row->kind ?? 'grievance'),
+                    'reference' => $row->reference,
+                    'subject' => (string) $row->subject,
+                    'category' => $row->category,
+                    'status' => $row->status,
+                    'description' => $row->description,
+                    'submitted_at' => $iso($row->submitted_at),
+                    'closed_at' => $iso($row->closed_at),
+                    'responses' => array_values((array) json_decode((string) $row->responses, true)),
+                    'decisions' => array_values((array) json_decode((string) $row->decisions, true)),
+                ])->values()->all(),
+            'parties' => DB::table('case_applicants')->where('case_id', $case->id)->whereIn('status', ['active', 'admitted', 'invited'])
+                ->orderByRaw("CASE role WHEN 'lead' THEN 0 WHEN 'co_applicant' THEN 1 ELSE 2 END")->orderBy('id')->get()
+                ->map(fn (object $party): array => [
+                    'id' => (int) $party->id,
+                    'name' => (string) $party->name,
+                    'role' => (string) $party->role,
+                    'status' => (string) $party->status,
+                    'lawyers' => ($lawyers->get($party->id) ?? collect())->map(fn (object $lawyer): array => ['name' => CaseParties::fullName($lawyer), 'license_number' => $lawyer->lawyer_license_number])->values()->all(),
+                ])->values()->all(),
+            'replies' => DB::table('applicant_response_replies')->where('case_id', $case->id)->where('review_status', 'accepted')->orderBy('created_at')->get()
+                ->map(fn (object $reply): array => [
+                    'id' => (int) $reply->id,
+                    'response_id' => (int) $reply->respondent_response_id,
+                    'description' => $reply->description ? Purifier::clean((string) $reply->description, 'default') : null,
+                    'created_at' => $iso($reply->created_at),
+                ])->values()->all(),
+        ];
+    }
+
+    /**
+     * The appeal panel (EUISIS ADR 0013 #14): whether a party may appeal, every
+     * request on the case, and what this person may do about them.
+     *
+     * @return array<string, mixed>
+     */
+    private function appealProps(CourtCase $case, AppealRecords $appeals): array
+    {
+        $iso = fn ($value): ?string => $value ? Carbon::parse($value)->toIso8601String() : null;
+        $user = Auth::user();
+        $can = fn (string $permission): bool => (bool) ($user?->hasPermission($permission) ?? false);
+
+        return [
+            'appealable' => $appeals->appealableDecision((int) $case->id) !== null,
+            'appealedAt' => $iso($case->appealed_at),
+            'outcome' => $case->appeal_outcome,
+            'rows' => DB::table('appeals as a')->leftJoin('users as r', 'r.id', '=', 'a.released_by_user_id')->leftJoin('users as d', 'd.id', '=', 'a.decided_by_user_id')
+                ->where('a.court_case_id', $case->id)->orderByDesc('a.id')
+                ->get(['a.*', 'r.name as released_by', 'd.name as decided_by'])
+                ->map(fn (object $appeal): array => [
+                    'id' => (int) $appeal->id,
+                    'appeal_number' => (string) $appeal->appeal_number,
+                    'status' => (string) $appeal->status,
+                    'side' => $appeal->appellant_type,
+                    'appellant' => $appeal->appellant_name,
+                    'via' => $appeal->requested_via,
+                    'grounds' => $appeal->grounds,
+                    'note' => $appeal->decision_notes,
+                    'requested_at' => $iso($appeal->submitted_at),
+                    'released_at' => $iso($appeal->released_at),
+                    'released_by' => $appeal->released_by,
+                    'decided_at' => $iso($appeal->decided_at),
+                    'decided_by' => $appeal->decided_by,
+                    'outcome' => $appeal->outcome,
+                    'outcome_date' => $appeal->outcome_date,
+                    'appellate_court' => $appeal->appellate_court,
+                    'appellate_case_number' => $appeal->appellate_case_number,
+                    'outcome_notes' => $appeal->outcome_notes,
+                    'outcome_document_url' => $appeal->outcome_document_path ? route('appeals.outcome-document', $appeal->id) : null,
+                ])->values()->all(),
+            'can' => [
+                'request' => $can('appeals.create'),
+                'release' => $can('appeals.decide'),
+                'outcome' => $can('appeals.decide'),
+            ],
+        ];
     }
 
     /**

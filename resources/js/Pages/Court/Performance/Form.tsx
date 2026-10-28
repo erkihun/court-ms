@@ -1,5 +1,6 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import type { FormEvent } from 'react';
+import axios from 'axios';
+import { useEffect, useState, type FormEvent } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import PageHeader from '@/Components/PageHeader';
 import LocalizedDatePicker from '@/Components/Calendar/LocalizedDatePicker';
@@ -27,6 +28,15 @@ interface EvaluationFormData {
 }
 
 type Action = 'draft' | 'submitted';
+
+/** A member's appeal outcomes over the period (AppealRecords::judgeRecord); score null when none. */
+interface AppealRecord {
+    total: number;
+    confirmed: number;
+    modified: number;
+    reversed: number;
+    score: number | null;
+}
 
 /**
  * One form for a new evaluation and for editing a draft or submitted one: the
@@ -59,6 +69,22 @@ export default function PerformanceForm({ evaluation, users, criteria, scores, c
     const description = editing
         ? [evaluation.member_name, [evaluation.period_start, evaluation.period_end].map((date) => (date ? formatDateDisplay(date, system, locale) : p('not_available'))).join(' – ')].filter(Boolean).join(' · ')
         : p('subtitle');
+
+    // The appeal outcomes this evaluation would count (EUISIS ADR 0013 #14), read for the chosen member and period.
+    const [appealRecord, setAppealRecord] = useState<AppealRecord | null>(null);
+    const hasAutomatic = criteria.some((criterion) => criterion.source === 'appeal_outcomes');
+    const { evaluated_user_id: member, period_start: start, period_end: end } = form.data;
+    useEffect(() => {
+        if (!hasAutomatic || member === '' || start === '' || end === '') {
+            setAppealRecord(null);
+            return;
+        }
+        const controller = new AbortController();
+        axios.get<{ data: AppealRecord }>(route('performance-evaluations.appeal-record'), { params: { user: member, start, end }, signal: controller.signal })
+            .then((response) => setAppealRecord(response.data.data))
+            .catch(() => undefined);
+        return () => controller.abort();
+    }, [hasAutomatic, member, start, end]);
 
     const setScore = (index: number, patch: Partial<ScoreInput>) => {
         form.setData('scores', form.data.scores.map((score, i) => (i === index ? { ...score, ...patch } : score)));
@@ -140,6 +166,36 @@ export default function PerformanceForm({ evaluation, users, criteria, scores, c
                         const value = form.data.scores[index];
                         if (!value) return null;
                         const sliderId = `criterion-${criterion.id}-score`;
+                        if (criterion.source === 'appeal_outcomes') {
+                            return (
+                                <div key={criterion.id} className="space-y-2 rounded-lg border border-dashed border-(--app-border) p-4">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                {criterion.category_label && <span className={badgeClassName('neutral', 'uppercase')}>{criterion.category_label}</span>}
+                                                <span className={badgeClassName('info')}>{p('appeal_outcomes.automatic')}</span>
+                                                <span className="text-xs text-(--app-muted-foreground)">{p('fields.weight')}: {criterion.weight}%</span>
+                                            </div>
+                                            <p className="mt-1 text-sm font-semibold text-(--app-foreground)">{criterion.name}</p>
+                                            <p className="mt-0.5 text-xs text-(--app-muted-foreground)">{p('appeal_outcomes.counting')}</p>
+                                        </div>
+                                        {appealRecord?.score !== null && appealRecord?.score !== undefined && (
+                                            <div className="w-12 shrink-0 text-center" aria-hidden="true">
+                                                <div className={cx('text-3xl font-extrabold tabular-nums', criterionTextClass(appealRecord.score))}>{appealRecord.score}</div>
+                                                <div className="text-[10px] text-(--app-muted-foreground)">/10</div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <p role="status" className="text-sm text-(--app-foreground)">
+                                        {appealRecord === null
+                                            ? p('appeal_outcomes.pick')
+                                            : appealRecord.score === null
+                                                ? p('appeal_outcomes.none')
+                                                : p('appeal_outcomes.result', { ...appealRecord, score: appealRecord.score })}
+                                    </p>
+                                </div>
+                            );
+                        }
                         return (
                             <div key={criterion.id} className="space-y-3 rounded-lg border border-(--app-border) bg-(--app-surface-muted) p-4">
                                 <div className="flex items-start justify-between gap-3">

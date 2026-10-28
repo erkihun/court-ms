@@ -1,6 +1,15 @@
 <?php
 
 return [
+    // The criterion worked out from the appellate court's outcomes (EUISIS ADR 0013 #14).
+    'appeal_outcomes' => [
+        'comment' => ':total appeal(s) decided: :confirmed confirmed, :modified modified, :reversed reversed.',
+        'automatic' => 'Worked out from the record',
+        'counting' => 'Decisions of this member\'s panels that the appellate court decided in the period.',
+        'result' => ':total appeal(s): :confirmed confirmed, :modified modified, :reversed reversed. Score :score.',
+        'none' => 'No appeal was decided in the period: this criterion is left out of the overall score.',
+        'pick' => 'Choose the member and the period to see it.',
+    ],
     'title' => 'Performance Evaluations',
     'detail_title' => 'Evaluation Detail',
     'new_title' => 'New Performance Evaluation',

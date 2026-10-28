@@ -107,7 +107,7 @@ test('a new evaluation is scored on the form, submitted, shown with its breakdow
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('Court/Performance/Form')
             ->where('evaluation', null)
-            ->has('criteria', 5)
+            ->has('criteria', 6)
             ->where('criteria.0.name', 'Case Management')
             ->where('criteria.0.category', 'efficiency')
             ->where('criteria.0.category_label', 'Efficiency')
@@ -187,7 +187,7 @@ test('a draft opens on the form with its saved scores, is updated from the page 
                 'notes' => 'Steady quarter.',
                 'status' => 'draft',
             ])
-            ->has('criteria', 6)
+            ->has('criteria', 7)
             ->has('scores', 6)
             ->where('scores', fn ($scores) => collect($scores)->firstWhere('criterion_id', $first->id) === ['criterion_id' => $first->id, 'score' => 5, 'comment' => null])
             ->where('can.delete', true));
@@ -253,7 +253,7 @@ test('the settings page lists every criterion with its category, weight, state a
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('Court/PerformanceSettings/Index')
-            ->has('criteria', 6)
+            ->has('criteria', 7)
             ->where('criteria.0', [
                 'id' => (int) PerformanceCriterion::query()->where('name', 'Case Management')->value('id'),
                 'name' => 'Case Management',
@@ -268,7 +268,8 @@ test('the settings page lists every criterion with its category, weight, state a
             ])
             ->where('criteria.5.name', 'Technical Knowledge')
             ->where('criteria.5.active', false)
-            ->where('totalActiveWeight', 85)
+            // With the criterion worked out from appeal outcomes (EUISIS ADR 0013 #14, weight 15).
+            ->where('totalActiveWeight', 100)
             ->has('categories', 4)
             ->where('categories.3', ['slug' => 'general', 'name' => 'General'])
             ->where('returnUrl', route('settings.performance-evaluation.index')));
@@ -310,10 +311,9 @@ test('criteria and categories are added from the dialogs and pages, edited and d
 
     $this->actingAs($admin)->get(route('settings.performance-evaluation.index'))
         ->assertInertia(fn (AssertableInertia $page) => $page
-            ->has('criteria', 7)
-            ->where('criteria.6.name', 'Initiative')
-            ->where('criteria.6.category_label', 'Innovation')
-            ->where('criteria.6.scores_count', 0));
+            ->has('criteria', 8)
+            ->where('criteria', fn ($criteria): bool => ($row = collect($criteria)->firstWhere('name', 'Initiative')) !== null
+                && $row['category_label'] === 'Innovation' && $row['scores_count'] === 0));
 
     // The Edit Criterion dialog.
     $this->actingAs($admin)->patch(route('settings.performance-evaluation.criteria.update', $criterion), [

@@ -12,24 +12,33 @@ interface Props {
         id: number; appeal_number: string; title: string; grounds: string | null; status: string;
         case_id: number; case_number: string; case_title: string | null;
         decided_by: string | null; decision_notes: string | null; submitted_at: string | null; decided_at: string | null; created_at: string | null;
+        /** EUISIS ADR 0013 #14: who appeals, how the request came, the release and the appellate outcome. */
+        side: 'applicant' | 'respondent' | null; appellant: string | null; via: string | null; released_at: string | null;
+        outcome: 'confirmed' | 'modified' | 'reversed' | null; outcome_date: string | null; appellate_court: string | null;
+        appellate_case_number: string | null; outcome_notes: string | null; outcome_document_url: string | null;
     };
     documents: { id: number; label: string | null; created_at: string | null }[];
-    can: { edit: boolean; decide: boolean; upload: boolean };
+    can: { edit: boolean; decide: boolean; upload: boolean; outcome?: boolean };
 }
 
 const TONES: Record<string, 'neutral' | 'info' | 'warning' | 'success' | 'danger'> = {
     draft: 'warning', submitted: 'info', under_review: 'info', approved: 'success', rejected: 'danger', closed: 'neutral',
 };
 
-/** One appeal: its case, grounds and state; submit a draft, edit, attach documents, and record the decision. */
+/**
+ * One appeal to the appellate court: its case, who appeals and on what grounds;
+ * the registry releases the record (the case is then marked as appealed) or
+ * refuses it, and the appellate outcome is recorded on the case record page.
+ */
 export default function AppealShow({ appeal, documents, can }: Props) {
     const { t } = useLocale();
+    const a = (key: string) => t(`cm.appeal_records.panel.${key}`);
     const { confirm } = useConfirm();
     const fileInput = useRef<HTMLInputElement>(null);
     const [busy, setBusy] = useState<number | null>(null);
     const upload = useForm<{ label: string; file: File | null }>({ label: '', file: null });
     const decide = useForm({ decision: 'approved', decision_notes: '' });
-    const statusLabel = (status: string) => status.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase());
+    const statusLabel = (status: string) => t(`cm.appeal_records.statuses.${status}`);
 
     const submitUpload = (event: FormEvent) => {
         event.preventDefault();
@@ -71,6 +80,25 @@ export default function AppealShow({ appeal, documents, can }: Props) {
                             <div><dt className="text-xs text-(--app-muted-foreground)">{t('court.appeals.decidedBy')}</dt><dd>{appeal.decided_by ?? '—'}</dd></div>
                         </dl>
                         {appeal.decision_notes && <p className="rounded-lg bg-(--app-surface-muted) p-3 text-sm text-(--app-foreground)">{appeal.decision_notes}</p>}
+                        {appeal.side && (
+                            <dl className="grid gap-3 border-t border-(--app-border) pt-4 text-sm sm:grid-cols-3">
+                                <div><dt className="text-xs text-(--app-muted-foreground)">{a('side')}</dt><dd>{appeal.appellant} ({t(`cm.appeal_records.sides.${appeal.side}`)})</dd></div>
+                                <div><dt className="text-xs text-(--app-muted-foreground)">{t('cm.appeal_records.bundle.requested')}</dt><dd>{appeal.via ? t(`cm.appeal_records.via.${appeal.via}`) : '—'}</dd></div>
+                                <div><dt className="text-xs text-(--app-muted-foreground)">{t('cm.appeal_records.bundle.released')}</dt><dd><LocalizedDateDisplay value={appeal.released_at} fallback="—" /></dd></div>
+                            </dl>
+                        )}
+                        {appeal.outcome && (
+                            <div className="rounded-lg border border-(--app-border) p-3 text-sm">
+                                <p className="font-semibold">{t('cm.appeal_records.bundle.outcome')}: {t(`cm.appeal_records.outcomes.${appeal.outcome}`)}</p>
+                                <p className="text-(--app-muted-foreground)">{[appeal.appellate_court, appeal.appellate_case_number].filter(Boolean).join(' · ')} · <LocalizedDateDisplay value={appeal.outcome_date} fallback="—" /></p>
+                                {appeal.outcome_notes && <p className="mt-1">{appeal.outcome_notes}</p>}
+                                {appeal.outcome_document_url && <a href={appeal.outcome_document_url} className="mt-1 inline-block text-xs font-medium text-primary hover:underline">{a('outcome_document')}</a>}
+                            </div>
+                        )}
+                        <div className="flex flex-wrap gap-2">
+                            <Link href={`${route('recordes.show', appeal.case_id)}#section-appeal`} className={buttonClassName({ variant: 'outline', size: 'sm' })}>{t('cm.recordes.titles.record')}</Link>
+                            <a href={route('recordes.appeal-pdf', appeal.case_id)} className={buttonClassName({ variant: 'outline', size: 'sm' })}>{a('download')}</a>
+                        </div>
                     </Card>
 
                     <TableCard title={t('court.appeals.documents')}>
@@ -111,9 +139,8 @@ export default function AppealShow({ appeal, documents, can }: Props) {
                             <FormField label={t('court.appeals.decision')} required error={decide.errors.decision}>
                                 {({ id }) => (
                                     <Select id={id} value={decide.data.decision} onChange={(event) => decide.setData('decision', event.target.value)}>
-                                        <option value="approved">{t('court.appeals.decisionApproved')}</option>
-                                        <option value="rejected">{t('court.appeals.decisionRejected')}</option>
-                                        <option value="closed">{t('court.appeals.decisionClosed')}</option>
+                                        <option value="approved">{a('release')}</option>
+                                        <option value="rejected">{a('refuse')}</option>
                                     </Select>
                                 )}
                             </FormField>

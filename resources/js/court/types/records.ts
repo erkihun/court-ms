@@ -18,7 +18,14 @@ export interface RecordListRow {
     decisions_count: number;
     /** The appeal record exists once the case has a decision or is closed/dismissed. */
     has_appeal_record: boolean;
+    /** ISO 8601: at the appellate court since (EUISIS ADR 0013 #14). */
+    appealed_at: string | null;
+    appeal_outcome: AppealOutcome | null;
+    /** Requests to appeal waiting for the registry. */
+    appeal_requests: number;
 }
+
+export type AppealOutcome = 'confirmed' | 'modified' | 'reversed';
 
 export interface RecordListFilters {
     q: string;
@@ -28,6 +35,8 @@ export interface RecordListFilters {
     /** ISO dates. */
     from: string;
     to: string;
+    /** appealed, requested or none. */
+    appeal: string;
 }
 
 export interface RecordsIndexProps {
@@ -99,15 +108,62 @@ export interface RecordShowProps {
     /** Case files plus evidence items, the count the "Other documents" header shows. */
     filesCount: number;
     hasAppealRecord: boolean;
+    /** The EUISIS proceeding the case started from: a grievance or a discipline case. */
+    origins: RecordOrigin[];
+    /** The parties on the applicant's side, with their lawyers (EUISIS ADR 0013 #13). */
+    parties: { id: number; name: string; role: 'lead' | 'co_applicant' | 'intervener'; status: string; lawyers: { name: string; license_number: string | null }[] }[];
+    /** The applicant's replies the court accepted; sanitized HTML. */
+    replies: { id: number; response_id: number; description: string | null; created_at: string | null }[];
+    appeal: RecordAppealPanel;
 }
 
-/** The sections of the record page; one is open at a time, as on the Blade page. */
-export type RecordSection =
-    | 'case-summary'
-    | 'case-details'
-    | 'respondent-responses'
-    | 'letters'
-    | 'hearings'
-    | 'bench-notes'
-    | 'final-decision'
-    | 'other-documents';
+export interface RecordOrigin {
+    id: number;
+    kind: 'grievance' | 'discipline';
+    reference: string | null;
+    subject: string;
+    category: string | null;
+    status: string | null;
+    /** Plain text. */
+    description: string | null;
+    submitted_at: string | null;
+    closed_at: string | null;
+    responses: { body?: string; at?: string }[];
+    decisions: { number?: string; type?: string; text?: string; at?: string }[];
+}
+
+export interface RecordAppeal {
+    id: number;
+    appeal_number: string;
+    status: 'draft' | 'submitted' | 'under_review' | 'approved' | 'rejected' | 'closed';
+    side: 'applicant' | 'respondent' | null;
+    appellant: string | null;
+    via: string | null;
+    grounds: string | null;
+    note: string | null;
+    requested_at: string | null;
+    released_at: string | null;
+    released_by: string | null;
+    decided_at: string | null;
+    decided_by: string | null;
+    outcome: AppealOutcome | null;
+    /** Y-m-d. */
+    outcome_date: string | null;
+    appellate_court: string | null;
+    appellate_case_number: string | null;
+    outcome_notes: string | null;
+    outcome_document_url: string | null;
+}
+
+/** The appeal to the appellate court (EUISIS ADR 0013 #14). */
+export interface RecordAppealPanel {
+    /** Closed with a published decision: a party may appeal. */
+    appealable: boolean;
+    appealedAt: string | null;
+    outcome: AppealOutcome | null;
+    rows: RecordAppeal[];
+    can: { request: boolean; release: boolean; outcome: boolean };
+}
+
+/** The record's sections, in the order of the proceedings (as the appeal record PDF). */
+export type RecordSection = 'origin' | 'case' | 'pleadings' | 'hearings' | 'witnesses-letters' | 'decision' | 'appeal' | 'documents';

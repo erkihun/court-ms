@@ -624,6 +624,9 @@ Route::middleware(SetLocale::class)->where(array_fill_keys($numericRouteParamete
             Route::patch('/appeals/{appeal}', [AppealController::class, 'update'])->middleware('perm:appeals.edit')->name('appeals.update');
             Route::post('/appeals/{appeal}/submit', [AppealController::class, 'submit'])->middleware('perm:appeals.edit')->name('appeals.submit');
             Route::post('/appeals/{appeal}/decide', [AppealController::class, 'decide'])->middleware('perm:appeals.decide')->name('appeals.decide');
+            // The appellate court's outcome on a released record (EUISIS ADR 0013 #14).
+            Route::post('/appeals/{appeal}/outcome', [AppealController::class, 'outcome'])->middleware(['perm:appeals.decide', 'throttle:20,1'])->name('appeals.outcome');
+            Route::get('/appeals/{appeal}/outcome-document', [AppealController::class, 'outcomeDocument'])->middleware('perm:appeals.view')->name('appeals.outcome-document');
 
             /*
              * Decisions (admin)
@@ -697,6 +700,8 @@ Route::middleware(SetLocale::class)->where(array_fill_keys($numericRouteParamete
                 ->middleware('perm:performance-evaluations.view')->name('performance-evaluations.index');
             Route::get('/performance-evaluations/create', [PerformanceEvaluationController::class, 'create'])
                 ->middleware('perm:performance-evaluations.create')->name('performance-evaluations.create');
+            Route::get('/performance-evaluations/appeal-record', [PerformanceEvaluationController::class, 'appealRecord'])
+                ->middleware('perm:performance-evaluations.create')->name('performance-evaluations.appeal-record');
             Route::post('/performance-evaluations', [PerformanceEvaluationController::class, 'store'])
                 ->middleware('perm:performance-evaluations.create')->name('performance-evaluations.store');
             Route::get('/performance-evaluations/{performanceEvaluation}', [PerformanceEvaluationController::class, 'show'])
