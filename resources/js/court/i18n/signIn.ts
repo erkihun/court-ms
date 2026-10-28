@@ -20,6 +20,8 @@ const signIn = {
         partiesTitle: 'Applicant or employee?',
         partiesText: 'Applicants file and follow their cases in the Agelgay employee portal, under My Portal › My court cases.',
         partiesLink: 'Go to My Portal',
+        lawyerText: 'A lawyer in the court\'s register?',
+        lawyerLink: 'Lawyers sign in here',
     },
     am: {
         eyebrow: 'የአዲስ አበባ ከተማ አስተዳደር',
@@ -38,6 +40,8 @@ const signIn = {
         partiesTitle: 'አመልካች ወይም ሠራተኛ ነዎት?',
         partiesText: 'አመልካቾች ጉዳያቸውን በአገልጋይ የሠራተኛ ፖርታል፣ በየእኔ ፖርታል › የፍርድ ቤት ጉዳዮቼ ያቀርባሉ፤ ይከታተላሉም።',
         partiesLink: 'ወደ የእኔ ፖርታል ይሂዱ',
+        lawyerText: 'በፍርድ ቤቱ የተመዘገቡ ጠበቃ ነዎት?',
+        lawyerLink: 'ጠበቆች እዚህ ይግቡ',
     },
 };
 

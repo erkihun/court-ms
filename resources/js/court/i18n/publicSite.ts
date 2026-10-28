@@ -24,6 +24,10 @@ const publicSite = {
             action: 'My Portal',
             hint: 'File or follow your case',
         },
+        lawyer: {
+            action: 'Lawyers',
+            hint: 'Sign in as a lawyer to file and follow your clients\' cases',
+        },
         eyebrow: {
             about: 'The Court',
             members: 'Composition',
@@ -119,6 +123,10 @@ const publicSite = {
         portal: {
             action: 'የእኔ ፖርታል',
             hint: 'ክስ ያቅርቡ ወይም ጉዳይዎን ይከታተሉ',
+        },
+        lawyer: {
+            action: 'ለጠበቆች',
+            hint: 'የደንበኞችዎን ክስ ለማቅረብና ለመከታተል በጠበቃነት ይግቡ',
         },
         eyebrow: {
             about: 'ፍርድ ቤቱ',

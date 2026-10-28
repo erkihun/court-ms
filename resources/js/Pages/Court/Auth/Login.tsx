@@ -122,6 +122,12 @@ export default function CourtLogin({ status, canResetPassword, sessionNotice, po
                         {text('partiesLink')} <span aria-hidden="true">›</span>
                     </a>
                 )}
+                <p className="mt-3 border-t border-(--court-brass)/30 pt-3 text-slate-600 dark:text-slate-300">
+                    {text('lawyerText')}{' '}
+                    <a href={route('lawyer.login')} className="inline-flex items-center gap-1 font-semibold text-(--court-navy) underline-offset-2 hover:underline dark:text-(--court-brass-soft)">
+                        {text('lawyerLink')} <span aria-hidden="true">›</span>
+                    </a>
+                </p>
             </div>
         </CourtAuthLayout>
     );

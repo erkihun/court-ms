@@ -114,6 +114,17 @@ export default function CourtPublicHeader({ portalUrl = null, authorityName = nu
         </a>
     ) : null;
 
+    // Lawyers sign in at /lawyer/login whether or not the parties' portal is open here.
+    const lawyerButton = (block = false) => (
+        <a
+            href={route('lawyer.login')}
+            className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-(--court-line) px-4 text-sm font-semibold text-(--court-ink) transition hover:bg-(--court-parchment) dark:text-white ${block ? 'w-full' : ''}`}
+            title={text('lawyer.hint')}
+        >
+            {text('lawyer.action')}
+        </a>
+    );
+
     return (
         <header className="public-header sticky top-0 z-40">
             <div className="bg-(--court-ink) text-[13px] text-slate-300">
@@ -156,6 +167,7 @@ export default function CourtPublicHeader({ portalUrl = null, authorityName = nu
                     <div className="ms-auto hidden shrink-0 items-center gap-2 xl:flex">
                         <LanguageSwitcher />
                         <ThemeToggle />
+                        {lawyerButton()}
                         {portalButton()}
                     </div>
 
@@ -220,6 +232,7 @@ export default function CourtPublicHeader({ portalUrl = null, authorityName = nu
                             <ThemeToggle />
                         </div>
                         {portalButton(true)}
+                        {lawyerButton(true)}
                     </div>
                 </DialogPanel>
             </Dialog>
