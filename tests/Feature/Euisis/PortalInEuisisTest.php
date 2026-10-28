@@ -10,8 +10,8 @@ use Inertia\Testing\AssertableInertia;
 
 /*
 | Flow 6: with EUISIS_PORTAL_IN_EUISIS on, employees work on their cases in
-| the EUISIS employee portal; the applicant and respondent portal here, with
-| its sign-in, registration and password pages, says where to go instead.
+| the EUISIS employee portal, so the applicant and respondent portal here,
+| with its sign-in, registration and password pages, is gone from the web.
 */
 
 function closePortal(?string $url = 'https://euisis.example.test/my-portal/court-cases'): void
@@ -19,20 +19,17 @@ function closePortal(?string $url = 'https://euisis.example.test/my-portal/court
     config(['services.euisis.portal_in_euisis' => true, 'services.euisis.portal_url' => $url]);
 }
 
-test('every applicant and respondent page shows where cases are now, with no form behind it', function (): void {
+test('every applicant and respondent URL is not found, with no form behind it', function (): void {
     closePortal();
 
-    foreach (['/applicant/login', '/applicant/register', '/applicant/forgot-password', '/applicant/cases', '/respondent/login', '/respondent/case-search', '/applicant/respondent/responses'] as $path) {
-        // A signed-out visitor to a members' page is sent to the sign-in first, which is the same notice.
-        $this->followingRedirects()->get($path)->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
-            ->component('Court/PortalMoved')
-            ->where('portalUrl', 'https://euisis.example.test/my-portal/court-cases'));
+    foreach (['/applicant', '/applicant/login', '/applicant/register', '/applicant/forgot-password', '/applicant/cases', '/respondent', '/respondent/login', '/respondent/case-search', '/applicant/respondent/responses'] as $path) {
+        // Not a sign-in redirect first: the members' pages are as gone as the sign-in.
+        $this->get($path)->assertNotFound();
     }
 
-    // Nothing is submitted to it.
-    $this->post('/applicant/login', ['email' => 'someone@example.com', 'password' => 'secret'])->assertStatus(410);
-    $this->post('/applicant/register', [])->assertStatus(410);
-    expect($this->postJson('/applicant/cases/1/messages', ['body' => 'Hello'])->status())->toBeIn([401, 410]);
+    $this->post('/applicant/login', ['email' => 'someone@example.com', 'password' => 'secret'])->assertNotFound();
+    $this->post('/applicant/register', [])->assertNotFound();
+    $this->postJson('/applicant/cases/1/messages', ['body' => 'Hello'])->assertNotFound();
 });
 
 test('a court account still signed in is signed out, and the home page is the public site', function (): void {
@@ -45,12 +42,8 @@ test('a court account still signed in is signed out, and the home page is the pu
     ]);
     $applicant->markEmailAsVerified();
 
-    $this->actingAs($applicant, 'applicant')->get('/applicant/dashboard')
-        ->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->component('Court/PortalMoved')->where('portalUrl', null));
+    $this->actingAs($applicant, 'applicant')->get('/applicant/dashboard')->assertNotFound();
     $this->assertGuest('applicant');
-    // A form posted from a page still open in that session is refused.
-    $this->actingAs($applicant, 'applicant')->postJson('/applicant/cases/1/messages', ['body' => 'Hello'])
-        ->assertStatus(410)->assertJsonPath('error_code', 'portal_in_euisis');
 
     $this->get('/')->assertRedirect(route('landing.home'));
     $this->get(route('landing.home'))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->where('courtPortal.closed', true));

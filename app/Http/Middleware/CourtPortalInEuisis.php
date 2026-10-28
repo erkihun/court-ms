@@ -8,20 +8,21 @@ use App\Support\EuisisParties;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Flow 6: with EUISIS_PORTAL_IN_EUISIS on, employees file, follow and answer
- * their cases in the EUISIS employee portal, so every applicant and respondent
- * portal page here (sign-in, registration, password reset, email verification,
- * the cases and replies themselves) shows where to go instead, and nothing is
- * submitted to it. A session someone still holds is ended. Staff pages and
- * the integration API are untouched.
+ * their cases in the EUISIS employee portal, so the applicant and respondent
+ * portal is gone from the web: every applicant, respondent and apply URL
+ * (sign-in, registration, password reset, the cases and replies) is not
+ * found, and a session someone still holds is ended. The route names stay
+ * registered for the portal's own controllers, which the integration API
+ * runs for the employee (EuisisCaseWorkspaceController). Staff pages and the
+ * integration API are untouched.
  */
 final class CourtPortalInEuisis
 {
-    private const PATHS = ['applicant', 'applicant/*', 'respondent', 'respondent/*', 'apply/*'];
+    private const PATHS = ['applicant', 'applicant/*', 'respondent', 'respondent/*', 'apply', 'apply/*'];
 
     public function handle(Request $request, Closure $next): Response
     {
@@ -35,13 +36,6 @@ final class CourtPortalInEuisis
             }
         }
 
-        $portalUrl = EuisisParties::portalUrl();
-        if ($request->expectsJson() && ! $request->header('X-Inertia')) {
-            return response()->json(['message' => 'Court cases are managed in the EUISIS employee portal.', 'error_code' => 'portal_in_euisis', 'portal_url' => $portalUrl], 410);
-        }
-
-        return Inertia::render('Court/PortalMoved', ['portalUrl' => $portalUrl])
-            ->toResponse($request)
-            ->setStatusCode($request->isMethod('GET') || $request->isMethod('HEAD') ? 200 : 410);
+        abort(404);
     }
 }

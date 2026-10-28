@@ -95,8 +95,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('web', SystemAuditMiddleware::class);
         // Props for the React (Inertia) screens; Blade pages are unaffected.
         $middleware->appendToGroup('web', HandleInertiaRequests::class);
-        // Flow 6: the applicant and respondent portal is closed while employees work in EUISIS.
+        // Flow 6: the applicant and respondent portal is gone while employees work in EUISIS:
+        // before the portals' own auth, so a guest gets not found, not a sign-in redirect.
         $middleware->appendToGroup('web', CourtPortalInEuisis::class);
+        $middleware->prependToPriorityList(\Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests::class, CourtPortalInEuisis::class);
         $middleware->appendToGroup('api', SystemAuditMiddleware::class);
 
         // If you ever need global middleware:
