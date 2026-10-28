@@ -270,6 +270,8 @@ export interface CaseParties {
     mergedInto: { id: number; case_number: string; note: string | null; at: string | null } | null;
     mergedFrom: { id: number; case_number: string; at: string | null }[];
     candidates: { id: number; case_number: string; title: string; filed_at: string | null; status: string }[];
+    /** The court's register of verified lawyers, for "Record a lawyer" (registry staff only; empty otherwise). */
+    lawyers: { id: number; name: string; license_number: string }[];
 }
 
 export interface CaseDetailProps {

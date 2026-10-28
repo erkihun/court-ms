@@ -1135,7 +1135,10 @@ const lang: Record<string, unknown> = {
             "judge_only": "የጣልቃ መግባት ማመልከቻን የሚወስነው የጉዳዩ ዳኛ ብቻ ነው።",
             "reason_required": "ውድቅ የተደረገበትን ምክንያት ይጻፉ።",
             "lawyer_not_verified": "በፍርድ ቤቱ መዝገብ ይህ የፈቃድ ቁጥር ያለው የተረጋገጠ ጠበቃ የለም።",
-            "unknown_case": "ይህ የመዝገብ ቁጥር ያለው ጉዳይ የለም።"
+            "unknown_case": "ይህ የመዝገብ ቁጥር ያለው ጉዳይ የለም።",
+            "party_not_represented": "ይህ ተከራካሪ በጉዳዩ ላይ ስለሌለ ጠበቃ ሊመዘገብለት አይችልም።",
+            "already_represented": "ይህ ጠበቃ ለዚህ ተከራካሪ አስቀድሞ ተመዝግቧል።",
+            "power_of_attorney_required": "ጠበቃ ሲሰየም የውክልና ማስረጃውን (PDF) ያያይዙ።"
         },
         "merge": {
             "not_found": "ከተመረጡት ጉዳዮች አንዱ ከእንግዲህ የለም።",
@@ -1150,6 +1153,7 @@ const lang: Record<string, unknown> = {
             "representation_accept": "የውክልና ሰነዱ ተቀባይነት አግኝቷል፤ ጠበቃው ተከራካሪውን ይወክላል።",
             "representation_refuse": "የውክልና ሰነዱ ውድቅ ተደርጓል።",
             "representation_revoke": "ጠበቃው ከእንግዲህ ተከራካሪውን አይወክልም።",
+            "representation_added": "ጠበቃው ለተከራካሪው ተመዝግቧል።",
             "merged": "ወደዚህ ጉዳይ የተጣመሩ፦ :numbers።"
         },
         "panel": {
@@ -1200,6 +1204,14 @@ const lang: Record<string, unknown> = {
             "accept": "ተቀበል",
             "revoke": "ሻር",
             "not_confirmed": "ደንበኛው እስካሁን አላረጋገጠም",
+            "add_lawyer": "ጠበቃ መዝግብ",
+            "add_lawyer_help": "ተከራካሪው የፈረመውን የውክልና ማስረጃ ተመልክተው ከፍርድ ቤቱ የጠበቆች መዝገብ ጠበቃውን ይምረጡ። ጠበቃው ወዲያውኑ ተቀባይነት ያገኛል።",
+            "add_lawyer_pick": "ጠበቃ",
+            "add_lawyer_choose": "ጠበቃ ይምረጡ",
+            "add_lawyer_none": "በመዝገቡ የተረጋገጠ ጠበቃ የለም፤ መጀመሪያ በጠበቆች ገጽ ይመዝግቡ።",
+            "add_lawyer_document": "የውክልና ማስረጃ (PDF)",
+            "add_lawyer_note": "ማስታወሻ (አማራጭ)",
+            "add_lawyer_submit": "ጠበቃውን መዝግብ",
             "cancel": "ይቅር",
             "merge": {
                 "title": "ጉዳዮችን ወደዚህ ማጣመር",
@@ -2723,6 +2735,12 @@ const lang: Record<string, unknown> = {
             "check": "ፈልግ",
             "client_found": "ደንበኛ፦ :name",
             "client_not_found": "ይህ ቁጥር ያለው በሥራ ላይ ያለ ሠራተኛ የለም።",
+            "client_twice": "ይህ ሠራተኛ አስቀድሞ በዚህ ክስ ውስጥ ተዘርዝሯል።",
+            "co_clients": "በዚሁ ጉዳይ ሌሎች ደንበኞች (አማራጭ)",
+            "co_clients_help": "በአንድ ጉዳይ ብዙ ደንበኞችን ከወከሉ እዚህ ይጨምሯቸው፤ የመጀመሪያው ደንበኛ ከሳሽ ይሆናል፣ ሌሎቹ ተባባሪ ከሳሾች። እያንዳንዳቸው በሠራተኛ ፖርታላቸው ያረጋግጣሉ፤ እርስዎም ሁሉንም በአንድ የውክልና ሰነድ ይወክላሉ።",
+            "add_client": "ደንበኛ ጨምር",
+            "remove_client": "አስወግድ",
+            "co_client": "የደንበኛ :n የሠራተኛ ቁጥር",
             "euisis_unavailable": "የሠራተኞች ማውጫው ሊደረስበት አልቻለም። ትንሽ ቆይተው እንደገና ይሞክሩ።",
             "case_type": "የጉዳይ ዓይነት",
             "select": "ይምረጡ…",

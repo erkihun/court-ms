@@ -71,12 +71,29 @@ class EuisisCasePartiesController extends Controller
     }
 
     /** The employee joins a case they were invited to, or declines. */
+    /**
+     * The employee joins or declines. Joining, they may name a lawyer of their own from the
+     * register (licence number) with the power of attorney; the registry checks it.
+     */
     public function respond(Request $request, int $party, EmployeeCourtAccess $access, CaseParties $parties): JsonResponse
     {
-        $data = $request->validate([...$this->identityRules(), 'accept' => ['required', 'boolean']]);
+        $data = $request->validate([
+            ...$this->identityRules(),
+            'accept' => ['required', 'boolean'],
+            'lawyer_license_number' => ['nullable', 'string', 'max:60'],
+            'power_of_attorney' => ['nullable', 'required_with:lawyer_license_number', 'file', 'mimes:pdf', 'max:10240'],
+        ], ['power_of_attorney.required_with' => __('case_parties.errors.power_of_attorney_required')]);
         $row = CaseApplicant::query()->where('id', $party)->where('euisis_employee_uuid', $data['employee']['uuid'])->first();
         if ($row === null) {
             return $this->problem($request, 404, 'not_found', 'No such invitation for this employee.');
+        }
+        $accept = filter_var($data['accept'], FILTER_VALIDATE_BOOLEAN);
+        $lawyer = null;
+        if ($accept && filled($data['lawyer_license_number'] ?? null)) {
+            $lawyer = Applicant::query()->where('is_lawyer', true)->where('lawyer_license_number', trim((string) $data['lawyer_license_number']))->first();
+            if ($lawyer === null || ! CaseParties::isVerifiedLawyer($lawyer)) {
+                return $this->problem($request, 422, 'unknown_lawyer', __('case_parties.errors.lawyer_not_verified'), ['lawyer_license_number' => [__('case_parties.errors.lawyer_not_verified')]]);
+            }
         }
 
         try {
@@ -84,7 +101,10 @@ class EuisisCasePartiesController extends Controller
         } catch (EmployeeCourtAccessException $e) {
             return $this->problem($request, 409, $e->errorCode, $e->getMessage());
         }
-        $parties->respond($row, $applicant, (bool) $data['accept']);
+        $path = $lawyer !== null
+            ? app(SecureUploadService::class)->store($request->file('power_of_attorney'), 'powers-of-attorney', 'private', ['related_type' => 'court_case', 'related_id' => $row->case_id])
+            : null;
+        $parties->respond($row, $applicant, $accept, $lawyer, $path);
 
         return response()->json(['data' => ['ok' => true, 'case_id' => (int) $row->case_id, 'status' => $row->fresh()->status]]);
     }

@@ -193,7 +193,19 @@ Owner decision, EUISIS ADR 0013 #13 (`App\Services\CaseParties`).
   `invited`, until the client confirms in My Portal. A lawyer named by an employee when
   filing (`lawyer_license_number` + `power_of_attorney`) acts once the registry accepts
   the power of attorney. `POST /people/lawyers` gives EUISIS the register: name and
-  licence number only.
+  licence number only. The lawyer's sign-in (`/lawyer/*`) shares the applicant portal's
+  session cookie (`SetSessionCookieForGuard`); on any other cookie the portal never sees it.
+- **One lawyer, several clients in one case** (a representation per party and lawyer):
+  - the lawyer files once for all of them (*Other clients in the same matter*,
+    `co_client_employee_numbers[]`): the first is the applicant, the others co-applicants,
+    each `invited`, all represented on the one power of attorney; joining confirms the lawyer;
+  - a co-applicant joining a colleague's case may name their own lawyer
+    (`POST /people/parties/{party}/respond` with `lawyer_license_number` and a
+    `power_of_attorney` PDF, multipart); the registry then checks it (`pending`);
+    an unknown licence is `422 unknown_lawyer`;
+  - the registry records a lawyer for any party on the case page's *Parties* section from the
+    power of attorney brought to it (`cases.parties.representatives.store`, `cases.edit`):
+    accepted at once, audited as `representation_added`.
 - **Merging** (`cases.merge`, for judges and registrars): open cases against the same
   respondent (same EUISIS institution, or the same name) merge into the case kept. Their
   parties join it as co-applicants (interveners stay admitted) with their accepted lawyers;

@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Applicant;
 use App\Models\CaseApplicant;
 use App\Models\CaseRepresentative;
 use App\Models\User;
 use App\Services\CaseParties;
+use App\Services\SecureUploadService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -20,7 +22,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 /**
  * The parties on the applicant's side of a case, on its staff page
  * (EUISIS ADR 0013 #13): the judge admits or refuses an intervener, the
- * registry accepts or refuses a lawyer's power of attorney, and a judge or
+ * registry accepts or refuses a lawyer's power of attorney and records a
+ * lawyer for a party from a power of attorney brought to it, and a judge or
  * registrar (`cases.merge`) merges open cases against the same respondent.
  */
 class CasePartiesController extends Controller
@@ -98,6 +101,14 @@ class CasePartiesController extends Controller
                 'verify' => (bool) $user?->hasPermission('cases.edit'),
                 'merge' => $open && (bool) $user?->hasPermission('cases.merge'),
             ],
+            // The court's register of verified lawyers, for "Record a lawyer" (registry staff only).
+            'lawyers' => $user?->hasPermission('cases.edit')
+                ? Applicant::query()->where('is_lawyer', true)->where('is_active', true)->whereNotNull('lawyer_verified_at')
+                    ->orderBy('first_name')->orderBy('last_name')->limit(500)
+                    ->get(['id', 'first_name', 'middle_name', 'last_name', 'lawyer_license_number'])
+                    ->map(fn (Applicant $lawyer): array => ['id' => (int) $lawyer->id, 'name' => CaseParties::fullName($lawyer), 'license_number' => (string) $lawyer->lawyer_license_number])
+                    ->all()
+                : [],
             'mergedInto' => $case?->merged_into_case_id ? [
                 'id' => (int) $case->merged_into_case_id,
                 'case_number' => (string) DB::table('court_cases')->where('id', $case->merged_into_case_id)->value('case_number'),
@@ -132,6 +143,25 @@ class CasePartiesController extends Controller
         }
 
         return back()->with('success', __("case_parties.flash.representation_{$data['decision']}"));
+    }
+
+    /** The registry records a lawyer for a party from the power of attorney the party signed. */
+    public function addRepresentative(Request $request, int $id, CaseApplicant $party): RedirectResponse
+    {
+        abort_unless((int) $party->case_id === $id, 404);
+        $data = $request->validate([
+            'lawyer_id' => ['required', 'integer'],
+            'power_of_attorney' => ['required', 'file', 'mimes:pdf', 'max:10240'],
+            'note' => ['nullable', 'string', 'max:2000'],
+        ], ['power_of_attorney.required' => __('case_parties.errors.power_of_attorney_required')]);
+        $lawyer = Applicant::query()->find($data['lawyer_id']);
+        if ($lawyer === null || ! CaseParties::isVerifiedLawyer($lawyer)) {
+            return back()->withErrors(['lawyer_id' => __('case_parties.errors.lawyer_not_verified')]);
+        }
+        $path = app(SecureUploadService::class)->store($request->file('power_of_attorney'), 'powers-of-attorney', 'private', ['related_type' => 'court_case', 'related_id' => $id]);
+        $this->parties->addRepresentativeByRegistry($party, $lawyer, $path, $request->user(), $data['note'] ?? null);
+
+        return back()->with('success', __('case_parties.flash.representation_added'));
     }
 
     /** Merges the chosen cases into this one. */

@@ -1,7 +1,7 @@
-import { Link, router } from '@inertiajs/react';
-import { useState } from 'react';
+import { Link, router, useForm } from '@inertiajs/react';
+import { useState, type FormEvent } from 'react';
 import LocalizedDateDisplay from '@/Components/Calendar/LocalizedDateDisplay';
-import { Alert, Button, FormField, Textarea, badgeClassName, buttonClassName, cx, type Tone } from '@/Components/ui';
+import { Alert, Button, FormField, Select, Textarea, badgeClassName, buttonClassName, cx, type Tone } from '@/Components/ui';
 import { useConfirm } from '@/hooks/useConfirm';
 import type { CaseParties, CaseParty, CasePartyRepresentative } from '@/court/types/caseDetail';
 import SectionCard, { EmptyBox } from './SectionCard';
@@ -12,6 +12,74 @@ const STATUS_TONES: Record<CaseParty['status'], Tone> = {
     active: 'success', admitted: 'success', invited: 'warning', requested: 'info', declined: 'neutral', refused: 'danger', removed: 'neutral',
 };
 const REPRESENTATION_TONES: Record<CasePartyRepresentative['status'], Tone> = { pending: 'warning', accepted: 'success', refused: 'danger', revoked: 'neutral' };
+
+/**
+ * The registry records a lawyer for one party from the power of attorney the
+ * party signed: a lawyer from the court's register, the PDF, an optional note.
+ * Folded behind its button until asked for.
+ */
+function AddLawyer({ caseId, party, lawyers }: { caseId: number; party: CaseParty; lawyers: CaseParties['lawyers'] }) {
+    const { t } = useCaseText();
+    const p = (key: string) => t(`cm.case_parties.panel.${key}`);
+    const [open, setOpen] = useState(false);
+    const form = useForm<{ lawyer_id: string; power_of_attorney: File | null; note: string }>({ lawyer_id: '', power_of_attorney: null, note: '' });
+    const taken = new Set(party.representatives.filter((r) => r.status === 'pending' || r.status === 'accepted').map((r) => r.license_number));
+    const choices = lawyers.filter((lawyer) => !taken.has(lawyer.license_number));
+
+    const submit = (event: FormEvent) => {
+        event.preventDefault();
+        form.post(route('cases.parties.representatives.store', [caseId, party.id]), {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => { form.reset(); setOpen(false); },
+        });
+    };
+
+    if (!open) {
+        return (
+            <div className="mt-3">
+                <Button type="button" size="sm" variant="outline" onClick={() => setOpen(true)}>{p('add_lawyer')}</Button>
+            </div>
+        );
+    }
+
+    return (
+        <form onSubmit={submit} className="mt-3 space-y-3 rounded-control border border-dashed border-(--app-border) bg-(--app-surface-muted) p-3">
+            <div>
+                <p className="text-sm font-semibold text-(--app-foreground)">{p('add_lawyer')}</p>
+                <p className="mt-0.5 text-xs text-(--app-muted-foreground)">{p('add_lawyer_help')}</p>
+            </div>
+            {choices.length === 0 ? <p className="text-sm text-(--app-muted-foreground)">{p('add_lawyer_none')}</p> : (
+                <>
+                    <div className="grid gap-3 md:grid-cols-2">
+                        <FormField label={p('add_lawyer_pick')} required error={form.errors.lawyer_id}>
+                            {({ id, describedBy, invalid }) => (
+                                <Select id={id} value={form.data.lawyer_id} onChange={(event) => form.setData('lawyer_id', event.target.value)} aria-describedby={describedBy} aria-invalid={invalid || undefined} required>
+                                    <option value="">{p('add_lawyer_choose')}</option>
+                                    {choices.map((lawyer) => <option key={lawyer.id} value={lawyer.id}>{`${lawyer.name} · ${lawyer.license_number}`}</option>)}
+                                </Select>
+                            )}
+                        </FormField>
+                        <FormField label={p('add_lawyer_document')} required error={form.errors.power_of_attorney}>
+                            {({ id, describedBy, invalid }) => (
+                                <input id={id} type="file" accept="application/pdf" required aria-describedby={describedBy} aria-invalid={invalid || undefined}
+                                    onChange={(event) => form.setData('power_of_attorney', event.target.files?.[0] ?? null)}
+                                    className="block w-full text-sm text-(--app-foreground) file:mr-3 file:rounded-control file:border-0 file:bg-primary/10 file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary" />
+                            )}
+                        </FormField>
+                    </div>
+                    <FormField label={p('add_lawyer_note')} error={form.errors.note}>
+                        {({ id, describedBy }) => <Textarea id={id} rows={2} value={form.data.note} onChange={(event) => form.setData('note', event.target.value)} aria-describedby={describedBy} />}
+                    </FormField>
+                </>
+            )}
+            <div className="flex flex-wrap gap-2">
+                {choices.length > 0 && <Button type="submit" size="sm" loading={form.processing}>{p('add_lawyer_submit')}</Button>}
+                <Button type="button" size="sm" variant="ghost" disabled={form.processing} onClick={() => { form.reset(); form.clearErrors(); setOpen(false); }}>{p('cancel')}</Button>
+            </div>
+        </form>
+    );
+}
 
 /** The notice on a case that was merged into another: the case it lives on in now. */
 export function MergedBanner({ mergedInto }: { mergedInto: NonNullable<CaseParties['mergedInto']> }) {
@@ -135,6 +203,10 @@ export default function PartiesSection({ caseId, caseNumber, parties }: { caseId
                                         </div>
                                     ) : <p className="text-xs text-(--app-muted-foreground)">{p('judge_only')}</p>)}
                                 </div>
+                            )}
+
+                            {parties.can.verify && ['active', 'admitted', 'invited'].includes(party.status) && (
+                                <AddLawyer caseId={caseId} party={party} lawyers={parties.lawyers} />
                             )}
 
                             {party.representatives.length > 0 && (

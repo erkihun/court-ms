@@ -11,6 +11,9 @@ return [
         'reason_required' => 'Give the reason for a refusal.',
         'lawyer_not_verified' => 'No verified lawyer in the court\'s register has this licence number.',
         'unknown_case' => 'No case has this number.',
+        'party_not_represented' => 'This party is no longer on the case; no lawyer can be recorded for them.',
+        'already_represented' => 'This lawyer is already recorded for this party.',
+        'power_of_attorney_required' => 'Attach the power of attorney (PDF) when naming a lawyer.',
     ],
     'merge' => [
         'not_found' => 'One of the chosen cases no longer exists.',
@@ -25,6 +28,7 @@ return [
         'representation_accept' => 'The power of attorney is accepted; the lawyer represents the party.',
         'representation_refuse' => 'The power of attorney is refused.',
         'representation_revoke' => 'The lawyer no longer represents the party.',
+        'representation_added' => 'The lawyer is recorded for the party.',
         'merged' => 'Merged into this case: :numbers.',
     ],
     'panel' => [
@@ -75,6 +79,14 @@ return [
         'accept' => 'Accept',
         'revoke' => 'Revoke',
         'not_confirmed' => 'The client has not confirmed yet',
+        'add_lawyer' => 'Record a lawyer',
+        'add_lawyer_help' => 'Check the power of attorney the party signed, then pick the lawyer from the court\'s register. The lawyer is accepted at once.',
+        'add_lawyer_pick' => 'Lawyer',
+        'add_lawyer_choose' => 'Choose a lawyer',
+        'add_lawyer_none' => 'No verified lawyer in the register; record them on the Lawyers screen first.',
+        'add_lawyer_document' => 'Power of attorney (PDF)',
+        'add_lawyer_note' => 'Note (optional)',
+        'add_lawyer_submit' => 'Record the lawyer',
         'cancel' => 'Cancel',
         'merge' => [
             'title' => 'Merge cases into this one',

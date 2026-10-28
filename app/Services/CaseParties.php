@@ -112,8 +112,13 @@ final class CaseParties
         ]);
     }
 
-    /** The invited employee joins the case or declines; joining links their court account. */
-    public function respond(CaseApplicant $party, Applicant $applicant, bool $accept): void
+    /**
+     * The invited employee joins the case or declines; joining links their court account.
+     * Joining confirms the lawyer who filed for them (as the lead or as one of several
+     * clients). They may also name a lawyer of their own from the register, with the power of
+     * attorney the registry then checks.
+     */
+    public function respond(CaseApplicant $party, Applicant $applicant, bool $accept, ?Applicant $lawyer = null, ?string $powerOfAttorneyPath = null): void
     {
         if ($party->status !== 'invited') {
             throw ValidationException::withMessages(['invitation' => [__('case_parties.errors.not_invited')]]);
@@ -126,7 +131,12 @@ final class CaseParties
         if ($accept && $party->role === CaseApplicant::ROLE_LEAD) {
             // A case a lawyer filed for the employee: the employee is now its applicant.
             DB::table('court_cases')->where('id', $party->case_id)->whereNull('applicant_id')->update(['applicant_id' => $applicant->id, 'updated_at' => now()]);
-            CaseRepresentative::query()->where('case_applicant_id', $party->id)->update(['confirmed_by_party_at' => now()]);
+        }
+        if ($accept) {
+            CaseRepresentative::query()->where('case_applicant_id', $party->id)->whereNull('confirmed_by_party_at')->update(['confirmed_by_party_at' => now()]);
+            if ($lawyer !== null) {
+                $this->addRepresentative($party, $lawyer, $powerOfAttorneyPath, confirmedByParty: true);
+            }
         }
         $this->audit((int) $party->case_id, $accept ? 'party_joined' : 'party_declined', 'applicant', (int) $applicant->id, ['party_id' => $party->id, 'role' => $party->role]);
     }
@@ -202,6 +212,28 @@ final class CaseParties
         }
         $representative->forceFill(['status' => $accept ? 'accepted' : 'refused', 'verified_by_user_id' => $user->id, 'verified_at' => now(), 'note' => $note])->save();
         $this->audit((int) $representative->case_id, $accept ? 'representation_accepted' : 'representation_refused', 'user', (int) $user->id, ['representative_id' => $representative->id]);
+    }
+
+    /**
+     * The registry records a lawyer for a party from the power of attorney the party signed
+     * (a client who came to the registry, a co-applicant's lawyer): accepted at once, since
+     * the registry is who checks a power of attorney. A lawyer already accepted for the
+     * party is refused as a duplicate; a refused or revoked one may be recorded again.
+     */
+    public function addRepresentativeByRegistry(CaseApplicant $party, Applicant $lawyer, string $powerOfAttorneyPath, User $user, ?string $note): CaseRepresentative
+    {
+        if (! in_array($party->status, [...CaseApplicant::PARTY_STATUSES, 'invited'], true)) {
+            throw ValidationException::withMessages(['lawyer' => [__('case_parties.errors.party_not_represented')]]);
+        }
+        $existing = CaseRepresentative::query()->where('case_applicant_id', $party->id)->where('lawyer_applicant_id', $lawyer->id)->first();
+        if ($existing !== null && in_array($existing->status, ['pending', 'accepted'], true)) {
+            throw ValidationException::withMessages(['lawyer' => [__('case_parties.errors.already_represented')]]);
+        }
+        $representative = $this->addRepresentative($party, $lawyer, $powerOfAttorneyPath, confirmedByParty: true);
+        $representative->forceFill(['status' => 'accepted', 'verified_by_user_id' => $user->id, 'verified_at' => now(), 'note' => filled($note) ? trim((string) $note) : null])->save();
+        $this->audit((int) $party->case_id, 'representation_added', 'user', (int) $user->id, ['party_id' => $party->id, 'representative_id' => $representative->id]);
+
+        return $representative;
     }
 
     public static function isVerifiedLawyer(Applicant $applicant): bool

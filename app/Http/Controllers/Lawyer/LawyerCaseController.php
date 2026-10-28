@@ -27,6 +27,9 @@ use Inertia\Response;
  * institution. The lawyer represents the client from the start, on the power
  * of attorney they upload; the client confirms in the EUISIS employee portal,
  * and only then is the case theirs there. The registry reviews it as any filing.
+ * A lawyer with several clients in the same matter files once: the first client
+ * is the applicant, the others co-applicants, each invited to confirm, and the
+ * lawyer represents every one of them on the same power of attorney.
  */
 class LawyerCaseController extends Controller
 {
@@ -64,6 +67,8 @@ class LawyerCaseController extends Controller
         $lawyer = $this->lawyer();
         $data = $request->validate([
             'client_employee_number' => ['required', 'string', 'max:60'],
+            'co_client_employee_numbers' => ['nullable', 'array', 'max:20'],
+            'co_client_employee_numbers.*' => ['nullable', 'string', 'max:60'],
             'case_type_id' => ['required', 'integer', 'exists:case_types,id'],
             'respondent_organization_uuid' => ['required', 'uuid', 'exists:euisis_organizations,uuid'],
             'respondent_address' => ['nullable', 'string', 'max:500'],
@@ -82,9 +87,28 @@ class LawyerCaseController extends Controller
         if ($client === null) {
             throw ValidationException::withMessages(['client_employee_number' => [__('lawyer.file.client_not_found')]]);
         }
+        // The other clients in the same matter: each found in EUISIS, none twice, none the applicant.
+        $coClients = [];
+        foreach ((array) ($data['co_client_employee_numbers'] ?? []) as $i => $number) {
+            if (trim((string) $number) === '') {
+                continue;
+            }
+            try {
+                $other = $this->employee($euisis, (string) $number);
+            } catch (EuisisException) {
+                throw ValidationException::withMessages(["co_client_employee_numbers.{$i}" => [__('lawyer.file.euisis_unavailable')]]);
+            }
+            if ($other === null) {
+                throw ValidationException::withMessages(["co_client_employee_numbers.{$i}" => [__('lawyer.file.client_not_found')]]);
+            }
+            if ($other['uuid'] === $client['uuid'] || isset($coClients[$other['uuid']])) {
+                throw ValidationException::withMessages(["co_client_employee_numbers.{$i}" => [__('lawyer.file.client_twice')]]);
+            }
+            $coClients[$other['uuid']] = $other;
+        }
         $respondent = DB::table('euisis_organizations')->where('uuid', $data['respondent_organization_uuid'])->first(['uuid', 'name_en']);
 
-        $caseId = DB::transaction(function () use ($data, $client, $respondent, $lawyer, $numbers, $documents, $parties, $request): int {
+        $caseId = DB::transaction(function () use ($data, $client, $coClients, $respondent, $lawyer, $numbers, $documents, $parties, $request): int {
             $caseId = DB::table('court_cases')->insertGetId([
                 // The case becomes the client's when they confirm in the EUISIS employee portal.
                 'applicant_id' => null,
@@ -111,6 +135,10 @@ class LawyerCaseController extends Controller
             $representative = $parties->addRepresentative($lead, $lawyer, $path, confirmedByParty: false);
             // Filed on the power of attorney: the registry checks it with the case, and may refuse it later.
             $representative->forceFill(['status' => 'accepted'])->save();
+            foreach ($coClients as $other) {
+                $party = $parties->invite($caseId, $other['uuid'], $other['name'], null, 'lawyer');
+                $parties->addRepresentative($party, $lawyer, $path, confirmedByParty: false)->forceFill(['status' => 'accepted'])->save();
+            }
 
             foreach ((array) $request->file('documents', []) as $file) {
                 $documents->store($caseId, $file, $file->getClientOriginalName(), __('lawyer.file.document_source'));

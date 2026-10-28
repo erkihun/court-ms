@@ -11,6 +11,7 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use App\Notifications\ApplicantResetPassword;
+use App\Services\CaseParties;
 use App\Support\Ui\PortalNavigation;
 use Illuminate\Http\Client\Request as HttpRequest;
 use Illuminate\Http\UploadedFile;
@@ -371,4 +372,110 @@ test('only a verified lawyer files for a client, and an employee account gets no
     // With the portal closed, an account that is not a verified lawyer has no court portal at all.
     config(['services.euisis.portal_in_euisis' => true]);
     $this->actingAs($unverified, 'applicant')->get(route('applicant.lawyer.file'))->assertNotFound();
+});
+
+test('a lawyer files once for several clients: the first is the applicant, the others co-applicants, all represented', function (): void {
+    config(['services.euisis.enabled' => true, 'services.euisis.url' => 'https://euisis.test', 'services.euisis.token' => 'partner-token']);
+    [$first, $second, $third] = [partiesEmployee('Tigist'), partiesEmployee('Abel'), partiesEmployee('Ruth')];
+    $directory = ['AA-2001' => [$first, 'Tigist A Haile'], 'AA-2002' => [$second, 'Abel A Haile'], 'AA-2003' => [$third, 'Ruth A Haile']];
+    Http::fake(function (HttpRequest $request) use ($directory) {
+        parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
+        $hit = $directory[$query['employee_number'] ?? ''] ?? null;
+        $rows = $hit ? [['id' => $hit[0]['uuid'], 'employee_number' => $query['employee_number'], 'full_name' => $hit[1], 'full_name_en' => $hit[1], 'employment_status' => 'active']] : [];
+
+        return Http::response(['data' => $rows, 'meta' => ['current_page' => 1, 'last_page' => 1, 'total' => count($rows)]]);
+    });
+    EuisisOrganization::query()->create(['uuid' => PARTIES_RESPONDENT, 'code' => 'BOF', 'name_en' => 'Bureau of Finance', 'name_am' => null, 'status' => 'active']);
+    $lawyer = partiesLawyer();
+    $filing = fn (array $others) => [
+        'client_employee_number' => 'AA-2001', 'co_client_employee_numbers' => $others, 'case_type_id' => partiesCaseType(),
+        'respondent_organization_uuid' => PARTIES_RESPONDENT, 'description' => '<p>All three were transferred without notice.</p>', 'power_of_attorney' => partiesPdf('poa.pdf'),
+    ];
+
+    // A client listed twice, or one EUISIS does not know, stops the filing at that row.
+    $this->actingAs($lawyer, 'applicant')->post(route('applicant.lawyer.file.store'), $filing(['AA-2002', 'AA-2001']))->assertSessionHasErrors('co_client_employee_numbers.1');
+    $this->actingAs($lawyer, 'applicant')->post(route('applicant.lawyer.file.store'), $filing(['AA-9999']))->assertSessionHasErrors('co_client_employee_numbers.0');
+    expect(DB::table('court_cases')->where('source', 'lawyer')->count())->toBe(0);
+
+    $this->actingAs($lawyer, 'applicant')->post(route('applicant.lawyer.file.store'), $filing(['AA-2002', '', 'AA-2003']))->assertRedirect()->assertSessionHasNoErrors();
+
+    $case = DB::table('court_cases')->where('source', 'lawyer')->sole();
+    $rows = CaseApplicant::query()->where('case_id', $case->id)->orderBy('id')->get();
+    expect($rows->pluck('role')->all())->toBe(['lead', 'co_applicant', 'co_applicant'])
+        ->and($rows->pluck('status')->unique()->values()->all())->toBe(['invited'])
+        ->and($rows->pluck('euisis_employee_uuid')->all())->toBe([$first['uuid'], $second['uuid'], $third['uuid']]);
+    $representatives = CaseRepresentative::query()->where('case_id', $case->id)->get();
+    expect($representatives)->toHaveCount(3)
+        ->and($representatives->pluck('lawyer_applicant_id')->unique()->values()->all())->toBe([$lawyer->id])
+        ->and($representatives->pluck('status')->unique()->values()->all())->toBe(['accepted']);
+
+    // Each co-client's invitation shows it was filed by their lawyer; joining confirms the lawyer.
+    $token = partiesToken();
+    $invitation = $this->withToken($token)->postJson('/api/v1/integration/people/parties', ['employee_uuid' => $second['uuid']])->json('data.invitations.0');
+    expect($invitation['role'])->toBe('co_applicant')->and($invitation['invited_by'])->toBeNull()->and($invitation['lawyer']['license_number'])->toBe($lawyer->lawyer_license_number);
+    $this->withToken($token)->postJson("/api/v1/integration/people/parties/{$rows[1]->id}/respond", ['employee' => $second, 'accept' => true])->assertOk();
+    expect(CaseRepresentative::query()->where('case_applicant_id', $rows[1]->id)->sole()->confirmed_by_party_at)->not->toBeNull()
+        ->and(CaseRepresentative::query()->where('case_applicant_id', $rows[2]->id)->sole()->confirmed_by_party_at)->toBeNull();
+});
+
+test('a co-applicant names their own lawyer when joining; the registry then checks the power of attorney', function (): void {
+    $token = partiesToken();
+    $lawyer = partiesLawyer();
+    [$lead, $joins] = [partiesEmployee('Meron'), partiesEmployee('Selam')];
+    $caseId = partiesFile($this, $token, $lead, ['co_applicants' => [['uuid' => $joins['uuid'], 'name' => 'Selam A Haile']]]);
+    $party = CaseApplicant::query()->where('case_id', $caseId)->where('euisis_employee_uuid', $joins['uuid'])->sole();
+
+    // A licence number the register does not know is refused, and the invitation stays open.
+    $this->withToken($token)->post("/api/v1/integration/people/parties/{$party->id}/respond",
+        ['employee' => $joins, 'accept' => '1', 'lawyer_license_number' => 'LIC-NOPE', 'power_of_attorney' => partiesPdf('poa.pdf')], ['Accept' => 'application/json'])
+        ->assertStatus(422)->assertJsonPath('error_code', 'unknown_lawyer');
+    // A lawyer without the power of attorney is refused too.
+    $this->withToken($token)->postJson("/api/v1/integration/people/parties/{$party->id}/respond",
+        ['employee' => $joins, 'accept' => true, 'lawyer_license_number' => $lawyer->lawyer_license_number])->assertStatus(422);
+    expect($party->fresh()->status)->toBe('invited');
+
+    $this->withToken($token)->post("/api/v1/integration/people/parties/{$party->id}/respond",
+        ['employee' => $joins, 'accept' => '1', 'lawyer_license_number' => $lawyer->lawyer_license_number, 'power_of_attorney' => partiesPdf('poa.pdf')], ['Accept' => 'application/json'])
+        ->assertOk()->assertJsonPath('data.status', 'active');
+
+    $representative = CaseRepresentative::query()->where('case_applicant_id', $party->id)->sole();
+    expect($representative->lawyer_applicant_id)->toBe($lawyer->id)
+        ->and($representative->status)->toBe('pending')
+        ->and($representative->confirmed_by_party_at)->not->toBeNull()
+        ->and(Storage::disk('private')->exists((string) $representative->power_of_attorney_path))->toBeTrue();
+});
+
+test('the registry records a lawyer for a party from the power of attorney, and the lawyer follows the case', function (): void {
+    $token = partiesToken();
+    [$lead, $joins] = [partiesEmployee('Meron'), partiesEmployee('Selam')];
+    $caseId = partiesFile($this, $token, $lead, ['co_applicants' => [['uuid' => $joins['uuid'], 'name' => 'Selam A Haile']]]);
+    $invited = CaseApplicant::query()->where('case_id', $caseId)->where('euisis_employee_uuid', $joins['uuid'])->sole();
+    $this->withToken($token)->postJson("/api/v1/integration/people/parties/{$invited->id}/respond", ['employee' => $joins, 'accept' => true])->assertOk();
+    $party = $invited->fresh();
+    $lawyer = partiesLawyer();
+    $unverified = partiesLawyer(false);
+    $registrar = partiesStaff(['cases.view', 'cases.edit']);
+    DB::table('court_cases')->where('id', $caseId)->update(['review_status' => 'accepted']);
+
+    // The case page offers the register to staff who may record a lawyer.
+    $this->actingAs($registrar, 'web')->get(route('cases.show', $caseId))->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('parties.lawyers', fn ($lawyers) => collect($lawyers)->pluck('id')->contains($lawyer->id) && ! collect($lawyers)->pluck('id')->contains($unverified->id)));
+
+    $store = fn (int $lawyerId) => $this->actingAs($registrar, 'web')->from(route('cases.show', $caseId))
+        ->post(route('cases.parties.representatives.store', [$caseId, $party->id]), ['lawyer_id' => $lawyerId, 'power_of_attorney' => partiesPdf('poa.pdf'), 'note' => 'Brought to the registry']);
+    $store($unverified->id)->assertSessionHasErrors('lawyer_id');
+    $store($lawyer->id)->assertRedirect(route('cases.show', $caseId))->assertSessionHasNoErrors();
+    $store($lawyer->id)->assertSessionHasErrors('lawyer');
+
+    $representative = CaseRepresentative::query()->where('case_applicant_id', $party->id)->sole();
+    expect($representative->status)->toBe('accepted')
+        ->and($representative->verified_by_user_id)->toBe($registrar->id)
+        ->and($representative->note)->toBe('Brought to the registry');
+    $this->assertDatabaseHas('case_audits', ['case_id' => $caseId, 'action' => 'representation_added']);
+    expect(DB::query()->fromSub(CaseParties::caseIdsFor($lawyer->id), 'ids')->pluck('id')->map(fn ($id) => (int) $id)->all())->toContain($caseId);
+
+    // Recording a lawyer needs cases.edit.
+    $viewer = partiesStaff(['cases.view']);
+    $this->actingAs($viewer, 'web')->post(route('cases.parties.representatives.store', [$caseId, $party->id]), ['lawyer_id' => $lawyer->id, 'power_of_attorney' => partiesPdf('poa.pdf')])
+        ->assertRedirect(route('dashboard'));
 });

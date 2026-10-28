@@ -527,6 +527,7 @@ Route::middleware(SetLocale::class)->where(array_fill_keys($numericRouteParamete
             Route::post('/cases/{id}/parties/{party}/decision', [CasePartiesController::class, 'decide'])->middleware(['perm:cases.view', 'throttle:30,1'])->whereNumber(['id', 'party'])->name('cases.parties.decide');
             Route::get('/cases/{id}/parties/{party}/attachment', [CasePartiesController::class, 'attachment'])->middleware('perm:cases.view')->whereNumber(['id', 'party'])->name('cases.parties.attachment');
             Route::post('/cases/{id}/representatives/{representative}/verification', [CasePartiesController::class, 'verify'])->middleware(['perm:cases.edit', 'throttle:30,1'])->whereNumber(['id', 'representative'])->name('cases.representatives.verify');
+            Route::post('/cases/{id}/parties/{party}/representatives', [CasePartiesController::class, 'addRepresentative'])->middleware(['perm:cases.edit', 'throttle:20,1'])->whereNumber(['id', 'party'])->name('cases.parties.representatives.store');
             Route::get('/cases/{id}/representatives/{representative}/power-of-attorney', [CasePartiesController::class, 'powerOfAttorney'])->middleware('perm:cases.view')->whereNumber(['id', 'representative'])->name('cases.representatives.power-of-attorney');
             Route::post('/cases/{id}/merge', [CasePartiesController::class, 'merge'])->middleware(['perm:cases.merge', 'throttle:10,1'])->whereNumber('id')->name('cases.merge');
 

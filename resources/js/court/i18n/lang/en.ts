@@ -1134,7 +1134,10 @@ const lang: Record<string, unknown> = {
             "judge_only": "Only the judge of the case decides an intervention.",
             "reason_required": "Give the reason for a refusal.",
             "lawyer_not_verified": "No verified lawyer in the court's register has this licence number.",
-            "unknown_case": "No case has this number."
+            "unknown_case": "No case has this number.",
+            "party_not_represented": "This party is no longer on the case; no lawyer can be recorded for them.",
+            "already_represented": "This lawyer is already recorded for this party.",
+            "power_of_attorney_required": "Attach the power of attorney (PDF) when naming a lawyer."
         },
         "merge": {
             "not_found": "One of the chosen cases no longer exists.",
@@ -1149,6 +1152,7 @@ const lang: Record<string, unknown> = {
             "representation_accept": "The power of attorney is accepted; the lawyer represents the party.",
             "representation_refuse": "The power of attorney is refused.",
             "representation_revoke": "The lawyer no longer represents the party.",
+            "representation_added": "The lawyer is recorded for the party.",
             "merged": "Merged into this case: :numbers."
         },
         "panel": {
@@ -1199,6 +1203,14 @@ const lang: Record<string, unknown> = {
             "accept": "Accept",
             "revoke": "Revoke",
             "not_confirmed": "The client has not confirmed yet",
+            "add_lawyer": "Record a lawyer",
+            "add_lawyer_help": "Check the power of attorney the party signed, then pick the lawyer from the court's register. The lawyer is accepted at once.",
+            "add_lawyer_pick": "Lawyer",
+            "add_lawyer_choose": "Choose a lawyer",
+            "add_lawyer_none": "No verified lawyer in the register; record them on the Lawyers screen first.",
+            "add_lawyer_document": "Power of attorney (PDF)",
+            "add_lawyer_note": "Note (optional)",
+            "add_lawyer_submit": "Record the lawyer",
             "cancel": "Cancel",
             "merge": {
                 "title": "Merge cases into this one",
@@ -2718,6 +2730,12 @@ const lang: Record<string, unknown> = {
             "check": "Find",
             "client_found": "Client: :name",
             "client_not_found": "No active employee has this number.",
+            "client_twice": "This employee is already listed on this case.",
+            "co_clients": "Other clients in the same matter (optional)",
+            "co_clients_help": "If you represent several clients in one matter, add them here: the first client is the applicant, the others co-applicants. Each confirms in their employee portal, and you represent them all on the one power of attorney.",
+            "add_client": "Add a client",
+            "remove_client": "Remove",
+            "co_client": "Client :n employee number",
             "euisis_unavailable": "The employee directory cannot be reached. Try again shortly.",
             "case_type": "Case type",
             "select": "Select…",
