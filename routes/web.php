@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\ActiveSessionController;
 use App\Http\Controllers\Admin\AdminNotificationController;
 use App\Http\Controllers\Admin\NotificationFeedController;
 use App\Http\Controllers\PortalNotificationFeedController;
+use App\Http\Controllers\Applicant\EuisisSignInController;
 use App\Http\Controllers\Admin\AdminRoleSwitchController;
 use App\Http\Controllers\Admin\AnnouncementController;
 use App\Http\Controllers\Admin\AppealController;
@@ -190,6 +191,12 @@ Route::middleware(SetLocale::class)->where(array_fill_keys($numericRouteParamete
     | Applicant Auth (guest:applicant)
     |--------------------------------------------------------------------------
     */
+    // From the EUISIS employee portal (Flow 4): a one-time ticket signs the employee in as an applicant.
+    Route::get('/applicant/euisis/sign-in/{ticket}', EuisisSignInController::class)
+        ->middleware(['throttle:20,1', UseGuard::class.':applicant'])
+        ->where('ticket', '[A-Za-z0-9]{64}')
+        ->name('applicant.euisis.sign-in');
+
     Route::middleware(['guest:applicant', UseGuard::class.':applicant'])->group(function () {
         // Register
         Route::get('/applicant/register', [ApplicantAuthController::class, 'showRegister'])->name('applicant.register');

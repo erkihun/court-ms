@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CaseController;
 use App\Http\Controllers\Api\CaseMessageController;
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\Integration\EuisisPeopleController;
 use App\Http\Controllers\Api\Integration\EuisisReferralController;
 use App\Http\Controllers\Api\LookupController;
 use App\Http\Controllers\Api\RespondentResponseController;
@@ -50,4 +51,10 @@ Route::prefix('v1/integration')
         Route::get('/referrals/{referral}', [EuisisReferralController::class, 'show'])
             ->whereUuid('referral')
             ->middleware('integration.client:referrals:read');
+
+        // Flow 4: the EUISIS employee portal's court section. POSTs, so a national ID never sits in a URL.
+        Route::post('/people/court-summary', [EuisisPeopleController::class, 'summary'])
+            ->middleware('integration.client:people:read');
+        Route::post('/people/sign-in-tickets', [EuisisPeopleController::class, 'signInTicket'])
+            ->middleware(['integration.client:people:sign-in', 'throttle:60,1']);
     });

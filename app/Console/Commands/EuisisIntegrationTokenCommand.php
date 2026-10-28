@@ -16,7 +16,8 @@ class EuisisIntegrationTokenCommand extends Command
     protected $signature = 'euisis:integration-token
         {--name=EUISIS : Integration client name}
         {--ip=* : Source IP allowed to call (repeat for several; none = any)}
-        {--revoke : Revoke the client instead of issuing a token}';
+        {--revoke : Revoke the client instead of issuing a token}
+        {--refresh-abilities : Grant the current abilities to the existing token without rotating it}';
 
     protected $description = 'Issue, rotate or revoke the EUISIS integration token';
 
@@ -24,6 +25,18 @@ class EuisisIntegrationTokenCommand extends Command
     {
         $name = (string) $this->option('name');
         $client = IntegrationClient::query()->firstOrNew(['name' => $name]);
+
+        if ($this->option('refresh-abilities')) {
+            if (! $client->exists) {
+                $this->error("No integration client named {$name}.");
+
+                return self::FAILURE;
+            }
+            $client->forceFill(['abilities' => IntegrationClient::DEFAULT_ABILITIES])->save();
+            $this->info("{$name} may now: ".implode(', ', IntegrationClient::DEFAULT_ABILITIES).'. Its token is unchanged.');
+
+            return self::SUCCESS;
+        }
 
         if ($this->option('revoke')) {
             if (! $client->exists) {
@@ -38,7 +51,7 @@ class EuisisIntegrationTokenCommand extends Command
         }
 
         $client->forceFill([
-            'abilities' => [IntegrationClient::ABILITY_REFERRALS_CREATE, IntegrationClient::ABILITY_REFERRALS_READ],
+            'abilities' => IntegrationClient::DEFAULT_ABILITIES,
             'allowed_ips' => array_values(array_filter((array) $this->option('ip'))) ?: ($client->allowed_ips ?? []),
         ]);
         // Saves the client with the new token's hash (an insert for a new client).

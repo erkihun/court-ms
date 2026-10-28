@@ -434,7 +434,8 @@ const lang: Record<string, unknown> = {
         "signature": "ፊርማ"
     },
     "applicant": {
-        "user": "ተጠቃሚ"
+        "user": "ተጠቃሚ",
+        "euisis_sign_in_expired": "ያ የመግቢያ ሊንክ ጊዜው አልፎበታል ወይም ቀድሞ ጥቅም ላይ ውሏል። ከEUISIS የሠራተኛ ፖርታልዎ የፍርድ ቤቱን ፖርታል እንደገና ይክፈቱ፣ ወይም እዚህ ይግቡ።"
     },
     "applicants": {
         "title": "አመልካቾች",
