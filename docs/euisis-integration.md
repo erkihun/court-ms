@@ -168,6 +168,39 @@ applicant portal is not used (owner decision, EUISIS ADR 0013 #12).
   and, while the portal is closed, a note sending parties to My Portal. The public site
   does not link to it.
 
+## Several parties, lawyers and merged cases
+
+Owner decision, EUISIS ADR 0013 #13 (`App\Services\CaseParties`).
+
+- **Parties** (`case_applicants`): the lead applicant, co-applicants and interveners of a
+  case, keyed by EUISIS employee UUID, with their status (invited, active, declined,
+  requested, admitted, refused, removed). A party follows the case once active or
+  admitted; only the lead (or the lead's accepted lawyer) changes it. Cases from before
+  this table get their lead row on first read.
+- **Co-applicants** come with a filing (`co_applicants[][uuid|name]`) as `invited`; each
+  confirms in the EUISIS employee portal (`POST /people/parties/{party}/respond`, which
+  opens the court account from the EUISIS record as filing does). `POST /people/parties`
+  lists an employee's invitations and intervention applications.
+- **Interveners** apply from EUISIS (`POST /people/interventions`: case number, grounds,
+  optional PDF). Only the case's judge (any judge while none is assigned) admits or
+  refuses, on the case page's *Parties* section; a refusal needs a reason.
+- **Lawyers** (`case_representatives`, applicants with `is_lawyer` and a verified
+  licence): the registry opens and verifies them on the Lawyers screen; the lawyer
+  chooses a password from the emailed link and signs in at `/lawyer/login`. A verified
+  lawyer reaches the applicant portal even while it is closed to employees (its sign-in and
+  registration pages stay `404`) and files for a client found in EUISIS by employee number
+  (*File for a client*): the case starts with no applicant, the client's lead row
+  `invited`, until the client confirms in My Portal. A lawyer named by an employee when
+  filing (`lawyer_license_number` + `power_of_attorney`) acts once the registry accepts
+  the power of attorney. `POST /people/lawyers` gives EUISIS the register: name and
+  licence number only.
+- **Merging** (`cases.merge`, for judges and registrars): open cases against the same
+  respondent (same EUISIS institution, or the same name) merge into the case kept. Their
+  parties join it as co-applicants (interveners stay admitted) with their accepted lawyers;
+  documents, witnesses and coming hearings move; each merged case is closed with
+  `merged_into_case_id` and the note. Nothing is deleted; both case pages and the EUISIS
+  workspace show where a case went.
+
 ## Staff accounts
 
 The court's staff (judges, registrars, inspectors and the rest) are EUISIS employees of the
@@ -248,7 +281,7 @@ reviewed built-in Amharic of `lang/am/home.php`.
 
 ## Tests
 
-`tests/Feature/Euisis/IntegrationApiTest.php`, `EuisisSyncTest.php`, `EmployeeCourtAccessTest.php`, `EmployeeFilingTest.php`, `CaseWorkspaceTest.php`, `PortalInEuisisTest.php` and `StaffLinkTest.php`. They run on the
+`tests/Feature/Euisis/IntegrationApiTest.php`, `EuisisSyncTest.php`, `EmployeeCourtAccessTest.php`, `EmployeeFilingTest.php`, `CaseWorkspaceTest.php`, `PortalInEuisisTest.php`, `CasePartiesTest.php` and `StaffLinkTest.php`. They run on the
 `court_ms_test` database from `.env.testing`:
 
 ```bash
