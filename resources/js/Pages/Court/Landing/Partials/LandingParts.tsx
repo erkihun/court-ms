@@ -1,6 +1,6 @@
 import { router } from '@inertiajs/react';
 import { useRef, useState, type FormEvent, type ReactNode, type RefObject } from 'react';
-import { Button, cx } from '@/Components/ui';
+import { Button, FormField, Input, Textarea, cx } from '@/Components/ui';
 import { EyeIcon, EyeOffIcon, PencilIcon, Plus, TrashIcon } from '@/Components/Icons';
 import { useConfirm } from '@/hooks/useConfirm';
 import { usePublicText } from '@/court/i18n/usePublicText';
@@ -191,3 +191,47 @@ export function OptionalHint({ extra }: { extra?: string }) {
 
 /** The options of the colour selects, in the Blade order. */
 export const COLOR_OPTIONS = ['blue', 'orange', 'emerald', 'violet', 'amber'] as const;
+
+export type AmharicFieldSpec = { key: string; label: string; multiline?: boolean; rows?: number; maxLength?: number; mono?: boolean };
+
+/** A blank Amharic text for the fields of a form. */
+export function blankAmharic(keys: readonly string[]): Record<string, string> {
+    return Object.fromEntries(keys.map((key) => [key, '']));
+}
+
+/**
+ * A row's Amharic text beside its English fields. Visitors reading in Amharic
+ * see it; a field left empty shows the English text. Open while it has text
+ * or an error.
+ */
+export function AmharicFields({ fields, values, errors, onChange }: {
+    fields: AmharicFieldSpec[];
+    values: Record<string, string>;
+    errors: Record<string, string | undefined>;
+    onChange: (key: string, value: string) => void;
+}) {
+    const { t } = usePublicText();
+    const c = (key: string) => t(`cm.admin_landing.common.${key}`);
+    const open = fields.some((field) => (values[field.key] ?? '').trim() !== '' || Boolean(errors[`am.${field.key}`]));
+
+    return (
+        <details open={open} className="group rounded-card border border-(--app-border) bg-(--app-surface) px-4 py-3">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-(--app-foreground) marker:content-none">
+                <span>{c('amharic_version')} <span lang="am" className="font-normal text-(--app-muted-foreground)">· አማርኛ</span></span>
+                <span aria-hidden="true" className="text-(--app-muted-foreground) transition group-open:rotate-180">⌄</span>
+            </summary>
+            <p className="mt-1 text-xs text-(--app-muted-foreground)">{c('amharic_help')}</p>
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {fields.map((field) => (
+                    <FormField key={field.key} label={field.label} error={errors[`am.${field.key}`]} className={field.multiline ? 'sm:col-span-2' : undefined}>
+                        {({ id }) => field.multiline ? (
+                            <Textarea id={id} lang="am" rows={field.rows ?? 3} maxLength={field.maxLength} className={field.mono ? 'font-mono' : undefined} value={values[field.key] ?? ''} onChange={(event) => onChange(field.key, event.target.value)} />
+                        ) : (
+                            <Input id={id} lang="am" maxLength={field.maxLength} value={values[field.key] ?? ''} onChange={(event) => onChange(field.key, event.target.value)} />
+                        )}
+                    </FormField>
+                ))}
+            </div>
+        </details>
+    );
+}

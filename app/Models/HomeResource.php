@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasAmharicText;
 use Illuminate\Database\Eloquent\Model;
 
 class HomeResource extends Model
 {
+    use HasAmharicText;
+
     protected $fillable = [
         'sort_order', 'is_active', 'is_featured', 'type',
         'title', 'description', 'file_path', 'external_url',

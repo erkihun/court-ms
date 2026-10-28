@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Models\Announcement;
 use App\Models\CaseType;
 use App\Models\CourtCase;
+use App\Models\CourtMember;
 use App\Models\HomeFaq;
 use App\Models\HomeResource;
 use App\Models\HomeService;
@@ -134,7 +135,7 @@ test('the landing manager opens on the tab a save asked for', function (): void 
             ->component('Court/Landing/Index')
             ->where('initialTab', 'metrics')
             ->where('metricDefaults.total_cases.label', 'Total Cases')
-            ->where('metrics.total_cases', ['label' => '', 'description' => ''])
+            ->where('metrics.total_cases', ['label' => '', 'description' => '', 'label_am' => '', 'description_am' => ''])
             ->where('sections.metrics.visible', true)
             ->where('userManual.title_en', 'User Manual')
             ->where('userManual.is_active', true)
@@ -209,7 +210,8 @@ test('timeline steps, service cards and FAQs are saved from the page payload', f
 
     $this->actingAs($admin)->get(route('admin.landing.index'))
         ->assertInertia(fn (AssertableInertia $page) => $page
-            ->where('steps.0', ['id' => $step->id, 'title' => 'Filing online', 'description' => 'Online.', 'meta' => null, 'duration' => null, 'color' => 'amber', 'is_active' => true])
+            ->where('steps.0', ['id' => $step->id, 'title' => 'Filing online', 'description' => 'Online.', 'meta' => null, 'duration' => null, 'color' => 'amber', 'is_active' => true,
+                'am' => ['title' => '', 'description' => '', 'meta' => '', 'duration' => '']])
             ->where('services.0.features', ['Upload', 'Track', 'Pay'])
             ->where('services.0.is_active', false)
             ->where('faqs.0.question', 'How do I file a case?'));
@@ -369,4 +371,49 @@ test('there is no public staff self-registration', function (): void {
 
     $this->assertGuest();
     expect(User::query()->where('email', 'new.clerk@court.test')->exists())->toBeFalse();
+});
+
+test('the landing manager keeps Amharic text, the court\'s facts and its members', function (): void {
+    $admin = publicSiteStaff();
+
+    $this->actingAs($admin)->post(route('admin.landing.faqs.store'), ['question' => 'Where?', 'answer' => 'Here.', 'am' => ['question' => ' የት? ', 'answer' => '']])
+        ->assertSessionHasNoErrors();
+    expect(HomeFaq::query()->firstWhere('question', 'Where?')->translations)->toBe(['am' => ['question' => 'የት?']]);
+    $this->actingAs($admin)->post(route('admin.landing.services.store'), [
+        'title' => 'Hearings', 'icon_type' => 'calendar', 'accent' => 'blue', 'href' => 'javascript:alert(1)',
+    ])->assertSessionHasErrors('href');
+    $this->actingAs($admin)->post(route('admin.landing.services.store'), [
+        'title' => 'Hearings', 'icon_type' => 'calendar', 'accent' => 'blue', 'href' => '#hearings', 'am' => ['title' => 'ችሎቶች', 'features' => "አንድ\n\nሁለት"],
+    ])->assertSessionHasNoErrors();
+    expect(HomeService::query()->firstWhere('title', 'Hearings')->only(['href', 'translations']))->toBe(['href' => '#hearings', 'translations' => ['am' => ['title' => 'ችሎቶች', 'features' => ['አንድ', 'ሁለት']]]]);
+
+    $this->actingAs($admin)->put(route('admin.landing.about.update'), [
+        'body' => 'Mandate.', 'body_am' => 'ተልዕኮ።',
+        'facts' => [['label' => 'Seat', 'value' => 'Addis Ababa'], ['label' => '', 'value' => 'dropped', 'label_am' => '', 'value_am' => '']],
+    ])->assertSessionHasNoErrors()->assertSessionHas('landing_tab', 'about');
+    expect(HomeSetting::getJson('about.settings'))->toBe(['body' => 'Mandate.', 'body_am' => 'ተልዕኮ።', 'facts' => [['label' => 'Seat', 'value' => 'Addis Ababa', 'label_am' => '', 'value_am' => '']]]);
+
+    $this->actingAs($admin)->post(route('admin.landing.members.store'), ['name' => 'Almaz T', 'role' => 'President', 'am' => ['name' => 'አልማዝ ተ']])->assertSessionHasNoErrors();
+    $this->actingAs($admin)->post(route('admin.landing.members.store'), ['name' => 'Kebede A', 'role' => 'Judge'])->assertSessionHasNoErrors();
+    $this->actingAs($admin)->post(route('admin.landing.members.store'), ['name' => ''])->assertSessionHasErrors('name');
+    [$first, $second] = CourtMember::query()->orderBy('sort_order')->get()->all();
+    $this->actingAs($admin)->post(route('admin.landing.members.reorder'), ['order' => [$second->id, $first->id]])->assertRedirect();
+    $this->actingAs($admin)->put(route('admin.landing.members.update', $first), ['name' => 'Almaz Tesfaye', 'role' => 'President'])->assertSessionHasNoErrors();
+    $this->actingAs($admin)->patch(route('admin.landing.members.toggle', $second));
+    expect($first->fresh()->translations)->toBeNull()->and($second->fresh()->is_active)->toBeFalse();
+
+    $this->actingAs($admin)->put(route('admin.landing.sections.update'), ['about' => ['visible' => true, 'title' => 'The Court', 'title_am' => 'ፍርድ ቤቱ'], 'news' => ['visible' => false]])
+        ->assertSessionHasNoErrors();
+    $this->actingAs($admin)->put(route('admin.landing.footer.update'), ['office_hours' => 'Mon–Fri', 'map_url' => 'javascript:alert(1)'])->assertSessionHasErrors('map_url');
+
+    $this->actingAs($admin)->get(route('admin.landing.index'))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('members.0.name', 'Kebede A')
+            ->where('members.1', fn ($member): bool => $member['name'] === 'Almaz Tesfaye' && $member['am'] === ['name' => '', 'role' => '', 'bio' => ''])
+            ->where('about.facts', [['label' => 'Seat', 'value' => 'Addis Ababa', 'label_am' => '', 'value_am' => '']])
+            ->where('sections.about.title_am', 'ፍርድ ቤቱ')
+            ->where('sections.news.visible', false)
+            ->where('faqs.0.am', ['question' => 'የት?', 'answer' => '']));
+
+    $this->get(route('landing.home'))->assertInertia(fn (AssertableInertia $page) => $page->where('news', [])->has('members', 1)->where('members.0.name', 'Almaz Tesfaye'));
 });

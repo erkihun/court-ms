@@ -33,7 +33,7 @@ const lang: Record<string, unknown> = {
         "page_title": "የመነሻ ገጽ ይዘት አስተዳደር",
         "eyebrow": "የሕዝብ ድረ ገጽ ይዘት",
         "heading": "በመነሻ ገጹ ላይ የሚታዩ ክፍሎችን ያስተዳድሩ",
-        "intro": "ዋና ማስታወቂያዎችን፣ የሥርዓቱን አጠቃላይ መረጃ፣ የጉዳይ ሂደት፣ አገልግሎቶች፣ ሰነዶች፣ ጥያቄና መልሶች እና የገጹን ግርጌ ከአንድ ቦታ ያዘምኑ።",
+        "intro": "ዋና ማስታወቂያዎችን፣ ፍርድ ቤቱንና አባላቱን፣ አገልግሎቶችን፣ ቁጥሮችን፣ የጉዳይ ሂደትን፣ ሕትመቶችን፣ ጥያቄዎችን፣ የመገናኛ መረጃንና የክፍሎችን መታየት በእንግሊዝኛና በአማርኛ ከአንድ ቦታ ያዘምኑ።",
         "preview": "መነሻ ገጹን ይመልከቱ",
         "tabs": {
             "slides": "ዋና ማስታወቂያዎች",
@@ -44,7 +44,9 @@ const lang: Record<string, unknown> = {
             "manual": "የተጠቃሚ መመሪያ",
             "faqs": "ተደጋጋሚ ጥያቄዎች",
             "footer": "የገጽ ግርጌ",
-            "sections": "የገጽ ክፍሎች"
+            "sections": "የገጽ ክፍሎች",
+            "about": "ስለ ፍርድ ቤቱ",
+            "members": "አባላት"
         },
         "metrics": {
             "title": "የሥርዓቱ አጠቃላይ መረጃ ካርዶች",
@@ -52,7 +54,9 @@ const lang: Record<string, unknown> = {
             "automatic": "ቁጥሮቹ በሥርዓቱ ይሰላሉ",
             "display_label": "የሚታይ ርዕስ",
             "description_label": "ማብራሪያ",
-            "save": "የአጠቃላይ መረጃ ይዘትን አስቀምጥ"
+            "save": "የአጠቃላይ መረጃ ይዘትን አስቀምጥ",
+            "am_label": "የአማርኛ መለያ",
+            "am_description": "የአማርኛ መግለጫ"
         },
         "slides": {
             "title": "ዋና ማስታወቂያዎች",
@@ -86,7 +90,12 @@ const lang: Record<string, unknown> = {
             "contact": "የግንኙነት መረጃ",
             "social": "የማኅበራዊ ሚዲያ አገናኞች",
             "social_help": "አዶው እንዳይታይ ከፈለጉ መስኩን ባዶ ይተዉት።",
-            "save": "የገጽ ግርጌውን አስቀምጥ"
+            "save": "የገጽ ግርጌውን አስቀምጥ",
+            "authority": "የበላይ አካል",
+            "authority_help": "ከፍርድ ቤቱ ስም በላይ ይታያል፤ ለምሳሌ የከተማ አስተዳደሩ።",
+            "office": "የሥራ ሰዓትና አድራሻ",
+            "office_hours": "የሥራ ሰዓት",
+            "map_url": "የካርታ ማስፈንጠሪያ"
         },
         "sections": {
             "title": "የመነሻ ገጽ ክፍሎች ቅንብር",
@@ -101,7 +110,12 @@ const lang: Record<string, unknown> = {
             "cases": "የቅርብ ጊዜ ጉዳዮች",
             "resources": "ሰነዶችና መረጃዎች",
             "faq": "ተደጋጋሚ ጥያቄዎች",
-            "cta": "የተግባር ጥሪ ማስታወቂያ"
+            "cta": "የተግባር ጥሪ ማስታወቂያ",
+            "about": "ስለ ፍርድ ቤቱ",
+            "members": "የፍርድ ቤቱ አወቃቀር",
+            "hearings": "የችሎት መርሐ ግብር",
+            "news": "ዜናዎችና ማስታወቂያዎች",
+            "contact": "መዝገብ ቤቱን ያግኙ"
         },
         "common": {
             "optional": "አማራጭ",
@@ -185,7 +199,21 @@ const lang: Record<string, unknown> = {
             "no_services": "የተመዘገበ የአገልግሎት ካርድ የለም።",
             "no_resources": "የተመዘገበ መረጃ የለም።",
             "no_faqs": "የተመዘገበ ጥያቄና መልስ የለም።",
-            "confirm_delete": "ይህን መረጃ ለመሰረዝ እርግጠኛ ነዎት?"
+            "confirm_delete": "ይህን መረጃ ለመሰረዝ እርግጠኛ ነዎት?",
+            "amharic": "አማርኛ",
+            "english": "እንግሊዝኛ",
+            "amharic_version": "የአማርኛ ቅጅ",
+            "amharic_help": "በአማርኛ ለሚያነቡ ጎብኚዎች ይታያል። ባዶ የተተወ መስክ የእንግሊዝኛውን ጽሑፍ ያሳያል።",
+            "member_name": "ሙሉ ስም",
+            "member_role": "የሥራ መደብ",
+            "member_bio": "አጭር የሕይወት ታሪክ",
+            "member_photo": "ፎቶ",
+            "card_link": "ማስፈንጠሪያ",
+            "card_link_help": "ካርዱ የሚወስድበት፦ በዚህ ጣቢያ ያለ ገጽ (/resources)፣ መልህቅ (#hearings) ወይም የድረ ገጽ አድራሻ።",
+            "about_body": "የተልዕኮ ጽሑፍ",
+            "office_hours": "የሥራ ሰዓት",
+            "map_url": "የካርታ ማስፈንጠሪያ",
+            "authority_name": "የበላይ አካል"
         },
         "manual": {
             "title": "የተጠቃሚ መመሪያ",
@@ -197,6 +225,29 @@ const lang: Record<string, unknown> = {
             "show_in_nav": "የተጠቃሚ መመሪያን በመነሻ ገጽ ማውጫ አሳይ",
             "save": "የተጠቃሚ መመሪያን አስቀምጥ",
             "saved": "የተጠቃሚ መመሪያ ቅንብር ተቀምጧል።"
+        },
+        "about": {
+            "title": "ስለ ፍርድ ቤቱ",
+            "description": "የፍርድ ቤቱ ተልዕኮና ዋና ዋና መረጃዎች፤ በመነሻ ገጹ ስለ ፍርድ ቤቱ ክፍል ይታያሉ።",
+            "body_help": "አንቀጾችን በባዶ መስመር ይለዩ። አብሮ የተዘጋጀውን ጽሑፍ ለማሳየት ባዶ ይተዉት።",
+            "facts": "ዋና ዋና መረጃዎች",
+            "facts_help": "እስከ ስምንት መረጃዎች፤ ለምሳሌ ፍርድ ቤቱ የተቋቋመበት ጊዜ፣ መቀመጫውና የሥልጣን ክልሉ።",
+            "fact_label": "ርዕስ",
+            "fact_value": "መረጃ",
+            "add_fact": "መረጃ ጨምር",
+            "remove_fact": "አስወግድ",
+            "save": "ስለ ፍርድ ቤቱ አስቀምጥ"
+        },
+        "members": {
+            "title": "የፍርድ ቤቱ አባላት",
+            "description": "በፍርድ ቤቱ አወቃቀር ስር የሚዘረዘሩት ፕሬዚዳንት፣ ዳኞችና የመዝገብ ቤት ኃላፊ። የሚታይ አባል እስከሌለ ድረስ ክፍሉ ይደበቃል።",
+            "add": "አባል ጨምር",
+            "new": "አዲስ አባል",
+            "edit": "አባል አስተካክል",
+            "save": "አባል አስቀምጥ",
+            "empty": "ምንም አባል አልተጨመረም።",
+            "remove_photo": "የአሁኑን ፎቶ አስወግድ",
+            "photo_help": "ካሬ ፎቶ ይመረጣል። በማስተካከል ጊዜ የአሁኑን ለማቆየት ባዶ ይተዉት።"
         },
         "validation": {
             "safe_link": ":attribute በ http:// ወይም https:// የሚጀምር የድረ ገጽ አድራሻ፣ በ # የሚጀምር የገጽ ውስጥ ማመላከቻ ወይም በ / የሚጀምር የዚህ ድረ ገጽ መንገድ መሆን አለበት።",
@@ -220,7 +271,11 @@ const lang: Record<string, unknown> = {
             "resource_deleted": "መረጃው ተሰርዟል።",
             "footer_saved": "የገጽ ግርጌ ቅንብሮች ተቀምጠዋል።",
             "metrics_saved": "የአጠቃላይ መረጃ ይዘት ተቀምጧል።",
-            "sections_saved": "የገጽ ክፍሎች ቅንብሮች ተቀምጠዋል።"
+            "sections_saved": "የገጽ ክፍሎች ቅንብሮች ተቀምጠዋል።",
+            "about_saved": "ስለ ፍርድ ቤቱ ተቀምጧል።",
+            "member_added": "አባል ተጨምሯል።",
+            "member_updated": "አባል ተሻሽሏል።",
+            "member_deleted": "አባል ተሰርዟል።"
         }
     },
     "announcements": {
@@ -1758,6 +1813,14 @@ const lang: Record<string, unknown> = {
             "view_all": "ሁሉንም ማስታወቂያዎች ይመልከቱ"
         },
         "hero": {
+            "court": {
+                "badge": "የአስተዳደር ፍርድ ቤት",
+                "title": "በከተማ አስተዳደር ውስጥ ፍትሕ",
+                "description": "ፍርድ ቤቱ የከተማዋ ሠራተኞች በተቋማት ውሳኔዎች ላይ የሚያቀርቧቸውን ጉዳዮች ይመለከታል፤ በሕግ መሠረትም ይወስናል።",
+                "portal": "ክስ ያቅርቡ ወይም ጉዳይዎን ይከታተሉ",
+                "hearings": "የችሎት መርሐ ግብር",
+                "about": "ስለ ፍርድ ቤቱ"
+            },
             "badge": "የዲጂታል ጉዳይ አስተዳደር ሥርዓት",
             "title": "የአስተዳደር ፍትሕ አገልግሎት",
             "accent": "ቀላል፣ ግልጽ እና ተደራሽ",
@@ -1796,9 +1859,9 @@ const lang: Record<string, unknown> = {
             }
         },
         "metrics": {
-            "section_title": "የችሎቱ የሥራ አፈጻጸም መለኪያዎች",
+            "section_title": "ፍርድ ቤቱ በቁጥሮች",
             "section_badge": "የቀጥታ መረጃዎች",
-            "section_description": "በሥርዓቱ የተመዘገቡ ጉዳዮችና የችሎት ቀጠሮዎች ወቅታዊ አጠቃላይ መረጃ።",
+            "section_description": "በፍርድ ቤቱ መዝገብ የተመዘገቡ ጉዳዮችና ችሎቶች።",
             "live_data": "ወቅታዊ መረጃ",
             "time_unit": "ቀናት",
             "resolution_card": {
@@ -1851,8 +1914,8 @@ const lang: Record<string, unknown> = {
         },
         "timeline": {
             "section_badge": "የሂደት ካርታ",
-            "section_title": "የጉዳይ ሂደት ጉዞ",
-            "section_description": "ከአቤቱታ እስከ ፍጻሜ ያለው ግልጽ የደረጃ በደረጃ ሂደት",
+            "section_title": "ጉዳይ እንዴት ይታያል",
+            "section_description": "ከክስ አቀራረብ እስከ ውሳኔና አፈጻጸሙ",
             "view_details": "ዝርዝሩን ይመልከቱ",
             "go_to_step": "ወደ ደረጃ :step ይሂዱ",
             "previous": "ቀዳሚ",
@@ -1896,8 +1959,8 @@ const lang: Record<string, unknown> = {
         },
         "services": {
             "section_badge": "ዋና አገልግሎቶች",
-            "section_title": "የችሎቱ የዲጂታል አገልግሎቶች",
-            "section_description": "ለተቀላጠፈ የጉዳይ አመራር እና ፍትሕ አሰጣጥ የተዘጋጁ መሣሪያዎች",
+            "section_title": "የፍርድ ቤቱ አገልግሎቶች",
+            "section_description": "ፍርድ ቤቱ ለተከራካሪዎችና ለሕዝቡ የሚሰጣቸው አገልግሎቶች",
             "learn_more": "ተጨማሪ ያንብቡ",
             "stats": {
                 "uptime": "የሥርዓቱ ዝግጁነት",
@@ -2015,8 +2078,8 @@ const lang: Record<string, unknown> = {
         },
         "resources": {
             "section_badge": "የችሎቱ መረጃዎች",
-            "section_title": "ቅጾች፣ ሰነዶች እና ማሳወቂያዎች",
-            "section_description": "በችሎቱ የታተሙ ቅጾችን፣ መመሪያዎችን፣ ሰነዶችንና ይፋዊ ማሳወቂያዎችን ያግኙ።",
+            "section_title": "ሕትመቶችና ቅጾች",
+            "section_description": "በፍርድ ቤቱ የታተሙ ቅጾች፣ ደንቦች፣ መመሪያዎችና ማስታወቂያዎች።",
             "view_all": "ሁሉንም መረጃዎች ይመልከቱ",
             "featured": "ተመራጭ",
             "download": "አውርድ",
@@ -2031,7 +2094,7 @@ const lang: Record<string, unknown> = {
         "faq": {
             "section_badge": "እገዛ ይፈልጋሉ?",
             "section_title": "ተደጋጋሚ ጥያቄዎች",
-            "section_description": "በዲጂታል መድረኩ ላይ ስለ አቤቱታ አቀራረብ፣ ስለ ችሎቶች እና ስለ ጉዳይ ክትትል ማብራሪያዎች።",
+            "section_description": "ስለ ክስ አቀራረብ፣ ስለ ችሎቶችና ስለ ጉዳይ ክትትል የሚሰጡ መልሶች።",
             "questions": [
                 {
                     "question": "እንዴት አዲስ ጉዳይ ማስገባት እችላለሁ?",
@@ -2158,7 +2221,7 @@ const lang: Record<string, unknown> = {
             "no_public_cases_text_mobile": "የፍለጋ ቃል ያዘምኑ ወይም ማጣሪያ ዳግም ያስጀምሩ።"
         },
         "footer": {
-            "description": "በዲጂታል ፈጠራ የታገዘ ቀልጣፋ እና ግልጽ የአስተዳደር ፍትሕ መስጠት።",
+            "description": "የከተማ አስተዳደሩ የአስተዳደር ፍርድ ቤት። የከተማዋ ሠራተኞች በተቋማት ውሳኔዎች ላይ የሚያቀርቧቸውን ጉዳዮች ይመለከታል።",
             "agency_label": "የአስተዳደር ችሎት",
             "quick_links": "ፈጣን ሊንኮች",
             "links": [
@@ -2195,6 +2258,49 @@ const lang: Record<string, unknown> = {
             "rights": "መብቱ በሕግ የተጠበቀ ነው።",
             "track_case_status": "የጉዳይ ሁኔታን ይከታተሉ",
             "version": "እትም 1.0.0"
+        },
+        "about": {
+            "section_title": "ስለ ፍርድ ቤቱ",
+            "section_description": "የከተማ አስተዳደሩ የአስተዳደር ፍርድ ቤት",
+            "body": "የአስተዳደር ፍርድ ቤቱ የከተማዋ ሠራተኞች በሚያገለግሉባቸው ተቋማት ውሳኔዎችና ድርጊቶች ላይ የሚያቀርቧቸውን ጉዳዮች ይመለከታል፤ በሕግ መሠረትም ይወስናል።\n\nክሶች በሠራተኛ ፖርታል ይቀርባሉ፣ በመዝገብ ቤቱ ይመረመራሉ፣ በችሎት ይታያሉ፤ ውሳኔውም ከምክንያቱ ጋር በጽሑፍ ተሰጥቶ ለተከራካሪዎች ይደርሳል።"
+        },
+        "members": {
+            "section_title": "የፍርድ ቤቱ አወቃቀር",
+            "section_description": "የፍርድ ቤቱ ፕሬዚዳንት፣ ዳኞችና የመዝገብ ቤት ኃላፊ"
+        },
+        "hearings": {
+            "section_title": "የችሎት መርሐ ግብር",
+            "section_description": "በሚቀጥሉት ሁለት ሳምንታት የሚታዩ ችሎቶች። ጉዳዮች የሚጠቀሱት በመዝገብ ቁጥራቸው ብቻ ነው።"
+        },
+        "news": {
+            "section_title": "ዜናዎችና ማስታወቂያዎች",
+            "section_description": "የፍርድ ቤቱ ማስታወቂያዎች፦ ችሎቶች፣ መርሐ ግብሮችና የሥነ ሥርዓት ለውጦች"
+        },
+        "contact": {
+            "section_title": "መዝገብ ቤቱን ያግኙ",
+            "section_description": "ፍርድ ቤቱ የሚገኝበትና መዝገብ ቤቱን የሚያገኙበት መንገድ"
+        },
+        "court_services": {
+            "filing": {
+                "title": "ክስ ማቅረብ",
+                "description": "ሠራተኞች ክሳቸውን ከቅሬታ መዝገባቸውና ከሰነዶቻቸው ጋር በየእኔ ፖርታል ያቀርባሉ።",
+                "meta": "በሠራተኛ ፖርታል"
+            },
+            "hearings": {
+                "title": "ችሎቶች",
+                "description": "ፍርድ ቤቱ እያንዳንዱን ችሎት ይቀጥራል፤ ቀኑን፣ ሰዓቱንና ክፍሉን ለተከራካሪዎች ያሳውቃል።",
+                "meta": "ከሁለት ሳምንት በፊት ይታወቃል"
+            },
+            "follow": {
+                "title": "ጉዳይዎን መከታተል",
+                "description": "ተከራካሪዎች እያንዳንዱን ደረጃ ይከታተላሉ፣ ለመዝገብ ቤቱ ይጽፋሉ፣ ለመልሶችም በየእኔ ፖርታል መልስ ይሰጣሉ።",
+                "meta": "ለተከራካሪዎች"
+            },
+            "publications": {
+                "title": "ውሳኔዎችና ሕትመቶች",
+                "description": "ውሳኔዎች ለተከራካሪዎች ይደርሳሉ፤ ፍርድ ቤቱ ቅጾቹን፣ ደንቦቹንና መመሪያዎቹን እዚህ ያትማል።",
+                "meta": "ሕትመቶች"
+            }
         }
     },
     "letters": {

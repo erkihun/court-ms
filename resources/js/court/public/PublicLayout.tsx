@@ -8,6 +8,7 @@ import CourtPublicHeader from '@/court/public/CourtPublicHeader';
 import CourtPublicFooter from '@/court/public/CourtPublicFooter';
 import type { PublicSiteChrome } from '@/court/types/public';
 import '../../../css/public-site.css';
+import '../../../css/court-public.css';
 
 interface Props {
     /** Browser tab title. */
@@ -19,11 +20,11 @@ interface Props {
 }
 
 /**
- * The court's public site layout, modelled on the EUISIS PublicLayout: skip
- * link, header, main, footer and the toaster, with the `public-site` look
- * (resources/css/public-site.css). Navigation and footer are the court's own:
- * the home page, resources, user manual and terms, the applicant and
- * respondent portals, and the landing manager's footer settings.
+ * The court's public site layout: skip link, header, main, footer and the
+ * toaster, with the shared `public-site` base (resources/css/public-site.css)
+ * and the court's own face over it (resources/css/court-public.css). The
+ * header and footer carry the landing manager's contact settings and the
+ * way to My Portal for the parties.
  */
 export default function PublicLayout({ title, description, publicSite = null, children }: Props) {
     const { t } = useLocale();
@@ -37,17 +38,21 @@ export default function PublicLayout({ title, description, publicSite = null, ch
             </Head>
 
             <div
-                className="public-site flex min-h-screen flex-col bg-(--app-background)"
+                className="public-site court-site flex min-h-screen flex-col"
                 data-motion={getBoolean('appearance.enable_ui_animations', true) ? 'on' : 'off'}
             >
                 <a
                     href="#main-content"
-                    className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-60 focus:rounded-control focus:bg-(--app-surface) focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-(--app-foreground) focus:shadow-sm focus:outline-hidden focus:ring-2 focus:ring-primary"
+                    className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-60 focus:rounded-md focus:bg-(--court-paper) focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:shadow-sm"
                 >
                     {t('publicSite.skipToContent')}
                 </a>
 
-                <CourtPublicHeader userManualEnabled={publicSite?.userManualEnabled ?? false} userManualTitle={publicSite?.userManualTitle ?? null} />
+                <CourtPublicHeader
+                    portalUrl={publicSite?.portalUrl ?? null}
+                    authorityName={publicSite?.footer?.authority_name ?? null}
+                    officeHours={publicSite?.footer?.office_hours ?? null}
+                />
 
                 <main id="main-content" tabIndex={-1} className="flex-1 focus:outline-hidden">
                     {children}

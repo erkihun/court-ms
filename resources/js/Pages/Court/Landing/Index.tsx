@@ -7,15 +7,17 @@ import { usePublicText } from '@/court/i18n/usePublicText';
 import type { LandingIndexProps, LandingTab } from '@/court/types/public';
 import { FaqsPanel, ResourcesPanel, ServicesPanel, SlidesPanel, TimelinePanel } from './Partials/ContentPanels';
 import { FooterPanel, ManualPanel, MetricsPanel, SectionsPanel } from './Partials/SettingsPanels';
+import { AboutPanel, MembersPanel } from './Partials/CourtPanels';
 
-const TABS: LandingTab[] = ['slides', 'metrics', 'timeline', 'services', 'resources', 'manual', 'faqs', 'footer', 'sections'];
+const TABS: LandingTab[] = ['slides', 'about', 'members', 'services', 'metrics', 'timeline', 'resources', 'manual', 'faqs', 'footer', 'sections'];
 
 /**
  * The landing-page manager (LandingPageController): every section of the
- * public home page in one workspace — hero slides, statistics labels, the
- * process timeline, service cards, resources, the user manual, FAQs, the
- * footer and section visibility. Each tab saves through the controller's own
- * routes; the tab stays open after a save.
+ * public home page in one workspace, in English and Amharic — hero slides, the
+ * court and its members, service cards, statistics labels, the process
+ * timeline, resources, the user manual, FAQs, the footer and contact details,
+ * and section visibility. Each tab saves through the controller's own routes;
+ * the tab stays open after a save.
  */
 export default function LandingIndex(props: LandingIndexProps) {
     const { t } = usePublicText();
@@ -85,6 +87,8 @@ export default function LandingIndex(props: LandingIndexProps) {
                 {TABS.map((key) => (
                     <div key={key} id={`landing-panel-${key}`} role="tabpanel" aria-labelledby={`landing-tab-${key}`} hidden={key !== tab} tabIndex={0} className="focus-visible:outline-hidden">
                         {key === 'slides' && <SlidesPanel slides={props.slides} />}
+                        {key === 'about' && <AboutPanel about={props.about} />}
+                        {key === 'members' && <MembersPanel members={props.members} />}
                         {key === 'metrics' && <MetricsPanel stats={props.stats} metrics={props.metrics} metricDefaults={props.metricDefaults} />}
                         {key === 'timeline' && <TimelinePanel steps={props.steps} />}
                         {key === 'services' && <ServicesPanel services={props.services} />}

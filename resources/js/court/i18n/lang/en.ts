@@ -33,7 +33,7 @@ const lang: Record<string, unknown> = {
         "page_title": "Landing Page Manager",
         "eyebrow": "Public website content",
         "heading": "Manage every section displayed on the home page",
-        "intro": "Update the hero, statistics labels, process, services, resources, FAQs, footer, and section visibility from one workspace.",
+        "intro": "Update the hero, the court and its members, services, figures, process, publications, questions, contact details and section visibility, in English and Amharic, from one workspace.",
         "preview": "Preview home page",
         "tabs": {
             "slides": "Hero Slides",
@@ -44,7 +44,9 @@ const lang: Record<string, unknown> = {
             "manual": "User Manual",
             "faqs": "FAQ",
             "footer": "Footer",
-            "sections": "Sections"
+            "sections": "Sections",
+            "about": "About the Court",
+            "members": "Members"
         },
         "metrics": {
             "title": "Statistics Cards",
@@ -52,7 +54,9 @@ const lang: Record<string, unknown> = {
             "automatic": "Values are system generated",
             "display_label": "Display label",
             "description_label": "Description",
-            "save": "Save Statistics Content"
+            "save": "Save Statistics Content",
+            "am_label": "Amharic label",
+            "am_description": "Amharic description"
         },
         "slides": {
             "title": "Hero Slides",
@@ -86,7 +90,12 @@ const lang: Record<string, unknown> = {
             "contact": "Contact information",
             "social": "Social-media links",
             "social_help": "Leave a field blank to hide its icon from the footer.",
-            "save": "Save Footer"
+            "save": "Save Footer",
+            "authority": "Parent authority",
+            "authority_help": "Shown above the court's name, such as the city administration.",
+            "office": "Office hours and location",
+            "office_hours": "Office hours",
+            "map_url": "Map link"
         },
         "sections": {
             "title": "Section Settings",
@@ -101,7 +110,12 @@ const lang: Record<string, unknown> = {
             "cases": "Recent Cases",
             "resources": "Resources and Posts",
             "faq": "Frequently Asked Questions",
-            "cta": "Call-to-Action Banner"
+            "cta": "Call-to-Action Banner",
+            "about": "About the Court",
+            "members": "Composition of the Court",
+            "hearings": "Hearing Schedule",
+            "news": "News and Announcements",
+            "contact": "Contact the Registry"
         },
         "common": {
             "optional": "optional",
@@ -185,7 +199,21 @@ const lang: Record<string, unknown> = {
             "no_services": "No service cards have been added.",
             "no_resources": "No resources have been added.",
             "no_faqs": "No FAQs have been added.",
-            "confirm_delete": "Are you sure you want to delete this item?"
+            "confirm_delete": "Are you sure you want to delete this item?",
+            "amharic": "Amharic",
+            "english": "English",
+            "amharic_version": "Amharic version",
+            "amharic_help": "Shown to visitors reading in Amharic. A field left empty shows the English text.",
+            "member_name": "Full name",
+            "member_role": "Position",
+            "member_bio": "Short biography",
+            "member_photo": "Photo",
+            "card_link": "Link",
+            "card_link_help": "Where the card leads: a page on this site (/resources), an anchor (#hearings) or a web address.",
+            "about_body": "Mandate text",
+            "office_hours": "Office hours",
+            "map_url": "Map link",
+            "authority_name": "Parent authority"
         },
         "manual": {
             "title": "User Manual",
@@ -197,6 +225,29 @@ const lang: Record<string, unknown> = {
             "show_in_nav": "Show User Manual in home navigation",
             "save": "Save User Manual",
             "saved": "User manual content saved."
+        },
+        "about": {
+            "title": "About the Court",
+            "description": "The mandate of the court and its key facts, shown in the About section of the home page.",
+            "body_help": "Separate paragraphs with an empty line. Leave empty to show the built-in text.",
+            "facts": "Key facts",
+            "facts_help": "Up to eight facts, such as when the court was established, its seat and its jurisdiction.",
+            "fact_label": "Label",
+            "fact_value": "Value",
+            "add_fact": "Add a fact",
+            "remove_fact": "Remove",
+            "save": "Save About the Court"
+        },
+        "members": {
+            "title": "Members of the Court",
+            "description": "The president, judges and registrar listed under Composition of the Court. The section is hidden while no member is shown.",
+            "add": "Add Member",
+            "new": "New Member",
+            "edit": "Edit Member",
+            "save": "Save Member",
+            "empty": "No members have been added.",
+            "remove_photo": "Remove current photo",
+            "photo_help": "A square photo works best. Leave empty while editing to keep the current one."
         },
         "validation": {
             "safe_link": "The :attribute must be a web address starting with http:// or https://, a # anchor, or a path on this site starting with /.",
@@ -220,7 +271,11 @@ const lang: Record<string, unknown> = {
             "resource_deleted": "Resource deleted.",
             "footer_saved": "Footer settings saved.",
             "metrics_saved": "Statistics content saved.",
-            "sections_saved": "Section settings saved."
+            "sections_saved": "Section settings saved.",
+            "about_saved": "About the Court saved.",
+            "member_added": "Member added.",
+            "member_updated": "Member updated.",
+            "member_deleted": "Member deleted."
         }
     },
     "announcements": {
@@ -1753,6 +1808,14 @@ const lang: Record<string, unknown> = {
             "view_all": "View all announcements"
         },
         "hero": {
+            "court": {
+                "badge": "Administrative Court",
+                "title": "Justice in the administration of the city",
+                "description": "The court hears the cases of the city's employees against the decisions of its institutions, and decides them according to the law.",
+                "portal": "File or follow a case",
+                "hearings": "Hearing schedule",
+                "about": "About the court"
+            },
             "badge": "Digital Tribunal Platform",
             "title": "Administrative Justice",
             "accent": "Redefined",
@@ -1791,9 +1854,9 @@ const lang: Record<string, unknown> = {
             }
         },
         "metrics": {
-            "section_title": "Tribunal Performance Metrics",
+            "section_title": "The Court in Figures",
             "section_badge": "Live Insights",
-            "section_description": "A current overview of cases and scheduled hearings recorded in the system.",
+            "section_description": "Cases and hearings as recorded in the court register.",
             "live_data": "Live data",
             "time_unit": "days",
             "resolution_card": {
@@ -1846,8 +1909,8 @@ const lang: Record<string, unknown> = {
         },
         "timeline": {
             "section_badge": "Journey map",
-            "section_title": "Case Processing Journey",
-            "section_description": "Transparent step-by-step process from filing to resolution",
+            "section_title": "How a Case Proceeds",
+            "section_description": "From filing to the decision and its execution",
             "view_details": "View details",
             "go_to_step": "Go to step :step",
             "previous": "Previous",
@@ -1891,8 +1954,8 @@ const lang: Record<string, unknown> = {
         },
         "services": {
             "section_badge": "Core services",
-            "section_title": "Tribunal Digital Services",
-            "section_description": "Comprehensive tools for efficient case management and justice delivery",
+            "section_title": "Services of the Court",
+            "section_description": "What the court offers the parties and the public",
             "learn_more": "Learn more",
             "stats": {
                 "uptime": "System uptime",
@@ -2010,8 +2073,8 @@ const lang: Record<string, unknown> = {
         },
         "resources": {
             "section_badge": "Court resources",
-            "section_title": "Resources and updates",
-            "section_description": "Forms, documents, links, and notices published by the tribunal.",
+            "section_title": "Publications and Forms",
+            "section_description": "Forms, rules, guides and notices published by the court.",
             "view_all": "View all resources",
             "featured": "Featured",
             "download": "Download",
@@ -2026,7 +2089,7 @@ const lang: Record<string, unknown> = {
         "faq": {
             "section_badge": "Need help?",
             "section_title": "Frequently Asked Questions",
-            "section_description": "Clarifications about filing, hearings, and case tracking on the digital platform.",
+            "section_description": "Answers about filing, hearings and following a case.",
             "questions": [
                 {
                     "question": "How do I file a new tribunal case?",
@@ -2153,7 +2216,7 @@ const lang: Record<string, unknown> = {
             "no_public_cases_text_mobile": "Try updating your search terms or reset the filter to view more public case records."
         },
         "footer": {
-            "description": "Delivering efficient and transparent administrative justice through digital innovation.",
+            "description": "The administrative court of the city administration. It hears the cases of the city's employees against the decisions of its institutions.",
             "agency_label": "Administrative Tribunal",
             "quick_links": "Quick Links",
             "links": [
@@ -2190,6 +2253,49 @@ const lang: Record<string, unknown> = {
             "rights": "All rights reserved.",
             "track_case_status": "Track Case Status",
             "version": "Version 1.0.0"
+        },
+        "about": {
+            "section_title": "About the Court",
+            "section_description": "The administrative court of the city administration",
+            "body": "The Administrative Court hears the cases of the city's employees against the decisions and acts of the institutions they serve, and decides them according to the law.\n\nCases are filed through the employee portal, reviewed by the registry, heard by the court and decided in writing, with the reasons, and served on the parties."
+        },
+        "members": {
+            "section_title": "Composition of the Court",
+            "section_description": "The president, judges and registrar of the court"
+        },
+        "hearings": {
+            "section_title": "Hearing Schedule",
+            "section_description": "Sittings of the next two weeks. Cases are named by their number only."
+        },
+        "news": {
+            "section_title": "News and Announcements",
+            "section_description": "Notices of the court: sittings, schedules and changes to procedure"
+        },
+        "contact": {
+            "section_title": "Contact the Registry",
+            "section_description": "Where to find the court and how to reach its registry"
+        },
+        "court_services": {
+            "filing": {
+                "title": "File a case",
+                "description": "Employees file their case, with their grievance record and documents, from My Portal.",
+                "meta": "Through the employee portal"
+            },
+            "hearings": {
+                "title": "Hearings",
+                "description": "The court schedules each sitting and tells the parties its date, time and room.",
+                "meta": "Published two weeks ahead"
+            },
+            "follow": {
+                "title": "Follow your case",
+                "description": "Parties follow every step, write to the registry and reply to responses in My Portal.",
+                "meta": "For the parties"
+            },
+            "publications": {
+                "title": "Decisions and publications",
+                "description": "Decisions are served on the parties; the court publishes its forms, rules and guides here.",
+                "meta": "Publications"
+            }
         }
     },
     "letters": {

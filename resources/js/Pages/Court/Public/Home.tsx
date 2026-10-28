@@ -1,124 +1,73 @@
-import { Fragment, useId, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { cx } from '@/Components/ui';
-import { useBranding } from '@/hooks/useBranding';
+import LocalizedDateDisplay from '@/Components/Calendar/LocalizedDateDisplay';
 import PublicLayout from '@/court/public/PublicLayout';
-import CourtHeroCarousel from '@/court/public/CourtHeroCarousel';
 import CourtResourceCard from '@/court/public/CourtResourceCard';
+import { useCourtName } from '@/court/public/CourtPublicHeader';
+import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { usePublicText } from '@/court/i18n/usePublicText';
 import type {
-    MetricKey,
-    PublicHomeMetric,
+    PublicHearing,
     PublicHomeProps,
-    PublicHomeService,
-    PublicHomeStep,
-    ServiceAccent,
+    PublicHomeSection,
+    PublicHomeSlide,
+    PublicMember,
     ServiceIcon,
-    StepColor,
 } from '@/court/types/public';
-
-/** Each statistics card's icon and colour, as the Blade cards drew them. */
-const METRIC_STYLES: Record<MetricKey, { icon: string; tone: string; bar: string }> = {
-    total_cases: {
-        icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
-        tone: 'bg-primary/10 text-primary ring-primary/15 dark:text-blue-300',
-        bar: 'from-primary',
-    },
-    resolved_cases: {
-        icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
-        tone: 'bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-900/50',
-        bar: 'from-emerald-600',
-    },
-    pending_cases: {
-        icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
-        tone: 'bg-orange-50 text-orange-700 ring-orange-100 dark:bg-orange-950/50 dark:text-orange-300 dark:ring-orange-900/50',
-        bar: 'from-orange-500',
-    },
-    active_caseload: {
-        icon: 'M13 10V3L4 14h7v7l9-11h-7z',
-        tone: 'bg-primary/10 text-primary ring-primary/15 dark:text-blue-300',
-        bar: 'from-blue-800',
-    },
-    hearings_this_week: {
-        icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
-        tone: 'bg-violet-50 text-violet-700 ring-violet-100 dark:bg-violet-950/50 dark:text-violet-300 dark:ring-violet-900/50',
-        bar: 'from-violet-600',
-    },
-    avg_resolution_time: {
-        icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z',
-        tone: 'bg-slate-100 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700',
-        bar: 'from-slate-500',
-    },
-};
-
-/** The landing manager's step colours; white text stays readable on each. */
-const STEP_COLORS: Record<StepColor, string> = {
-    blue: 'bg-primary text-white dark:bg-blue-500',
-    orange: 'bg-orange-700 text-white',
-    emerald: 'bg-emerald-700 text-white',
-    violet: 'bg-violet-700 text-white',
-    amber: 'bg-amber-700 text-white',
-};
 
 /** The landing manager's service icons (Services → icon). */
 const SERVICE_ICONS: Record<ServiceIcon, string> = {
-    document: 'M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12',
+    document: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
     calendar: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
     lock: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z',
-    chart: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
-    database: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10',
-    chat: 'M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z',
+    chart: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
+    database: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253',
+    chat: 'M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z',
 };
-
-/** The landing manager's service accents (Services → accent). */
-const SERVICE_ACCENTS: Record<ServiceAccent, string> = {
-    blue: 'bg-primary/10 text-primary dark:text-blue-300',
-    orange: 'bg-orange-50 text-orange-700 dark:bg-orange-950/50 dark:text-orange-300',
-    emerald: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300',
-    violet: 'bg-violet-50 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300',
-    amber: 'bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300',
-    pink: 'bg-pink-50 text-pink-700 dark:bg-pink-950/50 dark:text-pink-300',
-};
-
-/** Up to five steps share one row on wide screens. */
-const STEP_COLUMNS: Record<number, string> = { 1: 'lg:grid-cols-1', 2: 'lg:grid-cols-2', 3: 'lg:grid-cols-3', 4: 'lg:grid-cols-4' };
-
-const cardCls = 'public-card relative min-w-0 overflow-hidden border border-gray-200/80 bg-white dark:border-slate-800/80 dark:bg-slate-900';
-const pillCls = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium';
 
 const numbers = new Intl.NumberFormat('en-US');
+const SLIDE_SECONDS = 9;
 
 function Icon({ path, className = 'h-5 w-5' }: { path: string; className?: string }) {
     return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden="true">
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d={path} />
         </svg>
     );
 }
 
-/** A home section: the Blade page's anchor id, eyebrow, saved or translated heading, and its cards. */
-function HomeSection({ id, tinted, badge, title, subtitle, aside, children }: {
+/** A home section: its anchor, the eyebrow with the brass rule, the heading and its body. */
+function Section({ id, eyebrow, heading, tone = 'paper', align = 'start', aside, children }: {
     id: string;
-    tinted: boolean;
-    badge: string;
-    title: string;
-    subtitle: string;
+    eyebrow: string;
+    heading: PublicHomeSection;
+    tone?: 'paper' | 'parchment' | 'ink';
+    align?: 'start' | 'center';
     aside?: ReactNode;
     children: ReactNode;
 }) {
+    const dark = tone === 'ink';
+
     return (
         <section
             id={id}
             aria-labelledby={`${id}-heading`}
             className={cx(
-                'scroll-mt-20 py-16 sm:py-20',
-                tinted ? 'border-y border-gray-200 bg-gray-50 dark:border-slate-800 dark:bg-slate-900/60' : 'bg-white dark:bg-slate-950',
+                'scroll-mt-32 py-16 sm:py-24',
+                tone === 'paper' && 'border-t border-(--court-line) bg-(--court-paper)',
+                tone === 'parchment' && 'bg-(--court-parchment)',
+                dark && 'bg-(--court-ink) text-white',
             )}
         >
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div className="mx-auto mb-10 max-w-2xl text-center sm:mb-12">
-                    <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-primary dark:text-blue-300">{badge}</p>
-                    <h2 id={`${id}-heading`} className="public-heading-accent text-2xl font-bold text-gray-900 sm:text-3xl dark:text-slate-100">{title}</h2>
-                    {subtitle && <p className="mt-4 text-base text-gray-600 dark:text-slate-400">{subtitle}</p>}
+                <div className={cx('mb-10 flex flex-col gap-6 sm:mb-14 lg:flex-row lg:items-end lg:justify-between', align === 'center' && 'items-center text-center lg:flex-col lg:items-center')}>
+                    <div className="max-w-2xl">
+                        <p className={cx('court-eyebrow', dark && 'court-eyebrow-light')}>{eyebrow}</p>
+                        <h2 id={`${id}-heading`} className={cx('mt-4 text-3xl font-semibold tracking-tight sm:text-4xl', dark ? 'text-white' : 'text-(--court-ink) dark:text-white')}>
+                            {heading.title}
+                        </h2>
+                        {heading.subtitle && <p className={cx('mt-4 text-base leading-relaxed', dark ? 'text-slate-300' : 'text-(--court-muted)')}>{heading.subtitle}</p>}
+                    </div>
                     {aside}
                 </div>
                 {children}
@@ -127,223 +76,430 @@ function HomeSection({ id, tinted, badge, title, subtitle, aside, children }: {
     );
 }
 
-function MetricCard({ metric }: { metric: PublicHomeMetric }) {
-    const style = METRIC_STYLES[metric.key] ?? METRIC_STYLES.total_cases;
-
+/** A quiet link at a section's head ("All news ›"). */
+function MoreLink({ href, children, light = false }: { href: string; children: ReactNode; light?: boolean }) {
     return (
-        <article className={cx(cardCls, 'p-5')}>
-            <div aria-hidden="true" className={cx('absolute inset-x-0 top-0 h-1 bg-linear-to-r to-transparent', style.bar)} />
-            <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                    <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-300">{metric.label}</h3>
-                    <p className="mt-3 text-3xl font-bold tracking-tight text-gray-950 tabular-nums dark:text-white">{numbers.format(metric.value)}</p>
-                </div>
-                <span className={cx('flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1', style.tone)}>
-                    <Icon path={style.icon} />
-                </span>
-            </div>
-            {metric.description && <p className="mt-3 text-xs leading-relaxed text-gray-500 dark:text-slate-400">{metric.description}</p>}
-        </article>
+        <a href={href} className={cx('inline-flex min-h-11 shrink-0 items-center gap-2 text-sm font-semibold underline-offset-4 hover:underline', light ? 'text-(--court-brass-soft)' : 'text-(--court-navy) dark:text-(--court-brass-soft)')}>
+            {children}
+            <span aria-hidden="true">›</span>
+        </a>
     );
 }
 
-function StepCard({ step, number }: { step: PublicHomeStep; number: number }) {
+/** The hero: the slide's statement and buttons, and "today at the court" beside it. */
+function Hero({ slides, today, hearings, officeHours }: {
+    slides: PublicHomeSlide[];
+    today: PublicHomeProps['today'];
+    hearings: PublicHearing[];
+    officeHours: string | null;
+}) {
+    const { t, fill } = usePublicText();
+    const text = (key: string) => t(`court.publicSite.${key}`);
+    const [index, setIndex] = useState(0);
+    const [paused, setPaused] = useState(false);
+    const count = slides.length;
+    const slide = slides[Math.min(index, count - 1)];
+    const next = hearings.slice(0, 3);
+
+    useEffect(() => {
+        if (count < 2 || paused || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+        const timer = window.setInterval(() => setIndex((value) => (value + 1) % count), SLIDE_SECONDS * 1000);
+        return () => window.clearInterval(timer);
+    }, [count, paused]);
+
+    if (!slide) return null;
+
     return (
-        <li className={cx(cardCls, 'flex flex-col p-5')}>
-            <span className={cx('mb-4 flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold shadow-sm', STEP_COLORS[step.color] ?? STEP_COLORS.blue)}>
-                {number}
-            </span>
-            <h3 className="text-sm font-semibold leading-snug text-gray-900 dark:text-slate-100">{step.title}</h3>
-            {step.description && <p className="mt-1 text-xs leading-relaxed text-gray-600 dark:text-slate-400">{step.description}</p>}
-            {(step.meta || step.duration) && (
-                <div className="mt-auto flex flex-wrap items-center gap-1.5 pt-3">
-                    {step.meta && <span className={cx(pillCls, 'bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-300')}>{step.meta}</span>}
-                    {step.duration && <span className={cx(pillCls, 'bg-primary/10 text-primary dark:text-blue-300')}>{step.duration}</span>}
+        <section aria-roledescription={count > 1 ? 'carousel' : undefined} aria-label={slide.title} className="court-hero">
+            {slide.image_url && <div aria-hidden="true" className="court-hero-image" style={{ backgroundImage: `url(${slide.image_url})` }} />}
+            <svg aria-hidden="true" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMax slice" className="court-hero-columns w-full">
+                <g fill="currentColor">
+                    <path d="M120 120 L600 20 L1080 120 Z" />
+                    <rect x="140" y="128" width="920" height="14" />
+                    {Array.from({ length: 8 }).map((_, i) => <rect key={i} x={180 + i * 115} y="150" width="34" height="220" />)}
+                    <rect x="120" y="370" width="960" height="30" />
+                </g>
+            </svg>
+
+            <div className="mx-auto grid max-w-7xl gap-10 px-4 pb-24 pt-14 sm:px-6 sm:pt-20 lg:grid-cols-[1.45fr_1fr] lg:gap-16 lg:px-8 lg:pb-28">
+                <div key={index} className="court-rise min-w-0" aria-live={paused ? 'polite' : 'off'}>
+                    {slide.badge && <p className="court-eyebrow court-eyebrow-light">{slide.badge}</p>}
+                    <h1 className="mt-5 text-4xl font-semibold leading-[1.12] tracking-tight text-white wrap-anywhere sm:text-5xl">{slide.title}</h1>
+                    {slide.description && <p className="mt-6 max-w-2xl text-lg leading-relaxed text-slate-300">{slide.description}</p>}
+                    <div className="mt-9 flex flex-wrap gap-3">
+                        <a href={slide.primary_href} className="inline-flex min-h-12 items-center gap-2 rounded-md bg-(--court-brass) px-6 text-sm font-semibold text-(--court-ink) shadow-sm transition hover:bg-(--court-brass-soft)">
+                            {slide.primary_label}
+                            <span aria-hidden="true">›</span>
+                        </a>
+                        {slide.secondary_label && (
+                            <a href={slide.secondary_href} className="inline-flex min-h-12 items-center rounded-md border border-white/25 px-6 text-sm font-semibold text-white transition hover:border-white/60 hover:bg-white/5">
+                                {slide.secondary_label}
+                            </a>
+                        )}
+                    </div>
+
+                    {count > 1 && (
+                        <div className="mt-10 flex items-center gap-3">
+                            <button type="button" onClick={() => setIndex((index - 1 + count) % count)} aria-label={text('hero.previous')} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 text-white hover:bg-white/10">‹</button>
+                            <ol className="flex items-center gap-2">
+                                {slides.map((item, i) => (
+                                    <li key={i}>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIndex(i)}
+                                            aria-label={fill(text('hero.slideOf'), { n: i + 1, total: count })}
+                                            aria-current={i === index ? 'true' : undefined}
+                                            className={cx('block h-1.5 rounded-full transition-all', i === index ? 'w-8 bg-(--court-brass)' : 'w-3 bg-white/30 hover:bg-white/60')}
+                                        />
+                                    </li>
+                                ))}
+                            </ol>
+                            <button type="button" onClick={() => setIndex((index + 1) % count)} aria-label={text('hero.next')} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 text-white hover:bg-white/10">›</button>
+                            <button type="button" onClick={() => setPaused((value) => !value)} aria-label={paused ? text('hero.play') : text('hero.pause')} className="ms-1 flex h-10 w-10 items-center justify-center rounded-full border border-white/20 text-xs text-white hover:bg-white/10">
+                                {paused ? '▶' : '❚❚'}
+                            </button>
+                        </div>
+                    )}
                 </div>
-            )}
+
+                <aside aria-labelledby="court-today" className="court-rise self-start rounded-xl border border-white/12 bg-white/[0.06] p-6 backdrop-blur-sm sm:p-7">
+                    <p id="court-today" className="text-xs font-semibold uppercase tracking-[0.16em] text-(--court-brass-soft)">{text('hero.today')}</p>
+                    <LocalizedDateDisplay value={today.date} className="mt-2 block text-lg font-semibold text-white" />
+                    <div className="mt-5 flex items-end gap-3 border-b border-white/10 pb-5">
+                        <span className="text-5xl font-semibold leading-none text-white tabular-nums">{numbers.format(today.hearings)}</span>
+                        <span className="pb-1 text-sm text-slate-300">{today.hearings > 0 ? text('hero.hearingsToday') : text('hero.noneToday')}</span>
+                    </div>
+                    {next.length > 0 && (
+                        <div className="mt-5">
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">{text('hero.nextSittings')}</p>
+                            <ul className="mt-3 space-y-3">
+                                {next.map((hearing) => (
+                                    <li key={hearing.id} className="flex items-start gap-3 text-sm">
+                                        <span className="mt-0.5 shrink-0 rounded bg-white/10 px-2 py-0.5 font-mono text-xs text-(--court-brass-soft)">{hearing.time ?? '—'}</span>
+                                        <span className="min-w-0">
+                                            <span className="block truncate font-medium text-white">{hearing.case_number}</span>
+                                            <span className="block truncate text-xs text-slate-400">
+                                                <LocalizedDateDisplay value={hearing.date} />{hearing.location ? ` · ${hearing.location}` : ''}
+                                            </span>
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                    <a href="#hearings" className="mt-6 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-(--court-brass-soft) hover:text-white">
+                        {text('hero.fullSchedule')} <span aria-hidden="true">↓</span>
+                    </a>
+                    {officeHours && (
+                        <p className="mt-4 border-t border-white/10 pt-4 text-xs text-slate-400">
+                            <span className="font-semibold text-slate-300">{text('hero.officeHours')}:</span> {officeHours}
+                        </p>
+                    )}
+                </aside>
+            </div>
+        </section>
+    );
+}
+
+function Initials({ name }: { name: string }) {
+    const letters = name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part.charAt(0)).join('');
+    return (
+        <span aria-hidden="true" className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-(--court-ink) text-xl font-semibold text-(--court-brass) ring-4 ring-(--court-parchment)">
+            {letters}
+        </span>
+    );
+}
+
+function MemberCard({ member }: { member: PublicMember }) {
+    return (
+        <li className="court-card court-card-hover flex flex-col items-center p-6 text-center">
+            {member.photo_url
+                ? <img src={member.photo_url} alt="" loading="lazy" decoding="async" className="h-20 w-20 shrink-0 rounded-full object-cover ring-4 ring-(--court-parchment)" />
+                : <Initials name={member.name} />}
+            <h3 className="mt-4 text-base font-semibold text-(--court-ink) dark:text-white">{member.name}</h3>
+            {member.role && <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-(--court-brass-strong)">{member.role}</p>}
+            {member.bio && <p className="mt-3 line-clamp-4 text-sm leading-relaxed text-(--court-muted)">{member.bio}</p>}
         </li>
     );
 }
 
-function ServiceCard({ service }: { service: PublicHomeService }) {
-    const accent = SERVICE_ACCENTS[service.accent] ?? SERVICE_ACCENTS.blue;
+/** The sittings of the coming days: a table on wide screens, a list on narrow ones. */
+function HearingList({ hearings }: { hearings: PublicHearing[] }) {
+    const { t } = usePublicText();
+    const col = (key: string) => t(`court.publicSite.hearings.${key}`);
+
+    if (hearings.length === 0) {
+        return <p className="court-card px-6 py-10 text-center text-sm text-(--court-muted)">{col('none')}</p>;
+    }
 
     return (
-        <article className={cx(cardCls, 'flex flex-col p-6')}>
-            <div className="mb-4 flex items-center gap-3">
-                <span className={cx('flex h-10 w-10 shrink-0 items-center justify-center rounded-xl', accent)}>
-                    <Icon path={SERVICE_ICONS[service.icon] ?? SERVICE_ICONS.document} />
-                </span>
-                {service.meta && (
-                    <span className={cx(pillCls, 'bg-gray-100 font-semibold uppercase tracking-wider text-gray-600 dark:bg-slate-800 dark:text-slate-300')}>{service.meta}</span>
-                )}
+        <>
+            <div className="court-card hidden overflow-hidden md:block">
+                <table className="w-full text-start text-sm">
+                    <thead className="bg-(--court-parchment) text-xs uppercase tracking-[0.1em] text-(--court-muted)">
+                        <tr>
+                            {['date', 'time', 'case', 'caseType', 'sitting', 'room'].map((key) => <th key={key} scope="col" className="px-5 py-3.5 text-start font-semibold">{col(key)}</th>)}
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-(--court-line)">
+                        {hearings.map((hearing) => (
+                            <tr key={hearing.id} className="hover:bg-(--court-parchment)/50">
+                                <td className="whitespace-nowrap px-5 py-4 font-medium text-(--court-ink) dark:text-white"><LocalizedDateDisplay value={hearing.date} /></td>
+                                <td className="whitespace-nowrap px-5 py-4 font-mono text-(--court-text)">{hearing.time ?? '—'}</td>
+                                <td className="whitespace-nowrap px-5 py-4 font-mono font-semibold text-(--court-navy) dark:text-(--court-brass-soft)">{hearing.case_number}</td>
+                                <td className="px-5 py-4 text-(--court-text)">{hearing.case_type ?? '—'}</td>
+                                <td className="px-5 py-4 text-(--court-text)">{hearing.type ?? '—'}</td>
+                                <td className="px-5 py-4 text-(--court-text)">{hearing.location ?? '—'}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             </div>
-            <h3 className="text-base font-semibold text-gray-900 dark:text-slate-100">{service.title}</h3>
-            {service.description && <p className="mt-2 text-sm leading-relaxed text-gray-600 dark:text-slate-400">{service.description}</p>}
-            {service.features.length > 0 && (
-                <ul className="mt-4 space-y-1.5">
-                    {service.features.map((feature, index) => (
-                        <li key={`${feature}-${index}`} className="flex items-start gap-2 text-xs text-gray-700 dark:text-slate-300">
-                            <span className={cx('mt-0.5 shrink-0 rounded-full', accent)}>
-                                <Icon path="M5 13l4 4L19 7" className="h-3.5 w-3.5" />
-                            </span>
-                            {feature}
-                        </li>
-                    ))}
-                </ul>
-            )}
-        </article>
+            <ul className="space-y-3 md:hidden">
+                {hearings.map((hearing) => (
+                    <li key={hearing.id} className="court-card flex gap-4 p-4">
+                        <span className="flex w-16 shrink-0 flex-col items-center justify-center rounded-lg bg-(--court-ink) py-2 text-center text-white">
+                            <span className="font-mono text-sm font-semibold text-(--court-brass-soft)">{hearing.time ?? '—'}</span>
+                        </span>
+                        <span className="min-w-0 text-sm">
+                            <span className="block font-mono font-semibold text-(--court-navy) dark:text-(--court-brass-soft)">{hearing.case_number}</span>
+                            <span className="block text-(--court-text)"><LocalizedDateDisplay value={hearing.date} /></span>
+                            <span className="block text-xs text-(--court-muted)">{[hearing.case_type, hearing.type, hearing.location].filter(Boolean).join(' · ')}</span>
+                        </span>
+                    </li>
+                ))}
+            </ul>
+            <p className="mt-4 text-xs text-(--court-muted)">{col('note')}</p>
+        </>
     );
 }
 
-/** The questions as a disclosure list: each opens on its own, as the Blade accordion did. */
-function FaqList({ faqs }: { faqs: PublicHomeProps['faqs'] }) {
-    const id = useId();
-    const [open, setOpen] = useState<number[]>([]);
-    const toggle = (index: number) => setOpen((list) => (list.includes(index) ? list.filter((item) => item !== index) : [...list, index]));
-
+function Faq({ faqs }: { faqs: PublicHomeProps['faqs'] }) {
     return (
-        <ul className="mx-auto max-w-3xl space-y-3">
-            {faqs.map((faq, index) => {
-                const expanded = open.includes(index);
-                return (
-                    <li key={index} className={cardCls}>
-                        <h3>
-                            <button
-                                type="button"
-                                id={`${id}-q${index}`}
-                                aria-expanded={expanded}
-                                aria-controls={`${id}-a${index}`}
-                                onClick={() => toggle(index)}
-                                className="flex min-h-12 w-full items-center justify-between gap-4 px-5 py-4 text-start text-sm font-semibold text-gray-900 hover:bg-gray-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary dark:text-slate-100 dark:hover:bg-slate-800/60"
-                            >
-                                <span className="min-w-0 wrap-anywhere">{faq.question}</span>
-                                <svg
-                                    className={cx('h-4 w-4 shrink-0 text-primary transition-transform duration-200 motion-reduce:transition-none dark:text-blue-300', expanded && 'rotate-180')}
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                    aria-hidden="true"
-                                >
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </button>
-                        </h3>
-                        <div id={`${id}-a${index}`} role="region" aria-labelledby={`${id}-q${index}`} hidden={!expanded} className="px-5 pb-4">
-                            <p className="whitespace-pre-line border-t border-gray-100 pt-4 text-sm leading-relaxed text-gray-600 dark:border-slate-800 dark:text-slate-400">{faq.answer}</p>
-                        </div>
-                    </li>
-                );
-            })}
+        <ul className="divide-y divide-(--court-line) border-y border-(--court-line)">
+            {faqs.map((faq, index) => (
+                <li key={index}>
+                    <details className="group py-1">
+                        <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-3 text-start text-base font-semibold text-(--court-ink) marker:content-none dark:text-white">
+                            <span className="min-w-0 wrap-anywhere">{faq.question}</span>
+                            <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-(--court-line) text-(--court-brass-strong) transition group-open:rotate-45">+</span>
+                        </summary>
+                        <p className="whitespace-pre-line pb-5 pe-12 text-sm leading-relaxed text-(--court-muted)">{faq.answer}</p>
+                    </details>
+                </li>
+            ))}
         </ul>
     );
 }
 
 /**
- * The public home page (PublicHomeController@home), the Blade page's sections
- * in the EUISIS public look: hero slides, statistics, the case journey,
- * services, resources and questions. Headings and items arrive resolved
- * (saved content, else the translations); a section the landing manager hid
- * arrives empty and is left out, and the bands alternate over what is shown.
+ * The public home page (PublicHomeController@home), laid out as an
+ * administrative court's site: the statement and today's sittings, the
+ * court's services, who it is and its members, the cause list, its figures,
+ * how a case proceeds, news, publications, questions and the registry. Every
+ * heading and item arrives resolved for the page's language; a section the
+ * landing manager hid arrives empty and is left out.
  */
-export default function PublicHome({ slides, sections, metrics, steps, services, resources, hasMoreResources, faqs, publicSite }: PublicHomeProps) {
+export default function PublicHome({
+    slides, sections, about, members, services, hearings, today, metrics, steps, news, resources, hasMoreResources, faqs, contactVisible, publicSite,
+}: PublicHomeProps) {
     const { t } = usePublicText();
-    const { brandName } = useBranding();
+    const courtName = useCourtName();
+    const text = (key: string) => t(`court.publicSite.${key}`);
+    const { getString } = useSystemSettings();
+    const footer = publicSite.footer;
+    const portalUrl = publicSite.portalUrl ?? null;
+    const paragraphs = (about?.body ?? '').split(/\n\s*\n/).map((part) => part.trim()).filter(Boolean);
+    // As the footer: the landing manager's contact details, else the system's support ones.
+    const phone = footer?.contact_phone || getString('general.support_phone');
+    const email = footer?.contact_email || getString('general.support_email');
 
-    const blocks: Array<{ key: string; render: (tinted: boolean) => ReactNode }> = [];
+    const contactRows: Array<{ key: string; label: string; value: ReactNode }> = [
+        { key: 'address', label: text('contact.address'), value: footer?.contact_address },
+        { key: 'phone', label: text('contact.phone'), value: phone ? <a href={`tel:${phone.replace(/\s+/g, '')}`} className="hover:underline">{phone}</a> : null },
+        { key: 'email', label: text('contact.email'), value: email ? <a href={`mailto:${email}`} className="hover:underline">{email}</a> : null },
+        { key: 'hours', label: text('contact.hours'), value: footer?.office_hours },
+    ];
 
-    if (sections.metrics.visible && metrics.length > 0) {
-        blocks.push({
-            key: 'metrics',
-            render: (tinted) => (
-                <HomeSection
-                    id="statistics"
-                    tinted={tinted}
-                    badge={t('cm.home.metrics.section_badge')}
-                    title={sections.metrics.title}
-                    subtitle={sections.metrics.subtitle}
-                    aside={(
-                        <p className="mt-5 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-600/15 dark:bg-emerald-950/50 dark:text-emerald-300">
-                            <span aria-hidden="true" className="h-2 w-2 rounded-full bg-emerald-500" />
-                            {t('cm.home.metrics.live_data')}
-                        </p>
-                    )}
-                >
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {metrics.map((metric) => <MetricCard key={metric.key} metric={metric} />)}
+    return (
+        <PublicLayout title={courtName} description={sections.about.subtitle || t('cm.home.meta.description')} publicSite={publicSite}>
+            <Hero slides={slides} today={today} hearings={hearings} officeHours={footer?.office_hours ?? null} />
+
+            {sections.services.visible && services.length > 0 && (
+                <section id="services" aria-label={sections.services.title} className="relative z-10 -mt-14 scroll-mt-32 pb-4">
+                    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                        <ul className={cx('grid gap-4 sm:grid-cols-2', services.length >= 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3')}>
+                            {services.map((service, index) => {
+                                const body = (
+                                    <>
+                                        <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-(--court-parchment) text-(--court-navy) ring-1 ring-(--court-line) dark:text-(--court-brass-soft)">
+                                            <Icon path={SERVICE_ICONS[service.icon] ?? SERVICE_ICONS.document} />
+                                        </span>
+                                        <span className="mt-4 block text-base font-semibold text-(--court-ink) dark:text-white">{service.title}</span>
+                                        {service.description && <span className="mt-2 block text-sm leading-relaxed text-(--court-muted)">{service.description}</span>}
+                                        {service.features.length > 0 && (
+                                            <span className="mt-3 block space-y-1">
+                                                {service.features.map((feature, i) => <span key={i} className="block text-xs text-(--court-text)">— {feature}</span>)}
+                                            </span>
+                                        )}
+                                        {service.meta && <span className="mt-4 block text-xs font-semibold uppercase tracking-[0.12em] text-(--court-brass-strong)">{service.meta}{service.href ? ' ›' : ''}</span>}
+                                    </>
+                                );
+                                return (
+                                    <li key={`${service.title}-${index}`} className="flex">
+                                        {service.href
+                                            ? <a href={service.href} className="court-card court-rise flex w-full flex-col p-6 shadow-[0_20px_45px_-34px_rgba(12,26,49,0.7)]">{body}</a>
+                                            : <div className="court-card court-rise flex w-full flex-col p-6 shadow-[0_20px_45px_-34px_rgba(12,26,49,0.7)]">{body}</div>}
+                                    </li>
+                                );
+                            })}
+                        </ul>
                     </div>
-                </HomeSection>
-            ),
-        });
-    }
+                </section>
+            )}
 
-    if (sections.process.visible && steps.length > 0) {
-        blocks.push({
-            key: 'process',
-            render: (tinted) => (
-                <HomeSection id="process" tinted={tinted} badge={t('cm.home.timeline.section_badge')} title={sections.process.title} subtitle={sections.process.subtitle}>
-                    <ol className={cx('grid gap-4 sm:grid-cols-2', STEP_COLUMNS[steps.length] ?? 'lg:grid-cols-5')}>
-                        {steps.map((step, index) => <StepCard key={`${step.title}-${index}`} step={step} number={index + 1} />)}
+            {about && (
+                <Section id="about" eyebrow={text('eyebrow.about')} heading={sections.about}>
+                    <div className="grid gap-10 lg:grid-cols-[1.5fr_1fr] lg:gap-16">
+                        <div className="court-prose max-w-3xl text-base leading-relaxed text-(--court-text)">
+                            {paragraphs.map((paragraph, index) => (
+                                <p key={index} className={cx('whitespace-pre-line', index === 0 && 'text-lg text-(--court-ink) dark:text-white')}>{paragraph}</p>
+                            ))}
+                        </div>
+                        {about.facts.length > 0 && (
+                            <aside aria-labelledby="about-facts" className="court-card self-start p-6 sm:p-8">
+                                <h3 id="about-facts" className="text-xs font-semibold uppercase tracking-[0.16em] text-(--court-brass-strong)">{text('about.facts')}</h3>
+                                <dl className="mt-5 divide-y divide-(--court-line)">
+                                    {about.facts.map((fact, index) => (
+                                        <div key={index} className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-4 py-3.5 text-sm">
+                                            <dt className="text-(--court-muted)">{fact.label}</dt>
+                                            <dd className="font-medium text-(--court-ink) dark:text-white">{fact.value}</dd>
+                                        </div>
+                                    ))}
+                                </dl>
+                            </aside>
+                        )}
+                    </div>
+                </Section>
+            )}
+
+            {sections.members.visible && members.length > 0 && (
+                <Section id="members" eyebrow={text('eyebrow.members')} heading={sections.members} tone="parchment" align="center">
+                    <ul className={cx('mx-auto grid gap-5 sm:grid-cols-2', members.length >= 4 ? 'lg:grid-cols-4' : 'max-w-4xl lg:grid-cols-3')}>
+                        {members.map((member, index) => <MemberCard key={`${member.name}-${index}`} member={member} />)}
+                    </ul>
+                </Section>
+            )}
+
+            {sections.hearings.visible && (
+                <Section id="hearings" eyebrow={text('eyebrow.hearings')} heading={sections.hearings}>
+                    <HearingList hearings={hearings} />
+                </Section>
+            )}
+
+            {sections.metrics.visible && metrics.length > 0 && (
+                <Section id="statistics" eyebrow={text('eyebrow.metrics')} heading={sections.metrics} tone="ink">
+                    <dl className="grid gap-px overflow-hidden rounded-xl bg-white/10 sm:grid-cols-2 lg:grid-cols-3">
+                        {metrics.map((metric) => (
+                            <div key={metric.key} className="bg-(--court-ink) p-6 sm:p-8">
+                                <dt className="text-sm font-medium text-slate-300">{metric.label}</dt>
+                                <dd className="mt-3 text-4xl font-semibold tracking-tight text-(--court-brass-soft) tabular-nums">{numbers.format(metric.value)}</dd>
+                                {metric.description && <dd className="mt-2 text-xs leading-relaxed text-slate-400">{metric.description}</dd>}
+                            </div>
+                        ))}
+                    </dl>
+                </Section>
+            )}
+
+            {sections.process.visible && steps.length > 0 && (
+                <Section id="process" eyebrow={text('eyebrow.process')} heading={sections.process} tone="parchment">
+                    <ol className={cx('relative grid gap-8 sm:grid-cols-2', steps.length >= 5 ? 'lg:grid-cols-5' : steps.length === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3')}>
+                        <span aria-hidden="true" className="absolute inset-x-8 top-6 hidden h-px bg-(--court-brass)/50 lg:block" />
+                        {steps.map((step, index) => (
+                            <li key={`${step.title}-${index}`} className="relative">
+                                <span className="relative flex h-12 w-12 items-center justify-center rounded-full border-2 border-(--court-brass) bg-(--court-parchment) text-base font-semibold text-(--court-ink) dark:text-white">
+                                    {index + 1}
+                                </span>
+                                <h3 className="mt-5 text-base font-semibold text-(--court-ink) dark:text-white">{step.title}</h3>
+                                {step.description && <p className="mt-2 text-sm leading-relaxed text-(--court-muted)">{step.description}</p>}
+                                {(step.meta || step.duration) && (
+                                    <p className="mt-3 text-xs font-semibold uppercase tracking-[0.1em] text-(--court-brass-strong)">{[step.meta, step.duration].filter(Boolean).join(' · ')}</p>
+                                )}
+                            </li>
+                        ))}
                     </ol>
-                </HomeSection>
-            ),
-        });
-    }
+                </Section>
+            )}
 
-    if (sections.services.visible && services.length > 0) {
-        blocks.push({
-            key: 'services',
-            render: (tinted) => (
-                <HomeSection id="services" tinted={tinted} badge={t('cm.home.services.section_badge')} title={sections.services.title} subtitle={sections.services.subtitle}>
-                    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                        {services.map((service, index) => <ServiceCard key={`${service.title}-${index}`} service={service} />)}
-                    </div>
-                </HomeSection>
-            ),
-        });
-    }
+            {sections.news.visible && (
+                <Section id="news" eyebrow={text('eyebrow.news')} heading={sections.news} aside={news.length > 0 ? <MoreLink href={route('public.news')}>{text('news.all')}</MoreLink> : undefined}>
+                    {news.length === 0 ? (
+                        <p className="court-card px-6 py-10 text-center text-sm text-(--court-muted)">{text('news.none')}</p>
+                    ) : (
+                        <ul className="grid gap-5 md:grid-cols-3">
+                            {news.map((item) => (
+                                <li key={item.id} className="flex">
+                                    <a href={route('public.news.show', item.id)} className="court-card flex w-full flex-col p-6">
+                                        <LocalizedDateDisplay value={item.created_at} className="text-xs font-semibold uppercase tracking-[0.12em] text-(--court-brass-strong)" />
+                                        <span className="mt-3 block text-lg font-semibold leading-snug text-(--court-ink) dark:text-white">{item.title}</span>
+                                        {item.excerpt && <span className="mt-3 block line-clamp-3 text-sm leading-relaxed text-(--court-muted)">{item.excerpt}</span>}
+                                        <span className="mt-auto pt-5 text-sm font-semibold text-(--court-navy) dark:text-(--court-brass-soft)">{text('news.read')} ›</span>
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </Section>
+            )}
 
-    if (sections.resources.visible && resources.length > 0) {
-        blocks.push({
-            key: 'resources',
-            render: (tinted) => (
-                <HomeSection id="resources" tinted={tinted} badge={t('cm.home.resources.section_badge')} title={sections.resources.title} subtitle={sections.resources.subtitle}>
+            {sections.resources.visible && resources.length > 0 && (
+                <Section id="resources" eyebrow={text('eyebrow.resources')} heading={sections.resources} tone="parchment" aside={hasMoreResources ? <MoreLink href={route('public.resources')}>{text('resources.all')}</MoreLink> : undefined}>
                     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                         {resources.map((resource) => <CourtResourceCard key={resource.id} resource={resource} />)}
                     </div>
-                    {hasMoreResources && (
-                        <p className="mt-10 text-center">
-                            <a
-                                href={route('public.resources')}
-                                className="inline-flex min-h-11 items-center gap-2 rounded-card border border-gray-300 bg-white px-6 py-3 text-sm font-semibold text-gray-800 hover:bg-gray-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
-                            >
-                                {t('cm.home.resources.view_all')}
-                                <Icon path="M17 8l4 4m0 0l-4 4m4-4H3" className="h-4 w-4 rtl:rotate-180" />
-                            </a>
-                        </p>
-                    )}
-                </HomeSection>
-            ),
-        });
-    }
+                </Section>
+            )}
 
-    if (sections.faq.visible && faqs.length > 0) {
-        blocks.push({
-            key: 'faq',
-            render: (tinted) => (
-                <HomeSection id="faq" tinted={tinted} badge={t('cm.home.faq.section_badge')} title={sections.faq.title} subtitle={sections.faq.subtitle}>
-                    <FaqList faqs={faqs} />
-                </HomeSection>
-            ),
-        });
-    }
+            {sections.faq.visible && faqs.length > 0 && (
+                <Section id="faq" eyebrow={text('eyebrow.faq')} heading={sections.faq} aside={contactVisible ? <MoreLink href="#contact">{text('faq.more')}</MoreLink> : undefined}>
+                    <div className="max-w-4xl">
+                        <Faq faqs={faqs} />
+                    </div>
+                </Section>
+            )}
 
-    // The saved title ends with the short name ("… | PSHRDBATC"); the app adds the brand itself.
-    return (
-        <PublicLayout title={t('cm.home.meta.title').split(' | ')[0]} description={t('cm.home.meta.description')} publicSite={publicSite}>
-            <h1 className="sr-only">{brandName}</h1>
-            <CourtHeroCarousel slides={slides} />
-            {blocks.map((block, index) => <Fragment key={block.key}>{block.render(index % 2 === 1)}</Fragment>)}
+            {contactVisible && (
+                <Section id="contact" eyebrow={text('eyebrow.contact')} heading={sections.contact} tone="parchment">
+                    <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+                        <div className="court-card p-6 sm:p-8">
+                            <dl className="grid gap-6 sm:grid-cols-2">
+                                {contactRows.map((row) => (
+                                    <div key={row.key}>
+                                        <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-(--court-brass-strong)">{row.label}</dt>
+                                        <dd className={cx('mt-2 text-sm leading-relaxed', row.value ? 'text-(--court-ink) dark:text-white' : 'text-(--court-muted)')}>{row.value || text('contact.notPublished')}</dd>
+                                    </div>
+                                ))}
+                            </dl>
+                            {footer?.map_url && (
+                                <a href={footer.map_url} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-(--court-navy) hover:underline dark:text-(--court-brass-soft)">
+                                    {text('contact.map')} <span aria-hidden="true">↗</span>
+                                </a>
+                            )}
+                        </div>
+                        <div className="flex flex-col justify-between rounded-xl bg-(--court-ink) p-6 text-white sm:p-8">
+                            <div>
+                                <p className="court-eyebrow court-eyebrow-light">{text('contact.partiesTitle')}</p>
+                                <p className="mt-4 text-base leading-relaxed text-slate-200">{text('contact.partiesText')}</p>
+                            </div>
+                            {portalUrl && (
+                                <a href={portalUrl} className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-(--court-brass) px-6 text-sm font-semibold text-(--court-ink) hover:bg-(--court-brass-soft)">
+                                    {text('contact.partiesAction')} <span aria-hidden="true">›</span>
+                                </a>
+                            )}
+                        </div>
+                    </div>
+                </Section>
+            )}
         </PublicLayout>
     );
 }

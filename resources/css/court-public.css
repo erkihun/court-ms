@@ -1,0 +1,156 @@
+/*
+ * ── The court's public site (court-ms) ─────────────────────────────
+ *
+ * The institutional face of the administrative court over the shared
+ * public-site layout (public-site.css, a copy of the EUISIS file): the
+ * court's ink, navy and brass on parchment, the hero with its colonnade,
+ * and the section rhythm of a court's site (eyebrow, title, brass rule).
+ * The same colours as the staff sign-in (court/components/auth/CourtAuthLayout).
+ *
+ * Motion follows the `appearance.enable_ui_animations` setting (data-motion
+ * on the layout root) and the visitor's reduced-motion preference.
+ */
+
+.court-site {
+    --court-ink: #0c1a31;
+    --court-ink-soft: #12233f;
+    --court-navy: #16305a;
+    --court-navy-hover: #1d3c70;
+    --court-brass: #c8a14a;
+    --court-brass-strong: #8f6d22;
+    --court-brass-soft: #e8d6a2;
+    --court-parchment: #f6f1e6;
+    --court-paper: #ffffff;
+    --court-line: #e4dac6;
+    --court-text: #1b2333;
+    --court-muted: #5a6476;
+}
+
+.dark .court-site {
+    --court-brass-strong: #d9b664;
+    --court-parchment: #0f1b31;
+    --court-paper: #0b1528;
+    --court-line: #24344f;
+    --court-text: #e7eaf0;
+    --court-muted: #9ba6b8;
+}
+
+.court-site {
+    color: var(--court-text);
+    background: var(--court-paper);
+}
+
+/* The hero: ink to navy, a brass glow, the colonnade and a brass line at the foot. */
+.court-site .court-hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    color: #ffffff;
+    background:
+        radial-gradient(ellipse at 82% -10%, rgb(200 161 74 / 0.22), transparent 55%),
+        linear-gradient(135deg, var(--court-ink) 0%, #10264a 55%, var(--court-navy) 100%);
+}
+.court-site .court-hero::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--court-brass), var(--court-brass-soft), var(--court-brass), transparent);
+    pointer-events: none;
+}
+.court-site .court-hero-image {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-position: center;
+    background-size: cover;
+    opacity: 0.2;
+}
+.court-site .court-hero-columns {
+    position: absolute;
+    inset: auto 0 0;
+    z-index: -1;
+    height: 70%;
+    color: #ffffff;
+    opacity: 0.06;
+    pointer-events: none;
+}
+
+/* Inner pages: the same band, shorter. */
+.court-site .court-band {
+    position: relative;
+    overflow: hidden;
+    color: #ffffff;
+    background:
+        radial-gradient(ellipse at 90% -20%, rgb(200 161 74 / 0.18), transparent 50%),
+        linear-gradient(135deg, var(--court-ink) 0%, var(--court-navy) 100%);
+}
+.court-site .court-band::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--court-brass), transparent);
+}
+
+/* Section heading: the eyebrow carries a short brass rule. */
+.court-site .court-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--court-brass-strong);
+}
+.court-site .court-eyebrow::before {
+    content: '';
+    width: 1.75rem;
+    height: 2px;
+    background: var(--court-brass);
+}
+.court-site .court-eyebrow-light {
+    color: var(--court-brass-soft);
+}
+
+/* Cards, tables and prose in the court's colours. */
+.court-site .court-card {
+    border: 1px solid var(--court-line);
+    border-radius: 0.75rem;
+    background: var(--court-paper);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+.court-site a.court-card:hover,
+.court-site .court-card-hover:hover {
+    border-color: color-mix(in srgb, var(--court-brass) 55%, var(--court-line));
+    box-shadow: 0 18px 40px -28px rgb(12 26 49 / 0.55);
+    transform: translateY(-2px);
+}
+.court-site .court-prose p + p {
+    margin-top: 1rem;
+}
+.court-site .court-focus:focus-visible,
+.court-site a:focus-visible,
+.court-site button:focus-visible,
+.court-site summary:focus-visible {
+    outline: 2px solid var(--court-brass);
+    outline-offset: 2px;
+}
+
+/* Entrance motion, once, when the setting and the visitor allow it. */
+@keyframes court-rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: none; }
+}
+.court-site[data-motion='on'] .court-rise {
+    animation: court-rise 0.55s ease both;
+}
+@media (prefers-reduced-motion: reduce) {
+    .court-site .court-rise {
+        animation: none !important;
+    }
+    .court-site .court-card {
+        transition: none;
+    }
+}

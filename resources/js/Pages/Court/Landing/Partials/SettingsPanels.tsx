@@ -5,6 +5,7 @@ import { ChevronDown } from '@/Components/Icons';
 import { Button, Card, FormField, Input, Textarea, cx } from '@/Components/ui';
 import { usePublicText } from '@/court/i18n/usePublicText';
 import { SOCIAL_LINKS } from '@/court/public/CourtPublicFooter';
+import { TITLED_SECTIONS } from '@/court/types/public';
 import type { LandingFooter, LandingIndexProps, LandingUserManual, MetricKey, MetricText, SectionKey, SectionSetting } from '@/court/types/public';
 import { PanelHeading, SwitchButton } from './LandingParts';
 
@@ -25,7 +26,10 @@ export const METRIC_KEYS: MetricKey[] = ['total_cases', 'resolved_cases', 'pendi
 /** Labels and descriptions of the home page's statistics cards; the figures stay live. */
 export function MetricsPanel({ stats, metrics, metricDefaults }: Pick<LandingIndexProps, 'stats' | 'metrics' | 'metricDefaults'>) {
     const { t, locale } = usePublicText();
-    const form = useForm<Record<MetricKey, MetricText>>(metrics);
+    const form = useForm<Record<MetricKey, MetricText>>(Object.fromEntries(METRIC_KEYS.map((key) => [key, {
+        label: metrics[key]?.label ?? '', description: metrics[key]?.description ?? '',
+        label_am: metrics[key]?.label_am ?? '', description_am: metrics[key]?.description_am ?? '',
+    }])) as Record<MetricKey, MetricText>);
     const number = new Intl.NumberFormat(locale === 'am' ? 'am-ET' : 'en-US');
     const error = (key: MetricKey, field: keyof MetricText) => (form.errors as Record<string, string | undefined>)[`${key}.${field}`];
 
@@ -63,6 +67,14 @@ export function MetricsPanel({ stats, metrics, metricDefaults }: Pick<LandingInd
                         <FormField label={t('cm.admin_landing.metrics.description_label')} error={error(key, 'description')}>
                             {({ id }) => <Textarea id={id} rows={2} maxLength={255} value={form.data[key].description} placeholder={metricDefaults[key].description} onChange={(event) => set(key, 'description', event.target.value)} />}
                         </FormField>
+                        <div className="grid gap-3 border-t border-(--app-border) pt-3 sm:grid-cols-2">
+                            <FormField label={t('cm.admin_landing.metrics.am_label')} error={error(key, 'label_am')}>
+                                {({ id }) => <Input id={id} lang="am" maxLength={120} value={form.data[key].label_am ?? ''} onChange={(event) => set(key, 'label_am', event.target.value)} />}
+                            </FormField>
+                            <FormField label={t('cm.admin_landing.metrics.am_description')} error={error(key, 'description_am')}>
+                                {({ id }) => <Input id={id} lang="am" maxLength={255} value={form.data[key].description_am ?? ''} onChange={(event) => set(key, 'description_am', event.target.value)} />}
+                            </FormField>
+                        </div>
                     </Card>
                 ))}
             </div>
@@ -146,7 +158,7 @@ function SettingsCard({ title, children }: { title: string; children: ReactNode 
 /** The site footer: about text, contact details and social-media links. */
 export function FooterPanel({ footer }: { footer: Record<keyof LandingFooter, string> }) {
     const { t, text } = usePublicText();
-    const form = useForm<Record<keyof LandingFooter, string>>(footer);
+    const form = useForm<Record<keyof LandingFooter, string>>({ ...footer });
     const f = (key: string) => t(`cm.admin_landing.footer.${key}`);
     const c = (key: string) => t(`cm.admin_landing.common.${key}`);
 
@@ -160,9 +172,20 @@ export function FooterPanel({ footer }: { footer: Record<keyof LandingFooter, st
             <PanelHeading title={f('title')} description={f('description')} />
 
             <SettingsCard title={f('about')}>
-                <FormField label={c('short_description')} error={form.errors.description}>
-                    {({ id }) => <Textarea id={id} rows={3} maxLength={500} placeholder={text('footer_description_placeholder')} value={form.data.description} onChange={(event) => form.setData('description', event.target.value)} />}
-                </FormField>
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <FormField label={`${f('authority')} · ${c('english')}`} description={f('authority_help')} error={form.errors.authority_name}>
+                        {({ id, describedBy }) => <Input id={id} aria-describedby={describedBy} maxLength={160} value={form.data.authority_name ?? ''} onChange={(event) => form.setData('authority_name', event.target.value)} />}
+                    </FormField>
+                    <FormField label={`${f('authority')} · ${c('amharic')}`} error={form.errors.authority_name_am}>
+                        {({ id }) => <Input id={id} lang="am" maxLength={160} value={form.data.authority_name_am ?? ''} onChange={(event) => form.setData('authority_name_am', event.target.value)} />}
+                    </FormField>
+                    <FormField label={`${c('short_description')} · ${c('english')}`} error={form.errors.description}>
+                        {({ id }) => <Textarea id={id} rows={3} maxLength={500} placeholder={text('footer_description_placeholder')} value={form.data.description ?? ''} onChange={(event) => form.setData('description', event.target.value)} />}
+                    </FormField>
+                    <FormField label={`${c('short_description')} · ${c('amharic')}`} error={form.errors.description_am}>
+                        {({ id }) => <Textarea id={id} lang="am" rows={3} maxLength={500} value={form.data.description_am ?? ''} onChange={(event) => form.setData('description_am', event.target.value)} />}
+                    </FormField>
+                </div>
             </SettingsCard>
 
             <SettingsCard title={f('contact')}>
@@ -173,8 +196,25 @@ export function FooterPanel({ footer }: { footer: Record<keyof LandingFooter, st
                     <FormField label={c('email')} error={form.errors.contact_email}>
                         {({ id }) => <Input id={id} type="email" maxLength={120} placeholder="info@court.gov.et" value={form.data.contact_email} onChange={(event) => form.setData('contact_email', event.target.value)} />}
                     </FormField>
-                    <FormField label={c('physical_address')} error={form.errors.contact_address} className="sm:col-span-2">
-                        {({ id }) => <Input id={id} maxLength={255} placeholder={text('address_placeholder')} value={form.data.contact_address} onChange={(event) => form.setData('contact_address', event.target.value)} />}
+                    <FormField label={`${c('physical_address')} · ${c('english')}`} error={form.errors.contact_address}>
+                        {({ id }) => <Input id={id} maxLength={255} placeholder={text('address_placeholder')} value={form.data.contact_address ?? ''} onChange={(event) => form.setData('contact_address', event.target.value)} />}
+                    </FormField>
+                    <FormField label={`${c('physical_address')} · ${c('amharic')}`} error={form.errors.contact_address_am}>
+                        {({ id }) => <Input id={id} lang="am" maxLength={255} value={form.data.contact_address_am ?? ''} onChange={(event) => form.setData('contact_address_am', event.target.value)} />}
+                    </FormField>
+                </div>
+            </SettingsCard>
+
+            <SettingsCard title={f('office')}>
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <FormField label={`${f('office_hours')} · ${c('english')}`} error={form.errors.office_hours}>
+                        {({ id }) => <Input id={id} maxLength={255} placeholder="Mon–Fri, 8:30–17:30" value={form.data.office_hours ?? ''} onChange={(event) => form.setData('office_hours', event.target.value)} />}
+                    </FormField>
+                    <FormField label={`${f('office_hours')} · ${c('amharic')}`} error={form.errors.office_hours_am}>
+                        {({ id }) => <Input id={id} lang="am" maxLength={255} value={form.data.office_hours_am ?? ''} onChange={(event) => form.setData('office_hours_am', event.target.value)} />}
+                    </FormField>
+                    <FormField label={f('map_url')} error={form.errors.map_url} className="sm:col-span-2">
+                        {({ id }) => <Input id={id} type="url" maxLength={500} placeholder="https://maps.google.com/..." value={form.data.map_url ?? ''} onChange={(event) => form.setData('map_url', event.target.value)} />}
                     </FormField>
                 </div>
             </SettingsCard>
@@ -202,27 +242,18 @@ export function FooterPanel({ footer }: { footer: Record<keyof LandingFooter, st
 
 /* ── Section settings ─────────────────────────────────────────────────── */
 
-const SECTION_DEFS: Array<{ key: SectionKey; titleSubtitle: boolean; cta: boolean }> = [
-    { key: 'metrics', titleSubtitle: true, cta: false },
-    { key: 'process', titleSubtitle: true, cta: false },
-    { key: 'services', titleSubtitle: true, cta: false },
-    { key: 'cases', titleSubtitle: false, cta: false },
-    { key: 'resources', titleSubtitle: true, cta: false },
-    { key: 'faq', titleSubtitle: true, cta: false },
-    { key: 'cta', titleSubtitle: false, cta: true },
-];
+type TitledSection = (typeof TITLED_SECTIONS)[number];
 
-type SectionValues = Record<SectionKey, Record<string, string | boolean>>;
+type SectionValues = Record<TitledSection, Record<string, string | boolean>>;
+
+const SECTION_FIELDS = ['title', 'subtitle', 'title_am', 'subtitle_am'] as const;
 
 function toFormValues(sections: Record<SectionKey, SectionSetting>): SectionValues {
-    return SECTION_DEFS.reduce((values, def) => {
-        const stored = sections[def.key] ?? { visible: true };
+    return TITLED_SECTIONS.reduce((values, key) => {
+        const stored = (sections[key] ?? { visible: true }) as unknown as Record<string, unknown>;
         const fields: Record<string, string | boolean> = { visible: stored.visible !== false };
-        const names = def.cta
-            ? ['title', 'description', 'primary_label', 'primary_href', 'secondary_label', 'secondary_href']
-            : def.titleSubtitle ? ['title', 'subtitle'] : [];
-        names.forEach((name) => { fields[name] = String((stored as unknown as Record<string, unknown>)[name] ?? ''); });
-        values[def.key] = fields;
+        SECTION_FIELDS.forEach((name) => { fields[name] = String(stored[name] ?? ''); });
+        values[key] = fields;
         return values;
     }, {} as SectionValues);
 }
@@ -231,19 +262,19 @@ function toFormValues(sections: Record<SectionKey, SectionSetting>): SectionValu
 export function SectionsPanel({ sections }: { sections: Record<SectionKey, SectionSetting> }) {
     const { t, text } = usePublicText();
     const form = useForm<SectionValues>(toFormValues(sections));
-    const [open, setOpen] = useState<SectionKey | null>(null);
+    const [open, setOpen] = useState<TitledSection | null>(null);
     const s = (key: string) => t(`cm.admin_landing.sections.${key}`);
     const c = (key: string) => t(`cm.admin_landing.common.${key}`);
     const errors = form.errors as Record<string, string | undefined>;
 
-    const set = (section: SectionKey, field: string, value: string | boolean) =>
+    const set = (section: TitledSection, field: string, value: string | boolean) =>
         form.setData((data) => ({ ...data, [section]: { ...data[section], [field]: value } }));
 
-    const textField = (section: SectionKey, field: string, label: string, options: { max: number; placeholder?: string; multiline?: boolean; className?: string }) => (
+    const textField = (section: TitledSection, field: string, label: string, options: { max: number; placeholder?: string; multiline?: boolean; className?: string; lang?: string }) => (
         <FormField label={label} error={errors[`${section}.${field}`]} className={options.className}>
             {({ id }) => options.multiline
-                ? <Textarea id={id} rows={2} maxLength={options.max} placeholder={options.placeholder} value={String(form.data[section][field] ?? '')} onChange={(event) => set(section, field, event.target.value)} />
-                : <Input id={id} maxLength={options.max} placeholder={options.placeholder} value={String(form.data[section][field] ?? '')} onChange={(event) => set(section, field, event.target.value)} />}
+                ? <Textarea id={id} lang={options.lang} rows={2} maxLength={options.max} placeholder={options.placeholder} value={String(form.data[section][field] ?? '')} onChange={(event) => set(section, field, event.target.value)} />
+                : <Input id={id} lang={options.lang} maxLength={options.max} placeholder={options.placeholder} value={String(form.data[section][field] ?? '')} onChange={(event) => set(section, field, event.target.value)} />}
         </FormField>
     );
 
@@ -257,50 +288,35 @@ export function SectionsPanel({ sections }: { sections: Record<SectionKey, Secti
             <PanelHeading title={s('title')} description={s('description')} />
 
             <div className="space-y-3">
-                {SECTION_DEFS.map((def) => {
-                    const expanded = open === def.key;
-                    const panelId = `landing-section-${def.key}`;
+                {TITLED_SECTIONS.map((key) => {
+                    const expanded = open === key;
+                    const panelId = `landing-section-${key}`;
                     return (
-                        <Card key={def.key} className="overflow-hidden p-0">
+                        <Card key={key} className="overflow-hidden p-0">
                             <div className="flex items-center gap-3 px-5 py-4">
                                 <SwitchButton
-                                    checked={Boolean(form.data[def.key].visible)}
-                                    label={`${text('section_visible')}: ${s(def.key)}`}
-                                    onChange={(checked) => set(def.key, 'visible', checked)}
+                                    checked={Boolean(form.data[key].visible)}
+                                    label={`${text('section_visible')}: ${s(key)}`}
+                                    onChange={(checked) => set(key, 'visible', checked)}
                                 />
                                 <button
                                     type="button"
-                                    onClick={() => setOpen(expanded ? null : def.key)}
+                                    onClick={() => setOpen(expanded ? null : key)}
                                     aria-expanded={expanded}
                                     aria-controls={panelId}
-                                    disabled={!def.titleSubtitle && !def.cta}
-                                    className="flex flex-1 items-center justify-between gap-3 text-left text-sm font-semibold text-(--app-foreground) disabled:cursor-default"
+                                    className="flex flex-1 items-center justify-between gap-3 text-left text-sm font-semibold text-(--app-foreground)"
                                 >
-                                    {s(def.key)}
-                                    {(def.titleSubtitle || def.cta) && (
-                                        <ChevronDown className={cx('h-4 w-4 text-(--app-muted-foreground) transition-transform', expanded && 'rotate-180')} aria-hidden="true" />
-                                    )}
+                                    {s(key)}
+                                    <ChevronDown className={cx('h-4 w-4 text-(--app-muted-foreground) transition-transform', expanded && 'rotate-180')} aria-hidden="true" />
                                 </button>
                             </div>
 
                             {expanded && (
-                                <div id={panelId} className="space-y-4 border-t border-(--app-border) px-5 pb-5 pt-4">
-                                    {def.titleSubtitle && (
-                                        <div className="grid gap-4 sm:grid-cols-2">
-                                            {textField(def.key, 'title', s('section_title'), { max: 255, placeholder: s('default_hint') })}
-                                            {textField(def.key, 'subtitle', s('subtitle'), { max: 500, placeholder: s('default_hint') })}
-                                        </div>
-                                    )}
-                                    {def.cta && (
-                                        <div className="grid gap-4 sm:grid-cols-2">
-                                            {textField('cta', 'title', c('banner_title'), { max: 255, placeholder: text('cta_title_placeholder'), className: 'sm:col-span-2' })}
-                                            {textField('cta', 'description', c('banner_description'), { max: 500, placeholder: text('cta_description_placeholder'), multiline: true, className: 'sm:col-span-2' })}
-                                            {textField('cta', 'primary_label', c('primary_button_label'), { max: 120 })}
-                                            {textField('cta', 'primary_href', c('primary_button_url'), { max: 500, placeholder: '/applicant/register' })}
-                                            {textField('cta', 'secondary_label', c('secondary_button_label'), { max: 120 })}
-                                            {textField('cta', 'secondary_href', c('secondary_button_url'), { max: 500, placeholder: '/applicant/login' })}
-                                        </div>
-                                    )}
+                                <div id={panelId} className="grid gap-4 border-t border-(--app-border) px-5 pb-5 pt-4 sm:grid-cols-2">
+                                    {textField(key, 'title', `${s('section_title')} · ${c('english')}`, { max: 255, placeholder: s('default_hint') })}
+                                    {textField(key, 'title_am', `${s('section_title')} · ${c('amharic')}`, { max: 255, placeholder: s('default_hint'), lang: 'am' })}
+                                    {textField(key, 'subtitle', `${s('subtitle')} · ${c('english')}`, { max: 500, placeholder: s('default_hint'), multiline: true })}
+                                    {textField(key, 'subtitle_am', `${s('subtitle')} · ${c('amharic')}`, { max: 500, placeholder: s('default_hint'), multiline: true, lang: 'am' })}
                                 </div>
                             )}
                         </Card>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, router, usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import { buttonClassName } from '@/Components/ui';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
@@ -7,6 +7,8 @@ import ThemeToggle from '@/Components/ThemeToggle';
 import { MenuIcon, X } from '@/Components/Icons';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { useBranding } from '@/hooks/useBranding';
+import { useLocale } from '@/hooks/useLocale';
+import { CourtEmblem } from '@/court/components/auth/CourtAuthLayout';
 import { usePublicText } from '@/court/i18n/usePublicText';
 import type { PageProps } from '@/types';
 
@@ -17,18 +19,31 @@ export interface CourtPublicLink {
 }
 
 /**
- * The public pages' links, as plain anchors (full visits). The manual is
- * listed under the title the landing manager saved for the language.
+ * The public site's main navigation, as an administrative court's site lays
+ * it out: the court, its hearings, news, publications and the registry. Plain
+ * anchors (full visits); the home page's sections are reached by their anchors.
  */
-export function useCourtPublicLinks(userManualEnabled: boolean, userManualTitle: string | null = null): CourtPublicLink[] {
+export function useCourtPublicLinks(): CourtPublicLink[] {
     const { t } = usePublicText();
+    const home = route('landing.home');
+    const label = (key: string) => t(`court.publicSite.nav.${key}`);
 
     return [
-        { key: 'home', label: t('cm.home.nav.home'), href: route('landing.home') },
-        { key: 'resources', label: t('cm.home.nav.resources'), href: route('public.resources') },
-        ...(userManualEnabled ? [{ key: 'manual', label: userManualTitle || t('cm.home.nav.user_manual'), href: route('landing.user-manual') }] : []),
-        { key: 'terms', label: t('cm.home.footer.terms_of_service'), href: route('public.terms') },
+        { key: 'home', label: label('home'), href: home },
+        { key: 'about', label: label('about'), href: `${home}#about` },
+        { key: 'hearings', label: label('hearings'), href: `${home}#hearings` },
+        { key: 'news', label: label('news'), href: route('public.news') },
+        { key: 'publications', label: label('publications'), href: route('public.resources') },
+        { key: 'contact', label: label('contact'), href: `${home}#contact` },
     ];
+}
+
+/** The court's name in the page's language, as the staff sign-in shows it. */
+export function useCourtName(): string {
+    const { locale } = useLocale();
+    const { brandName, brandNameEn, brandNameAm, officialNameEn, officialNameAm } = useBranding();
+
+    return (locale === 'am' ? (officialNameAm || brandNameAm) : (officialNameEn || brandNameEn)) || brandName;
 }
 
 function pathOf(href: string): string {
@@ -39,161 +54,157 @@ function pathOf(href: string): string {
     }
 }
 
+/** The court's mark: the logo set in System Settings, else the scales of justice. */
+export function CourtMark({ size = 'md' }: { size?: 'md' | 'lg' }) {
+    const { getString } = useSystemSettings();
+    const logoUrl = getString('general.identity_system_logo_url');
+    const box = size === 'lg' ? 'h-14 w-14' : 'h-11 w-11';
+
+    return logoUrl ? (
+        <img src={logoUrl} alt="" decoding="async" className={`${box} shrink-0 rounded-full bg-white object-contain p-1 ring-1 ring-(--court-brass)/40`} />
+    ) : (
+        <span aria-hidden="true" className={`${box} flex shrink-0 items-center justify-center rounded-full bg-(--court-ink) text-(--court-brass) ring-1 ring-(--court-brass)/50`}>
+            <CourtEmblem className={size === 'lg' ? 'h-9 w-9' : 'h-7 w-7'} />
+        </span>
+    );
+}
+
 /**
- * The public header, after the EUISIS PublicHeader: identity, the court's
- * public navigation, language and theme, and the applicant and respondent
- * portals. One breakpoint (`lg`) switches to the menu button and its dialog.
+ * The public header: a slim bar naming the parent authority, then the court's
+ * mark and name, the main navigation, language and theme, and My Portal for
+ * the parties. Court staff reach their sign-in directly; it is not offered to
+ * the public here. One breakpoint (`xl`) switches to the menu dialog.
  */
-export default function CourtPublicHeader({ userManualEnabled, userManualTitle = null }: { userManualEnabled: boolean; userManualTitle?: string | null }) {
+export default function CourtPublicHeader({ portalUrl = null, authorityName = null, officeHours = null }: {
+    portalUrl?: string | null;
+    authorityName?: string | null;
+    officeHours?: string | null;
+}) {
     const { t } = usePublicText();
     const page = usePage<PageProps>();
-    const { getString } = useSystemSettings();
-    const { brandName } = useBranding();
     const [menuOpen, setMenuOpen] = useState(false);
-    const links = useCourtPublicLinks(userManualEnabled, userManualTitle);
-    const logoUrl = getString('general.identity_system_logo_url');
+    const links = useCourtPublicLinks();
+    const courtName = useCourtName();
+    const text = (key: string) => t(`court.publicSite.${key}`);
     const path = page.url.split('?')[0].split('#')[0] || '/';
-    // Off the portals the shared `auth` is the staff (web) session.
-    const user = page.props.auth?.user ?? null;
-    // Flow 6: with the portal in EUISIS, employees go to My Portal and the court keeps a staff sign-in.
-    const portal = (page.props as { courtPortal?: { closed: boolean; url: string | null } }).courtPortal;
+    // With the portal still open here (EUISIS_PORTAL_IN_EUISIS off), parties sign in to it.
+    const portal = (page.props as { courtPortal?: { closed: boolean } }).courtPortal;
+    const partiesUrl = portalUrl ?? (portal?.closed ? null : route('applicant.login'));
 
     useEffect(() => router.on('navigate', () => setMenuOpen(false)), []);
 
     useEffect(() => {
-        const desktop = window.matchMedia('(min-width: 1024px)');
+        const desktop = window.matchMedia('(min-width: 1280px)');
         const closeOnDesktop = () => { if (desktop.matches) setMenuOpen(false); };
         desktop.addEventListener('change', closeOnDesktop);
         return () => desktop.removeEventListener('change', closeOnDesktop);
     }, []);
 
-    const isActive = (href: string) => pathOf(href) === path;
+    // An anchor of the home page is never "the current page"; the page itself is.
+    const isActive = (link: CourtPublicLink) => !link.href.includes('#') && (pathOf(link.href) === path || (link.key === 'news' && path.startsWith('/news')));
 
-    const navLinkClass = (active: boolean) => [
-        'relative inline-flex h-16 items-center px-3 text-sm font-medium transition-colors',
-        'focus:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary',
-        active ? 'text-primary' : 'text-gray-600 hover:text-gray-900 dark:text-slate-300 dark:hover:text-white',
-    ].join(' ');
-
-    const portalLinks = (
-        <>
-            {user ? (
-                <Link href={route('dashboard')} className={buttonClassName({ variant: 'ghost', size: 'sm' })}>
-                    {t('nav.dashboard')}
-                </Link>
-            ) : null}
-            {portal?.closed ? (
-                <>
-                    {!user && (
-                        <a href={route('login')} className={buttonClassName({ variant: 'outline', size: 'sm' })}>
-                            {t('court.signIn.staffLink')}
-                        </a>
-                    )}
-                    {portal.url && (
-                        <a href={portal.url} className={buttonClassName({ variant: 'primary', size: 'sm' })}>
-                            {t('court.signIn.partiesLink')}
-                        </a>
-                    )}
-                </>
-            ) : (
-                <>
-                    <a href={route('applicant.login')} className={buttonClassName({ variant: 'outline', size: 'sm' })}>
-                        {t('cm.home.nav.applicant_portal')}
-                    </a>
-                    <a href={route('applicant.login', { login_as: 'respondent' })} className={buttonClassName({ variant: 'primary', size: 'sm' })}>
-                        {t('cm.home.nav.respondent_portal')}
-                    </a>
-                </>
-            )}
-        </>
-    );
+    const portalButton = (block = false) => partiesUrl ? (
+        <a
+            href={partiesUrl}
+            className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-(--court-navy) px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-(--court-navy-hover) ${block ? 'w-full' : ''}`}
+            title={text('portal.hint')}
+        >
+            {text('portal.action')}
+            <span aria-hidden="true">›</span>
+        </a>
+    ) : null;
 
     return (
-        <header className="public-header sticky top-0 z-40 border-b border-gray-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-            <div aria-hidden="true" className="h-[3px] bg-accent" />
-
-            <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
-                <a
-                    href={route('landing.home')}
-                    className="flex min-h-11 min-w-0 items-center gap-2.5 rounded-control focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary"
-                >
-                    {logoUrl ? (
-                        <img src={logoUrl} alt="" width={88} height={36} decoding="async" className="h-9 w-auto max-w-[88px] shrink-0 object-contain" />
-                    ) : null}
-                    <span className="min-w-0">
-                        <span className="block truncate text-sm font-semibold text-gray-900 dark:text-slate-100">{brandName}</span>
-                        <span className="hidden truncate text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-500 sm:block dark:text-slate-400">
-                            {t('cm.home.nav.agency_label')}
-                        </span>
-                    </span>
-                </a>
-
-                <nav aria-label={t('publicSite.mainNavigation')} className="hidden flex-1 justify-center lg:flex">
-                    <ul className="flex items-center">
-                        {links.map((link) => {
-                            const active = isActive(link.href);
-                            return (
-                                <li key={link.key}>
-                                    <a href={link.href} className={navLinkClass(active)} aria-current={active ? 'page' : undefined}>
-                                        {link.label}
-                                        {active && <span aria-hidden="true" className="absolute inset-x-3 bottom-0 h-0.5 bg-primary" />}
-                                    </a>
-                                </li>
-                            );
-                        })}
-                    </ul>
-                </nav>
-
-                <div className="ms-auto hidden items-center gap-1.5 lg:flex">
-                    <LanguageSwitcher />
-                    <ThemeToggle />
-                    {portalLinks}
+        <header className="public-header sticky top-0 z-40">
+            <div className="bg-(--court-ink) text-[13px] text-slate-300">
+                <div className="mx-auto flex h-9 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+                    <span className="truncate font-medium tracking-wide text-(--court-brass-soft)">{authorityName || text('authority')}</span>
+                    {officeHours && <span className="hidden truncate sm:block">{text('hero.officeHours')}: {officeHours}</span>}
                 </div>
-
-                <button
-                    type="button"
-                    onClick={() => setMenuOpen(true)}
-                    aria-label={t('nav.openMenu')}
-                    aria-haspopup="dialog"
-                    aria-expanded={menuOpen}
-                    aria-controls="court-public-mobile-menu"
-                    className={buttonClassName({ variant: 'ghost', size: 'icon', className: 'ms-auto h-11! w-11! shrink-0 lg:hidden' })}
-                >
-                    <MenuIcon className="h-5 w-5" aria-hidden="true" />
-                </button>
             </div>
 
-            <Dialog open={menuOpen} onClose={setMenuOpen} className="relative z-50 lg:hidden">
-                <div className="fixed inset-0 bg-black/40" aria-hidden="true" />
+            <div className="border-b border-(--court-line) bg-(--court-paper)">
+                <div className="mx-auto flex h-20 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
+                    <a href={route('landing.home')} className="flex min-h-11 min-w-0 shrink items-center gap-3 rounded-md xl:max-w-[20rem] 2xl:max-w-[26rem]">
+                        <CourtMark />
+                        <span className="min-w-0">
+                            <span className="block truncate text-[15px] font-semibold leading-tight text-(--court-ink) dark:text-white">{courtName}</span>
+                            <span className="mt-0.5 block truncate text-[11px] font-semibold uppercase tracking-[0.18em] text-(--court-brass-strong)">{text('courtKind')}</span>
+                        </span>
+                    </a>
+
+                    <nav aria-label={text('nav.label')} className="hidden shrink-0 grow justify-center xl:flex">
+                        <ul className="flex items-center whitespace-nowrap">
+                            {links.map((link) => {
+                                const active = isActive(link);
+                                return (
+                                    <li key={link.key}>
+                                        <a
+                                            href={link.href}
+                                            aria-current={active ? 'page' : undefined}
+                                            className={`relative inline-flex h-20 items-center px-3 text-sm font-medium whitespace-nowrap transition-colors 2xl:px-4 ${active ? 'text-(--court-ink) dark:text-white' : 'text-(--court-muted) hover:text-(--court-ink) dark:hover:text-white'}`}
+                                        >
+                                            {link.label}
+                                            <span aria-hidden="true" className={`absolute inset-x-3 bottom-0 h-[3px] rounded-t bg-(--court-brass) transition-opacity ${active ? 'opacity-100' : 'opacity-0'}`} />
+                                        </a>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </nav>
+
+                    <div className="ms-auto hidden shrink-0 items-center gap-2 xl:flex">
+                        <LanguageSwitcher />
+                        <ThemeToggle />
+                        {portalButton()}
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={() => setMenuOpen(true)}
+                        aria-label={text('nav.menu')}
+                        aria-haspopup="dialog"
+                        aria-expanded={menuOpen}
+                        aria-controls="court-public-mobile-menu"
+                        className={buttonClassName({ variant: 'ghost', size: 'icon', className: 'ms-auto h-11! w-11! shrink-0 xl:hidden' })}
+                    >
+                        <MenuIcon className="h-5 w-5" aria-hidden="true" />
+                    </button>
+                </div>
+            </div>
+
+            <Dialog open={menuOpen} onClose={setMenuOpen} className="relative z-50 xl:hidden">
+                <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
                 <DialogPanel
                     id="court-public-mobile-menu"
-                    className="fixed inset-y-0 right-0 flex w-full max-w-xs flex-col overflow-y-auto overscroll-contain bg-white pb-[env(safe-area-inset-bottom)] shadow-xl dark:bg-slate-950"
+                    className="court-site fixed inset-y-0 right-0 flex w-full max-w-xs flex-col overflow-y-auto overscroll-contain bg-(--court-paper) pb-[env(safe-area-inset-bottom)] shadow-xl"
                 >
-                    <div className="flex h-16 shrink-0 items-center justify-between gap-2 border-b border-gray-200 px-4 dark:border-slate-800">
-                        <DialogTitle className="min-w-0 truncate text-sm font-semibold text-gray-900 dark:text-slate-100">{brandName}</DialogTitle>
+                    <div className="flex h-20 shrink-0 items-center justify-between gap-2 border-b border-(--court-line) px-4">
+                        <DialogTitle className="flex min-w-0 items-center gap-3 text-sm font-semibold text-(--court-ink) dark:text-white">
+                            <CourtMark />
+                            <span className="truncate">{courtName}</span>
+                        </DialogTitle>
                         <button
                             type="button"
                             onClick={() => setMenuOpen(false)}
-                            aria-label={t('nav.closeMenu')}
+                            aria-label={text('nav.closeMenu')}
                             className={buttonClassName({ variant: 'ghost', size: 'icon', className: 'h-11! w-11! shrink-0' })}
                         >
                             <X className="h-5 w-5" aria-hidden="true" />
                         </button>
                     </div>
 
-                    <nav aria-label={t('publicSite.mainNavigation')} className="min-h-20 flex-1 overflow-y-auto overscroll-contain px-2 py-3">
+                    <nav aria-label={text('nav.label')} className="flex-1 px-2 py-3">
                         <ul className="space-y-0.5">
                             {links.map((link) => {
-                                const active = isActive(link.href);
+                                const active = isActive(link);
                                 return (
                                     <li key={link.key}>
                                         <a
                                             href={link.href}
+                                            onClick={() => setMenuOpen(false)}
                                             aria-current={active ? 'page' : undefined}
-                                            className={[
-                                                'flex min-h-[44px] items-center rounded-control px-3 py-2 text-sm font-medium wrap-anywhere',
-                                                active ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100 dark:text-slate-200 dark:hover:bg-slate-800',
-                                            ].join(' ')}
+                                            className={`flex min-h-11 items-center rounded-md border-s-[3px] px-3 py-2 text-sm font-medium ${active ? 'border-(--court-brass) bg-(--court-parchment) text-(--court-ink) dark:text-white' : 'border-transparent text-(--court-text) hover:bg-(--court-parchment)'}`}
                                         >
                                             {link.label}
                                         </a>
@@ -203,12 +214,12 @@ export default function CourtPublicHeader({ userManualEnabled, userManualTitle =
                         </ul>
                     </nav>
 
-                    <div className="shrink-0 space-y-3 border-t border-gray-200 p-4 dark:border-slate-800">
+                    <div className="shrink-0 space-y-3 border-t border-(--court-line) p-4">
                         <div className="flex items-center justify-between gap-2">
                             <LanguageSwitcher />
                             <ThemeToggle />
                         </div>
-                        <div className="flex flex-wrap gap-2">{portalLinks}</div>
+                        {portalButton(true)}
                     </div>
                 </DialogPanel>
             </Dialog>

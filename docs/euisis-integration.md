@@ -155,14 +155,34 @@ applicant portal is not used (owner decision, EUISIS ADR 0013 #12).
   props, a redirect as `{ok, message}` (its error flash as `409 refused`, its validation
   errors as `422`), a file as the file. Opening the case page marks its messages, status
   changes and hearings as seen, as in the portal.
-- **Portal closed** (`EUISIS_PORTAL_IN_EUISIS`, on with `EUISIS_PARTIES_ONLY`): every
-  `applicant/*`, `respondent/*` and `apply/*` page, including sign-in, registration and
-  password reset, shows "Your court cases are now in My Portal" with a link to
-  `EUISIS_PORTAL_URL` and the staff sign-in; a form posted to them gets `410`, and a
-  court account still signed in is signed out. `/` opens the public site. Respondents can
-  no longer answer in court-ms either. Staff screens and the integration API are untouched.
+- **Portal gone** (`EUISIS_PORTAL_IN_EUISIS`, on with `EUISIS_PARTIES_ONLY`): every
+  `applicant`, `respondent` and `apply` URL, including sign-in, registration and password
+  reset, is not found (`404`), before any sign-in redirect, and a court account still
+  signed in is signed out. The route names stay registered for the portal controllers the
+  workspace API runs. `/` opens the public site, which links parties to
+  `EUISIS_PORTAL_URL` (My Portal). Respondents can no longer answer in court-ms either.
+  Staff screens and the integration API are untouched.
 - **Staff sign-in** (`/login`) has the court's own look: the case path, the official name
-  and, while the portal is closed, a note sending parties to My Portal.
+  and, while the portal is closed, a note sending parties to My Portal. The public site
+  does not link to it.
+
+## Public site
+
+The public site (`/home`, `/news`, `/resources`, `/terms`, `/user-manual`) is laid out as
+an administrative court's site, after the ILO and World Bank administrative tribunals
+and Germany's Federal Administrative Court: the court's statement with today's sittings,
+its services, about the court and its members, the hearing schedule (case number and
+type only, never a party's name), figures, how a case proceeds, news (the active
+Announcements), publications, questions and the registry's contact details.
+
+Everything on it is managed under System Settings > Landing Page, in English and
+Amharic: hero slides, About the Court (mandate and key facts), Members (composition, with
+photos), service cards (each may link somewhere), statistics labels, timeline, resources,
+user manual, FAQs, footer and contact (parent authority, address, office hours, map link,
+social links) and each section's visibility and headings. A row keeps its Amharic text in
+`translations` (`{"am": {field: text}}`, migration `2026_10_28_000005`); Amharic visitors
+see it, or the English where a field is empty, and a list with no Amharic at all keeps the
+reviewed built-in Amharic of `lang/am/home.php`.
 
 ## Tests
 

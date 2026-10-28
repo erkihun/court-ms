@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Models\Announcement;
 use App\Models\CaseType;
 use App\Models\CourtCase;
+use App\Models\CourtMember;
 use App\Models\HomeFaq;
 use App\Models\HomeResource;
 use App\Models\HomeService;
@@ -57,24 +59,30 @@ test('the home page shows the built-in content while nothing is saved', function
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('Court/Public/Home')
-            ->has('slides', 3)
+            // One institutional statement; with the portal open here it leads to the hearings and the court.
+            ->has('slides', 1)
             ->where('slides.0', [
-                'badge' => __('home.hero.slides.digital.badge', [], 'en'),
-                'title' => __('home.hero.slides.digital.title', [], 'en'),
-                'description' => __('home.hero.slides.digital.description', [], 'en'),
-                'primary_label' => __('home.hero.slides.digital.cta_label', [], 'en'),
-                'primary_href' => route('applicant.register'),
-                'secondary_label' => __('home.hero.slides.digital.secondary_label', [], 'en'),
-                'secondary_href' => route('applicant.login'),
+                'badge' => __('home.hero.court.badge', [], 'en'),
+                'title' => __('home.hero.court.title', [], 'en'),
+                'description' => __('home.hero.court.description', [], 'en'),
+                'primary_label' => __('home.hero.court.hearings', [], 'en'),
+                'primary_href' => '#hearings',
+                'secondary_label' => __('home.hero.court.about', [], 'en'),
+                'secondary_href' => '#about',
                 'style' => 'blue',
                 'image_url' => null,
             ])
-            ->where('slides.1.primary_href', route('applicant.login'))
-            ->where('slides.1.secondary_href', route('public.terms'))
-            ->where('slides.1.style', 'orange')
-            ->where('slides.2.primary_href', '#statistics')
-            ->where('slides.2.style', 'emerald')
-            ->where('sections.metrics', ['visible' => true, 'title' => 'Tribunal Performance Metrics', 'subtitle' => __('home.metrics.section_description', [], 'en')])
+            ->where('sections.metrics', ['visible' => true, 'title' => 'The Court in Figures', 'subtitle' => __('home.metrics.section_description', [], 'en')])
+            ->where('sections.about.title', 'About the Court')
+            ->where('sections.hearings.title', 'Hearing Schedule')
+            ->where('about', ['body' => __('home.about.body', [], 'en'), 'facts' => []])
+            // No member, so no composition section; no announcement, no hearing.
+            ->where('members', [])
+            ->where('sections.members.visible', false)
+            ->where('hearings', [])
+            ->where('news', [])
+            ->where('today.hearings', 0)
+            ->where('contactVisible', true)
             ->where('sections.process.title', __('home.timeline.section_title', [], 'en'))
             ->where('sections.services.title', __('home.services.section_title', [], 'en'))
             ->where('sections.resources.title', __('home.resources.section_title', [], 'en'))
@@ -91,20 +99,24 @@ test('the home page shows the built-in content while nothing is saved', function
                 'color' => 'blue',
             ])
             ->where('steps.4.color', 'emerald')
-            // The 6 built-in service cards, as the landing manager's Services tab says.
-            ->has('services', 6)
-            ->where('services.0.title', 'Digital Case Filing')
-            ->where('services.0.features', ['Auto-validation rules', 'Instant acknowledgement', 'Secure encrypted uploads'])
+            // The 4 built-in service cards: filing, hearings, following a case, publications.
+            ->has('services', 4)
+            ->where('services.0.title', 'File a case')
+            ->where('services.0.features', [])
             ->where('services.0.icon', 'document')
-            ->where('services.5.icon', 'chat')
-            ->where('services.5.accent', 'pink')
+            // My Portal is not set up in this test, so the portal cards lead nowhere.
+            ->where('services.0.href', null)
+            ->where('services.1.href', '#hearings')
+            ->where('services.3.icon', 'database')
+            ->where('services.3.href', '#resources')
             ->where('resources', [])
             ->where('hasMoreResources', false)
             ->has('faqs', count(__('home.faq.questions', [], 'en')))
             ->where('faqs.0', __('home.faq.questions', [], 'en')[0])
             ->where('publicSite.footer', null)
             ->where('publicSite.userManualEnabled', false)
-            ->where('publicSite.userManualTitle', null));
+            ->where('publicSite.userManualTitle', null)
+            ->where('publicSite.portalUrl', null));
 });
 
 test('the statistics count cases and hearings as the Blade page did', function (): void {
@@ -149,7 +161,7 @@ test('saved landing content replaces the built-in content in English', function 
                 'style' => 'orange', 'image_url' => asset('storage/landing/slides/week.jpg'),
             ]])
             ->where('steps', [['title' => 'Lodge the appeal', 'description' => 'Online.', 'meta' => 'Day 1', 'duration' => '1 day', 'color' => 'violet']])
-            ->where('services', [['title' => 'E-filing', 'description' => 'File from home.', 'meta' => 'Online', 'features' => ['Upload', 'Track'], 'icon' => 'chart', 'accent' => 'pink']])
+            ->where('services', [['title' => 'E-filing', 'description' => 'File from home.', 'meta' => 'Online', 'features' => ['Upload', 'Track'], 'icon' => 'chart', 'accent' => 'pink', 'href' => null]])
             ->where('faqs', [['question' => 'Where is the registry?', 'answer' => 'Ground floor.']])
             ->where('metrics.2', ['key' => 'pending_cases', 'label' => 'Awaiting hearing', 'description' => 'Not yet heard.', 'value' => 0])
             ->where('metrics.0.label', 'Total Cases')
@@ -166,17 +178,17 @@ test('in Amharic the home page shows the reviewed translations, not the English-
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('Court/Public/Home')
-            ->has('slides', 3)
-            ->where('slides.0.title', __('home.hero.slides.digital.title', [], 'am'))
-            ->where('slides.0.primary_label', __('home.hero.slides.digital.cta_label', [], 'am'))
+            ->has('slides', 1)
+            ->where('slides.0.title', __('home.hero.court.title', [], 'am'))
+            ->where('slides.0.primary_label', __('home.hero.court.hearings', [], 'am'))
             ->where('sections.process.title', __('home.timeline.section_title', [], 'am'))
             ->where('sections.process.subtitle', __('home.timeline.section_description', [], 'am'))
             ->where('sections.metrics.title', __('home.metrics.section_title', [], 'am'))
             ->where('metrics.2.label', __('home.metrics.cards.pending_cases.label', [], 'am'))
             ->has('steps', 5)
             ->where('steps.0.title', __('home.timeline.steps.case_initiation.title', [], 'am'))
-            ->has('services', 6)
-            ->where('services.0.title', __('home.services.cards.digital_case_filing.title', [], 'am'))
+            ->has('services', 4)
+            ->where('services.0.title', __('home.court_services.filing.title', [], 'am'))
             ->where('faqs.0', __('home.faq.questions', [], 'am')[0])
             // Resources and contact details are shown in both languages.
             ->where('resources.0.title', 'Filing form')
@@ -288,4 +300,73 @@ test('the user manual link carries the title saved for the language', function (
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->where('publicSite.userManualEnabled', true)
             ->where('publicSite.userManualTitle', null));
+});
+
+test('content written in Amharic in the landing manager is what Amharic visitors read', function (): void {
+    savedHomeContent();
+    HomeSlide::query()->where('title', 'Court week')->update(['translations' => json_encode(['am' => ['title' => 'የችሎት ሳምንት', 'primary_label' => 'ያንብቡ']])]);
+    HomeFaq::query()->where('question', 'Where is the registry?')->update(['translations' => json_encode(['am' => ['question' => 'መዝገብ ቤቱ የት ነው?']])]);
+    HomeSetting::setJson('section.process', ['visible' => true, 'title' => 'How a case moves', 'title_am' => 'ጉዳይ እንዴት ይሄዳል', 'subtitle' => 'Five steps.']);
+    HomeSetting::setJson('about.settings', ['body' => 'English mandate.', 'body_am' => 'የአማርኛ ተልዕኮ።', 'facts' => [['label' => 'Seat', 'value' => 'Addis Ababa', 'label_am' => 'መቀመጫ', 'value_am' => ''], ['label' => '', 'value' => 'no label']]]);
+    HomeSetting::setJson('footer.settings', ['description' => 'English footer.', 'office_hours' => 'Mon–Fri', 'office_hours_am' => 'ሰኞ–ዓርብ', 'contact_address' => 'Piazza']);
+    CourtMember::query()->create(['sort_order' => 1, 'is_active' => true, 'name' => 'Almaz T', 'role' => 'President', 'translations' => ['am' => ['name' => 'አልማዝ ተ']]]);
+    CourtMember::query()->create(['sort_order' => 2, 'is_active' => false, 'name' => 'Hidden Judge']);
+
+    $this->withSession(['app_locale' => 'am'])->get(route('landing.home'))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            // A row's Amharic, its English where the Amharic is empty.
+            ->where('slides.0.title', 'የችሎት ሳምንት')
+            ->where('slides.0.primary_label', 'ያንብቡ')
+            ->where('slides.0.description', 'Hearings resume.')
+            ->where('faqs.0', ['question' => 'መዝገብ ቤቱ የት ነው?', 'answer' => 'Ground floor.'])
+            // Steps and services have no Amharic yet, so the reviewed built-in Amharic stays.
+            ->has('steps', 5)
+            ->where('sections.process.title', 'ጉዳይ እንዴት ይሄዳል')
+            ->where('sections.process.subtitle', __('home.timeline.section_description', [], 'am'))
+            ->where('about', ['body' => 'የአማርኛ ተልዕኮ።', 'facts' => [['label' => 'መቀመጫ', 'value' => 'Addis Ababa']]])
+            ->where('members', [['name' => 'አልማዝ ተ', 'role' => 'President', 'bio' => '', 'photo_url' => null]])
+            ->where('sections.members.visible', true)
+            ->where('publicSite.footer.office_hours', 'ሰኞ–ዓርብ')
+            ->where('publicSite.footer.contact_address', 'Piazza')
+            ->where('publicSite.footer.description', null));
+
+    $this->withSession(['app_locale' => 'en'])->get(route('landing.home'))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('slides.0.title', 'Court week')
+            ->where('about.body', 'English mandate.')
+            ->where('members.0.name', 'Almaz T')
+            ->where('publicSite.footer.office_hours', 'Mon–Fri'));
+});
+
+test('the hearing list names cases by number only, for the next two weeks', function (): void {
+    $this->travelTo(Carbon::parse('2026-10-28 08:00:00'));
+    $type = CaseType::query()->create(['name' => 'Labour']);
+    $case = CourtCase::query()->create(['case_number' => 'LAB-0001-26', 'title' => 'Meron A Haile', 'case_type_id' => $type->id, 'filing_date' => now()->toDateString(), 'status' => 'active']);
+    foreach (['2026-10-28 10:30:00', '2026-11-05 09:00:00', '2026-12-01 09:00:00', '2026-10-27 09:00:00'] as $at) {
+        DB::table('case_hearings')->insert(['case_id' => $case->id, 'hearing_at' => $at, 'type' => 'Hearing', 'location' => 'Room 2', 'created_at' => now(), 'updated_at' => now()]);
+    }
+
+    $this->get(route('landing.home'))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->has('hearings', 2)
+            ->where('hearings.0', fn ($hearing): bool => collect($hearing)->except('id')->all() === [
+                'date' => '2026-10-28', 'time' => '10:30', 'case_number' => 'LAB-0001-26', 'case_type' => 'Labour', 'type' => 'Hearing', 'location' => 'Room 2',
+            ])
+            ->where('hearings.1.date', '2026-11-05')
+            ->where('today', ['date' => '2026-10-28', 'hearings' => 1])
+            ->where('hearings', fn ($hearings): bool => ! str_contains(json_encode($hearings), 'Meron')));
+});
+
+test('news lists active announcements and opens one; an inactive one is not found', function (): void {
+    $active = Announcement::query()->create(['title' => 'Court closed on Friday', 'content' => '<p>The registry is <strong>closed</strong>.</p><script>alert(1)</script>', 'status' => 'active']);
+    $inactive = Announcement::query()->create(['title' => 'Draft notice', 'content' => '<p>Draft</p>', 'status' => 'inactive']);
+
+    $this->get(route('landing.home'))
+        ->assertInertia(fn (AssertableInertia $page) => $page->has('news', 1)->where('news.0.title', 'Court closed on Friday')->where('news.0.excerpt', 'The registry is closed.alert(1)'));
+    $this->get(route('public.news'))->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page->component('Court/Public/News')->has('items', 1)->where('pagination.total', 1));
+    $this->get(route('public.news.show', $active))->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page->component('Court/Public/NewsItem')
+            ->where('item.content', fn (string $html): bool => str_contains($html, '<strong>closed</strong>') && ! str_contains($html, '<script')));
+    $this->get(route('public.news.show', $inactive))->assertNotFound();
 });

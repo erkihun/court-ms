@@ -8,8 +8,11 @@ import type {
     ResourceType, ServiceAccent, ServiceIcon, SlideStyle, StepColor,
 } from '@/court/types/public';
 import {
-    AddButton, COLOR_OPTIONS, Chip, EditorCard, EmptyBox, HiddenChip, OptionalHint, PanelHeading, RowActions, SwitchButton, useInlineEditor,
+    AddButton, AmharicFields, COLOR_OPTIONS, Chip, EditorCard, EmptyBox, HiddenChip, OptionalHint, PanelHeading, RowActions, SwitchButton, blankAmharic, useInlineEditor,
 } from './LandingParts';
+
+/** The form errors, read by any key (court-ms answers Amharic fields as `am.<field>`). */
+const anyErrors = (errors: object) => errors as Record<string, string | undefined>;
 
 const fileInputClass = 'cursor-pointer py-1.5 file:mr-3 file:rounded-md file:border-0 file:bg-primary/10 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-primary';
 const visit = { preserveScroll: true } as const;
@@ -27,11 +30,14 @@ type SlideForm = {
     bg_style: SlideStyle;
     bg_image: File | null;
     remove_bg_image: boolean;
+    am: Record<string, string>;
 };
+
+const SLIDE_AM = ['badge', 'title', 'description', 'primary_label', 'secondary_label'] as const;
 
 const EMPTY_SLIDE: SlideForm = {
     badge: '', title: '', description: '', primary_label: '', primary_href: '', secondary_label: '', secondary_href: '',
-    bg_style: 'blue', bg_image: null, remove_bg_image: false,
+    bg_style: 'blue', bg_image: null, remove_bg_image: false, am: blankAmharic(SLIDE_AM),
 };
 
 const SLIDE_SWATCH: Record<SlideStyle, string> = {
@@ -59,7 +65,7 @@ export function SlidesPanel({ slides }: { slides: LandingSlide[] }) {
             badge: slide.badge ?? '', title: slide.title, description: slide.description ?? '',
             primary_label: slide.primary_label, primary_href: slide.primary_href,
             secondary_label: slide.secondary_label ?? '', secondary_href: slide.secondary_href ?? '',
-            bg_style: slide.bg_style, bg_image: null, remove_bg_image: false,
+            bg_style: slide.bg_style, bg_image: null, remove_bg_image: false, am: { ...blankAmharic(SLIDE_AM), ...slide.am },
         });
         form.clearErrors();
         editor.startEdit(slide.id);
@@ -131,15 +137,28 @@ export function SlidesPanel({ slides }: { slides: LandingSlide[] }) {
                             {({ id }) => <Input id={id} value={form.data.primary_label} required maxLength={120} onChange={(event) => form.setData('primary_label', event.target.value)} />}
                         </FormField>
                         <FormField label={c('primary_button_url')} required error={form.errors.primary_href}>
-                            {({ id }) => <Input id={id} value={form.data.primary_href} required maxLength={500} placeholder="/applicant/register" onChange={(event) => form.setData('primary_href', event.target.value)} />}
+                            {({ id }) => <Input id={id} value={form.data.primary_href} required maxLength={500} placeholder="https://… /my-portal/court-cases" onChange={(event) => form.setData('primary_href', event.target.value)} />}
                         </FormField>
                         <FormField label={c('secondary_button_label')} error={form.errors.secondary_label}>
                             {({ id }) => <Input id={id} value={form.data.secondary_label} maxLength={120} onChange={(event) => form.setData('secondary_label', event.target.value)} />}
                         </FormField>
                         <FormField label={c('secondary_button_url')} error={form.errors.secondary_href}>
-                            {({ id }) => <Input id={id} value={form.data.secondary_href} maxLength={500} placeholder="/applicant/login" onChange={(event) => form.setData('secondary_href', event.target.value)} />}
+                            {({ id }) => <Input id={id} value={form.data.secondary_href} maxLength={500} placeholder="#hearings" onChange={(event) => form.setData('secondary_href', event.target.value)} />}
                         </FormField>
                     </div>
+
+                    <AmharicFields
+                        values={form.data.am}
+                        errors={anyErrors(form.errors)}
+                        onChange={(key, value) => form.setData('am', { ...form.data.am, [key]: value })}
+                        fields={[
+                            { key: 'badge', label: c('badge_text'), maxLength: 120 },
+                            { key: 'title', label: c('title'), maxLength: 255 },
+                            { key: 'description', label: c('description'), multiline: true, maxLength: 1000 },
+                            { key: 'primary_label', label: c('primary_button_label'), maxLength: 120 },
+                            { key: 'secondary_label', label: c('secondary_button_label'), maxLength: 120 },
+                        ]}
+                    />
 
                     <FormField label={<>{c('background_image')} <OptionalHint extra="3 MB" /></>} description={c('image_help')} error={form.errors.bg_image}>
                         {({ id, describedBy }) => (
@@ -196,8 +215,9 @@ export function SlidesPanel({ slides }: { slides: LandingSlide[] }) {
 
 /* ── Timeline steps ───────────────────────────────────────────────────── */
 
-type StepForm = { title: string; meta: string; duration: string; description: string; color: StepColor };
-const EMPTY_STEP: StepForm = { title: '', meta: '', duration: '', description: '', color: 'blue' };
+type StepForm = { title: string; meta: string; duration: string; description: string; color: StepColor; am: Record<string, string> };
+const STEP_AM = ['title', 'description', 'meta', 'duration'] as const;
+const EMPTY_STEP: StepForm = { title: '', meta: '', duration: '', description: '', color: 'blue', am: blankAmharic(STEP_AM) };
 
 const STEP_DOT: Record<StepColor, string> = {
     blue: 'bg-blue-500', orange: 'bg-orange-500', emerald: 'bg-emerald-500', violet: 'bg-violet-500', amber: 'bg-amber-500',
@@ -213,7 +233,7 @@ export function TimelinePanel({ steps }: { steps: LandingStep[] }) {
     const create = () => { form.reset(); form.clearErrors(); editor.toggleCreate(); };
     const cancel = () => { editor.close(); form.reset(); form.clearErrors(); };
     const edit = (step: LandingStep) => {
-        form.setData({ title: step.title, meta: step.meta ?? '', duration: step.duration ?? '', description: step.description ?? '', color: step.color });
+        form.setData({ title: step.title, meta: step.meta ?? '', duration: step.duration ?? '', description: step.description ?? '', color: step.color, am: { ...blankAmharic(STEP_AM), ...step.am } });
         form.clearErrors();
         editor.startEdit(step.id);
     };
@@ -257,6 +277,17 @@ export function TimelinePanel({ steps }: { steps: LandingStep[] }) {
                     <FormField label={c('description')} error={form.errors.description}>
                         {({ id }) => <Textarea id={id} rows={3} maxLength={1000} value={form.data.description} onChange={(event) => form.setData('description', event.target.value)} />}
                     </FormField>
+                    <AmharicFields
+                        values={form.data.am}
+                        errors={anyErrors(form.errors)}
+                        onChange={(key, value) => form.setData('am', { ...form.data.am, [key]: value })}
+                        fields={[
+                            { key: 'title', label: c('title'), maxLength: 255 },
+                            { key: 'meta', label: c('meta_label'), maxLength: 120 },
+                            { key: 'duration', label: c('duration'), maxLength: 60 },
+                            { key: 'description', label: c('description'), multiline: true, maxLength: 1000 },
+                        ]}
+                    />
                     <FormField label={c('colour_accent')} error={form.errors.color} className="sm:w-48">
                         {({ id }) => (
                             <Select id={id} value={form.data.color} onChange={(event) => form.setData('color', event.target.value as StepColor)}>
@@ -301,8 +332,9 @@ export function TimelinePanel({ steps }: { steps: LandingStep[] }) {
 
 /* ── Service cards ────────────────────────────────────────────────────── */
 
-type ServiceForm = { title: string; meta: string; description: string; features: string; icon_type: ServiceIcon; accent: ServiceAccent };
-const EMPTY_SERVICE: ServiceForm = { title: '', meta: '', description: '', features: '', icon_type: 'document', accent: 'blue' };
+type ServiceForm = { title: string; meta: string; description: string; features: string; icon_type: ServiceIcon; accent: ServiceAccent; href: string; am: Record<string, string> };
+const SERVICE_AM = ['title', 'meta', 'description', 'features'] as const;
+const EMPTY_SERVICE: ServiceForm = { title: '', meta: '', description: '', features: '', icon_type: 'document', accent: 'blue', href: '', am: blankAmharic(SERVICE_AM) };
 
 const ICON_OPTIONS: Array<{ value: ServiceIcon; key: string }> = [
     { value: 'document', key: 'document_upload' },
@@ -325,7 +357,8 @@ export function ServicesPanel({ services }: { services: LandingService[] }) {
     const edit = (service: LandingService) => {
         form.setData({
             title: service.title, meta: service.meta ?? '', description: service.description ?? '',
-            features: service.features.join('\n'), icon_type: service.icon_type, accent: service.accent,
+            features: service.features.join('\n'), icon_type: service.icon_type, accent: service.accent, href: service.href ?? '',
+            am: { title: service.am.title, meta: service.am.meta, description: service.am.description, features: (service.am.features ?? []).join('\n') },
         });
         form.clearErrors();
         editor.startEdit(service.id);
@@ -386,6 +419,20 @@ export function ServicesPanel({ services }: { services: LandingService[] }) {
                             )}
                         </FormField>
                     </div>
+                    <FormField label={<>{c('card_link')} <OptionalHint /></>} description={c('card_link_help')} error={form.errors.href}>
+                        {({ id, describedBy }) => <Input id={id} aria-describedby={describedBy} value={form.data.href} maxLength={500} placeholder="#hearings" onChange={(event) => form.setData('href', event.target.value)} />}
+                    </FormField>
+                    <AmharicFields
+                        values={form.data.am}
+                        errors={anyErrors(form.errors)}
+                        onChange={(key, value) => form.setData('am', { ...form.data.am, [key]: value })}
+                        fields={[
+                            { key: 'title', label: c('title'), maxLength: 255 },
+                            { key: 'meta', label: c('meta_label'), maxLength: 120 },
+                            { key: 'description', label: c('description'), multiline: true, rows: 2, maxLength: 1000 },
+                            { key: 'features', label: `${c('features')} (${c('one_per_line')})`, multiline: true, rows: 3, mono: true },
+                        ]}
+                    />
                 </EditorCard>
             )}
 
@@ -443,10 +490,14 @@ type ResourceForm = {
     remove_file: boolean;
     cover_image: File | null;
     is_featured: boolean;
+    am: Record<string, string>;
 };
+
+const RESOURCE_AM = ['title', 'description'] as const;
 
 const EMPTY_RESOURCE: ResourceForm = {
     title: '', type: 'post', published_at: '', description: '', external_url: '', file: null, remove_file: false, cover_image: null, is_featured: false,
+    am: blankAmharic(RESOURCE_AM),
 };
 
 const RESOURCE_TYPES: Array<{ value: ResourceType; key: string }> = [
@@ -477,6 +528,7 @@ export function ResourcesPanel({ resources }: { resources: LandingResource[] }) 
             title: resource.title, type: resource.type, published_at: resource.published_at_local ?? '',
             description: resource.description ?? '', external_url: resource.external_url ?? '',
             file: null, remove_file: false, cover_image: null, is_featured: resource.is_featured,
+            am: { ...blankAmharic(RESOURCE_AM), ...resource.am },
         });
         form.clearErrors();
         editor.startEdit(resource.id);
@@ -571,6 +623,15 @@ export function ResourcesPanel({ resources }: { resources: LandingResource[] }) 
                         <input type="checkbox" checked={form.data.is_featured} onChange={(event) => form.setData('is_featured', event.target.checked)} className="rounded border-(--app-border-strong) text-primary" />
                         {c('featured')}
                     </label>
+                    <AmharicFields
+                        values={form.data.am}
+                        errors={anyErrors(form.errors)}
+                        onChange={(key, value) => form.setData('am', { ...form.data.am, [key]: value })}
+                        fields={[
+                            { key: 'title', label: c('title'), maxLength: 255 },
+                            { key: 'description', label: c('description_summary'), multiline: true, maxLength: 2000 },
+                        ]}
+                    />
                 </EditorCard>
             )}
 
@@ -617,8 +678,9 @@ export function ResourcesPanel({ resources }: { resources: LandingResource[] }) 
 
 /* ── FAQs ─────────────────────────────────────────────────────────────── */
 
-type FaqForm = { question: string; answer: string };
-const EMPTY_FAQ: FaqForm = { question: '', answer: '' };
+type FaqForm = { question: string; answer: string; am: Record<string, string> };
+const FAQ_AM = ['question', 'answer'] as const;
+const EMPTY_FAQ: FaqForm = { question: '', answer: '', am: blankAmharic(FAQ_AM) };
 
 /** The home page's questions and answers. */
 export function FaqsPanel({ faqs }: { faqs: LandingFaq[] }) {
@@ -630,7 +692,7 @@ export function FaqsPanel({ faqs }: { faqs: LandingFaq[] }) {
     const create = () => { form.reset(); form.clearErrors(); editor.toggleCreate(); };
     const cancel = () => { editor.close(); form.reset(); form.clearErrors(); };
     const edit = (faq: LandingFaq) => {
-        form.setData({ question: faq.question, answer: faq.answer });
+        form.setData({ question: faq.question, answer: faq.answer, am: { ...blankAmharic(FAQ_AM), ...faq.am } });
         form.clearErrors();
         editor.startEdit(faq.id);
     };
@@ -666,6 +728,15 @@ export function FaqsPanel({ faqs }: { faqs: LandingFaq[] }) {
                     <FormField label={c('answer')} required error={form.errors.answer}>
                         {({ id }) => <Textarea id={id} rows={4} required maxLength={2000} value={form.data.answer} onChange={(event) => form.setData('answer', event.target.value)} />}
                     </FormField>
+                    <AmharicFields
+                        values={form.data.am}
+                        errors={anyErrors(form.errors)}
+                        onChange={(key, value) => form.setData('am', { ...form.data.am, [key]: value })}
+                        fields={[
+                            { key: 'question', label: c('question'), maxLength: 500 },
+                            { key: 'answer', label: c('answer'), multiline: true, rows: 4, maxLength: 2000 },
+                        ]}
+                    />
                 </EditorCard>
             )}
 

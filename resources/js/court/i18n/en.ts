@@ -13,6 +13,7 @@ import respondentPages from './respondent';
 import applicantPages from './applicant';
 import publicPages from './public';
 import signIn from './signIn';
+import publicSite from './publicSite';
 
 export default {
     cm: lang,
@@ -80,6 +81,7 @@ export default {
         applicantCases: applicantCases.en,
         publicPages: publicPages.en,
         signIn: signIn.en,
+        publicSite: publicSite.en,
         respondentPages: respondentPages.en,
         applicantPages: applicantPages.en,
         settings: {

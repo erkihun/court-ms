@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasAmharicText;
 use Illuminate\Database\Eloquent\Model;
 
 class HomeSlide extends Model
 {
+    use HasAmharicText;
+
     protected $fillable = [
         'sort_order', 'is_active', 'badge', 'title', 'description',
         'primary_label', 'primary_href', 'secondary_label', 'secondary_href', 'bg_style', 'bg_image',

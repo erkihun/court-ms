@@ -52,6 +52,14 @@ return [
     ],
 
     'hero' => [
+        'court' => [
+            'badge' => 'Administrative Court',
+            'title' => 'Justice in the administration of the city',
+            'description' => "The court hears the cases of the city's employees against the decisions of its institutions, and decides them according to the law.",
+            'portal' => 'File or follow a case',
+            'hearings' => 'Hearing schedule',
+            'about' => 'About the court',
+        ],
         'badge' => 'Digital Tribunal Platform',
         'title' => 'Administrative Justice',
         'accent' => 'Redefined',
@@ -91,9 +99,9 @@ return [
     ],
 
     'metrics' => [
-        'section_title' => 'Tribunal Performance Metrics',
+        'section_title' => 'The Court in Figures',
         'section_badge' => 'Live Insights',
-        'section_description' => 'A current overview of cases and scheduled hearings recorded in the system.',
+        'section_description' => 'Cases and hearings as recorded in the court register.',
         'live_data' => 'Live data',
         'time_unit' => 'days',
         'resolution_card' => [
@@ -147,8 +155,8 @@ return [
 
     'timeline' => [
         'section_badge' => 'Journey map',
-        'section_title' => 'Case Processing Journey',
-        'section_description' => 'Transparent step-by-step process from filing to resolution',
+        'section_title' => 'How a Case Proceeds',
+        'section_description' => 'From filing to the decision and its execution',
         'view_details' => 'View details',
         'go_to_step' => 'Go to step :step',
         'previous' => 'Previous',
@@ -193,8 +201,8 @@ return [
 
     'services' => [
         'section_badge' => 'Core services',
-        'section_title' => 'Tribunal Digital Services',
-        'section_description' => 'Comprehensive tools for efficient case management and justice delivery',
+        'section_title' => 'Services of the Court',
+        'section_description' => 'What the court offers the parties and the public',
         'learn_more' => 'Learn more',
         'stats' => [
             'uptime' => 'System uptime',
@@ -315,8 +323,8 @@ return [
 
     'resources' => [
         'section_badge' => 'Court resources',
-        'section_title' => 'Resources and updates',
-        'section_description' => 'Forms, documents, links, and notices published by the tribunal.',
+        'section_title' => 'Publications and Forms',
+        'section_description' => 'Forms, rules, guides and notices published by the court.',
         'view_all' => 'View all resources',
         'featured' => 'Featured',
         'download' => 'Download',
@@ -332,7 +340,7 @@ return [
     'faq' => [
         'section_badge' => 'Need help?',
         'section_title' => 'Frequently Asked Questions',
-        'section_description' => 'Clarifications about filing, hearings, and case tracking on the digital platform.',
+        'section_description' => 'Answers about filing, hearings and following a case.',
         'questions' => [
             [
                 'question' => 'How do I file a new tribunal case?',
@@ -465,7 +473,7 @@ return [
     ],
 
     'footer' => [
-        'description' => 'Delivering efficient and transparent administrative justice through digital innovation.',
+        'description' => "The administrative court of the city administration. It hears the cases of the city's employees against the decisions of its institutions.",
         'agency_label' => 'Administrative Tribunal',
         'quick_links' => 'Quick Links',
         'links' => [
@@ -502,5 +510,50 @@ return [
         'rights' => 'All rights reserved.',
         'track_case_status' => 'Track Case Status',
         'version' => 'Version 1.0.0',
+    ],
+
+    // The public site's institutional sections (PublicHomeController, 2026-10-28).
+    'about' => [
+        'section_title' => 'About the Court',
+        'section_description' => 'The administrative court of the city administration',
+        'body' => "The Administrative Court hears the cases of the city's employees against the decisions and acts of the institutions they serve, and decides them according to the law.\n\nCases are filed through the employee portal, reviewed by the registry, heard by the court and decided in writing, with the reasons, and served on the parties.",
+    ],
+    'members' => [
+        'section_title' => 'Composition of the Court',
+        'section_description' => 'The president, judges and registrar of the court',
+    ],
+    'hearings' => [
+        'section_title' => 'Hearing Schedule',
+        'section_description' => 'Sittings of the next two weeks. Cases are named by their number only.',
+    ],
+    'news' => [
+        'section_title' => 'News and Announcements',
+        'section_description' => 'Notices of the court: sittings, schedules and changes to procedure',
+    ],
+    'contact' => [
+        'section_title' => 'Contact the Registry',
+        'section_description' => 'Where to find the court and how to reach its registry',
+    ],
+    'court_services' => [
+        'filing' => [
+            'title' => 'File a case',
+            'description' => 'Employees file their case, with their grievance record and documents, from My Portal.',
+            'meta' => 'Through the employee portal',
+        ],
+        'hearings' => [
+            'title' => 'Hearings',
+            'description' => 'The court schedules each sitting and tells the parties its date, time and room.',
+            'meta' => 'Published two weeks ahead',
+        ],
+        'follow' => [
+            'title' => 'Follow your case',
+            'description' => 'Parties follow every step, write to the registry and reply to responses in My Portal.',
+            'meta' => 'For the parties',
+        ],
+        'publications' => [
+            'title' => 'Decisions and publications',
+            'description' => 'Decisions are served on the parties; the court publishes its forms, rules and guides here.',
+            'meta' => 'Publications',
+        ],
     ],
 ];

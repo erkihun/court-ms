@@ -108,6 +108,8 @@ Route::middleware(SetLocale::class)->where(array_fill_keys($numericRouteParamete
     // With the portal in EUISIS (Flow 6) the court's home is its public site.
     Route::get('/', fn () => redirect()->route(\App\Support\EuisisParties::portalClosed() ? 'landing.home' : 'applicant.login'))->name('root');
     Route::get('/resources', [PublicHomeController::class, 'resources'])->name('public.resources');
+    Route::get('/news', [PublicHomeController::class, 'newsIndex'])->name('public.news');
+    Route::get('/news/{announcement}', [PublicHomeController::class, 'newsItem'])->whereNumber('announcement')->name('public.news.show');
     Route::get('/terms', [TermsDisplayController::class, 'show'])->name('public.terms');
     Route::get('/signage', [PublicSignageController::class, 'show'])
         ->middleware(['throttle:30,1'])
@@ -452,6 +454,12 @@ Route::middleware(SetLocale::class)->where(array_fill_keys($numericRouteParamete
                 Route::put('/landing/user-manual', [LandingPageController::class, 'updateUserManual'])->name('admin.landing.user-manual.update');
                 // Footer settings
                 Route::put('/landing/footer', [LandingPageController::class, 'updateFooter'])->name('admin.landing.footer.update');
+                Route::put('/landing/about', [LandingPageController::class, 'updateAbout'])->name('admin.landing.about.update');
+                Route::post('/landing/members', [LandingPageController::class, 'storeMember'])->name('admin.landing.members.store');
+                Route::put('/landing/members/{member}/update', [LandingPageController::class, 'updateMember'])->name('admin.landing.members.update');
+                Route::delete('/landing/members/{member}', [LandingPageController::class, 'destroyMember'])->name('admin.landing.members.destroy');
+                Route::patch('/landing/members/{member}/toggle', [LandingPageController::class, 'toggleMember'])->name('admin.landing.members.toggle');
+                Route::post('/landing/members/reorder', [LandingPageController::class, 'reorderMembers'])->name('admin.landing.members.reorder');
             });
 
             // System audit (read-only view)
