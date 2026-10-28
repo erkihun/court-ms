@@ -221,8 +221,10 @@ final class EmployeeCourtAccess
         $nationalId = preg_replace('/\D+/', '', (string) ($employee['national_id'] ?? ''));
         $phone = trim((string) ($employee['phone'] ?? ''));
         $email = Str::lower(trim((string) ($employee['email'] ?? '')));
-        if ($nationalId === '' || $phone === '' || $email === '') {
-            throw new EmployeeCourtAccessException('employee_record_incomplete', 'Opening a court account needs the employee\'s national ID, phone number and email.');
+        // applicants.gender is male or female (2026_02_04_000002); it is never guessed.
+        $gender = in_array($employee['gender'] ?? null, ['male', 'female'], true) ? (string) $employee['gender'] : '';
+        if ($nationalId === '' || $phone === '' || $email === '' || $gender === '') {
+            throw new EmployeeCourtAccessException('employee_record_incomplete', 'Opening a court account needs the employee\'s national ID, phone number, email and gender.');
         }
         if (Applicant::query()->where('phone', $phone)->exists()) {
             throw new EmployeeCourtAccessException('phone_in_use', 'Another court account uses this phone number.');
@@ -233,10 +235,10 @@ final class EmployeeCourtAccess
             'first_name' => (string) $employee['first_name'],
             'middle_name' => (string) ($employee['middle_name'] ?? ''),
             'last_name' => (string) $employee['last_name'],
-            // Gender and address are required columns (2026_02_04 migration: 'other' and '' when unknown).
-            'gender' => in_array($employee['gender'] ?? null, ['male', 'female'], true) ? $employee['gender'] : 'other',
+            'gender' => $gender,
             'position' => $employee['position'] ?? null,
             'organization_name' => $employee['organization_name'] ?? null,
+            // A required column (2026_02_04_000001): empty when EUISIS has no address.
             'address' => (string) ($employee['address'] ?? ''),
             'phone' => $phone,
             'email' => $email,

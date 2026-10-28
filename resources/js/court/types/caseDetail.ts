@@ -195,6 +195,8 @@ export interface EuisisPanelData {
     } | null;
     organization: { name: string; code: string | null; active: boolean; status: string | null } | null;
     employee: { name: string; number: string | null; status: string | null; position: string | null; organization: string | null } | null;
+    /** Set when the person is linked to an EUISIS employee, even before the directory cache has the record. */
+    employee_uuid: string | null;
     has_applicant: boolean;
     can_link: boolean;
     can_link_employee: boolean;

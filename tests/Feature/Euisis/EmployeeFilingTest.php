@@ -52,7 +52,6 @@ function filingPayload(int $caseTypeId, array $overrides = []): array
         ],
         'filing_id' => (string) Str::uuid(),
         'case_type_id' => $caseTypeId,
-        'title' => 'Transfer decision contested',
         'description' => "I was transferred without notice.\n\nThe grievance committee upheld the transfer.",
         'relief_requested' => 'Reinstatement to my position.',
         'respondent' => ['organization_uuid' => (string) Str::uuid(), 'name' => 'Bureau of Finance', 'address' => 'Addis Ababa'],
@@ -95,6 +94,8 @@ test('an employee files a case from EUISIS with the grievance record and documen
     $case = DB::table('court_cases')->where('id', $response->json('data.case_id'))->first();
     $applicant = Applicant::query()->findOrFail($case->applicant_id);
     expect($applicant->euisis_employee_uuid)->toBe($payload['employee']['uuid'])
+        // The case title is the applicant's name, as on the applicant form.
+        ->and($case->title)->toBe('Meron A Haile')
         ->and($case->source)->toBe('euisis_employee')
         ->and($case->euisis_filing_id)->toBe($payload['filing_id'])
         ->and($case->respondent_organization_uuid)->toBe($payload['respondent']['organization_uuid'])
@@ -139,7 +140,10 @@ test('filing needs the people:file ability, an EUISIS institution and well-forme
 
 test('the case page shows staff the EUISIS grievance record', function (): void {
     [, $token] = filingClient();
-    $caseId = $this->withToken($token)->postJson('/api/v1/integration/people/cases', filingPayload(filingCaseType()))->assertCreated()->json('data.case_id');
+    $payload = filingPayload(filingCaseType());
+    $caseId = $this->withToken($token)->postJson('/api/v1/integration/people/cases', $payload)->assertCreated()->json('data.case_id');
+    // The respondent is in the directory cache, so the EUISIS panel shows.
+    DB::table('euisis_organizations')->insert(['uuid' => $payload['respondent']['organization_uuid'], 'name_en' => 'Bureau of Finance', 'status' => 'active', 'created_at' => now(), 'updated_at' => now()]);
 
     $user = User::factory()->create(['status' => 'active', 'email_verified_at' => now()]);
     $role = Role::query()->create(['name' => 'Filing viewer '.Str::random(6)]);
@@ -152,6 +156,9 @@ test('the case page shows staff the EUISIS grievance record', function (): void 
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('Court/Cases/Show')
             ->where('euisisRecord.filed_from_euisis', true)
+            // Linked, though the EUISIS directory cache has no record of the employee yet.
+            ->where('euisis.employee', null)
+            ->where('euisis.employee_uuid', $payload['employee']['uuid'])
             ->has('euisisRecord.grievances', 1, fn (AssertableInertia $grievance) => $grievance
                 ->where('reference', 'GRV-2610-0011')
                 ->where('subject', 'Transfer without notice')

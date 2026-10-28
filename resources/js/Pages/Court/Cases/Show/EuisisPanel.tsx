@@ -114,7 +114,7 @@ export default function EuisisPanel({ caseId, panel }: Props) {
                                 <p className="text-xs font-semibold text-amber-700 dark:text-amber-300">{fill(t('cm.euisis.panel.employee_status'), { status: panel.employee.status })}</p>
                             )}
                         </>
-                    ) : <p className="text-sm text-(--app-muted-foreground)">{t('cm.euisis.panel.not_linked')}</p>}
+                    ) : <p className="text-sm text-(--app-muted-foreground)">{t(panel.employee_uuid ? 'cm.euisis.panel.employee_not_synced' : 'cm.euisis.panel.not_linked')}</p>}
 
                     {panel.can_link_employee && (
                         <form onSubmit={linkEmployee} className="flex flex-wrap items-end gap-2">

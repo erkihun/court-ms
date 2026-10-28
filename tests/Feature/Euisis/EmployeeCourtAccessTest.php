@@ -146,6 +146,9 @@ test('an incomplete employee record or a deactivated account gets no ticket', fu
 
     $this->withToken($token)->postJson('/api/v1/integration/people/sign-in-tickets', ['employee' => employeeAccessEmployee(['phone' => null]), 'target' => 'dashboard'])
         ->assertStatus(409)->assertJsonPath('error_code', 'employee_record_incomplete');
+    // Gender is a required male/female column: an unknown one is never guessed.
+    $this->withToken($token)->postJson('/api/v1/integration/people/sign-in-tickets', ['employee' => employeeAccessEmployee(['gender' => null]), 'target' => 'dashboard'])
+        ->assertStatus(409)->assertJsonPath('error_code', 'employee_record_incomplete');
 
     $employee = employeeAccessEmployee();
     employeeAccessApplicant(['national_id_number' => $employee['national_id'], 'euisis_employee_uuid' => $employee['uuid'], 'is_active' => false]);

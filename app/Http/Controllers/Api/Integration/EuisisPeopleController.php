@@ -83,7 +83,6 @@ class EuisisPeopleController extends Controller
             'employee.address' => ['nullable', 'string', 'max:255'],
             'filing_id' => ['required', 'uuid'],
             'case_type_id' => ['required', 'integer', 'exists:case_types,id'],
-            'title' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:20000'],
             'relief_requested' => ['nullable', 'string', 'max:5000'],
             'respondent' => ['required', 'array'],

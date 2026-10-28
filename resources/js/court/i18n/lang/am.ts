@@ -1691,6 +1691,7 @@ const lang: Record<string, unknown> = {
             "applicant_employee": "አመልካቹ በEUISIS ሠራተኛነት",
             "complainant_employee": "ቅሬታ አቅራቢው በEUISIS ሠራተኛነት",
             "not_linked": "አልተገናኘም",
+            "employee_not_synced": "መዝገቡ እስካሁን ወደ ማውጫው ቅጂ ካልደረሰ የEUISIS ሠራተኛ ጋር ተገናኝቷል (በቀጣዩ የEUISIS ማመሳሰል ይደርሳል)።",
             "no_organization": "— አልተገናኘም —",
             "link": "አገናኝ",
             "find_and_link": "ፈልግና አገናኝ",

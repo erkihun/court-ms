@@ -76,8 +76,8 @@ Errors are `{message, error_code, request_id}`; `401 unauthenticated`,
 | `GET /api/v1/integration/referrals/{referral_id}` | `referrals:read` | The referral and its case number and states |
 | `GET /api/v1/integration/referrals/updates?since=&limit=` | `referrals:read` | `{data: [{cursor, referral_id, case_number, review_status, review_reason, status, hearing_at, decision_date, decision_summary, changed, occurred_at}], next_cursor, has_more}` |
 | `POST /api/v1/integration/people/court-summary` | `people:read` | Body `{employee: {uuid, national_id?, email?}}`. `{data: {linked: false}}`, or `{data: {linked: true, applicant, counts{cases, open, awaiting_review, upcoming_hearings, unread_notices}, cases[{id, case_number, title, case_type, status, review_status, filed_at, next_hearing_at}], notices[{id, title, message, created_at}]}}`. Reads only |
-| `POST /api/v1/integration/people/sign-in-tickets` | `people:sign-in` | Body `{employee: {uuid, national_id, first_name, middle_name?, last_name, gender?, email, phone, position?, organization_name?, address?}, target}`; `target` is `dashboard`, `cases`, `new_case`, `notifications`, `profile` or `case:<id>` of the employee's own case. `201 {data: {url, expires_at}}`. `409` with `error_code` `linked_to_another_employee`, `identity_mismatch`, `employee_record_incomplete`, `phone_in_use` or `account_inactive`; `404 unknown_target` |
-| `POST /api/v1/integration/people/cases` | `people:file` | Multipart. The employee files a case from the EUISIS employee portal. `employee{…}` as for tickets, `filing_id` (UUID, the idempotency key: `201` the first time, `200` with the same case after), `case_type_id`, `title`, `description`, `relief_requested?`, `respondent{organization_uuid, name, address?}`, `grievances` (a JSON string, ≤ 20: `[{uuid, reference?, subject, category?, status?, description?, submitted_at?, closed_at?, responses[{body, at?}], decisions[{number?, type?, text, at?}]}]`), `documents[]` (PDF, ≤ 10 MB, ≤ 20) with `document_titles[]` and `document_sources[]`. `{data: {case_id, case_number, review_status, status}}`; `409` as for tickets |
+| `POST /api/v1/integration/people/sign-in-tickets` | `people:sign-in` | Body `{employee: {uuid, national_id, first_name, middle_name?, last_name, gender, email, phone, position?, organization_name?, address?}, target}` (`gender` `male` or `female`, needed when the account is opened); `target` is `dashboard`, `cases`, `new_case`, `notifications`, `profile` or `case:<id>` of the employee's own case. `201 {data: {url, expires_at}}`. `409` with `error_code` `linked_to_another_employee`, `identity_mismatch`, `employee_record_incomplete`, `phone_in_use` or `account_inactive`; `404 unknown_target` |
+| `POST /api/v1/integration/people/cases` | `people:file` | Multipart. The employee files a case from the EUISIS employee portal. `employee{…}` as for tickets, `filing_id` (UUID, the idempotency key: `201` the first time, `200` with the same case after), `case_type_id`, `description`, `relief_requested?`, `respondent{organization_uuid, name, address?}`, `grievances` (a JSON string, ≤ 20: `[{uuid, reference?, subject, category?, status?, description?, submitted_at?, closed_at?, responses[{body, at?}], decisions[{number?, type?, text, at?}]}]`), `documents[]` (PDF, ≤ 10 MB, ≤ 20) with `document_titles[]` and `document_sources[]`. `{data: {case_id, case_number, review_status, status}}`; `409` as for tickets |
 | `GET /api/v1/integration/letters/updates?since=&limit=` | `letters:read` | Approved letters for EUISIS institutions: `{data: [{cursor, letter_id, organization_uuid, case_number, case_title, subject, reference_number, recipient, approved_by, approved_at, pdf_url}], next_cursor, has_more}` |
 | `GET /api/v1/integration/letters/{letter}/pdf` | `letters:read` | The approved letter as a PDF; `404` unless it is in the delivery queue |
 
@@ -98,8 +98,10 @@ file, follow or answer something, asks for a ticket and sends the browser to its
   (`applicants.euisis_employee_uuid`). Before the first link, the applicant with their
   national ID, then their email; an email match with a different national ID is
   refused. A match linked to another employee is never taken over. With no match, the
-  first ticket opens a court account from the EUISIS record (national ID, phone and email
-  are required; the password is random and never used; the email counts as verified).
+  first ticket (or filing) opens a court account from the EUISIS record (national ID,
+  phone, email and gender, male or female, are required: gender is never guessed; the
+  address may be empty; the password is random and never used; the email counts as
+  verified).
 - **Tickets** (`applicant_sign_in_tickets`): 64 random characters, stored as a SHA-256
   hash, valid two minutes, used once (claimed atomically).
   `GET /applicant/euisis/sign-in/{ticket}` signs the person in as an applicant (replacing
@@ -120,7 +122,8 @@ or be sued.
   `respondent.organization_uuid`. The portal still follows, answers and messages cases.
 - **The filing** (`POST /people/cases`): the employee's court account is found or opened
   as in Flow 4; the respondent must be in the mirrored EUISIS directory once court-ms has
-  one. The case starts `pending`, `awaiting_review`, with `source = euisis_employee`,
+  one. The case title is the applicant's name, as on the applicant form. The case starts
+  `pending`, `awaiting_review`, with `source = euisis_employee`,
   `euisis_filing_id` and `respondent_organization_uuid`.
 - **The grievance record**: each attached grievance, with its responses and decisions as
   plain text, is a row of `case_euisis_grievances`; staff see it on the case summary

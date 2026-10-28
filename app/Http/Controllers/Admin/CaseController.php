@@ -1150,6 +1150,8 @@ class CaseController extends Controller
                 'position' => $panel->position?->displayTitle(),
                 'organization' => $panel->employeeOrganization?->displayName(),
             ] : null,
+            // Linked (Flow 4/5) although the directory cache does not have the record yet.
+            'employee_uuid' => $panel->employeeUuid,
             'has_applicant' => $hasApplicant,
             'can_link' => $canLink,
             'can_link_employee' => $canLink && $panel->enabled && ($hasApplicant || $referral !== null),
