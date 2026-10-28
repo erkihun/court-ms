@@ -4,9 +4,7 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "dev:legacy": "vite --config vite.legacy.config.js",
-        "build": "tsc && vite build && vite build --config vite.legacy.config.js",
-        "build:legacy": "vite build --config vite.legacy.config.js",
+        "build": "tsc && vite build",
         "sync:euisis": "node scripts/sync-from-euisis.mjs",
         "typecheck": "tsc --noEmit -p ."
     },
@@ -20,16 +18,12 @@
         "@types/react": "^19.3.0",
         "@types/react-dom": "^19.3.0",
         "@vitejs/plugin-react": "^6.1.2",
-        "alpinejs": "^3.15.0",
-        "autoprefixer": "^10.4.2",
         "axios": "^1.7.4",
         "concurrently": "^10.0.6",
         "laravel-vite-plugin": "^3.2.0",
-        "postcss": "^8.4.31",
         "react": "^19.3.1",
         "react-dom": "^19.3.1",
         "tailwindcss": "^4.3.3",
-        "tailwindcss-v3": "npm:tailwindcss@^3.4.19",
         "typescript": "^7.0.2",
         "vite": "^8.3.5"
     },
@@ -38,21 +32,15 @@
         "@fontsource/abyssinica-sil": "^5.3.0",
         "@fontsource/inter": "^5.3.0",
         "@fontsource/noto-sans-ethiopic": "^5.3.0",
-        "@popperjs/core": "^2.11.8",
         "@solar-icons/react": "^2.3.2",
         "@tanstack/react-table": "^9.3.1",
         "@tinymce/tinymce-react": "^6.3.1",
-        "adminlte4": "^4.0.0-rc.4.20250823",
-        "bootstrap": "^5.3.8",
-        "chart.js": "^4.5.0",
         "cmdk": "^1.1.1",
         "dompurify": "^3.4.17",
-        "jquery": "^3.7.1",
         "laravel-echo": "^2.6.1",
         "pusher-js": "^8.6.0",
         "recharts": "^3.8.1",
         "sonner": "^2.0.7",
-        "tinymce": "^8.10.0",
-        "xhtml-purifier": "^0.4.1"
+        "tinymce": "^8.10.0"
     }
 }
