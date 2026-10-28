@@ -97,13 +97,16 @@ test('authorized administrator sees every audit source and evidence field', func
     $this->actingAs($admin)
         ->get(route('admin.audit'))
         ->assertOk()
-        ->assertSee('End-to-End Audit Trail')
-        ->assertSee('audit.system.example')
-        ->assertSee('audit_case_example')
-        ->assertSee('AUDIT-CASE-001')
-        ->assertSee('Model history')
-        ->assertSee('req-system-001')
-        ->assertSee('HTTP 422');
+        // The page (Court/Audit/Index) draws every source and evidence field from these props.
+        ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->component('Court/Audit/Index')
+            ->where('events.data', function ($rows): bool {
+                $rows = collect($rows);
+
+                return $rows->contains(fn ($row) => $row['action'] === 'audit.system.example' && $row['request_id'] === 'req-system-001' && $row['response_status'] === 422)
+                    && $rows->contains(fn ($row) => $row['action'] === 'audit_case_example' && $row['target_label'] === 'AUDIT-CASE-001')
+                    && $rows->contains(fn ($row) => $row['source_label'] === 'Model history');
+            }));
 });
 
 test('audit filters apply across the unified timeline', function (): void {
@@ -113,8 +116,10 @@ test('audit filters apply across the unified timeline', function (): void {
     $this->actingAs($admin)
         ->get(route('admin.audit', ['source' => 'case']))
         ->assertOk()
-        ->assertSee('audit_case_example')
-        ->assertDontSee('audit.system.example');
+        ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->where('filters.source', 'case')
+            ->where('events.data', fn ($rows) => collect($rows)->pluck('action')->contains('audit_case_example')
+                && ! collect($rows)->pluck('action')->contains('audit.system.example')));
 });
 
 test('destructive activity states who deleted which record', function (): void {
@@ -168,8 +173,9 @@ test('destructive activity states who deleted which record', function (): void {
     $this->actingAs($admin)
         ->get(route('admin.audit', ['search' => $requestId]))
         ->assertOk()
-        ->assertSee('Deleted Letter Template')
-        ->assertSee('ICT Support: Deleted Letter Template - Letter Template "Notice Template" #7.');
+        ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->where('events.data', fn ($rows) => collect($rows)->contains(fn ($row) => $row['action_label'] === 'Deleted Letter Template'
+                && $row['description'] === 'ICT Support: Deleted Letter Template - Letter Template "Notice Template" #7.')));
 });
 
 test('staff without audit permission cannot open the audit trail', function (): void {
