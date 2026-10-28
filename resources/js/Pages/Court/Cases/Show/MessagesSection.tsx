@@ -16,6 +16,25 @@ interface Props {
     currentUserInitial: string;
 }
 
+const URL_PATTERN = /(https?:\/\/[^\s<>"]+)/g;
+
+/**
+ * A message's text with its links clickable (the approved-letter notices carry
+ * a signed preview link). Review notices sent before the fix kept the
+ * placeholder `:case` unfilled; it reads as the case number.
+ */
+function MessageBody({ body, caseNumber, light }: { body: string; caseNumber: string; light: boolean }) {
+    const filled = body.replace(/:case\b/g, caseNumber);
+
+    return (
+        <>
+            {filled.split(URL_PATTERN).map((part, i) => (i % 2 === 1
+                ? <a key={i} href={part} target="_blank" rel="noopener noreferrer" className={cx('break-all underline underline-offset-2', light ? 'text-white' : 'text-primary')}>{part}</a>
+                : part))}
+        </>
+    );
+}
+
 /** The message thread between the court and the applicant, with the composer (Enter sends). */
 export default function MessagesSection({ caseId, caseNumber, messages, canCreate, caseLocked, currentUserInitial }: Props) {
     const { t, text } = useCaseText();
@@ -56,7 +75,7 @@ export default function MessagesSection({ caseId, caseNumber, messages, canCreat
                                 <span className="text-[10.5px] text-(--app-muted-foreground)"><LocalizedDateDisplay value={message.created_at} withTime /></span>
                             </div>
                             <div className={cx('whitespace-pre-wrap break-words rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm', message.from_admin ? 'rounded-br-sm bg-primary text-white' : 'rounded-bl-sm border border-(--app-border) bg-(--app-surface-muted) text-(--app-foreground)')}>
-                                {message.body}
+                                <MessageBody body={message.body} caseNumber={caseNumber} light={message.from_admin} />
                             </div>
                         </div>
                     </div>

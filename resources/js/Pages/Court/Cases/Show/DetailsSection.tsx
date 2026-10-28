@@ -8,6 +8,7 @@ import { useCalendarSystem } from '@/lib/calendar/calendarSystem';
 import { formatDateDisplay, formatDateTimeDisplay } from '@/lib/calendar/dateFormat';
 import type { CaseDetailCase, CaseDocument, CaseWitness } from '@/court/types/caseDetail';
 import DocumentSheet from './DocumentSheet';
+import { fileKind } from './fileKind';
 import { printCaseOverview } from './printCaseOverview';
 import SectionCard, { EmptyBox } from './SectionCard';
 import { useCaseText } from './useCaseText';
@@ -140,7 +141,7 @@ function DocumentsTable({ caseId, docs }: { caseId: number; docs: CaseDocument[]
                                         <div className="font-medium text-(--app-foreground)">{doc.title ?? t('cm.cases.documents.document')}</div>
                                         {doc.description_html && <div className="rich-text mt-1 text-xs text-(--app-muted-foreground)" dangerouslySetInnerHTML={{ __html: doc.description_html }} />}
                                     </td>
-                                    <td className={tableCellClassName}>{doc.mime ?? t('cm.cases.documents.document')}</td>
+                                    <td className={tableCellClassName}>{fileKind(doc.mime) ?? t('cm.cases.documents.document')}</td>
                                     <td className={tableCellClassName}>
                                         <LocalizedDateDisplay value={doc.created_at} withTime />
                                         {doc.size !== null && <span className="ml-1 text-xs text-(--app-muted-foreground)">({(Math.max(0, doc.size) / 1024).toFixed(1)} KB)</span>}

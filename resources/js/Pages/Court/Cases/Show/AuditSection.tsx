@@ -10,9 +10,13 @@ const humanize = (action: string): string => {
     return text.charAt(0).toUpperCase() + text.slice(1);
 };
 
-/** The case audit trail: when, action, actor and the recorded details. */
+/** The case audit trail: when, what happened, who did it and the recorded details as labelled lines. */
 export function AuditSection({ audits }: { audits: CaseAudit[] }) {
-    const { t } = useCaseText();
+    const { t, tx } = useCaseText();
+    const actor = (audit: CaseAudit): string => {
+        const role = tx(`cm.case_audit.actors.${audit.actor_type ?? 'system'}`, audit.actor_type ?? 'system');
+        return audit.actor_name ? `${audit.actor_name} · ${role}` : role;
+    };
 
     return (
         <SectionCard id="audits" title={t('cm.cases.case_audit_trail')} icon={<AuditIcon />} count={`${audits.length} ${t('cm.cases.show.entries')}`}>
@@ -29,20 +33,21 @@ export function AuditSection({ audits }: { audits: CaseAudit[] }) {
                             </thead>
                             <tbody className={tableBodyClassName}>
                                 {audits.map((audit) => (
-                                    <tr key={audit.id} className={tableRowClassName}>
-                                        <td className={cx(tableCellClassName, 'whitespace-nowrap')}><LocalizedDateDisplay value={audit.created_at} withTime /></td>
-                                        <td className={cx(tableCellClassName, 'font-medium text-(--app-foreground)')}>{humanize(audit.action)}</td>
+                                    <tr key={audit.id} className={cx(tableRowClassName, 'align-top')}>
+                                        <td className={cx(tableCellClassName, 'whitespace-nowrap text-xs')}><LocalizedDateDisplay value={audit.created_at} withTime /></td>
+                                        <td className={cx(tableCellClassName, 'font-medium text-(--app-foreground)')}>{tx(`cm.case_audit.actions.${audit.action}`, humanize(audit.action))}</td>
+                                        <td className={cx(tableCellClassName, 'text-xs')}>{actor(audit)}</td>
                                         <td className={cx(tableCellClassName, 'text-xs')}>
-                                            {audit.actor_name
-                                                ? <>{audit.actor_name}{audit.actor_id ? ` (#${audit.actor_id})` : ''}</>
-                                                : audit.actor_id
-                                                    ? `${audit.actor_type ?? 'system'} (#${audit.actor_id})`
-                                                    : (audit.actor_type ?? 'system')}
-                                        </td>
-                                        <td className={cx(tableCellClassName, 'text-xs')}>
-                                            {audit.meta
-                                                ? <pre className="whitespace-pre-wrap rounded-control border border-(--app-border) bg-(--app-surface-muted) px-2 py-1 text-[11px]">{audit.meta}</pre>
-                                                : <span className="text-(--app-muted-foreground)">-</span>}
+                                            {audit.details.length > 0 ? (
+                                                <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+                                                    {audit.details.map((line, i) => (
+                                                        <div key={i} className="contents">
+                                                            <dt className="text-(--app-muted-foreground)">{line.label}</dt>
+                                                            <dd className="max-w-md break-words text-(--app-foreground)">{line.kind === 'date' ? <LocalizedDateDisplay value={line.value} withTime /> : line.value}</dd>
+                                                        </div>
+                                                    ))}
+                                                </dl>
+                                            ) : <span className="text-(--app-muted-foreground)">—</span>}
                                         </td>
                                     </tr>
                                 ))}
@@ -55,25 +60,30 @@ export function AuditSection({ audits }: { audits: CaseAudit[] }) {
     );
 }
 
-/** The status timeline (case_status_logs): each change, its note and when it happened. */
+/** The status timeline (case_status_logs): each change as "from → to", its note and when it happened. */
 export function TimelineSection({ timeline }: { timeline: CaseTimelineEntry[] }) {
     const { t, text, statusLabel } = useCaseText();
 
     return (
         <SectionCard id="timeline" title={text('timeline_title')} icon={<ClockIcon />} count={`${timeline.length} ${t('cm.cases.show.entries')}`}>
             {timeline.length === 0 ? <EmptyBox>{text('timeline_empty')}</EmptyBox> : (
-                <ol className="space-y-3">
+                <ol className="relative space-y-3 border-s-2 border-(--app-border) ps-5">
                     {timeline.map((entry) => (
-                        <li key={entry.id} className="flex flex-wrap items-start justify-between gap-3 rounded-control border border-(--app-border) bg-(--app-surface-muted) px-4 py-3 text-sm">
-                            <div>
-                                <span className="text-(--app-muted-foreground)">{text('timeline_from')} </span>
-                                <span className="font-medium text-(--app-foreground)">{entry.from_status ? statusLabel(entry.from_status) : '—'}</span>
-                                <span className="mx-2 text-(--app-muted-foreground)">→</span>
-                                <span className="text-(--app-muted-foreground)">{text('timeline_to')} </span>
-                                <span className="font-medium text-(--app-foreground)">{entry.to_status ? statusLabel(entry.to_status) : '—'}</span>
-                                {entry.note && <p className="mt-1 text-xs text-(--app-muted-foreground)">{text('timeline_note')}: {entry.note}</p>}
+                        <li key={entry.id} className="relative rounded-control border border-(--app-border) bg-(--app-surface-muted) px-4 py-3 text-sm">
+                            <span aria-hidden="true" className="absolute -start-[1.72rem] top-4 h-3 w-3 rounded-full border-2 border-(--app-surface) bg-primary" />
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    {entry.from_status ? (
+                                        <>
+                                            <span className="rounded-full border border-(--app-border) bg-(--app-surface) px-2.5 py-0.5 text-xs text-(--app-muted-foreground)">{statusLabel(entry.from_status)}</span>
+                                            <span aria-label={text('timeline_to')} className="text-(--app-muted-foreground)">→</span>
+                                        </>
+                                    ) : <span className="text-xs text-(--app-muted-foreground)">{text('timeline_opened')}</span>}
+                                    <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">{entry.to_status ? statusLabel(entry.to_status) : '—'}</span>
+                                </div>
+                                <span className="text-xs text-(--app-muted-foreground)"><LocalizedDateDisplay value={entry.created_at} withTime /></span>
                             </div>
-                            <span className="text-xs text-(--app-muted-foreground)"><LocalizedDateDisplay value={entry.created_at} withTime /></span>
+                            {entry.note && <p className="mt-2 text-xs text-(--app-muted-foreground)"><span className="font-semibold text-(--app-foreground)">{text('timeline_note')}:</span> {entry.note}</p>}
                         </li>
                     ))}
                 </ol>

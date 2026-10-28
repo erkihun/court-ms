@@ -4,6 +4,7 @@ import LocalizedDateDisplay from '@/Components/Calendar/LocalizedDateDisplay';
 import { Button, FieldError, FormField, Input, actionLinkClassName, buttonClassName, cx } from '@/Components/ui';
 import { useConfirm } from '@/hooks/useConfirm';
 import type { CaseDetailPermissions, CaseFile } from '@/court/types/caseDetail';
+import { fileKind } from './fileKind';
 import SectionCard, { EmptyBox } from './SectionCard';
 import { useCaseText } from './useCaseText';
 import { EyeIcon, FilesIcon, TrashIcon, UploadIcon } from './icons';
@@ -72,7 +73,7 @@ export default function FilesSection({ caseId, files, can, caseLocked }: Props) 
                             <div>
                                 <div className="flex items-center gap-2 font-medium text-(--app-foreground)"><FilesIcon className="h-4 w-4 text-(--app-muted-foreground)" /> {file.name}</div>
                                 <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-(--app-muted-foreground)">
-                                    <span>{file.mime ?? t('cm.cases.file')}</span>
+                                    <span>{fileKind(file.mime) ?? t('cm.cases.file')}</span>
                                     <span>• {(file.size / 1024).toFixed(1)} KB</span>
                                     <span>• <LocalizedDateDisplay value={file.created_at} withTime /></span>
                                     {file.uploaded_by && <span>• {t('cm.cases.files.uploaded_by')} {file.uploaded_by}</span>}

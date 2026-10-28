@@ -37,7 +37,7 @@ class CasePartiesController extends Controller
         $service = app(CaseParties::class);
         $service->ensureLead($caseId);
         $iso = fn (mixed $value): ?string => $value ? Carbon::parse($value)->toIso8601String() : null;
-        $columns = ['id', 'case_number', 'status', 'respondent_name', 'merged_into_case_id', 'merged_at', 'merge_note'];
+        $columns = ['id', 'case_number', 'status', 'respondent_name', 'merged_into_case_id', 'merged_at', 'merge_note', 'created_at'];
         if (Schema::hasColumn('court_cases', 'respondent_organization_uuid')) {
             $columns[] = 'respondent_organization_uuid';
         }
@@ -78,7 +78,8 @@ class CasePartiesController extends Controller
                 'decided_at' => $iso($party->decided_at),
                 'decided_by' => $party->decided_by_user_id ? ($deciders[$party->decided_by_user_id] ?? null) : null,
                 'merged_from' => $party->merged_from_case_id ? ($origins[$party->merged_from_case_id] ?? null) : null,
-                'created_at' => $iso($party->created_at),
+                // A lead added by the backfill has been a party since the case was filed, not since the backfill ran.
+                'created_at' => $iso($party->role === CaseApplicant::ROLE_LEAD && $party->source === 'backfill' ? ($case->created_at ?? $party->created_at) : $party->created_at),
                 'representatives' => $party->representatives->map(fn (CaseRepresentative $representative): array => [
                     'id' => (int) $representative->id,
                     'name' => $representative->lawyer ? CaseParties::fullName($representative->lawyer) : '—',

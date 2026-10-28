@@ -16,7 +16,7 @@ const humanize = (status: string): string => {
 
 /** The letters logged against this case number. */
 export function LettersSection({ letters, canView }: { letters: CaseLetter[]; canView: boolean }) {
-    const { t } = useCaseText();
+    const { t, tx } = useCaseText();
 
     return (
         <SectionCard id="letters" title={t('cm.cases.navigation.letters')} icon={<MailIcon />} count={`${letters.length} ${t('cm.cases.show.entries')}`}>
@@ -38,7 +38,7 @@ export function LettersSection({ letters, canView }: { letters: CaseLetter[]; ca
                                         <td className={cx(tableCellClassName, 'font-medium text-(--app-foreground)')}>{letter.reference_number ?? '—'}</td>
                                         <td className={tableCellClassName}>{letter.subject ?? '—'}</td>
                                         <td className={tableCellClassName}>{letter.template_title ?? '—'}</td>
-                                        <td className={tableCellClassName}><UiStatusBadge tone={LETTER_TONES[letter.approval_status] ?? 'neutral'}>{humanize(letter.approval_status)}</UiStatusBadge></td>
+                                        <td className={tableCellClassName}><UiStatusBadge tone={LETTER_TONES[letter.approval_status] ?? 'neutral'}>{tx(`cm.cases.letters_section.status.${letter.approval_status}`, humanize(letter.approval_status))}</UiStatusBadge></td>
                                         <td className={tableCellClassName}><LocalizedDateDisplay value={letter.created_at} withTime /></td>
                                         <td className={tableCellClassName}>{letter.author_name ?? '—'}</td>
                                         <td className={cx(tableCellClassName, 'text-right')}>

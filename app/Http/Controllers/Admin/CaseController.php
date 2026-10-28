@@ -18,6 +18,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use App\Models\User;
 use App\Models\RespondentResponse;
 use App\Models\ApplicantResponseReply;
@@ -973,19 +974,7 @@ class CaseController extends Controller
                 'address' => $w->address ?? null,
                 'notes' => $w->notes ?? null,
             ])->values()->all(),
-            'audits' => collect($audits)->map(function ($a) use ($iso) {
-                $meta = $a->meta ? json_decode((string) $a->meta, true) : null;
-
-                return [
-                    'id' => (int) $a->id,
-                    'action' => (string) ($a->action ?? ''),
-                    'actor_type' => $a->actor_type ?? null,
-                    'actor_id' => $a->actor_id ?? null,
-                    'actor_name' => $a->actor_name ?? null,
-                    'meta' => $meta ? json_encode($meta, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) : null,
-                    'created_at' => $iso($a->created_at ?? null),
-                ];
-            })->values()->all(),
+            'audits' => $this->auditRows($audits, $iso),
             'letters' => collect($letters)->map(fn ($l) => [
                 'id' => (int) $l->id,
                 'subject' => $l->subject ?? null,
@@ -1227,6 +1216,18 @@ class CaseController extends Controller
         }
 
         DB::table('court_cases')->where('id', $id)->update($updatePayload);
+
+        // The activation is a status change like any other: it goes on the case's status timeline.
+        if (isset($updatePayload['status']) && (string) $case->status !== $updatePayload['status']) {
+            DB::table('case_status_logs')->insert([
+                'case_id'            => $id,
+                'from_status'        => $case->status,
+                'to_status'          => $updatePayload['status'],
+                'changed_by_user_id' => Auth::id(),
+                'created_at'         => now(),
+                'updated_at'         => now(),
+            ]);
+        }
 
         $this->logCaseAudit($id, 'review_decision', [
             'decision' => $newStatus,
@@ -1949,7 +1950,7 @@ class CaseController extends Controller
         };
 
         $body = __('cases.notifications.case_reviewed', [
-            'case_number' => $case->case_number,
+            'case' => $case->case_number,
             'decision' => $decisionText,
         ]);
         if ($note !== '') {
@@ -1992,6 +1993,58 @@ class CaseController extends Controller
         } catch (\Throwable $e) {
             Log::error('Failed sending review decision email', ['case_id' => $case->id, 'error' => $e->getMessage()]);
         }
+    }
+
+    /**
+     * The audit trail as the case page shows it: each entry's recorded details as labelled
+     * lines in the reader's language, ids resolved to the bench and user names, statuses and
+     * decisions translated, the hearing time as a date the page formats. `meta` keeps the raw
+     * record for an action the labels do not know yet.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function auditRows($audits, callable $iso): array
+    {
+        $metas = collect($audits)->mapWithKeys(fn ($a) => [(int) $a->id => is_array($m = json_decode((string) ($a->meta ?? ''), true)) ? $m : []]);
+        $ids = fn (string ...$keys) => $metas->flatMap(fn (array $m) => array_map(fn ($k) => $m[$k] ?? null, $keys))->filter(fn ($v) => is_numeric($v))->map(fn ($v) => (int) $v)->unique()->values();
+        $teams = Schema::hasTable('teams') ? DB::table('teams')->whereIn('id', $ids('assigned_team_id'))->pluck('name', 'id') : collect();
+        $users = DB::table('users')->whereIn('id', $ids('assigned_user_id', 'assigned_member_user_id'))->pluck('name', 'id');
+        $label = fn (string $key) => __("case_audit.fields.{$key}");
+        $known = fn (string $group, $value) => ($text = __("{$group}.{$value}")) !== "{$group}.{$value}" ? $text : (string) $value;
+        $blank = fn ($value) => $value === null || $value === '' || $value === 'NULL';
+
+        return collect($audits)->map(function ($a) use ($iso, $metas, $teams, $users, $label, $known, $blank) {
+            $meta = $metas[(int) $a->id];
+            $details = [];
+            foreach ($meta as $key => $value) {
+                if ($blank($value) || is_array($value) || in_array($key, ['path', 'hearing_id'], true)) {
+                    continue;
+                }
+                $line = match ($key) {
+                    'assigned_team_id' => [$label('team'), $teams[(int) $value] ?? "#{$value}"],
+                    'assigned_user_id' => [$label('judge'), $users[(int) $value] ?? "#{$value}"],
+                    'assigned_member_user_id' => [$label('member'), $users[(int) $value] ?? "#{$value}"],
+                    'from', 'to' => [$label($key), $known('cases.status', $value)],
+                    'decision' => [$label('decision'), $known('cases.review_status', $value)],
+                    'by' => [$label('by'), $known('case_audit.by', $value)],
+                    'when' => [$label('when'), (string) $value, 'date'],
+                    'respondent', 'note', 'body', 'label', 'sections' => [$label($key), (string) $value],
+                    default => [Str::headline((string) $key), (string) $value],
+                };
+                $details[] = ['label' => $line[0], 'value' => $line[1], 'kind' => $line[2] ?? 'text'];
+            }
+
+            return [
+                'id' => (int) $a->id,
+                'action' => (string) ($a->action ?? ''),
+                'actor_type' => $a->actor_type ?? null,
+                'actor_id' => $a->actor_id ?? null,
+                'actor_name' => $a->actor_name ?? null,
+                'details' => $details,
+                'meta' => $meta !== [] ? json_encode($meta, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) : null,
+                'created_at' => $iso($a->created_at ?? null),
+            ];
+        })->values()->all();
     }
 
     /**

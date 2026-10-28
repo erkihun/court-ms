@@ -115,6 +115,8 @@ export interface CaseAudit {
     actor_type: string | null;
     actor_id: number | string | null;
     actor_name: string | null;
+    /** The recorded details as labelled lines in the reader's language (ids resolved to names). */
+    details: Array<{ label: string; value: string; kind: 'text' | 'date' }>;
     /** Pretty-printed JSON, or null. */
     meta: string | null;
     created_at: string | null;

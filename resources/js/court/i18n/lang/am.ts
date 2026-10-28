@@ -965,6 +965,48 @@ const lang: Record<string, unknown> = {
         },
         "title": "የችሎት ውሎ ማስታወሻዎች"
     },
+    "case_audit": {
+        "actions": {
+            "applicant_updated": "አመልካቹ መዝገቡን አሻሽሏል",
+            "review_decision": "የግምገማ ውሳኔ",
+            "assigned": "ተመድቧል",
+            "unassigned": "ምደባው ተነስቷል",
+            "message_posted": "መልዕክት ተልኳል",
+            "status_updated": "ሁኔታው ተቀይሯል",
+            "file_uploaded": "ፋይል ተጭኗል",
+            "hearing_created": "ችሎት ተቀጥሯል",
+            "hearing_updated": "ችሎቱ ተቀይሯል",
+            "hearing_deleted": "ችሎቱ ተሰርዟል",
+            "respondent_viewed": "ተጠሪው መዝገቡን ከፍቷል",
+            "response_reply_reviewed": "የመልስ መልሱ ተገምግሟል"
+        },
+        "actors": {
+            "user": "የፍርድ ቤቱ ሠራተኛ",
+            "applicant": "አመልካች",
+            "respondent": "ተጠሪ",
+            "system": "ሥርዓቱ"
+        },
+        "fields": {
+            "respondent": "ተጠሪ",
+            "decision": "ውሳኔ",
+            "note": "ማስታወሻ",
+            "from": "ከ",
+            "to": "ወደ",
+            "team": "ችሎት",
+            "judge": "የተመደበለት",
+            "member": "የችሎቱ አባል",
+            "by": "በ",
+            "body": "መልዕክት",
+            "label": "ሰነድ",
+            "when": "ችሎት",
+            "hearing": "የችሎት ቁጥር",
+            "sections": "የተሻሻለው"
+        },
+        "by": {
+            "admin": "ፍርድ ቤቱ",
+            "applicant": "አመልካቹ"
+        }
+    },
     "case_inspections": {
         "title": "የጉዳይ ምርመራዎች",
         "common": {
@@ -1220,13 +1262,13 @@ const lang: Record<string, unknown> = {
             "update": "አዘምን"
         },
         "cancel": "ሰርዝ",
-        "case_audit_trail": "የጉዳዩ የክትትል መዝገብ (Audit trail)",
-        "case_details": "የ መዝገብ ዝርዝር",
+        "case_audit_trail": "የጉዳዩ የክትትል መዝገብ",
+        "case_details": "የመዝገብ ዝርዝር",
         "case_information": "የመዝገብ መረጃ",
         "case_number": "መዝገብ ቁጥር #",
         "case_number_short": "የክስ ቁጥር",
-        "case_title": "Case title",
-        "case_type": "የመዝገብ  ዓይነት",
+        "case_title": "የመዝገቡ ርዕስ",
+        "case_type": "የመዝገብ ዓይነት",
         "chat": {
             "title": "የክስ ቻት",
             "select_case": "ቻት ለማግኘት ክስ ይምረጡ።",
@@ -1247,12 +1289,12 @@ const lang: Record<string, unknown> = {
         "copied": "ተቀድቷል!",
         "copy": "ቅዳ",
         "court_staff": "የ ፍርድ ቤት ሰራተኛ",
-        "deleted_successfully": "Deleted successfully",
+        "deleted_successfully": "በተሳካ ሁኔታ ተሰርዟል",
         "details": {
             "case_details": "የ መዝገቡ ዝርዝር ሁኔታ",
             "relief_requested": "የተጠየቀ ዳኝነት",
-            "no_details": "No details",
-            "no_relief_specified": "No relief specified"
+            "no_details": "ዝርዝር አልቀረበም",
+            "no_relief_specified": "የተጠየቀ ዳኝነት አልተገለጸም"
         },
         "document": "ሰነድ",
         "document_title_placeholder": "የሰነድ ርዕስ",
@@ -1288,7 +1330,7 @@ const lang: Record<string, unknown> = {
             "upload": "ጫን",
             "uploaded_by": "ይህ መዝገብ የተጫነው በ",
             "remove_confirm": "ይህን ፋይል ለማስወገድ?",
-            "upload_success": "Upload success"
+            "upload_success": "ፋይሉ ተጭኗል"
         },
         "filing_date": "የቀረበበት ቀን",
         "filing_receipt": "የመግባት ደረሰኝ",
@@ -1328,7 +1370,7 @@ const lang: Record<string, unknown> = {
         "hints": {
             "edit_only_pending": "ክስ በመጠባበቅ ላይ ሳለ ብቻ መርማሪያ ይችላሉ።",
             "editing_disabled": "ክስ በመጠባበቅ ላይ ስለማይሆን አርትዕ ተከልክሏል።",
-            "edit_page_subtitle": "Edit page subtitle"
+            "edit_page_subtitle": "የመዝገቡን መረጃ ያስተካክሉ"
         },
         "inline": "ውስጥ ተገብሯል",
         "items": "እቃዎች",
@@ -1347,17 +1389,17 @@ const lang: Record<string, unknown> = {
             "address": "አድራሻ",
             "summary": "ማጠቃለያ",
             "not_available": "የለም",
-            "actions": "Actions",
-            "filed": "Filed",
-            "no_records": "No records",
-            "type": "Type"
+            "actions": "እርምጃዎች",
+            "filed": "የቀረበበት",
+            "no_records": "መዝገብ የለም",
+            "type": "ዓይነት"
         },
         "letters_section": {
             "title": "ደብዳቤዎች",
             "empty": "ለዚህ መዝገብ እስካሁን ምንም ደብዳቤ የለም።",
             "letter": "ደብዳቤ",
             "reference": "ማጣቀሻ",
-            "template": "ናሙና (Template)",
+            "template": "ናሙና",
             "author": "ጸሐፊ",
             "created": "የተፈጠረበት ቀን",
             "status": {
@@ -1369,30 +1411,30 @@ const lang: Record<string, unknown> = {
         },
         "limit_reached": " ከፍተኛው  3 ወረቀት (~:max ቃላት).",
         "messages": {
-            "court_staff": "Court staff",
-            "total": "Total"
+            "court_staff": "የፍርድ ቤቱ ሠራተኛ",
+            "total": "ጠቅላላ"
         },
         "messages_section": {
             "title": "መልዕክቶች",
             "total": "ጠቅላላ",
             "no_messages": "እስካሁን ምንም መልዕክት የለም።",
-            "reply_to_applicant": "ለለ መዝገብ ያቀረበ ሰው መልስ",
+            "reply_to_applicant": "መዝገቡን ላቀረበው ሰው ይመልሱ",
             "write_message_placeholder": "መልዕክት ይጻፉ…",
             "send_message": "መልዕክት ላክ",
-            "court_staff": "የ court ሰራተኛ",
+            "court_staff": "የፍርድ ቤቱ ሠራተኛ",
             "system": "ስርዓት",
-            "subtitle": "Subtitle"
+            "subtitle": ":count መልዕክቶች"
         },
         "my_cases": "የኔ መዝገብ",
         "name": "ስም",
         "navigation": {
             "title": "ማሰስ",
-            "case_summary": "የ መዝገብ ማጠቃለያ",
-            "case_details": "የ መዝገብ ዝርዝር",
+            "case_summary": "የመዝገብ ማጠቃለያ",
+            "case_details": "የመዝገብ ዝርዝር",
             "submitted_documents": "የቀረቡ ሰነዶች",
             "uploaded_files": "ተጨማሪ የሰነድ ማስረጃዎች",
             "witnesses": "ምስክሮች",
-            "hearings": "ችሎት የሚሰማት ቀኖች",
+            "hearings": "ችሎት የሚሰማበት ቀኖች",
             "timeline": "የመገብ ሂደት",
             "messages": "መልዕክቶች",
             "letters": "ደብዳቤዎች",
@@ -1434,7 +1476,7 @@ const lang: Record<string, unknown> = {
         },
         "please_fix_errors": "እባክዎ የሚከተሉትን ያረሙ፡",
         "print": "አትም",
-        "received": "Received",
+        "received": "የደረሰ",
         "relief_requested": "የተጠየቀ ዳኝነት",
         "reset": "አዲስ አስጀምር",
         "respondent_address": "ተከሳሽ/መልስ ሰጭ አድራሻ",
@@ -1474,13 +1516,13 @@ const lang: Record<string, unknown> = {
         },
         "select_option": "ምረጥ",
         "send": "ላክ",
-        "sent": "Sent",
+        "sent": "የተላከ",
         "show": {
             "inspection_request": "ለኢንስፔክሽን ላክ",
             "review_actions": "የግምገማ እርምጃዎች",
             "accept": "ተቀብለናል",
             "return": "ማስካከያ ያስፈልገዋል",
-            "give_correction": "Give Correction",
+            "give_correction": "ለማስተካከያ መልስ",
             "reject": "ውድቅ የተደረገ",
             "bench_note": "የችሎት ውሎ",
             "write_letter": "ደብዳቤ ጻፍ",
@@ -1529,7 +1571,7 @@ const lang: Record<string, unknown> = {
         },
         "showing_results": ":first–:last ከ :total ውስጥ ታይቷል",
         "status": {
-            "change_case_status": "የ መዝገብ ሁኔታ ለውጥ",
+            "change_case_status": "የመዝገብ ሁኔታ ለውጥ",
             "new_status": "አዲስ መዝገብ",
             "note_to_timeline": " ማስታወሻ (አማራጭ)",
             "add_note_placeholder": "አጭር ማስታወሻ ያክሉ…",
@@ -1550,8 +1592,8 @@ const lang: Record<string, unknown> = {
             "title": "ርዕስ",
             "type": "የመዝገቡ ዓይነት",
             "filing_date": "መዝገቡ የቀረበበት ቀን",
-            "first_hearing": "የመጀመሪያ ችሎት የሚሰማት ቀን",
-            "applicant": "ይግባኝ ባይ /አመልካች",
+            "first_hearing": "የመጀመሪያ ችሎት የሚሰማበት ቀን",
+            "applicant": "ይግባኝ ባይ / አመልካች",
             "applicant_email": "አመልካች ኢሜይል",
             "assignee": "መዝገቡ የተመደበበት ችሎት",
             "team": "ቡድን",
@@ -1559,7 +1601,7 @@ const lang: Record<string, unknown> = {
             "created": "ተፈጥሯል",
             "updated": "ተሻሽሏል",
             "assigned_at": "ተመድቧል በ",
-            "hearings": "ችሎት የሚሰማት ቀኖች"
+            "hearings": "ችሎት የሚሰማበት ቀኖች"
         },
         "system": "ሲስተም",
         "table": {
@@ -1578,7 +1620,7 @@ const lang: Record<string, unknown> = {
             "assign": "መድብ",
             "no_cases_found": "ምንም መዝገብ አልተገኘም።",
             "no_cases_yet": "እስካሁን ምንም መዝገብ አልቀረቡም።",
-            "delete_confirm": "Delete confirm",
+            "delete_confirm": "ይሰረዝ?",
             "no_cases_viewed_yet": "እስካሁን የታዩ መዝገቦች የሉም።",
             "delete": "ሰርዝ"
         },

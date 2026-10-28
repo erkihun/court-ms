@@ -964,6 +964,48 @@ const lang: Record<string, unknown> = {
         },
         "title": "Bench Notes"
     },
+    "case_audit": {
+        "actions": {
+            "applicant_updated": "Applicant updated the case",
+            "review_decision": "Review decision",
+            "assigned": "Assigned",
+            "unassigned": "Assignment removed",
+            "message_posted": "Message sent",
+            "status_updated": "Status changed",
+            "file_uploaded": "File uploaded",
+            "hearing_created": "Hearing scheduled",
+            "hearing_updated": "Hearing changed",
+            "hearing_deleted": "Hearing removed",
+            "respondent_viewed": "Respondent opened the case",
+            "response_reply_reviewed": "Reply reviewed"
+        },
+        "actors": {
+            "user": "Court staff",
+            "applicant": "Applicant",
+            "respondent": "Respondent",
+            "system": "System"
+        },
+        "fields": {
+            "respondent": "Respondent",
+            "decision": "Decision",
+            "note": "Note",
+            "from": "From",
+            "to": "To",
+            "team": "Bench",
+            "judge": "Assigned to",
+            "member": "Bench member",
+            "by": "By",
+            "body": "Message",
+            "label": "Document",
+            "when": "Hearing",
+            "hearing": "Hearing no.",
+            "sections": "Changed"
+        },
+        "by": {
+            "admin": "the court",
+            "applicant": "the applicant"
+        }
+    },
     "case_inspections": {
         "title": "Case Inspections",
         "common": {
@@ -1327,7 +1369,7 @@ const lang: Record<string, unknown> = {
         "hints": {
             "edit_only_pending": "You can edit only while the case is pending.",
             "editing_disabled": "Editing is disabled because the case is not pending.",
-            "edit_page_subtitle": "Edit page subtitle"
+            "edit_page_subtitle": "Update the case information"
         },
         "inline": "inline",
         "items": "items",
@@ -1380,7 +1422,7 @@ const lang: Record<string, unknown> = {
             "send_message": "Send Message",
             "court_staff": "Court Staff",
             "system": "System",
-            "subtitle": "Subtitle"
+            "subtitle": ":count messages"
         },
         "my_cases": "My Cases",
         "name": "Name",
@@ -1477,7 +1519,7 @@ const lang: Record<string, unknown> = {
             "review_actions": "Review Actions",
             "accept": "Accept",
             "return": "Return",
-            "give_correction": "Give Correction",
+            "give_correction": "Return for correction",
             "reject": "Reject",
             "bench_note": "Bench note",
             "write_letter": "Write letter",
@@ -1575,7 +1617,7 @@ const lang: Record<string, unknown> = {
             "assign": "Assign",
             "no_cases_found": "No cases found.",
             "no_cases_yet": "You have not submitted any cases yet.",
-            "delete_confirm": "Delete confirm",
+            "delete_confirm": "Delete this?",
             "no_cases_viewed_yet": "No cases viewed yet."
         },
         "timeline": "Timeline",

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\Applicant;
 use App\Models\CaseType;
 use App\Models\CourtCase;
 use App\Models\Permission;
@@ -190,5 +191,47 @@ test('a respondent response carries its response number to the case page', funct
                 ->where('title', 'Statement of defence')
                 ->where('pdf_url', null)
                 ->etc())
+            ->etc());
+});
+
+test('accepting the review puts the activation on the timeline and names the case in the notice', function (): void {
+    $reviewer = caseDetailUser(['cases.view', 'cases.review']);
+    $applicant = Applicant::query()->create([
+        'first_name' => 'Abebe', 'middle_name' => 'K', 'last_name' => 'Kebede', 'gender' => 'male',
+        'phone' => '09'.random_int(10000000, 99999999), 'email' => 'cd-app-'.Str::lower(Str::random(8)).'@example.com',
+        'password' => Hash::make(Str::random(16)),
+    ]);
+    $case = caseDetailCase(['review_status' => 'awaiting_review', 'applicant_id' => $applicant->id]);
+
+    $this->actingAs($reviewer)->patch(route('cases.review.update', $case->id), ['decision' => 'accept', 'note' => ''])->assertRedirect();
+
+    expect(DB::table('court_cases')->where('id', $case->id)->value('status'))->toBe('active');
+    $this->assertDatabaseHas('case_status_logs', ['case_id' => $case->id, 'from_status' => 'pending', 'to_status' => 'active', 'changed_by_user_id' => $reviewer->id]);
+    expect((string) DB::table('case_messages')->where('case_id', $case->id)->latest('id')->value('body'))
+        ->toContain($case->case_number)->not->toContain(':case');
+});
+
+test('the audit trail reaches the page as labelled lines with names resolved', function (): void {
+    $viewer = caseDetailUser(['cases.view']);
+    $judge = User::factory()->create(['name' => 'Judge Almaz']);
+    $team = Team::query()->create(['name' => 'Bench One', 'team_leader_id' => $judge->id]);
+    $case = caseDetailCase();
+    DB::table('case_audits')->insert([
+        ['case_id' => $case->id, 'action' => 'assigned', 'actor_type' => 'user', 'actor_id' => $viewer->id,
+            'meta' => json_encode(['assigned_team_id' => $team->id, 'assigned_user_id' => $judge->id, 'assigned_member_user_id' => null]), 'created_at' => now()],
+        ['case_id' => $case->id, 'action' => 'status_updated', 'actor_type' => 'user', 'actor_id' => $viewer->id,
+            'meta' => json_encode(['from' => 'pending', 'to' => 'active', 'note' => null]), 'created_at' => now()],
+    ]);
+
+    $this->actingAs($viewer)->get(route('cases.show', $case->id))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('audits', fn ($audits) => collect($audits)->firstWhere('action', 'assigned')['details'] === [
+                ['label' => __('case_audit.fields.team'), 'value' => 'Bench One', 'kind' => 'text'],
+                ['label' => __('case_audit.fields.judge'), 'value' => 'Judge Almaz', 'kind' => 'text'],
+            ] && collect($audits)->firstWhere('action', 'status_updated')['details'] === [
+                ['label' => __('case_audit.fields.from'), 'value' => __('cases.status.pending'), 'kind' => 'text'],
+                ['label' => __('case_audit.fields.to'), 'value' => __('cases.status.active'), 'kind' => 'text'],
+            ])
             ->etc());
 });
