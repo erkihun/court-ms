@@ -24,7 +24,12 @@ class EuisisPeopleController extends Controller
     /** The employee's court summary, or `linked: false` when they have no court account yet. */
     public function summary(Request $request, EmployeeCourtAccess $access): JsonResponse
     {
-        $employee = $request->validate($this->identityRules())['employee'];
+        $data = $request->validate([...$this->identityRules(), 'locale' => ['nullable', 'string', 'in:en,am']]);
+        $employee = $data['employee'];
+        // Notices are worded in the language the employee reads EUISIS in, not court-ms's default.
+        if (isset($data['locale'])) {
+            app()->setLocale($data['locale']);
+        }
 
         try {
             $applicant = $access->find($employee);

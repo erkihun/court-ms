@@ -114,6 +114,12 @@ test('the summary lists the linked employee\'s cases, hearings and unseen notice
         // The access code and other staff columns never leave court-ms.
         ->and(json_encode($data))->not->toContain('EM1234');
 
+    // Notices are worded in the language the employee reads EUISIS in.
+    $title = fn (string $locale): string => (string) $this->withToken($token)->postJson('/api/v1/integration/people/court-summary', ['employee' => ['uuid' => $employee['uuid']], 'locale' => $locale])
+        ->assertOk()->json('data.notices.0.title');
+    expect(preg_match('/[\x{1200}-\x{137F}]/u', $title('am')))->toBe(1)
+        ->and(preg_match('/[\x{1200}-\x{137F}]/u', $title('en')))->toBe(0);
+
     // A ticket can open one of the employee's own cases, not someone else's.
     $this->withToken($token)->postJson('/api/v1/integration/people/sign-in-tickets', ['employee' => $employee, 'target' => "case:{$caseId}"])->assertCreated();
     $this->withToken($token)->postJson('/api/v1/integration/people/sign-in-tickets', ['employee' => $employee, 'target' => 'case:999999'])

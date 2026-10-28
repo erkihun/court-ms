@@ -15,6 +15,8 @@ interface Props {
 export default function EuisisRecordPanel({ record }: Props) {
     const { t } = useCaseText();
     const dash = (value: string | null | undefined) => (value && value.trim() !== '' ? value : '—');
+    // EUISIS sends the grievance status as its code (decision_issued); shown as words.
+    const statusText = (status: string) => status.replace(/_/g, ' ').replace(/^./, (first) => first.toUpperCase());
 
     return (
         <section id="euisis-record" className="space-y-4 rounded-control border border-teal-200 bg-teal-50/40 p-4 dark:border-teal-900 dark:bg-teal-950/20">
@@ -40,7 +42,7 @@ export default function EuisisRecordPanel({ record }: Props) {
                                     <div className="font-semibold text-(--app-foreground)">{grievance.subject}</div>
                                     {grievance.category && <div className="text-xs text-(--app-muted-foreground)">{grievance.category}</div>}
                                 </div>
-                                {grievance.status && <span className={badgeClassName('neutral')}>{grievance.status}</span>}
+                                {grievance.status && <span className={badgeClassName('neutral')}>{statusText(grievance.status)}</span>}
                             </div>
 
                             <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-3">
