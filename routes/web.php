@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AboutController;
 use App\Http\Controllers\Admin\ActiveSessionController;
 use App\Http\Controllers\Admin\AdminNotificationController;
 use App\Http\Controllers\Admin\NotificationFeedController;
+use App\Http\Controllers\PortalNotificationFeedController;
 use App\Http\Controllers\Admin\AdminRoleSwitchController;
 use App\Http\Controllers\Admin\AnnouncementController;
 use App\Http\Controllers\Admin\AppealController;
@@ -207,6 +208,10 @@ Route::middleware(SetLocale::class)->group(function () {
         Route::delete('/respondent/profile/sessions', [ApplicantSessionController::class, 'destroyOthers'])->name('respondent.profile.sessions.destroyOthers');
         Route::post('/respondent/notifications/mark-one', [RespondentNotificationController::class, 'markOne'])->name('respondent.notifications.markOne');
         Route::post('/respondent/notifications/mark-all', [RespondentNotificationController::class, 'markAll'])->name('respondent.notifications.markAll');
+        // The header bell (EUISIS NotificationBell).
+        Route::get('/respondent/notifications/feed', [PortalNotificationFeedController::class, 'feed'])->name('respondent.notifications.feed');
+        Route::post('/respondent/notifications/read-all', [PortalNotificationFeedController::class, 'readAll'])->name('respondent.notifications.read-all');
+        Route::post('/respondent/notifications/{notice}/read', [PortalNotificationFeedController::class, 'read'])->name('respondent.notifications.read');
         Route::post('/respondent/switch-to-applicant', [RespondentAuthController::class, 'switchToApplicant'])->name('respondent.switchToApplicant');
     });
 
@@ -370,6 +375,10 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::get('/applicant/notifications', [ApplicantNotificationController::class, 'index'])->name('applicant.notifications.index');
             Route::post('/applicant/notifications/mark-one', [ApplicantNotificationController::class, 'markOne'])->name('applicant.notifications.markOne');
             Route::post('/applicant/notifications/mark-all', [ApplicantNotificationController::class, 'markAll'])->name('applicant.notifications.markAll');
+            // The header bell (EUISIS NotificationBell).
+            Route::get('/applicant/notifications/feed', [PortalNotificationFeedController::class, 'feed'])->name('applicant.notifications.feed');
+            Route::post('/applicant/notifications/read-all', [PortalNotificationFeedController::class, 'readAll'])->name('applicant.notifications.read-all');
+            Route::post('/applicant/notifications/{notice}/read', [PortalNotificationFeedController::class, 'read'])->name('applicant.notifications.read');
 
             // Notification settings
             Route::get('/applicant/notifications/settings', [ApplicantNotificationController::class, 'settingsEdit'])->name('applicant.notifications.settings');

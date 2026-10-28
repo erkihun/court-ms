@@ -191,7 +191,7 @@ export default function RespondentDashboard({ stats, recentCases, letters, respo
                                         {notifications.items.map((item) => (
                                             <li key={`${item.type}-${item.source_id}`} className="flex items-start justify-between gap-3 rounded-lg border border-(--app-border) p-3">
                                                 <div className="min-w-0 space-y-1">
-                                                    <span className={badgeClassName('neutral')}>{item.type.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase())}</span>
+                                                    <span className={badgeClassName('neutral')}>{t(`cm.app.admin_notifications.types.${item.type}`)}</span>
                                                     <div className="font-mono text-sm font-semibold text-(--app-foreground)">{item.case_number || '—'}</div>
                                                     <div className="truncate text-xs text-(--app-muted-foreground)">{item.title || t('cm.respondent.view_case_details')}</div>
                                                     <div className="text-xs text-(--app-muted-foreground)">{formatRelative(item.at, locale) ?? '—'}</div>

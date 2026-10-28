@@ -47,10 +47,21 @@ final class PortalNavigation
         ]],
     ];
 
-    /** @var array<string, array{home: string, profile: string, logout: string, switch: ?string}> */
+    /**
+     * The header's routes. `feed`, `read`, `readAll` and `viewAll` are the notification bell's
+     * (PortalNotificationFeedController); the respondent portal lists its notifications on its dashboard.
+     *
+     * @var array<string, array{home: string, profile: string, logout: string, switch: ?string, feed: string, read: string, readAll: string, viewAll: string}>
+     */
     private const ROUTES = [
-        'applicant' => ['home' => 'applicant.dashboard', 'profile' => 'applicant.profile.edit', 'logout' => 'applicant.logout', 'switch' => 'respondent.dashboard'],
-        'respondent' => ['home' => 'respondent.dashboard', 'profile' => 'respondent.profile.edit', 'logout' => 'respondent.logout', 'switch' => 'respondent.switchToApplicant'],
+        'applicant' => [
+            'home' => 'applicant.dashboard', 'profile' => 'applicant.profile.edit', 'logout' => 'applicant.logout', 'switch' => 'respondent.dashboard',
+            'feed' => 'applicant.notifications.feed', 'read' => 'applicant.notifications.read', 'readAll' => 'applicant.notifications.read-all', 'viewAll' => 'applicant.notifications.index',
+        ],
+        'respondent' => [
+            'home' => 'respondent.dashboard', 'profile' => 'respondent.profile.edit', 'logout' => 'respondent.logout', 'switch' => 'respondent.switchToApplicant',
+            'feed' => 'respondent.notifications.feed', 'read' => 'respondent.notifications.read', 'readAll' => 'respondent.notifications.read-all', 'viewAll' => 'respondent.dashboard',
+        ],
     ];
 
     /** 'applicant', 'respondent' or null (the staff application). Read at render time, after the route's guard middleware. */
@@ -88,7 +99,7 @@ final class PortalNavigation
             ->values()->all();
     }
 
-    /** @return array{name: string, home: string, profile: string, logout: string, switch: ?string} */
+    /** @return array{name: string, home: string, profile: string, logout: string, switch: ?string, feed: string, read: string, readAll: string, viewAll: string} */
     public static function routes(string $portal): array
     {
         return ['name' => $portal, ...self::ROUTES[$portal]];

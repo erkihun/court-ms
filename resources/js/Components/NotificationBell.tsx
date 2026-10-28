@@ -13,6 +13,9 @@ type Feed = { unread_count: number; items: Notice[]; page: number; last_page: nu
 export default function NotificationBell() {
     const { t, locale } = useLocale();
     const { url, props } = usePage<PageProps & { has_employee_record?: boolean; notifications?: unknown }>();
+    // court-ms: the applicant and respondent portals (HandleInertiaRequests `portal`).
+    const portal = (props as { portal?: { feed: string; read: string; readAll: string; viewAll: string } | null }).portal ?? null;
+    const viewAll = portal?.viewAll ?? 'admin.notifications.index';
     const [feed, setFeed] = useState<Feed | null>(null);
     const [page, setPage] = useState(1);
     const [loading, setLoading] = useState(false);
@@ -29,7 +32,7 @@ export default function NotificationBell() {
         pending.current = controller;
         setLoading(true);
         try {
-            const response = await axios.get<Feed>(route('notifications.feed'), { params: { page, locale }, signal: controller.signal, headers: { 'X-Activity': 'passive' } });
+            const response = await axios.get<Feed>(route(portal?.feed ?? 'notifications.feed'), { params: { page, locale }, signal: controller.signal, headers: { 'X-Activity': 'passive' } });
             setFeed(response.data);
             setError(false);
         } catch (error) {
@@ -56,7 +59,7 @@ export default function NotificationBell() {
         setBusy(true);
         setError(false);
         try {
-            await axios.post(notice ? route('notifications.read', notice.id) : route('notifications.read-all'));
+            await axios.post(notice ? route(portal?.read ?? 'notifications.read', notice.id) : route(portal?.readAll ?? 'notifications.read-all'));
             mutating.current = false;
             await refresh();
             if (open && notice?.url) {
@@ -111,9 +114,9 @@ export default function NotificationBell() {
                         </div>
                     </li>)}
                 </ul>
-                {props.has_employee_record && (
+                {route().has(viewAll) && (
                     <div className="border-t border-(--app-border) p-2 text-center">
-                        <Link href={route('admin.notifications.index')} className={actionCls}>{label('viewAll')}</Link>
+                        <Link href={route(viewAll)} className={actionCls}>{label('viewAll')}</Link>
                     </div>
                 )}
                 {feed && feed.last_page > 1 && <div className="flex items-center justify-between border-t border-(--app-border) p-3">

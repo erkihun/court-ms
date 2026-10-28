@@ -100,7 +100,7 @@ const PATCHES = [
         to: 'const homeNav = coreSections ? { ...coreHomeNav, routeName: (workspace as { home?: string } | null)?.home ?? coreHomeNav.routeName } :',
     },
     {
-        // The applicant and respondent portals have their own profile and sign-out, and no staff notification feed.
+        // The applicant and respondent portals have their own profile and sign-out (and bell feed, below).
         file: 'Components/AppHeader.tsx',
         from: '    const { auth } = usePage<PageProps>().props;',
         to: [
@@ -108,11 +108,6 @@ const PATCHES = [
             '    // court-ms: the applicant and respondent portals (HandleInertiaRequests `portal`).',
             '    const portal = (usePage().props as { portal?: { profile: string; logout: string } | null }).portal ?? null;',
         ].join('\n'),
-    },
-    {
-        file: 'Components/AppHeader.tsx',
-        from: '<NotificationBell />',
-        to: '{!portal && <NotificationBell />}',
     },
     {
         file: 'Components/AppHeader.tsx',
@@ -147,10 +142,36 @@ const PATCHES = [
         to: "if (current === 'core.dashboard' || current === 'admin.dashboard' || current === 'dashboard') return null;",
     },
     {
-        // The bell's "view all" opens court-ms's notifications page.
+        // The bell reads the staff feed, or in a portal that portal's own (PortalNavigation::routes):
+        // its feed, read and read-all routes, and "view all" opens its notifications page.
+        file: 'Components/NotificationBell.tsx',
+        from: "    const { url, props } = usePage<PageProps & { has_employee_record?: boolean; notifications?: unknown }>();",
+        to: [
+            "    const { url, props } = usePage<PageProps & { has_employee_record?: boolean; notifications?: unknown }>();",
+            '    // court-ms: the applicant and respondent portals (HandleInertiaRequests `portal`).',
+            "    const portal = (props as { portal?: { feed: string; read: string; readAll: string; viewAll: string } | null }).portal ?? null;",
+            "    const viewAll = portal?.viewAll ?? 'admin.notifications.index';",
+        ].join('\n'),
+    },
+    {
+        file: 'Components/NotificationBell.tsx',
+        from: "route('notifications.feed')",
+        to: "route(portal?.feed ?? 'notifications.feed')",
+    },
+    {
+        file: 'Components/NotificationBell.tsx',
+        from: "route('notifications.read', notice.id) : route('notifications.read-all')",
+        to: "route(portal?.read ?? 'notifications.read', notice.id) : route(portal?.readAll ?? 'notifications.read-all')",
+    },
+    {
+        file: 'Components/NotificationBell.tsx',
+        from: '{props.has_employee_record && (',
+        to: '{route().has(viewAll) && (',
+    },
+    {
         file: 'Components/NotificationBell.tsx',
         from: "route('employee.notifications')",
-        to: "route('admin.notifications.index')",
+        to: 'route(viewAll)',
     },
     {
         // court-ms is only its own workspace: there is no "Leave Core" to go back to.

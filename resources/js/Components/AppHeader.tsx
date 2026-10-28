@@ -85,7 +85,7 @@ export default function AppHeader({ onMenuClick, onToggleSidebar, sidebarCollaps
 
                 <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
                     <CommunicationButton />
-                    {!portal && <NotificationBell />}
+                    <NotificationBell />
                     <ThemeToggle variant="toolbar" />
                     <LanguageSwitcher variant="toolbar" />
                     <span aria-hidden="true" className="mx-1 hidden h-6 w-px bg-(--app-border) sm:block" />
