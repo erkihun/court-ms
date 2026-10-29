@@ -688,7 +688,7 @@
 }
 .court-site.court-signage[data-orientation='portrait'] .court-signage-stage {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 336px 158px 248px minmax(0, 1fr) 276px 156px;
+    grid-template-rows: 256px 164px 248px minmax(0, 1fr) 286px 156px;
     grid-template-areas: 'crest' 'clock' 'next' 'list' 'figures' 'foot';
     row-gap: 0;
 }
@@ -729,12 +729,10 @@
     margin-inline: calc(var(--sg-pad) * -1);
     padding-inline: var(--sg-pad);
 }
+/* The mark on the left, the court's name beside it on the right. */
 .court-site.court-signage[data-orientation='portrait'] .sg-crest {
-    flex-direction: column;
-    justify-content: center;
-    gap: 14px;
-    padding: 8px 0 26px;
-    text-align: center;
+    gap: 32px;
+    padding: 20px var(--sg-pad) 28px;
 }
 .court-site.court-signage[data-orientation='landscape'] .sg-crest {
     margin-inline-end: 0;
@@ -766,35 +764,27 @@
     background: linear-gradient(105deg, transparent 38%, rgb(232 214 162 / 0.13) 50%, transparent 62%);
     opacity: 0;
 }
+/* The logo as it is drawn: no plate, no ring. */
 .court-site .sg-medallion {
-    position: relative;
-    display: grid;
+    display: flex;
     flex-shrink: 0;
-    place-items: center;
-    width: 108px;
-    height: 108px;
+    align-items: center;
+    justify-content: center;
     color: var(--court-brass);
 }
-.court-site .sg-orbit { position: absolute; inset: 0; width: 100%; height: 100%; }
-.court-site .sg-medallion-mark,
 .court-site .sg-medallion-logo {
-    width: 84px;
-    height: 84px;
-    border-radius: 9999px;
-}
-.court-site .sg-medallion-mark {
-    display: grid;
-    place-items: center;
-    background: radial-gradient(circle at 50% 35%, #17305a, var(--court-ink) 75%);
-    box-shadow: inset 0 0 0 1.5px rgb(200 161 74 / 0.6), 0 12px 40px -12px rgb(200 161 74 / 0.45);
-}
-.court-site .sg-medallion-logo {
+    display: block;
+    width: auto;
+    height: 156px;
+    max-width: 240px;
     object-fit: contain;
-    padding: 8px;
-    background: #fff;
-    box-shadow: 0 0 0 2px rgb(200 161 74 / 0.6), 0 12px 40px -12px rgb(200 161 74 / 0.45);
+    filter: drop-shadow(0 10px 28px rgb(0 0 0 / 0.45));
 }
+.court-site .sg-medallion-mark { width: 128px; height: 128px; }
+.court-site.court-signage[data-orientation='landscape'] .sg-medallion-logo { height: 128px; max-width: 200px; }
+.court-site.court-signage[data-orientation='landscape'] .sg-medallion-mark { width: 104px; height: 104px; }
 .court-site .sg-crest-text { min-width: 0; }
+.court-site.court-signage[data-orientation='portrait'] .sg-eyebrow { font-size: 15px; letter-spacing: 0.16em; }
 .court-site .sg-eyebrow {
     font-size: 17px;
     font-weight: 600;
@@ -1362,7 +1352,6 @@
     }
     .court-site[data-motion='on'] .sg-colon { animation: cp-tick 2s steps(1) infinite; }
     .court-site[data-motion='on'] .sg-progress-fill { animation: cp-fill var(--page, 12s) linear both; }
-    .court-site[data-motion='on'] .sg-orbit { animation: cp-turn 90s linear infinite; }
     .court-site[data-motion='on'] .sg-sheen { animation: cp-sheen 16s ease-in-out 2s infinite; }
     .court-site[data-motion='on'] .sg-next[data-state='next'] { animation: cp-breathe 5s ease-in-out infinite; }
     .court-site[data-motion='on'] .sg-pulse::after,

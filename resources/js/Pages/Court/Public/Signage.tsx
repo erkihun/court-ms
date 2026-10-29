@@ -192,17 +192,13 @@ function SectionHead({ primary, secondary, aside }: { primary: string; secondary
     );
 }
 
-/** The court's medallion: the logo set in System Settings, else the scales, inside a turning ring of brass dots. */
+/** The court's mark: the logo set in System Settings as it is drawn, else the scales in brass. */
 function Medallion({ logoUrl }: { logoUrl: string | null }) {
     return (
         <span className="sg-medallion" aria-hidden="true">
-            <svg viewBox="0 0 200 200" className="sg-orbit">
-                <circle cx="100" cy="100" r="96" fill="none" stroke="currentColor" strokeWidth="2.2" strokeDasharray="0.6 9.4" strokeLinecap="round" />
-                <circle cx="100" cy="100" r="88" fill="none" stroke="currentColor" strokeWidth="0.6" />
-            </svg>
             {logoUrl
                 ? <img src={logoUrl} alt="" className="sg-medallion-logo" />
-                : <span className="sg-medallion-mark"><CourtEmblem className="h-[58%] w-[58%]" /></span>}
+                : <CourtEmblem className="sg-medallion-mark" />}
         </span>
     );
 }
