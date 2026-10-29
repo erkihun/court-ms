@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 class CaseTypeController extends Controller
 {
@@ -35,7 +36,16 @@ class CaseTypeController extends Controller
 
         $types = $query->paginate(12)->withQueryString();
 
-        return view('admin.cases.types.index', compact('types', 'q'));
+        // The register (React, Court/CaseTypes/Index).
+        return Inertia::render('Court/CaseTypes/Index', [
+            'types' => $types->through(fn (object $row): array => [
+                'id' => (int) $row->id,
+                'name' => (string) $row->name,
+                'prefix' => $hasPrefix ? ($row->prefix ?? null) : null,
+                'cases_count' => (int) $row->cases_count,
+            ]),
+            'filters' => ['q' => $q],
+        ]);
     }
 
     /**
@@ -44,7 +54,8 @@ class CaseTypeController extends Controller
     public function create()
     {
         $this->authorizeTypes();
-        return view('admin.cases.types.create');
+
+        return Inertia::render('Court/CaseTypes/Form', ['type' => null, 'hasPrefix' => Schema::hasColumn('case_types', 'prefix')]);
     }
 
     /**
@@ -88,8 +99,12 @@ class CaseTypeController extends Controller
 
         $type = DB::table('case_types')->where('id', $id)->first();
         abort_if(!$type, 404);
+        $hasPrefix = Schema::hasColumn('case_types', 'prefix');
 
-        return view('admin.cases.types.edit', compact('type'));
+        return Inertia::render('Court/CaseTypes/Form', [
+            'type' => ['id' => (int) $type->id, 'name' => (string) $type->name, 'prefix' => $hasPrefix ? ($type->prefix ?? null) : null],
+            'hasPrefix' => $hasPrefix,
+        ]);
     }
 
     /**

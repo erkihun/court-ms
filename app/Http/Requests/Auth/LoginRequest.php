@@ -2,13 +2,11 @@
 
 namespace App\Http\Requests\Auth;
 
-use App\Models\SystemSetting;
+use App\Support\LoginThrottle;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class LoginRequest extends FormRequest
@@ -39,26 +37,28 @@ class LoginRequest extends FormRequest
      *
      * @throws ValidationException
      */
-    private function loginSettings(): object
-    {
-        return SystemSetting::cached()
-            ?? (object) ['login_max_attempts' => 5, 'lockout_minutes' => 15];
-    }
-
     public function authenticate(): void
     {
         $this->ensureIsNotRateLimited();
 
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
-            $settings = $this->loginSettings();
-            RateLimiter::hit($this->throttleKey(), ($settings->lockout_minutes ?? 15) * 60);
+            $this->throttle()->hit();
 
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),
             ]);
         }
 
-        RateLimiter::clear($this->throttleKey());
+        $this->throttle()->clear();
+
+        // An account the EUISIS staff check suspended (the employee left the court's units).
+        if (Auth::guard('web')->user()?->euisis_suspended_at !== null) {
+            Auth::guard('web')->logout();
+
+            throw ValidationException::withMessages([
+                'email' => trans('euisis_staff.sign_in_suspended'),
+            ]);
+        }
     }
 
     /**
@@ -68,16 +68,15 @@ class LoginRequest extends FormRequest
      */
     public function ensureIsNotRateLimited(): void
     {
-        $settings = $this->loginSettings();
-        $maxAttempts = $settings->login_max_attempts ?? 5;
+        $throttle = $this->throttle();
 
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), $maxAttempts)) {
+        if (! $throttle->tooManyAttempts()) {
             return;
         }
 
         event(new Lockout($this));
 
-        $seconds = RateLimiter::availableIn($this->throttleKey());
+        $seconds = $throttle->availableIn();
 
         throw ValidationException::withMessages([
             'email' => trans('auth.throttle', [
@@ -88,10 +87,10 @@ class LoginRequest extends FormRequest
     }
 
     /**
-     * Get the rate limiting throttle key for the request.
+     * Failed-attempt lockout for this sign-in: per client and per account.
      */
-    public function throttleKey(): string
+    public function throttle(): LoginThrottle
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+        return LoginThrottle::for('staff', (string) $this->string('email'), $this->ip());
     }
 }

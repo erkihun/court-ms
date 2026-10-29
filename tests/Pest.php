@@ -13,6 +13,8 @@
 
 pest()->extend(Tests\TestCase::class)
     ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+    // The React pages' root view asks Vite for its assets; the tests need no build.
+    ->beforeEach(fn () => $this->withoutVite())
     ->in('Feature');
 
 /*

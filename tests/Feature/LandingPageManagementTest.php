@@ -3,55 +3,95 @@
 declare(strict_types=1);
 
 use App\Models\HomeSetting;
+use App\Models\Permission;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
+use Inertia\Testing\AssertableInertia;
 
 uses(RefreshDatabase::class);
 
-test('landing manager exposes controls for every home page section', function (): void {
-    $admin = User::factory()->create(['email_verified_at' => now()]);
+/** The landing manager is part of the system settings (routes: perm:settings.manage). */
+function landingManagementEditor(): User
+{
+    $role = Role::query()->create(['name' => 'landing-editor-'.Str::lower(Str::random(6))]);
+    $role->permissions()->sync([Permission::query()->firstOrCreate(['name' => 'settings.manage'], ['label' => 'Manage settings'])->id]);
+    $user = User::factory()->create(['status' => 'active', 'email_verified_at' => now()]);
+    $user->roles()->sync([$role->id]);
 
+    return $user;
+}
+
+test('the landing manager is refused to staff without settings.manage', function (): void {
+    $staff = User::factory()->create(['status' => 'active', 'email_verified_at' => now()]);
+
+    // RequirePermission sends the person to their dashboard instead of the page.
+    $this->actingAs($staff)->get(route('admin.landing.index'))->assertRedirect(route('dashboard'));
+    $this->actingAs($staff)->put(route('admin.landing.footer.update'), ['description' => 'Defaced'])->assertRedirect(route('dashboard'));
+
+    expect(HomeSetting::getJson('footer.settings'))->toBeEmpty();
+});
+
+test('landing manager exposes controls for every home page section', function (): void {
+    $admin = landingManagementEditor();
+
+    // The React page (Court/Landing/Index) draws a tab per section from these props;
+    // its labels are the admin_landing.* keys, read in the browser as cm.admin_landing.*.
     $this->actingAs($admin)
         ->get(route('admin.landing.index'))
         ->assertOk()
-        ->assertSee('Hero Slides')
-        ->assertSee('Statistics')
-        ->assertSee('Timeline')
-        ->assertSee('Services')
-        ->assertSee('Resources')
-        ->assertSee('FAQ')
-        ->assertSee('Footer')
-        ->assertSee('Sections')
-        ->assertSee('Preview home page');
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('Court/Landing/Index')
+            ->where('initialTab', 'slides')
+            ->where('homeUrl', route('landing.home'))
+            ->has('slides')->has('steps')->has('services')->has('resources')->has('faqs')
+            ->has('stats')->has('metrics.total_cases')->has('metricDefaults.avg_resolution_time')
+            ->has('sections.cta')->has('footer.social_telegram')->has('userManual'));
+
+    expect([
+        __('admin_landing.tabs.slides', [], 'en'), __('admin_landing.tabs.metrics', [], 'en'), __('admin_landing.tabs.timeline', [], 'en'),
+        __('admin_landing.tabs.services', [], 'en'), __('admin_landing.tabs.resources', [], 'en'), __('admin_landing.tabs.faqs', [], 'en'),
+        __('admin_landing.tabs.footer', [], 'en'), __('admin_landing.tabs.sections', [], 'en'), __('admin_landing.preview', [], 'en'),
+    ])->toBe(['Hero Slides', 'Statistics', 'Timeline', 'Services', 'Resources', 'FAQ', 'Footer', 'Sections', 'Preview home page']);
 });
 
 test('landing manager uses formal amharic labels in the amharic locale', function (): void {
-    $admin = User::factory()->create(['email_verified_at' => now()]);
+    $admin = landingManagementEditor();
 
     $this->actingAs($admin)
         ->withSession(['app_locale' => 'am'])
         ->get(route('admin.landing.index'))
         ->assertOk()
-        ->assertSee('ዋና ማስታወቂያዎች')
-        ->assertSee('አጠቃላይ መረጃ')
-        ->assertSee('የጉዳይ ሂደት')
-        ->assertSee('አገልግሎቶች')
-        ->assertSee('ሰነዶችና መረጃዎች')
-        ->assertSee('ተደጋጋሚ ጥያቄዎች')
-        ->assertSee('የገጽ ግርጌ')
-        ->assertSee('የገጽ ክፍሎች')
-        ->assertSee('አጭር መለያ ጽሑፍ')
-        ->assertSee('የዋና አዝራር ጽሑፍ')
-        ->assertSee('የሚፈጀው ጊዜ')
-        ->assertSee('ዋና ባህሪያት')
-        ->assertSee('የሚታተምበት ቀን')
-        ->assertSee('ጥያቄ')
-        ->assertSee('የግንኙነት መረጃ')
-        ->assertSee('የክፍሉ ርዕስ');
+        ->assertInertia(fn (AssertableInertia $page) => $page->component('Court/Landing/Index')->where('locale', 'am'));
+
+    // The labels the React page shows in Amharic (cm.admin_landing.* from lang/am/admin_landing.php).
+    $labels = [
+        'tabs.slides' => 'ዋና ማስታወቂያዎች',
+        'tabs.metrics' => 'አጠቃላይ መረጃ',
+        'tabs.timeline' => 'የጉዳይ ሂደት',
+        'tabs.services' => 'አገልግሎቶች',
+        'tabs.resources' => 'ሰነዶችና መረጃዎች',
+        'tabs.faqs' => 'ተደጋጋሚ ጥያቄዎች',
+        'tabs.footer' => 'የገጽ ግርጌ',
+        'tabs.sections' => 'የገጽ ክፍሎች',
+        'common.badge_text' => 'አጭር መለያ ጽሑፍ',
+        'common.primary_button_label' => 'የዋና አዝራር ጽሑፍ',
+        'common.duration' => 'የሚፈጀው ጊዜ',
+        'common.features' => 'ዋና ባህሪያት',
+        'common.publish_date' => 'የሚታተምበት ቀን',
+        'common.question' => 'ጥያቄ',
+        'footer.contact' => 'የግንኙነት መረጃ',
+        'sections.section_title' => 'የክፍሉ ርዕስ',
+    ];
+
+    foreach ($labels as $key => $amharic) {
+        expect(__("admin_landing.{$key}", [], 'am'))->toBe($amharic);
+    }
 });
 
 test('administrator can update statistics content displayed on the english home page', function (): void {
-    $admin = User::factory()->create(['email_verified_at' => now()]);
+    $admin = landingManagementEditor();
 
     $payload = [
         'total_cases' => [
@@ -71,11 +111,15 @@ test('administrator can update statistics content displayed on the english home 
     $this->withSession(['app_locale' => 'en'])
         ->get(route('landing.home'))
         ->assertOk()
-        ->assertSee('Registered Tribunal Matters');
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('Court/Public/Home')
+            ->where('metrics.0.key', 'total_cases')
+            ->where('metrics.0.label', 'Registered Tribunal Matters')
+            ->where('metrics.0.description', 'All matters currently registered by the tribunal.'));
 });
 
 test('section settings control metrics and faq headings on the home page', function (): void {
-    $admin = User::factory()->create(['email_verified_at' => now()]);
+    $admin = landingManagementEditor();
 
     $this->actingAs($admin)
         ->put(route('admin.landing.sections.update'), [
@@ -95,12 +139,16 @@ test('section settings control metrics and faq headings on the home page', funct
     $this->withSession(['app_locale' => 'en'])
         ->get(route('landing.home'))
         ->assertOk()
-        ->assertSee('Current Tribunal Workload')
-        ->assertSee('Portal Help');
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('Court/Public/Home')
+            ->where('sections.metrics.title', 'Current Tribunal Workload')
+            ->where('sections.metrics.subtitle', 'Live operational totals.')
+            ->where('sections.faq.title', 'Portal Help')
+            ->where('sections.faq.subtitle', 'Answers for applicants and respondents.'));
 });
 
 test('administrator manages the user manual opened from localized home navigation', function (): void {
-    $admin = User::factory()->create(['email_verified_at' => now()]);
+    $admin = landingManagementEditor();
 
     $this->actingAs($admin)->put(route('admin.landing.user-manual.update'), [
         'title_en' => 'User Manual',
@@ -112,17 +160,24 @@ test('administrator manages the user manual opened from localized home navigatio
 
     $settings = HomeSetting::getJson('user_manual.settings');
 
+    // The header and footer link the manual (route landing.user-manual) under its Amharic title.
     $this->withSession(['app_locale' => 'am'])
         ->get(route('landing.home'))
         ->assertOk()
-        ->assertSee('የተጠቃሚ መመሪያ')
-        ->assertSee(route('landing.user-manual'));
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('Court/Public/Home')
+            ->where('publicSite.userManualEnabled', true)
+            ->where('publicSite.userManualTitle', 'የተጠቃሚ መመሪያ'));
 
     $this->withSession(['app_locale' => 'en'])
         ->get(route('landing.user-manual'))
         ->assertOk()
-        ->assertSee('<h2 style="color: #123456;">Applicant Guide</h2>', false)
-        ->assertSee('<ol><li>Register an account</li>', false)
-        ->assertSee('<table>', false)
-        ->assertDontSee('&lt;h2');
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('Court/Public/UserManual')
+            ->where('title', 'User Manual')
+            // HTMLPurifier keeps the inline style, normalised.
+            ->where('content', fn (string $content): bool => str_contains($content, '<h2 style="color:#123456;">Applicant Guide</h2>')
+                && str_contains($content, '<ol><li>Register an account</li>')
+                && str_contains($content, '<table>')
+                && ! str_contains($content, '&lt;h2')));
 });

@@ -29,6 +29,9 @@ class CasePanel extends Component
 
     public ?EuisisEmployee $employee;
 
+    /** The EUISIS employee the applicant or complainant is linked to, even before the directory cache has their record. */
+    public ?string $employeeUuid;
+
     public ?EuisisPosition $position;
 
     public ?EuisisOrganization $employeeOrganization;
@@ -48,10 +51,10 @@ class CasePanel extends Component
         $this->organization = $this->case?->respondent_organization_uuid !== null
             ? EuisisOrganization::query()->find($this->case->respondent_organization_uuid) : null;
 
-        $employeeUuid = $this->case?->applicant_id !== null
+        $this->employeeUuid = $this->case?->applicant_id !== null
             ? DB::table('applicants')->where('id', $this->case->applicant_id)->value('euisis_employee_uuid')
             : $this->referral?->complainant_employee_uuid;
-        $this->employee = $employeeUuid !== null ? EuisisEmployee::query()->find($employeeUuid) : null;
+        $this->employee = $this->employeeUuid !== null ? EuisisEmployee::query()->find($this->employeeUuid) : null;
         $this->position = $this->employee?->position_uuid !== null ? EuisisPosition::query()->find($this->employee->position_uuid) : null;
         $this->employeeOrganization = $this->employee?->organization_uuid !== null ? EuisisOrganization::query()->find($this->employee->organization_uuid) : null;
 

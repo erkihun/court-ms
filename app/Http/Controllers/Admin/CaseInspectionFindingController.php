@@ -7,10 +7,18 @@ use App\Models\CaseInspectionFinding;
 use App\Models\CaseInspectionRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class CaseInspectionFindingController extends Controller
 {
-    public function index()
+    /** The severities, in the order the form offers them. */
+    private const SEVERITIES = ['low', 'medium', 'high', 'critical'];
+
+    /**
+     * Every finding this user may see (React, Court/Inspections/FindingsIndex).
+     */
+    public function index(): Response
     {
         $user = auth()->user();
         $query = CaseInspectionFinding::with(['request.case', 'recordedBy'])
@@ -40,38 +48,33 @@ class CaseInspectionFindingController extends Controller
             $query->where('severity', $severity);
         }
 
-        $findings = $query->paginate(12)->withQueryString();
-        $requestsQuery = CaseInspectionRequest::with('case')
-            ->orderByDesc('request_date')
-            ->select(['id', 'court_case_id', 'subject', 'request_date']);
+        $findings = $query->paginate(12)->withQueryString()
+            ->through(fn (CaseInspectionFinding $finding): array => $this->findingRow($finding));
 
-        if (!$this->canAccessAllFindings()) {
-            $requestsQuery->where('assigned_inspector_user_id', $user?->id);
-        }
-        if ($caseId) {
-            $requestsQuery->where('court_case_id', $caseId);
-        }
-
-        $requests = $requestsQuery->get();
-
-        return view('admin.case-inspections.findings.index', compact('findings', 'requests', 'requestId', 'caseId', 'severity'));
+        return Inertia::render('Court/Inspections/FindingsIndex', [
+            'findings' => $findings,
+            'requests' => $this->requestOptions($caseId ?: null),
+            'filters' => [
+                'request_id' => $requestId ? (string) $requestId : '',
+                'case_id' => $caseId ? (string) $caseId : '',
+                'severity' => $severity,
+            ],
+            'severities' => self::SEVERITIES,
+            'nav' => [
+                'requests' => $user?->hasPermission('inspection-requests.manage') ?? false,
+                'findings' => $user?->hasPermission('inspection-findings.manage') ?? false,
+            ],
+        ]);
     }
 
-    public function create()
+    /**
+     * The new-finding form (React, Court/Inspections/FindingForm with a null finding).
+     */
+    public function create(): Response
     {
-        $user = auth()->user();
-        $requestsQuery = CaseInspectionRequest::with('case')
-            ->orderByDesc('request_date')
-            ->select(['id', 'court_case_id', 'subject', 'request_date']);
-
-        if (!$this->canAccessAllFindings()) {
-            $requestsQuery->where('assigned_inspector_user_id', $user?->id);
-        }
-
-        $requests = $requestsQuery->get();
         $prefillRequestId = request()->integer('request_id');
 
-        return view('admin.case-inspections.findings.create', compact('requests', 'prefillRequestId'));
+        return Inertia::render('Court/Inspections/FindingForm', $this->formProps(null, $prefillRequestId));
     }
 
     public function store(Request $request)
@@ -127,14 +130,29 @@ class CaseInspectionFindingController extends Controller
         return redirect()->route('case-inspection-findings.index')->with('success', __('case_inspections.findings.created'));
     }
 
-    public function show(CaseInspectionFinding $finding)
+    /**
+     * One finding (React, Court/Inspections/FindingShow).
+     */
+    public function show(CaseInspectionFinding $finding): Response
     {
         $this->authorizeFindingAccess($finding);
         $finding->load(['request.case', 'recordedBy', 'acceptedBy']);
 
-        return view('admin.case-inspections.findings.show', compact('finding'));
+        return Inertia::render('Court/Inspections/FindingShow', [
+            'finding' => $this->findingRow($finding) + [
+                'details' => $finding->details,
+                'recorded_by_name' => $finding->recordedBy?->name,
+                'accepted_at' => $finding->accepted_at ? $finding->accepted_at->toIso8601String() : null,
+                'accepted_by_name' => $finding->acceptedBy?->name,
+            ],
+            'canEdit' => !$this->isAcceptedLocked($finding),
+            'canAccept' => $this->canAccessAllFindings() && !$this->isAcceptedLocked($finding),
+        ]);
     }
 
+    /**
+     * The edit form (React, Court/Inspections/FindingForm with the finding).
+     */
     public function edit(CaseInspectionFinding $finding)
     {
         $this->authorizeFindingAccess($finding);
@@ -144,18 +162,7 @@ class CaseInspectionFindingController extends Controller
                 ->with('error', __('case_inspections.findings.accepted_locked'));
         }
 
-        $user = auth()->user();
-        $requestsQuery = CaseInspectionRequest::with('case')
-            ->orderByDesc('request_date')
-            ->select(['id', 'court_case_id', 'subject', 'request_date']);
-
-        if (!$this->canAccessAllFindings()) {
-            $requestsQuery->where('assigned_inspector_user_id', $user?->id);
-        }
-
-        $requests = $requestsQuery->get();
-
-        return view('admin.case-inspections.findings.edit', compact('finding', 'requests'));
+        return Inertia::render('Court/Inspections/FindingForm', $this->formProps($finding, 0));
     }
 
     public function update(Request $request, CaseInspectionFinding $finding)
@@ -264,6 +271,61 @@ class CaseInspectionFindingController extends Controller
             $filename,
             ['Content-Type' => 'application/pdf']
         );
+    }
+
+    /** The row of a finding as the list, the show page and the form read it. */
+    private function findingRow(CaseInspectionFinding $finding): array
+    {
+        return [
+            'id' => (int) $finding->id,
+            'request_id' => (int) $finding->case_inspection_request_id,
+            'request_subject' => $finding->request?->subject,
+            'case_id' => $finding->request?->court_case_id !== null ? (int) $finding->request->court_case_id : null,
+            'case_number' => $finding->request?->case?->case_number,
+            'title' => $finding->title,
+            'finding_date' => $finding->finding_date?->toDateString(),
+            'severity' => (string) $finding->severity,
+            'accepted' => $finding->accepted_at !== null,
+            'has_attachment' => (bool) $finding->attachment_path,
+            'attachment_name' => $finding->attachment_original_name ?: ($finding->attachment_path ? basename((string) $finding->attachment_path) : null),
+        ];
+    }
+
+    /** The props of the create and edit form: the finding (null when new), the requests to choose from and the prefill. */
+    private function formProps(?CaseInspectionFinding $finding, int $prefillRequestId): array
+    {
+        return [
+            'finding' => $finding ? $this->findingRow($finding) + ['details' => $finding->details] : null,
+            'requests' => $this->requestOptions(null),
+            'prefill' => ['request_id' => $prefillRequestId ? (string) $prefillRequestId : ''],
+            'severities' => self::SEVERITIES,
+            'today' => now()->toDateString(),
+        ];
+    }
+
+    /** The requests this user may record findings against, newest first, optionally one case's. */
+    private function requestOptions(?int $caseId): array
+    {
+        $user = auth()->user();
+        $requestsQuery = CaseInspectionRequest::with('case')
+            ->orderByDesc('request_date')
+            ->select(['id', 'court_case_id', 'subject', 'request_date']);
+
+        if (!$this->canAccessAllFindings()) {
+            $requestsQuery->where('assigned_inspector_user_id', $user?->id);
+        }
+        if ($caseId) {
+            $requestsQuery->where('court_case_id', $caseId);
+        }
+
+        return $requestsQuery->get()
+            ->map(fn (CaseInspectionRequest $request): array => [
+                'id' => (int) $request->id,
+                'case_number' => $request->case?->case_number,
+                'subject' => $request->subject,
+                'request_date' => $request->request_date?->toDateString(),
+            ])
+            ->all();
     }
 
     private function canAccessAllFindings(): bool

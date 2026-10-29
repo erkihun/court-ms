@@ -8,12 +8,14 @@ use App\Services\Euisis\CaseUpdateRecorder;
 use App\Services\Euisis\EuisisClient;
 use App\Services\Euisis\EuisisException;
 use App\Services\Euisis\EuisisSync;
+use App\Services\Euisis\StaffLink;
 use Illuminate\Console\Command;
 
 /**
  * Pulls EUISIS master data into the court-ms cache and records changes of
  * referred cases for EUISIS to read (docs/euisis-integration.md). Scheduled
- * every five minutes while EUISIS_ENABLED is true.
+ * every five minutes while EUISIS_ENABLED is true. Linked staff accounts are
+ * checked after the feed: suspended when the employee left the court's units.
  */
 class EuisisSyncCommand extends Command
 {
@@ -21,7 +23,7 @@ class EuisisSyncCommand extends Command
 
     protected $description = 'Sync organizations and people from EUISIS and record referred-case changes';
 
-    public function handle(EuisisClient $client, EuisisSync $sync, CaseUpdateRecorder $updates): int
+    public function handle(EuisisClient $client, EuisisSync $sync, CaseUpdateRecorder $updates, StaffLink $staff): int
     {
         $recorded = $updates->capture();
         $this->line("Referred-case changes recorded: {$recorded}");
@@ -46,6 +48,11 @@ class EuisisSyncCommand extends Command
         $this->info($summary['feed']
             ? "Change feed: {$summary['events']} events read, {$summary['applied']} applied."
             : 'The EUISIS change feed is off; the directory is refreshed hourly instead.');
+
+        // Without the feed, the linked employees' records are read again (hourly) before the check.
+        $standing = $staff->review(! $summary['feed']);
+        $this->info("Staff accounts: {$standing['checked']} checked, {$standing['suspended']} suspended, {$standing['restored']} restored"
+            .($standing['errors'] > 0 ? ", {$standing['errors']} not read" : '').'.');
 
         return self::SUCCESS;
     }

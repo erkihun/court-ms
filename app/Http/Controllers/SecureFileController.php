@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\ApplicantResponseReply;
 use App\Models\Respondent;
 use App\Models\RespondentResponse;
+use App\Support\CaseScope;
+use App\Services\CaseParties;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -54,6 +56,7 @@ class SecureFileController extends Controller
     {
         // Staff only — lawyer credential documents are reviewed by court staff.
         abort_unless($this->staffCan('cases.view'), 403);
+        $this->ensureStaffScope(DB::table('court_cases')->where('id', $caseId)->first());
 
         $path = DB::table('court_cases as c')
             ->leftJoin('applicants as a', 'a.id', '=', 'c.applicant_id')
@@ -70,15 +73,20 @@ class SecureFileController extends Controller
         $inline = $request->boolean('inline');
 
         if ($this->staffCan('cases.view')) {
+            if ($response->case_number) {
+                $this->ensureStaffScope(DB::table('court_cases')->where('case_number', $response->case_number)->first());
+            }
+
             return $this->downloadFile($response->pdf_path, basename((string) $response->pdf_path), null, $inline);
         }
 
         $applicant = auth('applicant')->user();
         abort_unless($applicant, 403);
 
+        // Any party on the applicant's side of the case (App\Services\CaseParties).
         $ownsCase = DB::table('court_cases')
             ->where('case_number', $response->case_number)
-            ->where('applicant_id', $applicant->id)
+            ->whereIn('id', CaseParties::caseIdsFor((int) $applicant->id))
             ->exists();
 
         if ($ownsCase) {
@@ -97,6 +105,8 @@ class SecureFileController extends Controller
         $inline = $request->boolean('inline');
 
         if ($this->staffCan('cases.view')) {
+            $this->ensureStaffScope(DB::table('court_cases')->where('id', $reply->case_id)->first());
+
             return $this->downloadFile($reply->pdf_path, basename((string) $reply->pdf_path), null, $inline);
         }
 
@@ -111,12 +121,12 @@ class SecureFileController extends Controller
 
         abort_unless($matchesTarget, 404);
 
+        // A reply on a case the account is a party to: the parties see each other's replies.
         $applicantOwnsReply = DB::table('applicant_response_replies')
             ->where('id', $reply->id)
             ->where('case_id', $caseId)
             ->where('respondent_response_id', $responseId)
-            ->where('applicant_id', $applicant->id)
-            ->exists();
+            ->exists() && CaseParties::canFollow((int) $applicant->id, $caseId);
 
         if ($applicantOwnsReply) {
             return $this->downloadFile($reply->pdf_path, basename((string) $reply->pdf_path), null, $inline);
@@ -150,6 +160,8 @@ class SecureFileController extends Controller
         $inline = $request->boolean('inline');
 
         if ($this->staffCan('cases.view')) {
+            $this->ensureStaffScope(DB::table('court_cases')->where('id', $reply->case_id)->first());
+
             return $this->downloadFile($reply->pdf_path, basename((string) $reply->pdf_path), null, $inline);
         }
 
@@ -195,9 +207,18 @@ class SecureFileController extends Controller
         );
     }
 
+    /** Staff with cases.view reach a case's files only within their team scope (CaseScope). */
+    private function ensureStaffScope(?object $case): void
+    {
+        abort_if($case === null, 404);
+        CaseScope::ensure($case);
+    }
+
     private function authorizeCaseAccess(int $caseId): void
     {
         if ($this->staffCan('cases.view')) {
+            $this->ensureStaffScope(DB::table('court_cases')->where('id', $caseId)->first());
+
             return;
         }
 
@@ -219,9 +240,7 @@ class SecureFileController extends Controller
             return false;
         }
 
-        $owner = DB::table('court_cases')->where('id', $caseId)->value('applicant_id');
-
-        return $owner && (int) $owner === (int) $aid;
+        return CaseParties::canFollow((int) $aid, $caseId);
     }
 
     private function respondentHasViewedCase(int $caseId): bool

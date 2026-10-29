@@ -3,22 +3,22 @@
 namespace App\Http\Controllers\Applicant;
 
 use App\Http\Controllers\Controller;
+use App\Models\AboutPage;
 use App\Models\Applicant;
-use App\Models\SystemSetting;
+use App\Support\LoginThrottle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
+use Inertia\Inertia;
 
 class ApplicantAuthController extends Controller
 {
-    public function showRegister()
+    public function showRegister(Request $request)
     {
-        return response()
-            ->view('applicant.auth.register')
+        // The registration page (React, Court/Applicant/Register).
+        return Inertia::render('Court/Applicant/Register')
+            ->toResponse($request)
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
             ->header('Pragma', 'no-cache');
     }
@@ -83,14 +83,31 @@ class ApplicantAuthController extends Controller
             ->with('success', __('auth.email_verified_welcome'));
     }
 
-    public function showLogin()
+    public function showLogin(Request $request)
     {
         // Always reset acting-as flag on login screen
         session()->forget('acting_as_respondent');
-        $asRespondentNav = request('login_as') === 'respondent';
+        $loginAs = old('login_as', $request->query('login_as', 'applicant')) === 'respondent' ? 'respondent' : 'applicant';
 
-        return response()
-            ->view('applicant.auth.login', compact('asRespondentNav'))
+        $settings = rescue(fn () => SystemSetting::cached(), null, false);
+        $bannerPath = ($settings?->show_banner_on_login ?? true) ? ($settings?->banner_path ?? null) : null;
+        $aboutPage = rescue(fn () => AboutPage::query()
+            ->where('is_published', true)
+            ->orderByDesc('updated_at')
+            ->first(), null, false);
+
+        // The sign-in page (React, Court/Applicant/Login): the form beside the published About page.
+        return Inertia::render('Court/Applicant/Login', [
+            'loginAs' => $loginAs,
+            'email' => (string) old('email', ''),
+            'bannerUrl' => $bannerPath ? asset('storage/'.$bannerPath) : null,
+            'about' => $aboutPage ? [
+                'title' => (string) $aboutPage->title,
+                // Sanitised as the Blade page printed it.
+                'body' => (string) clean($aboutPage->body ?? '', 'cases'),
+            ] : null,
+        ])
+            ->toResponse($request)
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
             ->header('Pragma', 'no-cache');
     }
@@ -116,13 +133,10 @@ class ApplicantAuthController extends Controller
         }
 
         $remember = $request->boolean('remember');
-        $loginSettings = SystemSetting::cached();
-        $maxAttempts = $loginSettings?->login_max_attempts ?? 5;
-        $lockoutSecs = ($loginSettings?->lockout_minutes ?? 15) * 60;
 
-        $throttleKey = Str::lower($credentials['email']).'|'.$request->ip();
-        if (RateLimiter::tooManyAttempts($throttleKey, $maxAttempts)) {
-            $seconds = RateLimiter::availableIn($throttleKey);
+        $throttle = LoginThrottle::for('applicant', $credentials['email'], $request->ip());
+        if ($throttle->tooManyAttempts()) {
+            $seconds = $throttle->availableIn();
             $message = trans('auth.throttle', [
                 'seconds' => $seconds,
                 'minutes' => ceil($seconds / 60),
@@ -142,57 +156,34 @@ class ApplicantAuthController extends Controller
 
         $isRespondentMode = $request->input('login_as') === 'respondent';
 
-        // 1) If logging in as respondent, ensure an applicant record exists and log in
-        if ($isRespondentMode) {
-            $applicant = Applicant::where('email', $credentials['email'])->first();
-            if (! $applicant) {
-                $applicant = Applicant::create([
-                    'first_name' => $existing?->first_name ?? '',
-                    'middle_name' => $existing?->middle_name ?? '',
-                    'last_name' => $existing?->last_name ?? '',
-                    'gender' => $existing?->gender ?? null,
-                    'position' => $existing?->position ?? '',
-                    'organization_name' => $existing?->organization_name ?? '',
-                    'phone' => $existing?->phone ?? ('resp_'.uniqid()),
-                    'email' => $credentials['email'],
-                    'address' => $existing?->address ?? '',
-                    'national_id_number' => $existing?->national_id_number ?? '',
-                    'password' => Hash::make($credentials['password']),
-                    'is_active' => true,
-                ]);
-            }
-
-            if (Hash::check($credentials['password'], $applicant->password) || Auth::guard('applicant')->attempt($credentials, $remember)) {
-                Auth::guard('applicant')->login($applicant, $remember);
-                $request->session()->regenerate();
-                $request->session()->put('acting_as_respondent', true);
-                RateLimiter::clear($throttleKey);
-                $target = route('respondent.dashboard');
-
-                return $this->loginResponse($request, $target);
-            }
-        }
-
-        // 2) Normal applicant login
+        // Respondents sign in with an existing account. Accounts are created
+        // only through registration (validation, national ID, the registration
+        // switch); signing in never creates one.
         if (Auth::guard('applicant')->attempt($credentials, $remember)) {
             $request->session()->regenerate();
-            $request->session()->forget('acting_as_respondent');
-            RateLimiter::clear($throttleKey);
-            $target = route('applicant.dashboard');
+            $throttle->clear();
 
-            return $this->loginResponse($request, $target);
+            if ($isRespondentMode) {
+                $request->session()->put('acting_as_respondent', true);
+
+                return $this->loginResponse($request, route('respondent.dashboard'));
+            }
+
+            $request->session()->forget('acting_as_respondent');
+
+            return $this->loginResponse($request, route('applicant.dashboard'));
         }
 
-        RateLimiter::hit($throttleKey, $lockoutSecs);
+        $throttle->hit();
 
         if ($request->expectsJson()) {
             return response()->json([
-                'errors' => ['email' => ['Invalid credentials.']],
+                'errors' => ['email' => [__('auth.failed')]],
             ], 422);
         }
 
         return back()
-            ->withErrors(['email' => 'Invalid credentials.'])
+            ->withErrors(['email' => __('auth.failed')])
             ->withInput($request->only('email', 'login_as'));
     }
 
@@ -201,11 +192,11 @@ class ApplicantAuthController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'redirect' => $target,
-                'message' => 'Signed in.',
+                'message' => __('respondent.login_success'),
             ]);
         }
 
-        return redirect($target)->with('success', 'Signed in.');
+        return redirect($target)->with('success', __('respondent.login_success'));
     }
 
     public function logout(Request $request)
@@ -214,6 +205,7 @@ class ApplicantAuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('applicant.login');
+        // With the portal in EUISIS only lawyers sign in here, at /lawyer/login.
+        return redirect()->route(\App\Support\EuisisParties::portalClosed() ? 'lawyer.login' : 'applicant.login');
     }
 }

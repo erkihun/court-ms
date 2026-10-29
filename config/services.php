@@ -43,6 +43,13 @@ return [
     */
     'euisis' => [
         'enabled' => (bool) env('EUISIS_ENABLED', false),
+        // Only EUISIS employees and institutions may sue or be sued: new cases come from EUISIS
+        // (the employee portal, or a grievance referral) with an EUISIS respondent institution.
+        'parties_only' => (bool) env('EUISIS_PARTIES_ONLY', (bool) env('EUISIS_ENABLED', false)),
+        // Employees work on their cases in the EUISIS employee portal (Flow 6): the applicant and
+        // respondent portal is closed. On with EUISIS parties only; EUISIS_PORTAL_URL is where they go.
+        'portal_in_euisis' => (bool) env('EUISIS_PORTAL_IN_EUISIS', (bool) env('EUISIS_PARTIES_ONLY', (bool) env('EUISIS_ENABLED', false))),
+        'portal_url' => env('EUISIS_PORTAL_URL'),
         'url' => rtrim((string) env('EUISIS_URL', ''), '/'),
         'token' => env('EUISIS_TOKEN'),
         'timeout' => (int) env('EUISIS_TIMEOUT', 15),

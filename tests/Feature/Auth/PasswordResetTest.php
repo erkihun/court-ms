@@ -14,7 +14,8 @@ use Illuminate\Support\Facades\Queue;
 test('reset password link screen can be rendered', function () {
     $response = $this->get('/forgot-password');
 
-    $response->assertStatus(200);
+    $response->assertStatus(200)
+        ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page->component('Court/Auth/ForgotPassword'));
 });
 
 test('requesting a reset code emails an OTP and redirects to the otp screen', function () {
@@ -71,12 +72,14 @@ test('password can be reset end-to-end with a valid otp code', function () {
     Notification::assertSentTo($user, PasswordResetOtp::class, function (PasswordResetOtp $notification) {
         $code = (fn () => $this->code)->call($notification);
 
-        $this->get(route('admin.password.otp.show'))->assertStatus(200);
+        $this->get(route('admin.password.otp.show'))->assertStatus(200)
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page->component('Court/Auth/PasswordOtp'));
 
         $this->post(route('admin.password.otp.verify'), ['code' => $code])
             ->assertRedirect(route('password.reset.new'));
 
-        $this->get(route('password.reset.new'))->assertStatus(200);
+        $this->get(route('password.reset.new'))->assertStatus(200)
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page->component('Court/Auth/ResetPassword'));
 
         $this->post(route('password.store'), [
             'password' => 'NewPassword123',

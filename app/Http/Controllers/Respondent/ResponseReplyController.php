@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Respondent;
 
 use App\Http\Controllers\Controller;
 use App\Models\Respondent;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Inertia\Inertia;
 
 class ResponseReplyController extends Controller
 {
@@ -44,7 +46,21 @@ class ResponseReplyController extends Controller
             ->orderByDesc('arr.created_at')
             ->paginate(15);
 
-        return view('applicant.respondent.response-replies.index', compact('replies'));
+        // The applicants' accepted replies to this respondent's responses (React, Court/Respondent/ResponseReplies/Index).
+        return Inertia::render('Court/Respondent/ResponseReplies/Index', [
+            'replies' => $replies->through(fn (object $reply): array => [
+                'id' => (int) $reply->id,
+                'case_number' => (string) $reply->case_number,
+                'response_number' => $reply->response_number,
+                'applicant_name' => $this->applicantName($reply),
+                'created_at' => $reply->created_at ? Carbon::parse($reply->created_at)->toIso8601String() : null,
+            ]),
+        ]);
+    }
+
+    private function applicantName(object $reply): string
+    {
+        return trim(($reply->applicant_first_name ?? '').' '.($reply->applicant_middle_name ?? '').' '.($reply->applicant_last_name ?? ''));
     }
 
     public function show(int $replyId)
@@ -76,7 +92,16 @@ class ResponseReplyController extends Controller
 
         abort_if(!$reply, 404);
 
-        return view('applicant.respondent.response-replies.show', compact('reply'));
+        // One accepted reply (React, Court/Respondent/ResponseReplies/Show); its file stays behind the download route.
+        return Inertia::render('Court/Respondent/ResponseReplies/Show', [
+            'reply' => [
+                'id' => (int) $reply->id,
+                'case_number' => (string) $reply->case_number,
+                'response_number' => $reply->response_number,
+                'applicant_name' => $this->applicantName($reply),
+                'description' => $reply->description,
+            ],
+        ]);
     }
 
     private function currentRespondentId(): int

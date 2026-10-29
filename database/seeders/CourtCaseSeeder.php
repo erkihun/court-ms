@@ -12,6 +12,13 @@ class CourtCaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // Fabricated cases must never be mixed into a live case register.
+        if (app()->environment('production')) {
+            $this->command?->warn('Skipping CourtCaseSeeder: sample cases are not seeded in production.');
+
+            return;
+        }
+
         $schema = DB::getSchemaBuilder();
         foreach (['court_cases', 'case_types'] as $table) {
             if (! $schema->hasTable($table)) {

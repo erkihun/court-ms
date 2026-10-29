@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasAmharicText;
 use Illuminate\Database\Eloquent\Model;
 
 class HomeService extends Model
 {
+    use HasAmharicText;
+
     protected $fillable = [
         'sort_order', 'is_active', 'title', 'description',
-        'meta', 'features', 'icon_type', 'accent',
+        'meta', 'features', 'icon_type', 'accent', 'href',
     ];
 
     protected $casts = [

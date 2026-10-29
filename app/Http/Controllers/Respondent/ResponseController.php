@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
 use App\Services\ResponseNotificationService;
+use Inertia\Inertia;
 use Mews\Purifier\Facades\Purifier;
 
 class ResponseController extends Controller
@@ -25,12 +26,19 @@ class ResponseController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        return view('applicant.respondent.responses.index', compact('responses'));
+        // The respondent's responses (React, Court/Respondent/Responses/Index).
+        return Inertia::render('Court/Respondent/Responses/Index', [
+            'responses' => $responses->map(fn (RespondentResponse $response): array => $this->present($response))->values()->all(),
+        ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        return view('applicant.respondent.responses.create');
+        // The case number comes from the case page's "Give response" link and is not editable here.
+        return Inertia::render('Court/Respondent/Responses/Form', [
+            'response' => null,
+            'caseNumber' => trim((string) $request->query('case_number', '')),
+        ]);
     }
 
     public function store(Request $request)
@@ -93,19 +101,49 @@ class ResponseController extends Controller
     {
         $this->authorizeOwnership($response);
 
-        return view('applicant.respondent.responses.show', compact('response'));
+        return Inertia::render('Court/Respondent/Responses/Show', [
+            'response' => $this->present($response, withDescription: true),
+        ]);
     }
 
     public function edit(RespondentResponse $response)
     {
         $this->authorizeOwnership($response);
+        if ($this->isLocked($response)) {
+            return redirect()->route('respondent.responses.show', $response)->with('error', __('respondent.response_locked'));
+        }
 
-        return view('applicant.respondent.responses.edit', compact('response'));
+        return Inertia::render('Court/Respondent/Responses/Form', [
+            'response' => $this->present($response, withDescription: true),
+            'caseNumber' => (string) ($response->case_number ?? ''),
+        ]);
+    }
+
+    /** One response as the pages show it; the stored PDF path stays on the server. @return array<string, mixed> */
+    private function present(RespondentResponse $response, bool $withDescription = false): array
+    {
+        $reviewStatus = (string) ($response->review_status ?? 'awaiting_review') ?: 'awaiting_review';
+
+        return [
+            'id' => (int) $response->id,
+            'title' => (string) $response->title,
+            'case_number' => $response->case_number,
+            'response_number' => $response->response_number,
+            'review_status' => $reviewStatus,
+            'review_note' => $response->review_note,
+            // Accepted responses are read only, on the server too (update and destroy refuse them).
+            'locked' => $this->isLocked($response),
+            'has_pdf' => ! empty($response->pdf_path),
+            'created_at' => $response->created_at?->toIso8601String(),
+            // Purified on save; cleaned again on the way out, as the other rich text is.
+            ...($withDescription ? ['description' => $response->description ? (string) clean($response->description, 'cases') : null] : []),
+        ];
     }
 
     public function update(Request $request, RespondentResponse $response)
     {
         $this->authorizeOwnership($response);
+        $this->ensureEditable($response);
         $applicant = Auth::guard('applicant')->user();
         abort_unless($applicant, 403);
 
@@ -147,6 +185,11 @@ class ResponseController extends Controller
                     : $response->response_number,
                 'title' => $data['title'],
                 'description' => $descHtml ?: null,
+                // A changed response goes back to the court for review.
+                'review_status' => 'awaiting_review',
+                'review_note' => null,
+                'reviewed_by_user_id' => null,
+                'reviewed_at' => null,
             ]);
             $response->save();
         });
@@ -157,12 +200,24 @@ class ResponseController extends Controller
     public function destroy(RespondentResponse $response)
     {
         $this->authorizeOwnership($response);
+        $this->ensureEditable($response);
         app(\App\Services\LegalHoldService::class)->assertFileMayBeDeleted((string) $response->pdf_path);
         Storage::disk('private')->delete($response->pdf_path);
         Storage::disk('public')->delete($response->pdf_path); // legacy cleanup
         $response->delete();
 
         return redirect()->route('respondent.responses.index');
+    }
+
+    /** Once the court accepts a response it is part of the case record and cannot change. */
+    private function isLocked(RespondentResponse $response): bool
+    {
+        return in_array($response->review_status, ['accepted', 'accept'], true);
+    }
+
+    private function ensureEditable(RespondentResponse $response): void
+    {
+        abort_if($this->isLocked($response), 403, __('respondent.response_locked'));
     }
 
     private function authorizeOwnership(RespondentResponse $response): void

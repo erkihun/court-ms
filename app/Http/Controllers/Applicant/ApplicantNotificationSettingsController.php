@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class ApplicantNotificationSettingsController extends Controller
 {
@@ -31,7 +32,15 @@ class ApplicantNotificationSettingsController extends Controller
                 ->where('applicant_id', $aid)->first();
         }
 
-        return view('applicant.notifications.settings', compact('settings'));
+        // Not routed (applicant.notifications.settings is ApplicantNotificationController@settingsEdit); the same React page.
+        return Inertia::render('Court/Applicant/NotificationSettings', [
+            'prefs' => [
+                'email_status' => (bool) ($settings->status_email ?? true),
+                'email_hearing' => (bool) ($settings->hearing_email ?? true),
+                'email_message' => (bool) ($settings->message_email ?? true),
+                'email_weekly_digest' => false,
+            ],
+        ]);
     }
 
     public function update(Request $request)

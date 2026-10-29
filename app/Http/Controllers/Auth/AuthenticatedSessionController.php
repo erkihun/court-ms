@@ -6,20 +6,27 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class AuthenticatedSessionController extends Controller
 {
     /**
-     * Display the login view.
+     * The court staff sign-in page (React, Court/Auth/Login).
      */
     public function create(): Response
     {
-        return response()
-            ->view('admin.auth.login')
-            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
-            ->header('Pragma', 'no-cache');
+        // The court's own sign-in (Pages/Court/Auth/Login), posting the same form as the EUISIS one.
+        return Inertia::render('Court/Auth/Login', [
+            'canResetPassword' => Route::has('password.request'),
+            'status' => session('status'),
+            // court-ms times sessions out on the server without naming the reason.
+            'sessionNotice' => null,
+            // Applicants and respondents are pointed to the EUISIS employee portal.
+            'portalUrl' => \App\Support\EuisisParties::portalUrl(),
+        ]);
     }
 
     /**

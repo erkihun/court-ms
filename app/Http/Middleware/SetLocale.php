@@ -9,12 +9,21 @@ use Illuminate\Support\Facades\Schema;
 
 class SetLocale
 {
+    /**
+     * The React screens (copied from EUISIS) keep the language in localStorage
+     * and mirror it into this unencrypted cookie, as EUISIS SetClientLocale reads it.
+     */
+    public const CLIENT_COOKIE = 'euisis_locale';
+
     public function handle($request, Closure $next)
     {
         // Admin-configured default locale (system settings) takes precedence over
-        // the static config default. A user's explicit choice (session/cookie)
+        // the static config default. A user's explicit choice (the React client's
+        // header or cookie, then the session/cookie the language switch sets)
         // still overrides the admin default.
-        $locale = session('app_locale')
+        $client = $request->header('X-Locale') ?? $request->cookie(self::CLIENT_COOKIE);
+        $locale = (in_array($client, ['en', 'am'], true) ? $client : null)
+            ?? session('app_locale')
             ?? $request->cookie('app_locale')
             ?? $this->defaultLocale();
 

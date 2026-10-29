@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Applicant;
 
 use App\Http\Controllers\Controller;
+use App\Support\SessionRows;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -12,7 +13,7 @@ use Illuminate\View\View;
 
 final class ApplicantSessionController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): View|\Inertia\Response
     {
         if ($request->routeIs('respondent.profile.*')) {
             $request->session()->put('acting_as_respondent', true);
@@ -34,22 +35,42 @@ final class ApplicantSessionController extends Controller
             $sessions->prepend($this->presentCurrent($request));
         }
 
-        return view('applicant.profile.sessions', compact('sessions'));
+        if ($request->routeIs('respondent.profile.*')) {
+            // The respondent portal's profile is its own React page (Court/Respondent/Profile), on its devices tab.
+            return \App\Http\Controllers\Respondent\RespondentProfilePage::render($request, $sessions);
+        }
+
+        // The applicant's signed-in sessions (React, Court/Applicant/Sessions), beside the profile and security tabs.
+        return \Inertia\Inertia::render('Court/Applicant/Sessions', [
+            'sessions' => $sessions->map(fn (object $session): array => [
+                'id' => (string) $session->id,
+                'ip_address' => $session->ip_address ?: null,
+                'device_name' => (string) $session->device_name,
+                'browser_name' => (string) $session->browser_name,
+                'is_current' => (bool) $session->is_current,
+                'last_active_at' => $session->last_active_at->toIso8601String(),
+                'last_active_relative' => $session->last_active_at->diffForHumans(),
+            ])->values()->all(),
+            'supported' => config('session.driver') === 'database',
+            // Flashed by destroy/destroyOthers under a key the shared flash does not carry.
+            'status' => $request->session()->get('status'),
+        ]);
     }
 
     public function destroy(Request $request, string $session): RedirectResponse
     {
         $user = $request->user('applicant');
         abort_if($user === null, 401);
-        abort_if(hash_equals($request->session()->getId(), $session), 422, __('auth.session_current_cannot_revoke'));
+        // `{session}` is the row's keyed hash (SessionRows::publicKey), as the page names it.
+        abort_if(hash_equals(SessionRows::publicKey($request->session()->getId()), $session), 422, __('auth.session_current_cannot_revoke'));
 
         $record = DB::table('sessions')
-            ->where('id', $session)
             ->where('user_id', $user->getAuthIdentifier())
-            ->first(['id', 'payload']);
+            ->get(['id', 'payload'])
+            ->first(fn (object $row): bool => $this->belongsToProfileSession($row) && hash_equals(SessionRows::publicKey((string) $row->id), $session));
 
-        if ($record !== null && $this->belongsToProfileSession($record)) {
-            DB::table('sessions')->where('id', $session)->delete();
+        if ($record !== null) {
+            DB::table('sessions')->where('id', $record->id)->delete();
         }
 
         return back()->with('status', __('auth.session_revoked'));
@@ -80,7 +101,8 @@ final class ApplicantSessionController extends Controller
         $userAgent = (string) $session->user_agent;
 
         return (object) [
-            'id' => $session->id,
+            // Session ids never reach the browser; a row is addressed by its keyed hash.
+            'id' => SessionRows::publicKey((string) $session->id),
             'ip_address' => $session->ip_address,
             'user_agent' => $userAgent,
             'device_name' => ($hints ? $this->deviceFromHints($hints) : null) ?? $this->deviceName($userAgent),
@@ -98,7 +120,7 @@ final class ApplicantSessionController extends Controller
         $hints = is_array($hints) ? $hints : null;
 
         return (object) [
-            'id' => $request->session()->getId(),
+            'id' => SessionRows::publicKey($request->session()->getId()),
             'ip_address' => $request->ip(),
             'user_agent' => $userAgent,
             'device_name' => ($hints ? $this->deviceFromHints($hints) : null) ?? $this->deviceName($userAgent),

@@ -8,15 +8,19 @@ use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\AuthenticateIntegrationClient;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\CaptureClientHints;
+use App\Http\Middleware\EndSuspendedStaffSessions;
 use App\Http\Middleware\EnforceSystemAvailability;
 use App\Http\Middleware\EnsureMfaIsVerified;
 use App\Http\Middleware\ForceHttps;
 use App\Http\Middleware\ForcePasswordChange;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\PurgeLegacySessionCookies;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\RequirePermission;
+use App\Http\Middleware\CourtPortalInEuisis;
 use App\Http\Middleware\RequireRole;
 use App\Http\Middleware\ResolveAdminRole;
+use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\SetSessionCookieForGuard;
 use App\Http\Middleware\SystemAuditMiddleware;
 use App\Http\Middleware\UseGuard;
@@ -82,14 +86,21 @@ return Application::configure(basePath: dirname(__DIR__))
         // EncryptCookies rewrites them into fresh encrypted payloads and the
         // browser keeps the stale cookie instead of dropping it.
         $middleware->encryptCookies(
-            except: PurgeLegacySessionCookies::legacyNames(),
+            except: [...PurgeLegacySessionCookies::legacyNames(), SetLocale::CLIENT_COOKIE],
         );
         $middleware->prependToGroup('web', AdminSessionTimeout::class);
         $middleware->appendToGroup('web', EnforceSystemAvailability::class);
         $middleware->appendToGroup('web', ForceHttps::class);
         $middleware->appendToGroup('web', CaptureClientHints::class);
+        $middleware->appendToGroup('web', EndSuspendedStaffSessions::class);
         $middleware->appendToGroup('web', EnsureMfaIsVerified::class);
         $middleware->appendToGroup('web', SystemAuditMiddleware::class);
+        // Props for the React (Inertia) screens; Blade pages are unaffected.
+        $middleware->appendToGroup('web', HandleInertiaRequests::class);
+        // Flow 6: the applicant and respondent portal is gone while employees work in EUISIS:
+        // before the portals' own auth, so a guest gets not found, not a sign-in redirect.
+        $middleware->appendToGroup('web', CourtPortalInEuisis::class);
+        $middleware->prependToPriorityList(\Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests::class, CourtPortalInEuisis::class);
         $middleware->appendToGroup('api', SystemAuditMiddleware::class);
 
         // If you ever need global middleware:

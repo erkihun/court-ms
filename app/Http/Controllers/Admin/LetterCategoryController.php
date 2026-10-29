@@ -5,24 +5,35 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\LetterCategory;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class LetterCategoryController extends Controller
 {
-    public function index()
+    /** The register (React, Court/LetterCategories/Index); the actions follow the Blade page's permissions. */
+    public function index(Request $request): Response
     {
         $categories = LetterCategory::query()
             ->orderBy('name')
             ->paginate(12)
             ->withQueryString();
 
-        return view('admin.letter-templates.categories.index', compact('categories'));
+        $user = $request->user();
+        $can = fn (string $permission): bool => (bool) ($user?->hasPermission($permission) ?? false);
+
+        return Inertia::render('Court/LetterCategories/Index', [
+            'categories' => $categories->through(fn (LetterCategory $category): array => $this->row($category)),
+            'can' => [
+                'create' => $can('letters.templet.create'),
+                'update' => $can('letters.templet.update'),
+                'delete' => $can('letters.templet.delete'),
+            ],
+        ]);
     }
 
-    public function create()
+    public function create(): Response
     {
-        $category = new LetterCategory();
-
-        return view('admin.letter-templates.categories.create', compact('category'));
+        return Inertia::render('Court/LetterCategories/Form', ['category' => null]);
     }
 
     public function store(Request $request)
@@ -39,11 +50,9 @@ class LetterCategoryController extends Controller
             ]);
     }
 
-    public function edit(LetterCategory $letterCategory)
+    public function edit(LetterCategory $letterCategory): Response
     {
-        return view('admin.letter-templates.categories.edit', [
-            'category' => $letterCategory,
-        ]);
+        return Inertia::render('Court/LetterCategories/Form', ['category' => $this->row($letterCategory)]);
     }
 
     public function update(Request $request, LetterCategory $letterCategory)
@@ -70,6 +79,16 @@ class LetterCategoryController extends Controller
                 'key' => 'messages.success.deleted',
                 'replace' => ['resource' => __('messages.resources.letter_category')],
             ]);
+    }
+
+    /** @return array{id: int, name: string, description: ?string} */
+    private function row(LetterCategory $category): array
+    {
+        return [
+            'id' => (int) $category->id,
+            'name' => (string) $category->name,
+            'description' => $category->description ?: null,
+        ];
     }
 
     private function validateCategory(Request $request, ?int $ignoreId = null): array

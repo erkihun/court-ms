@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasAmharicText;
 use Illuminate\Database\Eloquent\Model;
 
 class HomeTimelineStep extends Model
 {
+    use HasAmharicText;
+
     protected $fillable = [
         'sort_order', 'is_active', 'title', 'description',
         'meta', 'duration', 'color',

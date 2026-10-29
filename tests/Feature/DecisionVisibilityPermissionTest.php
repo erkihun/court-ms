@@ -68,12 +68,10 @@ test('decision view remains team scoped', function (): void {
     $this->actingAs($user)
         ->get(route('decisions.index'))
         ->assertOk()
-        ->assertViewHas('decisions', function ($decisions) use ($visibleDecision, $hiddenDecision): bool {
-            $ids = $decisions->getCollection()->pluck('id');
-
-            return $ids->contains($visibleDecision->id)
-                && ! $ids->contains($hiddenDecision->id);
-        });
+        ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->component('Court/Decisions/Index')
+            ->where('decisions.data', fn ($rows) => collect($rows)->pluck('id')->contains($visibleDecision->id)
+                && ! collect($rows)->pluck('id')->contains($hiddenDecision->id)));
 
     $this->actingAs($user)
         ->get(route('decisions.show', $hiddenDecision))
@@ -87,7 +85,7 @@ test('decision view alone does not bypass team scope for a user without a team',
     $this->actingAs($user)
         ->get(route('decisions.index'))
         ->assertOk()
-        ->assertViewHas('decisions', fn ($decisions): bool => $decisions->isEmpty());
+        ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page->where('decisions.total', 0));
 
     $this->actingAs($user)
         ->get(route('decisions.show', $decision))
@@ -101,15 +99,17 @@ test('decision view all bypasses team scope for a permitted user without a team'
     $this->actingAs($user)
         ->get(route('decisions.index'))
         ->assertOk()
-        ->assertViewHas(
-            'decisions',
-            fn ($decisions): bool => $decisions->getCollection()->contains('id', $decision->id),
-        );
+        ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->where('decisions.data', fn ($rows) => collect($rows)->pluck('id')->contains($decision->id)));
 
     $this->actingAs($user)
         ->get(route('decisions.show', $decision))
         ->assertOk()
-        ->assertViewIs('admin.decisions.show');
+        ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->component('Court/Decisions/Show')
+            ->where('decision.id', $decision->id)
+            ->where('decision.status', 'draft')
+            ->etc());
 });
 
 test('decision index displays each decision approval status', function (): void {
@@ -123,10 +123,10 @@ test('decision index displays each decision approval status', function (): void 
 
     $user = decisionVisibilityUser(['decision.view', 'decision.view.all']);
 
+    // The page draws the approval column from `approved`; one decision approved, one pending.
     $this->actingAs($user)
         ->get(route('decisions.index'))
         ->assertOk()
-        ->assertSeeText(__('decisions.index.approval_status'))
-        ->assertSeeText(__('decisions.approval_status.approved'))
-        ->assertSeeText(__('decisions.approval_status.pending'));
+        ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->where('decisions.data', fn ($rows) => collect($rows)->pluck('approved')->sort()->values()->all() === [false, true]));
 });

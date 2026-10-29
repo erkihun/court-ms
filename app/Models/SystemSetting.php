@@ -36,6 +36,10 @@ class SystemSetting extends Model implements AuditableContract
 
         // Appearance
         'accent_palette', 'default_theme', 'show_banner_on_login', 'custom_css',
+        'primary_color', 'secondary_color', 'accent_color', 'sidebar_color',
+        'table_density', 'button_style', 'card_radius', 'logo_position',
+        'allow_user_theme_switching', 'enable_ui_animations', 'sidebar_compact_default',
+        'show_breadcrumbs', 'sticky_table_headers',
 
         // API
         'api_enabled', 'api_rate_limit',
@@ -66,6 +70,11 @@ class SystemSetting extends Model implements AuditableContract
         'password_require_number' => 'boolean',
         'password_require_symbol' => 'boolean',
         'show_banner_on_login' => 'boolean',
+        'allow_user_theme_switching' => 'boolean',
+        'enable_ui_animations' => 'boolean',
+        'sidebar_compact_default' => 'boolean',
+        'show_breadcrumbs' => 'boolean',
+        'sticky_table_headers' => 'boolean',
         'api_enabled' => 'boolean',
         'mail_enabled' => 'boolean',
         'mail_port' => 'integer',

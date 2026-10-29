@@ -6,21 +6,35 @@ use App\Http\Controllers\Controller;
 use App\Models\TermsAndCondition;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class TermsAndConditionsController extends Controller
 {
-    public function index(): View
+    public function index(): Response
     {
         $terms = TermsAndCondition::orderByDesc('created_at')->paginate(10);
 
-        return view('admin.terms.index', compact('terms'));
+        // The list (React, Court/Terms/Index).
+        return Inertia::render('Court/Terms/Index', [
+            'terms' => $terms->through(fn (TermsAndCondition $term): array => [
+                'id' => (int) $term->id,
+                'title' => (string) $term->title,
+                'excerpt' => Str::limit(strip_tags((string) $term->body), 120),
+                'is_published' => (bool) $term->is_published,
+                'published_at' => $term->published_at?->toIso8601String(),
+                'updated_at' => $term->updated_at?->toIso8601String(),
+            ]),
+            'publicUrl' => Route::has('public.terms') ? route('public.terms') : null,
+        ]);
     }
 
-    public function create(): View
+    public function create(): Response
     {
-        return view('admin.terms.create');
+        return Inertia::render('Court/Terms/Form', ['term' => null]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -43,9 +57,14 @@ class TermsAndConditionsController extends Controller
         ]);
     }
 
-    public function edit(TermsAndCondition $term): View
+    public function edit(TermsAndCondition $term): Response
     {
-        return view('admin.terms.edit', compact('term'));
+        return Inertia::render('Court/Terms/Form', ['term' => [
+            'id' => (int) $term->id,
+            'title' => (string) $term->title,
+            'body' => (string) $term->body,
+            'is_published' => (bool) $term->is_published,
+        ]]);
     }
 
     public function update(Request $request, TermsAndCondition $term): RedirectResponse

@@ -13,9 +13,10 @@ use Illuminate\Validation\Rules\Password;
 
 class RespondentAuthController extends Controller
 {
+    /** Respondents sign up and sign in through the applicant portal (as the /respondent/* routes redirect). */
     public function showRegister()
     {
-        return view('applicant.auth.register', ['asRespondentNav' => true]);
+        return redirect()->route('applicant.register', ['login_as' => 'respondent']);
     }
 
     public function register(Request $request)
@@ -58,7 +59,7 @@ class RespondentAuthController extends Controller
 
     public function showLogin()
     {
-        return view('applicant.auth.login', ['asRespondentNav' => true]);
+        return redirect()->route('applicant.login', ['login_as' => 'respondent']);
     }
 
     public function login(Request $request)

@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 use Mews\Purifier\Facades\Purifier;
 
 class DecisionController extends Controller
@@ -44,7 +45,48 @@ class DecisionController extends Controller
             ->paginate(12)
             ->withQueryString();
 
-        return view('admin.decisions.index', compact('decisions', 'search'));
+        // The register (React, Court/Decisions/Index); the row actions follow the Blade page's rules.
+        $user = auth()->user();
+        $canEdit = $user?->hasPermission('decision.update') ?? false;
+        $canDelete = $user?->hasPermission('decision.delete') ?? false;
+
+        return Inertia::render('Court/Decisions/Index', [
+            'decisions' => $decisions->through(function (Decision $decision) use ($canEdit, $canDelete): array {
+                $open = $this->isPresidingJudgeOrUnassigned($decision) && $decision->status !== 'published';
+
+                return [
+                    'id' => (int) $decision->id,
+                    'case_id' => $decision->courtCase?->id,
+                    'case_number' => $decision->case_number,
+                    'case_filed_date' => $decision->case_filed_date?->toDateString(),
+                    'applicant' => $decision->applicant_full_name ?: ($decision->courtCase?->title ?: null),
+                    'respondent' => $decision->respondent_full_name ?: null,
+                    'judge' => $decision->reviewing_admin_user_name
+                        ?: ($decision->reviewer?->name
+                        ?: (($decision->panel_judges[1]['admin_user_name'] ?? null)
+                        ?: ($decision->courtCase?->judge?->name ?: null))),
+                    'decision_date' => $decision->decision_date?->toDateString(),
+                    'status' => $decision->status,
+                    'approved' => $decision->isApproved(),
+                    'can_edit' => $canEdit && $open,
+                    'can_delete' => $canDelete && $open,
+                ];
+            }),
+            'filters' => ['q' => $search],
+            'canCreate' => $user?->hasPermission('decision.create') ?? false,
+        ]);
+    }
+
+    /**
+     * Only the presiding (middle) judge may change a decision. Drafts saved
+     * before a panel was mandatory have none, and any authorised editor may
+     * open them to assign one (see ensureMiddleJudge()).
+     */
+    private function isPresidingJudgeOrUnassigned(Decision $decision): bool
+    {
+        $presiding = $decision->presidingJudgeId();
+
+        return $presiding === null || $presiding === (int) auth()->id();
     }
 
     /**
@@ -108,21 +150,119 @@ class DecisionController extends Controller
             && ($user->hasRole('admin') || $user->hasPermission(self::VIEW_ALL_PERMISSION));
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        $cases = $this->loadCases(status: 'closed');
-        $adminUsers = $this->loadAdminUsers();
-        $judgeUsers = $this->loadJudgeUsers();
-        return view('admin.decisions.create', compact('cases', 'adminUsers', 'judgeUsers'));
+        // The form (React, Court/Decisions/Create): only closed cases may receive a decision.
+        return Inertia::render('Court/Decisions/Create', $this->formProps(
+            cases: $this->loadCases(status: 'closed'),
+            decision: null,
+            preselectedCaseId: $request->integer('case_id') ?: null,
+        ));
     }
 
     public function show(Decision $decision)
     {
-        $decision->loadMissing(['courtCase', 'reviews.reviewer']);
+        $decision->loadMissing(['courtCase', 'reviews.reviewer', 'approver']);
         abort_unless($this->canAccessDecision($decision), 403);
 
-        $templates = \App\Models\DecisionTemplate::orderBy('title')->get(['id', 'title']);
-        return view('admin.decisions.show', compact('decision', 'templates'));
+        $user = auth()->user();
+        $isMiddleJudge = $this->isPresidingJudgeOrUnassigned($decision);
+        $isPublished = $decision->isPublished();
+        $canUpdate = $user?->hasPermission('decision.update') ?? false;
+
+        // The author-first panel, padded to the three seats the page draws.
+        $panel = collect($decision->panelJudgesAuthorFirst())->pad(3, [])->take(3)->values()
+            ->map(fn (array $judge, int $index): array => [
+                'number' => $index + 1,
+                'name' => ($judge['admin_user_name'] ?? null) ?: null,
+                'vote' => ($judge['vote'] ?? null) ?: null,
+            ])->all();
+
+        return Inertia::render('Court/Decisions/Show', [
+            'decision' => [
+                'id' => (int) $decision->id,
+                'name' => $decision->name,
+                'case_id' => $decision->courtCase?->id,
+                'case_number' => $decision->case_number,
+                'case_file_number' => $decision->case_file_number ?: $decision->case_number,
+                'decision_date' => $decision->decision_date?->toDateString(),
+                'applicant_full_name' => $decision->applicant_full_name ?: null,
+                'respondent_full_name' => $decision->respondent_full_name ?: null,
+                'status' => $decision->status ?: 'draft',
+                'approved' => $decision->isApproved(),
+                'approved_at' => $decision->approved_at?->toIso8601String(),
+                'approver_name' => $decision->approver?->name,
+                // Purified on save; cleaned again on output for rows saved before that.
+                'decision_content' => clean((string) $decision->decision_content, 'cases'),
+                'panel' => $panel,
+                'panel_complete' => $decision->hasCompletePanel(),
+            ],
+            'reviews' => $decision->reviews->map(fn (DecisionReview $review): array => [
+                'id' => (int) $review->id,
+                'reviewer_name' => $review->reviewer?->name,
+                'outcome' => $review->outcome ?: 'pending',
+                'review_note' => $review->review_note ?: null,
+                'updated_at' => $review->updated_at?->toIso8601String(),
+                'is_owner' => $user?->id === $review->reviewer_id,
+            ])->values()->all(),
+            'templates' => \App\Models\DecisionTemplate::orderBy('title')->get(['id', 'title'])
+                ->map(fn (\App\Models\DecisionTemplate $template): array => ['id' => (int) $template->id, 'title' => $template->title])
+                ->all(),
+            'statuses' => self::STATUS_OPTIONS,
+            'can' => [
+                // The middle judge edits a decision until it is published.
+                'edit' => $isMiddleJudge && ! $isPublished,
+                'changeStatus' => $canUpdate,
+                'approve' => $user?->hasPermission('decision.approve') ?? false,
+                'review' => $canUpdate,
+            ],
+        ]);
+    }
+
+    /**
+     * The props of the create and edit forms: the cases to choose from, the
+     * judges, the signed-in judge (always the second seat) and the values.
+     */
+    private function formProps($cases, ?Decision $decision, ?int $preselectedCaseId = null): array
+    {
+        $user = auth()->user();
+
+        // Seats by storage index (1 = presiding judge), as normalizePanelJudges() stores them.
+        $panel = is_array($decision?->panel_judges) ? $decision->panel_judges : [];
+        $judges = collect(range(0, 2))
+            ->map(fn (int $seat): ?int => ! empty($panel[$seat]['admin_user_id']) ? (int) $panel[$seat]['admin_user_id'] : null)
+            ->all();
+        // The session judge holds the middle seat on a new decision.
+        $judges[1] ??= $user?->id;
+
+        return [
+            'decision' => $decision ? [
+                'id' => (int) $decision->id,
+                'name' => $decision->name,
+                'case_id' => $decision->court_case_id,
+                'case_file_number' => $decision->case_file_number,
+                'applicant_full_name' => $decision->applicant_full_name,
+                'respondent_full_name' => $decision->respondent_full_name,
+                'decision_date' => $decision->decision_date?->toDateString(),
+                'decision_content' => $decision->decision_content,
+                'judges' => $judges,
+            ] : null,
+            'cases' => collect($cases)->map(fn (CourtCase $case): array => [
+                'id' => (int) $case->id,
+                'case_number' => $case->case_number,
+                'title' => $case->title,
+                'applicant' => $case->title ?: ($case->applicant?->full_name ?? ''),
+                'respondent' => $case->respondent_name ?? '',
+            ])->values()->all(),
+            'judgeUsers' => $this->loadJudgeUsers()
+                ->map(fn (User $judge): array => ['id' => (int) $judge->id, 'name' => $judge->name])->values()->all(),
+            'currentUser' => ['id' => $user?->id, 'name' => $user?->name],
+            'defaults' => [
+                'decision_date' => now()->toDateString(),
+                'case_id' => $preselectedCaseId,
+                'judges' => $judges,
+            ],
+        ];
     }
 
     /**
@@ -163,6 +303,10 @@ class DecisionController extends Controller
         // A decision can only be approved after it has been published.
         if (! $decision->isPublished()) {
             return back()->withErrors(['approve' => __('decisions.approve_requires_published')]);
+        }
+
+        if (! $decision->hasCompletePanel()) {
+            return back()->withErrors(['approve' => __('decisions.validation.publish_requires_panel')]);
         }
 
         if ($decision->isApproved()) {
@@ -274,17 +418,17 @@ class DecisionController extends Controller
     {
         $this->ensureMiddleJudge($decision);
         $this->ensureNotPublished($decision);
-        $cases = $this->loadCases($decision);
-        $adminUsers = $this->loadAdminUsers();
-        $judgeUsers = $this->loadJudgeUsers();
-        return view('admin.decisions.edit', compact('decision', 'cases', 'adminUsers', 'judgeUsers'));
+
+        return Inertia::render('Court/Decisions/Edit', $this->formProps($this->loadCases($decision), $decision));
     }
 
     public function update(Request $request, Decision $decision)
     {
         $this->ensureMiddleJudge($decision);
         $this->ensureNotPublished($decision);
-        $payload = $this->preparePayload($request->validate($this->rules()));
+        $payload = $this->preparePayload(
+            $request->validate($this->rules(), StoreDecisionRequest::panelMessages())
+        );
         $case = CourtCase::with('applicant')->findOrFail($payload['case_id']);
         $decision->update($this->hydrateCaseData($payload, $case));
 
@@ -308,6 +452,10 @@ class DecisionController extends Controller
         $data = $request->validate([
             'status' => ['required', 'string', 'max:32', Rule::in(self::STATUS_OPTIONS)],
         ]);
+
+        if ($data['status'] === 'published' && ! $decision->hasCompletePanel()) {
+            return back()->withErrors(['status' => __('decisions.validation.publish_requires_panel')]);
+        }
 
         $decision->update(['status' => $data['status']]);
 
@@ -404,8 +552,17 @@ class DecisionController extends Controller
         abort_unless($this->canAccessDecision($decision), 403);
         abort_if($review->decision_id !== $decision->id, 404);
         abort_if(auth()->id() !== $review->reviewer_id, 403);
+        $review->loadMissing('reviewer');
 
-        return view('admin.decisions.reviews.edit', compact('decision', 'review'));
+        return Inertia::render('Court/Decisions/EditReview', [
+            'decision' => ['id' => (int) $decision->id, 'case_number' => $decision->case_number],
+            'review' => [
+                'id' => (int) $review->id,
+                'outcome' => $review->outcome,
+                'review_note' => $review->review_note ?: '',
+                'reviewer_name' => $review->reviewer?->name,
+            ],
+        ]);
     }
 
     public function destroy(Decision $decision)
@@ -431,8 +588,7 @@ class DecisionController extends Controller
             'reviewing_admin_user_names' => ['nullable', 'array'],
             'reviewing_admin_user_names.*' => ['string', 'max:255'],
             'judges_comments' => ['nullable', 'string', 'max:5000'],
-            'judges' => ['nullable', 'array', 'size:3'],
-            'judges.*.admin_user_id' => ['nullable', 'integer', 'exists:users,id'],
+            ...StoreDecisionRequest::panelRules(),
         ];
     }
 
@@ -504,7 +660,10 @@ class DecisionController extends Controller
 
     private function normalizePanelJudges(array $panel): array
     {
-        $ordered = collect($panel)->pad(3, [])->take(3)->values();
+        // Seats are addressed by storage index (1 = presiding judge). Read them
+        // by key rather than array order: validated() may rebuild the array in
+        // rule order, and re-indexing that would silently reassign the seats.
+        $ordered = collect(range(0, 2))->map(fn (int $seat): array => (array) ($panel[$seat] ?? []));
         $ids = $ordered->pluck('admin_user_id')->filter()->unique();
         $namesById = User::whereIn('id', $ids)->pluck('name', 'id');
 
@@ -521,8 +680,20 @@ class DecisionController extends Controller
 
     private function ensureMiddleJudge(Decision $decision): void
     {
-        $middleJudgeId = $decision->panel_judges[1]['admin_user_id'] ?? null;
-        if (!$middleJudgeId || $middleJudgeId !== auth()->id()) {
+        $middleJudgeId = $decision->presidingJudgeId();
+
+        // Drafts saved before a panel was mandatory have no presiding judge,
+        // which would leave them permanently uneditable. Let a user who can
+        // access the decision open it; saving requires a complete panel with
+        // that user in the presiding seat (see StoreDecisionRequest::panelRules).
+        if ($middleJudgeId === null) {
+            $decision->loadMissing('courtCase');
+            abort_unless($this->canAccessDecision($decision), 403);
+
+            return;
+        }
+
+        if ($middleJudgeId !== (int) auth()->id()) {
             abort(403, 'Only the middle judge can modify this decision.');
         }
     }
@@ -563,14 +734,6 @@ class DecisionController extends Controller
         }
 
         return $cases;
-    }
-
-    private function loadAdminUsers()
-    {
-        return User::query()
-            ->whereHas('roles', fn($query) => $query->where('name', 'admin'))
-            ->orderBy('name')
-            ->get(['id', 'name']);
     }
 
     private function loadJudgeUsers()

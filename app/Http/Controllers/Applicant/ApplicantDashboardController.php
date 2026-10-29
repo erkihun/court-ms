@@ -5,7 +5,11 @@ namespace App\Http\Controllers\Applicant;
 use App\Http\Controllers\Controller;
 use App\Models\Decision;
 use App\Support\DecisionPdf;
+use App\Support\EthiopianDate;
+use App\Services\CaseParties;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class ApplicantDashboardController extends Controller
 {
@@ -18,7 +22,7 @@ class ApplicantDashboardController extends Controller
         $applicantId = auth('applicant')->id();
 
         $ownsCase = DB::table('court_cases')
-            ->where('applicant_id', $applicantId)
+            ->whereIn('id', CaseParties::caseIdsFor((int) $applicantId))
             ->where('case_number', $decision->case_number)
             ->exists();
 
@@ -33,7 +37,7 @@ class ApplicantDashboardController extends Controller
         $applicantId = auth('applicant')->id();
 
         $counts = DB::table('court_cases')
-            ->where('applicant_id', $applicantId)
+            ->whereIn('id', CaseParties::caseIdsFor((int) $applicantId))
             ->selectRaw("
                 COUNT(*) as total,
                 SUM(status = 'pending') as pending,
@@ -48,7 +52,7 @@ class ApplicantDashboardController extends Controller
         $closed  = (int) ($counts->closed ?? 0);
 
         $caseNumbers = DB::table('court_cases')
-            ->where('applicant_id', $applicantId)
+            ->whereIn('id', CaseParties::caseIdsFor((int) $applicantId))
             ->pluck('case_number')
             ->filter()
             ->values();
@@ -139,7 +143,7 @@ class ApplicantDashboardController extends Controller
         $recent = DB::table('court_cases')
             ->leftJoin('case_types', 'case_types.id', '=', 'court_cases.case_type_id')
 
-            ->where('court_cases.applicant_id', $applicantId)
+            ->whereIn('court_cases.id', CaseParties::caseIdsFor((int) $applicantId))
             ->select(
                 'court_cases.id',
                 'court_cases.case_number',
@@ -153,20 +157,67 @@ class ApplicantDashboardController extends Controller
             ->limit(6)
             ->get();
 
-        return view('applicant.dashboard', compact(
-            'total',
-            'pending',
-            'active',
-            'closed',
-            'recent',
-            'caseLetters',
-            'caseResponses',
-            'caseDecisions',
-            'responseReplies',
-            'lettersCount',
-            'responsesCount',
-            'decisionsCount',
-            'responseRepliesCount'
-        ));
+        $applicant = auth('applicant')->user();
+        $iso = fn (mixed $value): ?string => $value ? Carbon::parse($value)->toIso8601String() : null;
+
+        // The portal home (React, Court/Applicant/Dashboard).
+        return Inertia::render('Court/Applicant/Dashboard', [
+            'applicant' => [
+                'name' => ($applicant?->full_name ?: $applicant?->email) ?: null,
+                'is_lawyer' => (bool) ($applicant?->is_lawyer ?? false),
+            ],
+            'today' => now()->toIso8601String(),
+            'counts' => [
+                'total' => $total,
+                'pending' => $pending,
+                'active' => $active,
+                'closed' => $closed,
+                'letters' => (int) $lettersCount,
+                'responses' => (int) $responsesCount,
+                'decisions' => (int) $decisionsCount,
+                'responseReplies' => (int) $responseRepliesCount,
+            ],
+            'recent' => $recent->map(fn (object $row): array => [
+                'id' => (int) $row->id,
+                'case_number' => (string) $row->case_number,
+                'title' => $row->title,
+                'status' => (string) $row->status,
+                'case_type' => $row->case_type,
+                'created_at' => $iso($row->created_at),
+                'created_relative' => EthiopianDate::smartRelative($row->created_at),
+            ])->values()->all(),
+            'letters' => $caseLetters->map(fn (object $row): array => [
+                'id' => (int) $row->id,
+                'subject' => $row->subject ?: ($row->template_title ?: null),
+                'reference_number' => $row->reference_number ?: null,
+                'case_number' => $row->case_number,
+                'created_at' => $iso($row->created_at),
+            ])->values()->all(),
+            'responses' => $caseResponses->map(fn (object $row): array => [
+                'id' => (int) $row->id,
+                'title' => $row->title,
+                'case_number' => $row->case_number,
+                'case_id' => $row->case_id ? (int) $row->case_id : null,
+                'created_relative' => EthiopianDate::smartRelative($row->created_at, ''),
+            ])->values()->all(),
+            'responseReplies' => $responseReplies->map(fn (object $row): array => [
+                'id' => (int) $row->id,
+                'case_id' => (int) $row->case_id,
+                'respondent_response_id' => (int) $row->respondent_response_id,
+                'case_number' => (string) $row->case_number,
+                'response_number' => $row->response_number ?: null,
+                'review_status' => (string) ($row->review_status ?? 'awaiting_review'),
+                'review_note' => $row->review_note ?: null,
+                'created_at' => $iso($row->created_at),
+            ])->values()->all(),
+            'decisions' => $caseDecisions->map(fn (object $row): array => [
+                'id' => (int) $row->id,
+                'name' => $row->name,
+                'case_number' => $row->case_number,
+                'status' => $row->status ?: null,
+                'date' => $iso($row->decision_date ?: $row->created_at),
+                'downloadable' => ($row->status ?? null) === 'published' && ! empty($row->approved_at),
+            ])->values()->all(),
+        ]);
     }
 }

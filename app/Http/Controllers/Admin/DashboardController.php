@@ -6,22 +6,62 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SystemSetting;
-use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class DashboardController extends Controller
 {
     // Cache TTL in seconds — short enough to feel live, long enough to matter
     private const CACHE_TTL = 300; // 5 minutes
 
-    public function index(): View
+    /** The periods the dashboard can show besides all time (`stats` accepts the same). */
+    private const RANGES = ['7d', '30d', '90d', '6m', '12m'];
+
+    /**
+     * The admin dashboard (React, Court/Dashboard). Without `range` the figures
+     * are all time and the chart covers six months, as on the Blade page it
+     * replaces; with a range every figure covers that period (the `stats` data).
+     *
+     * Case statistics (counts, workload by person and team, recent case
+     * titles) need cases.view, and service health and storage settings.manage;
+     * any other staff member gets the page with neither (null props).
+     */
+    public function index(Request $request): Response
     {
-        $data = Cache::remember('dashboard_index_v3', self::CACHE_TTL, function () {
+        $user = $request->user();
+        $canSeeCases = (bool) $user?->hasPermission('cases.view');
+        $canSeeSystem = (bool) $user?->hasPermission('settings.manage');
+
+        $dashboard = null;
+        if ($canSeeCases) {
+            $range = $request->query('range');
+            if (is_string($range) && in_array($range, self::RANGES, true)) {
+                [$start, $end] = $this->rangeBounds($range);
+                $dashboard = $this->fromRange($range, $this->rangeStats($start, $end));
+            } else {
+                $dashboard = $this->fromAllTime($this->allTime());
+            }
+        }
+
+        return Inertia::render('Court/Dashboard', [
+            'dashboard' => $dashboard,
+            'ranges' => self::RANGES,
+            'serviceHealth' => $canSeeSystem ? $this->serviceHealth() : null,
+            'dataStorage' => $canSeeSystem ? $this->dataStorage() : null,
+        ]);
+    }
+
+    /** @return array<string, mixed> */
+    private function allTime(): array
+    {
+        return Cache::remember('dashboard_index_v4', self::CACHE_TTL, function () {
             $totalCases    = DB::table('court_cases')->count();
             $pendingCases  = DB::table('court_cases')->where('status', 'pending')->count();
             $resolvedCases = DB::table('decisions')
@@ -30,6 +70,7 @@ class DashboardController extends Controller
                 ->distinct()
                 ->count('court_case_id');
             $activeUsers   = DB::table('users')->where('status', 'active')->count();
+            $activeCases   = DB::table('court_cases')->where('status', 'active')->count();
 
             $recent = DB::table('court_cases')
                 ->select('id', 'case_number', 'title', 'status', 'created_at')
@@ -126,26 +167,159 @@ class DashboardController extends Controller
                 ->mapWithKeys(fn($row) => [$row->label => $row->total])
                 ->toArray();
 
-            $labels = [];
+            $keys = [];
             $values = [];
             for ($i = 5; $i >= 0; $i--) {
-                $point = $reference->copy()->subMonths($i);
-                $ym = $point->format('Y-m');
-                $labels[] = $point->format('M Y');
-                $values[] = (int) ($months->firstWhere('ym', $ym)->cnt ?? 0);
+                $point = $reference->copy()->subMonths($i)->startOfMonth();
+                $keys[] = $point->toDateString();
+                $values[] = (int) ($months->firstWhere('ym', $point->format('Y-m'))->cnt ?? 0);
             }
 
             return compact(
-                'totalCases', 'pendingCases', 'resolvedCases', 'activeUsers',
-                'recent', 'labels', 'values',
+                'totalCases', 'pendingCases', 'activeCases', 'resolvedCases', 'activeUsers',
+                'recent', 'keys', 'values',
                 'teamCaseCounts', 'memberCaseCounts', 'genderCounts', 'caseTypeCounts'
             );
         });
+    }
 
-        $data['serviceHealth'] = $this->serviceHealth();
-        $data['dataStorage'] = $this->dataStorage();
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function fromAllTime(array $data): array
+    {
+        return [
+            'range' => 'all',
+            'mode' => 'monthly',
+            'kpis' => [
+                'total' => (int) $data['totalCases'],
+                'pending' => (int) $data['pendingCases'],
+                'active' => (int) $data['activeCases'],
+                'resolved' => (int) $data['resolvedCases'],
+                'activeUsers' => (int) $data['activeUsers'],
+            ],
+            'recent' => $this->recentRows($data['recent']),
+            'trend' => $this->series($data['keys'], $data['values']),
+            'teams' => $this->teamRows($data['teamCaseCounts']),
+            'members' => $this->memberRows($data['memberCaseCounts']),
+            'gender' => $this->pairs(array_keys($data['genderCounts']), array_values($data['genderCounts'])),
+            'caseTypes' => $this->pairs(array_keys($data['caseTypeCounts']), array_values($data['caseTypeCounts'])),
+        ];
+    }
 
-        return view('admin.dashboard', $data);
+    /**
+     * @param  array<string, mixed>  $stats
+     * @return array<string, mixed>
+     */
+    private function fromRange(string $range, array $stats): array
+    {
+        return [
+            'range' => $range,
+            'mode' => $stats['range']['mode'],
+            'kpis' => [
+                'total' => $stats['kpis']['totalCases'],
+                'pending' => $stats['kpis']['pendingCases'],
+                'active' => $stats['kpis']['activeCases'],
+                'resolved' => $stats['kpis']['resolvedCases'],
+                'activeUsers' => $stats['kpis']['activeUsers'],
+            ],
+            'recent' => $this->recentRows($stats['recent']),
+            'trend' => $this->series($stats['charts']['line']['keys'], $stats['charts']['line']['values']),
+            'teams' => $this->teamRows($stats['teamCaseCounts']),
+            'members' => $this->memberRows($stats['memberCaseCounts']),
+            'gender' => $this->pairs($stats['charts']['gender']['labels'], $stats['charts']['gender']['values']),
+            'caseTypes' => $this->pairs($stats['charts']['types']['labels'], $stats['charts']['types']['values']),
+        ];
+    }
+
+    /** @return list<array{id: int, case_number: string, title: ?string, status: string, created_at: ?string}> */
+    private function recentRows(iterable $rows): array
+    {
+        $out = [];
+        foreach ($rows as $row) {
+            $out[] = [
+                'id' => (int) $row->id,
+                'case_number' => (string) $row->case_number,
+                'title' => $row->title,
+                'status' => (string) $row->status,
+                'created_at' => $row->created_at ? Carbon::parse($row->created_at)->toIso8601String() : null,
+            ];
+        }
+
+        return $out;
+    }
+
+    /** @return list<array{id: int, name: string, cases: int}> */
+    private function teamRows(iterable $rows): array
+    {
+        $out = [];
+        foreach ($rows as $row) {
+            $out[] = ['id' => (int) $row->id, 'name' => (string) $row->name, 'cases' => (int) $row->cases_count];
+        }
+
+        return $out;
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function memberRows(iterable $rows): array
+    {
+        $out = [];
+        foreach ($rows as $row) {
+            $out[] = [
+                'id' => (int) $row->id,
+                'name' => (string) $row->name,
+                'team' => $row->team_name,
+                'status' => (string) ($row->status ?? 'inactive'),
+                'avatar_url' => filled($row->avatar_path) && Storage::disk('public')->exists($row->avatar_path)
+                    ? Storage::disk('public')->url($row->avatar_path)
+                    : null,
+                'cases' => (int) $row->cases_count,
+                'pending' => (int) ($row->pending_cases_count ?? 0),
+                'active' => (int) ($row->active_cases_count ?? 0),
+                'resolved' => (int) ($row->resolved_cases_count ?? 0),
+                // '__unknown__' is a case without a type.
+                'types' => collect($row->case_type_counts ?? [])
+                    ->map(fn (array $type): array => ['label' => $type['label'] === '__unknown__' ? null : $type['label'], 'count' => (int) $type['count']])
+                    ->values()->all(),
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param  list<string>  $keys
+     * @param  list<int|string>  $values
+     * @return list<array{key: string, value: int}>
+     */
+    private function series(array $keys, array $values): array
+    {
+        return array_map(fn (string $key, int|string $value): array => ['key' => $key, 'value' => (int) $value], $keys, $values);
+    }
+
+    /**
+     * @param  list<int|string|null>  $labels
+     * @param  list<int|string>  $values
+     * @return list<array{key: string, value: int}>
+     */
+    private function pairs(array $labels, array $values): array
+    {
+        return array_map(fn ($label, $value): array => ['key' => (string) ($label ?? ''), 'value' => (int) $value], $labels, $values);
+    }
+
+    /** @return array{0: Carbon, 1: Carbon} */
+    private function rangeBounds(string $range): array
+    {
+        $now = Carbon::now();
+
+        return match ($range) {
+            '7d'  => [$now->copy()->subDays(6)->startOfDay(),         $now->copy()],
+            '30d' => [$now->copy()->subDays(29)->startOfDay(),        $now->copy()],
+            '90d' => [$now->copy()->subDays(89)->startOfDay(),        $now->copy()],
+            '12m' => [$now->copy()->subMonths(11)->startOfMonth(),    $now->copy()],
+            default=>[$now->copy()->subMonths(5)->startOfMonth(),     $now->copy()],
+        };
     }
 
     /** @return array<string, mixed> */
@@ -169,11 +343,27 @@ class DashboardController extends Controller
         ];
     }
 
-    /** @return array<string, int|string|null> */
+    /**
+     * Cached: the size query reads information_schema, which MySQL answers
+     * slowly when its table statistics are cold.
+     *
+     * @return array<string, int|string|null>
+     */
     private function dataStorage(): array
     {
+        return Cache::remember('dashboard_storage_v1', self::CACHE_TTL, fn (): array => $this->measureStorage());
+    }
+
+    /** @return array<string, int|string|null> */
+    private function measureStorage(): array
+    {
         $tables = 0;
-        try { $tables = count(Schema::getTables()); } catch (\Throwable) {}
+        try {
+            // SHOW TABLES answers at once; Schema::getTables() also reads each table's statistics.
+            $tables = DB::connection()->getDriverName() === 'mysql'
+                ? count(DB::select('SHOW TABLES'))
+                : count(Schema::getTables());
+        } catch (\Throwable) {}
         $size = null;
         try {
             $driver = DB::connection()->getDriverName();
@@ -210,7 +400,8 @@ class DashboardController extends Controller
      */
     public function stats(Request $request): JsonResponse
     {
-        $now = Carbon::now();
+        // The same case statistics the dashboard shows only to cases.view holders.
+        abort_unless((bool) $request->user()?->hasPermission('cases.view'), 403);
 
         if ($request->filled('start') && $request->filled('end')) {
             try {
@@ -220,24 +411,23 @@ class DashboardController extends Controller
                 return response()->json(['ok' => false, 'message' => 'Invalid date format.'], 422);
             }
         } else {
-            $range = $request->input('range', '6m');
-            [$start, $end] = match ($range) {
-                '7d'  => [$now->copy()->subDays(6)->startOfDay(),         $now->copy()],
-                '30d' => [$now->copy()->subDays(29)->startOfDay(),        $now->copy()],
-                '90d' => [$now->copy()->subDays(89)->startOfDay(),        $now->copy()],
-                '12m' => [$now->copy()->subMonths(11)->startOfMonth(),    $now->copy()],
-                default=>[$now->copy()->subMonths(5)->startOfMonth(),     $now->copy()],
-            };
+            [$start, $end] = $this->rangeBounds((string) $request->input('range', '6m'));
         }
 
         if ($start->greaterThan($end)) {
             [$start, $end] = [$end->copy(), $start->copy()];
         }
 
-        // Cache key encodes the exact day range so custom ranges also benefit
-        $cacheKey = 'dashboard_stats_v3_' . $start->toDateString() . '_' . $end->toDateString();
+        return response()->json($this->rangeStats($start, $end));
+    }
 
-        $result = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($start, $end, $now) {
+    /** @return array<string, mixed> */
+    private function rangeStats(Carbon $start, Carbon $end): array
+    {
+        // Cache key encodes the exact day range so custom ranges also benefit
+        $cacheKey = 'dashboard_stats_v4_' . $start->toDateString() . '_' . $end->toDateString();
+
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($start, $end) {
 
             // All 4 KPI counts in a single pass using conditional aggregation
             $kpiRow = DB::table('court_cases as c')
@@ -248,6 +438,7 @@ class DashboardController extends Controller
                 ->selectRaw("
                     COUNT(DISTINCT c.id) as total,
                     COUNT(DISTINCT CASE WHEN c.status = 'pending' THEN c.id END) as pending,
+                    COUNT(DISTINCT CASE WHEN c.status = 'active' THEN c.id END) as active,
                     COUNT(DISTINCT CASE WHEN d.id IS NOT NULL THEN c.id END) as resolved
                 ")
                 ->whereBetween('c.created_at', [$start, $end])
@@ -256,6 +447,7 @@ class DashboardController extends Controller
             $totalCases    = (int) $kpiRow->total;
             $pendingCases  = (int) $kpiRow->pending;
             $resolvedCases = (int) $kpiRow->resolved;
+            $activeCases   = (int) $kpiRow->active;
 
             $activeUsers = DB::table('users')
                 ->whereBetween('updated_at', [$start, $end])
@@ -340,6 +532,7 @@ class DashboardController extends Controller
 
             $useDaily = $end->diffInDays($start) <= 45;
             $labels = [];
+            $keys = [];
             $values = [];
 
             if ($useDaily) {
@@ -352,6 +545,7 @@ class DashboardController extends Controller
                 $cursor = $start->copy();
                 while ($cursor->lte($end)) {
                     $labels[] = $cursor->format('M d');
+                    $keys[] = $cursor->toDateString();
                     $values[] = (int) ($rows[$cursor->toDateString()] ?? 0);
                     $cursor->addDay();
                 }
@@ -365,6 +559,7 @@ class DashboardController extends Controller
                 $cursor = $start->copy()->startOfMonth();
                 while ($cursor->lte($end)) {
                     $labels[] = $cursor->format('M Y');
+                    $keys[] = $cursor->toDateString();
                     $values[] = (int) ($rows[$cursor->format('Y-m')] ?? 0);
                     $cursor->addMonth();
                 }
@@ -398,13 +593,14 @@ class DashboardController extends Controller
                     'totalCases'    => $totalCases,
                     'pendingCases'  => $pendingCases,
                     'resolvedCases' => $resolvedCases,
+                    'activeCases'   => $activeCases,
                     'activeUsers'   => $activeUsers,
                 ],
                 'recent'          => $recent,
                 'teamCaseCounts'  => $teamCaseCounts,
                 'memberCaseCounts'=> $memberCaseCounts,
                 'charts' => [
-                    'line'   => ['labels' => $labels, 'values' => $values],
+                    'line'   => ['labels' => $labels, 'keys' => $keys, 'values' => $values],
                     'gender' => [
                         'labels' => array_keys($genderCounts),
                         'values' => array_values($genderCounts),
@@ -416,7 +612,5 @@ class DashboardController extends Controller
                 ],
             ];
         });
-
-        return response()->json($result);
     }
 }

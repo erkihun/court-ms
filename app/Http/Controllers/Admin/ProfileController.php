@@ -4,30 +4,67 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateProfileRequest;
+use App\Services\Security\UserSessionRegistry;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
+use Inertia\Response;
 use Throwable;
 
 class ProfileController extends Controller
 {
     /**
-     * Show the user's profile form.
+     * The profile page (React, Profile/Edit from EUISIS): account, security
+     * and devices tabs, with the props in the EUISIS shape.
      */
-    public function edit(Request $request)
+    public function edit(Request $request, UserSessionRegistry $sessions): Response
     {
-        return view('admin.profile.edit', [
-            'user' => $request->user(),
+        $user = $request->user();
+
+        return Inertia::render('Profile/Edit', [
+            'mustVerifyEmail' => $user instanceof MustVerifyEmail,
+            'status' => session('status') ?? session('mfa_status'),
+            'profile' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone_number' => $user->phone,
+                'gender' => $user->gender,
+                'national_id' => $user->national_id,
+                'profile_photo_url' => $user->avatar_url,
+                'initials' => mb_strtoupper(mb_substr((string) $user->name, 0, 1)),
+                'roles' => $user->roles()->pluck('name')->all(),
+                'status' => (string) ($user->status ?? 'active'),
+                'last_login_at' => null,
+                'created_at' => $user->created_at?->toIso8601String(),
+            ],
+            'security' => [
+                'two_factor_enabled' => $user->hasConfirmedMfa(),
+                'two_factor_required' => $user->requiresMfa(),
+                'two_factor_confirmed_at' => $user->mfa_confirmed_at?->toIso8601String(),
+                'two_factor_last_used_at' => null,
+            ],
+            'devices' => [
+                'supported' => $sessions->supported(),
+                'sessions' => $sessions->forUser($user, $request),
+                'recent_sign_ins' => [],
+            ],
+            // court-ms: the signature on letters and decisions; only an administrator changes it (users.manage).
+            'signature' => [
+                'url' => $user->signature_url,
+                'read_only' => true,
+            ],
         ]);
     }
 
     /**
-     * Update the user's profile information, avatar, and signature.
+     * Update the user's profile information and photo.
      */
     public function update(UpdateProfileRequest $request)
     {
         $user = $request->user();
-        $validated = $request->safe()->except(['avatar', 'signature', 'remove_signature']);
+        $validated = $request->safe()->except(['avatar', 'signature', 'remove_signature', 'profile_photo', 'phone_number']);
         $oldAvatarPath = $user->avatar_path;
         $newAvatarPath = $request->file('avatar')?->store('avatars', 'public');
 

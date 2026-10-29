@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 class RolesController extends Controller
 {
@@ -25,15 +26,49 @@ class RolesController extends Controller
             ->orderBy('name')
             ->paginate(10);
 
-        return view('admin.roles.index', compact('roles'));
+        // The register (React, Court/Roles/Index).
+        return Inertia::render('Court/Roles/Index', [
+            'roles' => $roles->through(fn (Role $role): array => [
+                'id' => (int) $role->id,
+                'name' => (string) $role->name,
+                'description' => $role->description,
+                'permissions' => $role->permissions->pluck('name')->values()->all(),
+                'users_count' => (int) $role->users_count,
+                // Why Delete is disabled: the page shows roles.index.cannot_delete_{admin,assigned}.
+                'delete_blocked' => match ($this->deleteBlockedReason($role, (int) $role->users_count)['key'] ?? null) {
+                    'roles.index.cannot_delete_admin' => 'admin',
+                    'roles.index.cannot_delete_assigned' => 'assigned',
+                    default => null,
+                },
+            ]),
+        ]);
+    }
+
+    /**
+     * Why a role cannot be deleted, as a flash translation, or null when it can.
+     *
+     * @return array{key: string, replace: array<string, int>}|null
+     */
+    private function deleteBlockedReason(Role $role, int $holders): ?array
+    {
+        if (mb_strtolower(trim((string) $role->name)) === 'admin') {
+            return ['key' => 'roles.index.cannot_delete_admin', 'replace' => []];
+        }
+        if ($holders > 0) {
+            return ['key' => 'roles.index.cannot_delete_assigned', 'replace' => ['count' => $holders]];
+        }
+
+        return null;
     }
 
     public function create()
     {
         $perms = Permission::orderBy('name')->get();
-        return view('admin.roles.create', [
-            'perms' => $perms,
-            'permissionGroups' => $this->groupPermissions($perms),
+
+        // The create form (React, Court/Roles/Create) with the permissions grouped by module.
+        return Inertia::render('Court/Roles/Create', [
+            'permissionsCount' => $perms->count(),
+            'permissionGroups' => $this->permissionGroupsPayload($perms),
         ]);
     }
 
@@ -64,11 +99,38 @@ class RolesController extends Controller
         $role->load('permissions');
         $perms = Permission::orderBy('name')->get();
 
-        return view('admin.roles.edit', [
-            'role' => $role,
-            'perms' => $perms,
-            'permissionGroups' => $this->groupPermissions($perms),
+        // The edit form (React, Court/Roles/Edit): the role, its permissions ticked among all of them.
+        return Inertia::render('Court/Roles/Edit', [
+            'role' => [
+                'id' => (int) $role->id,
+                'name' => (string) $role->name,
+                'description' => $role->description,
+                'permission_ids' => $role->permissions->pluck('id')->map(fn ($id) => (int) $id)->values()->all(),
+                'users_count' => (int) $role->users()->count(),
+            ],
+            'permissionsCount' => $perms->count(),
+            'permissionGroups' => $this->permissionGroupsPayload($perms),
         ]);
+    }
+
+    /** The grouped permissions as plain arrays for the React forms. */
+    private function permissionGroupsPayload(Collection $perms): array
+    {
+        return $this->groupPermissions($perms)
+            ->map(fn (array $group): array => [
+                'key' => (string) $group['key'],
+                'label' => (string) $group['label'],
+                'permissions' => collect($group['permissions'])
+                    ->map(fn (Permission $perm): array => [
+                        'id' => (int) $perm->id,
+                        'name' => (string) $perm->name,
+                        'label' => $perm->labelLocalized ?: null,
+                    ])
+                    ->values()
+                    ->all(),
+            ])
+            ->values()
+            ->all();
     }
 
     public function update(Request $request, Role $role)
@@ -95,6 +157,13 @@ class RolesController extends Controller
 
     public function destroy(Role $role)
     {
+        // The admin role grants everything and backs every "admin" check; a role
+        // still held by staff would silently strip their access. The list
+        // disables Delete for both (RolesController::index sends why).
+        if ($reason = $this->deleteBlockedReason($role, $role->users()->count())) {
+            return back()->with('error', $reason);
+        }
+
         $role->delete();
         return back()->with('ok', [
             'key' => 'messages.success.deleted',

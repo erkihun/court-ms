@@ -10,11 +10,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 final class AuditController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): Response
     {
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:150'],
@@ -60,9 +61,34 @@ final class AuditController extends Controller
             return $event;
         });
 
-        return view('admin.audit', [
-            'events' => $events,
+        // The page (React, Court/Audit/Index): the decorated events as plain arrays.
+        return Inertia::render('Court/Audit/Index', [
+            'events' => $events->through(fn (object $event): array => [
+                'id' => (int) $event->id,
+                'source' => (string) $event->source,
+                'source_label' => (string) $event->source_label,
+                'occurred_at' => $event->occurred_at ? \Illuminate\Support\Carbon::parse($event->occurred_at)->toIso8601String() : null,
+                'action' => $event->action,
+                'action_label' => (string) $event->action_label,
+                'description' => $event->description,
+                'actor_type' => (string) $event->actor_type,
+                'actor_name' => $event->actor_name,
+                'target_label' => $event->target_label,
+                'outcome' => $event->outcome ?? null,
+                'method' => $event->method ?? null,
+                'route' => $event->route ?? null,
+                'ip' => $event->ip ?? null,
+                'request_id' => $event->request_id ?? null,
+                'response_status' => isset($event->response_status) ? (int) $event->response_status : null,
+                'details' => (object) ($event->details ?? []),
+            ]),
             'filters' => $filters,
+            'options' => [
+                'sources' => ['system', 'case', 'legacy_model'],
+                'outcomes' => ['success', 'failure', 'error'],
+                'actorTypes' => ['user', 'applicant', 'respondent', 'guest', 'system'],
+                'methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
+            ],
         ]);
     }
 

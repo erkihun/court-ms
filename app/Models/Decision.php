@@ -81,6 +81,30 @@ class Decision extends Model
     }
 
     /**
+     * The presiding (session) judge occupies the middle slot of the panel.
+     */
+    public function presidingJudgeId(): ?int
+    {
+        $id = (int) ($this->panel_judges[1]['admin_user_id'] ?? 0);
+
+        return $id > 0 ? $id : null;
+    }
+
+    /**
+     * A decision is attributable only when all three panel seats are held by
+     * three different judges.
+     */
+    public function hasCompletePanel(): bool
+    {
+        $ids = collect(is_array($this->panel_judges) ? array_values($this->panel_judges) : [])
+            ->take(3)
+            ->map(fn ($judge): int => (int) (is_array($judge) ? ($judge['admin_user_id'] ?? 0) : 0))
+            ->filter(fn (int $id): bool => $id > 0);
+
+        return $ids->count() === 3 && $ids->unique()->count() === 3;
+    }
+
+    /**
      * Return the judicial panel with the recorded decision author first.
      *
      * @return array<int, array<string, mixed>>

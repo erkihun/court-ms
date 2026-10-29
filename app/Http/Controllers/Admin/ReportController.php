@@ -15,6 +15,7 @@ use App\Models\Team;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class ReportController extends Controller
 {
@@ -33,16 +34,17 @@ class ReportController extends Controller
 
         $caseFilter = CourtCase::query();
         if ($startDate) {
-            $caseFilter->where('created_at', '>=', $startDate);
+            $caseFilter->where('court_cases.created_at', '>=', $startDate);
         }
         if ($endDate) {
-            $caseFilter->where('created_at', '<=', $endDate . ' 23:59:59');
+            $caseFilter->where('court_cases.created_at', '<=', $endDate . ' 23:59:59');
         }
         if ($selectedStatus) {
-            $caseFilter->where('status', $selectedStatus);
+            // Qualified: the by-judge breakdown joins users, which has a status column too.
+            $caseFilter->where('court_cases.status', $selectedStatus);
         }
         if ($selectedJudge) {
-            $caseFilter->where('judge_id', $selectedJudge);
+            $caseFilter->where('court_cases.judge_id', $selectedJudge);
         }
 
         $filteredCaseCount = (clone $caseFilter)->count();
@@ -134,27 +136,52 @@ class ReportController extends Controller
             ['key' => 'respondent_responses', 'value' => DB::table('respondent_responses')->count()],
         ];
 
-        return view('admin.reports.index', [
+        // The page (React, Court/Reports/Index): every breakdown as {key, total} pairs.
+        $pairs = fn ($rows, string $keyColumn): array => collect($rows)
+            ->map(fn (object $row): array => ['key' => (string) ($row->{$keyColumn} ?? ''), 'total' => (int) $row->total])
+            ->values()->all();
+
+        return Inertia::render('Court/Reports/Index', [
             'summaryCards' => $summaryCards,
-            'caseStatusBreakdown' => $caseStatusBreakdown,
-            'caseTypeBreakdown' => $caseTypeBreakdown,
-            'appealStatusBreakdown' => $appealStatusBreakdown,
-            'decisionStatusBreakdown' => $decisionStatusBreakdown,
-            'letterApprovalBreakdown' => $letterApprovalBreakdown,
-            'applicantStatusBreakdown' => $applicantStatusBreakdown,
-            'userStatusBreakdown' => $userStatusBreakdown,
-            'recentCases' => $recentCases,
-            'recentAppeals' => $recentAppeals,
+            'breakdowns' => [
+                'cases_status' => $pairs($caseStatusBreakdown, 'status'),
+                'cases_types' => $pairs($caseTypeBreakdown, 'name'),
+                'appeals_status' => $pairs($appealStatusBreakdown, 'status'),
+                'decisions_status' => $pairs($decisionStatusBreakdown, 'status'),
+                'letters_status' => $pairs($letterApprovalBreakdown, 'status'),
+                'applicants_status' => $pairs($applicantStatusBreakdown, 'state'),
+                'users_status' => $pairs($userStatusBreakdown, 'status'),
+            ],
+            'recentCases' => $recentCases->map(fn (CourtCase $case): array => [
+                'id' => (int) $case->id,
+                'case_number' => (string) $case->case_number,
+                'title' => $case->title,
+                'status' => (string) $case->status,
+                'applicant' => $case->applicant?->full_name,
+                'case_type' => $case->caseType?->name,
+                'created_at' => $case->created_at?->toIso8601String(),
+            ])->values()->all(),
+            'recentAppeals' => $recentAppeals->map(fn (object $appeal): array => [
+                'id' => (int) $appeal->id,
+                'appeal_number' => (string) $appeal->appeal_number,
+                'title' => $appeal->title,
+                'status' => (string) $appeal->status,
+                'case_id' => (int) $appeal->case_id,
+                'case_number' => (string) $appeal->case_number,
+                'created_at' => $appeal->created_at ? \Illuminate\Support\Carbon::parse($appeal->created_at)->toIso8601String() : null,
+            ])->values()->all(),
             'caseStatuses' => $caseStatuses,
-            'judges' => $judges,
-            'filteredCaseCount' => $filteredCaseCount,
-            'filteredCaseStatus' => $filteredCaseStatus,
-            'casesByJudge' => $casesByJudge,
-            'filterParams' => [
-                'start_date' => $startDate,
-                'end_date' => $endDate,
-                'status' => $selectedStatus,
-                'judge_id' => $selectedJudge,
+            'judges' => $judges->map(fn (User $judge): array => ['id' => (int) $judge->id, 'name' => (string) $judge->name])->values()->all(),
+            'filtered' => [
+                'count' => (int) $filteredCaseCount,
+                'status' => $pairs($filteredCaseStatus, 'status'),
+                'byJudge' => collect($casesByJudge)->map(fn (object $row): array => ['key' => (string) $row->judge_name, 'total' => (int) $row->total])->values()->all(),
+            ],
+            'filters' => [
+                'start_date' => (string) ($startDate ?? ''),
+                'end_date' => (string) ($endDate ?? ''),
+                'status' => (string) ($selectedStatus ?? ''),
+                'judge_id' => (string) ($selectedJudge ?? ''),
             ],
         ]);
     }

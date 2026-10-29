@@ -134,5 +134,9 @@ return array (
   'validation' =>
   array (
     'closed_case_required' => 'ውሳኔ መፍጠር የሚቻለው ለተዘጋ ጉዳይ ብቻ ነው።',
+    'panel_required' => 'ሦስቱንም ዳኞች ለችሎቱ ይመድቡ።',
+    'panel_distinct' => 'በችሎቱ ላይ ያለ እያንዳንዱ ዳኛ የተለየ ሰው መሆን አለበት።',
+    'presiding_judge_must_be_you' => 'የችሎቱን ሰብሳቢ ዳኛ ቦታ እርስዎ መያዝ አለብዎት።',
+    'publish_requires_panel' => 'ውሳኔ ሊታተም ወይም ሊጸድቅ የሚችለው ሦስቱም ዳኞች ከተመደቡ በኋላ ብቻ ነው።',
   ),
 );

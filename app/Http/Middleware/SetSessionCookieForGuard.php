@@ -31,10 +31,12 @@ class SetSessionCookieForGuard
         }
 
         // The respondent portal uses the applicant guard, so both portal
-        // modes intentionally share the applicant session cookie.
+        // modes intentionally share the applicant session cookie. So does the
+        // lawyer sign-in (/lawyer/*, the applicant guard too): on any other
+        // cookie the lawyer signs in and the portal never sees it.
         if ($this->isAdminPath($request)) {
             config(['session.cookie' => $base.'-admin']);
-        } elseif ($request->is('applicant', 'applicant/*', 'respondent', 'respondent/*')) {
+        } elseif ($request->is('applicant', 'applicant/*', 'respondent', 'respondent/*', 'lawyer', 'lawyer/*')) {
             config(['session.cookie' => $base.'-applicant']);
         } else {
             config(['session.cookie' => $base]);

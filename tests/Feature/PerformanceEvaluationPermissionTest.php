@@ -7,6 +7,7 @@ use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Inertia\Testing\AssertableInertia;
 
 uses(RefreshDatabase::class);
 
@@ -76,7 +77,10 @@ test('view permission grants read access but not create access', function (): vo
     $this->actingAs($user)
         ->get(route('performance-evaluations.index'))
         ->assertOk()
-        ->assertDontSee(route('performance-evaluations.create'));
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('Court/Performance/Index')
+            ->where('can.create', false)
+            ->where('can.update', false));
 
     $this->actingAs($user)
         ->get(route('performance-evaluations.create'))
@@ -88,5 +92,8 @@ test('admin role retains the global permission bypass', function (): void {
 
     $this->actingAs($admin)
         ->get(route('performance-evaluations.index'))
-        ->assertOk();
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('Court/Performance/Index')
+            ->where('can.create', true));
 });

@@ -13,11 +13,12 @@ use Illuminate\Validation\Rules\Password;
 class PasswordController extends Controller
 {
     /**
-     * Update the user's password.
+     * Update the user's password (the profile's Security tab, and the forced
+     * change). Errors go to the default bag, where the React forms read them.
      */
     public function update(Request $request): RedirectResponse
     {
-        $validated = $request->validateWithBag('updatePassword', [
+        $validated = $request->validate([
             'current_password' => ['required', 'current_password'],
             'password' => ['required', Password::defaults(), 'confirmed'],
         ]);
@@ -40,7 +41,7 @@ class PasswordController extends Controller
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect()->route('login')->with('status', 'Password updated. Please log in again.');
+            return redirect()->route('login')->with('status', __('auth.password_updated_sign_in_again'));
         }
 
         return back()->with('status', 'password-updated');

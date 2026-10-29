@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
+use Inertia\Inertia;
 
 class ApplicantPasswordController extends Controller
 {
@@ -19,7 +20,11 @@ class ApplicantPasswordController extends Controller
 
     public function showLinkRequestForm()
     {
-        return view('applicant.auth.forgot');
+        // React, Court/Applicant/ForgotPassword.
+        return Inertia::render('Court/Applicant/ForgotPassword', [
+            'email' => (string) old('email', ''),
+            'status' => session('status'),
+        ]);
     }
 
     // ── Step 2: send OTP to email ──────────────────────────────────────────────
@@ -76,7 +81,8 @@ class ApplicantPasswordController extends Controller
             return redirect()->route('applicant.password.request');
         }
 
-        return view('applicant.auth.password-otp');
+        // React, Court/Applicant/PasswordOtp.
+        return Inertia::render('Court/Applicant/PasswordOtp');
     }
 
     // ── Step 4: verify OTP ─────────────────────────────────────────────────────
@@ -161,7 +167,8 @@ class ApplicantPasswordController extends Controller
             return redirect()->route('applicant.password.request');
         }
 
-        return view('applicant.auth.reset-otp');
+        // React, Court/Applicant/NewPassword.
+        return Inertia::render('Court/Applicant/NewPassword');
     }
 
     // ── Step 6: save new password ─────────────────────────────────────────────

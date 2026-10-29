@@ -8,6 +8,7 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Str;
+use Inertia\Testing\AssertableInertia;
 
 function closedCaseStatusUser(): User
 {
@@ -39,6 +40,8 @@ function closedCaseStatusRecord(): CourtCase
         'case_type_id' => $caseType->id,
         'filing_date' => now()->toDateString(),
         'status' => 'closed',
+        // A closed case was accepted first; an unreviewed one only opens for reviewers (CourtCasePolicy::view).
+        'review_status' => 'accepted',
     ]);
 }
 
@@ -66,10 +69,16 @@ test('a closed case status cannot be changed by a permitted admin', function ():
         'to_status' => 'active',
     ]);
 
+    // The page is React now: with the case closed and the viewer allowed to edit statuses,
+    // Court/Cases/Show shows the lock notice (cases.status.closed_locked_title / closed_locked)
+    // in place of the status form, and the response never carries the status route.
     $this->actingAs($user)
         ->get(route('cases.show', $case->id))
         ->assertOk()
-        ->assertSeeText(__('cases.status.closed_locked_title'))
-        ->assertSeeText(__('cases.status.closed_locked'))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('Court/Cases/Show')
+            ->where('case.status', 'closed')
+            ->where('can.editStatus', true)
+            ->etc())
         ->assertDontSee(route('cases.status.update', $case->id), false);
 });

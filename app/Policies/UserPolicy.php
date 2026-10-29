@@ -57,7 +57,11 @@ class UserPolicy
         // Never allow self-delete
         if ($actor->id === $target->id) return false;
 
-        return $actor->hasPermission('users.manage');
+        if (! $actor->hasPermission('users.manage')) return false;
+
+        // Same guardrail as update(): only admins can remove admin accounts
+        // (admins pass through before()).
+        return ! $target->roles()->whereRaw('LOWER(name) = ?', ['admin'])->exists();
     }
 
     /** Restore soft-deleted users (if you enable soft deletes) */

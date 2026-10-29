@@ -18,12 +18,14 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use App\Models\User;
 use App\Models\RespondentResponse;
 use App\Models\ApplicantResponseReply;
 use App\Services\ResponseNotificationService;
 use App\Services\SecureUploadService;
 use App\Services\LegalHoldService;
+use Inertia\Inertia;
 
 class CaseController extends Controller
 {
@@ -118,20 +120,36 @@ class CaseController extends Controller
 
         $users  = DB::table('users')->where('status', 'active')->orderBy('name')->get(['id', 'name']);
 
-        return view('admin.cases.index', compact(
-            'cases',
-            'q',
-            'status',
-            'caseTypeId',
-
-            'assigneeId',
-            'from',
-            'to',
-            'types',
-
-            'users',
-            'isReviewer'
-        ));
+        // The register (React, Court/Cases/Index): a non-reviewer sees every case as accepted, as before.
+        return Inertia::render('Court/Cases/Index', [
+            'cases' => $cases->through(fn (object $row): array => [
+                'id' => (int) $row->id,
+                'case_number' => (string) $row->case_number,
+                'title' => $row->title,
+                'applicant_name' => ($row->applicant_name ?? '') !== '' ? $row->applicant_name : null,
+                'applicant_is_lawyer' => (bool) ($row->applicant_is_lawyer ?? false),
+                'case_type' => $row->case_type,
+                'team_name' => $row->team_name,
+                'assignee_name' => $row->assignee_name,
+                'status' => (string) $row->status,
+                'filing_date' => $row->filing_date ? Carbon::parse($row->filing_date)->toDateString() : null,
+                'review_status' => $isReviewer ? (string) ($row->review_status ?? 'accepted') : 'accepted',
+                'reviewer_name' => $row->reviewer_name,
+            ]),
+            'filters' => [
+                'q' => $q,
+                'status' => $status,
+                'case_type_id' => $caseTypeId ? (string) $caseTypeId : '',
+                'assignee_id' => $assigneeId ? (string) $assigneeId : '',
+                'from' => $from?->format('Y-m-d') ?? '',
+                'to' => $to?->format('Y-m-d') ?? '',
+            ],
+            'statuses' => ['pending', 'active', 'adjourned', 'dismissed', 'closed'],
+            'types' => $types,
+            'users' => $users,
+            'isReviewer' => $isReviewer,
+            'canExport' => (bool) (Auth::user()?->hasPermission('reports.export') ?? false),
+        ]);
     }
 
     /**
@@ -245,12 +263,32 @@ class CaseController extends Controller
         abort_if(!$case, 404);
 
         $scope = $this->buildAssignmentScope();
+        $this->ensureCaseAccess($case);
+        $leaderTeam = $scope['leaderTeam'];
 
-        return view('admin.cases.assign', [
-            'case' => $case,
+        return Inertia::render('Court/Cases/Assign', [
+            'case' => [
+                'id' => (int) $case->id,
+                'case_number' => (string) $case->case_number,
+                'title' => $case->title ?? null,
+                'status' => (string) ($case->status ?? 'pending'),
+                'assigned_user_id' => isset($case->assigned_user_id) ? (int) $case->assigned_user_id : null,
+                'assignee_name' => $case->assignee_name ?? null,
+                'assignee_email' => $case->assignee_email ?? null,
+                'assigned_at' => $this->isoDate($case->assigned_at ?? null),
+            ],
             'assignmentMode' => $scope['mode'],
-            'teams' => $scope['teams'],
-            'leaderTeam' => $scope['leaderTeam'],
+            'canAssignLeaders' => (bool) (Auth::user()?->hasPermission('cases.assign.team') ?? false),
+            'leaderTeam' => $leaderTeam ? [
+                'id' => (int) $leaderTeam->id,
+                'name' => (string) $leaderTeam->name,
+                'members' => $leaderTeam->users->map(fn ($u) => ['id' => (int) $u->id, 'name' => (string) $u->name, 'email' => (string) $u->email])->values()->all(),
+            ] : null,
+            'teams' => collect($scope['teams'])->filter(fn ($team) => $team->leader !== null)->map(fn ($team) => [
+                'id' => (int) $team->id,
+                'name' => (string) $team->name,
+                'leader' => ['id' => (int) $team->leader->id, 'name' => (string) $team->leader->name, 'email' => (string) $team->leader->email],
+            ])->values()->all(),
         ]);
     }
 
@@ -278,6 +316,7 @@ class CaseController extends Controller
 
         $case = DB::table('court_cases')->where('id', $caseId)->first();
         abort_if(!$case, 404);
+        $this->ensureCaseAccess($case);
 
         $assigning = !$request->boolean('unassign') && !empty($validated['assigned_user_id']);
         $assignedUserId = $assigning ? (int) $validated['assigned_user_id'] : null;
@@ -417,24 +456,9 @@ class CaseController extends Controller
 
         abort_if(!$case, 404, 'Case not found.');
 
-        $memberScopeIds = $this->teamLeaderAssignmentIds(Auth::user());
-        if (!empty($memberScopeIds)) {
-            $leaderTeamId = Team::where('team_leader_id', Auth::id())->value('id');
-            $allowed = in_array($case->assigned_user_id, $memberScopeIds, true)
-                || ($leaderTeamId && (int) $case->assigned_team_id === (int) $leaderTeamId);
-            abort_if(!$allowed, 403, 'You do not have access to this case.');
-        } else {
-            $uid = Auth::id();
-            $isTeamMember = $uid && DB::table('team_user')->where('user_id', $uid)->exists();
-            $isLeader = Auth::user()?->hasPermission('cases.assign.member') ?? false;
-            $canAssignTeams = Auth::user()?->hasPermission('cases.assign.team') ?? false;
-
-            if ($isTeamMember && !$isLeader && !$canAssignTeams) {
-                // Backward compatibility: many cases are assigned via assigned_user_id only.
-                $assignedTo = (int) ($case->assigned_member_user_id ?? $case->assigned_user_id ?? 0);
-                abort_if($assignedTo !== (int) $uid, 403, 'You do not have access to this case.');
-            }
-        }
+        // A case awaiting review opens only for reviewers and its assignee, as on the record page (CourtCasePolicy::view).
+        $this->authorize('view', \App\Models\CourtCase::query()->findOrFail($id));
+        $this->ensureCaseAccess($case);
 
         // Make HTML fields explicit for Blade raw rendering
         $case->description_html        = (string) ($case->description ?? '');
@@ -713,23 +737,442 @@ class CaseController extends Controller
             }, 'case_inspection_findings');
         }
 
-        return view('admin.cases.show', [
-            'case'       => $case,
-            'timeline'   => $timeline,
-            'files'      => $files,
-            'messages'   => $messages,
-            'hearings'   => $hearings,
-            'docs'       => $docs,        // empty collection; Blade stays compatible
-            'witnesses'  => $witnesses,
-            'audits'     => $audits,
-            'letters'    => $letters,
-            'respondentResponses' => $respondentResponses,
-            'applicantResponseReplies' => $applicantResponseReplies,
-            'letterTemplates' => $letterTemplates,
-            'inspectionAssignees' => $inspectionAssignees,
-            'inspectionRequests' => $inspectionRequests,
-            'inspectionFindings' => $inspectionFindings,
-        ]);
+        return Inertia::render('Court/Cases/Show', ['parties' => CasePartiesController::props((int) $case->id, auth()->user())] + $this->caseDetailProps(
+            $case,
+            $timeline,
+            $files,
+            $messages,
+            $hearings,
+            $docs,
+            $witnesses,
+            $audits,
+            $letters,
+            $respondentResponses,
+            $applicantResponseReplies,
+            $letterTemplates,
+            $inspectionAssignees,
+            $inspectionRequests,
+            $inspectionFindings,
+        ));
+    }
+
+    /**
+     * The case detail page's props: the Blade page's rows as plain arrays with
+     * ISO 8601 dates, the permission booleans the Blade page checked inline,
+     * and the derived values it computed in @php blocks (lock, terms, next
+     * letter reference, the EUISIS panel).
+     */
+    private function caseDetailProps(
+        object $case,
+        $timeline,
+        $files,
+        $messages,
+        $hearings,
+        $docs,
+        $witnesses,
+        $audits,
+        $letters,
+        $respondentResponses,
+        $applicantResponseReplies,
+        $letterTemplates,
+        $inspectionAssignees,
+        $inspectionRequests,
+        $inspectionFindings,
+    ): array {
+        $user = Auth::user();
+        $can = fn (string $permission): bool => (bool) userHasPermission($permission);
+        $isAdmin = $user?->hasRole('admin') ?? false;
+
+        $hasActiveDecision = false;
+        try {
+            $hasActiveDecision = \App\Models\Decision::where('court_case_id', $case->id)->where('status', 'published')->exists();
+        } catch (\Throwable $e) {
+            $hasActiveDecision = false;
+        }
+        $caseLocked = (($case->status ?? '') === 'closed') && $hasActiveDecision;
+
+        $lawyerName = collect([
+            $case->applicant_first_name ?? null,
+            $case->applicant_middle_name ?? null,
+            $case->applicant_last_name ?? null,
+        ])->map(fn ($part) => trim((string) $part))->filter()->implode(' ');
+        if ($lawyerName === '') {
+            $lawyerName = trim((string) ($case->applicant_name ?? ''));
+        }
+        $applicantAddress = trim((string) ($case->applicant_address ?? ''));
+        if ($applicantAddress === '') {
+            $applicantAddress = trim((string) ($case->applicant_profile_address ?? ''));
+        }
+
+        $descriptionHtml = (string) ($case->description_html ?? '');
+        if ($descriptionHtml === '' && !empty($case->description)) {
+            $descriptionHtml = clean((string) $case->description, 'cases');
+        }
+        $reliefHtml = null;
+        if (!empty($case->relief_requested_html ?? null)) {
+            $reliefHtml = clean($case->relief_requested_html, 'cases');
+        } elseif (!empty($case->relief_requested)) {
+            $reliefHtml = clean($case->relief_requested, 'cases');
+        }
+
+        // Active Terms & Conditions, printed as a list under the respondent section.
+        $termsItems = [];
+        try {
+            $printTerms = \App\Models\TermsAndCondition::published()->orderByDesc('published_at')->first();
+            if ($printTerms && !empty($printTerms->body)) {
+                $termsHtml = clean($printTerms->body, 'cases');
+                if (preg_match_all('/<li\b[^>]*>(.*?)<\/li>/is', $termsHtml, $m) && !empty($m[1])) {
+                    $rows = $m[1];
+                } elseif (preg_match_all('/<p\b[^>]*>(.*?)<\/p>/is', $termsHtml, $m) && !empty($m[1])) {
+                    $rows = $m[1];
+                } else {
+                    $rows = preg_split('/<br\s*\/?>|\r\n|\n/i', $termsHtml) ?: [];
+                }
+                foreach ($rows as $row) {
+                    $row = trim(preg_replace('/\s+/', ' ', strip_tags($row, '<strong><b><em><i><u><a>')));
+                    if ($row !== '') {
+                        $termsItems[] = $row;
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            $termsItems = [];
+        }
+
+        // The next letter reference for this case (the compose panel shows it read-only).
+        $nextReference = null;
+        $caseNumber = (string) ($case->case_number ?? '');
+        if ($caseNumber !== '' && Schema::hasTable('letters')) {
+            $last = DB::table('letters')->where('case_number', $caseNumber)->orderBy('id', 'desc')->first();
+            $nextSeq = ($last && preg_match('/\/(\d{2})$/', (string) $last->reference_number, $m)) ? intval($m[1]) + 1 : 1;
+            $nextReference = $caseNumber . '/' . str_pad((string) $nextSeq, 2, '0', STR_PAD_LEFT);
+        }
+
+        $iso = fn ($value): ?string => $this->isoDate($value);
+        $today = Carbon::today();
+
+        return [
+            'case' => [
+                'id' => (int) $case->id,
+                'case_number' => $caseNumber,
+                'title' => $case->title ?? null,
+                'status' => (string) ($case->status ?? 'pending'),
+                'review_status' => (string) ($case->review_status ?? 'accepted'),
+                'review_note' => $case->review_note ?? null,
+                'case_type' => $case->case_type ?? null,
+                'filing_date' => $iso($case->filing_date ?? null),
+                'created_at' => $iso($case->created_at ?? null),
+                'updated_at' => $iso($case->updated_at ?? null),
+                'assigned_at' => $iso($case->assigned_at ?? null),
+                'assigned_user_id' => isset($case->assigned_user_id) ? (int) $case->assigned_user_id : null,
+                'assignee_name' => $case->assignee_name ?? null,
+                'assignee_team_name' => $case->assignee_team_name ?? null,
+                'applicant_display_name' => trim((string) ($case->title ?? '')),
+                'lawyer_name' => $lawyerName,
+                'submitted_by_lawyer' => !empty($case->applicant_is_lawyer) && $lawyerName !== '',
+                'has_lawyer_document' => !empty($case->applicant_lawyer_document_path),
+                'applicant_address' => $applicantAddress,
+                'applicant_email' => $case->applicant_email ?? null,
+                'respondent_name' => $case->respondent_name ?? null,
+                'respondent_address' => $case->respondent_address ?? null,
+                'description_html' => $descriptionHtml,
+                'relief_html' => $reliefHtml,
+            ],
+            'can' => [
+                'editStatus' => $can('cases.edit'),
+                'assign' => $can('cases.assign.team') || $can('cases.assign.member') || $can('cases.assign'),
+                'review' => $can('cases.review'),
+                'manageResponseReplies' => $can('cases.response-replies.manage'),
+                'writeLetter' => $can('letters.create'),
+                'viewLetters' => $can('letters.view'),
+                // The button opens the bench notes list, which needs both (BenchNoteController).
+                'manageBench' => $can('bench-notes.manage') && $can('bench-notes.view'),
+                'viewHearings' => $can('hearing.view'),
+                'createHearings' => $can('hearing.create'),
+                'updateHearings' => $can('hearing.update'),
+                'deleteHearings' => $can('hearing.delete'),
+                'viewFiles' => $can('file.view'),
+                'createFiles' => $can('file.create'),
+                'updateFiles' => $can('file.update'),
+                'deleteFiles' => $can('file.delete'),
+                'manageInspectionRequests' => $can('inspection-requests.manage'),
+                'manageInspectionFindings' => $can('inspection-findings.manage'),
+                'createMessage' => $can('message.create'),
+                'isAdmin' => $isAdmin,
+            ],
+            'caseLocked' => $caseLocked,
+            'statuses' => ['pending', 'active', 'dismissed', 'closed'],
+            'currentUserInitial' => mb_strtoupper(mb_substr((string) ($user?->name ?? 'A'), 0, 1)),
+            'termsItems' => $termsItems,
+            'nextLetterReference' => $nextReference,
+            'timeline' => collect($timeline)->map(fn ($row) => [
+                'id' => (int) $row->id,
+                'from_status' => $row->from_status ?? null,
+                'to_status' => $row->to_status ?? null,
+                'note' => $row->note ?? null,
+                'created_at' => $iso($row->created_at ?? null),
+            ])->values()->all(),
+            'hearings' => collect($hearings)->map(function ($h) use ($iso, $today) {
+                $locked = false;
+                try {
+                    $locked = Carbon::parse($h->hearing_at)->startOfDay()->lte($today);
+                } catch (\Throwable $e) {
+                    $locked = false;
+                }
+
+                return [
+                    'id' => (int) $h->id,
+                    'hearing_at' => $iso($h->hearing_at ?? null),
+                    'type' => $h->type ?? null,
+                    'location' => $h->location ?? null,
+                    'notes' => $h->notes ?? null,
+                    'date_locked' => $locked,
+                ];
+            })->values()->all(),
+            'files' => collect($files)->map(fn ($f) => [
+                'id' => (int) $f->id,
+                'label' => $f->label ?? null,
+                'name' => $f->label ?? basename((string) ($f->path ?? '')),
+                'mime' => $f->mime ?? null,
+                'size' => (int) ($f->size ?? 0),
+                'created_at' => $iso($f->created_at ?? null),
+                'uploaded_by' => ($f->uploader_name ?? null) ?: (trim(($f->first_name ?? '') . ' ' . ($f->last_name ?? '')) ?: null),
+            ])->values()->all(),
+            'messages' => collect($messages)->map(function ($m) use ($iso) {
+                $fromAdmin = !is_null($m->sender_user_id);
+                $fromApplicant = !is_null($m->sender_applicant_id);
+                $who = $fromAdmin
+                    ? (($m->admin_name ?? null) ?: __('cases.messages.court_staff'))
+                    : ($fromApplicant ? trim(($m->first_name ?? '') . ' ' . ($m->last_name ?? '')) : __('cases.messages_section.system'));
+
+                return [
+                    'id' => (int) $m->id,
+                    'body' => (string) ($m->body ?? ''),
+                    'from_admin' => $fromAdmin,
+                    'sender_name' => $who,
+                    'created_at' => $iso($m->created_at ?? null),
+                ];
+            })->values()->all(),
+            'docs' => collect($docs)->map(function ($d) use ($iso) {
+                $filePath = $d->file_path ?? $d->path ?? null;
+
+                return [
+                    'id' => (int) $d->id,
+                    'title' => trim((string) ($d->title ?? '')) ?: ($filePath ? basename((string) $filePath) : null),
+                    'description_html' => !empty($d->description) ? clean((string) $d->description, 'cases') : null,
+                    'mime' => $d->mime ?? null,
+                    'size' => isset($d->size) ? (int) $d->size : null,
+                    'created_at' => $iso($d->created_at ?? null),
+                    'has_file' => !empty($filePath),
+                ];
+            })->values()->all(),
+            'witnesses' => collect($witnesses)->map(fn ($w) => [
+                'id' => (int) $w->id,
+                'full_name' => (string) ($w->full_name ?? ''),
+                'phone' => $w->phone ?? null,
+                'email' => $w->email ?? null,
+                'address' => $w->address ?? null,
+                'notes' => $w->notes ?? null,
+            ])->values()->all(),
+            'audits' => $this->auditRows($audits, $iso),
+            'letters' => collect($letters)->map(fn ($l) => [
+                'id' => (int) $l->id,
+                'subject' => $l->subject ?? null,
+                'reference_number' => $l->reference_number ?? null,
+                'approval_status' => strtolower((string) ($l->approval_status ?? 'pending')),
+                'template_title' => $l->template_title ?? null,
+                'author_name' => $l->author_name ?? null,
+                'created_at' => $iso($l->created_at ?? null),
+            ])->values()->all(),
+            'letterTemplates' => collect($letterTemplates)->map(function ($tpl) {
+                $placeholders = $tpl->placeholders ?? [];
+                if (is_string($placeholders)) {
+                    $decoded = json_decode($placeholders, true);
+                    $placeholders = $decoded ?: [];
+                }
+
+                return [
+                    'id' => (int) $tpl->id,
+                    'title' => (string) ($tpl->title ?? ''),
+                    'body' => (string) ($tpl->body ?? ''),
+                    'category' => $tpl->category ?? null,
+                    'placeholders' => array_values(array_map('strval', is_array($placeholders) ? $placeholders : [])),
+                ];
+            })->values()->all(),
+            'respondentResponses' => collect($respondentResponses)->map(fn ($r) => [
+                'id' => (int) $r->id,
+                'title' => $r->title ?? null,
+                'case_number' => $r->case_number ?? null,
+                'response_number' => isset($r->response_number) && $r->response_number !== '' ? (string) $r->response_number : null,
+                'description_html' => !empty($r->description) ? clean((string) $r->description, 'cases') : '',
+                'review_status' => (string) ($r->review_status ?? 'awaiting_review'),
+                'review_note' => $r->review_note ?? null,
+                'pdf_url' => !empty($r->pdf_path) ? route('respondent-responses.download', ['response' => $r->id, 'inline' => 1]) : null,
+                'created_at' => $iso($r->created_at ?? null),
+            ])->values()->all(),
+            'applicantResponseReplies' => collect($applicantResponseReplies)->map(fn ($reply) => [
+                'id' => (int) $reply->id,
+                'respondent_response_id' => (int) $reply->respondent_response_id,
+                'response_number' => $reply->response_number ?? null,
+                'applicant_name' => trim(($reply->applicant_first_name ?? '') . ' ' . ($reply->applicant_middle_name ?? '') . ' ' . ($reply->applicant_last_name ?? '')),
+                'description' => (string) ($reply->description ?? ''),
+                'review_status' => (string) ($reply->review_status ?? 'awaiting_review'),
+                'review_note' => $reply->review_note ?? null,
+                'pdf_url' => !empty($reply->pdf_path)
+                    ? route('admin.applicant-response-replies.download', ['case' => $case->id, 'response' => $reply->respondent_response_id, 'reply' => $reply->id, 'inline' => 1])
+                    : null,
+                'created_at' => $iso($reply->created_at ?? null),
+            ])->values()->all(),
+            'inspectionAssignees' => collect($inspectionAssignees)->map(fn ($u) => ['id' => (int) $u->id, 'name' => (string) $u->name])->values()->all(),
+            'inspectionRequests' => collect($inspectionRequests)->map(fn ($req) => [
+                'id' => (int) $req->id,
+                'subject' => $req->subject ?? null,
+                'status' => (string) ($req->status ?? ''),
+                'request_date' => $iso($req->request_date ?? null),
+                'assigned_inspector_name' => $req->assigned_inspector_name ?? null,
+                'created_by_name' => $req->created_by_name ?? null,
+            ])->values()->all(),
+            'inspectionFindings' => collect($inspectionFindings)->map(fn ($f) => [
+                'id' => (int) $f->id,
+                'title' => $f->title ?? null,
+                'severity' => (string) ($f->severity ?? ''),
+                'finding_date' => $iso($f->finding_date ?? null),
+                'request_subject' => $f->request_subject ?? null,
+                'assigned_inspector_name' => $f->assigned_inspector_name ?? null,
+                'recorded_by_name' => $f->recorded_by_name ?? null,
+                'accepted' => !empty($f->accepted_at),
+                'has_attachment' => !empty($f->attachment_path),
+                'attachment_name' => $f->attachment_original_name ?? null,
+                'details' => $f->details ?? null,
+            ])->values()->all(),
+            'euisis' => $this->euisisPanelProps($case, $can('cases.edit')),
+            'euisisRecord' => $this->euisisRecordProps($case),
+        ];
+    }
+
+    /**
+     * Flow 5: the grievances an employee attached when filing from the EUISIS
+     * employee portal, with the responses and decisions they received there.
+     * Null for a case that did not come from EUISIS and carries no record.
+     */
+    private function euisisRecordProps(object $case): ?array
+    {
+        $filed = ($case->source ?? null) === 'euisis_employee';
+        if (!Schema::hasTable('case_euisis_grievances')) {
+            return $filed ? ['filed_from_euisis' => true, 'grievances' => []] : null;
+        }
+
+        $decode = fn (?string $json): array => array_values(array_filter((array) json_decode((string) $json, true), 'is_array'));
+        $grievances = DB::table('case_euisis_grievances')
+            ->where('court_case_id', $case->id)
+            ->orderBy('submitted_at')
+            ->orderBy('id')
+            ->get()
+            ->map(fn (object $row): array => [
+                'id' => (int) $row->id,
+                'reference' => $row->reference,
+                'subject' => $row->subject,
+                'category' => $row->category,
+                'status' => $row->status,
+                'description' => $row->description,
+                'submitted_at' => $row->submitted_at ? Carbon::parse($row->submitted_at)->format('Y-m-d H:i') : null,
+                'closed_at' => $row->closed_at ? Carbon::parse($row->closed_at)->format('Y-m-d H:i') : null,
+                'responses' => array_map(fn (array $r): array => [
+                    'body' => (string) ($r['body'] ?? ''),
+                    'at' => $r['at'] ?? null,
+                ], $decode($row->responses)),
+                'decisions' => array_map(fn (array $d): array => [
+                    'number' => $d['number'] ?? null,
+                    'type' => $d['type'] ?? null,
+                    'text' => (string) ($d['text'] ?? ''),
+                    'at' => $d['at'] ?? null,
+                ], $decode($row->decisions)),
+            ])
+            ->values()
+            ->all();
+
+        if (!$filed && $grievances === []) {
+            return null;
+        }
+
+        return ['filed_from_euisis' => $filed, 'grievances' => $grievances];
+    }
+
+    /** The EUISIS panel the Blade page rendered through <x-euisis.case-panel>; null when it would not render. */
+    private function euisisPanelProps(object $case, bool $canLink): ?array
+    {
+        try {
+            $panel = new \App\View\Components\Euisis\CasePanel((int) $case->id);
+        } catch (\Throwable $e) {
+            Log::warning('EUISIS case panel unavailable', ['case' => $case->id, 'error' => $e->getMessage()]);
+
+            return null;
+        }
+        if (!$panel->shouldRender()) {
+            return null;
+        }
+
+        $referral = $panel->referral;
+        $organization = $panel->organization;
+        $employee = $panel->employee;
+        $hasApplicant = ($panel->case?->applicant_id ?? null) !== null;
+        $lastRun = $panel->lastRun;
+
+        return [
+            'referral' => $referral ? [
+                'grievance_reference' => $referral->grievance_reference ?? null,
+                'tribunal_case_number' => $referral->tribunal_case_number ?? null,
+                'complainant_name' => $referral->complainant_name ?? null,
+                'complainant_contact' => collect([$referral->complainant_phone ?? null, $referral->complainant_email ?? null])->filter()->implode(' · ') ?: null,
+                'referring_officer' => $referral->referring_officer ?? null,
+                'received_at' => $referral->created_at?->format('Y-m-d H:i'),
+            ] : null,
+            'organization' => $organization ? [
+                'name' => $organization->displayName(),
+                'code' => $organization->code ?? null,
+                'active' => $organization->isActive(),
+                'status' => $organization->status ?? null,
+            ] : null,
+            'employee' => $employee ? [
+                'name' => $employee->displayName(),
+                'number' => $employee->employee_number ?? null,
+                'status' => $employee->status ?? null,
+                'position' => $panel->position?->displayTitle(),
+                'organization' => $panel->employeeOrganization?->displayName(),
+            ] : null,
+            // Linked (Flow 4/5) although the directory cache does not have the record yet.
+            'employee_uuid' => $panel->employeeUuid,
+            'has_applicant' => $hasApplicant,
+            'can_link' => $canLink,
+            'can_link_employee' => $canLink && $panel->enabled && ($hasApplicant || $referral !== null),
+            'enabled' => $panel->enabled,
+            'has_organizations' => $panel->hasOrganizations,
+            'organizations' => ($canLink && $panel->hasOrganizations)
+                ? $panel->organizations()->map(fn ($option) => [
+                    'uuid' => (string) $option->uuid,
+                    'name' => $option->displayName(),
+                    'active' => $option->isActive(),
+                    'status' => $option->status ?? null,
+                ])->values()->all()
+                : [],
+            'selected_organization_uuid' => $organization?->uuid,
+            'last_sync' => $lastRun ? Carbon::parse($lastRun)->diffForHumans() : null,
+            'last_error' => $panel->lastError,
+            'notice' => session('euisis_status'),
+        ];
+    }
+
+    /** A date value from the database as ISO 8601, or null when it is empty or unparseable. */
+    private function isoDate(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        try {
+            return Carbon::parse((string) $value)->toIso8601String();
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     /**
@@ -739,6 +1182,7 @@ class CaseController extends Controller
     {
         $case = DB::table('court_cases')->where('id', $id)->first();
         abort_if(!$case, 404, 'Case not found.');
+        $this->ensureCaseAccess($case);
 
         $data = $request->validate([
             'decision' => ['required', 'in:accept,return,reject'],
@@ -773,6 +1217,18 @@ class CaseController extends Controller
 
         DB::table('court_cases')->where('id', $id)->update($updatePayload);
 
+        // The activation is a status change like any other: it goes on the case's status timeline.
+        if (isset($updatePayload['status']) && (string) $case->status !== $updatePayload['status']) {
+            DB::table('case_status_logs')->insert([
+                'case_id'            => $id,
+                'from_status'        => $case->status,
+                'to_status'          => $updatePayload['status'],
+                'changed_by_user_id' => Auth::id(),
+                'created_at'         => now(),
+                'updated_at'         => now(),
+            ]);
+        }
+
         $this->logCaseAudit($id, 'review_decision', [
             'decision' => $newStatus,
             'note'     => $note ?: null,
@@ -805,6 +1261,9 @@ class CaseController extends Controller
     {
         $response = RespondentResponse::find($responseId);
         abort_if(!$response, 404, __('respondent.response_not_found'));
+        $responseCase = DB::table('court_cases')->where('case_number', $response->case_number)->first();
+        abort_if(!$responseCase, 404);
+        $this->ensureCaseAccess($responseCase);
 
         $data = $request->validate([
             'decision'    => ['required', 'in:accept,return'],
@@ -839,6 +1298,9 @@ class CaseController extends Controller
     {
         $reply = ApplicantResponseReply::find($replyId);
         abort_if(!$reply, 404, __('respondent.response_reply_not_found'));
+        $replyCase = DB::table('court_cases')->where('id', $reply->case_id)->first();
+        abort_if(!$replyCase, 404);
+        $this->ensureCaseAccess($replyCase);
 
         $data = $request->validate([
             'decision'    => ['required', 'in:accept,return'],
@@ -886,6 +1348,7 @@ class CaseController extends Controller
 
         $case = DB::table('court_cases')->where('id', $id)->first();
         abort_if(!$case, 404);
+        $this->ensureCaseAccess($case);
 
         $old = $case->status;
         $new = $data['status'];
@@ -993,12 +1456,11 @@ class CaseController extends Controller
      */
     public function postAdminMessage(Request $request, int $id)
     {
+        $case = $this->writableCase($id, 'message.create');
+
         $data = $request->validate([
             'body' => ['required', 'string', 'max:5000'],
         ]);
-
-        $case = DB::table('court_cases')->where('id', $id)->first();
-        abort_if(!$case, 404);
 
         DB::table('case_messages')->insert([
             'case_id'             => $id,
@@ -1047,8 +1509,7 @@ class CaseController extends Controller
      */
     public function storeHearing(Request $request, int $case)
     {
-        $c = DB::table('court_cases')->where('id', $case)->first();
-        abort_if(!$c, 404);
+        $c = $this->writableCase($case, 'hearing.create');
 
         $data = $request->validate([
             'hearing_at' => ['required', 'date'], // expect normalized datetime string (Y-m-d H:i:s)
@@ -1118,6 +1579,7 @@ class CaseController extends Controller
     {
         $h = DB::table('case_hearings')->where('id', $hearing)->first();
         abort_if(!$h, 404);
+        $this->writableCase((int) $h->case_id, 'hearing.update');
         $existingHearingDate = Carbon::parse($h->hearing_at)->startOfDay();
         if ($existingHearingDate->lte(Carbon::today())) {
             return back()->with('error', 'messages.error.past_hearing_edit_locked');
@@ -1169,6 +1631,7 @@ class CaseController extends Controller
     {
         $row = DB::table('case_hearings')->where('id', $hearing)->first();
         abort_if(!$row, 404);
+        $this->writableCase((int) $row->case_id, 'hearing.delete');
         $existingHearingDate = Carbon::parse($row->hearing_at)->startOfDay();
         if ($existingHearingDate->lte(Carbon::today())) {
             return back()->with('error', 'messages.error.past_hearing_delete_locked');
@@ -1192,8 +1655,7 @@ class CaseController extends Controller
      */
     public function storeFile(Request $request, int $case, SecureUploadService $uploads)
     {
-        $c = DB::table('court_cases')->where('id', $case)->first();
-        abort_if(!$c, 404);
+        $this->writableCase($case, 'file.create');
 
         $data = $request->validate([
             'label' => ['nullable', 'string', 'max:255'],
@@ -1234,7 +1696,8 @@ class CaseController extends Controller
      */
     public function deleteFile(int $case, int $file, LegalHoldService $legalHolds)
     {
-        $row = DB::table('case_files')->where('id', $file)->where('case_id', $case)->first();
+        $this->writableCase($case, 'file.delete');
+        $row =DB::table('case_files')->where('id', $file)->where('case_id', $case)->first();
         abort_if(!$row, 404);
 
         $legalHolds->assertFileMayBeDeleted((string) $row->path);
@@ -1261,6 +1724,11 @@ class CaseController extends Controller
     public function viewDocument(int $caseId, int $docId)
     {
         $this->authorizeView();
+
+        // A submitted document is part of the case file: same team scope as the case page.
+        $case = DB::table('court_cases')->where('id', $caseId)->first();
+        abort_if(!$case, 404, 'Case not found.');
+        $this->ensureCaseAccess($case);
 
         $doc = DB::table('case_evidences')
             ->where('id', $docId)
@@ -1312,8 +1780,7 @@ class CaseController extends Controller
      */
     public function storeWitness(Request $request, int $case)
     {
-        $c = DB::table('court_cases')->where('id', $case)->first();
-        abort_if(!$c, 404);
+        $this->writableCase($case);
 
         $data = $request->validate([
             'full_name' => ['required', 'string', 'max:255'],
@@ -1347,7 +1814,8 @@ class CaseController extends Controller
      */
     public function updateWitness(Request $request, int $case, int $witness)
     {
-        $exists = DB::table('case_witnesses')
+        $this->writableCase($case);
+        $exists =DB::table('case_witnesses')
             ->where('id', $witness)
             ->where('case_id', $case)
             ->exists();
@@ -1382,6 +1850,7 @@ class CaseController extends Controller
      */
     public function deleteWitness(int $case, int $witness)
     {
+        $this->writableCase($case);
         DB::table('case_witnesses')
             ->where('id', $witness)
             ->where('case_id', $case)
@@ -1391,6 +1860,41 @@ class CaseController extends Controller
             'key' => 'messages.success.deleted',
             'replace' => ['resource' => __('messages.resources.witness')],
         ]);
+    }
+
+    /**
+     * Team leaders only reach their team's cases and plain team members only
+     * the cases assigned to them; everyone else with cases.view sees all.
+     */
+    /** Team leaders reach their team's cases, plain team members only theirs (CaseScope). */
+    private function ensureCaseAccess(object $case): void
+    {
+        \App\Support\CaseScope::ensure($case);
+    }
+
+    /** A published decision on a closed case freezes the file. */
+    private function isCaseLocked(object $case): bool
+    {
+        return \App\Support\CaseScope::isLocked($case);
+    }
+
+    /**
+     * Case a staff member may change: it exists, is within their scope, is not
+     * locked by a published decision, and (when given) they hold $permission.
+     * The page hides these actions already; this is the server-side check.
+     */
+    private function writableCase(int $caseId, ?string $permission = null): object
+    {
+        $case = DB::table('court_cases')->where('id', $caseId)->first();
+        abort_if(!$case, 404);
+        abort_if($permission !== null && !(Auth::user()?->hasPermission($permission) ?? false), 403);
+        $this->ensureCaseAccess($case);
+
+        if ($this->isCaseLocked($case)) {
+            throw new HttpResponseException(back()->with('error', __('cases.show.actions_locked')));
+        }
+
+        return $case;
     }
 
     /**
@@ -1446,7 +1950,7 @@ class CaseController extends Controller
         };
 
         $body = __('cases.notifications.case_reviewed', [
-            'case_number' => $case->case_number,
+            'case' => $case->case_number,
             'decision' => $decisionText,
         ]);
         if ($note !== '') {
@@ -1489,6 +1993,58 @@ class CaseController extends Controller
         } catch (\Throwable $e) {
             Log::error('Failed sending review decision email', ['case_id' => $case->id, 'error' => $e->getMessage()]);
         }
+    }
+
+    /**
+     * The audit trail as the case page shows it: each entry's recorded details as labelled
+     * lines in the reader's language, ids resolved to the bench and user names, statuses and
+     * decisions translated, the hearing time as a date the page formats. `meta` keeps the raw
+     * record for an action the labels do not know yet.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function auditRows($audits, callable $iso): array
+    {
+        $metas = collect($audits)->mapWithKeys(fn ($a) => [(int) $a->id => is_array($m = json_decode((string) ($a->meta ?? ''), true)) ? $m : []]);
+        $ids = fn (string ...$keys) => $metas->flatMap(fn (array $m) => array_map(fn ($k) => $m[$k] ?? null, $keys))->filter(fn ($v) => is_numeric($v))->map(fn ($v) => (int) $v)->unique()->values();
+        $teams = Schema::hasTable('teams') ? DB::table('teams')->whereIn('id', $ids('assigned_team_id'))->pluck('name', 'id') : collect();
+        $users = DB::table('users')->whereIn('id', $ids('assigned_user_id', 'assigned_member_user_id'))->pluck('name', 'id');
+        $label = fn (string $key) => __("case_audit.fields.{$key}");
+        $known = fn (string $group, $value) => ($text = __("{$group}.{$value}")) !== "{$group}.{$value}" ? $text : (string) $value;
+        $blank = fn ($value) => $value === null || $value === '' || $value === 'NULL';
+
+        return collect($audits)->map(function ($a) use ($iso, $metas, $teams, $users, $label, $known, $blank) {
+            $meta = $metas[(int) $a->id];
+            $details = [];
+            foreach ($meta as $key => $value) {
+                if ($blank($value) || is_array($value) || in_array($key, ['path', 'hearing_id'], true)) {
+                    continue;
+                }
+                $line = match ($key) {
+                    'assigned_team_id' => [$label('team'), $teams[(int) $value] ?? "#{$value}"],
+                    'assigned_user_id' => [$label('judge'), $users[(int) $value] ?? "#{$value}"],
+                    'assigned_member_user_id' => [$label('member'), $users[(int) $value] ?? "#{$value}"],
+                    'from', 'to' => [$label($key), $known('cases.status', $value)],
+                    'decision' => [$label('decision'), $known('cases.review_status', $value)],
+                    'by' => [$label('by'), $known('case_audit.by', $value)],
+                    'when' => [$label('when'), (string) $value, 'date'],
+                    'respondent', 'note', 'body', 'label', 'sections' => [$label($key), (string) $value],
+                    default => [Str::headline((string) $key), (string) $value],
+                };
+                $details[] = ['label' => $line[0], 'value' => $line[1], 'kind' => $line[2] ?? 'text'];
+            }
+
+            return [
+                'id' => (int) $a->id,
+                'action' => (string) ($a->action ?? ''),
+                'actor_type' => $a->actor_type ?? null,
+                'actor_id' => $a->actor_id ?? null,
+                'actor_name' => $a->actor_name ?? null,
+                'details' => $details,
+                'meta' => $meta !== [] ? json_encode($meta, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) : null,
+                'created_at' => $iso($a->created_at ?? null),
+            ];
+        })->values()->all();
     }
 
     /**

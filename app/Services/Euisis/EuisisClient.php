@@ -82,6 +82,27 @@ final class EuisisClient
         return array_values((array) ($json['data'] ?? []));
     }
 
+    /**
+     * Employees whose current assignment is in one unit, by the organization's and the
+     * unit's codes (unit codes are unique only inside an organization).
+     *
+     * @return array{data: list<array<string, mixed>>, last_page: int}
+     */
+    public function employeesInUnit(string $organizationCode, string $unitCode, int $page): array
+    {
+        $json = $this->get('/api/v1/employees', [
+            'organization_code' => $organizationCode,
+            'organization_unit_code' => $unitCode,
+            'page' => max(1, $page),
+            'per_page' => 100,
+        ]);
+
+        return [
+            'data' => array_values((array) ($json['data'] ?? [])),
+            'last_page' => max(1, (int) ($json['meta']['last_page'] ?? 1)),
+        ];
+    }
+
     /** @return array<string, mixed>|null */
     public function employee(string $uuid): ?array
     {

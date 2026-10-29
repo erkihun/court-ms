@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
 
 class TeamController extends Controller
 {
@@ -14,30 +17,83 @@ class TeamController extends Controller
     {
         $teams = Team::with(['parent', 'children', 'users', 'leader'])->orderBy('name')->get();
 
-        return view('admin.teams.index', compact('teams'));
+        // The register (React, Court/Teams/Index).
+        return Inertia::render('Court/Teams/Index', [
+            'teams' => $teams->map(fn (Team $team): array => [
+                'id' => (int) $team->id,
+                'name' => (string) $team->name,
+                'parent_name' => $team->parent?->name,
+                'description' => $team->description,
+                'members_count' => $team->users->count(),
+                'leader_name' => $team->leader?->name,
+                'leader_email' => $team->leader?->email,
+            ])->values()->all(),
+        ]);
     }
 
     public function create()
     {
-        $teams = Team::orderBy('name')->get();
-        $users = $this->availableUsers();
-
-        return view('admin.teams.create', compact('teams', 'users'));
+        // The create form (React, Court/Teams/Create): possible parents and the people free to lead.
+        return Inertia::render('Court/Teams/Create', [
+            'teams' => $this->teamOptions(Team::orderBy('name')->get()),
+            'users' => $this->userOptions($this->availableUsers()),
+        ]);
     }
 
     public function show(Team $team)
     {
         $team->load(['parent', 'children', 'users', 'leader']);
 
-        return view('admin.teams.show', compact('team'));
+        // The team page (React, Court/Teams/Show) with its members.
+        return Inertia::render('Court/Teams/Show', [
+            'team' => [
+                'id' => (int) $team->id,
+                'name' => (string) $team->name,
+                'parent_name' => $team->parent?->name,
+                'description' => $team->description,
+                'leader_name' => $team->leader?->name,
+                'members' => $this->userOptions($team->users),
+            ],
+        ]);
     }
 
     public function edit(Team $team)
     {
-        $teams = Team::where('id', '!=', $team->id)->orderBy('name')->get();
-        $users = $this->availableUsers($team);
+        $team->load('users');
 
-        return view('admin.teams.edit', compact('team', 'teams', 'users'));
+        // The edit form (React, Court/Teams/Edit): details on one side, membership on the other.
+        // The people offered are those in no other team, so the current members stay listed.
+        return Inertia::render('Court/Teams/Edit', [
+            'team' => [
+                'id' => (int) $team->id,
+                'name' => (string) $team->name,
+                'parent_id' => $team->parent_id !== null ? (int) $team->parent_id : null,
+                'description' => $team->description,
+                'team_leader_id' => $team->team_leader_id !== null ? (int) $team->team_leader_id : null,
+                'user_ids' => $team->users->pluck('id')->map(fn ($id) => (int) $id)->values()->all(),
+            ],
+            // A team cannot report to itself or to one of its own sub-teams.
+            'teams' => $this->teamOptions(Team::whereNotIn('id', $this->descendantIds($team)->push((int) $team->id)->all())->orderBy('name')->get()),
+            'users' => $this->userOptions($this->availableUsers($team)),
+        ]);
+    }
+
+    /** Teams as select options. */
+    private function teamOptions($teams): array
+    {
+        return collect($teams)
+            ->map(fn (Team $team): array => ['id' => (int) $team->id, 'name' => (string) $team->name])
+            ->values()
+            ->all();
+    }
+
+    /** People as select options and member rows. */
+    private function userOptions($users): array
+    {
+        return collect($users)
+            ->map(fn (User $user): array => ['id' => (int) $user->id, 'name' => (string) $user->name, 'email' => (string) $user->email])
+            ->values()
+            ->all();
     }
 
     public function store(Request $request)
@@ -70,6 +126,12 @@ class TeamController extends Controller
             'description' => ['nullable', 'string'],
             'team_leader_id' => ['nullable', 'exists:users,id'],
         ]);
+
+        // A team cannot report to itself or to one of its sub-teams: the
+        // hierarchy would loop and the team would drop out of the tree.
+        if (! empty($data['parent_id']) && $this->descendantIds($team)->push((int) $team->id)->contains((int) $data['parent_id'])) {
+            throw ValidationException::withMessages(['parent_id' => __('teams.errors.parent_cycle')]);
+        }
 
         $team->update($data);
 
@@ -131,6 +193,34 @@ class TeamController extends Controller
             : 'messages.success.team_membership_updated';
 
         return redirect()->route('teams.edit', $team)->with('success', $message);
+    }
+
+    /**
+     * Every team below this one, however deep (breadth-first over parent_id;
+     * the visited set stops at a loop already stored).
+     *
+     * @return Collection<int, int>
+     */
+    private function descendantIds(Team $team): Collection
+    {
+        $seen = [(int) $team->id => true];
+        $found = [];
+        $frontier = [(int) $team->id];
+
+        while ($frontier !== []) {
+            $children = Team::whereIn('parent_id', $frontier)->pluck('id')
+                ->map(fn ($id): int => (int) $id)
+                ->reject(fn (int $id): bool => isset($seen[$id]))
+                ->values()
+                ->all();
+            foreach ($children as $id) {
+                $seen[$id] = true;
+                $found[] = $id;
+            }
+            $frontier = $children;
+        }
+
+        return collect($found);
     }
 
     private function ensureSingleTeamForUser(int $userId, ?int $currentTeamId = null): void

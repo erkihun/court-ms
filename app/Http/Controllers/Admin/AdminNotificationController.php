@@ -8,8 +8,10 @@ use App\Models\Team;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class AdminNotificationController extends Controller
 {
@@ -148,7 +150,40 @@ class AdminNotificationController extends Controller
             ->orderByDesc('v.viewed_at')
             ->paginate(10, ['*'], 'respondent_views_page');
 
-        return view('admin.notifications.index', compact('msgs', 'cases', 'hearings', 'respondentViews'));
+        // The page (React, Court/Notifications/Index): four lists, each paged on its own.
+        $legacyApplicantUpdate = 'Applicant updated the case details. Please review the submission.';
+        $at = fn (mixed $value): ?string => $value ? Carbon::parse($value)->toIso8601String() : null;
+
+        return Inertia::render('Court/Notifications/Index', [
+            'messages' => $msgs->through(fn (object $row): array => [
+                'id' => (int) $row->id,
+                'case_id' => (int) $row->case_id,
+                'case_number' => (string) $row->case_number,
+                'body' => trim((string) $row->body) === $legacyApplicantUpdate ? __('cases.notifications.applicant_updated_submission') : (string) $row->body,
+                'at' => $at($row->created_at),
+            ]),
+            'cases' => $cases->through(fn (object $row): array => [
+                'id' => (int) $row->id,
+                'case_number' => (string) $row->case_number,
+                'title' => $row->title,
+                'at' => $at($row->created_at),
+            ]),
+            'hearings' => $hearings->through(fn (object $row): array => [
+                'id' => (int) $row->id,
+                'case_id' => (int) $row->case_id,
+                'case_number' => (string) $row->case_number,
+                'type' => $row->type ?? null,
+                'location' => $row->location ?? null,
+                'at' => $at($row->hearing_at),
+            ]),
+            'respondentViews' => $respondentViews->through(fn (object $row): array => [
+                'id' => (int) $row->id,
+                'case_id' => (int) $row->case_id,
+                'case_number' => (string) $row->case_number,
+                'respondent_name' => $row->respondent_name ?: null,
+                'at' => $at($row->viewed_at),
+            ]),
+        ]);
     }
 
     public function markOne(Request $request)

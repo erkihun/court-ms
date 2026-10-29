@@ -9,13 +9,15 @@ use App\Models\Permission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 class PermissionController extends Controller
 {
     public function index(Request $request)
     {
         $q       = trim((string) $request->get('q', ''));
-        $perPage = (int) $request->input('perPage', 15);
+        // Bounded: an unbounded perPage would let one request load the whole table.
+        $perPage = max(5, min(100, (int) $request->input('perPage', 15)));
 
         $permissions = Permission::query()
             ->with(['roles:id,name'])   // to render role chips
@@ -43,12 +45,28 @@ class PermissionController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
-        return view('admin.permissions.index', compact('permissions', 'q', 'perPage'));
+        // The register (React, Court/Permissions/Index).
+        return Inertia::render('Court/Permissions/Index', [
+            'permissions' => $permissions->through(fn (Permission $permission): array => [
+                'id' => (int) $permission->id,
+                'name' => (string) $permission->name,
+                'label' => $permission->labelLocalized ?: null,
+                'description' => $permission->descriptionLocalized ?: null,
+                'roles' => $permission->roles->pluck('name')->values()->all(),
+                'roles_count' => (int) $permission->roles_count,
+                'users_count' => (int) $permission->users_count,
+            ]),
+            'filters' => ['q' => $q, 'perPage' => $perPage],
+        ]);
     }
 
     public function create()
     {
-        return view('admin.permissions.create');
+        // The create form (React, Court/Permissions/Create): a label and description per locale.
+        return Inertia::render('Court/Permissions/Create', [
+            'permission' => null,
+            ...$this->localeProps(),
+        ]);
     }
 
     public function store(Request $request)
@@ -79,7 +97,45 @@ class PermissionController extends Controller
 
     public function edit(Permission $permission)
     {
-        return view('admin.permissions.edit', compact('permission'));
+        // The edit form (React, Court/Permissions/Edit) with each locale's current text.
+        return Inertia::render('Court/Permissions/Edit', [
+            'permission' => [
+                'id' => (int) $permission->id,
+                'name' => (string) $permission->name,
+                'label_translations' => $this->translationsByLocale($permission, 'label'),
+                'description_translations' => $this->translationsByLocale($permission, 'description'),
+            ],
+            ...$this->localeProps(),
+        ]);
+    }
+
+    /** The locales a permission is described in, and the one its plain label falls back to. */
+    private function localeProps(): array
+    {
+        $locales = array_values((array) config('app.locales', [config('app.locale', 'en')]));
+
+        return [
+            'locales' => $locales,
+            'primaryLocale' => (string) config('app.locale', $locales[0] ?? 'en'),
+        ];
+    }
+
+    /**
+     * One value per locale: the stored translation, or for the primary locale
+     * the plain column when no translation was saved (what the form showed before).
+     */
+    private function translationsByLocale(Permission $permission, string $field): array
+    {
+        $translations = (array) ($permission->{"{$field}_translations"} ?? []);
+        $primaryLocale = (string) config('app.locale', 'en');
+        $values = [];
+
+        foreach ($this->localeProps()['locales'] as $locale) {
+            $values[$locale] = (string) ($translations[$locale]
+                ?? ($locale === $primaryLocale ? ($permission->{$field} ?? '') : ''));
+        }
+
+        return $values;
     }
 
     public function update(Request $request, Permission $permission)

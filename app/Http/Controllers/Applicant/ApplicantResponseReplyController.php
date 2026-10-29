@@ -6,9 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\ApplicantResponseReply;
 use App\Models\RespondentResponse;
 use App\Services\ResponseNotificationService;
+use App\Services\CaseParties;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 class ApplicantResponseReplyController extends Controller
 {
@@ -40,7 +43,19 @@ class ApplicantResponseReplyController extends Controller
             ->orderByDesc('arr.created_at')
             ->paginate(15);
 
-        return view('applicant.responses.index', compact('replies'));
+        // React page Court/Applicant/Replies/Index.
+        return Inertia::render('Court/Applicant/Replies/Index', [
+            'replies' => $replies->through(fn (object $reply): array => [
+                'id' => (int) $reply->id,
+                'case_id' => (int) $reply->case_id,
+                'respondent_response_id' => (int) $reply->respondent_response_id,
+                'case_number' => (string) $reply->case_number,
+                'response_number' => !empty($reply->response_number) ? (string) $reply->response_number : null,
+                'review_status' => (string) ($reply->review_status ?? 'awaiting_review'),
+                'created_at' => $this->isoDate($reply->created_at ?? null),
+                'editable' => ($reply->review_status ?? null) !== 'accepted',
+            ]),
+        ]);
     }
 
     public function create(int $caseId, int $responseId)
@@ -49,8 +64,13 @@ class ApplicantResponseReplyController extends Controller
         abort_if(!$applicantId, 403);
 
         [$case, $response] = $this->loadCaseAndResponse($caseId, $responseId, $applicantId);
+        $applicant = auth('applicant')->user();
 
-        return view('applicant.responses.create', compact('case', 'response'));
+        return Inertia::render('Court/Applicant/Replies/Create', [
+            'case' => $this->caseSummary($case),
+            'response' => $this->responseSummary($response),
+            'applicantName' => $this->joinName($applicant->first_name ?? null, $applicant->middle_name ?? null, $applicant->last_name ?? null),
+        ]);
     }
 
     public function store(Request $request, int $caseId, int $responseId)
@@ -98,7 +118,11 @@ class ApplicantResponseReplyController extends Controller
         [$case, $response] = $this->loadCaseAndResponse($caseId, $responseId, $applicantId);
         $reply = $this->loadReply($replyId, $case->id, $response->id, $applicantId);
 
-        return view('applicant.responses.show', compact('case', 'response', 'reply'));
+        return Inertia::render('Court/Applicant/Replies/Show', [
+            'case' => $this->caseSummary($case),
+            'response' => $this->responseSummary($response),
+            'reply' => $this->replySummary($reply),
+        ]);
     }
 
     public function edit(int $caseId, int $responseId, int $replyId)
@@ -110,7 +134,11 @@ class ApplicantResponseReplyController extends Controller
         $reply = $this->loadReply($replyId, $case->id, $response->id, $applicantId);
         $this->ensureEditableReply($reply);
 
-        return view('applicant.responses.edit', compact('case', 'response', 'reply'));
+        return Inertia::render('Court/Applicant/Replies/Edit', [
+            'case' => $this->caseSummary($case),
+            'response' => $this->responseSummary($response),
+            'reply' => $this->replySummary($reply),
+        ]);
     }
 
     public function update(Request $request, int $caseId, int $responseId, int $replyId)
@@ -183,7 +211,7 @@ class ApplicantResponseReplyController extends Controller
             ->leftJoin('case_types as ct', 'ct.id', '=', 'cc.case_type_id')
             ->select('cc.*', 'ct.name as case_type_name')
             ->where('cc.id', $caseId)
-            ->where('cc.applicant_id', $applicantId)
+            ->whereIn('cc.id', CaseParties::caseIdsFor($applicantId))
             ->first();
 
         abort_if(!$case, 404);
@@ -228,6 +256,57 @@ class ApplicantResponseReplyController extends Controller
         abort_if(!$reply, 404);
 
         return $reply;
+    }
+
+    /** @return array{id: int, case_number: string} */
+    private function caseSummary(object $case): array
+    {
+        return ['id' => (int) $case->id, 'case_number' => (string) $case->case_number];
+    }
+
+    /** The respondent response as the reply pages show it. @return array<string, mixed> */
+    private function responseSummary(object $response): array
+    {
+        $name = $this->joinName($response->first_name ?? null, $response->middle_name ?? null, $response->last_name ?? null);
+
+        return [
+            'id' => (int) $response->id,
+            'response_number' => !empty($response->response_number) ? (string) $response->response_number : null,
+            'respondent_name' => $name !== '' ? $name : null,
+            'has_pdf' => !empty($response->pdf_path),
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function replySummary(object $reply): array
+    {
+        return [
+            'id' => (int) $reply->id,
+            'description' => (string) ($reply->description ?? ''),
+            'review_status' => (string) ($reply->review_status ?? 'awaiting_review'),
+            'review_note' => !empty($reply->review_note) ? (string) $reply->review_note : null,
+            'created_at' => $this->isoDate($reply->created_at ?? null),
+            'applicant_name' => $this->joinName($reply->applicant_first_name ?? null, $reply->applicant_middle_name ?? null, $reply->applicant_last_name ?? null),
+            'editable' => ($reply->review_status ?? null) !== 'accepted',
+            'has_pdf' => !empty($reply->pdf_path),
+        ];
+    }
+
+    private function joinName(?string ...$parts): string
+    {
+        return collect($parts)->map(fn ($part) => trim((string) $part))->filter()->implode(' ');
+    }
+
+    private function isoDate(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        try {
+            return Carbon::parse((string) $value)->toIso8601String();
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     private function ensureEditableReply(object $reply): void

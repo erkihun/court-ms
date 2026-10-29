@@ -1,6 +1,15 @@
 <?php
 
 return [
+    // ከይግባኝ ሰሚ ፍርድ ቤቱ ውጤቶች የሚሰላው መስፈርት (EUISIS ADR 0013 #14)።
+    'appeal_outcomes' => [
+        'comment' => ':total ይግባኝ ተወስኗል፦ :confirmed ጸንቷል፣ :modified ተሻሽሏል፣ :reversed ተሽሯል።',
+        'automatic' => 'ከመዝገቡ የሚሰላ',
+        'counting' => 'የዚህ ዳኛ ችሎት የሰጣቸው ውሳኔዎች ላይ ይግባኝ ሰሚ ፍርድ ቤቱ በጊዜው ውስጥ የሰጠው ውሳኔ።',
+        'result' => ':total ይግባኝ፦ :confirmed ጸንቷል፣ :modified ተሻሽሏል፣ :reversed ተሽሯል። ውጤት :score።',
+        'none' => 'በጊዜው ውስጥ የተወሰነ ይግባኝ የለም፤ ይህ መስፈርት ከአጠቃላይ ውጤቱ ውጭ ነው።',
+        'pick' => 'ለማየት ሠራተኛውንና ጊዜውን ይምረጡ።',
+    ],
     'title' => 'የአፈጻጸም ግምገማዎች',
     'detail_title' => 'የግምገማ ዝርዝር',
     'new_title' => 'አዲስ የአፈጻጸም ግምገማ',

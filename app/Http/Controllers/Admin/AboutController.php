@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AboutPage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
 
 class AboutController extends Controller
 {
@@ -13,12 +14,21 @@ class AboutController extends Controller
     {
         $aboutPages = AboutPage::orderByDesc('updated_at')->paginate(10);
 
-        return view('admin.about.index', compact('aboutPages'));
+        // The list (React, Court/About/Index).
+        return Inertia::render('Court/About/Index', [
+            'pages' => $aboutPages->through(fn (AboutPage $page): array => [
+                'id' => (int) $page->id,
+                'title' => (string) $page->title,
+                'slug' => (string) $page->slug,
+                'is_published' => (bool) $page->is_published,
+                'updated_at' => $page->updated_at?->toIso8601String(),
+            ]),
+        ]);
     }
 
     public function create()
     {
-        return view('admin.about.create');
+        return Inertia::render('Court/About/Form', ['page' => null]);
     }
 
     public function store(Request $request)
@@ -36,7 +46,7 @@ class AboutController extends Controller
         AboutPage::create([
             'title' => $data['title'],
             'slug' => $slug,
-            'body' => $data['body'],
+            'body' => $this->cleanBody($data['body']),
             'is_published' => (bool) ($data['is_published'] ?? false),
             'created_by_user_id' => $request->user()?->id,
             'updated_by_user_id' => $request->user()?->id,
@@ -47,12 +57,25 @@ class AboutController extends Controller
 
     public function show(AboutPage $about)
     {
-        return view('admin.about.show', compact('about'));
+        return Inertia::render('Court/About/Show', ['page' => $this->pageProps($about)]);
     }
 
     public function edit(AboutPage $about)
     {
-        return view('admin.about.edit', compact('about'));
+        return Inertia::render('Court/About/Form', ['page' => $this->pageProps($about)]);
+    }
+
+    /** @return array{id: int, title: string, slug: string, body: string, is_published: bool} */
+    private function pageProps(AboutPage $about): array
+    {
+        return [
+            'id' => (int) $about->id,
+            'title' => (string) $about->title,
+            'slug' => (string) $about->slug,
+            // Purified on save; cleaned again for the page, which shows it as rich text.
+            'body' => $this->cleanBody((string) $about->body),
+            'is_published' => (bool) $about->is_published,
+        ];
     }
 
     public function update(Request $request, AboutPage $about)
@@ -70,7 +93,7 @@ class AboutController extends Controller
         $about->update([
             'title' => $data['title'],
             'slug' => $slug,
-            'body' => $data['body'],
+            'body' => $this->cleanBody($data['body']),
             'is_published' => (bool) ($data['is_published'] ?? false),
             'updated_by_user_id' => $request->user()?->id,
         ]);
@@ -83,6 +106,16 @@ class AboutController extends Controller
         $about->delete();
 
         return redirect()->route('about.index')->with('success', __('about.deleted'));
+    }
+
+    /**
+     * The body is shown as HTML on the applicant sign-in page, which purifies it
+     * with the same profile on output (ApplicantAuthController); it is purified
+     * before it is stored as well.
+     */
+    private function cleanBody(string $html): string
+    {
+        return trim((string) clean($html, 'cases'));
     }
 
     private function uniqueSlug(string $slug, ?int $ignoreId = null): string

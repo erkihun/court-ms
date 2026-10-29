@@ -18,6 +18,35 @@ class IntegrationClient extends Model
 
     public const ABILITY_REFERRALS_READ = 'referrals:read';
 
+    /** Read an employee's court summary for the EUISIS employee portal (Flow 4). */
+    public const ABILITY_PEOPLE_READ = 'people:read';
+
+    /** Ask for a one-time ticket that signs an employee into the applicant portal (Flow 4). */
+    public const ABILITY_PEOPLE_SIGN_IN = 'people:sign-in';
+
+    /** File a case for an employee from the EUISIS employee portal (Flow 5). */
+    public const ABILITY_PEOPLE_FILE = 'people:file';
+
+    /** Read the letters to deliver to EUISIS institutions (Flow 5). */
+    public const ABILITY_LETTERS_READ = 'letters:read';
+
+    /** Work on an employee's own case from the EUISIS employee portal: messages, files, replies, corrections (Flow 6). */
+    public const ABILITY_PEOPLE_ACT = 'people:act';
+
+    /** Read the cases filed against EUISIS institutions, and an institution's view of one (Flow 7). */
+    public const ABILITY_INSTITUTIONS_READ = 'institutions:read';
+
+    /** Ask, for an institution, for a closed case's record to take to the appellate court (Flow 7). */
+    public const ABILITY_INSTITUTIONS_ACT = 'institutions:act';
+
+    /** What a token issued by `euisis:integration-token` may do. */
+    public const DEFAULT_ABILITIES = [
+        self::ABILITY_REFERRALS_CREATE, self::ABILITY_REFERRALS_READ,
+        self::ABILITY_PEOPLE_READ, self::ABILITY_PEOPLE_SIGN_IN, self::ABILITY_PEOPLE_FILE,
+        self::ABILITY_PEOPLE_ACT, self::ABILITY_LETTERS_READ,
+        self::ABILITY_INSTITUTIONS_READ, self::ABILITY_INSTITUTIONS_ACT,
+    ];
+
     protected $guarded = [];
 
     protected $hidden = ['token_hash'];

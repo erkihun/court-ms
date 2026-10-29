@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
 use Mews\Purifier\Facades\Purifier;
 
 class LetterController extends Controller
@@ -23,6 +24,7 @@ class LetterController extends Controller
         if (!in_array($statusFilter, ['', 'pending', 'approved', 'rejected'], true)) {
             $statusFilter = '';
         }
+        $search = trim((string) $request->query('q', ''));
 
         $baseQuery = Letter::query();
 
@@ -53,12 +55,62 @@ class LetterController extends Controller
                     ->orWhere('letters.approval_status', '')
                     ->orWhere('letters.approval_status', 'pending');
             }))
+            // Reference, subject, case number and the parties (recipient, applicant, respondent).
+            ->when($search !== '', function ($query) use ($search) {
+                $like = '%'.addcslashes($search, '%_\\').'%';
+                $query->where(function ($inner) use ($like) {
+                    $inner->where('letters.reference_number', 'like', $like)
+                        ->orWhere('letters.subject', 'like', $like)
+                        ->orWhere('letters.case_number', 'like', $like)
+                        ->orWhere('letters.recipient_name', 'like', $like)
+                        ->orWhere('c.title', 'like', $like)
+                        ->orWhere('c.respondent_name', 'like', $like);
+                });
+            })
             ->with(['template', 'author'])
-            ->latest()
+            ->latest('letters.created_at')
             ->paginate(10)
             ->withQueryString();
 
-        return view('admin.letters.index', compact('letters', 'stats', 'statusFilter'));
+        // The register (React, Court/Letters/Index); the row actions follow the Blade page's permissions.
+        $user = $request->user();
+        $can = fn (string $permission): bool => (bool) ($user?->hasPermission($permission) ?? false);
+        $categories = collect($stats['category_counts']);
+
+        return Inertia::render('Court/Letters/Index', [
+            'letters' => $letters->through(fn (Letter $letter): array => [
+                'id' => (int) $letter->id,
+                'reference_number' => $letter->reference_number,
+                'subject' => $letter->subject,
+                'case_number' => $letter->case_number,
+                'send_to_applicant' => (bool) $letter->send_to_applicant,
+                'send_to_respondent' => (bool) $letter->send_to_respondent,
+                'applicant_name' => $letter->applicant_name,
+                'applicant_lawyer_name' => $letter->applicant_is_lawyer ? $letter->applicant_lawyer_name : null,
+                'respondent_name' => $letter->respondent_name,
+                'author_name' => $letter->author?->name,
+                'author_position' => $letter->author?->position,
+                'category' => $letter->template?->category,
+                'approval_status' => $letter->approval_status ?: null,
+                'approved_by_name' => $letter->approved_by_name,
+                'created_at' => $letter->created_at?->toIso8601String(),
+            ]),
+            'stats' => [
+                'total' => $stats['total'],
+                'approved' => $stats['approved'],
+                'rejected' => $stats['rejected'],
+                'categories' => $categories->count(),
+                'top_category' => $categories->sortDesc()->keys()->first(),
+                'top_category_count' => (int) ($categories->sortDesc()->first() ?? 0),
+            ],
+            'filters' => ['status' => $statusFilter, 'q' => $search],
+            'can' => [
+                'create' => $can('letters.create'),
+                'update' => $can('letters.update'),
+                'delete' => $can('letters.delete'),
+                'approve' => $can('letters.approve'),
+            ],
+        ]);
     }
 
     public function store(Request $request)
@@ -197,17 +249,54 @@ class LetterController extends Controller
         ]);
     }
 
+    /**
+     * The edit page (React, Court/Letters/Edit): the letter's fields as last
+     * submitted when a save was refused, else as stored, and its template.
+     */
     public function edit(Letter $letter)
     {
-        $letter->load('template');
+        // An approved letter has been sent to the parties; it is no longer editable.
+        if ($letter->approval_status === 'approved') {
+            return redirect()->route('letters.index')->with('error', __('messages.error.approved_letter_update_locked'));
+        }
 
-        return view('admin.letters.edit', compact('letter'));
+        $letter->load('template');
+        $template = $letter->template;
+
+        $nextSeq = ($template?->reference_sequence ?? 0) + 1;
+        $nextReference = implode('/', array_filter([
+            $template?->subject_prefix,
+            str_pad((string) $nextSeq, 4, '0', STR_PAD_LEFT),
+        ]));
+
+        return Inertia::render('Court/Letters/Edit', [
+            'letter' => [
+                'id' => (int) $letter->id,
+                'reference_number' => $letter->reference_number,
+                'approval_status' => $letter->approval_status ?: null,
+                'recipient_name' => (string) old('recipient_name', $letter->recipient_name ?? ''),
+                'recipient_title' => (string) old('recipient_title', $letter->recipient_title ?? ''),
+                'recipient_company' => (string) old('recipient_company', $letter->recipient_company ?? ''),
+                'case_number' => (string) old('case_number', $letter->case_number ?? ''),
+                'cc' => (string) old('cc', $letter->cc ?? ''),
+                'send_to_applicant' => filter_var(old('send_to_applicant', $letter->send_to_applicant ?? true), FILTER_VALIDATE_BOOLEAN),
+                'send_to_respondent' => filter_var(old('send_to_respondent', $letter->send_to_respondent ?? true), FILTER_VALIDATE_BOOLEAN),
+                'subject' => (string) old('subject', $letter->subject ?? ''),
+                'body' => (string) old('body', $letter->body ?? ''),
+            ],
+            'template' => [
+                'id' => (int) ($template?->id ?? 0),
+                'title' => (string) ($template?->title ?? ''),
+                'subject_prefix' => $template?->subject_prefix ?: null,
+                'next_reference' => $nextReference,
+            ],
+        ]);
     }
 
     public function update(Request $request, Letter $letter)
     {
         if ($letter->approval_status === 'approved') {
-            return back()->with('error', 'messages.error.approved_letter_update_locked');
+            return back()->with('error', __('messages.error.approved_letter_update_locked'));
         }
 
         $data = $request->validate([
@@ -387,6 +476,12 @@ class LetterController extends Controller
             'status' => 'required|in:approved,returned,rejected',
         ]);
 
+        // An approved letter has been sent to the parties; it can no longer change state
+        // (deciding it again re-sent the approval emails).
+        if ($letter->approval_status === 'approved') {
+            return back()->with('error', __('messages.error.approved_letter_update_locked'));
+        }
+
         $letter->update([
             'approved_by_name'  => $user?->name,
             'approved_by_title' => $user?->position,
@@ -396,6 +491,8 @@ class LetterController extends Controller
         if ($data['status'] === 'approved') {
             $this->notifyPartiesOfApprovedLetter($letter);
             $this->createSystemCaseMessage($letter, $user?->id);
+            // A letter to an EUISIS institution also goes to EUISIS, which delivers it (Flow 5).
+            app(\App\Services\Euisis\LetterDeliveries::class)->record($letter);
         }
 
         return redirect()->route('letters.index')->with('success', [

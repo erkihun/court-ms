@@ -13,6 +13,7 @@ return [
         'applicant_employee' => 'Applicant as an EUISIS employee',
         'complainant_employee' => 'Complainant as an EUISIS employee',
         'not_linked' => 'Not linked',
+        'employee_not_synced' => 'Linked to an EUISIS employee whose record has not reached the directory cache yet (next EUISIS sync).',
         'no_organization' => '— Not linked —',
         'link' => 'Link',
         'find_and_link' => 'Find and link',

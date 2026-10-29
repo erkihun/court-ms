@@ -16,7 +16,8 @@ class NotificationController extends Controller
         abort_if(!$respondentId, 403);
 
         $data = $request->validate([
-            'type'     => 'required|string',
+            // Only the kinds the respondent feed lists (any string used to be stored).
+            'type'     => 'required|in:hearing,message,status,respondent_view',
             'sourceId' => 'required|integer',
         ]);
 
@@ -108,7 +109,8 @@ class NotificationController extends Controller
         }
 
         if (!empty($rows)) {
-            DB::table('respondent_notification_reads')->insert($rows);
+            // An upsert, so a double click (or two tabs) cannot hit the unique key.
+            DB::table('respondent_notification_reads')->upsert($rows, ['respondent_id', 'type', 'source_id'], ['seen_at', 'updated_at']);
         }
 
         return back()->with('success', __('app.admin_notifications.all_marked_as_seen'));

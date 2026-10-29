@@ -167,7 +167,7 @@ return array (
   array (
     'edit_only_pending' => 'You can edit only while the case is pending.',
     'editing_disabled' => 'Editing is disabled because the case is not pending.',
-    'edit_page_subtitle' => 'Edit page subtitle',
+    'edit_page_subtitle' => 'Update the case information',
   ),
   'inline' => 'inline',
   'items' => 'items',
@@ -225,7 +225,7 @@ return array (
     'send_message' => 'Send Message',
     'court_staff' => 'Court Staff',
     'system' => 'System',
-    'subtitle' => 'Subtitle',
+    'subtitle' => ':count messages',
   ),
   'my_cases' => 'My Cases',
   'name' => 'Name',
@@ -329,7 +329,7 @@ return array (
     'review_actions' => 'Review Actions',
     'accept' => 'Accept',
     'return' => 'Return',
-    'give_correction' => 'Give Correction',
+    'give_correction' => 'Return for correction',
     'reject' => 'Reject',
     'bench_note' => 'Bench note',
     'write_letter' => 'Write letter',
@@ -430,7 +430,7 @@ return array (
     'assign' => 'Assign',
     'no_cases_found' => 'No cases found.',
     'no_cases_yet' => 'You have not submitted any cases yet.',
-    'delete_confirm' => 'Delete confirm',
+    'delete_confirm' => 'Delete this?',
     'no_cases_viewed_yet' => 'No cases viewed yet.',
   ),
   'timeline' => 'Timeline',
@@ -479,5 +479,27 @@ return array (
   array (
     'empty' => 'No case types found.',
     'adjust_search_hint' => 'Try adjusting your search criteria.',
+  ),
+  'messages_flash' => array (
+    'evidence_removed' => 'Evidence removed.',
+    'witness_removed' => 'Witness removed.',
+  ),
+  'errors' => array (
+    'no_case_access' => 'You do not have access to this case.',
+  ),
+  'file_in_euisis' => 'New cases are filed from your EUISIS employee portal (My Portal > My court cases). Only employees and institutions registered in EUISIS can sue or be sued.',
+  'euisis_record' => 
+  array (
+    'title' => 'EUISIS grievance record',
+    'description' => 'The grievances the employee raised in EUISIS before filing, with the answers and decisions they received.',
+    'reference' => 'Reference',
+    'submitted' => 'Submitted',
+    'closed' => 'Closed',
+    'status' => 'Status',
+    'category' => 'Category',
+    'responses' => 'Responses',
+    'decisions' => 'Decisions',
+    'none' => 'No grievance record came with this case.',
+    'filed_from_euisis' => 'Filed by the employee from the EUISIS employee portal.',
   ),
 );

@@ -3,6 +3,9 @@
 use App\Http\Controllers\Admin\AboutController;
 use App\Http\Controllers\Admin\ActiveSessionController;
 use App\Http\Controllers\Admin\AdminNotificationController;
+use App\Http\Controllers\Admin\NotificationFeedController;
+use App\Http\Controllers\PortalNotificationFeedController;
+use App\Http\Controllers\Applicant\EuisisSignInController;
 use App\Http\Controllers\Admin\AdminRoleSwitchController;
 use App\Http\Controllers\Admin\AnnouncementController;
 use App\Http\Controllers\Admin\AppealController;
@@ -11,7 +14,12 @@ use App\Http\Controllers\Admin\ApplicantController;
 use App\Http\Controllers\Admin\AuditController;
 use App\Http\Controllers\Admin\BenchNoteController;
 use App\Http\Controllers\Admin\EuisisCaseLinkController;
+use App\Http\Controllers\Admin\EuisisStaffController;
 use App\Http\Controllers\Admin\CaseController;
+use App\Http\Controllers\Admin\LawyerController;
+use App\Http\Controllers\Lawyer\LawyerAuthController;
+use App\Http\Controllers\Lawyer\LawyerCaseController;
+use App\Http\Controllers\Admin\CasePartiesController;
 use App\Http\Controllers\Admin\CaseInspectionFindingController;
 use App\Http\Controllers\Admin\CaseInspectionRequestController;
 use App\Http\Controllers\Admin\CaseTypeController;
@@ -49,6 +57,7 @@ use App\Http\Controllers\Applicant\ApplicantSessionController;
 use App\Http\Controllers\Applicant\ApplicantVerificationController;
 use App\Http\Controllers\Auth\MfaChallengeController;
 use App\Http\Controllers\Auth\MfaController;
+use App\Http\Controllers\PublicHomeController;
 use App\Http\Controllers\PublicSignageController;
 use App\Http\Controllers\Respondent\CaseSearchController;
 use App\Http\Controllers\Respondent\DashboardController as RespondentDashboardController;
@@ -62,17 +71,8 @@ use App\Http\Controllers\TermsDisplayController;
 use App\Http\Controllers\UserManualController;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\UseGuard;
-use App\Models\HomeFaq;
-use App\Models\HomeResource;
-use App\Models\HomeService;
-use App\Models\HomeSetting;
-use App\Models\HomeSlide;
-use App\Models\HomeTimelineStep;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Schema;
 
 /*
 |--------------------------------------------------------------------------
@@ -80,7 +80,21 @@ use Illuminate\Support\Facades\Schema;
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(SetLocale::class)->group(function () {
+/*
+| Every ID-style route parameter is a numeric primary key. Constraining them
+| here makes a malformed segment (e.g. /admin/cases/abc) a clean 404 instead
+| of a TypeError 500 from an int-typed controller argument.
+*/
+$numericRouteParameters = [
+    'id', 'caseId', 'case', 'fileId', 'evidenceId', 'hearingId', 'witnessId',
+    'about', 'announcement', 'appeal', 'applicant', 'benchNote', 'criterion',
+    'decision', 'decisionTemplate', 'doc', 'faq', 'file', 'finding', 'hearing',
+    'letter', 'letterCategory', 'letter_template', 'performanceEvaluation',
+    'permission', 'reply', 'requestRecord', 'resource', 'response', 'review',
+    'role', 'service', 'slide', 'step', 'team', 'term', 'user', 'witness',
+];
+
+Route::middleware(SetLocale::class)->where(array_fill_keys($numericRouteParameters, '[0-9]+'))->group(function () {
 
     /*
     |--------------------------------------------------------------------------
@@ -91,79 +105,16 @@ Route::middleware(SetLocale::class)->group(function () {
     Route::get('/language/{locale}', [LanguageController::class, 'switch'])->name('language.switch');
     Route::get('/user-manual', UserManualController::class)->name('landing.user-manual');
 
-    Route::get('/home', function () {
-        $totalCases = DB::table('court_cases')->count();
-        $pendingCases = DB::table('court_cases')->where('status', 'pending')->count();
-        $resolvedCases = DB::table('court_cases')->whereIn('status', ['closed', 'dismissed'])->count();
-        $openCases = max($totalCases - $resolvedCases, 0);
-        $upcomingHearings = DB::table('case_hearings')
-            ->whereBetween('hearing_at', [now(), now()->addDays(30)])
-            ->count();
-        $hearingsThisWeek = DB::table('case_hearings')
-            ->whereBetween('hearing_at', [now()->startOfWeek(), now()->endOfWeek()])
-            ->count();
-        $recentCases = DB::table('court_cases')
-            ->select('case_number', 'title', 'status', 'created_at')
-            ->orderByDesc('created_at')
-            ->limit(6)
-            ->get();
-
-        // Admin-managed landing content
-        $dbSlides = Cache::remember('home_slides', 3600,
-            fn () => Schema::hasTable('home_slides') ? HomeSlide::active()->get() : collect()
-        );
-        $dbFaqs = Cache::remember('home_faqs', 3600,
-            fn () => Schema::hasTable('home_faqs') ? HomeFaq::active()->get() : collect()
-        );
-        $dbServices = Cache::remember('home_services', 3600,
-            fn () => Schema::hasTable('home_services') ? HomeService::active()->get() : collect()
-        );
-        $dbTimeline = Cache::remember('home_timeline', 3600,
-            fn () => Schema::hasTable('home_timeline_steps') ? HomeTimelineStep::active()->get() : collect()
-        );
-        $dbResources = Cache::remember('home_resources', 3600,
-            fn () => Schema::hasTable('home_resources') ? HomeResource::active()->get() : collect()
-        );
-        $dbSections = Cache::remember('home_settings', 3600, function () {
-            if (! Schema::hasTable('home_settings')) {
-                return [];
-            }
-            $keys = ['metrics', 'process', 'services', 'cases', 'resources', 'faq', 'cta'];
-            $out = [];
-            foreach ($keys as $k) {
-                $out[$k] = HomeSetting::getJson("section.{$k}");
-            }
-
-            return $out;
-        });
-        $dbFooter = Cache::remember('home_footer', 3600,
-            fn () => Schema::hasTable('home_settings') ? HomeSetting::getJson('footer.settings') : null
-        );
-        $dbMetrics = Cache::remember('home_metrics', 3600,
-            fn () => Schema::hasTable('home_settings') ? HomeSetting::getJson('metrics.content') : []
-        );
-        $dbUserManual = Cache::remember('home_user_manual', 3600,
-            fn () => Schema::hasTable('home_settings') ? HomeSetting::getJson('user_manual.settings') : []
-        );
-
-        return view('home', compact(
-            'totalCases', 'pendingCases', 'resolvedCases', 'openCases',
-            'upcomingHearings', 'hearingsThisWeek', 'recentCases',
-            'dbSlides', 'dbFaqs', 'dbSections', 'dbServices', 'dbTimeline', 'dbResources', 'dbFooter', 'dbMetrics', 'dbUserManual'
-        ));
-    })->name('landing.home');
+    Route::get('/home', [PublicHomeController::class, 'home'])->name('landing.home');
 
     if (app()->environment('local')) {
         Route::get('/debug-locale', fn () => 'locale='.app()->getLocale());
     }
-    Route::get('/', fn () => redirect()->route('applicant.login'))->name('root');
-    Route::get('/resources', function () {
-        $resources = Cache::remember('home_resources', 3600,
-            fn () => Schema::hasTable('home_resources') ? HomeResource::active()->get() : collect()
-        );
-
-        return view('public.resources', compact('resources'));
-    })->name('public.resources');
+    // With the portal in EUISIS (Flow 6) the court's home is its public site.
+    Route::get('/', fn () => redirect()->route(\App\Support\EuisisParties::portalClosed() ? 'landing.home' : 'applicant.login'))->name('root');
+    Route::get('/resources', [PublicHomeController::class, 'resources'])->name('public.resources');
+    Route::get('/news', [PublicHomeController::class, 'newsIndex'])->name('public.news');
+    Route::get('/news/{announcement}', [PublicHomeController::class, 'newsItem'])->whereNumber('announcement')->name('public.news.show');
     Route::get('/terms', [TermsDisplayController::class, 'show'])->name('public.terms');
     Route::get('/signage', [PublicSignageController::class, 'show'])
         ->middleware(['throttle:30,1'])
@@ -206,12 +157,20 @@ Route::middleware(SetLocale::class)->group(function () {
         Route::delete('/respondent/profile/sessions', [ApplicantSessionController::class, 'destroyOthers'])->name('respondent.profile.sessions.destroyOthers');
         Route::post('/respondent/notifications/mark-one', [RespondentNotificationController::class, 'markOne'])->name('respondent.notifications.markOne');
         Route::post('/respondent/notifications/mark-all', [RespondentNotificationController::class, 'markAll'])->name('respondent.notifications.markAll');
+        // The header bell (EUISIS NotificationBell).
+        Route::get('/respondent/notifications/feed', [PortalNotificationFeedController::class, 'feed'])->name('respondent.notifications.feed');
+        Route::post('/respondent/notifications/read-all', [PortalNotificationFeedController::class, 'readAll'])->name('respondent.notifications.read-all');
+        Route::post('/respondent/notifications/{notice}/read', [PortalNotificationFeedController::class, 'read'])->name('respondent.notifications.read');
         Route::post('/respondent/switch-to-applicant', [RespondentAuthController::class, 'switchToApplicant'])->name('respondent.switchToApplicant');
     });
 
     Route::get('/respondent/case-search', [CaseSearchController::class, 'index'])
         ->middleware(['auth:applicant', 'throttle:30,1'])
         ->name('respondent.case.search');
+    // The search form posts here, so the access code stays out of URLs; 10 tries a minute.
+    Route::post('/respondent/case-search', [CaseSearchController::class, 'submit'])
+        ->middleware(['auth:applicant', 'throttle:10,1'])
+        ->name('respondent.case.search.submit');
     Route::get('/respondent/cases/{caseNumber}', [CaseSearchController::class, 'show'])
         ->middleware(['auth:applicant', 'throttle:30,1'])
         ->name('respondent.cases.show')
@@ -240,6 +199,28 @@ Route::middleware(SetLocale::class)->group(function () {
     | Applicant Auth (guest:applicant)
     |--------------------------------------------------------------------------
     */
+    // From the EUISIS employee portal (Flow 4): a one-time ticket signs the employee in as an applicant.
+    Route::get('/applicant/euisis/sign-in/{ticket}', EuisisSignInController::class)
+        ->middleware(['throttle:20,1', UseGuard::class.':applicant'])
+        ->where('ticket', '[A-Za-z0-9]{64}')
+        ->name('applicant.euisis.sign-in');
+
+    // Lawyers (EUISIS ADR 0013 #13): their own sign-in; they then work in the court portal on the cases they represent.
+    Route::prefix('/lawyer')->name('lawyer.')->group(function () {
+        Route::middleware(['guest:applicant', UseGuard::class.':applicant'])->group(function () {
+            Route::get('/login', [LawyerAuthController::class, 'showLogin'])->name('login');
+            Route::post('/login', [LawyerAuthController::class, 'login'])->middleware('throttle:10,1')->name('login.submit');
+            // A lawyer applies; the registry verifies the licence before the account opens.
+            Route::get('/register', [LawyerAuthController::class, 'showRegister'])->name('register');
+            Route::post('/register', [LawyerAuthController::class, 'register'])->middleware('throttle:5,1')->name('register.submit');
+            Route::get('/forgot-password', [LawyerAuthController::class, 'showForgot'])->name('password.request');
+            Route::post('/forgot-password', [LawyerAuthController::class, 'sendResetLink'])->middleware('throttle:5,1')->name('password.email');
+            Route::get('/reset-password/{token}', [LawyerAuthController::class, 'showReset'])->name('password.reset');
+            Route::post('/reset-password', [LawyerAuthController::class, 'reset'])->middleware('throttle:10,1')->name('password.update');
+        });
+        Route::post('/logout', [LawyerAuthController::class, 'logout'])->middleware('auth:applicant')->name('logout');
+    });
+
     Route::middleware(['guest:applicant', UseGuard::class.':applicant'])->group(function () {
         // Register
         Route::get('/applicant/register', [ApplicantAuthController::class, 'showRegister'])->name('applicant.register');
@@ -296,6 +277,10 @@ Route::middleware(SetLocale::class)->group(function () {
             // Cases (only applicant's own)
             Route::get('/applicant/cases', [ApplicantCaseController::class, 'index'])->name('applicant.cases.index');
             Route::get('/applicant/cases/create', [ApplicantCaseController::class, 'create'])->name('applicant.cases.create');
+            // A verified lawyer files a case for a client (App\Http\Controllers\Lawyer\LawyerCaseController).
+            Route::get('/applicant/lawyer/file', [LawyerCaseController::class, 'create'])->name('applicant.lawyer.file');
+            Route::post('/applicant/lawyer/file', [LawyerCaseController::class, 'store'])->middleware('throttle:10,1')->name('applicant.lawyer.file.store');
+            Route::post('/applicant/lawyer/client', [LawyerCaseController::class, 'client'])->middleware('throttle:30,1')->name('applicant.lawyer.client');
             Route::post('/applicant/cases', [ApplicantCaseController::class, 'store'])->name('applicant.cases.store');
             Route::get('/applicant/cases/{id}', [ApplicantCaseController::class, 'show'])->name('applicant.cases.show');
             Route::get('/applicant/cases/{case}/respondent-responses/{response}', [ApplicantCaseController::class, 'showRespondentResponse'])->name('applicant.cases.respondentResponses.show');
@@ -338,13 +323,13 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::middleware('throttle:30,1')->group(function () {
                 Route::get('/applicant/respondent/case-search', [CaseSearchController::class, 'index'])
                     ->name('applicant.respondent.cases.search');
+                // Before the catch-all case route below, which would otherwise read "my" as a case number.
+                Route::get('/applicant/respondent/cases/my', [CaseSearchController::class, 'myCases'])
+                    ->name('applicant.respondent.cases.my');
                 Route::get('/applicant/respondent/cases/{caseNumber}', [CaseSearchController::class, 'show'])
                     ->name('applicant.respondent.cases.show')
                     ->where('caseNumber', '.*');
             });
-            Route::get('/applicant/respondent/cases/my', [CaseSearchController::class, 'myCases'])
-                ->middleware('throttle:30,1')
-                ->name('applicant.respondent.cases.my');
 
             Route::get('/applicant/respondent/responses', [ResponseController::class, 'index'])
                 ->name('applicant.respondent.responses.index');
@@ -369,6 +354,10 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::get('/applicant/notifications', [ApplicantNotificationController::class, 'index'])->name('applicant.notifications.index');
             Route::post('/applicant/notifications/mark-one', [ApplicantNotificationController::class, 'markOne'])->name('applicant.notifications.markOne');
             Route::post('/applicant/notifications/mark-all', [ApplicantNotificationController::class, 'markAll'])->name('applicant.notifications.markAll');
+            // The header bell (EUISIS NotificationBell).
+            Route::get('/applicant/notifications/feed', [PortalNotificationFeedController::class, 'feed'])->name('applicant.notifications.feed');
+            Route::post('/applicant/notifications/read-all', [PortalNotificationFeedController::class, 'readAll'])->name('applicant.notifications.read-all');
+            Route::post('/applicant/notifications/{notice}/read', [PortalNotificationFeedController::class, 'read'])->name('applicant.notifications.read');
 
             // Notification settings
             Route::get('/applicant/notifications/settings', [ApplicantNotificationController::class, 'settingsEdit'])->name('applicant.notifications.settings');
@@ -421,26 +410,21 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::get('/dashboard/stats', [DashboardController::class, 'stats'])
                 ->name('admin.dashboard.stats');
 
-            // System settings
-            Route::get('/settings/system', [SystemSettingController::class, 'edit'])
-                ->middleware('perm:settings.manage')
-                ->name('settings.system.edit');
-
-            Route::post('/settings/system', [SystemSettingController::class, 'update'])
-                ->middleware('perm:settings.manage')
-                ->name('settings.system.update');
-
-            Route::post('/settings/system/clear-cache', [SystemSettingController::class, 'clearCache'])
-                ->middleware('perm:settings.manage')
-                ->name('settings.system.clearCache');
-
-            Route::post('/settings/system/test-smtp', [SystemSettingController::class, 'testSmtp'])
-                ->middleware('perm:settings.manage')
-                ->name('settings.system.testSmtp');
-
-            Route::post('/settings/system/database-backup', [SystemSettingController::class, 'downloadDatabaseBackup'])
-                ->middleware('perm:settings.manage')
-                ->name('settings.system.databaseBackup');
+            // System settings: the EUISIS settings page (SystemSettings/Index); each section saves on its own,
+            // under the route names that page uses (system-settings.*).
+            Route::middleware('perm:settings.manage')->group(function () {
+                Route::get('/settings/system', [SystemSettingController::class, 'edit'])->name('settings.system.edit');
+                foreach (['general', 'localization', 'appearance', 'notifications', 'email', 'sms', 'telegram', 'security'] as $section) {
+                    Route::patch('/settings/system/'.$section, [SystemSettingController::class, 'updateSection'])
+                        ->defaults('section', $section)
+                        ->name('system-settings.'.$section.'.update');
+                }
+                Route::post('/settings/system/clear-cache', [SystemSettingController::class, 'clearCache'])->name('system-settings.clear-cache');
+                Route::post('/settings/system/test-email', [SystemSettingController::class, 'testEmail'])->middleware('throttle:6,1')->name('system-settings.test-email');
+                Route::post('/settings/system/test-telegram', [SystemSettingController::class, 'testTelegram'])->middleware('throttle:6,1')->name('system-settings.test-telegram');
+                Route::get('/settings/system/maintenance', [SystemSettingController::class, 'maintenance'])->name('settings.maintenance');
+                Route::post('/settings/system/database-backup', [SystemSettingController::class, 'downloadDatabaseBackup'])->name('settings.system.databaseBackup');
+            });
 
             Route::get('/settings/performance-evaluation', [PerformanceEvaluationSettingController::class, 'index'])
                 ->middleware('perm:settings.manage')
@@ -464,36 +448,44 @@ Route::middleware(SetLocale::class)->group(function () {
                 ->middleware('perm:settings.manage')
                 ->name('settings.performance-evaluation.criteria.destroy');
 
-            // Landing page manager
-            Route::get('/landing', [LandingPageController::class, 'index'])->name('admin.landing.index');
-            Route::post('/landing/slides', [LandingPageController::class, 'storeSlide'])->name('admin.landing.slides.store');
-            Route::put('/landing/slides/{slide}/update', [LandingPageController::class, 'updateSlide'])->name('admin.landing.slides.update');
-            Route::delete('/landing/slides/{slide}', [LandingPageController::class, 'destroySlide'])->name('admin.landing.slides.destroy');
-            Route::patch('/landing/slides/{slide}/toggle', [LandingPageController::class, 'toggleSlide'])->name('admin.landing.slides.toggle');
-            Route::post('/landing/slides/reorder', [LandingPageController::class, 'reorderSlides'])->name('admin.landing.slides.reorder');
-            Route::post('/landing/faqs', [LandingPageController::class, 'storeFaq'])->name('admin.landing.faqs.store');
-            Route::put('/landing/faqs/{faq}/update', [LandingPageController::class, 'updateFaq'])->name('admin.landing.faqs.update');
-            Route::delete('/landing/faqs/{faq}', [LandingPageController::class, 'destroyFaq'])->name('admin.landing.faqs.destroy');
-            Route::patch('/landing/faqs/{faq}/toggle', [LandingPageController::class, 'toggleFaq'])->name('admin.landing.faqs.toggle');
-            Route::put('/landing/sections', [LandingPageController::class, 'updateSections'])->name('admin.landing.sections.update');
-            Route::put('/landing/metrics', [LandingPageController::class, 'updateMetrics'])->name('admin.landing.metrics.update');
-            Route::post('/landing/services', [LandingPageController::class, 'storeService'])->name('admin.landing.services.store');
-            Route::put('/landing/services/{service}/update', [LandingPageController::class, 'updateService'])->name('admin.landing.services.update');
-            Route::delete('/landing/services/{service}', [LandingPageController::class, 'destroyService'])->name('admin.landing.services.destroy');
-            Route::patch('/landing/services/{service}/toggle', [LandingPageController::class, 'toggleService'])->name('admin.landing.services.toggle');
-            // Timeline steps
-            Route::post('/landing/steps', [LandingPageController::class, 'storeStep'])->name('admin.landing.steps.store');
-            Route::put('/landing/steps/{step}/update', [LandingPageController::class, 'updateStep'])->name('admin.landing.steps.update');
-            Route::delete('/landing/steps/{step}', [LandingPageController::class, 'destroyStep'])->name('admin.landing.steps.destroy');
-            Route::patch('/landing/steps/{step}/toggle', [LandingPageController::class, 'toggleStep'])->name('admin.landing.steps.toggle');
-            // Resources
-            Route::post('/landing/resources', [LandingPageController::class, 'storeResource'])->name('admin.landing.resources.store');
-            Route::put('/landing/resources/{resource}/update', [LandingPageController::class, 'updateResource'])->name('admin.landing.resources.update');
-            Route::delete('/landing/resources/{resource}', [LandingPageController::class, 'destroyResource'])->name('admin.landing.resources.destroy');
-            Route::patch('/landing/resources/{resource}/toggle', [LandingPageController::class, 'toggleResource'])->name('admin.landing.resources.toggle');
-            Route::put('/landing/user-manual', [LandingPageController::class, 'updateUserManual'])->name('admin.landing.user-manual.update');
-            // Footer settings
-            Route::put('/landing/footer', [LandingPageController::class, 'updateFooter'])->name('admin.landing.footer.update');
+            // Landing page manager: the public home page is part of the system settings.
+            Route::middleware('perm:settings.manage')->group(function () {
+                Route::get('/landing', [LandingPageController::class, 'index'])->name('admin.landing.index');
+                Route::post('/landing/slides', [LandingPageController::class, 'storeSlide'])->name('admin.landing.slides.store');
+                Route::put('/landing/slides/{slide}/update', [LandingPageController::class, 'updateSlide'])->name('admin.landing.slides.update');
+                Route::delete('/landing/slides/{slide}', [LandingPageController::class, 'destroySlide'])->name('admin.landing.slides.destroy');
+                Route::patch('/landing/slides/{slide}/toggle', [LandingPageController::class, 'toggleSlide'])->name('admin.landing.slides.toggle');
+                Route::post('/landing/slides/reorder', [LandingPageController::class, 'reorderSlides'])->name('admin.landing.slides.reorder');
+                Route::post('/landing/faqs', [LandingPageController::class, 'storeFaq'])->name('admin.landing.faqs.store');
+                Route::put('/landing/faqs/{faq}/update', [LandingPageController::class, 'updateFaq'])->name('admin.landing.faqs.update');
+                Route::delete('/landing/faqs/{faq}', [LandingPageController::class, 'destroyFaq'])->name('admin.landing.faqs.destroy');
+                Route::patch('/landing/faqs/{faq}/toggle', [LandingPageController::class, 'toggleFaq'])->name('admin.landing.faqs.toggle');
+                Route::put('/landing/sections', [LandingPageController::class, 'updateSections'])->name('admin.landing.sections.update');
+                Route::put('/landing/metrics', [LandingPageController::class, 'updateMetrics'])->name('admin.landing.metrics.update');
+                Route::post('/landing/services', [LandingPageController::class, 'storeService'])->name('admin.landing.services.store');
+                Route::put('/landing/services/{service}/update', [LandingPageController::class, 'updateService'])->name('admin.landing.services.update');
+                Route::delete('/landing/services/{service}', [LandingPageController::class, 'destroyService'])->name('admin.landing.services.destroy');
+                Route::patch('/landing/services/{service}/toggle', [LandingPageController::class, 'toggleService'])->name('admin.landing.services.toggle');
+                // Timeline steps
+                Route::post('/landing/steps', [LandingPageController::class, 'storeStep'])->name('admin.landing.steps.store');
+                Route::put('/landing/steps/{step}/update', [LandingPageController::class, 'updateStep'])->name('admin.landing.steps.update');
+                Route::delete('/landing/steps/{step}', [LandingPageController::class, 'destroyStep'])->name('admin.landing.steps.destroy');
+                Route::patch('/landing/steps/{step}/toggle', [LandingPageController::class, 'toggleStep'])->name('admin.landing.steps.toggle');
+                // Resources
+                Route::post('/landing/resources', [LandingPageController::class, 'storeResource'])->name('admin.landing.resources.store');
+                Route::put('/landing/resources/{resource}/update', [LandingPageController::class, 'updateResource'])->name('admin.landing.resources.update');
+                Route::delete('/landing/resources/{resource}', [LandingPageController::class, 'destroyResource'])->name('admin.landing.resources.destroy');
+                Route::patch('/landing/resources/{resource}/toggle', [LandingPageController::class, 'toggleResource'])->name('admin.landing.resources.toggle');
+                Route::put('/landing/user-manual', [LandingPageController::class, 'updateUserManual'])->name('admin.landing.user-manual.update');
+                // Footer settings
+                Route::put('/landing/footer', [LandingPageController::class, 'updateFooter'])->name('admin.landing.footer.update');
+                Route::put('/landing/about', [LandingPageController::class, 'updateAbout'])->name('admin.landing.about.update');
+                Route::post('/landing/members', [LandingPageController::class, 'storeMember'])->name('admin.landing.members.store');
+                Route::put('/landing/members/{member}/update', [LandingPageController::class, 'updateMember'])->name('admin.landing.members.update');
+                Route::delete('/landing/members/{member}', [LandingPageController::class, 'destroyMember'])->name('admin.landing.members.destroy');
+                Route::patch('/landing/members/{member}/toggle', [LandingPageController::class, 'toggleMember'])->name('admin.landing.members.toggle');
+                Route::post('/landing/members/reorder', [LandingPageController::class, 'reorderMembers'])->name('admin.landing.members.reorder');
+            });
 
             // System audit (read-only view)
             Route::get('/audit', [AuditController::class, 'index'])
@@ -534,6 +526,13 @@ Route::middleware(SetLocale::class)->group(function () {
 
             Route::patch('/cases/{id}/status', [CaseController::class, 'updateStatus'])->middleware('perm:cases.edit')->name('cases.status.update');
             Route::post('/cases/{id}/messages', [CaseController::class, 'postAdminMessage'])->middleware('perm:cases.edit')->name('cases.messages.post');
+            // Parties and representation (App\Services\CaseParties): the judge decides an intervention inside the controller.
+            Route::post('/cases/{id}/parties/{party}/decision', [CasePartiesController::class, 'decide'])->middleware(['perm:cases.view', 'throttle:30,1'])->whereNumber(['id', 'party'])->name('cases.parties.decide');
+            Route::get('/cases/{id}/parties/{party}/attachment', [CasePartiesController::class, 'attachment'])->middleware('perm:cases.view')->whereNumber(['id', 'party'])->name('cases.parties.attachment');
+            Route::post('/cases/{id}/representatives/{representative}/verification', [CasePartiesController::class, 'verify'])->middleware(['perm:cases.edit', 'throttle:30,1'])->whereNumber(['id', 'representative'])->name('cases.representatives.verify');
+            Route::post('/cases/{id}/parties/{party}/representatives', [CasePartiesController::class, 'addRepresentative'])->middleware(['perm:cases.edit', 'throttle:20,1'])->whereNumber(['id', 'party'])->name('cases.parties.representatives.store');
+            Route::get('/cases/{id}/representatives/{representative}/power-of-attorney', [CasePartiesController::class, 'powerOfAttorney'])->middleware('perm:cases.view')->whereNumber(['id', 'representative'])->name('cases.representatives.power-of-attorney');
+            Route::post('/cases/{id}/merge', [CasePartiesController::class, 'merge'])->middleware(['perm:cases.merge', 'throttle:10,1'])->whereNumber('id')->name('cases.merge');
 
             // Registrar review (accept/reject) - route used by index blade
             Route::post('/cases/review', [CaseController::class, 'review'])->middleware('perm:cases.review')->name('cases.review');
@@ -573,6 +572,13 @@ Route::middleware(SetLocale::class)->group(function () {
             });
 
             // Applicants
+            // The court's register of lawyers (App\Http\Controllers\Admin\LawyerController).
+            Route::get('/lawyers', [LawyerController::class, 'index'])->middleware('perm:applicants.view')->name('lawyers.index');
+            Route::post('/lawyers', [LawyerController::class, 'store'])->middleware(['perm:applicants.manage', 'throttle:20,1'])->name('lawyers.store');
+            Route::patch('/lawyers/{applicant}/verification', [LawyerController::class, 'verify'])->middleware(['perm:applicants.manage', 'throttle:30,1'])->name('lawyers.verify');
+            Route::patch('/lawyers/{applicant}/refusal', [LawyerController::class, 'refuse'])->middleware(['perm:applicants.manage', 'throttle:30,1'])->name('lawyers.refuse');
+            Route::get('/lawyers/{applicant}', [LawyerController::class, 'show'])->middleware('perm:applicants.view')->whereNumber('applicant')->name('lawyers.show');
+            Route::get('/lawyers/{applicant}/license',[LawyerController::class, 'license'])->middleware('perm:applicants.view')->name('lawyers.license');
             Route::get('/applicants', [ApplicantController::class, 'index'])
                 ->middleware('perm:applicants.view')
                 ->name('applicants.index');
@@ -625,6 +631,9 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::patch('/appeals/{appeal}', [AppealController::class, 'update'])->middleware('perm:appeals.edit')->name('appeals.update');
             Route::post('/appeals/{appeal}/submit', [AppealController::class, 'submit'])->middleware('perm:appeals.edit')->name('appeals.submit');
             Route::post('/appeals/{appeal}/decide', [AppealController::class, 'decide'])->middleware('perm:appeals.decide')->name('appeals.decide');
+            // The appellate court's outcome on a released record (EUISIS ADR 0013 #14).
+            Route::post('/appeals/{appeal}/outcome', [AppealController::class, 'outcome'])->middleware(['perm:appeals.decide', 'throttle:20,1'])->name('appeals.outcome');
+            Route::get('/appeals/{appeal}/outcome-document', [AppealController::class, 'outcomeDocument'])->middleware('perm:appeals.view')->name('appeals.outcome-document');
 
             /*
              * Decisions (admin)
@@ -698,6 +707,8 @@ Route::middleware(SetLocale::class)->group(function () {
                 ->middleware('perm:performance-evaluations.view')->name('performance-evaluations.index');
             Route::get('/performance-evaluations/create', [PerformanceEvaluationController::class, 'create'])
                 ->middleware('perm:performance-evaluations.create')->name('performance-evaluations.create');
+            Route::get('/performance-evaluations/appeal-record', [PerformanceEvaluationController::class, 'appealRecord'])
+                ->middleware('perm:performance-evaluations.create')->name('performance-evaluations.appeal-record');
             Route::post('/performance-evaluations', [PerformanceEvaluationController::class, 'store'])
                 ->middleware('perm:performance-evaluations.create')->name('performance-evaluations.store');
             Route::get('/performance-evaluations/{performanceEvaluation}', [PerformanceEvaluationController::class, 'show'])
@@ -716,6 +727,10 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::get('/notifications/count', [AdminNotificationController::class, 'count'])->name('admin.notifications.count');
             Route::post('/notifications/mark-one', [AdminNotificationController::class, 'markOne'])->name('admin.notifications.markOne');
             Route::post('/notifications/mark-all', [AdminNotificationController::class, 'markAll'])->name('admin.notifications.markAll');
+            // The header bell of the React screens (route names the EUISIS NotificationBell uses)
+            Route::get('/notifications/feed', [NotificationFeedController::class, 'feed'])->name('notifications.feed');
+            Route::post('/notifications/read-all', [NotificationFeedController::class, 'readAll'])->name('notifications.read-all');
+            Route::post('/notifications/{notice}/read', [NotificationFeedController::class, 'read'])->name('notifications.read');
 
             // Case Types (matches admin layout link 'case-types.index')
             Route::get('/case-types', [CaseTypeController::class, 'index'])->name('case-types.index');
@@ -907,6 +922,12 @@ Route::middleware(SetLocale::class)->group(function () {
             Route::get('users', [UsersController::class, 'index'])->name('users.index');
             Route::get('users/create', [UsersController::class, 'create'])->name('users.create');
             Route::post('users', [UsersController::class, 'store'])->name('users.store');
+
+            // Staff accounts and their EUISIS employees (docs/euisis-integration.md, "Staff accounts").
+            Route::get('users/euisis-staff', [EuisisStaffController::class, 'index'])->name('users.euisis.index');
+            Route::put('users/euisis-staff/units', [EuisisStaffController::class, 'units'])->middleware('throttle:20,1')->name('users.euisis.units');
+            Route::post('users/{user}/euisis', [EuisisStaffController::class, 'link'])->middleware('throttle:20,1')->whereNumber('user')->name('users.euisis.link');
+            Route::delete('users/{user}/euisis', [EuisisStaffController::class, 'unlink'])->whereNumber('user')->name('users.euisis.unlink');
         });
 
         Route::get('users/{user}', [UsersController::class, 'show'])->middleware('can:view,user')->name('users.show');

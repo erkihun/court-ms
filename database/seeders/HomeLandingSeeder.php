@@ -10,6 +10,13 @@ use App\Models\HomeSetting;
 use App\Models\HomeSlide;
 use App\Models\HomeTimelineStep;
 
+/**
+ * Seeds default landing-page content for a fresh install.
+ *
+ * Non-destructive by design: each collection is seeded only while its table is
+ * empty, and each setting only while it is unset, so re-running `db:seed` never
+ * replaces content an administrator has authored through the landing CMS.
+ */
 class HomeLandingSeeder extends Seeder
 {
     public function run(): void
@@ -27,7 +34,9 @@ class HomeLandingSeeder extends Seeder
 
     private function seedSlides(): void
     {
-        HomeSlide::truncate();
+        if (HomeSlide::query()->exists()) {
+            return;
+        }
 
         $slides = [
             [
@@ -80,7 +89,9 @@ class HomeLandingSeeder extends Seeder
 
     private function seedTimeline(): void
     {
-        HomeTimelineStep::truncate();
+        if (HomeTimelineStep::query()->exists()) {
+            return;
+        }
 
         $steps = [
             [
@@ -139,7 +150,9 @@ class HomeLandingSeeder extends Seeder
 
     private function seedServices(): void
     {
-        HomeService::truncate();
+        if (HomeService::query()->exists()) {
+            return;
+        }
 
         $services = [
             [
@@ -213,7 +226,9 @@ class HomeLandingSeeder extends Seeder
 
     private function seedFaqs(): void
     {
-        HomeFaq::truncate();
+        if (HomeFaq::query()->exists()) {
+            return;
+        }
 
         $faqs = [
             [
@@ -275,7 +290,9 @@ class HomeLandingSeeder extends Seeder
 
     private function seedResources(): void
     {
-        HomeResource::truncate();
+        if (HomeResource::query()->exists()) {
+            return;
+        }
 
         $resources = [
             [
@@ -397,7 +414,7 @@ class HomeLandingSeeder extends Seeder
         ];
 
         foreach ($sections as $key => $value) {
-            HomeSetting::setJson("section.{$key}", $value);
+            $this->setJsonIfMissing("section.{$key}", $value);
         }
     }
 
@@ -405,7 +422,7 @@ class HomeLandingSeeder extends Seeder
 
     private function seedFooter(): void
     {
-        HomeSetting::setJson('footer.settings', [
+        $this->setJsonIfMissing('footer.settings', [
             'description'      => 'The Public Servants\' Human Rights Defence & Administrative Tribunal Commission provides independent, impartial resolution of administrative disputes for individuals and organisations across Ethiopia.',
             'contact_phone'    => '+251 11 551 7700',
             'contact_email'    => 'info@pshrdbatc.gov.et',
@@ -417,5 +434,14 @@ class HomeLandingSeeder extends Seeder
             'social_telegram'  => 'https://t.me',
             'social_instagram' => '',
         ]);
+    }
+
+    private function setJsonIfMissing(string $key, array $value): void
+    {
+        if (HomeSetting::get($key) !== null) {
+            return;
+        }
+
+        HomeSetting::setJson($key, $value);
     }
 }

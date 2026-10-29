@@ -68,6 +68,8 @@ test('user can delete their account', function () {
 });
 
 test('sessions page shows real device and browser info from stored sessions', function () {
+    // The Devices tab lists sessions only with the database driver (the live configuration).
+    config(['session.driver' => 'database']);
     $user = User::factory()->create();
 
     \Illuminate\Support\Facades\DB::table('sessions')->insert([
@@ -79,18 +81,18 @@ test('sessions page shows real device and browser info from stored sessions', fu
         'last_activity' => now()->subMinutes(30)->getTimestamp(),
     ]);
 
-    $response = $this
-        ->actingAs($user)
-        ->get('/profile/sessions');
-
-    $response
+    // Sessions are the profile page's Devices tab now.
+    $this->actingAs($user)
+        ->get('/profile')
         ->assertOk()
-        ->assertSee('macOS')
-        ->assertSee('Safari 17')
-        ->assertSee('203.0.113.7');
+        ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->where('devices.sessions', fn ($sessions) => collect($sessions)->contains(
+                fn ($row) => $row['id'] === \App\Support\SessionRows::publicKey('other-session-id') && $row['os'] === 'macOS' && $row['browser'] === 'Safari 17' && $row['ip_address'] === '203.0.113.7'
+            )));
 });
 
 test('sessions page shows exact os and browser version from stored client hints', function () {
+    config(['session.driver' => 'database']);
     $user = User::factory()->create();
 
     \Illuminate\Support\Facades\DB::table('sessions')->insert([
@@ -107,13 +109,16 @@ test('sessions page shows exact os and browser version from stored client hints'
     ]);
 
     $this->actingAs($user)
-        ->get('/profile/sessions')
+        ->get('/profile')
         ->assertOk()
-        ->assertSee('Windows 11')
-        ->assertSee('Microsoft Edge 150.0.3595.20');
+        ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->where('devices.sessions', fn ($sessions) => collect($sessions)->contains(
+                fn ($row) => $row['id'] === \App\Support\SessionRows::publicKey('hinted-session-id') && $row['os'] === 'Windows 11' && $row['browser'] === 'Microsoft Edge 150.0.3595.20'
+            )));
 });
 
 test('current session uses live client hint headers and hints are requested', function () {
+    config(['session.driver' => 'database']);
     $user = User::factory()->create();
 
     $response = $this->actingAs($user)
@@ -122,13 +127,15 @@ test('current session uses live client hint headers and hints are requested', fu
             'Sec-CH-UA-Platform-Version' => '"10.0.0"',
             'Sec-CH-UA-Full-Version-List' => '"Chromium";v="150.0.7204.50", "Google Chrome";v="150.0.7204.50", "Not?A_Brand";v="8.0.0.0"',
         ])
-        ->get('/profile/sessions');
+        ->get('/profile');
 
     $response
         ->assertOk()
-        ->assertSee('Windows 10')
-        ->assertSee('Chrome 150.0.7204.50')
-        ->assertHeader('Accept-CH');
+        ->assertHeader('Accept-CH')
+        ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->where('devices.sessions', fn ($sessions) => collect($sessions)->contains(
+                fn ($row) => $row['current'] === true && $row['os'] === 'Windows 10' && $row['browser'] === 'Chrome 150.0.7204.50'
+            )));
 });
 
 test('user can revoke another session but not the current one', function () {
@@ -144,7 +151,7 @@ test('user can revoke another session but not the current one', function () {
     ]);
 
     $this->actingAs($user)
-        ->delete('/profile/sessions/other-session-id')
+        ->delete('/profile/sessions/'.\App\Support\SessionRows::publicKey('other-session-id'))
         ->assertRedirect();
 
     $this->assertDatabaseMissing('sessions', ['id' => 'other-session-id']);
