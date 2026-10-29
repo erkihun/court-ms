@@ -21,6 +21,8 @@
         text-justify: inter-word;
         overflow-wrap: break-word;
     }
+    /* The shared .rich-text :lang(am) leading (1.85) outweighs .case-doc alone; these match its weight and come later. */
+    .case-doc:lang(am), .case-doc :lang(am) { line-height: 1.95; }
     .case-doc:lang(en) { font-family: var(--font-document-en); line-height: 1.75; }
     .case-doc span, .case-doc font { font-size: inherit !important; line-height: inherit !important; font-family: inherit !important; }
     .case-doc p { margin: 0; }
