@@ -7,8 +7,9 @@ import { usePublicText } from '@/court/i18n/usePublicText';
 /**
  * The lawyers' sign-in (LawyerAuthController, EUISIS ADR 0013 #13). Only a
  * lawyer the registry verified gets in; they then work in the court portal on
- * the cases of the employees they represent. There is no self-registration:
- * the registry opens the account and the lawyer chooses a password by email.
+ * the cases of the employees they represent. The registry opens the account,
+ * or a lawyer applies (/lawyer/register) and the registry verifies the
+ * licence; the lawyer then chooses a password from the emailed link.
  */
 export default function LawyerLogin({ status }: { status?: string | null }) {
     const { t } = usePublicText();
@@ -22,7 +23,12 @@ export default function LawyerLogin({ status }: { status?: string | null }) {
 
     return (
         <CourtAuthShell title={text('title')} subtitle={text('subtitle')} icon={<Briefcase className="h-5 w-5" />} backToLogin={false}
-            footer={<p className="mt-6 border-t border-gray-100 pt-5 text-center text-xs leading-relaxed text-gray-500 dark:border-slate-800 dark:text-slate-400">{text('not_registered')}</p>}>
+            footer={(
+                <p className="mt-6 border-t border-gray-100 pt-5 text-center text-sm text-gray-500 dark:border-slate-800 dark:text-slate-400">
+                    {text('not_registered')}{' '}
+                    <Link href={route('lawyer.register')} className="font-semibold text-primary hover:underline">{text('apply')}</Link>
+                </p>
+            )}>
             {status && <CourtAuthAlert tone="success">{status}</CourtAuthAlert>}
 
             <form onSubmit={submit} className="space-y-4" noValidate>

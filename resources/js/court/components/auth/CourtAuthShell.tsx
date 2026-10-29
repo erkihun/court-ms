@@ -21,6 +21,8 @@ interface Props {
     flashToasts?: boolean;
     /** Content under the form, inside the card (secondary links). */
     footer?: ReactNode;
+    /** A wider card, for a form with several fields side by side (the lawyers' application). */
+    wide?: boolean;
     children: ReactNode;
 }
 
@@ -31,7 +33,7 @@ interface Props {
  * theme switches above it. The panel tells the court's story in the sign-in
  * page's own words (`auth.stage.*`).
  */
-export default function CourtAuthShell({ title, subtitle, icon, backToLogin = true, flashToasts = true, footer, children }: Props) {
+export default function CourtAuthShell({ title, subtitle, icon, backToLogin = true, flashToasts = true, footer, wide = false, children }: Props) {
     const { t, text } = usePublicText();
     const { brandName, officialName } = useBranding();
     const { getString } = useSystemSettings();
@@ -99,7 +101,7 @@ export default function CourtAuthShell({ title, subtitle, icon, backToLogin = tr
                     </div>
 
                     <div className="flex flex-1 items-center justify-center px-6 pb-10">
-                        <div className="w-full max-w-[420px]">
+                        <div className={`w-full ${wide ? 'max-w-[640px]' : 'max-w-[420px]'}`}>
                             <div className="rounded-panel border border-gray-200 bg-white px-8 py-8 dark:border-slate-800 dark:bg-slate-900">
                                 <div className="mb-7">
                                     <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-panel bg-primary text-white shadow-md shadow-blue-600/30" aria-hidden="true">

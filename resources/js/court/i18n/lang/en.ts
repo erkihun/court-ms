@@ -2708,7 +2708,33 @@ const lang: Record<string, unknown> = {
             "remember": "Keep me signed in",
             "forgot": "Forgot your password?",
             "submit": "Sign in",
-            "not_registered": "Not registered? The court registry opens lawyers' accounts and verifies their licence."
+            "not_registered": "Not registered yet?",
+            "apply": "Apply to be registered"
+        },
+        "apply": {
+            "title": "Apply to be registered as a lawyer",
+            "subtitle": "The court registry checks your licence. Once it is verified, we email you a link to choose your password.",
+            "personal": "About you",
+            "license_section": "Your licence",
+            "license_document": "Licence (PDF, up to 10 MB)",
+            "license_help": "A scan of your current advocacy licence. The registry compares it with the licence number.",
+            "submit": "Send the application",
+            "have_account": "Already registered?",
+            "sign_in": "Sign in",
+            "received": "Your application has been received. The registry will check your licence and email you; you can sign in once it is approved.",
+            "notice": "Lawyer application: :name",
+            "notice_detail": "Licence :license, waiting for verification",
+            "approved_mail": {
+                "subject": "Your registration as a lawyer is approved",
+                "intro": "The court registry has verified your licence. Choose your password to sign in to the court portal as a lawyer.",
+                "outro": "After that, sign in at the lawyers' sign-in page with your email and this password."
+            },
+            "refused_mail": {
+                "subject": "Your application to be registered as a lawyer",
+                "intro": "The court registry could not approve your application to be registered as a lawyer.",
+                "reason": "Reason: :reason",
+                "outro": "For questions, contact the court registry."
+            }
         },
         "forgot": {
             "title": "Reset your password",
@@ -2785,7 +2811,15 @@ const lang: Record<string, unknown> = {
             "cancel": "Cancel",
             "created": "The account of :name is open; a link to choose a password was emailed.",
             "verified_flash": "The lawyer is verified.",
-            "unverified_flash": "The verification is withdrawn."
+            "unverified_flash": "The verification is withdrawn.",
+            "applied": "Applied",
+            "waiting": "Waiting for verification",
+            "refused": "Refused",
+            "refuse": "Refuse",
+            "refusal_reason": "Reason (the lawyer receives it by email)",
+            "refused_flash": "The application is refused; the lawyer was emailed the reason.",
+            "view_license": "View the licence",
+            "approve_help": "Verifying opens the account and emails the lawyer a link to choose a password."
         }
     },
     "letters": {

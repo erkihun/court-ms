@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\DB;
  */
 final class AdminNotificationFeed
 {
-    public const TYPES = ['message', 'case', 'hearing', 'respondent_view', 'staff_account'];
+    public const TYPES = ['message', 'case', 'hearing', 'respondent_view', 'staff_account', 'lawyer_application'];
 
     public function __construct(private readonly User $user)
     {
@@ -83,7 +83,8 @@ final class AdminNotificationFeed
     /**
      * The sources: each an unseen-rows query, the column its ids live in, and how
      * a row becomes a notice. The four case sources need `cases.view`; staff
-     * accounts the EUISIS staff check suspended or restored need `users.manage`.
+     * accounts the EUISIS staff check suspended or restored need `users.manage`;
+     * lawyers' applications waiting for the registry need `applicants.manage`.
      *
      * @return array<string, array{query: Builder, id: string, notice: callable(object): array<string, mixed>}>
      */
@@ -108,6 +109,23 @@ final class AdminNotificationFeed
                     __('euisis_staff.notice.'.$row->event, ['name' => $row->name]),
                     $row->event === 'suspended' ? (string) __('euisis_staff.reasons.'.$row->reason) : (string) __('euisis_staff.notice.restored_detail'),
                     route('users.show', (int) $row->user_id), $row->created_at),
+            ];
+        }
+
+        // Lawyers who applied at /lawyer/register, until the registry verifies or refuses them.
+        if ($this->user->hasPermission('applicants.manage')) {
+            $sources['lawyer_application'] = [
+                'query' => DB::table('applicants as a')
+                    ->select('a.id', 'a.lawyer_license_number', 'a.lawyer_applied_at', DB::raw("TRIM(CONCAT_WS(' ', a.first_name, a.middle_name, a.last_name)) as name"))
+                    ->where('a.is_lawyer', true)->whereNotNull('a.lawyer_applied_at')
+                    ->whereNull('a.lawyer_verified_at')->whereNull('a.lawyer_refused_at')
+                    ->whereNotExists($unseen('lawyer_application', 'a.id'))
+                    ->orderByDesc('a.lawyer_applied_at'),
+                'id' => 'a.id',
+                'notice' => fn (object $row): array => $this->notice('lawyer_application', (int) $row->id,
+                    __('lawyer.apply.notice', ['name' => $row->name]),
+                    __('lawyer.apply.notice_detail', ['license' => (string) $row->lawyer_license_number]),
+                    route('lawyers.index', ['q' => (string) $row->lawyer_license_number]), $row->lawyer_applied_at),
             ];
         }
 

@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Lawyer;
 use App\Http\Controllers\Controller;
 use App\Models\Applicant;
 use App\Services\CaseParties;
+use App\Services\SecureUploadService;
 use App\Support\LoginThrottle;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password as PasswordRule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -22,8 +24,8 @@ use Inertia\Response;
 /**
  * The lawyers' sign-in (EUISIS ADR 0013 #13). Employees work on their cases in
  * the EUISIS employee portal; the lawyers who represent them have their own
- * account here, opened by the registry (Lawyers screen) and verified against
- * their licence. A lawyer signs in on the applicant guard and works on the cases
+ * account here, opened by the registry (Lawyers screen) or applied for at
+ * /lawyer/register, and verified against their licence. A lawyer signs in on the applicant guard and works on the cases
  * of those they represent in the court portal, which stays open to them alone.
  * Passwords are set and reset by an emailed link (the `applicants` broker).
  */
@@ -57,6 +59,46 @@ class LawyerAuthController extends Controller
         $throttle->clear();
 
         return redirect()->intended(route('applicant.cases.index'));
+    }
+
+    public function showRegister(): Response
+    {
+        return Inertia::render('Court/Lawyer/Register');
+    }
+
+    /**
+     * A lawyer applies to be registered. The account stays closed until the
+     * registry verifies the licence on its Lawyers screen; approving it emails
+     * the link to choose a password, which also proves the address is theirs.
+     */
+    public function register(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'first_name' => ['required', 'string', 'max:100'],
+            'middle_name' => ['required', 'string', 'max:100'],
+            'last_name' => ['required', 'string', 'max:100'],
+            'gender' => ['required', 'in:male,female'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('applicants', 'email')],
+            'phone' => ['required', 'string', 'max:30', Rule::unique('applicants', 'phone')],
+            'national_id_number' => ['required', 'string', 'max:32', Rule::unique('applicants', 'national_id_number')],
+            'address' => ['required', 'string', 'max:255'],
+            'license_number' => ['required', 'string', 'max:80', Rule::unique('applicants', 'lawyer_license_number')],
+            'license_document' => ['required', 'file', 'mimes:pdf', 'max:10240'],
+        ]);
+
+        $lawyer = new Applicant([
+            'first_name' => trim($data['first_name']), 'middle_name' => trim($data['middle_name']), 'last_name' => trim($data['last_name']),
+            'gender' => $data['gender'], 'email' => mb_strtolower(trim($data['email'])), 'phone' => trim($data['phone']),
+            'national_id_number' => trim($data['national_id_number']), 'address' => trim($data['address']),
+            // A password nobody knows: the lawyer chooses theirs from the link sent on approval.
+            'password' => Hash::make(Str::random(48)), 'is_active' => true, 'organization_name' => null, 'position' => null,
+        ]);
+        $lawyer->forceFill(['is_lawyer' => true, 'lawyer_license_number' => trim($data['license_number']), 'lawyer_applied_at' => now()])->save();
+        $lawyer->forceFill(['lawyer_document_path' => app(SecureUploadService::class)->store($request->file('license_document'), 'lawyer-documents', 'private', [
+            'related_type' => 'applicant', 'related_id' => $lawyer->id,
+        ])])->save();
+
+        return redirect()->route('lawyer.login')->with('status', __('lawyer.apply.received'));
     }
 
     public function logout(Request $request): RedirectResponse

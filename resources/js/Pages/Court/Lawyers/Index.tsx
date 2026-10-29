@@ -20,6 +20,9 @@ interface LawyerRow {
     license_number: string | null;
     verified: boolean;
     verified_at: string | null;
+    applied_at: string | null;
+    refused: boolean;
+    refusal_reason: string | null;
     active: boolean;
     has_document: boolean;
     cases: number;
@@ -53,6 +56,7 @@ const blank: NewLawyer = {
  * The registry opens a lawyer's account, verified on their licence, and the
  * lawyer chooses a password from the emailed link; only a verified, active
  * lawyer signs in at /lawyer/login and is offered to employees who file.
+ * Applications sent at /lawyer/register come first, to verify or refuse.
  */
 export default function LawyersIndex({ lawyers, search, canManage }: LawyersIndexProps) {
     const { t } = useLocale();
@@ -79,11 +83,20 @@ export default function LawyersIndex({ lawyers, search, canManage }: LawyersInde
             if (!result.confirmed) return;
             license = (result.reason ?? '').trim();
         } else {
-            const result = await confirm({ title: `${verified ? r('verify') : r('unverify')}: ${lawyer.name}`, variant: verified ? 'success' : 'warning', confirmLabel: verified ? r('verify') : r('unverify'), cancelLabel: r('cancel') });
+            const result = await confirm({
+                title: `${verified ? r('verify') : r('unverify')}: ${lawyer.name}`, variant: verified ? 'success' : 'warning', confirmLabel: verified ? r('verify') : r('unverify'), cancelLabel: r('cancel'),
+                description: verified && lawyer.applied_at && !lawyer.refused ? r('approve_help') : undefined,
+            });
             if (!result.confirmed) return;
         }
         router.patch(route('lawyers.verify', lawyer.id), { verified, license_number: license }, { preserveScroll: true, onStart: () => setBusy(lawyer.id), onFinish: () => setBusy(null) });
     };
+    const refuse = async (lawyer: LawyerRow) => {
+        const result = await confirm({ title: `${r('refuse')}: ${lawyer.name}`, variant: 'danger', confirmLabel: r('refuse'), cancelLabel: r('cancel'), requireReason: true, reasonLabel: r('refusal_reason') });
+        if (!result.confirmed) return;
+        router.patch(route('lawyers.refuse', lawyer.id), { reason: (result.reason ?? '').trim() }, { preserveScroll: true, onStart: () => setBusy(lawyer.id), onFinish: () => setBusy(null) });
+    };
+    const waiting = (lawyer: LawyerRow) => Boolean(lawyer.applied_at) && !lawyer.verified && !lawyer.refused;
 
     const field = (key: Exclude<keyof NewLawyer, 'license_document' | 'gender'>, type = 'text') => (
         <FormField label={r(key === 'national_id_number' ? 'national_id' : key)} required error={form.errors[key]}>
@@ -164,6 +177,9 @@ export default function LawyersIndex({ lawyers, search, canManage }: LawyersInde
                                         <td className={tableCellClassName}>
                                             <div className="font-mono text-xs">{lawyer.license_number ?? '—'}</div>
                                             {lawyer.verified_at && <div className="text-xs text-(--app-muted-foreground)"><LocalizedDateDisplay value={lawyer.verified_at} /></div>}
+                                            {lawyer.has_document && (
+                                                <a href={route('lawyers.license', lawyer.id)} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-(--app-primary) hover:underline">{r('view_license')}</a>
+                                            )}
                                         </td>
                                         <td className={cx(tableCellClassName, 'text-(--app-muted-foreground)')}>
                                             <div>{lawyer.email}</div>
@@ -171,17 +187,31 @@ export default function LawyersIndex({ lawyers, search, canManage }: LawyersInde
                                         </td>
                                         <td className={tableCellClassName}>
                                             <div className="flex flex-wrap gap-1.5">
-                                                <span className={badgeClassName(lawyer.verified ? 'success' : 'warning')}>{lawyer.verified ? r('verified') : r('unverified')}</span>
-                                                {!lawyer.active && <span className={badgeClassName('neutral')}>{r('inactive')}</span>}
+                                                {lawyer.refused
+                                                    ? <span className={badgeClassName('danger')}>{r('refused')}</span>
+                                                    : <span className={badgeClassName(lawyer.verified ? 'success' : 'warning')}>{lawyer.verified ? r('verified') : waiting(lawyer) ? r('waiting') : r('unverified')}</span>}
+                                                {!lawyer.active && !lawyer.refused && <span className={badgeClassName('neutral')}>{r('inactive')}</span>}
                                             </div>
+                                            {lawyer.applied_at && !lawyer.verified && (
+                                                <div className="mt-1 text-xs text-(--app-muted-foreground)">{r('applied')}: <LocalizedDateDisplay value={lawyer.applied_at} /></div>
+                                            )}
+                                            {lawyer.refused && lawyer.refusal_reason && <p className="mt-1 max-w-xs text-xs text-(--app-muted-foreground)">{lawyer.refusal_reason}</p>}
                                         </td>
                                         <td className={tableCellClassName}>{lawyer.cases}</td>
                                         <td className={tableCellClassName}>
                                             {canManage ? (
-                                                <button type="button" disabled={busy === lawyer.id} onClick={() => { void setVerified(lawyer, !lawyer.verified); }}
-                                                    className={buttonClassName({ variant: lawyer.verified ? 'destructiveOutline' : 'outline', size: 'sm' })}>
-                                                    {lawyer.verified ? r('unverify') : r('verify')}
-                                                </button>
+                                                <div className="flex flex-wrap gap-2">
+                                                    <button type="button" disabled={busy === lawyer.id} onClick={() => { void setVerified(lawyer, !lawyer.verified); }}
+                                                        className={buttonClassName({ variant: lawyer.verified ? 'destructiveOutline' : 'outline', size: 'sm' })}>
+                                                        {lawyer.verified ? r('unverify') : r('verify')}
+                                                    </button>
+                                                    {waiting(lawyer) && (
+                                                        <button type="button" disabled={busy === lawyer.id} onClick={() => { void refuse(lawyer); }}
+                                                            className={buttonClassName({ variant: 'destructiveOutline', size: 'sm' })}>
+                                                            {r('refuse')}
+                                                        </button>
+                                                    )}
+                                                </div>
                                             ) : <span className="text-xs text-(--app-muted-foreground)">—</span>}
                                         </td>
                                     </tr>

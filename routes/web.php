@@ -210,6 +210,9 @@ Route::middleware(SetLocale::class)->where(array_fill_keys($numericRouteParamete
         Route::middleware(['guest:applicant', UseGuard::class.':applicant'])->group(function () {
             Route::get('/login', [LawyerAuthController::class, 'showLogin'])->name('login');
             Route::post('/login', [LawyerAuthController::class, 'login'])->middleware('throttle:10,1')->name('login.submit');
+            // A lawyer applies; the registry verifies the licence before the account opens.
+            Route::get('/register', [LawyerAuthController::class, 'showRegister'])->name('register');
+            Route::post('/register', [LawyerAuthController::class, 'register'])->middleware('throttle:5,1')->name('register.submit');
             Route::get('/forgot-password', [LawyerAuthController::class, 'showForgot'])->name('password.request');
             Route::post('/forgot-password', [LawyerAuthController::class, 'sendResetLink'])->middleware('throttle:5,1')->name('password.email');
             Route::get('/reset-password/{token}', [LawyerAuthController::class, 'showReset'])->name('password.reset');
@@ -573,6 +576,8 @@ Route::middleware(SetLocale::class)->where(array_fill_keys($numericRouteParamete
             Route::get('/lawyers', [LawyerController::class, 'index'])->middleware('perm:applicants.view')->name('lawyers.index');
             Route::post('/lawyers', [LawyerController::class, 'store'])->middleware(['perm:applicants.manage', 'throttle:20,1'])->name('lawyers.store');
             Route::patch('/lawyers/{applicant}/verification', [LawyerController::class, 'verify'])->middleware(['perm:applicants.manage', 'throttle:30,1'])->name('lawyers.verify');
+            Route::patch('/lawyers/{applicant}/refusal', [LawyerController::class, 'refuse'])->middleware(['perm:applicants.manage', 'throttle:30,1'])->name('lawyers.refuse');
+            Route::get('/lawyers/{applicant}/license', [LawyerController::class, 'license'])->middleware('perm:applicants.view')->name('lawyers.license');
             Route::get('/applicants', [ApplicantController::class, 'index'])
                 ->middleware('perm:applicants.view')
                 ->name('applicants.index');

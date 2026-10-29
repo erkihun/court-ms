@@ -186,7 +186,12 @@ Owner decision, EUISIS ADR 0013 #13 (`App\Services\CaseParties`).
   refuses, on the case page's *Parties* section; a refusal needs a reason.
 - **Lawyers** (`case_representatives`, applicants with `is_lawyer` and a verified
   licence): the registry opens and verifies them on the Lawyers screen; the lawyer
-  chooses a password from the emailed link and signs in at `/lawyer/login`. A verified
+  chooses a password from the emailed link and signs in at `/lawyer/login`. A lawyer may
+  also apply at `/lawyer/register` (ADR 0013 #15) with the licence as a PDF
+  (`applicants.lawyer_applied_at`): the account stays closed until the registry verifies
+  the licence, which emails the password link, or refuses it with an emailed reason
+  (`lawyer_refused_at`, `lawyer_refusal_reason`); waiting applications are listed first
+  and reach the bell of staff with `applicants.manage`. A verified
   lawyer reaches the applicant portal even while it is closed to employees (its sign-in and
   registration pages stay `404`) and files for a client found in EUISIS by employee number
   (*File for a client*): the case starts with no applicant, the client's lead row
