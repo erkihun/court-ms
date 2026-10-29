@@ -107,6 +107,8 @@ const publicSite = {
         },
         signage: {
             title: 'Court display',
+            crestOffice: 'Addis Ababa City Administration Public Service and Human Resource Development Bureau',
+            crestCourt: 'Administrative Court',
             causeList: "Today's cause list",
             time: 'Time',
             case: 'Case',
@@ -262,6 +264,9 @@ const publicSite = {
         },
         signage: {
             title: 'የፍርድ ቤቱ ማሳያ',
+            // The letterhead: the parent office over the court's own name, read as one.
+            crestOffice: 'በአዲስ አበባ ከተማ አስተዳደር የፐብሊክ ሰርቪስና የሰው ሃብት ልማት ቢሮ',
+            crestCourt: 'የአስተዳደር ፍርድ ቤት',
             causeList: 'የዛሬ የችሎት ዝርዝር',
             time: 'ሰዓት',
             case: 'መዝገብ',

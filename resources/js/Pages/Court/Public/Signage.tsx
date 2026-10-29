@@ -249,8 +249,8 @@ export default function PublicSignage(props: PublicSignageProps) {
     const branding = useBranding();
     const { now, timezone, benches, today, nextDay, decisions, announcements, registry, portal, refreshSeconds } = props;
 
-    // The official Amharic name falls back to the English one when it is not set; the Amharic brand name is then better.
-    const courtName = (branding.officialNameAm && branding.officialNameAm !== branding.officialNameEn ? branding.officialNameAm : '') || branding.brandNameAm;
+    // The letterhead names the court by its office, not by the system's name.
+    const courtName = `${say('crestOffice')} ${say('crestCourt')}`;
     const benchTone = (id: number | null) => {
         const index = benches.findIndex((bench) => bench.id === id);
         return index >= 0 ? BENCH_TONES[index % BENCH_TONES.length] : null;
@@ -366,8 +366,10 @@ export default function PublicSignage(props: PublicSignageProps) {
                         <span className="sg-sheen" aria-hidden="true" />
                         <Medallion logoUrl={branding.logoUrl} />
                         <div className="sg-crest-text">
-                            <p className="sg-eyebrow">{publicSite.am.authority} · {publicSite.am.courtKind}</p>
-                            <h1 className="sg-court">{courtName}</h1>
+                            <h1 aria-label={courtName}>
+                                <span className="sg-eyebrow">{say('crestOffice')}</span>
+                                <span className="sg-court">{say('crestCourt')}</span>
+                            </h1>
                         </div>
                         <div className="sg-crest-time" aria-label={`${clock.ethiopianPart} ${clock.ethiopianHour}:${clock.minutes}`}>
                             <p className="sg-eth-time">
@@ -474,6 +476,24 @@ export default function PublicSignage(props: PublicSignageProps) {
                         )}
                     </section>
 
+                    {/* The notices the registry publishes, one after another, right under the cause list. */}
+                    {current && (
+                        <section className="sg-notices" aria-live="off">
+                            <div className="sg-section-head">
+                                <h2>
+                                    {say('notices')}
+                                    {announcements.length > 1 && <span className="sg-count">{notice + 1} / {announcements.length}</span>}
+                                </h2>
+                                <Progress count={announcements.length} active={notice} seconds={NOTICE_SECONDS} />
+                            </div>
+                            <article key={current.id} className="sg-notice court-signage-in">
+                                <p className="sg-notice-title">{current.title}</p>
+                                {current.summary && <p className="sg-notice-summary">{current.summary}</p>}
+                                {current.created_at && <p className="sg-notice-date">{ethiopianDay(current.created_at).date}</p>}
+                            </article>
+                        </section>
+                    )}
+
                     {/* Decisions released lately, by case number. */}
                     {decisions.length > 0 && (
                         <section className="sg-decisions">
@@ -517,30 +537,11 @@ export default function PublicSignage(props: PublicSignageProps) {
                         )}
                     </section>
 
-                    {/* The notices, one after another, and how fresh the board is. */}
+                    {/* How fresh the board is. */}
                     <footer className="sg-foot">
-                        {announcements.length > 1 && (
-                            <span className="sg-foot-progress" aria-hidden="true">
-                                <span key={notice} className="sg-progress-fill" style={{ '--page': `${NOTICE_SECONDS}s` } as CSSProperties} />
-                            </span>
-                        )}
-                        <span className="sg-foot-label">{say('notices')}</span>
-                        <div className="sg-foot-notice" aria-live="off">
-                            {current ? (
-                                <div key={current.id} className="court-signage-in">
-                                    <p className="sg-notice-title">{current.title}</p>
-                                    {current.summary && <p className="sg-notice-summary">{current.summary}</p>}
-                                </div>
-                            ) : (
-                                <p className="sg-notice-none">{say('noNotices')}</p>
-                            )}
-                        </div>
-                        <div className="sg-foot-side">
-                            {announcements.length > 1 && <p className="sg-notice-count">{notice + 1} / {announcements.length}</p>}
-                            <p className={stale ? 'sg-fresh is-stale' : 'sg-fresh'} role="status">
-                                {say(stale ? 'stale' : 'updated', { time: readTime })}
-                            </p>
-                        </div>
+                        <p className={stale ? 'sg-fresh is-stale' : 'sg-fresh'} role="status">
+                            {say(stale ? 'stale' : 'updated', { time: readTime })}
+                        </p>
                     </footer>
                 </div>
 

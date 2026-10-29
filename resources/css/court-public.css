@@ -688,22 +688,24 @@
     mix-blend-mode: overlay;
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
-/* Portrait, top to bottom: the court and the hour, the next sitting, the cause list, the decisions
-   released (when there are any), following a case and the registry, the notices. */
+/* Portrait, top to bottom: the court and the hour, the next sitting, the cause list, the registry's
+   notices and the decisions released (each when there are any), following a case and the registry,
+   and how fresh the board is. */
 .court-site.court-signage[data-orientation='portrait'] .court-signage-stage {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 248px 236px minmax(0, 1fr) auto 248px 150px;
-    grid-template-areas: 'crest' 'next' 'list' 'decisions' 'info' 'foot';
+    grid-template-rows: 248px 236px minmax(0, 1fr) auto auto 236px 52px;
+    grid-template-areas: 'crest' 'next' 'list' 'notices' 'decisions' 'info' 'foot';
 }
 .court-site.court-signage[data-orientation='landscape'] .court-signage-stage {
     grid-template-columns: 760px minmax(0, 1fr);
-    grid-template-rows: 300px minmax(0, 1fr) auto 236px 120px;
-    grid-template-areas: 'crest list' 'next list' 'decisions list' 'info list' 'foot foot';
+    grid-template-rows: 276px minmax(0, 1fr) auto auto 236px 48px;
+    grid-template-areas: 'crest list' 'next list' 'notices list' 'decisions list' 'info list' 'foot foot';
     column-gap: 56px;
 }
 .court-site .sg-crest { grid-area: crest; }
 .court-site .sg-next { grid-area: next; }
 .court-site .sg-list { grid-area: list; }
+.court-site .sg-notices { grid-area: notices; }
 .court-site .sg-decisions { grid-area: decisions; }
 .court-site .sg-info { grid-area: info; }
 .court-site .sg-foot { grid-area: foot; }
@@ -762,17 +764,18 @@
 }
 .court-site .sg-medallion-mark { width: 112px; height: 112px; }
 .court-site .sg-crest-text { flex: 1; min-width: 0; }
-.court-site .sg-eyebrow { font-size: 17px; font-weight: 600; color: var(--court-brass); }
+/* The letterhead: the parent office in brass, then the court's own name large, read as one name. */
+.court-site .sg-eyebrow { display: block; font-size: 21px; font-weight: 600; line-height: 1.45; color: var(--court-brass); }
 .court-site .sg-court {
+    display: block;
     margin-top: 6px;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
     overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
     font-family: var(--font-document-am);
-    font-size: 40px;
+    font-size: 48px;
     font-weight: 400;
-    line-height: 1.22;
+    line-height: 1.15;
     color: #fff;
 }
 /* The Ethiopian hour, and today's Ethiopian date under it, ruled off from the name. */
@@ -1046,7 +1049,7 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 22px;
-    padding: 10px 0 22px;
+    padding: 6px 0 16px;
 }
 .court-site .sg-follow,
 .court-site .sg-registry {
@@ -1079,44 +1082,37 @@
 .court-site .sg-registry dt { font-size: 15px; font-weight: 600; color: rgb(148 163 184); }
 .court-site .sg-registry dd { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 20px; color: #fff; }
 
-/* ── The notices ── */
-.court-site .sg-foot {
+/* ── The notices, under the cause list: a brass-ruled card, one notice at a time ── */
+.court-site .sg-notices { padding: 4px 0 18px; }
+.court-site .sg-notice {
     position: relative;
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 32px;
-    margin-inline: calc(var(--sg-pad) * -1);
-    padding-inline: var(--sg-pad);
-    border-top: 1px solid var(--sg-brass-line);
-    background: linear-gradient(180deg, rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.42));
+    height: 182px;
+    padding: 20px 26px 18px 30px;
+    overflow: hidden;
+    border: 1px solid var(--sg-brass-line);
+    border-radius: 18px;
+    background:
+        radial-gradient(ellipse 50% 120% at 0% 0%, rgb(200 161 74 / 0.14), transparent 70%),
+        rgb(255 255 255 / 0.035);
+    box-shadow: inset 5px 0 0 var(--court-brass);
 }
-.court-site .sg-foot-progress { position: absolute; top: -1px; left: 0; right: 0; height: 3px; overflow: hidden; }
-.court-site .sg-foot-label {
-    padding: 14px 22px;
-    border-radius: 12px;
-    background: linear-gradient(180deg, #d9b664, var(--court-brass));
-    font-size: 21px;
-    font-weight: 800;
-    color: var(--court-ink);
-    box-shadow: 0 10px 30px -12px rgb(200 161 74 / 0.7);
-}
-.court-site .sg-foot-notice { min-width: 0; }
-.court-site .sg-notice-title { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 28px; font-weight: 600; color: #fff; }
+.court-site .sg-notice-title { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 29px; font-weight: 700; color: #fff; }
 .court-site .sg-notice-summary {
-    margin-top: 6px;
+    margin-top: 8px;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
     overflow: hidden;
-    font-size: 20px;
-    line-height: 1.4;
-    color: rgb(203 213 225);
+    font-size: 22px;
+    line-height: 1.5;
+    color: rgb(226 232 240);
 }
+.court-site .sg-notice-date { position: absolute; right: 26px; bottom: 14px; font-size: 16px; color: var(--court-brass-soft); }
+.court-site.court-signage[data-orientation='landscape'] .sg-notice { height: 150px; }
 .court-site.court-signage[data-orientation='landscape'] .sg-notice-summary { -webkit-line-clamp: 1; }
-.court-site .sg-notice-none { font-size: 22px; color: rgb(148 163 184); }
-.court-site .sg-foot-side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; text-align: right; }
-.court-site .sg-notice-count { font-size: 16px; font-variant-numeric: tabular-nums; color: rgb(100 116 139); }
+
+/* ── How fresh the board is ── */
+.court-site .sg-foot { display: flex; align-items: center; justify-content: flex-start; border-top: 1px solid var(--sg-line); }
 .court-site .sg-fresh { font-size: 16px; color: rgb(100 116 139); }
 .court-site .sg-fresh.is-stale { font-weight: 700; color: #fcd34d; }
 
