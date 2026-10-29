@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { cx } from '@/Components/ui';
 import LocalizedDateDisplay from '@/Components/Calendar/LocalizedDateDisplay';
 import PublicLayout from '@/court/public/PublicLayout';
@@ -6,6 +6,7 @@ import CourtResourceCard from '@/court/public/CourtResourceCard';
 import { useCourtName } from '@/court/public/CourtPublicHeader';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { usePublicText } from '@/court/i18n/usePublicText';
+import { CountUp, CourtMotes, CourtSeal, RisingWords, stagger } from '@/court/public/motion';
 import type {
     PublicHearing,
     PublicHomeProps,
@@ -26,12 +27,13 @@ const SERVICE_ICONS: Record<ServiceIcon, string> = {
 };
 
 const numbers = new Intl.NumberFormat('en-US');
+const formatNumber = (value: number) => numbers.format(value);
 const SLIDE_SECONDS = 9;
 
 function Icon({ path, className = 'h-5 w-5' }: { path: string; className?: string }) {
     return (
         <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" d={path} />
+            <path strokeLinecap="round" strokeLinejoin="round" d={path} pathLength={100} />
         </svg>
     );
 }
@@ -60,7 +62,7 @@ function Section({ id, eyebrow, heading, tone = 'paper', align = 'start', aside,
             )}
         >
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div className={cx('mb-10 flex flex-col gap-6 sm:mb-14 lg:flex-row lg:items-end lg:justify-between', align === 'center' && 'items-center text-center lg:flex-col lg:items-center')}>
+                <div data-reveal="heading" className={cx('mb-10 flex flex-col gap-6 sm:mb-14 lg:flex-row lg:items-end lg:justify-between', align === 'center' && 'items-center text-center lg:flex-col lg:items-center')}>
                     <div className="max-w-2xl">
                         <p className={cx('court-eyebrow', dark && 'court-eyebrow-light')}>{eyebrow}</p>
                         <h2 id={`${id}-heading`} className={cx('mt-4 text-3xl font-semibold tracking-tight sm:text-4xl', dark ? 'text-white' : 'text-(--court-ink) dark:text-white')}>
@@ -111,25 +113,30 @@ function Hero({ slides, today, hearings, officeHours }: {
 
     return (
         <section aria-roledescription={count > 1 ? 'carousel' : undefined} aria-label={slide.title} className="court-hero">
-            {slide.image_url && <div aria-hidden="true" className="court-hero-image" style={{ backgroundImage: `url(${slide.image_url})` }} />}
+            {slide.image_url && <div key={`image-${index}`} aria-hidden="true" className="court-hero-image" style={{ backgroundImage: `url(${slide.image_url})` }} />}
+            {/* The hall: a band of window light crossing now and then, brass motes in it, the colonnade rising at the foot. */}
+            <div aria-hidden="true" className="court-hero-sweep" />
+            <CourtMotes />
             <svg aria-hidden="true" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMax slice" className="court-hero-columns w-full">
                 <g fill="currentColor">
-                    <path d="M120 120 L600 20 L1080 120 Z" />
-                    <rect x="140" y="128" width="920" height="14" />
-                    {Array.from({ length: 8 }).map((_, i) => <rect key={i} x={180 + i * 115} y="150" width="34" height="220" />)}
+                    <path d="M120 120 L600 20 L1080 120 Z" className="court-hall-roof" />
+                    <rect x="140" y="128" width="920" height="14" className="court-hall-roof" />
+                    {Array.from({ length: 8 }).map((_, i) => <rect key={i} x={180 + i * 115} y="150" width="34" height="220" className="court-hall-column" style={stagger(i)} />)}
                     <rect x="120" y="370" width="960" height="30" />
                 </g>
             </svg>
+            <CourtSeal className="court-hero-seal" />
 
             <div className="mx-auto grid max-w-7xl gap-10 px-4 pb-24 pt-14 sm:px-6 sm:pt-20 lg:grid-cols-[1.45fr_1fr] lg:gap-16 lg:px-8 lg:pb-28">
-                <div key={index} className="court-rise min-w-0" aria-live={paused ? 'polite' : 'off'}>
-                    {slide.badge && <p className="court-eyebrow court-eyebrow-light">{slide.badge}</p>}
-                    <h1 className="mt-5 text-4xl font-semibold leading-[1.12] tracking-tight text-white wrap-anywhere sm:text-5xl">{slide.title}</h1>
-                    {slide.description && <p className="mt-6 max-w-2xl text-lg leading-relaxed text-slate-300">{slide.description}</p>}
-                    <div className="mt-9 flex flex-wrap gap-3">
-                        <a href={slide.primary_href} className="inline-flex min-h-12 items-center gap-2 rounded-md bg-(--court-brass) px-6 text-sm font-semibold text-(--court-ink) shadow-sm transition hover:bg-(--court-brass-soft)">
+                {/* Keyed by the slide, so each new slide plays its entrance: the eyebrow's rule draws, the words rise in turn. */}
+                <div key={index} className="min-w-0" aria-live={paused ? 'polite' : 'off'}>
+                    {slide.badge && <p className="court-rise court-eyebrow court-eyebrow-light court-eyebrow-draw">{slide.badge}</p>}
+                    <h1 className="court-rising mt-5 text-4xl font-semibold leading-[1.12] tracking-tight text-white wrap-anywhere sm:text-5xl"><RisingWords text={slide.title} /></h1>
+                    {slide.description && <p className="court-rise court-pub-delay-2 mt-6 max-w-2xl text-lg leading-relaxed text-slate-300">{slide.description}</p>}
+                    <div className="court-rise court-pub-delay-3 mt-9 flex flex-wrap gap-3">
+                        <a href={slide.primary_href} className="court-cta group inline-flex min-h-12 items-center gap-2 rounded-md bg-(--court-brass) px-6 text-sm font-semibold text-(--court-ink) shadow-sm transition hover:bg-(--court-brass-soft)">
                             {slide.primary_label}
-                            <span aria-hidden="true">›</span>
+                            <span aria-hidden="true" className="court-arrow">›</span>
                         </a>
                         {slide.secondary_label && (
                             <a href={slide.secondary_href} className="inline-flex min-h-12 items-center rounded-md border border-white/25 px-6 text-sm font-semibold text-white transition hover:border-white/60 hover:bg-white/5">
@@ -149,8 +156,11 @@ function Hero({ slides, today, hearings, officeHours }: {
                                             onClick={() => setIndex(i)}
                                             aria-label={fill(text('hero.slideOf'), { n: i + 1, total: count })}
                                             aria-current={i === index ? 'true' : undefined}
-                                            className={cx('block h-1.5 rounded-full transition-all', i === index ? 'w-8 bg-(--court-brass)' : 'w-3 bg-white/30 hover:bg-white/60')}
-                                        />
+                                            className={cx('relative block h-1.5 overflow-hidden rounded-full transition-all', i === index ? 'w-8 bg-(--court-brass)/40' : 'w-3 bg-white/30 hover:bg-white/60')}
+                                        >
+                                            {/* The current slide's line fills over its nine seconds, and stops while paused. */}
+                                            {i === index && <span key={index} aria-hidden="true" className={cx('court-slide-fill', paused && 'is-paused')} style={{ '--slide': `${SLIDE_SECONDS}s` } as CSSProperties} />}
+                                        </button>
                                     </li>
                                 ))}
                             </ol>
@@ -162,19 +172,22 @@ function Hero({ slides, today, hearings, officeHours }: {
                     )}
                 </div>
 
-                <aside aria-labelledby="court-today" className="court-rise self-start rounded-xl border border-white/12 bg-white/[0.06] p-6 backdrop-blur-sm sm:p-7">
-                    <p id="court-today" className="text-xs font-semibold uppercase tracking-[0.16em] text-(--court-brass-soft)">{text('hero.today')}</p>
+                <aside aria-labelledby="court-today" className="court-rise court-pub-delay-2 court-today self-start rounded-xl border border-white/12 bg-white/[0.06] p-6 backdrop-blur-sm sm:p-7">
+                    <p id="court-today" className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-(--court-brass-soft)">
+                        {today.hearings > 0 && <span aria-hidden="true" className="court-live" />}
+                        {text('hero.today')}
+                    </p>
                     <LocalizedDateDisplay value={today.date} className="mt-2 block text-lg font-semibold text-white" />
                     <div className="mt-5 flex items-end gap-3 border-b border-white/10 pb-5">
-                        <span className="text-5xl font-semibold leading-none text-white tabular-nums">{numbers.format(today.hearings)}</span>
+                        <CountUp value={today.hearings} format={formatNumber} duration={1200} className="text-5xl font-semibold leading-none text-white tabular-nums" />
                         <span className="pb-1 text-sm text-slate-300">{today.hearings > 0 ? text('hero.hearingsToday') : text('hero.noneToday')}</span>
                     </div>
                     {next.length > 0 && (
                         <div className="mt-5">
                             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">{text('hero.nextSittings')}</p>
                             <ul className="mt-3 space-y-3">
-                                {next.map((hearing) => (
-                                    <li key={hearing.id} className="flex items-start gap-3 text-sm">
+                                {next.map((hearing, i) => (
+                                    <li key={hearing.id} className="court-rise flex items-start gap-3 text-sm" style={{ animationDelay: `${0.5 + i * 0.12}s` }}>
                                         <span className="mt-0.5 shrink-0 rounded bg-white/10 px-2 py-0.5 font-mono text-xs text-(--court-brass-soft)">{hearing.time ?? '—'}</span>
                                         <span className="min-w-0">
                                             <span className="block truncate font-medium text-white">{hearing.case_number}</span>
@@ -188,7 +201,7 @@ function Hero({ slides, today, hearings, officeHours }: {
                         </div>
                     )}
                     <a href="#hearings" className="mt-6 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-(--court-brass-soft) hover:text-white">
-                        {text('hero.fullSchedule')} <span aria-hidden="true">↓</span>
+                        {text('hero.fullSchedule')} <span aria-hidden="true" className="court-nudge-down">↓</span>
                     </a>
                     {officeHours && (
                         <p className="mt-4 border-t border-white/10 pt-4 text-xs text-slate-400">
@@ -210,31 +223,38 @@ function Initials({ name }: { name: string }) {
     );
 }
 
-function MemberCard({ member }: { member: PublicMember }) {
+function MemberCard({ member, index }: { member: PublicMember; index: number }) {
     return (
-        <li className="court-card court-card-hover flex flex-col items-center p-6 text-center">
+        // The item reveals; the card inside lifts on hover (two transitions, two elements).
+        <li data-reveal style={stagger(index)} className="flex">
+            <div className="court-card court-card-hover flex w-full flex-col items-center p-6 text-center">
             {member.photo_url
                 ? <img src={member.photo_url} alt="" loading="lazy" decoding="async" className="h-20 w-20 shrink-0 rounded-full object-cover ring-4 ring-(--court-parchment)" />
                 : <Initials name={member.name} />}
             <h3 className="mt-4 text-base font-semibold text-(--court-ink) dark:text-white">{member.name}</h3>
             {member.role && <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-(--court-brass-strong)">{member.role}</p>}
             {member.bio && <p className="mt-3 line-clamp-4 text-sm leading-relaxed text-(--court-muted)">{member.bio}</p>}
+            </div>
         </li>
     );
 }
 
 /** The sittings of the coming days: a table on wide screens, a list on narrow ones. */
-function HearingList({ hearings }: { hearings: PublicHearing[] }) {
+function HearingList({ hearings, today }: { hearings: PublicHearing[]; today: string }) {
     const { t } = usePublicText();
     const col = (key: string) => t(`court.publicSite.hearings.${key}`);
+    // A sitting of today carries a live brass dot beside its date.
+    const todayMark = (hearing: PublicHearing) => hearing.date === today
+        ? <span className="ms-2 inline-flex items-center gap-1.5 rounded-full bg-(--court-brass)/15 px-2 py-0.5 align-middle text-[11px] font-semibold text-(--court-brass-strong)"><span aria-hidden="true" className="court-live" />{col('today')}</span>
+        : null;
 
     if (hearings.length === 0) {
-        return <p className="court-card px-6 py-10 text-center text-sm text-(--court-muted)">{col('none')}</p>;
+        return <p data-reveal className="court-card px-6 py-10 text-center text-sm text-(--court-muted)">{col('none')}</p>;
     }
 
     return (
         <>
-            <div className="court-card hidden overflow-hidden md:block">
+            <div data-reveal className="court-card hidden overflow-hidden md:block">
                 <table className="w-full text-start text-sm">
                     <thead className="bg-(--court-parchment) text-xs uppercase tracking-[0.1em] text-(--court-muted)">
                         <tr>
@@ -242,9 +262,9 @@ function HearingList({ hearings }: { hearings: PublicHearing[] }) {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-(--court-line)">
-                        {hearings.map((hearing) => (
-                            <tr key={hearing.id} className="hover:bg-(--court-parchment)/50">
-                                <td className="whitespace-nowrap px-5 py-4 font-medium text-(--court-ink) dark:text-white"><LocalizedDateDisplay value={hearing.date} /></td>
+                        {hearings.map((hearing, index) => (
+                            <tr key={hearing.id} data-reveal="row" style={stagger(index)} className="court-row hover:bg-(--court-parchment)/50">
+                                <td className="whitespace-nowrap px-5 py-4 font-medium text-(--court-ink) dark:text-white"><LocalizedDateDisplay value={hearing.date} />{todayMark(hearing)}</td>
                                 <td className="whitespace-nowrap px-5 py-4 font-mono text-(--court-text)">{hearing.time ?? '—'}</td>
                                 <td className="whitespace-nowrap px-5 py-4 font-mono font-semibold text-(--court-navy) dark:text-(--court-brass-soft)">{hearing.case_number}</td>
                                 <td className="px-5 py-4 text-(--court-text)">{hearing.case_type ?? '—'}</td>
@@ -256,14 +276,14 @@ function HearingList({ hearings }: { hearings: PublicHearing[] }) {
                 </table>
             </div>
             <ul className="space-y-3 md:hidden">
-                {hearings.map((hearing) => (
-                    <li key={hearing.id} className="court-card flex gap-4 p-4">
+                {hearings.map((hearing, index) => (
+                    <li key={hearing.id} data-reveal style={stagger(index)} className="court-card flex gap-4 p-4">
                         <span className="flex w-16 shrink-0 flex-col items-center justify-center rounded-lg bg-(--court-ink) py-2 text-center text-white">
                             <span className="font-mono text-sm font-semibold text-(--court-brass-soft)">{hearing.time ?? '—'}</span>
                         </span>
                         <span className="min-w-0 text-sm">
                             <span className="block font-mono font-semibold text-(--court-navy) dark:text-(--court-brass-soft)">{hearing.case_number}</span>
-                            <span className="block text-(--court-text)"><LocalizedDateDisplay value={hearing.date} /></span>
+                            <span className="block text-(--court-text)"><LocalizedDateDisplay value={hearing.date} />{todayMark(hearing)}</span>
                             <span className="block text-xs text-(--court-muted)">{[hearing.case_type, hearing.type, hearing.location].filter(Boolean).join(' · ')}</span>
                         </span>
                     </li>
@@ -278,8 +298,8 @@ function Faq({ faqs }: { faqs: PublicHomeProps['faqs'] }) {
     return (
         <ul className="divide-y divide-(--court-line) border-y border-(--court-line)">
             {faqs.map((faq, index) => (
-                <li key={index}>
-                    <details className="group py-1">
+                <li key={index} data-reveal style={stagger(index)}>
+                    <details className="court-faq group py-1">
                         <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-3 text-start text-base font-semibold text-(--court-ink) marker:content-none dark:text-white">
                             <span className="min-w-0 wrap-anywhere">{faq.question}</span>
                             <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-(--court-line) text-(--court-brass-strong) transition group-open:rotate-45">+</span>
@@ -332,7 +352,7 @@ export default function PublicHome({
                             {services.map((service, index) => {
                                 const body = (
                                     <>
-                                        <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-(--court-parchment) text-(--court-navy) ring-1 ring-(--court-line) dark:text-(--court-brass-soft)">
+                                        <span className="court-service-icon flex h-11 w-11 items-center justify-center rounded-lg bg-(--court-parchment) text-(--court-navy) ring-1 ring-(--court-line) dark:text-(--court-brass-soft)">
                                             <Icon path={SERVICE_ICONS[service.icon] ?? SERVICE_ICONS.document} />
                                         </span>
                                         <span className="mt-4 block text-base font-semibold text-(--court-ink) dark:text-white">{service.title}</span>
@@ -346,10 +366,10 @@ export default function PublicHome({
                                     </>
                                 );
                                 return (
-                                    <li key={`${service.title}-${index}`} className="flex">
+                                    <li key={`${service.title}-${index}`} data-reveal style={stagger(index + 2)} className="flex">
                                         {service.href
-                                            ? <a href={service.href} className="court-card court-rise flex w-full flex-col p-6 shadow-[0_20px_45px_-34px_rgba(12,26,49,0.7)]">{body}</a>
-                                            : <div className="court-card court-rise flex w-full flex-col p-6 shadow-[0_20px_45px_-34px_rgba(12,26,49,0.7)]">{body}</div>}
+                                            ? <a href={service.href} className="court-card court-service group flex w-full flex-col p-6 shadow-[0_20px_45px_-34px_rgba(12,26,49,0.7)]">{body}</a>
+                                            : <div className="court-card court-service group flex w-full flex-col p-6 shadow-[0_20px_45px_-34px_rgba(12,26,49,0.7)]">{body}</div>}
                                     </li>
                                 );
                             })}
@@ -363,11 +383,11 @@ export default function PublicHome({
                     <div className="grid gap-10 lg:grid-cols-[1.5fr_1fr] lg:gap-16">
                         <div className="court-prose max-w-3xl text-base leading-relaxed text-(--court-text)">
                             {paragraphs.map((paragraph, index) => (
-                                <p key={index} className={cx('whitespace-pre-line', index === 0 && 'text-lg text-(--court-ink) dark:text-white')}>{paragraph}</p>
+                                <p key={index} data-reveal style={stagger(index)} className={cx('whitespace-pre-line', index === 0 && 'text-lg text-(--court-ink) dark:text-white')}>{paragraph}</p>
                             ))}
                         </div>
                         {about.facts.length > 0 && (
-                            <aside aria-labelledby="about-facts" className="court-card self-start p-6 sm:p-8">
+                            <aside aria-labelledby="about-facts" data-reveal style={stagger(2)} className="court-card self-start p-6 sm:p-8">
                                 <h3 id="about-facts" className="text-xs font-semibold uppercase tracking-[0.16em] text-(--court-brass-strong)">{text('about.facts')}</h3>
                                 <dl className="mt-5 divide-y divide-(--court-line)">
                                     {about.facts.map((fact, index) => (
@@ -386,24 +406,27 @@ export default function PublicHome({
             {sections.members.visible && members.length > 0 && (
                 <Section id="members" eyebrow={text('eyebrow.members')} heading={sections.members} tone="parchment" align="center">
                     <ul className={cx('mx-auto grid gap-5 sm:grid-cols-2', members.length >= 4 ? 'lg:grid-cols-4' : 'max-w-4xl lg:grid-cols-3')}>
-                        {members.map((member, index) => <MemberCard key={`${member.name}-${index}`} member={member} />)}
+                        {members.map((member, index) => <MemberCard key={`${member.name}-${index}`} member={member} index={index} />)}
                     </ul>
                 </Section>
             )}
 
             {sections.hearings.visible && (
                 <Section id="hearings" eyebrow={text('eyebrow.hearings')} heading={sections.hearings}>
-                    <HearingList hearings={hearings} />
+                    <HearingList hearings={hearings} today={today.date} />
                 </Section>
             )}
 
             {sections.metrics.visible && metrics.length > 0 && (
                 <Section id="statistics" eyebrow={text('eyebrow.metrics')} heading={sections.metrics} tone="ink">
                     <dl className="grid gap-px overflow-hidden rounded-xl bg-white/10 sm:grid-cols-2 lg:grid-cols-3">
-                        {metrics.map((metric) => (
-                            <div key={metric.key} className="bg-(--court-ink) p-6 sm:p-8">
+                        {metrics.map((metric, index) => (
+                            <div key={metric.key} data-reveal style={stagger(index)} className="court-metric bg-(--court-ink) p-6 sm:p-8">
                                 <dt className="text-sm font-medium text-slate-300">{metric.label}</dt>
-                                <dd className="mt-3 text-4xl font-semibold tracking-tight text-(--court-brass-soft) tabular-nums">{numbers.format(metric.value)}</dd>
+                                <dd className="mt-3 text-4xl font-semibold tracking-tight text-(--court-brass-soft) tabular-nums">
+                                    <CountUp value={metric.value} format={formatNumber} />
+                                </dd>
+                                <dd aria-hidden="true" className="court-metric-rule mt-4 h-0.5 w-12 rounded-full bg-(--court-brass)" />
                                 {metric.description && <dd className="mt-2 text-xs leading-relaxed text-slate-400">{metric.description}</dd>}
                             </div>
                         ))}
@@ -413,11 +436,14 @@ export default function PublicHome({
 
             {sections.process.visible && steps.length > 0 && (
                 <Section id="process" eyebrow={text('eyebrow.process')} heading={sections.process} tone="parchment">
-                    <ol className={cx('relative grid gap-8 sm:grid-cols-2', steps.length >= 5 ? 'lg:grid-cols-5' : steps.length === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3')}>
-                        <span aria-hidden="true" className="absolute inset-x-8 top-6 hidden h-px bg-(--court-brass)/50 lg:block" />
+                    {/* A case's path: the line draws across, a light travels it, and each step lights as it passes. */}
+                    <ol data-reveal="path" style={{ '--steps': steps.length } as CSSProperties} className={cx('court-path relative grid gap-8 sm:grid-cols-2', steps.length >= 5 ? 'lg:grid-cols-5' : steps.length === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3')}>
+                        <span aria-hidden="true" className="court-path-line absolute inset-x-8 top-6 hidden h-px bg-(--court-brass)/50 lg:block">
+                            <span className="court-path-light" />
+                        </span>
                         {steps.map((step, index) => (
-                            <li key={`${step.title}-${index}`} className="relative">
-                                <span className="relative flex h-12 w-12 items-center justify-center rounded-full border-2 border-(--court-brass) bg-(--court-parchment) text-base font-semibold text-(--court-ink) dark:text-white">
+                            <li key={`${step.title}-${index}`} className="court-proc-step relative" style={stagger(index)}>
+                                <span className="court-proc-number relative flex h-12 w-12 items-center justify-center rounded-full border-2 border-(--court-brass) bg-(--court-parchment) text-base font-semibold text-(--court-ink) dark:text-white">
                                     {index + 1}
                                 </span>
                                 <h3 className="mt-5 text-base font-semibold text-(--court-ink) dark:text-white">{step.title}</h3>
@@ -437,13 +463,13 @@ export default function PublicHome({
                         <p className="court-card px-6 py-10 text-center text-sm text-(--court-muted)">{text('news.none')}</p>
                     ) : (
                         <ul className="grid gap-5 md:grid-cols-3">
-                            {news.map((item) => (
-                                <li key={item.id} className="flex">
-                                    <a href={route('public.news.show', item.id)} className="court-card flex w-full flex-col p-6">
+                            {news.map((item, index) => (
+                                <li key={item.id} data-reveal style={stagger(index)} className="flex">
+                                    <a href={route('public.news.show', item.id)} className="court-card group flex w-full flex-col p-6">
                                         <LocalizedDateDisplay value={item.created_at} className="text-xs font-semibold uppercase tracking-[0.12em] text-(--court-brass-strong)" />
                                         <span className="mt-3 block text-lg font-semibold leading-snug text-(--court-ink) dark:text-white">{item.title}</span>
                                         {item.excerpt && <span className="mt-3 block line-clamp-3 text-sm leading-relaxed text-(--court-muted)">{item.excerpt}</span>}
-                                        <span className="mt-auto pt-5 text-sm font-semibold text-(--court-navy) dark:text-(--court-brass-soft)">{text('news.read')} ›</span>
+                                        <span className="mt-auto pt-5 text-sm font-semibold text-(--court-navy) dark:text-(--court-brass-soft)">{text('news.read')} <span aria-hidden="true" className="court-arrow">›</span></span>
                                     </a>
                                 </li>
                             ))}
@@ -455,7 +481,11 @@ export default function PublicHome({
             {sections.resources.visible && resources.length > 0 && (
                 <Section id="resources" eyebrow={text('eyebrow.resources')} heading={sections.resources} tone="parchment" aside={hasMoreResources ? <MoreLink href={route('public.resources')}>{text('resources.all')}</MoreLink> : undefined}>
                     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                        {resources.map((resource) => <CourtResourceCard key={resource.id} resource={resource} />)}
+                        {resources.map((resource, index) => (
+                            <div key={resource.id} data-reveal style={stagger(index)} className="flex min-w-0 *:w-full">
+                                <CourtResourceCard resource={resource} />
+                            </div>
+                        ))}
                     </div>
                 </Section>
             )}
@@ -471,7 +501,7 @@ export default function PublicHome({
             {contactVisible && (
                 <Section id="contact" eyebrow={text('eyebrow.contact')} heading={sections.contact} tone="parchment">
                     <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-                        <div className="court-card p-6 sm:p-8">
+                        <div data-reveal className="court-card p-6 sm:p-8">
                             <dl className="grid gap-6 sm:grid-cols-2">
                                 {contactRows.map((row) => (
                                     <div key={row.key}>
@@ -486,14 +516,14 @@ export default function PublicHome({
                                 </a>
                             )}
                         </div>
-                        <div className="flex flex-col justify-between rounded-xl bg-(--court-ink) p-6 text-white sm:p-8">
+                        <div data-reveal style={stagger(1)} className="court-ink-card relative isolate flex flex-col justify-between overflow-hidden rounded-xl bg-(--court-ink) p-6 text-white sm:p-8">
                             <div>
                                 <p className="court-eyebrow court-eyebrow-light">{text('contact.partiesTitle')}</p>
                                 <p className="mt-4 text-base leading-relaxed text-slate-200">{text('contact.partiesText')}</p>
                             </div>
                             {portalUrl && (
-                                <a href={portalUrl} className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-(--court-brass) px-6 text-sm font-semibold text-(--court-ink) hover:bg-(--court-brass-soft)">
-                                    {text('contact.partiesAction')} <span aria-hidden="true">›</span>
+                                <a href={portalUrl} className="group mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-(--court-brass) px-6 text-sm font-semibold text-(--court-ink) hover:bg-(--court-brass-soft)">
+                                    {text('contact.partiesAction')} <span aria-hidden="true" className="court-arrow">›</span>
                                 </a>
                             )}
                         </div>

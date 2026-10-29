@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { useLocale } from '@/hooks/useLocale';
+import { CourtSeal } from '@/court/public/motion';
 
 /*
  * The court's inner public pages (publications, news, terms, the manual):
@@ -58,11 +59,14 @@ export function CourtPublicPageHeader({ title, eyebrow, meta, breadcrumbs, actio
 }) {
     return (
         <section aria-labelledby="page-heading" className="court-band pb-16 pt-10 sm:pb-20 sm:pt-14">
+            {/* The home hero's motion, quieter: the passing light and the seal settling at the band's end. */}
+            <div aria-hidden="true" className="court-hero-sweep" />
+            <CourtSeal className="court-band-seal" />
             <CourtPublicContainer className="relative">
                 {breadcrumbs && breadcrumbs.length > 0 && <CourtPublicBreadcrumbs items={breadcrumbs} />}
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                     <div className="court-rise min-w-0 max-w-3xl">
-                        {eyebrow && <p className="court-eyebrow court-eyebrow-light mb-4">{eyebrow}</p>}
+                        {eyebrow && <p className="court-eyebrow court-eyebrow-light court-eyebrow-draw mb-4">{eyebrow}</p>}
                         <h1 id="page-heading" className="text-3xl font-semibold tracking-tight text-white wrap-anywhere sm:text-4xl">{title}</h1>
                         {meta && <div className="mt-3 text-sm leading-relaxed text-slate-300">{meta}</div>}
                     </div>

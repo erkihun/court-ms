@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { router, usePage } from '@inertiajs/react';
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import { buttonClassName } from '@/Components/ui';
@@ -10,6 +10,7 @@ import { useBranding } from '@/hooks/useBranding';
 import { useLocale } from '@/hooks/useLocale';
 import { CourtEmblem } from '@/court/components/auth/CourtAuthLayout';
 import { usePublicText } from '@/court/i18n/usePublicText';
+import { useScrollProgress } from '@/court/public/motion';
 import type { PageProps } from '@/types';
 
 export interface CourtPublicLink {
@@ -83,6 +84,9 @@ export default function CourtPublicHeader({ portalUrl = null, authorityName = nu
     const { t } = usePublicText();
     const page = usePage<PageProps>();
     const [menuOpen, setMenuOpen] = useState(false);
+    const headerRef = useRef<HTMLElement>(null);
+    // A shadow once the page scrolls, and the brass reading-progress line along the header's foot.
+    useScrollProgress(headerRef);
     const links = useCourtPublicLinks();
     const courtName = useCourtName();
     const text = (key: string) => t(`court.publicSite.${key}`);
@@ -126,7 +130,8 @@ export default function CourtPublicHeader({ portalUrl = null, authorityName = nu
     );
 
     return (
-        <header className="public-header sticky top-0 z-40">
+        <header ref={headerRef} className="public-header court-header sticky top-0 z-40">
+            <span aria-hidden="true" className="court-progress" />
             <div className="bg-(--court-ink) text-[13px] text-slate-300">
                 <div className="mx-auto flex h-9 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
                     <span className="truncate font-medium tracking-wide text-(--court-brass-soft)">{authorityName || text('authority')}</span>
@@ -153,10 +158,10 @@ export default function CourtPublicHeader({ portalUrl = null, authorityName = nu
                                         <a
                                             href={link.href}
                                             aria-current={active ? 'page' : undefined}
-                                            className={`relative inline-flex h-20 items-center px-3 text-sm font-medium whitespace-nowrap transition-colors 2xl:px-4 ${active ? 'text-(--court-ink) dark:text-white' : 'text-(--court-muted) hover:text-(--court-ink) dark:hover:text-white'}`}
+                                            className={`group relative inline-flex h-20 items-center px-3 text-sm font-medium whitespace-nowrap transition-colors 2xl:px-4 ${active ? 'text-(--court-ink) dark:text-white' : 'text-(--court-muted) hover:text-(--court-ink) dark:hover:text-white'}`}
                                         >
                                             {link.label}
-                                            <span aria-hidden="true" className={`absolute inset-x-3 bottom-0 h-[3px] rounded-t bg-(--court-brass) transition-opacity ${active ? 'opacity-100' : 'opacity-0'}`} />
+                                            <span aria-hidden="true" className={`court-nav-rule absolute inset-x-3 bottom-0 h-[3px] rounded-t bg-(--court-brass) ${active ? 'is-active' : ''}`} />
                                         </a>
                                     </li>
                                 );

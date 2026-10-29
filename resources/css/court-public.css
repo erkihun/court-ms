@@ -79,6 +79,7 @@
 /* Inner pages: the same band, shorter. */
 .court-site .court-band {
     position: relative;
+    isolation: isolate;
     overflow: hidden;
     color: #ffffff;
     background:
@@ -146,11 +147,491 @@
 .court-site[data-motion='on'] .court-rise {
     animation: court-rise 0.55s ease both;
 }
+.court-site[data-motion='on'] .court-pub-delay-2 { animation-delay: 0.18s; }
+.court-site[data-motion='on'] .court-pub-delay-3 { animation-delay: 0.3s; }
 @media (prefers-reduced-motion: reduce) {
     .court-site .court-rise {
         animation: none !important;
     }
-    .court-site .court-card {
+    .court-site .court-card,
+    .court-site .court-header,
+    .court-site .court-nav-rule,
+    .court-site .court-arrow,
+    .court-site .court-service-icon {
+        transition: none !important;
+    }
+}
+
+/*
+ * ── Motion ─────────────────────────────────────────────────────────
+ *
+ * The court's motion on the public site (court/public/motion.tsx), in the
+ * language of the staff sign-in: calm, deliberate, in brass light.
+ *
+ *  - The hall (the home hero and the inner pages' band): a band of window
+ *    light crosses now and then, brass motes rise through it, the colonnade
+ *    rises at the foot, and the court's seal draws itself while its scales
+ *    swing, settle level and then sway a little (the beam turns on its
+ *    pivot, the pans counter-turn so they hang straight).
+ *  - The statement: the eyebrow's rule draws, then the words rise in turn;
+ *    the current slide's line fills over its nine seconds.
+ *  - As the page scrolls: section headings and items rise into place in a
+ *    short stagger, figures count up, the procedure's path draws across with
+ *    a light travelling it while each step lights as it passes, a brass line
+ *    along the header's foot shows how far the page has been read.
+ *  - Today: a live brass dot beside today's sittings.
+ *
+ * Only transform and opacity move (the steps' brief brass flash aside).
+ * Everything here waits for the "UI animations" setting (data-motion="on")
+ * and the visitor's `prefers-reduced-motion: no-preference`; otherwise the
+ * still picture shows at once: the seal drawn and level, every item in place,
+ * the lines full, the motes and light hidden.
+ */
+
+/* The still picture (and the parts that never move). */
+.court-site .court-hero-sweep {
+    position: absolute;
+    inset: -30% -50%;
+    z-index: -1;
+    opacity: 0;
+    pointer-events: none;
+    background: linear-gradient(105deg, transparent 42%, rgb(232 214 162 / 0.07) 47%, rgb(255 255 255 / 0.07) 50%, rgb(232 214 162 / 0.07) 53%, transparent 58%);
+}
+.court-site .court-motes {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    display: none;
+    overflow: hidden;
+}
+.court-site .court-motes span {
+    position: absolute;
+    bottom: -12px;
+    left: var(--x);
+    width: var(--s);
+    height: var(--s);
+    border-radius: 9999px;
+    background: var(--court-brass-soft);
+    box-shadow: 0 0 8px rgb(232 214 162 / 0.65);
+    opacity: 0;
+}
+.court-site .court-seal {
+    position: absolute;
+    z-index: -1;
+    display: none;
+    color: var(--court-brass);
+}
+.court-site .court-seal > * {
+    position: absolute;
+}
+.court-site .court-seal-ring {
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+.court-site .court-seal-scales {
+    inset: 20%;
+    width: 60%;
+    height: 60%;
+}
+.court-site .court-seal-glow {
+    inset: 18%;
+    border-radius: 9999px;
+    background: radial-gradient(circle, rgb(200 161 74 / 0.35), transparent 65%);
+}
+.court-site .court-seal-beam { transform-box: view-box; transform-origin: 32px 21px; }
+.court-site .court-seal-pan { transform-box: view-box; transform-origin: 19px 21px; --court-dir: -1; }
+.court-site .court-seal-pan-right { transform-origin: 45px 21px; }
+.court-site .court-hero-seal {
+    right: -7rem;
+    top: 50%;
+    width: 36rem;
+    height: 36rem;
+    translate: 0 -50%;
+    opacity: 0.17;
+}
+.court-site .court-band-seal {
+    right: -4rem;
+    top: 50%;
+    width: 19rem;
+    height: 19rem;
+    translate: 0 -50%;
+    opacity: 0.16;
+}
+@media (min-width: 1024px) {
+    .court-site .court-hero-seal { display: block; }
+}
+@media (min-width: 768px) {
+    .court-site .court-band-seal { display: block; }
+}
+
+.court-site .court-live {
+    position: relative;
+    display: inline-block;
+    flex-shrink: 0;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 9999px;
+    background: var(--court-brass);
+}
+.court-site .court-live::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--court-brass);
+    opacity: 0;
+}
+
+.court-site .court-slide-fill {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--court-brass);
+    transform-origin: left center;
+}
+
+.court-site .court-arrow {
+    display: inline-block;
+    transition: transform 0.25s ease;
+}
+.court-site .group:hover .court-arrow,
+.court-site .group:focus-visible .court-arrow {
+    transform: translateX(4px);
+}
+
+/* The header: a shadow once the page scrolls, and the reading-progress line along its foot. */
+.court-site .court-header {
+    transition: box-shadow 0.3s ease;
+}
+.court-site .court-header[data-scrolled] {
+    box-shadow: 0 12px 32px -22px rgb(12 26 49 / 0.55);
+}
+.court-site .court-progress {
+    position: absolute;
+    inset: auto 0 0;
+    z-index: 1;
+    height: 2px;
+    pointer-events: none;
+    background: linear-gradient(90deg, var(--court-brass), var(--court-brass-soft));
+    transform: scaleX(var(--progress, 0));
+    transform-origin: left center;
+}
+.court-site .court-nav-rule {
+    opacity: 0;
+    transform: scaleX(0);
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+.court-site .court-nav-rule.is-active {
+    opacity: 1;
+    transform: none;
+}
+.court-site .group:hover .court-nav-rule:not(.is-active) {
+    opacity: 0.55;
+    transform: scaleX(0.6);
+}
+
+/* Services: the icon tile turns to the court's ink on hover. */
+.court-site .court-service-icon {
+    transition: transform 0.35s ease, background-color 0.35s ease, color 0.35s ease;
+}
+.court-site .court-service:hover .court-service-icon {
+    color: var(--court-brass);
+    background-color: var(--court-ink);
+    transform: translateY(-2px) rotate(-6deg);
+}
+
+/* The registry card's slow brass light. */
+.court-site .court-ink-card::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    left: -30%;
+    top: -80%;
+    width: 160%;
+    aspect-ratio: 1;
+    background: conic-gradient(from 0deg, transparent 0deg, rgb(200 161 74 / 0.16) 50deg, transparent 110deg);
+    pointer-events: none;
+}
+
+.court-site .court-metric {
+    transition: background-color 0.3s ease;
+}
+.court-site .court-metric:hover {
+    background-color: var(--court-ink-soft);
+}
+
+@keyframes cp-word {
+    from { opacity: 0; transform: translateY(0.5em); filter: blur(6px); }
+    to { opacity: 1; transform: none; filter: none; }
+}
+@keyframes cp-rule {
+    from { transform: scaleX(0); }
+    to { transform: none; }
+}
+@keyframes cp-fade {
+    from { opacity: 0; }
+}
+@keyframes cp-image-in {
+    from { opacity: 0; }
+    to { opacity: 0.2; }
+}
+@keyframes cp-kenburns {
+    from { transform: scale(1.02); }
+    to { transform: scale(1.1) translate3d(-1.5%, -1%, 0); }
+}
+@keyframes cp-sweep {
+    0% { opacity: 0; transform: translateX(-55%); }
+    6% { opacity: 1; }
+    26% { opacity: 0; transform: translateX(55%); }
+    100% { opacity: 0; transform: translateX(55%); }
+}
+@keyframes cp-mote {
+    0% { opacity: 0; transform: translate3d(0, 0, 0); }
+    12% { opacity: 0.6; }
+    75% { opacity: 0.35; }
+    100% { opacity: 0; transform: translate3d(28px, -620px, 0); }
+}
+@keyframes cp-column {
+    from { opacity: 0; transform: scaleY(0.2); }
+    to { opacity: 1; transform: none; }
+}
+@keyframes cp-draw {
+    from { stroke-dashoffset: 100; }
+    to { stroke-dashoffset: 0; }
+}
+@keyframes cp-turn {
+    to { transform: rotate(360deg); }
+}
+@keyframes cp-glow {
+    0%, 100% { opacity: 0.55; transform: scale(0.94); }
+    50% { opacity: 1; transform: scale(1.04); }
+}
+@keyframes cp-weigh {
+    0% { transform: rotate(calc(var(--court-dir, 1) * -10deg)); }
+    22% { transform: rotate(calc(var(--court-dir, 1) * 6.5deg)); }
+    42% { transform: rotate(calc(var(--court-dir, 1) * -3.6deg)); }
+    60% { transform: rotate(calc(var(--court-dir, 1) * 1.9deg)); }
+    76% { transform: rotate(calc(var(--court-dir, 1) * -0.8deg)); }
+    90% { transform: rotate(calc(var(--court-dir, 1) * 0.3deg)); }
+    100% { transform: rotate(0deg); }
+}
+@keyframes cp-sway {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(calc(var(--court-dir, 1) * 1.4deg)); }
+    75% { transform: rotate(calc(var(--court-dir, 1) * -1.4deg)); }
+}
+@keyframes cp-fill {
+    from { transform: scaleX(0); }
+    to { transform: none; }
+}
+@keyframes cp-ping {
+    0% { opacity: 0.6; transform: scale(1); }
+    80%, 100% { opacity: 0; transform: scale(2.8); }
+}
+@keyframes cp-bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(3px); }
+}
+@keyframes cp-travel {
+    0% { left: 0; opacity: 0; }
+    8% { opacity: 1; }
+    92% { opacity: 1; }
+    100% { left: calc(100% - 60px); opacity: 0; }
+}
+@keyframes cp-step-light {
+    0% { box-shadow: 0 0 0 0 rgb(200 161 74 / 0.55); }
+    35% { color: var(--court-ink); background-color: var(--court-brass); box-shadow: 0 0 0 10px rgb(200 161 74 / 0); }
+    100% { box-shadow: 0 0 0 0 rgb(200 161 74 / 0); }
+}
+@keyframes cp-spin-slow {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    :root:has(.court-site[data-motion='on']) {
+        scroll-behavior: smooth;
+    }
+
+    /* The hall. */
+    .court-site[data-motion='on'] .court-hero-sweep {
+        animation: cp-sweep 15s ease-in-out 1.8s infinite;
+    }
+    .court-site[data-motion='on'] .court-motes {
+        display: block;
+    }
+    .court-site[data-motion='on'] .court-motes span {
+        animation: cp-mote var(--d) linear var(--t) infinite;
+    }
+    .court-site[data-motion='on'] .court-hero-image {
+        animation: cp-image-in 1.2s ease both, cp-kenburns 26s ease-in-out 1.2s infinite alternate;
+    }
+    .court-site[data-motion='on'] .court-hall-column {
+        transform-box: fill-box;
+        transform-origin: 50% 100%;
+        animation: cp-column 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+        animation-delay: calc(0.15s + var(--i, 0) * 70ms);
+    }
+    .court-site[data-motion='on'] .court-hall-roof {
+        animation: cp-fade 1s ease 0.85s both;
+    }
+    @supports (animation-timeline: scroll()) {
+        /* The colonnade falls behind a little as the page scrolls past the hall. */
+        .court-site[data-motion='on'] .court-hero-columns {
+            animation: cp-parallax linear both;
+            animation-timeline: scroll(root);
+            animation-range: 0 700px;
+        }
+        @keyframes cp-parallax {
+            to { transform: translateY(70px); }
+        }
+    }
+
+    /* The seal. */
+    .court-site[data-motion='on'] .court-seal-ring {
+        animation: cp-turn 110s linear infinite;
+    }
+    .court-site[data-motion='on'] .court-seal-ring-reverse {
+        animation-duration: 150s;
+        animation-direction: reverse;
+    }
+    .court-site[data-motion='on'] .court-seal-glow {
+        animation: cp-glow 7s ease-in-out infinite;
+    }
+    .court-site[data-motion='on'] .court-seal-draw {
+        stroke-dasharray: 100;
+        animation: cp-draw 1.6s cubic-bezier(0.6, 0, 0.3, 1) 0.3s both;
+    }
+    .court-site[data-motion='on'] .court-seal-fade {
+        animation: cp-fade 0.8s ease 1.2s both;
+    }
+    .court-site[data-motion='on'] .court-seal-d1 { animation-delay: 0.7s; }
+    .court-site[data-motion='on'] .court-seal-d2 { animation-delay: 1s; }
+    .court-site[data-motion='on'] .court-seal-d3 { animation-delay: 1.5s; }
+    .court-site[data-motion='on'] .court-seal-beam,
+    .court-site[data-motion='on'] .court-seal-pan {
+        animation: cp-weigh 3.2s cubic-bezier(0.37, 0, 0.3, 1) 1.4s both, cp-sway 9s ease-in-out 4.6s infinite;
+    }
+
+    /* The statement. */
+    .court-site[data-motion='on'] .court-word {
+        display: inline-block;
+        animation: cp-word 0.75s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+        animation-delay: calc(0.12s + var(--w, 0) * 65ms);
+    }
+    .court-site[data-motion='on'] .court-eyebrow-draw::before {
+        transform-origin: left center;
+        animation: cp-rule 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) 0.1s both;
+    }
+    .court-site[data-motion='on'] .court-slide-fill {
+        animation: cp-fill var(--slide, 9s) linear both;
+    }
+    .court-site[data-motion='on'] .court-slide-fill.is-paused {
+        animation-play-state: paused;
+    }
+    .court-site[data-motion='on'] .court-live::after {
+        animation: cp-ping 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+    .court-site[data-motion='on'] .court-nudge-down {
+        display: inline-block;
+        animation: cp-bob 2.4s ease-in-out infinite;
+    }
+    .court-site[data-motion='on'] .court-ink-card::before {
+        animation: cp-spin-slow 22s linear infinite;
+    }
+
+    /* Rising into view. The root has data-reveal-ready only once the observer runs. */
+    .court-site[data-motion='on'][data-reveal-ready] [data-reveal] {
+        transition: opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+        transition-delay: calc(var(--i, 0) * 85ms);
+    }
+    .court-site[data-motion='on'][data-reveal-ready] [data-reveal]:not([data-revealed]) {
+        opacity: 0;
+        transform: translateY(24px);
+    }
+    .court-site[data-motion='on'][data-reveal-ready] [data-reveal='row']:not([data-revealed]) {
+        transform: translateX(-12px);
+    }
+    /* The heading's eyebrow rule draws as it arrives. */
+    .court-site[data-motion='on'][data-reveal-ready] [data-reveal='heading'] .court-eyebrow::before {
+        transform-origin: left center;
+        transition: transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) 0.2s;
+    }
+    .court-site[data-motion='on'][data-reveal-ready] [data-reveal='heading']:not([data-revealed]) .court-eyebrow::before {
+        transform: scaleX(0);
+    }
+    /* A service's icon draws its line when the card arrives. */
+    .court-site[data-motion='on'][data-reveal-ready] [data-reveal] .court-service-icon path {
+        stroke-dasharray: 100;
+        transition: stroke-dashoffset 1.3s cubic-bezier(0.6, 0, 0.3, 1);
+        transition-delay: calc(0.25s + var(--i, 0) * 85ms);
+    }
+    .court-site[data-motion='on'][data-reveal-ready] [data-reveal]:not([data-revealed]) .court-service-icon path {
+        stroke-dashoffset: 100;
+    }
+    /* A figure's brass rule grows under it. */
+    .court-site[data-motion='on'][data-reveal-ready] [data-reveal] .court-metric-rule {
+        transform-origin: left center;
+        transition: transform 1.1s cubic-bezier(0.2, 0.7, 0.2, 1);
+        transition-delay: calc(0.35s + var(--i, 0) * 85ms);
+    }
+    .court-site[data-motion='on'][data-reveal-ready] [data-reveal]:not([data-revealed]) .court-metric-rule {
+        transform: scaleX(0);
+    }
+
+    /* The procedure's path: the line draws across, then the steps light in order and a light travels on. */
+    .court-site[data-motion='on'][data-reveal-ready] [data-reveal='path'] {
         transition: none;
+    }
+    .court-site[data-motion='on'][data-reveal-ready] [data-reveal='path']:not([data-revealed]) {
+        opacity: 1;
+        transform: none;
+    }
+    .court-site[data-motion='on'][data-reveal-ready] [data-reveal='path'] .court-path-line {
+        transform-origin: left center;
+        transition: transform 1.5s cubic-bezier(0.6, 0, 0.3, 1) 0.15s;
+    }
+    .court-site[data-motion='on'][data-reveal-ready] [data-reveal='path']:not([data-revealed]) .court-path-line {
+        transform: scaleX(0);
+    }
+    .court-site[data-motion='on'][data-reveal-ready] [data-reveal='path'] .court-proc-step {
+        transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+        transition-delay: calc(0.25s + var(--i, 0) * 0.24s);
+    }
+    .court-site[data-motion='on'][data-reveal-ready] [data-reveal='path']:not([data-revealed]) .court-proc-step {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    .court-site[data-motion='on'][data-reveal-ready] [data-reveal='path'][data-revealed] .court-proc-number {
+        animation: cp-step-light 1s ease both;
+        animation-delay: calc(0.45s + var(--i, 0) * 0.24s);
+    }
+    .court-site[data-motion='on'] .court-path-light {
+        position: absolute;
+        top: -2px;
+        left: 0;
+        width: 60px;
+        height: 5px;
+        border-radius: 9999px;
+        background: radial-gradient(ellipse at center, var(--court-brass-soft), transparent 70%);
+        opacity: 0;
+    }
+    .court-site[data-motion='on'][data-reveal-ready] [data-reveal='path'][data-revealed] .court-path-light {
+        animation: cp-travel 6.5s ease-in-out 1.8s infinite;
+    }
+
+    /* A question opens smoothly where the browser can size to its content. */
+    @supports (interpolate-size: allow-keywords) {
+        .court-site[data-motion='on'] {
+            interpolate-size: allow-keywords;
+        }
+        .court-site[data-motion='on'] .court-faq::details-content {
+            height: 0;
+            overflow: clip;
+            transition: height 0.35s ease, content-visibility 0.35s ease allow-discrete;
+        }
+        .court-site[data-motion='on'] .court-faq[open]::details-content {
+            height: auto;
+        }
     }
 }

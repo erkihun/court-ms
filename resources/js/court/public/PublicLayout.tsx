@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { Head } from '@inertiajs/react';
 import { useLocale } from '@/hooks/useLocale';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
@@ -6,6 +6,7 @@ import LocalizedUiProvider from '@/Components/ui/LocalizedUiProvider';
 import AppToaster from '@/Components/ui/AppToaster';
 import CourtPublicHeader from '@/court/public/CourtPublicHeader';
 import CourtPublicFooter from '@/court/public/CourtPublicFooter';
+import { useReveal } from '@/court/public/motion';
 import type { PublicSiteChrome } from '@/court/types/public';
 import '../../../css/public-site.css';
 import '../../../css/court-public.css';
@@ -29,6 +30,9 @@ interface Props {
 export default function PublicLayout({ title, description, publicSite = null, children }: Props) {
     const { t } = useLocale();
     const { getBoolean } = useSystemSettings();
+    const root = useRef<HTMLDivElement>(null);
+    // Sections and cards rise into place as they come into view (court/public/motion.tsx).
+    useReveal(root);
 
     return (
         <LocalizedUiProvider>
@@ -38,6 +42,7 @@ export default function PublicLayout({ title, description, publicSite = null, ch
             </Head>
 
             <div
+                ref={root}
                 className="public-site court-site flex min-h-screen flex-col"
                 data-motion={getBoolean('appearance.enable_ui_animations', true) ? 'on' : 'off'}
             >

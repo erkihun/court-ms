@@ -64,6 +64,7 @@ const publicSite = {
             sitting: 'Sitting',
             room: 'Room',
             none: 'No hearing is scheduled in the next two weeks.',
+            today: 'Today',
             note: 'A sitting may be moved; the parties are told in My Portal.',
         },
         news: {
@@ -164,6 +165,7 @@ const publicSite = {
             sitting: 'ችሎት',
             room: 'ክፍል',
             none: 'በሚቀጥሉት ሁለት ሳምንታት የተቀጠረ ችሎት የለም።',
+            today: 'ዛሬ',
             note: 'ችሎት ሊዛወር ይችላል፤ ተከራካሪዎች በየእኔ ፖርታል ይነገራቸዋል።',
         },
         news: {
