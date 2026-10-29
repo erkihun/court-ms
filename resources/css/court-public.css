@@ -635,3 +635,126 @@
         }
     }
 }
+
+/* ── The public display (Pages/Court/Public/Signage) ────────────────
+   A fixed stage scaled to the screen it is shown on (--scale, set by the
+   page): portrait 1080x1920 for the floor-standing screen, landscape
+   1920x1080 for a wall. Always the court's dark face: a lobby screen is read
+   from across the hall. */
+.court-site.court-signage {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    color: #e7eaf0;
+    background:
+        radial-gradient(ellipse at 88% -20%, rgb(200 161 74 / 0.16), transparent 55%),
+        radial-gradient(ellipse at -10% 120%, rgb(22 48 90 / 0.9), transparent 60%),
+        var(--court-ink);
+    color-scheme: dark;
+}
+.court-site.court-signage[data-idle] { cursor: none; }
+.court-site .court-signage-stage {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    isolation: isolate;
+    display: grid;
+    gap: 24px;
+    transform: translate(-50%, -50%) scale(var(--scale, 1));
+    transform-origin: center;
+}
+.court-site .court-signage-head { grid-area: head; }
+.court-site .court-signage-line { grid-area: line; }
+.court-site .court-signage-list { grid-area: list; }
+.court-site .court-signage-side { grid-area: side; display: grid; gap: 24px; min-height: 0; }
+.court-site .court-signage-foot { grid-area: foot; }
+
+/* Landscape: the cause list beside a column of figures, caseload and the turning panel. */
+.court-site.court-signage[data-orientation='landscape'] .court-signage-stage {
+    padding: 32px 48px 0;
+    grid-template-columns: minmax(0, 1fr) 600px;
+    grid-template-rows: 128px 3px minmax(0, 1fr) 104px;
+    grid-template-areas: 'head head' 'line line' 'list side' 'foot foot';
+}
+.court-site.court-signage[data-orientation='landscape'] .court-signage-side {
+    grid-template-rows: auto auto minmax(0, 1fr);
+}
+/* Portrait: the cause list runs down the screen; the figures, then caseload and panel side by side, below it. */
+.court-site.court-signage[data-orientation='portrait'] .court-signage-stage {
+    padding: 48px 48px 0;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 200px 3px minmax(0, 1fr) 560px 150px;
+    grid-template-areas: 'head' 'line' 'list' 'side' 'foot';
+}
+.court-site.court-signage[data-orientation='portrait'] .court-signage-side {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas: 'figures figures' 'caseload panel';
+}
+.court-site.court-signage[data-orientation='portrait'] .court-signage-figures { grid-area: figures; }
+.court-site.court-signage[data-orientation='portrait'] .court-signage-caseload { grid-area: caseload; }
+.court-site.court-signage[data-orientation='portrait'] .court-signage-panel { grid-area: panel; }
+/* The rule and the notices band run to the stage's edges. */
+.court-site .court-signage-line,
+.court-site .court-signage-foot {
+    margin-inline: -48px;
+    padding-inline: 48px;
+}
+.court-site .court-signage-line { padding-inline: 0; }
+
+.court-site .court-signage-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgb(200 161 74 / 0.16);
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.05), rgb(255 255 255 / 0.02));
+}
+.court-site .court-signage-rule {
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--court-brass), var(--court-brass-soft), var(--court-brass), transparent);
+}
+.court-site .court-signage-row[data-next] {
+    background: linear-gradient(90deg, rgb(200 161 74 / 0.2), rgb(200 161 74 / 0.04) 70%, transparent);
+    box-shadow: inset 4px 0 0 var(--court-brass);
+}
+/* Its cells, not the row: the row's entrance animation ends at full opacity. */
+.court-site .court-signage-row[data-past] > * { opacity: 0.45; }
+.court-site .court-signage-seal {
+    display: block;
+    top: 50%;
+    width: 220px;
+    height: 220px;
+    translate: 0 -50%;
+    opacity: 0.12;
+}
+.court-site.court-signage[data-orientation='landscape'] .court-signage-seal { right: 330px; }
+.court-site.court-signage[data-orientation='portrait'] .court-signage-seal { right: 0; top: 135%; width: 300px; height: 300px; opacity: 0.08; }
+.court-site .court-signage-tools {
+    transition: opacity 0.3s ease;
+}
+.court-site.court-signage[data-idle] .court-signage-tools {
+    opacity: 0;
+    pointer-events: none;
+}
+
+@keyframes cp-board-in {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: none; }
+}
+@keyframes cp-tick {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.25; }
+}
+@media (prefers-reduced-motion: no-preference) {
+    /* A page of the cause list, a notice and the side panel arrive in turn as they change. */
+    .court-site[data-motion='on'] .court-signage-in {
+        animation: cp-board-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+        animation-delay: calc(var(--i, 0) * 70ms);
+    }
+    .court-site[data-motion='on'] .court-signage-colon {
+        animation: cp-tick 2s steps(1) infinite;
+    }
+    .court-site[data-motion='on'] .court-signage-fill {
+        animation: cp-fill var(--page, 12s) linear both;
+    }
+}

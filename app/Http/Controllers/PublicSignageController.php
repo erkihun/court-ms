@@ -3,20 +3,28 @@
 namespace App\Http\Controllers;
 
 use App\Models\Announcement;
-use App\Models\CaseHearing;
 use App\Models\CourtCase;
-use App\Models\SystemSetting;
-use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Mews\Purifier\Facades\Purifier;
 
 class PublicSignageController extends Controller
 {
+    /** How many of today's sittings the board pages through, and how many filings and case types it lists. */
+    public const HEARING_LIMIT = 60;
+
+    public const FILING_LIMIT = 6;
+
+    public const CASE_TYPE_LIMIT = 5;
+
     /**
-     * Digital signage dashboard (1920x1080) for public display.
+     * The court's wall board (a 1920x1080 screen in the lobby): today's cause
+     * list with times and rooms, today's figures, the caseload and the active
+     * notices. It is public, so it shows case numbers and types, a filing
+     * party's initials only, and no staff: the board once listed every active
+     * account as "on duty", which was neither true nor the public's to see.
      */
     public function show()
     {
@@ -26,12 +34,9 @@ class PublicSignageController extends Controller
         // to UTC, the window lost every case filed after 21:00 in Addis Ababa.
         $startOfDay = $now->copy()->startOfDay();
         $endOfDay = $now->copy()->endOfDay();
-        $todayDate = $now->toDateString();
-
-        $totalCases = CourtCase::count();
 
         $statusCounts = CourtCase::select(
-            DB::raw("COALESCE(NULLIF(status, ''), 'Unspecified') as label"),
+            DB::raw("COALESCE(NULLIF(status, ''), 'unspecified') as label"),
             DB::raw('count(*) as total')
         )
             ->groupBy('label')
@@ -40,57 +45,46 @@ class PublicSignageController extends Controller
 
         $categoryCounts = DB::table('court_cases as c')
             ->leftJoin('case_types as t', 't.id', '=', 'c.case_type_id')
-            ->select(
-                DB::raw("COALESCE(t.name, 'Uncategorized') as name"),
-                DB::raw('count(*) as total')
-            )
-            ->groupBy('name')
+            ->select('t.name', DB::raw('count(*) as total'))
+            ->groupBy('t.name')
             ->orderByDesc('total')
-            ->limit(6)
+            ->limit(self::CASE_TYPE_LIMIT)
             ->get();
 
-        $todayCases = CourtCase::select('id', 'case_number', 'status', 'case_type_id', 'created_at', 'applicant_id')
-            ->with([
-                'caseType:id,name',
-                'applicant:id,first_name,middle_name,last_name',
-            ])
-            ->whereBetween('created_at', [$startOfDay, $endOfDay])
+        $filedToday = CourtCase::query()->whereBetween('created_at', [$startOfDay, $endOfDay]);
+
+        $todayCases = (clone $filedToday)
+            ->select('id', 'case_number', 'case_type_id', 'created_at', 'applicant_id')
+            ->with(['caseType:id,name', 'applicant:id,first_name,middle_name,last_name'])
             ->latest('created_at')
-            ->limit(8)
+            ->limit(self::FILING_LIMIT)
             ->get();
 
-        $todayHearings = CaseHearing::select('id', 'case_id', 'hearing_at')
-            ->with([
-                'courtCase:id,case_number,case_type_id,title,applicant_id',
-                'courtCase.caseType:id,name',
-                'courtCase.applicant:id,first_name,middle_name,last_name',
-            ])
-            ->whereDate('hearing_at', $todayDate)
-            ->orderBy('hearing_at')
-            ->limit(8)
-            ->get();
+        $hearingsToday = DB::table('case_hearings as h')
+            ->join('court_cases as c', 'c.id', '=', 'h.case_id')
+            ->whereBetween('h.hearing_at', [$startOfDay, $endOfDay]);
 
-        $activeAnnouncements = Announcement::select('id', 'title', 'content', 'created_at')
+        $todayHearings = (clone $hearingsToday)
+            ->leftJoin('case_types as t', 't.id', '=', 'c.case_type_id')
+            ->orderBy('h.hearing_at')
+            ->orderBy('h.id')
+            ->limit(self::HEARING_LIMIT)
+            ->get(['h.id', 'h.hearing_at', 'h.type', 'h.location', 'c.case_number', 't.name as case_type']);
+
+        $announcements = Announcement::select('id', 'title', 'content', 'created_at')
             ->where('status', 'active')
             ->latest('created_at')
-            ->limit(3)
+            ->limit(5)
             ->get();
-
-        $activeStaff = User::active()
-            ->select('id', 'name', 'position', 'avatar_path')
-            ->orderBy('name')
-            ->limit(12)
-            ->get();
-
-        $settings = SystemSetting::query()->first();
 
         return Inertia::render('Court/Public/Signage', [
             'now' => $now->toIso8601String(),
-            'appName' => (string) ($settings->app_name ?? config('app.name', 'Justice Portal')),
-            'logoUrl' => $settings?->logo_path ? Storage::url($settings->logo_path) : asset('favicon.ico'),
-            'totalCases' => (int) $totalCases,
+            'timezone' => $tz,
+            'totalCases' => CourtCase::count(),
+            'filedToday' => (clone $filedToday)->count(),
+            'hearingsToday' => (clone $hearingsToday)->count(),
             'statusCounts' => $statusCounts->map(fn ($stat): array => ['label' => (string) $stat->label, 'total' => (int) $stat->total])->values(),
-            'categoryCounts' => $categoryCounts->map(fn ($cat): array => ['name' => (string) $cat->name, 'total' => (int) $cat->total])->values(),
+            'categoryCounts' => $categoryCounts->map(fn ($cat): array => ['name' => $cat->name, 'total' => (int) $cat->total])->values(),
             'todayCases' => $todayCases->map(function (CourtCase $case): array {
                 // A public screen shows initials only: the party can recognise
                 // their case next to its number, a passer-by cannot identify anyone.
@@ -107,33 +101,36 @@ class PublicSignageController extends Controller
                     'case_type' => $case->caseType?->name,
                 ];
             })->values(),
-            'todayHearings' => $todayHearings->map(function (CaseHearing $hearing): array {
-                $raw = (string) ($hearing->getRawOriginal('hearing_at') ?? '');
+            'todayHearings' => $todayHearings->map(function (object $row): array {
+                // The stored wall-clock time, as the public site's hearing list shows it.
+                $raw = (string) $row->hearing_at;
 
                 return [
-                    'id' => $hearing->id,
-                    'case_id' => $hearing->case_id,
-                    'case_number' => $hearing->courtCase?->case_number,
-                    'case_type' => $hearing->courtCase?->caseType?->name,
-                    'hearing_at' => $hearing->hearing_at ? Carbon::parse($hearing->hearing_at)->toIso8601String() : null,
-                    'time' => strlen($raw) >= 19 ? substr($raw, 11, 8) : null,
+                    'id' => (int) $row->id,
+                    'time' => strlen($raw) >= 16 ? substr($raw, 11, 5) : null,
+                    'case_number' => $row->case_number,
+                    'case_type' => $row->case_type,
+                    'type' => $row->type,
+                    'location' => $row->location,
                 ];
             })->values(),
-            'activeAnnouncements' => $activeAnnouncements->map(fn (Announcement $announcement): array => [
+            'announcements' => $announcements->map(fn (Announcement $announcement): array => [
                 'id' => $announcement->id,
                 'title' => (string) $announcement->title,
-                // Keep announcement HTML within the configured default profile.
-                'content' => (string) Purifier::clean($announcement->content ?? '', 'default'),
+                // The board reads a notice as one line of text; the full notice is on the news page.
+                'summary' => $this->plainText((string) $announcement->content, 220),
                 'created_at' => $announcement->created_at?->toIso8601String(),
             ])->values(),
-            'activeStaff' => $activeStaff->map(fn (User $person): array => [
-                'id' => $person->id,
-                'name' => (string) $person->name,
-                'position' => $person->position,
-                'avatar_url' => $person->avatar_path ? Storage::url($person->avatar_path) : null,
-            ])->values(),
-            // The Blade board refreshed itself every 120 seconds (meta refresh).
-            'refreshSeconds' => 120,
+            'refreshSeconds' => 60,
         ]);
+    }
+
+    /** A notice's HTML as plain text: cleaned, tags dropped with a space each, whitespace folded, shortened. */
+    private function plainText(string $html, int $limit): string
+    {
+        $clean = (string) Purifier::clean($html, 'default');
+        $text = html_entity_decode(strip_tags(str_replace('<', ' <', $clean)), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        return Str::limit(trim((string) preg_replace('/\s+/u', ' ', $text)), $limit);
     }
 }

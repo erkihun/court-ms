@@ -191,25 +191,28 @@ export interface SignageCase {
 
 export interface SignageHearing {
     id: number;
-    case_id: number;
+    /** The stored time of day (HH:MM), as the public site's hearing list shows it. */
+    time: string | null;
     case_number: string | null;
     case_type: string | null;
-    hearing_at: string | null;
-    /** The stored time of day (HH:MM:SS), as the Blade board printed it. */
-    time: string | null;
+    /** The sitting (a free-text kind of hearing) and the room. */
+    type: string | null;
+    location: string | null;
 }
 
 export interface PublicSignageProps {
+    /** The server's clock (ISO 8601, the court's time zone) when the board was read. */
     now: string;
-    appName: string;
-    logoUrl: string | null;
+    timezone: string;
     totalCases: number;
+    filedToday: number;
+    hearingsToday: number;
     statusCounts: Array<{ label: string; total: number }>;
-    categoryCounts: Array<{ name: string; total: number }>;
+    /** The largest case types; a null name is a case without a type. */
+    categoryCounts: Array<{ name: string | null; total: number }>;
     todayCases: SignageCase[];
     todayHearings: SignageHearing[];
-    activeAnnouncements: Array<{ id: number; title: string; content: string; created_at: string | null }>;
-    activeStaff: Array<{ id: number; name: string; position: string | null; avatar_url: string | null }>;
+    announcements: Array<{ id: number; title: string; summary: string; created_at: string | null }>;
     /** Seconds between automatic refreshes of the board. */
     refreshSeconds: number;
 }

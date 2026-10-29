@@ -97,34 +97,71 @@ test('the user manual is not found while it is switched off', function (): void 
     $this->get(route('landing.user-manual'))->assertNotFound();
 });
 
-test('the signage board renders the live figures, today\'s activity, announcements and staff', function (): void {
+test('the signage board renders today\'s cause list, figures, caseload and notices', function (): void {
     $type = CaseType::query()->create(['name' => 'Labour']);
     $case = CourtCase::query()->create([
         'case_number' => 'SG-0001', 'title' => 'Signage case', 'case_type_id' => $type->id,
         'filing_date' => now()->toDateString(), 'status' => 'pending',
     ]);
-    DB::table('case_hearings')->insert([
-        'case_id' => $case->id, 'hearing_at' => now()->setTime(10, 30)->format('Y-m-d H:i:s'), 'created_at' => now(), 'updated_at' => now(),
+    $hearing = fn (string $time, ?string $room) => DB::table('case_hearings')->insert([
+        'case_id' => $case->id, 'hearing_at' => now()->format('Y-m-d').' '.$time, 'type' => 'Mention', 'location' => $room,
+        'created_at' => now(), 'updated_at' => now(),
     ]);
-    Announcement::query()->create(['title' => 'Holiday', 'content' => '<p>Closed Friday.</p><script>x</script>', 'status' => 'active']);
-    User::factory()->create(['name' => 'Abebe Kebede', 'status' => 'active', 'position' => 'Registrar']);
+    $hearing('14:00:00', null);
+    $hearing('10:30:00', 'Bench 2');
+    DB::table('case_hearings')->insert([
+        'case_id' => $case->id, 'hearing_at' => now()->addDay()->format('Y-m-d').' 09:00:00', 'created_at' => now(), 'updated_at' => now(),
+    ]);
+    Announcement::query()->create(['title' => 'Holiday', 'content' => '<p>Closed&nbsp;Friday.</p><p>Back Monday.</p><script>x</script>', 'status' => 'active']);
+    Announcement::query()->create(['title' => 'Old', 'content' => '<p>Gone.</p>', 'status' => 'inactive']);
 
     $this->get(route('public.signage'))
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('Court/Public/Signage')
             ->where('totalCases', 1)
+            ->where('filedToday', 1)
+            ->where('hearingsToday', 2)
             ->where('statusCounts.0', ['label' => 'pending', 'total' => 1])
             ->where('categoryCounts.0', ['name' => 'Labour', 'total' => 1])
             ->where('todayCases.0.case_number', 'SG-0001')
             ->where('todayCases.0.case_type', 'Labour')
-            ->where('todayHearings.0.case_number', 'SG-0001')
-            ->where('todayHearings.0.time', '10:30:00')
-            ->where('activeAnnouncements.0.title', 'Holiday')
-            ->where('activeAnnouncements.0.content', fn (string $html): bool => str_contains($html, 'Closed Friday.') && ! str_contains($html, '<script'))
-            ->where('activeStaff', fn ($staff): bool => collect($staff)->contains(fn (array $person): bool => $person['name'] === 'Abebe Kebede' && $person['position'] === 'Registrar'))
-            ->where('refreshSeconds', 120)
-            ->has('now')->has('appName')->has('logoUrl'));
+            // Today's sittings in time order, with the sitting and the room; tomorrow's is not on today's board.
+            ->has('todayHearings', 2)
+            ->where('todayHearings.0', fn ($row): bool => $row['time'] === '10:30' && $row['case_number'] === 'SG-0001'
+                && $row['case_type'] === 'Labour' && $row['type'] === 'Mention' && $row['location'] === 'Bench 2')
+            ->where('todayHearings.1.time', '14:00')
+            ->where('todayHearings.1.location', null)
+            // A notice is one line of plain text: no markup, no script, the paragraphs spaced.
+            ->has('announcements', 1)
+            ->where('announcements.0.title', 'Holiday')
+            ->where('announcements.0.summary', 'Closed Friday. Back Monday.')
+            ->where('refreshSeconds', 60)
+            ->where('timezone', config('app.timezone'))
+            ->has('now')
+            ->missing('activeStaff')->missing('activeAnnouncements'));
+});
+
+test('the signage board counts all of today, lists a screenful, and names no staff', function (): void {
+    $type = CaseType::query()->create(['name' => 'Labour']);
+    foreach (range(1, 8) as $n) {
+        CourtCase::query()->create([
+            'case_number' => sprintf('SG-%04d', $n), 'title' => "Case {$n}", 'case_type_id' => $type->id,
+            'filing_date' => now()->toDateString(), 'status' => 'active',
+        ]);
+    }
+    CourtCase::query()->create(['case_number' => 'SG-NOSTATUS', 'title' => 'No status', 'case_type_id' => $type->id, 'filing_date' => now()->toDateString(), 'status' => '']);
+    User::factory()->create(['name' => 'Abebe Kebede', 'status' => 'active', 'position' => 'Registrar']);
+
+    $this->get(route('public.signage'))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('filedToday', 9)
+            ->has('todayCases', 6)
+            ->where('statusCounts', fn ($counts): bool => collect($counts)->pluck('total', 'label')->all() === ['active' => 8, 'unspecified' => 1])
+            ->where('categoryCounts', [['name' => 'Labour', 'total' => 9]]))
+        ->assertDontSee('Abebe Kebede', false)
+        ->assertDontSee('Registrar', false);
 });
 
 test('the signage board\'s today is the day in Addis Ababa, evening included', function (): void {

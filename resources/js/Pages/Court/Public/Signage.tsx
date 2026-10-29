@@ -1,372 +1,485 @@
 import { Head, router } from '@inertiajs/react';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import LocalizedDateDisplay from '@/Components/Calendar/LocalizedDateDisplay';
-import RichTextViewer from '@/Components/forms/RichTextViewer';
 import LocalizedUiProvider from '@/Components/ui/LocalizedUiProvider';
+import { CourtEmblem } from '@/court/components/auth/CourtAuthLayout';
 import { usePublicText } from '@/court/i18n/usePublicText';
-import type { PublicSignageProps } from '@/court/types/public';
+import { useCourtName } from '@/court/public/CourtPublicHeader';
+import { CountUp, CourtSeal, stagger } from '@/court/public/motion';
+import type { PublicSignageProps, SignageHearing } from '@/court/types/public';
+import { useSystemSettings } from '@/hooks/useSystemSettings';
+import '../../../../css/court-public.css';
 
-const STATUS_COLORS: Record<string, { bar: string; text: string; border: string }> = {
-    active: { bar: 'bg-blue-600', text: 'text-blue-700', border: 'border-blue-200' },
-    pending: { bar: 'bg-amber-500', text: 'text-amber-700', border: 'border-amber-200' },
-    closed: { bar: 'bg-slate-400', text: 'text-slate-700', border: 'border-slate-200' },
-    hearing: { bar: 'bg-blue-600', text: 'text-blue-700', border: 'border-blue-200' },
-    dismissed: { bar: 'bg-rose-600', text: 'text-rose-700', border: 'border-rose-200' },
+/** The two stages: a floor-standing screen stands portrait, a wall screen lies landscape. */
+type Orientation = 'portrait' | 'landscape';
+const STAGES: Record<Orientation, { width: number; height: number }> = {
+    portrait: { width: 1080, height: 1920 },
+    landscape: { width: 1920, height: 1080 },
+};
+/** The height of one sitting on the cause list (stage pixels); a page holds as many as fit. */
+const ROW_HEIGHT = 72;
+/** The seconds each page, notice and side panel stays. */
+const PAGE_SECONDS = 12;
+const NOTICE_SECONDS = 14;
+const PANEL_SECONDS = 16;
+/** After this long without a cursor movement the cursor and the screen tools hide. */
+const IDLE_MS = 4000;
+
+const STATUS_TONES: Record<string, string> = {
+    pending: '#c8a14a',
+    active: '#7fb2ff',
+    adjourned: '#b79cff',
+    closed: '#94a3b8',
+    dismissed: '#f28b8b',
 };
 
-/** Str::limit($text, 18), as the Blade board shortened applicant names. */
-function limit(text: string, length: number): string {
-    return [...text].length > length ? `${[...text].slice(0, length).join('')}...` : text;
+/** The time of day in the court's zone: hours and minutes (24-hour, as hearing times are stored) and seconds. */
+function useCourtClock(serverNow: string, timezone: string) {
+    // The screen's own clock may be wrong; the board keeps the server's, read at each refresh.
+    const skew = useMemo(() => {
+        const server = new Date(serverNow).getTime();
+        return Number.isNaN(server) ? 0 : server - Date.now();
+    }, [serverNow]);
+    const [tick, setTick] = useState(() => Date.now());
+
+    useEffect(() => {
+        let timer = 0;
+        const next = () => {
+            setTick(Date.now());
+            timer = window.setTimeout(next, 1000 - ((Date.now() + skew) % 1000));
+        };
+        timer = window.setTimeout(next, 1000 - ((Date.now() + skew) % 1000));
+        return () => window.clearTimeout(timer);
+    }, [skew]);
+
+    const format = useMemo(() => {
+        const options: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' };
+        try {
+            return new Intl.DateTimeFormat('en-GB', { ...options, timeZone: timezone });
+        } catch {
+            return new Intl.DateTimeFormat('en-GB', options);
+        }
+    }, [timezone]);
+
+    const parts = Object.fromEntries(format.formatToParts(new Date(tick + skew)).map((part) => [part.type, part.value]));
+    return { tick, hm: `${parts.hour}:${parts.minute}`, hours: parts.hour, minutes: parts.minute, seconds: parts.second, format };
 }
 
-function Panel({ icon, title, subtitle, badge, children }: { icon: string; title: string; subtitle: string; badge?: ReactNode; children: ReactNode }) {
+/**
+ * The stage for this screen and its scale. A portrait screen (taller than
+ * wide) gets the portrait stage; `?orientation=portrait|landscape` fixes it
+ * for a kiosk whose browser reports its size wrongly.
+ */
+function useStage(): { orientation: Orientation; scale: number } {
+    const read = (): { orientation: Orientation; scale: number } => {
+        const forced = new URLSearchParams(window.location.search).get('orientation');
+        const orientation: Orientation = forced === 'portrait' || forced === 'landscape'
+            ? forced
+            : (window.innerHeight > window.innerWidth ? 'portrait' : 'landscape');
+        const stage = STAGES[orientation];
+        return { orientation, scale: Math.min(window.innerWidth / stage.width, window.innerHeight / stage.height) };
+    };
+    const [state, setState] = useState(read);
+    useEffect(() => {
+        const fit = () => setState(read());
+        window.addEventListener('resize', fit);
+        return () => window.removeEventListener('resize', fit);
+    }, []);
+    return state;
+}
+
+/** How many items of a given height fit in a box (stage pixels, so the scale does not matter). */
+function useFit(box: RefObject<HTMLElement | null>, itemHeight: number, fallback: number, watch: unknown): number {
+    const [count, setCount] = useState(fallback);
+    useEffect(() => {
+        const element = box.current;
+        if (!element || typeof ResizeObserver === 'undefined') return undefined;
+        const measure = () => setCount(Math.max(1, Math.floor(element.clientHeight / itemHeight)));
+        measure();
+        const observer = new ResizeObserver(measure);
+        observer.observe(element);
+        return () => observer.disconnect();
+    }, [box, itemHeight, watch]);
+    return count;
+}
+
+/** Cycles 0..count-1 every `seconds`; restarts when `reset` changes. */
+function useRotation(count: number, seconds: number, reset?: unknown): number {
+    const [index, setIndex] = useState(0);
+    useEffect(() => setIndex(0), [reset]);
+    useEffect(() => {
+        if (count < 2) return undefined;
+        const timer = window.setInterval(() => setIndex((current) => (current + 1) % count), seconds * 1000);
+        return () => window.clearInterval(timer);
+    }, [count, seconds]);
+    return count > 0 ? index % count : 0;
+}
+
+/** Keeps the screen awake while the board shows, where the browser allows it. */
+function useWakeLock() {
+    useEffect(() => {
+        let lock: WakeLockSentinel | null = null;
+        const acquire = async () => {
+            if (document.visibilityState !== 'visible' || !('wakeLock' in navigator)) return;
+            try {
+                lock = await navigator.wakeLock.request('screen');
+            } catch {
+                // Not allowed here (no user gesture, a policy): the screen's own power settings apply.
+            }
+        };
+        void acquire();
+        document.addEventListener('visibilitychange', acquire);
+        return () => {
+            document.removeEventListener('visibilitychange', acquire);
+            void lock?.release().catch(() => undefined);
+        };
+    }, []);
+}
+
+function Card({ title, aside, children, className = '' }: { title: string; aside?: ReactNode; children: ReactNode; className?: string }) {
     return (
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_10px_25px_-5px_rgba(0,0,0,0.05)]">
-            <div className="border-b border-slate-100 bg-linear-to-r from-slate-50 to-white px-6 py-5">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50" aria-hidden="true">
-                            <svg className="h-6 w-6 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}><path d={icon} /></svg>
-                        </div>
-                        <div>
-                            <h2 className="text-lg font-bold text-slate-900">{title}</h2>
-                            <p className="mt-0.5 text-sm text-slate-500">{subtitle}</p>
-                        </div>
-                    </div>
-                    {badge}
-                </div>
+        <section className={`court-signage-card flex min-h-0 min-w-0 flex-col p-7 ${className}`}>
+            <div className="mb-5 flex items-center justify-between gap-4">
+                <h2 className="text-[26px] font-semibold tracking-wide text-(--court-brass-soft)">{title}</h2>
+                {aside}
             </div>
-            <div className="p-6">{children}</div>
+            {children}
         </section>
     );
 }
 
+function Dots({ count, active, seconds }: { count: number; active: number; seconds: number }) {
+    if (count < 2) return null;
+    return (
+        <span aria-hidden="true" className="flex items-center gap-2">
+            {Array.from({ length: Math.min(count, 12) }).map((_, index) => (
+                <span key={index} className="relative h-2.5 w-10 overflow-hidden rounded-full bg-white/15">
+                    {index === active && (
+                        <span key={`${active}-${count}`} className="court-signage-fill absolute inset-0 origin-left rounded-full bg-(--court-brass)" style={{ '--page': `${seconds}s` } as CSSProperties} />
+                    )}
+                    {index < active && <span className="absolute inset-0 rounded-full bg-(--court-brass)/50" />}
+                </span>
+            ))}
+        </span>
+    );
+}
+
 /**
- * The public display board (PublicSignageController): live totals, the case
- * distribution and categories, today's filings and hearings, active
- * announcements and the staff on duty. It is a screen for a wall display,
- * not a document, so it has no site header or footer, and it refreshes its
- * data on the interval the Blade board's meta refresh used.
+ * The court's public display (PublicSignageController), for the screen in
+ * the lobby, standing (portrait, 1080x1920) or on a wall (landscape,
+ * 1920x1080): the court's name and clock, today's cause list paged a screen
+ * at a time with the next sitting marked, today's figures and the caseload,
+ * and the notices, one after another. It is a screen, not a document: no site
+ * header or footer, the stage scaled to the display, the cursor and the
+ * full-screen button hidden while nobody moves the mouse, and the screen kept
+ * awake. It re-reads its data every minute; a failed read leaves the last
+ * figures up and says how old they are, never an error page.
  */
 export default function PublicSignage(props: PublicSignageProps) {
-    const { t, fill, locale } = usePublicText();
-    const { now, appName, logoUrl, totalCases, statusCounts, categoryCounts, todayCases, todayHearings, activeAnnouncements, activeStaff, refreshSeconds } = props;
-    const number = new Intl.NumberFormat(locale === 'am' ? 'am-ET' : 'en-US');
-    const maxCategory = Math.max(1, ...categoryCounts.map((category) => category.total));
-    const updatedAt = new Date(now);
-    const updatedTime = Number.isNaN(updatedAt.getTime())
-        ? ''
-        : updatedAt.toLocaleTimeString(locale === 'am' ? 'am-ET' : 'en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+    const { t, tx, fill, locale } = usePublicText();
+    const { getBoolean, getString } = useSystemSettings();
+    const courtName = useCourtName();
+    const logoUrl = getString('general.identity_system_logo_url');
+    const { now, timezone, totalCases, filedToday, hearingsToday, statusCounts, categoryCounts, todayCases, todayHearings, announcements, refreshSeconds } = props;
+    const s = (key: string) => t(`court.publicSite.signage.${key}`);
+    const number = useMemo(() => new Intl.NumberFormat(locale === 'am' ? 'am-ET' : 'en-US'), [locale]);
+    const formatNumber = (value: number) => number.format(value);
 
+    const clock = useCourtClock(now, timezone);
+    const { orientation, scale } = useStage();
+    const portrait = orientation === 'portrait';
+    const stage = STAGES[orientation];
+    const listBox = useRef<HTMLDivElement>(null);
+    // Re-measured when the orientation changes or the list first appears.
+    const rows = useFit(listBox, ROW_HEIGHT, 8, `${orientation}-${todayHearings.length > 0}`);
+    const panelBox = useRef<HTMLDivElement>(null);
+    useWakeLock();
+
+    // Re-read every minute in place; a failed read keeps what is on screen.
+    const [readAt, setReadAt] = useState(() => Date.now());
+    useEffect(() => setReadAt(Date.now()), [now]);
     useEffect(() => {
-        const timer = window.setInterval(() => router.reload(), Math.max(30, refreshSeconds) * 1000);
+        const timer = window.setInterval(() => router.reload({
+            showProgress: false,
+            onHttpException: () => false,
+            onNetworkError: () => false,
+        }), Math.max(30, refreshSeconds) * 1000);
         return () => window.clearInterval(timer);
     }, [refreshSeconds]);
+    const stale = clock.tick - readAt > Math.max(30, refreshSeconds) * 2500;
+    const readTime = clock.format.format(new Date(now)).slice(0, 5);
 
-    const statusLabel = (label: string) => {
-        const key = `cm.signage.status_labels.${label.toLowerCase()}`;
-        const value = t(key);
-        return value === key ? label : value;
+    // Nobody at the mouse: hide the cursor and the screen tools.
+    const [idle, setIdle] = useState(false);
+    const [fullscreen, setFullscreen] = useState(false);
+    useEffect(() => {
+        let timer = window.setTimeout(() => setIdle(true), IDLE_MS);
+        const wake = () => {
+            setIdle(false);
+            window.clearTimeout(timer);
+            timer = window.setTimeout(() => setIdle(true), IDLE_MS);
+        };
+        const onFullscreen = () => setFullscreen(document.fullscreenElement !== null);
+        window.addEventListener('pointermove', wake);
+        window.addEventListener('keydown', wake);
+        document.addEventListener('fullscreenchange', onFullscreen);
+        return () => {
+            window.clearTimeout(timer);
+            window.removeEventListener('pointermove', wake);
+            window.removeEventListener('keydown', wake);
+            document.removeEventListener('fullscreenchange', onFullscreen);
+        };
+    }, []);
+    const toggleFullscreen = () => {
+        if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined);
+        else void document.documentElement.requestFullscreen?.().catch(() => undefined);
     };
 
-    const todayBadge = (tone: 'blue' | 'amber') => (
-        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${tone === 'blue' ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-600'}`}>{t('cm.signage.today')}</span>
+    // The cause list, a page at a time; the next sitting is marked and the ones before it dimmed.
+    const pages = useMemo(() => {
+        const out: SignageHearing[][] = [];
+        for (let index = 0; index < todayHearings.length; index += rows) out.push(todayHearings.slice(index, index + rows));
+        return out;
+    }, [todayHearings, rows]);
+    const page = useRotation(pages.length, PAGE_SECONDS, `${pages.length}-${rows}`);
+    const nextTime = todayHearings.find((hearing) => hearing.time !== null && hearing.time >= clock.hm)?.time ?? null;
+
+    const notice = useRotation(announcements.length, NOTICE_SECONDS, announcements.length);
+    const panel = useRotation(2, PANEL_SECONDS);
+    // The turning panel shows as many filings (44px) or case types (56px) as its box holds.
+    const panelFits = { filings: useFit(panelBox, 44, 3, orientation), types: useFit(panelBox, 56, 3, orientation) };
+    const statusTotal = Math.max(1, statusCounts.reduce((sum, stat) => sum + stat.total, 0));
+    const maxType = Math.max(1, ...categoryCounts.map((category) => category.total));
+    const statusLabel = (label: string) => (label === 'unspecified' ? s('unspecified') : tx(`cm.cases.status.${label.toLowerCase()}`, label));
+    const current = announcements[notice];
+    const columns = portrait ? 'grid-cols-[132px_270px_minmax(0,1fr)_190px]' : 'grid-cols-[150px_300px_minmax(0,1fr)_260px]';
+
+    const figures = (
+        <Card title={s('today')} aside={<span className="court-live h-3! w-3!" aria-hidden="true" />} className="court-signage-figures">
+            <dl className="grid grid-cols-3 gap-6">
+                {([
+                    ['hearingsToday', hearingsToday],
+                    ['filedToday', filedToday],
+                    ['totalCases', totalCases],
+                ] as const).map(([key, value]) => (
+                    <div key={key} className="flex min-w-0 flex-col-reverse">
+                        <dt className="mt-2 text-lg leading-snug text-slate-300">{s(key)}</dt>
+                        <dd className={`font-semibold tabular-nums leading-none text-white ${portrait ? 'text-[64px]' : 'text-[56px]'}`}>
+                            <CountUp value={value} format={formatNumber} />
+                        </dd>
+                    </div>
+                ))}
+            </dl>
+        </Card>
+    );
+
+    const caseload = (
+        <Card title={s('caseload')} className="court-signage-caseload">
+            <div className="flex h-4 overflow-hidden rounded-full bg-white/10" aria-hidden="true">
+                {statusCounts.map((stat) => (
+                    <span key={stat.label} style={{ width: `${(stat.total / statusTotal) * 100}%`, background: STATUS_TONES[stat.label.toLowerCase()] ?? '#64748b' }} />
+                ))}
+            </div>
+            <ul className={`mt-5 grid gap-y-3 ${portrait ? 'grid-cols-1' : 'grid-cols-2 gap-x-6'}`}>
+                {statusCounts.map((stat) => (
+                    <li key={stat.label} className="flex items-center justify-between gap-3 text-xl">
+                        <span className="flex min-w-0 items-center gap-2.5 text-slate-200">
+                            <span aria-hidden="true" className="h-3 w-3 shrink-0 rounded-sm" style={{ background: STATUS_TONES[stat.label.toLowerCase()] ?? '#64748b' }} />
+                            <span className="truncate">{statusLabel(stat.label)}</span>
+                        </span>
+                        <span className="tabular-nums text-white">
+                            {formatNumber(stat.total)}
+                            <span className="ml-2 text-slate-400">{Math.round((stat.total / statusTotal) * 100)}%</span>
+                        </span>
+                    </li>
+                ))}
+            </ul>
+        </Card>
+    );
+
+    // Turns between today's filings and the largest case types.
+    const turning = (
+        <Card
+            className="court-signage-panel"
+            title={panel === 0 ? s('filedToday') : s('caseTypes')}
+            aside={<Dots count={2} active={panel} seconds={PANEL_SECONDS} />}
+        >
+            <div ref={panelBox} className="min-h-0 flex-1 overflow-hidden">
+            <div key={panel}>
+                {panel === 0 ? (
+                    todayCases.length === 0 ? (
+                        <p className="court-signage-in text-xl text-slate-300">{s('noneFiled')}</p>
+                    ) : (
+                        <ul className="grid">
+                            {todayCases.slice(0, panelFits.filings).map((item, index) => (
+                                <li key={item.id} className="court-signage-in grid h-11 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 border-b border-white/6" style={stagger(index)}>
+                                    <span className="font-mono text-[22px] font-semibold text-white">{item.case_number ?? '—'}</span>
+                                    <span className="truncate text-lg text-slate-400">{item.case_type ?? s('untyped')}</span>
+                                    <span className="text-lg text-slate-300" title={s('party')}>{item.applicant ?? '—'}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    )
+                ) : (
+                    <ul className="grid">
+                        {categoryCounts.slice(0, panelFits.types).map((category, index) => (
+                            <li key={category.name ?? '—'} className="court-signage-in flex h-14 flex-col justify-center" style={stagger(index)}>
+                                <div className="mb-1.5 flex items-baseline justify-between gap-4 text-xl">
+                                    <span className="truncate text-slate-100">{category.name ?? s('untyped')}</span>
+                                    <span className="tabular-nums text-white">{formatNumber(category.total)}</span>
+                                </div>
+                                <div className="h-2.5 overflow-hidden rounded-full bg-white/10" aria-hidden="true">
+                                    <div className="h-full rounded-full bg-linear-to-r from-(--court-brass-strong) to-(--court-brass)" style={{ width: `${(category.total / maxType) * 100}%` }} />
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
+            </div>
+        </Card>
     );
 
     return (
         <LocalizedUiProvider>
-            <Head title={t('cm.signage.title')} />
+            <Head title={`${s('title')} · ${courtName}`} />
 
-            <div className="min-h-screen bg-linear-135 from-slate-50 via-slate-100 to-slate-200 text-slate-900">
-                <div className="fixed right-4 top-4 z-20 flex items-center gap-2 rounded-full bg-white px-4 py-2 shadow-lg ring-1 ring-slate-900/5" role="status">
-                    <span className="relative flex h-3 w-3" aria-hidden="true">
-                        <span className="absolute inset-0 animate-ping rounded-full bg-emerald-500 opacity-75 motion-reduce:animate-none" />
-                        <span className="relative h-3 w-3 rounded-full bg-emerald-500" />
-                    </span>
-                    <span className="text-sm font-semibold text-slate-700">{t('cm.signage.live_updates')}</span>
-                </div>
-
-                <main className="mx-auto grid min-h-screen max-w-7xl items-start gap-6 p-4 sm:p-6 lg:p-8 xl:grid-cols-[3fr_2fr]">
-                    <div className="flex min-w-0 flex-col gap-6">
-                        <header className="overflow-hidden rounded-2xl border border-blue-700/30 bg-linear-to-br from-blue-900 via-blue-800 to-blue-900 text-white shadow-2xl">
-                            <div className="relative px-6 py-6 md:px-8 md:py-8">
-                                <div className="absolute inset-0 opacity-10" aria-hidden="true" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '20px 20px' }} />
-                                <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-                                    <div className="flex items-center gap-5">
-                                        <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border-2 border-white/20 bg-white/10 p-3 shadow-xl backdrop-blur-sm">
-                                            {logoUrl && <img className="h-full w-full object-contain drop-shadow-lg" src={logoUrl} alt="" />}
-                                        </div>
-                                        <div className="min-w-0">
-                                            <div className="mb-1 flex items-center gap-2">
-                                                <span className="text-xs font-semibold uppercase text-blue-200/90">{t('cm.signage.court_management')}</span>
-                                                <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400 motion-reduce:animate-none" aria-hidden="true" />
-                                            </div>
-                                            <h1 className="text-2xl font-black tracking-tight drop-shadow-lg md:text-3xl">{appName}</h1>
-                                            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm font-medium text-blue-100">
-                                                <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 backdrop-blur-sm">
-                                                    <LocalizedDateDisplay value={now} withTime />
-                                                </span>
-                                                <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 backdrop-blur-sm">{t('cm.signage.public_display')}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="md:text-right">
-                                        <div className="inline-block rounded-xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm">
-                                            <p className="mb-2 text-xs font-semibold uppercase text-blue-200/80">{t('cm.signage.total_cases')}</p>
-                                            <div className="flex items-baseline gap-2 md:justify-end">
-                                                <p className="text-5xl font-black leading-none tracking-tight drop-shadow-xl md:text-6xl">{number.format(totalCases)}</p>
-                                                <span className="text-lg font-bold text-blue-200">{t('cm.signage.cases')}</span>
-                                            </div>
-                                            <p className="mt-2 text-xs font-medium text-blue-200/70">{t('cm.signage.across_departments')}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </header>
-
-                        <div className="grid gap-6 md:grid-cols-2">
-                            <Panel
-                                icon="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                                title={t('cm.signage.case_distribution')}
-                                subtitle={t('cm.signage.status_breakdown')}
-                                badge={(
-                                    <span className="inline-flex items-center gap-1 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">
-                                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-orange-500 motion-reduce:animate-none" aria-hidden="true" />
-                                        {t('cm.signage.live_status')}
-                                    </span>
-                                )}
-                            >
-                                <ul className="grid gap-4">
-                                    {statusCounts.map((stat) => {
-                                        const pct = totalCases > 0 ? Math.round((stat.total / totalCases) * 100) : 0;
-                                        const color = STATUS_COLORS[stat.label.toLowerCase()] ?? STATUS_COLORS.active;
-                                        return (
-                                            <li key={stat.label} className={`rounded-xl border bg-white p-3 ${color.border}`}>
-                                                <div className="mb-2 flex items-center justify-between">
-                                                    <span className="font-semibold text-slate-900">{statusLabel(stat.label)}</span>
-                                                    <span className="text-lg font-bold text-slate-900">{number.format(stat.total)}</span>
-                                                </div>
-                                                <div className="flex items-center gap-3">
-                                                    <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-200" aria-hidden="true">
-                                                        <div className={`h-full rounded-full ${color.bar}`} style={{ width: `${pct}%` }} />
-                                                    </div>
-                                                    <span className={`min-w-12 text-right text-sm font-bold ${color.text}`}>{pct}%</span>
-                                                </div>
-                                            </li>
-                                        );
-                                    })}
-                                </ul>
-                            </Panel>
-
-                            <Panel
-                                icon="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                                title={t('cm.signage.case_categories')}
-                                subtitle={t('cm.signage.top_categories')}
-                                badge={(
-                                    <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-                                        {fill(t('cm.signage.top_count_label'), { count: categoryCounts.length })}
-                                    </span>
-                                )}
-                            >
-                                <ul className="grid gap-4">
-                                    {categoryCounts.map((category) => {
-                                        const pct = Math.round((category.total / maxCategory) * 100);
-                                        return (
-                                            <li key={category.name} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4">
-                                                <div className="flex min-w-0 items-center gap-4">
-                                                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-blue-50 to-blue-100">
-                                                        <span className="text-lg font-bold text-blue-700">{category.total}</span>
-                                                    </div>
-                                                    <div className="min-w-0">
-                                                        <h3 className="truncate font-semibold text-slate-900">{category.name}</h3>
-                                                        <div className="mt-2 flex items-center gap-2">
-                                                            <div className="h-2 w-24 overflow-hidden rounded-full bg-slate-200" aria-hidden="true">
-                                                                <div className="h-full rounded-full bg-linear-to-r from-blue-500 to-blue-600" style={{ width: `${pct}%` }} />
-                                                            </div>
-                                                            <span className="text-sm text-slate-500">{pct}%</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <span className="text-sm font-medium text-slate-500">{t('cm.signage.cases')}</span>
-                                            </li>
-                                        );
-                                    })}
-                                </ul>
-                            </Panel>
-                        </div>
-
-                        <Panel
-                            icon="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                            title={t('cm.signage.todays_activity')}
-                            subtitle={t('cm.signage.live_status')}
-                            badge={(
-                                <div className="flex flex-wrap gap-2 text-sm font-semibold">
-                                    <span className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-blue-700">
-                                        <span className="h-2 w-2 rounded-full bg-blue-500" aria-hidden="true" />
-                                        {todayCases.length} {t('cm.signage.new_submissions')}
-                                    </span>
-                                    <span className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-amber-700">
-                                        <span className="h-2 w-2 rounded-full bg-amber-500" aria-hidden="true" />
-                                        {todayHearings.length} {t('cm.signage.hearings')}
-                                    </span>
-                                </div>
-                            )}
-                        >
-                            <div className="grid gap-6 lg:grid-cols-2">
-                                <div className="space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <h3 className="text-base font-bold text-slate-900">{t('cm.signage.new_submissions')}</h3>
-                                            <p className="mt-0.5 text-sm text-slate-500">{t('cm.signage.live_status')}</p>
-                                        </div>
-                                        {todayBadge('blue')}
-                                    </div>
-                                    <div className="max-h-[300px] overflow-y-auto rounded-xl border border-slate-200">
-                                        <table className="w-full text-sm">
-                                            <thead className="sticky top-0 bg-slate-50">
-                                                <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                                                    <th scope="col" className="px-4 py-3">{t('cm.signage.case_number')}</th>
-                                                    <th scope="col" className="px-4 py-3">{t('cm.signage.applicant_column')}</th>
-                                                    <th scope="col" className="px-4 py-3">{t('cm.cases.case_type')}</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-slate-100">
-                                                {todayCases.length === 0 ? (
-                                                    <tr><td colSpan={3} className="px-4 py-8 text-center text-slate-400">{t('cm.signage.no_new_submissions')}</td></tr>
-                                                ) : todayCases.map((item) => (
-                                                    <tr key={item.id}>
-                                                        <td className="px-4 py-3 font-mono text-sm font-bold text-slate-800">{item.case_number ?? `${t('cm.signage.case_number')} ${item.id}`}</td>
-                                                        <td className="px-4 py-3 text-slate-700">{limit(item.applicant ?? t('cm.signage.unknown_applicant'), 18)}</td>
-                                                        <td className="px-4 py-3">
-                                                            <span className="inline-flex items-center rounded-md border border-blue-100 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
-                                                                {item.case_type ?? t('cm.signage.general_case_type')}
-                                                            </span>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <h3 className="text-base font-bold text-slate-900">{t('cm.signage.scheduled_hearings')}</h3>
-                                            <p className="mt-0.5 text-sm text-slate-500">{t('cm.signage.live_status')}</p>
-                                        </div>
-                                        {todayBadge('amber')}
-                                    </div>
-                                    <div className="max-h-[300px] overflow-y-auto rounded-xl border border-slate-200">
-                                        <table className="w-full text-sm">
-                                            <thead className="sticky top-0 bg-slate-50">
-                                                <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                                                    <th scope="col" className="px-4 py-3">{t('cm.signage.case_number')}</th>
-                                                    <th scope="col" className="px-4 py-3">{t('cm.signage.time')}</th>
-                                                    <th scope="col" className="px-4 py-3">{t('cm.signage.type')}</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-slate-100">
-                                                {todayHearings.length === 0 ? (
-                                                    <tr><td colSpan={3} className="px-4 py-8 text-center text-slate-400">{t('cm.signage.no_hearings')}</td></tr>
-                                                ) : todayHearings.map((hearing) => (
-                                                    <tr key={hearing.id}>
-                                                        <td className="px-4 py-3 font-mono text-sm font-bold text-slate-800">{hearing.case_number ?? `${t('cm.signage.case_number')} ${hearing.case_id}`}</td>
-                                                        <td className="px-4 py-3 font-medium text-slate-800">
-                                                            <LocalizedDateDisplay value={hearing.hearing_at} fallback="-" /> {hearing.time ?? '-'}
-                                                        </td>
-                                                        <td className="px-4 py-3">
-                                                            <span className="inline-flex items-center rounded-md border border-blue-100 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
-                                                                {hearing.case_type ?? t('cm.signage.hearings')}
-                                                            </span>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </Panel>
-
-                        <section className="rounded-2xl border border-slate-200 bg-linear-to-r from-white to-slate-50 p-4 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.05)]">
-                            <div className="mb-3 flex items-center justify-between gap-3">
-                                <div>
-                                    <h2 className="text-base font-bold text-slate-900">{t('cm.signage.active_announcements')}</h2>
-                                    <p className="text-xs text-slate-500">{t('cm.signage.today')}</p>
-                                </div>
-                                <span className="rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600">
-                                    {activeAnnouncements.length} {t('cm.signage.active_announcements')}
+            <div
+                className="court-site court-signage"
+                data-motion={getBoolean('appearance.enable_ui_animations', true) ? 'on' : 'off'}
+                data-orientation={orientation}
+                data-idle={idle ? '' : undefined}
+            >
+                <div
+                    className="court-signage-stage"
+                    style={{ width: stage.width, height: stage.height, '--scale': scale } as CSSProperties}
+                >
+                    {/* The court and the clock. */}
+                    <header className="court-signage-head relative flex items-center justify-between gap-8">
+                        <CourtSeal className="court-signage-seal" />
+                        <div className="flex min-w-0 items-center gap-6">
+                            {logoUrl ? (
+                                <img src={logoUrl} alt="" className="h-24 w-24 shrink-0 rounded-full bg-white object-contain p-1.5 ring-2 ring-(--court-brass)/50" />
+                            ) : (
+                                <span aria-hidden="true" className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-(--court-ink-soft) text-(--court-brass) ring-2 ring-(--court-brass)/50">
+                                    <CourtEmblem className="h-14 w-14" />
                                 </span>
+                            )}
+                            <div className="min-w-0">
+                                <p className="text-lg font-semibold uppercase tracking-[0.2em] text-(--court-brass)">{t('court.publicSite.authority')} · {t('court.publicSite.courtKind')}</p>
+                                <h1 className={`mt-1 font-semibold leading-tight text-white ${portrait ? 'line-clamp-3 text-[40px]' : 'line-clamp-2 text-[44px]'}`}>{courtName}</h1>
                             </div>
-                            <div className="space-y-4">
-                                {activeAnnouncements.length === 0 ? (
-                                    <p className="text-sm text-slate-500">{t('cm.signage.no_active_announcements')}</p>
-                                ) : activeAnnouncements.map((announcement) => (
-                                    <article key={announcement.id} className="rounded-xl border border-slate-100 bg-white/80 p-3">
-                                        <h3 className="text-sm font-semibold text-slate-900">{announcement.title}</h3>
-                                        <p className="mb-2 text-xs text-slate-500"><LocalizedDateDisplay value={announcement.created_at} /></p>
-                                        <RichTextViewer html={announcement.content} className="text-justify text-xs text-slate-600" />
-                                    </article>
-                                ))}
-                            </div>
-                        </section>
-                    </div>
+                        </div>
+                        <div className="shrink-0 text-right">
+                            <p className="font-semibold tabular-nums leading-none text-white" aria-label={clock.hm}>
+                                <span className={portrait ? 'text-[104px]' : 'text-[92px]'}>{clock.hours}<span className="court-signage-colon">:</span>{clock.minutes}</span>
+                                <span className="ml-2 text-4xl text-(--court-brass)">{clock.seconds}</span>
+                            </p>
+                            <p className="mt-2 text-2xl text-slate-300"><LocalizedDateDisplay value={now.slice(0, 10)} /></p>
+                        </div>
+                    </header>
 
-                    <Panel
-                        icon="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
-                        title={t('cm.signage.on_duty_staff')}
-                        subtitle={t('cm.signage.currently_active_personnel')}
-                        badge={(
-                            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                                <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500 motion-reduce:animate-none" aria-hidden="true" />
-                                {activeStaff.length} {t('cm.signage.active_staff_label')}
+                    <div className="court-signage-rule court-signage-line" aria-hidden="true" />
+
+                    {/* Today's cause list. */}
+                    <Card
+                        className="court-signage-list"
+                        title={s('causeList')}
+                        aside={(
+                            <span className="flex items-center gap-4 text-xl text-slate-300">
+                                {pages.length > 1 && fill(s('pageOf'), { n: page + 1, total: pages.length })}
+                                <Dots count={pages.length} active={page} seconds={PAGE_SECONDS} />
                             </span>
                         )}
                     >
-                        {activeStaff.length === 0 ? (
-                            <div className="rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-10 text-center text-slate-400">
-                                <p className="font-medium">{t('cm.signage.no_staff')}</p>
-                                <p className="text-sm">{t('cm.signage.offline_staff')}</p>
+                        {todayHearings.length === 0 ? (
+                            <div className="flex flex-1 flex-col items-center justify-center gap-5 text-center">
+                                <CourtEmblem className="h-24 w-24 text-(--court-brass)/60" />
+                                <p className="text-3xl text-slate-300">{s('noneToday')}</p>
                             </div>
                         ) : (
-                            <ul className="grid gap-4 sm:grid-cols-2">
-                                {activeStaff.map((person) => (
-                                    <li key={person.id} className="flex items-center gap-4 rounded-xl border border-slate-200 bg-linear-to-r from-white to-slate-50 p-4">
-                                        <div className="relative shrink-0">
-                                            <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl bg-linear-to-br from-blue-500 to-blue-600 text-xl font-bold text-white shadow-md">
-                                                {person.avatar_url
-                                                    ? <img className="h-full w-full object-cover" src={person.avatar_url} alt={person.name} />
-                                                    : [...(person.name || 'N/A')][0]?.toLocaleUpperCase()}
+                            <div role="table" aria-label={s('causeList')} className="flex min-h-0 flex-1 flex-col">
+                                <div role="row" className={`grid ${columns} gap-4 border-b border-white/10 px-5 pb-3 text-base font-semibold uppercase tracking-[0.16em] text-slate-400`}>
+                                    <span role="columnheader">{t('court.publicSite.hearings.time')}</span>
+                                    <span role="columnheader">{t('court.publicSite.hearings.case')}</span>
+                                    <span role="columnheader">{t('court.publicSite.hearings.caseType')} · {t('court.publicSite.hearings.sitting')}</span>
+                                    <span role="columnheader">{t('court.publicSite.hearings.room')}</span>
+                                </div>
+                                <div ref={listBox} className="min-h-0 flex-1 overflow-hidden">
+                                <div key={`${page}-${rows}`} role="rowgroup">
+                                    {(pages[page] ?? []).map((hearing, index) => {
+                                        const past = hearing.time !== null && hearing.time < clock.hm;
+                                        const next = hearing.time !== null && hearing.time === nextTime;
+                                        return (
+                                            <div
+                                                key={hearing.id}
+                                                role="row"
+                                                className={`court-signage-row court-signage-in grid ${columns} h-[72px] items-center gap-4 border-b border-white/6 px-5`}
+                                                data-next={next ? '' : undefined}
+                                                data-past={past ? '' : undefined}
+                                                style={stagger(index)}
+                                            >
+                                                <span role="cell" className="text-[32px] font-semibold tabular-nums text-white">{hearing.time ?? '—'}</span>
+                                                <span role="cell" className="truncate font-mono text-[26px] font-semibold text-white">{hearing.case_number ?? '—'}</span>
+                                                <span role="cell" className="min-w-0">
+                                                    <span className="block truncate text-[22px] text-slate-100">{hearing.case_type ?? '—'}</span>
+                                                    {hearing.type && <span className="block truncate text-lg text-slate-400">{hearing.type}</span>}
+                                                </span>
+                                                <span role="cell" className="flex min-w-0 items-center justify-between gap-3">
+                                                    <span className="truncate text-[22px] text-slate-100">{hearing.location ?? '—'}</span>
+                                                    {next && (
+                                                        <span className="shrink-0 rounded-full bg-(--court-brass) px-3 py-1 text-base font-bold uppercase tracking-wider text-(--court-ink)">
+                                                            {s('next')}
+                                                        </span>
+                                                    )}
+                                                </span>
                                             </div>
-                                            <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white bg-emerald-500" aria-hidden="true" />
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <h3 className="truncate font-bold text-slate-900">{person.name}</h3>
-                                            <p className="truncate text-sm text-slate-600">{person.position ?? t('cm.signage.staff_position_fallback')}</p>
-                                            <span className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-                                                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500 motion-reduce:animate-none" aria-hidden="true" />
-                                                {t('cm.signage.on_duty')}
-                                            </span>
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
+                                        );
+                                    })}
+                                </div>
+                                </div>
+                                <p className="pt-4 text-lg text-slate-400">{t('court.publicSite.hearings.note')}</p>
+                            </div>
                         )}
+                    </Card>
 
-                        <div className="mt-8 flex items-center justify-between border-t border-slate-200 pt-6">
-                            <div>
-                                <p className="text-sm font-semibold text-slate-900">{t('cm.signage.public_display')}</p>
-                                <p className="text-xs text-slate-500">{t('cm.signage.auto_refresh')}</p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-xs font-medium text-slate-500">{t('cm.signage.updated')}</p>
-                                <p className="text-sm font-bold text-slate-900">{updatedTime}</p>
-                            </div>
+                    <div className="court-signage-side">
+                        {figures}
+                        {caseload}
+                        {turning}
+                    </div>
+
+                    {/* The notices, one after another, and how fresh the board is. */}
+                    <footer className="court-signage-foot flex items-center gap-8 border-t border-(--court-brass)/25 bg-black/25">
+                        <span className="inline-flex shrink-0 items-center rounded-md bg-(--court-brass) px-4 py-2 text-xl font-bold uppercase tracking-[0.14em] text-(--court-ink)">
+                            {s('notices')}
+                        </span>
+                        <div className="min-w-0 flex-1" aria-live="off">
+                            {current ? (
+                                <div key={current.id} className="court-signage-in min-w-0">
+                                    <p className="truncate text-[26px] font-semibold text-white">{current.title}</p>
+                                    {current.summary && <p className={`mt-1 text-xl text-slate-300 ${portrait ? 'line-clamp-2' : 'truncate'}`}>{current.summary}</p>}
+                                </div>
+                            ) : (
+                                <p className="text-xl text-slate-400">{s('noNotices')}</p>
+                            )}
                         </div>
-                    </Panel>
-                </main>
+                        <div className={`flex shrink-0 gap-3 ${portrait ? 'flex-col items-end' : 'items-center gap-8'}`}>
+                            <Dots count={announcements.length} active={notice} seconds={NOTICE_SECONDS} />
+                            <p className={`text-lg ${stale ? 'font-semibold text-amber-300' : 'text-slate-400'}`} role="status">
+                                {fill(s(stale ? 'stale' : 'updated'), { time: readTime })}
+                            </p>
+                        </div>
+                    </footer>
+                </div>
+
+                <button
+                    type="button"
+                    onClick={toggleFullscreen}
+                    className="court-signage-tools fixed left-1/2 top-4 z-20 -translate-x-1/2 rounded-md border border-white/20 bg-(--court-ink)/90 px-4 py-2 text-sm font-semibold text-white shadow-lg hover:bg-(--court-navy) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--court-brass)"
+                >
+                    {fullscreen ? s('exitFullscreen') : s('fullscreen')}
+                </button>
             </div>
         </LocalizedUiProvider>
     );

@@ -95,7 +95,7 @@ Respondent registration and login routes redirect to the applicant login form wi
 - Mark all read: `/respondent/notifications/mark-all`.
 
 ## Other public pages
-- Public signage display (for kiosk/TV): `/signage`.
+- Public display for the lobby screen: `/signage`. It shows today's hearings (time, case number, case type, sitting, room, the next sitting marked), today's figures, the caseload and the active notices, and refreshes every minute. A screen taller than wide (the floor-standing display) gets the portrait layout (1080x1920), a wide one the landscape layout (1920x1080); add `?orientation=portrait` or `?orientation=landscape` to fix it. Open it full screen on the display; the cursor hides when the mouse is still.
 - Public letter preview: `/case-letters/{letter}` (access-controlled).
 - Terms and conditions: `/terms`.
 
