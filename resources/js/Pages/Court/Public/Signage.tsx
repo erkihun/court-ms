@@ -20,7 +20,7 @@ const STAGES: Record<Orientation, { width: number; height: number }> = {
  * the least height as fit; a single short page lets its rows grow, up to the
  * most, so the list fills the column instead of ending halfway down it.
  */
-const ROW_MIN: Record<Orientation, number> = { portrait: 84, landscape: 66 };
+const ROW_MIN: Record<Orientation, number> = { portrait: 72, landscape: 64 };
 const ROW_MAX = 120;
 /** The seconds each page and each notice stays. */
 const PAGE_SECONDS = 12;
@@ -32,6 +32,14 @@ const SHIFT_MINUTES = 4;
 const SHIFTS = [[0, 0], [3, 2], [-2, 3], [2, -3], [-3, -2]] as const;
 /** Each bench keeps one colour, in the benches' fixed order. */
 const BENCH_TONES = ['#d4ad57', '#7fb2ff', '#8fd3a8', '#e7a0c8', '#b79cff', '#f0b37e'];
+/** The caseload bar's colour for each case status. */
+const STATUS_TONES: Record<string, string> = {
+    pending: '#d4ad57',
+    active: '#7fb2ff',
+    adjourned: '#b79cff',
+    closed: '#8b98ab',
+    dismissed: '#ee8b8b',
+};
 
 const ETH_MONTHS_AM = ['', 'መስከረም', 'ጥቅምት', 'ኅዳር', 'ታኅሣሥ', 'ጥር', 'የካቲት', 'መጋቢት', 'ሚያዝያ', 'ግንቦት', 'ሰኔ', 'ሐምሌ', 'ነሐሴ', 'ጳጉሜ'];
 const WEEKDAYS_AM = ['እሑድ', 'ሰኞ', 'ማክሰኞ', 'ረቡዕ', 'ሐሙስ', 'ዓርብ', 'ቅዳሜ'];
@@ -247,7 +255,9 @@ function Bench({ hearing, tone, large = false }: { hearing: SignageHearing; tone
 export default function PublicSignage(props: PublicSignageProps) {
     const { getBoolean } = useSystemSettings();
     const branding = useBranding();
-    const { now, timezone, benches, today, nextDay, decisions, announcements, registry, portal, refreshSeconds } = props;
+    const { now, timezone, benches, today, nextDay, decisions, stats, week, announcements, registry, portal, refreshSeconds } = props;
+    const number = useMemo(() => new Intl.NumberFormat('am-ET'), []);
+    const statusLabel = (label: string) => (publicSite.am.signage.status as Record<string, string>)[label.toLowerCase()] ?? label;
 
     // The letterhead names the court by its office, not by the system's name.
     const courtName = `${say('crestOffice')} ${say('crestCourt')}`;
@@ -493,6 +503,67 @@ export default function PublicSignage(props: PublicSignageProps) {
                             </article>
                         </section>
                     )}
+
+                    {/* The court in figures, and this week's sitting days. */}
+                    <section className="sg-overview">
+                        <div className="sg-stats-card">
+                            <h2>{say('statsTitle')}</h2>
+                            <dl className="sg-figures">
+                                {([
+                                    ['hearingsToday', stats.hearings_today],
+                                    ['hearingsWeek', stats.hearings_week],
+                                    ['filedToday', stats.filed_today],
+                                    ['decisionsMonth', stats.decisions_month],
+                                ] as const).map(([key, value]) => (
+                                    <div key={key}>
+                                        <dt>{say(key)}</dt>
+                                        <dd>{number.format(value)}</dd>
+                                    </div>
+                                ))}
+                            </dl>
+                            <div className="sg-caseload">
+                                <p className="sg-caseload-head">
+                                    {say('totalCases')}
+                                    <b>{number.format(stats.total_cases)}</b>
+                                </p>
+                                <div className="sg-bar" aria-hidden="true">
+                                    {stats.by_status.map((stat) => (
+                                        <span key={stat.label} style={{ flexGrow: stat.total, background: STATUS_TONES[stat.label.toLowerCase()] ?? '#64748b' }} />
+                                    ))}
+                                </div>
+                                <ul className="sg-legend">
+                                    {stats.by_status.map((stat) => (
+                                        <li key={stat.label}>
+                                            <span aria-hidden="true" style={{ background: STATUS_TONES[stat.label.toLowerCase()] ?? '#64748b' }} />
+                                            {statusLabel(stat.label)}
+                                            <b>{number.format(stat.total)}</b>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                        <div className="sg-week-card">
+                            <h2>{say('weekTitle')}</h2>
+                            {week.length === 0 ? (
+                                <p className="sg-week-none">{say('weekNone')}</p>
+                            ) : (
+                                <ul className="sg-week">
+                                    {week.map((entry) => {
+                                        const label = ethiopianDay(entry.date);
+                                        const isToday = entry.date === today.date;
+                                        return (
+                                            <li key={entry.date} data-today={isToday ? '' : undefined}>
+                                                <span className="sg-week-day">{label.weekday}</span>
+                                                <span className="sg-week-date">{label.date.replace(/ ቀን .*$/, '')}</span>
+                                                {isToday && <span className="sg-week-mark">{say('todayMark')}</span>}
+                                                <b>{say('sittings', { n: number.format(entry.count) })}</b>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            )}
+                        </div>
+                    </section>
 
                     {/* Decisions released lately, by case number. */}
                     {decisions.length > 0 && (

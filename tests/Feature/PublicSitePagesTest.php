@@ -186,6 +186,35 @@ test('the signage board lists decisions released to the parties lately, by case 
         ->assertDontSee('Private reasons', false);
 });
 
+test('the signage board gives the court\'s figures and this week\'s sitting days', function (): void {
+    $type = CaseType::query()->create(['name' => 'Labour']);
+    $open = CourtCase::query()->create(['case_number' => 'SG-0006', 'title' => 'Open', 'case_type_id' => $type->id, 'filing_date' => now()->toDateString(), 'status' => 'active']);
+    $old = CourtCase::query()->create(['case_number' => 'SG-0007', 'title' => 'Old', 'case_type_id' => $type->id, 'filing_date' => now()->subMonth()->toDateString(), 'status' => 'closed']);
+    $old->forceFill(['created_at' => now()->subMonth()])->save();
+    $sit = fn (string $at) => DB::table('case_hearings')->insert(['case_id' => $open->id, 'hearing_at' => $at, 'created_at' => now(), 'updated_at' => now()]);
+    $sit(now()->format('Y-m-d').' 09:00:00');
+    $sit(now()->format('Y-m-d').' 11:00:00');
+    $sit(now()->addDays(2)->format('Y-m-d').' 09:00:00');
+    $sit(now()->addDays(9)->format('Y-m-d').' 09:00:00');
+    DB::table('decisions')->insert([
+        'court_case_id' => $old->id, 'case_number' => 'SG-0007', 'name' => 'Decision', 'decision_content' => 'x',
+        'status' => 'published', 'approved_at' => now(), 'created_at' => now(), 'updated_at' => now(),
+    ]);
+
+    $this->get(route('public.signage'))->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('stats.hearings_today', 2)
+            ->where('stats.hearings_week', 3)
+            ->where('stats.filed_today', 1)
+            ->where('stats.decisions_month', 1)
+            ->where('stats.total_cases', 2)
+            ->where('stats.by_status', fn ($rows): bool => collect($rows)->pluck('total', 'label')->sortKeys()->all() === ['active' => 1, 'closed' => 1])
+            ->where('week', [
+                ['date' => now()->toDateString(), 'count' => 2],
+                ['date' => now()->addDays(2)->toDateString(), 'count' => 1],
+            ]));
+});
+
 test('the signage board points parties to their portal with a QR code', function (): void {
     $this->get(route('public.signage'))->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page

@@ -213,6 +213,17 @@ export interface PublicSignageProps {
     nextDay: SignageDay | null;
     /** Cases whose decision was released to the parties lately (published and approved). */
     decisions: Array<{ case_number: string; released: string }>;
+    /** The court's figures; counts only. */
+    stats: {
+        hearings_today: number;
+        hearings_week: number;
+        filed_today: number;
+        decisions_month: number;
+        total_cases: number;
+        by_status: Array<{ label: string; total: number }>;
+    };
+    /** The coming seven days with sittings, today first, and how many each. */
+    week: Array<{ date: string; count: number }>;
     announcements: Array<{ id: number; title: string; summary: string; created_at: string | null }>;
     /** The registry's office hours, phone and address (landing manager contact settings); null when not set. */
     registry: { office_hours: string | null; phone: string | null; address: string | null };

@@ -689,23 +689,24 @@
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
 /* Portrait, top to bottom: the court and the hour, the next sitting, the cause list, the registry's
-   notices and the decisions released (each when there are any), following a case and the registry,
-   and how fresh the board is. */
+   notices (when there are any), the court in figures beside this week's sitting days, the decisions
+   released (when there are any), following a case and the registry, and how fresh the board is. */
 .court-site.court-signage[data-orientation='portrait'] .court-signage-stage {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 248px 236px minmax(0, 1fr) auto auto 236px 52px;
-    grid-template-areas: 'crest' 'next' 'list' 'notices' 'decisions' 'info' 'foot';
+    grid-template-rows: 224px 214px minmax(0, 1fr) auto 326px auto 212px 44px;
+    grid-template-areas: 'crest' 'next' 'list' 'notices' 'overview' 'decisions' 'info' 'foot';
 }
 .court-site.court-signage[data-orientation='landscape'] .court-signage-stage {
     grid-template-columns: 760px minmax(0, 1fr);
-    grid-template-rows: 276px minmax(0, 1fr) auto auto 236px 48px;
-    grid-template-areas: 'crest list' 'next list' 'notices list' 'decisions list' 'info list' 'foot foot';
+    grid-template-rows: 276px minmax(0, 1fr) auto auto 236px 44px;
+    grid-template-areas: 'crest list' 'next list' 'notices overview' 'decisions overview' 'info overview' 'foot foot';
     column-gap: 56px;
 }
 .court-site .sg-crest { grid-area: crest; }
 .court-site .sg-next { grid-area: next; }
 .court-site .sg-list { grid-area: list; }
 .court-site .sg-notices { grid-area: notices; }
+.court-site .sg-overview { grid-area: overview; }
 .court-site .sg-decisions { grid-area: decisions; }
 .court-site .sg-info { grid-area: info; }
 .court-site .sg-foot { grid-area: foot; }
@@ -818,9 +819,9 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    height: calc(100% - 28px);
+    height: calc(100% - 26px);
     min-height: 0;
-    padding: 22px 34px;
+    padding: 18px 32px;
     border: 1px solid rgb(200 161 74 / 0.42);
     border-radius: 22px;
     background:
@@ -873,7 +874,7 @@
 .court-site.court-signage[data-orientation='landscape'] .sg-next-body { grid-template-columns: auto minmax(0, 1fr); row-gap: 14px; }
 .court-site.court-signage[data-orientation='landscape'] .sg-next-body .sg-where { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 16px; text-align: left; }
 .court-site .sg-next-time {
-    font-size: 80px;
+    font-size: 68px;
     font-weight: 600;
     line-height: 1;
     font-variant-numeric: tabular-nums;
@@ -1069,9 +1070,9 @@
 .court-site .sg-qr {
     display: block;
     flex-shrink: 0;
-    width: 168px;
-    height: 168px;
-    padding: 10px;
+    width: 150px;
+    height: 150px;
+    padding: 9px;
     border-radius: 14px;
     background: #fff;
     box-shadow: 0 0 0 3px rgb(200 161 74 / 0.5);
@@ -1086,8 +1087,8 @@
 .court-site .sg-notices { padding: 4px 0 18px; }
 .court-site .sg-notice {
     position: relative;
-    height: 182px;
-    padding: 20px 26px 18px 30px;
+    height: 164px;
+    padding: 18px 26px 16px 30px;
     overflow: hidden;
     border: 1px solid var(--sg-brass-line);
     border-radius: 18px;
@@ -1166,3 +1167,62 @@
     .court-site[data-motion='on'] .sg-pulse::after,
     .court-site[data-motion='on'] .sg-row[data-state='next'] .sg-marker::after { animation: cp-ping 2.2s cubic-bezier(0, 0, 0.2, 1) infinite; }
 }
+
+/* ── The court in figures, beside this week's sitting days ── */
+.court-site .sg-overview {
+    display: grid;
+    grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+    gap: 22px;
+    min-height: 0;
+    padding: 2px 0 16px;
+}
+.court-site.court-signage[data-orientation='landscape'] .sg-overview { grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr); padding: 0 0 24px; }
+.court-site .sg-stats-card,
+.court-site .sg-week-card {
+    min-width: 0;
+    min-height: 0;
+    padding: 18px 22px;
+    overflow: hidden;
+    border: 1px solid var(--sg-line);
+    border-radius: 18px;
+    background: rgb(255 255 255 / 0.03);
+}
+.court-site .sg-stats-card h2,
+.court-site .sg-week-card h2 { font-size: 22px; font-weight: 700; color: var(--court-brass-soft); }
+.court-site .sg-figures { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 12px; }
+.court-site .sg-figures > div {
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: flex-end;
+    min-width: 0;
+    padding: 0 14px;
+    border-left: 1px solid var(--sg-brass-line);
+}
+.court-site .sg-figures > div:first-child { padding-left: 0; border-left: 0; }
+.court-site .sg-figures dd { font-size: 46px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; color: #fff; }
+.court-site .sg-figures dt { margin-top: 8px; font-size: 15px; line-height: 1.35; color: rgb(148 163 184); }
+.court-site .sg-caseload { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--sg-line); }
+.court-site .sg-caseload-head { display: flex; align-items: baseline; gap: 12px; font-size: 17px; color: rgb(203 213 225); }
+.court-site .sg-caseload-head b { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; color: #fff; }
+.court-site .sg-bar { display: flex; gap: 3px; height: 10px; margin: 10px 0 10px; overflow: hidden; border-radius: 9999px; }
+.court-site .sg-bar > span { flex-basis: 0; border-radius: 2px; }
+.court-site .sg-legend { display: flex; flex-wrap: wrap; gap: 6px 22px; }
+.court-site .sg-legend li { display: inline-flex; align-items: center; gap: 8px; font-size: 16px; color: rgb(226 232 240); }
+.court-site .sg-legend li > span { width: 11px; height: 11px; border-radius: 3px; }
+.court-site .sg-legend b { font-weight: 600; font-variant-numeric: tabular-nums; color: #fff; }
+.court-site .sg-week { display: grid; margin-top: 10px; }
+.court-site .sg-week li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    align-items: baseline;
+    gap: 10px;
+    padding: 6px 8px;
+    border-bottom: 1px solid rgb(255 255 255 / 0.05);
+    border-radius: 8px;
+}
+.court-site .sg-week li[data-today] { background: rgb(200 161 74 / 0.1); }
+.court-site .sg-week-day { font-size: 18px; font-weight: 600; color: #fff; }
+.court-site .sg-week-date { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 16px; color: rgb(148 163 184); }
+.court-site .sg-week-mark { padding: 1px 10px; border-radius: 9999px; background: var(--court-brass); font-size: 13px; font-weight: 700; color: var(--court-ink); }
+.court-site .sg-week b { font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--court-brass-soft); }
+.court-site .sg-week-none { margin-top: 12px; font-size: 18px; color: rgb(148 163 184); }

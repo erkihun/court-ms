@@ -80,6 +80,8 @@ class PublicSignageController extends Controller
                 'hearings' => $this->sittings($nextDay),
             ] : null,
             'decisions' => $this->releasedDecisions($now),
+            'stats' => $this->statistics($today),
+            'week' => $this->week($today),
             'announcements' => $announcements->map(fn (Announcement $announcement): array => [
                 'id' => $announcement->id,
                 'title' => (string) $announcement->title,
@@ -132,6 +134,49 @@ class PublicSignageController extends Controller
                     'bench' => $row->bench,
                 ];
             })->values();
+    }
+
+    /**
+     * The court's figures: today's sittings and filings, the coming week's
+     * sittings, the decisions released this month, the cases on record and
+     * how they stand. Counts only.
+     *
+     * @return array<string, mixed>
+     */
+    private function statistics(Carbon $today): array
+    {
+        $statusCounts = DB::table('court_cases')
+            ->selectRaw("COALESCE(NULLIF(status, ''), 'unspecified') as label, count(*) as total")
+            ->groupBy('label')
+            ->orderByDesc('total')
+            ->get();
+
+        return [
+            'hearings_today' => DB::table('case_hearings')->whereBetween('hearing_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->count(),
+            'hearings_week' => DB::table('case_hearings')->whereBetween('hearing_at', [$today->copy()->startOfDay(), $today->copy()->addDays(6)->endOfDay()])->count(),
+            'filed_today' => DB::table('court_cases')->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->count(),
+            'decisions_month' => DB::table('decisions')->where('status', 'published')->whereNotNull('approved_at')
+                ->where('approved_at', '>=', $today->copy()->startOfMonth())->count(),
+            'total_cases' => DB::table('court_cases')->count(),
+            'by_status' => $statusCounts->map(fn (object $row): array => ['label' => (string) $row->label, 'total' => (int) $row->total])->values(),
+        ];
+    }
+
+    /**
+     * The coming seven days, today first: each day with sittings and how many.
+     *
+     * @return Collection<int, array{date: string, count: int}>
+     */
+    private function week(Carbon $today): Collection
+    {
+        return DB::table('case_hearings')
+            ->selectRaw('DATE(hearing_at) as day, count(*) as total')
+            ->whereBetween('hearing_at', [$today->copy()->startOfDay(), $today->copy()->addDays(6)->endOfDay()])
+            ->groupBy('day')
+            ->orderBy('day')
+            ->get()
+            ->map(fn (object $row): array => ['date' => (string) $row->day, 'count' => (int) $row->total])
+            ->values();
     }
 
     /**
