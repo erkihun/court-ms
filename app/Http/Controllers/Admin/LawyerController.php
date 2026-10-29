@@ -67,6 +67,61 @@ class LawyerController extends Controller
         ]);
     }
 
+    /**
+     * One lawyer in full, for the registry to check before verifying or refusing:
+     * who they are, their licence (the PDF beside it), the registry's decisions
+     * and the cases they represent.
+     */
+    public function show(Request $request, Applicant $applicant): Response
+    {
+        abort_unless((bool) $applicant->is_lawyer, 404);
+        $licenseStored = ! empty($applicant->lawyer_document_path) && Storage::disk('private')->exists($applicant->lawyer_document_path);
+        $verifiedBy = $applicant->lawyer_verified_by_user_id ? DB::table('users')->where('id', $applicant->lawyer_verified_by_user_id)->value('name') : null;
+        $cases = DB::table('case_representatives as r')
+            ->join('court_cases as c', 'c.id', '=', 'r.case_id')
+            ->leftJoin('case_applicants as p', 'p.id', '=', 'r.case_applicant_id')
+            ->where('r.lawyer_applicant_id', $applicant->id)
+            ->select('c.id', 'c.case_number', 'c.status as case_status', 'r.status', 'p.name as client', 'r.created_at')
+            ->orderByDesc('r.created_at')->limit(50)->get();
+
+        return Inertia::render('Court/Lawyers/Show', [
+            'lawyer' => [
+                'id' => (int) $applicant->id,
+                'name' => CaseParties::fullName($applicant),
+                'first_name' => (string) $applicant->first_name,
+                'middle_name' => (string) $applicant->middle_name,
+                'last_name' => (string) $applicant->last_name,
+                'gender' => $applicant->gender,
+                'national_id_number' => (string) $applicant->national_id_number,
+                'email' => (string) $applicant->email,
+                'phone' => (string) $applicant->phone,
+                'address' => (string) $applicant->address,
+                'license_number' => $applicant->lawyer_license_number,
+                'license_url' => $licenseStored ? route('lawyers.license', $applicant->id) : null,
+                // A licence on record whose file is gone (not the same as none sent).
+                'license_missing' => ! empty($applicant->lawyer_document_path) && ! $licenseStored,
+                'applied_at' => $applicant->lawyer_applied_at?->toIso8601String(),
+                'created_at' => $applicant->created_at?->toIso8601String(),
+                'verified' => $applicant->lawyer_verified_at !== null,
+                'verified_at' => $applicant->lawyer_verified_at?->toIso8601String(),
+                'verified_by' => $verifiedBy,
+                'refused' => $applicant->lawyer_refused_at !== null,
+                'refused_at' => $applicant->lawyer_refused_at?->toIso8601String(),
+                'refusal_reason' => $applicant->lawyer_refusal_reason,
+                'active' => (bool) $applicant->is_active,
+                'email_confirmed' => $applicant->email_verified_at !== null,
+            ],
+            'cases' => $cases->map(fn (object $row): array => [
+                'id' => (int) $row->id,
+                'case_number' => (string) $row->case_number,
+                'case_status' => (string) $row->case_status,
+                'status' => (string) $row->status,
+                'client' => (string) ($row->client ?? ''),
+            ])->all(),
+            'canManage' => (bool) $request->user()?->hasPermission('applicants.manage'),
+        ]);
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([

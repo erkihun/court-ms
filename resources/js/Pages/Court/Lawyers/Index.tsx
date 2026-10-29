@@ -1,4 +1,4 @@
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import PageHeader from '@/Components/PageHeader';
@@ -9,7 +9,6 @@ import {
     tableBodyClassName, tableCellClassName, tableClassName, tableContainerClassName, tableHeadClassName, tableHeaderCellClassName, tableRowClassName,
     type LaravelPageMeta,
 } from '@/Components/ui';
-import { useConfirm } from '@/hooks/useConfirm';
 import { useLocale } from '@/hooks/useLocale';
 
 interface LawyerRow {
@@ -56,15 +55,15 @@ const blank: NewLawyer = {
  * The registry opens a lawyer's account, verified on their licence, and the
  * lawyer chooses a password from the emailed link; only a verified, active
  * lawyer signs in at /lawyer/login and is offered to employees who file.
- * Applications sent at /lawyer/register come first, to verify or refuse.
+ * Applications sent at /lawyer/register come first. Each lawyer opens on
+ * their own page (Lawyers/Show), where the registry checks the details and
+ * the licence before it verifies or refuses.
  */
 export default function LawyersIndex({ lawyers, search, canManage }: LawyersIndexProps) {
     const { t } = useLocale();
     const r = (key: string) => t(`cm.lawyer.register.${key}`);
-    const { confirm } = useConfirm();
     const [q, setQ] = useState(search);
     const [adding, setAdding] = useState(false);
-    const [busy, setBusy] = useState<number | null>(null);
     const form = useForm<NewLawyer>(blank);
     const title = r('title');
 
@@ -75,26 +74,6 @@ export default function LawyersIndex({ lawyers, search, canManage }: LawyersInde
     const open = (event: FormEvent) => {
         event.preventDefault();
         form.post(route('lawyers.store'), { forceFormData: true, preserveScroll: true, onSuccess: () => { form.reset(); setAdding(false); } });
-    };
-    const setVerified = async (lawyer: LawyerRow, verified: boolean) => {
-        let license = lawyer.license_number ?? '';
-        if (verified && license === '') {
-            const result = await confirm({ title: `${r('verify')}: ${lawyer.name}`, confirmLabel: r('verify'), cancelLabel: r('cancel'), requireReason: true, reasonLabel: r('license_prompt') });
-            if (!result.confirmed) return;
-            license = (result.reason ?? '').trim();
-        } else {
-            const result = await confirm({
-                title: `${verified ? r('verify') : r('unverify')}: ${lawyer.name}`, variant: verified ? 'success' : 'warning', confirmLabel: verified ? r('verify') : r('unverify'), cancelLabel: r('cancel'),
-                description: verified && lawyer.applied_at && !lawyer.refused ? r('approve_help') : undefined,
-            });
-            if (!result.confirmed) return;
-        }
-        router.patch(route('lawyers.verify', lawyer.id), { verified, license_number: license }, { preserveScroll: true, onStart: () => setBusy(lawyer.id), onFinish: () => setBusy(null) });
-    };
-    const refuse = async (lawyer: LawyerRow) => {
-        const result = await confirm({ title: `${r('refuse')}: ${lawyer.name}`, variant: 'danger', confirmLabel: r('refuse'), cancelLabel: r('cancel'), requireReason: true, reasonLabel: r('refusal_reason') });
-        if (!result.confirmed) return;
-        router.patch(route('lawyers.refuse', lawyer.id), { reason: (result.reason ?? '').trim() }, { preserveScroll: true, onStart: () => setBusy(lawyer.id), onFinish: () => setBusy(null) });
     };
     const waiting = (lawyer: LawyerRow) => Boolean(lawyer.applied_at) && !lawyer.verified && !lawyer.refused;
 
@@ -172,8 +151,10 @@ export default function LawyersIndex({ lawyers, search, canManage }: LawyersInde
                             </thead>
                             <tbody className={tableBodyClassName}>
                                 {lawyers.data.map((lawyer) => (
-                                    <tr key={lawyer.id} className={cx(tableRowClassName, busy === lawyer.id && 'opacity-60')}>
-                                        <td className={cx(tableCellClassName, 'font-medium text-(--app-foreground)')}>{lawyer.name}</td>
+                                    <tr key={lawyer.id} className={tableRowClassName}>
+                                        <td className={cx(tableCellClassName, 'font-medium text-(--app-foreground)')}>
+                                            <Link href={route('lawyers.show', lawyer.id)} className="hover:text-(--app-primary) hover:underline">{lawyer.name}</Link>
+                                        </td>
                                         <td className={tableCellClassName}>
                                             <div className="font-mono text-xs">{lawyer.license_number ?? '—'}</div>
                                             {lawyer.verified_at && <div className="text-xs text-(--app-muted-foreground)"><LocalizedDateDisplay value={lawyer.verified_at} /></div>}
@@ -199,20 +180,11 @@ export default function LawyersIndex({ lawyers, search, canManage }: LawyersInde
                                         </td>
                                         <td className={tableCellClassName}>{lawyer.cases}</td>
                                         <td className={tableCellClassName}>
-                                            {canManage ? (
-                                                <div className="flex flex-wrap gap-2">
-                                                    <button type="button" disabled={busy === lawyer.id} onClick={() => { void setVerified(lawyer, !lawyer.verified); }}
-                                                        className={buttonClassName({ variant: lawyer.verified ? 'destructiveOutline' : 'outline', size: 'sm' })}>
-                                                        {lawyer.verified ? r('unverify') : r('verify')}
-                                                    </button>
-                                                    {waiting(lawyer) && (
-                                                        <button type="button" disabled={busy === lawyer.id} onClick={() => { void refuse(lawyer); }}
-                                                            className={buttonClassName({ variant: 'destructiveOutline', size: 'sm' })}>
-                                                            {r('refuse')}
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            ) : <span className="text-xs text-(--app-muted-foreground)">—</span>}
+                                            {/* Verifying or refusing is done on the lawyer's page, with the details and the licence in view. */}
+                                            <Link href={route('lawyers.show', lawyer.id)}
+                                                className={buttonClassName({ variant: canManage && waiting(lawyer) ? 'primary' : 'outline', size: 'sm' })}>
+                                                {canManage && waiting(lawyer) ? r('review') : r('details')}
+                                            </Link>
                                         </td>
                                     </tr>
                                 ))}

@@ -162,3 +162,40 @@ test('the registry refuses an application with a reason the lawyer is emailed; t
     $this->actingAs($manager)->patch(route('lawyers.refuse', $lawyer->id), ['reason' => 'Too late.'])->assertNotFound();
     expect($lawyer->fresh()->lawyer_refused_at)->toBeNull()->and((bool) $lawyer->fresh()->is_active)->toBeTrue();
 });
+
+test('the registry opens a lawyer\'s page with the details and the licence before deciding', function (): void {
+    $fields = applicationFields();
+    $this->post(route('lawyer.register.submit'), $fields)->assertSessionHasNoErrors();
+    $lawyer = Applicant::query()->where('email', $fields['email'])->sole();
+    $viewer = applicationStaff(['applicants.view']);
+    $manager = applicationStaff(['applicants.view', 'applicants.manage']);
+    $outsider = applicationStaff(['cases.view']);
+
+    $this->actingAs($viewer)->get(route('lawyers.show', $lawyer->id))->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page->component('Court/Lawyers/Show')
+            ->where('lawyer.license_number', $fields['license_number'])
+            ->where('lawyer.email', $fields['email'])
+            ->where('lawyer.phone', $fields['phone'])
+            ->where('lawyer.address', 'Addis Ababa')
+            ->where('lawyer.gender', 'female')
+            ->where('lawyer.license_url', route('lawyers.license', $lawyer->id))->where('lawyer.license_missing', false)
+            ->where('lawyer.verified', false)->where('lawyer.refused', false)
+            ->where('lawyer.applied_at', fn ($at) => $at !== null)
+            ->where('cases', [])
+            ->where('canManage', false));
+    $this->actingAs($manager)->get(route('lawyers.show', $lawyer->id))->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('canManage', true));
+    $this->actingAs($outsider)->get(route('lawyers.show', $lawyer->id))->assertRedirect(route('dashboard'));
+
+    // A licence on record whose file is gone is told apart from none sent.
+    Storage::disk('private')->delete($lawyer->lawyer_document_path);
+    $this->actingAs($viewer)->get(route('lawyers.show', $lawyer->id))->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('lawyer.license_url', null)->where('lawyer.license_missing', true));
+
+    $employee = Applicant::create([
+        'first_name' => 'Abel', 'middle_name' => 'K', 'last_name' => 'Tesfaye', 'gender' => 'male', 'phone' => '09'.random_int(10000000, 99999999),
+        'email' => 'abel-'.Str::lower(Str::random(6)).'@example.com', 'address' => 'Addis Ababa',
+        'national_id_number' => (string) random_int(1000000000000000, 9999999999999999), 'password' => 'Unused#Pass2026', 'is_active' => true,
+    ]);
+    $this->actingAs($viewer)->get(route('lawyers.show', $employee->id))->assertNotFound();
+});

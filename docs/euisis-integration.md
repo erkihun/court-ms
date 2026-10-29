@@ -191,7 +191,8 @@ Owner decision, EUISIS ADR 0013 #13 (`App\Services\CaseParties`).
   (`applicants.lawyer_applied_at`): the account stays closed until the registry verifies
   the licence, which emails the password link, or refuses it with an emailed reason
   (`lawyer_refused_at`, `lawyer_refusal_reason`); waiting applications are listed first
-  and reach the bell of staff with `applicants.manage`. A verified
+  and reach the bell of staff with `applicants.manage`. Verifying and refusing are done on
+  the lawyer's own page (`/admin/lawyers/{id}`), with the details and the licence in view. A verified
   lawyer reaches the applicant portal even while it is closed to employees (its sign-in and
   registration pages stay `404`) and files for a client found in EUISIS by employee number
   (*File for a client*): the case starts with no applicant, the client's lead row

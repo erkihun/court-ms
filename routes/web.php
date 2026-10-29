@@ -577,7 +577,8 @@ Route::middleware(SetLocale::class)->where(array_fill_keys($numericRouteParamete
             Route::post('/lawyers', [LawyerController::class, 'store'])->middleware(['perm:applicants.manage', 'throttle:20,1'])->name('lawyers.store');
             Route::patch('/lawyers/{applicant}/verification', [LawyerController::class, 'verify'])->middleware(['perm:applicants.manage', 'throttle:30,1'])->name('lawyers.verify');
             Route::patch('/lawyers/{applicant}/refusal', [LawyerController::class, 'refuse'])->middleware(['perm:applicants.manage', 'throttle:30,1'])->name('lawyers.refuse');
-            Route::get('/lawyers/{applicant}/license', [LawyerController::class, 'license'])->middleware('perm:applicants.view')->name('lawyers.license');
+            Route::get('/lawyers/{applicant}', [LawyerController::class, 'show'])->middleware('perm:applicants.view')->whereNumber('applicant')->name('lawyers.show');
+            Route::get('/lawyers/{applicant}/license',[LawyerController::class, 'license'])->middleware('perm:applicants.view')->name('lawyers.license');
             Route::get('/applicants', [ApplicantController::class, 'index'])
                 ->middleware('perm:applicants.view')
                 ->name('applicants.index');
