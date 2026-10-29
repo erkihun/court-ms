@@ -688,7 +688,7 @@
 }
 .court-site.court-signage[data-orientation='portrait'] .court-signage-stage {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 256px 164px 248px minmax(0, 1fr) 286px 156px;
+    grid-template-rows: 236px 140px 216px minmax(0, 1fr) 286px 156px;
     grid-template-areas: 'crest' 'clock' 'next' 'list' 'figures' 'foot';
     row-gap: 0;
 }
@@ -783,8 +783,18 @@
 .court-site .sg-medallion-mark { width: 128px; height: 128px; }
 .court-site.court-signage[data-orientation='landscape'] .sg-medallion-logo { height: 128px; max-width: 200px; }
 .court-site.court-signage[data-orientation='landscape'] .sg-medallion-mark { width: 104px; height: 104px; }
-.court-site .sg-crest-text { min-width: 0; }
-.court-site.court-signage[data-orientation='portrait'] .sg-eyebrow { font-size: 15px; letter-spacing: 0.16em; }
+.court-site .sg-crest-text { flex: 1; min-width: 0; }
+.court-site.court-signage[data-orientation='portrait'] .sg-eyebrow { font-size: 14px; letter-spacing: 0.14em; }
+.court-site.court-signage[data-orientation='portrait'] .sg-medallion-logo { height: 128px; max-width: 200px; }
+.court-site.court-signage[data-orientation='portrait'] .sg-medallion-mark { width: 112px; height: 112px; }
+/* The Ethiopian hour, at the letterhead's right end, ruled off from the name. */
+.court-site .sg-crest-time {
+    flex-shrink: 0;
+    padding-left: 28px;
+    border-left: 1px solid var(--sg-brass-line);
+    text-align: right;
+}
+.court-site .sg-crest-time .sg-bi { align-items: flex-end; }
 .court-site .sg-eyebrow {
     font-size: 17px;
     font-weight: 600;
@@ -812,6 +822,10 @@
 }
 .court-site.court-signage[data-orientation='landscape'] .sg-court { font-size: 42px; }
 .court-site.court-signage[data-orientation='landscape'] .sg-court:lang(am) { font-size: 46px; }
+/* Portrait: the name shares its line with the logo and the Ethiopian hour. */
+.court-site.court-signage[data-orientation='portrait'] .sg-court { -webkit-line-clamp: 3; font-size: 36px; }
+.court-site.court-signage[data-orientation='portrait'] .sg-court:lang(am) { font-size: 38px; }
+.court-site.court-signage[data-orientation='portrait'] .sg-court-other { font-size: 18px; }
 .court-site .sg-court-other {
     margin-top: 6px;
     overflow: hidden;
@@ -830,14 +844,14 @@
     border-bottom: 1px solid var(--sg-line);
 }
 .court-site .sg-time {
-    font-size: 118px;
+    font-size: 84px;
     font-weight: 600;
     line-height: 0.95;
     letter-spacing: -0.03em;
     font-variant-numeric: tabular-nums;
     color: #fff;
 }
-.court-site.court-signage[data-orientation='landscape'] .sg-time { font-size: 100px; }
+.court-site.court-signage[data-orientation='landscape'] .sg-time { font-size: 76px; }
 .court-site .sg-colon { position: relative; top: -0.06em; margin-inline: 0.02em; }
 .court-site .sg-seconds {
     margin-left: 14px;
@@ -847,16 +861,21 @@
     vertical-align: 0.15em;
 }
 .court-site .sg-eth-time {
-    margin-top: 8px;
-    font-size: 25px;
-    color: rgb(226 232 240 / 0.85);
+    margin-top: 6px;
+    font-size: 58px;
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    color: var(--court-brass-soft);
 }
 .court-site .sg-eth-time span {
-    margin-left: 12px;
-    font-size: 17px;
-    letter-spacing: 0.04em;
-    color: rgb(148 163 184 / 0.9);
+    margin-right: 10px;
+    font-size: 24px;
+    font-weight: 500;
+    color: rgb(226 232 240 / 0.85);
 }
+.court-site.court-signage[data-orientation='landscape'] .sg-eth-time { font-size: 48px; }
 .court-site .sg-dates { min-width: 0; text-align: right; }
 .court-site .sg-weekday {
     font-size: 34px;
@@ -956,7 +975,7 @@
     row-gap: 14px;
 }
 .court-site .sg-next-time {
-    font-size: 108px;
+    font-size: 76px;
     font-weight: 600;
     line-height: 1;
     letter-spacing: -0.03em;
@@ -966,7 +985,7 @@
     background-clip: text;
     color: transparent;
 }
-.court-site.court-signage[data-orientation='landscape'] .sg-next-time { font-size: 92px; }
+.court-site.court-signage[data-orientation='landscape'] .sg-next-time { font-size: 68px; }
 .court-site .sg-next-case {
     overflow: hidden;
     white-space: nowrap;
@@ -1309,8 +1328,8 @@
 
 .court-site .sg-tool {
     position: fixed;
-    top: 16px;
     right: 16px;
+    bottom: 16px;
     z-index: 20;
     padding: 8px 16px;
     border: 1px solid rgb(255 255 255 / 0.2);

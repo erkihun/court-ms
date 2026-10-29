@@ -94,7 +94,8 @@ function useCourtClock(serverNow: string, timezone: string) {
         hours: parts.hour,
         minutes: parts.minute,
         seconds: parts.second,
-        ethiopian: `${dayPart} ${((hour + 6) % 12) || 12}:${parts.minute}`,
+        ethiopianPart: dayPart,
+        ethiopianTime: `${((hour + 6) % 12) || 12}:${parts.minute}`,
         format,
     };
 }
@@ -374,18 +375,22 @@ export default function PublicSignage(props: PublicSignageProps) {
                             <h1 className="sg-court" lang={lang}>{names[lang]}</h1>
                             {names[other] && names[other] !== names[lang] && <p className="sg-court-other" lang={other}>{names[other]}</p>}
                         </div>
+                        {/* The hour as the city reads it, counted from dawn, at the letterhead's end. */}
+                        <div className="sg-crest-time">
+                            <Bi {...bi('ethiopianTime')} className="sg-mini" />
+                            <p className="sg-eth-time" lang="am">
+                                <span>{clock.ethiopianPart}</span>
+                                {clock.ethiopianTime}
+                            </p>
+                        </div>
                     </header>
 
-                    {/* The clock: the hour as hearings are set, the Ethiopian hour, and today in both calendars. */}
+                    {/* The clock: the hour as hearings are set, and today in both calendars. */}
                     <section className="sg-clock" aria-label={clock.hm}>
                         <div>
                             <p className="sg-time">
                                 {clock.hours}<span className="sg-colon">:</span>{clock.minutes}
                                 <span className="sg-seconds">{clock.seconds}</span>
-                            </p>
-                            <p className="sg-eth-time" lang="am">
-                                {clock.ethiopian}
-                                <span>{lang === 'am' ? text('ethiopianTime') : `· ${text('ethiopianTime')}`}</span>
                             </p>
                         </div>
                         <div className="sg-dates">
