@@ -72,6 +72,16 @@ const WHOLE = ['i18n', 'types'];
  */
 const PATCHES = [
     {
+        // court-ms's own styles (the case-page sheet, the sign-in motion) live outside the copied app.css.
+        file: 'app.tsx',
+        from: "import '../css/app.css';",
+        to: [
+            "import '../css/app.css';",
+            '// court-ms: its own styles over the shared app.css (resources/css/court.css).',
+            "import '../css/court.css';",
+        ].join('\n'),
+    },
+    {
         file: 'app.tsx',
         from: 'globalThis.route = ziggyRoute;',
         to: [

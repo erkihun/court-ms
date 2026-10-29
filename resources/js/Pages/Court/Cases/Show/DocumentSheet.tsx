@@ -45,7 +45,7 @@ interface Props {
 /**
  * A filed text (the claim, the relief, a response) read as the paper it came
  * from: a sheet in the document face, justified, with Word's pasted sizes
- * evened out (`.case-doc`, app.css). A long text folds behind a fade.
+ * evened out (`.case-doc`, court.css). A long text folds behind a fade.
  */
 export default function DocumentSheet({ html, empty, foldAt = 0, className }: Props) {
     const { text } = useCaseText();

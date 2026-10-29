@@ -1,4 +1,6 @@
 import '../css/app.css';
+// court-ms: its own styles over the shared app.css (resources/css/court.css).
+import '../css/court.css';
 import './bootstrap';
 
 import { axiosAdapter } from '@inertiajs/core';

@@ -9,7 +9,7 @@ import { useLocale } from '@/hooks/useLocale';
  * tribunal's name and its case path from filing to appeal, beside a parchment
  * work surface. Its colours are local to these pages (court ink, brass,
  * parchment), so the shell's appearance settings stay those of the system.
- * The panel moves (app.css, "Court sign-in"): the seal turns and its scales
+ * The panel moves (court.css, "Court sign-in"): the seal turns and its scales
  * settle into balance, a case runs down the path and the gavel falls on the
  * decision, motes rise through the light and the colonnade rises at the foot.
  */

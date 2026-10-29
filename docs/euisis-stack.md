@@ -11,7 +11,10 @@ copied verbatim the way the EUISIS Core platform does it.
 
 One Vite build (`vite.config.js`) into `public/build`: Tailwind 4
 (`resources/css/app.css`, from EUISIS), loaded by
-`resources/views/inertia.blade.php`. `npm run build` type-checks and builds;
+`resources/views/inertia.blade.php`. court-ms's own global styles (the
+case-page document sheet, the sign-in motion) are in `resources/css/court.css`,
+imported after `app.css`; the public site's are in `resources/css/court-public.css`.
+Never add court-ms rules to `app.css`: the next sync replaces it. `npm run build` type-checks and builds;
 `npm run dev` serves it with hot reload. The Blade/Alpine/Tailwind 3 build
 that served the screens during the move (`vite.legacy.config.js`,
 `resources/legacy`, `public/build-legacy`) is gone, with its layouts,
