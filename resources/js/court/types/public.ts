@@ -182,13 +182,6 @@ export interface PublicNewsItemProps {
     publicSite: PublicSiteChrome;
 }
 
-export interface SignageCase {
-    id: number;
-    case_number: string | null;
-    applicant: string | null;
-    case_type: string | null;
-}
-
 export interface SignageHearing {
     id: number;
     /** The stored time of day (HH:MM), as the public site's hearing list shows it. */
@@ -208,9 +201,8 @@ export interface PublicSignageProps {
     filedToday: number;
     hearingsToday: number;
     statusCounts: Array<{ label: string; total: number }>;
-    /** The largest case types; a null name is a case without a type. */
-    categoryCounts: Array<{ name: string | null; total: number }>;
-    todayCases: SignageCase[];
+    /** The registry's office hours and phone (landing manager contact settings); null when not set. */
+    registry: { office_hours: string | null; phone: string | null };
     todayHearings: SignageHearing[];
     announcements: Array<{ id: number; title: string; summary: string; created_at: string | null }>;
     /** Seconds between automatic refreshes of the board. */

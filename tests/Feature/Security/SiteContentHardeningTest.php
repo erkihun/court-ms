@@ -206,7 +206,7 @@ test('section settings store only the validated keys', function (): void {
 
 // ---------------------------------------------------------------- signage
 
-test('the public signage board shows applicant initials, never full names', function (): void {
+test('the public signage board names no party, not even by initials', function (): void {
     $applicant = Applicant::create([
         'first_name' => 'Helina', 'middle_name' => 'Birtukan', 'last_name' => 'Paulos', 'gender' => 'female',
         'phone' => '+251911'.random_int(100000, 999999), 'email' => 'signage-'.uniqid().'@example.com', 'address' => 'Addis Ababa',
@@ -221,8 +221,9 @@ test('the public signage board shows applicant initials, never full names', func
     $this->get(route('public.signage'))
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page
-            ->where('todayCases.0.case_number', 'SG/00001/26')
-            ->where('todayCases.0.applicant', 'H. B. P.'))
+            ->where('filedToday', 1)
+            ->missing('todayCases'))
+        ->assertDontSee('H. B. P.', false)
         ->assertDontSee('Helina', false)
         ->assertDontSee('Birtukan', false)
         ->assertDontSee('Paulos', false)

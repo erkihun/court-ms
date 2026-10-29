@@ -123,9 +123,6 @@ test('the signage board renders today\'s cause list, figures, caseload and notic
             ->where('filedToday', 1)
             ->where('hearingsToday', 2)
             ->where('statusCounts.0', ['label' => 'pending', 'total' => 1])
-            ->where('categoryCounts.0', ['name' => 'Labour', 'total' => 1])
-            ->where('todayCases.0.case_number', 'SG-0001')
-            ->where('todayCases.0.case_type', 'Labour')
             // Today's sittings in time order, with the sitting and the room; tomorrow's is not on today's board.
             ->has('todayHearings', 2)
             ->where('todayHearings.0', fn ($row): bool => $row['time'] === '10:30' && $row['case_number'] === 'SG-0001'
@@ -139,10 +136,25 @@ test('the signage board renders today\'s cause list, figures, caseload and notic
             ->where('refreshSeconds', 60)
             ->where('timezone', config('app.timezone'))
             ->has('now')
-            ->missing('activeStaff')->missing('activeAnnouncements'));
+            ->where('registry', ['office_hours' => null, 'phone' => null])
+            ->missing('activeStaff')->missing('activeAnnouncements')->missing('todayCases')->missing('categoryCounts'));
 });
 
-test('the signage board counts all of today, lists a screenful, and names no staff', function (): void {
+test('the signage board shows the registry\'s hours and phone from the landing manager, in the screen\'s language', function (): void {
+    HomeSetting::setJson('footer.settings', [
+        'office_hours' => 'Mon-Fri 8:30-17:30', 'office_hours_am' => 'ከሰኞ እስከ ዓርብ 2:30-11:30', 'contact_phone' => '+251 11 000 0000',
+    ]);
+    Cache::forget('home_footer');
+
+    $this->withSession(['app_locale' => 'en'])->get(route('public.signage'))->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('registry.phone', '+251 11 000 0000')
+            ->where('registry.office_hours', 'Mon-Fri 8:30-17:30'));
+    $this->withSession(['app_locale' => 'am'])->get(route('public.signage'))->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('registry.office_hours', 'ከሰኞ እስከ ዓርብ 2:30-11:30'));
+});
+
+test('the signage board counts all of today and names no staff', function (): void {
     $type = CaseType::query()->create(['name' => 'Labour']);
     foreach (range(1, 8) as $n) {
         CourtCase::query()->create([
@@ -157,9 +169,8 @@ test('the signage board counts all of today, lists a screenful, and names no sta
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->where('filedToday', 9)
-            ->has('todayCases', 6)
-            ->where('statusCounts', fn ($counts): bool => collect($counts)->pluck('total', 'label')->all() === ['active' => 8, 'unspecified' => 1])
-            ->where('categoryCounts', [['name' => 'Labour', 'total' => 9]]))
+            ->where('totalCases', 9)
+            ->where('statusCounts', fn ($counts): bool => collect($counts)->pluck('total', 'label')->all() === ['active' => 8, 'unspecified' => 1]))
         ->assertDontSee('Abebe Kebede', false)
         ->assertDontSee('Registrar', false);
 });
@@ -177,13 +188,12 @@ test('the signage board\'s today is the day in Addis Ababa, evening included', f
     $file('SG-EVENING', '2026-10-28 21:45:00');
 
     $this->get(route('public.signage'))->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
-            ->where('todayCases', fn ($cases): bool => collect($cases)->pluck('case_number')->all() === ['SG-EVENING', 'SG-MORNING']));
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('filedToday', 2)->where('totalCases', 3));
 
     // Just after midnight the new day starts empty, and yesterday's evening case is gone.
     $this->travelTo(Carbon::parse('2026-10-29 00:10:00', 'Africa/Addis_Ababa'));
     $this->get(route('public.signage'))->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page->where('todayCases', []));
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('filedToday', 0));
 });
 
 /* ── Landing-page manager ─────────────────────────────────────────────── */

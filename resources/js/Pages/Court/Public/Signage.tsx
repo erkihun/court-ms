@@ -1,41 +1,58 @@
 import { Head, router } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
-import LocalizedDateDisplay from '@/Components/Calendar/LocalizedDateDisplay';
 import LocalizedUiProvider from '@/Components/ui/LocalizedUiProvider';
 import { CourtEmblem } from '@/court/components/auth/CourtAuthLayout';
-import { usePublicText } from '@/court/i18n/usePublicText';
-import { useCourtName } from '@/court/public/CourtPublicHeader';
-import { CountUp, CourtSeal, stagger } from '@/court/public/motion';
+import publicSite from '@/court/i18n/publicSite';
+import { CountUp } from '@/court/public/motion';
 import type { PublicSignageProps, SignageHearing } from '@/court/types/public';
+import { useBranding } from '@/hooks/useBranding';
+import { useLocale } from '@/hooks/useLocale';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
+import { gregorianIsoToEthiopian } from '@/lib/calendar/ethiopianCalendar';
 import '../../../../css/court-public.css';
 
-/** The two stages: a floor-standing screen stands portrait, a wall screen lies landscape. */
+/** The two stages: the floor-standing screen stands portrait, a wall screen lies landscape. */
 type Orientation = 'portrait' | 'landscape';
 const STAGES: Record<Orientation, { width: number; height: number }> = {
     portrait: { width: 1080, height: 1920 },
     landscape: { width: 1920, height: 1080 },
 };
-/** The height of one sitting on the cause list (stage pixels); a page holds as many as fit. */
-const ROW_HEIGHT = 72;
-/** The seconds each page, notice and side panel stays. */
+/** One sitting on the cause list (stage pixels); a page holds as many as fit. */
+const ROW_HEIGHT = 62;
+/** The seconds each page and each notice stays. */
 const PAGE_SECONDS = 12;
 const NOTICE_SECONDS = 14;
-const PANEL_SECONDS = 16;
 /** After this long without a cursor movement the cursor and the screen tools hide. */
 const IDLE_MS = 4000;
+/** Every few minutes the whole stage moves a few pixels, so nothing burns into the panel. */
+const SHIFT_MINUTES = 4;
+const SHIFTS = [[0, 0], [3, 2], [-2, 3], [2, -3], [-3, -2]] as const;
 
 const STATUS_TONES: Record<string, string> = {
-    pending: '#c8a14a',
+    pending: '#d4ad57',
     active: '#7fb2ff',
     adjourned: '#b79cff',
-    closed: '#94a3b8',
-    dismissed: '#f28b8b',
+    closed: '#8b98ab',
+    dismissed: '#ee8b8b',
 };
 
-/** The time of day in the court's zone: hours and minutes (24-hour, as hearing times are stored) and seconds. */
+const ETH_MONTHS = {
+    am: ['', 'መስከረም', 'ጥቅምት', 'ኅዳር', 'ታኅሣሥ', 'ጥር', 'የካቲት', 'መጋቢት', 'ሚያዝያ', 'ግንቦት', 'ሰኔ', 'ሐምሌ', 'ነሐሴ', 'ጳጉሜ'],
+    en: ['', 'Meskerem', 'Tikimt', 'Hidar', 'Tahsas', 'Tir', 'Yekatit', 'Megabit', 'Miyazia', 'Ginbot', 'Sene', 'Hamle', 'Nehase', 'Pagume'],
+};
+const WEEKDAYS_AM = ['እሑድ', 'ሰኞ', 'ማክሰኞ', 'ረቡዕ', 'ሐሙስ', 'ዓርብ', 'ቅዳሜ'];
+/** The Ethiopian clock counts from dawn: 07:00 is 1 in the morning. The part of the day, by the international hour. */
+const ETH_DAY_PARTS: Array<[number, string]> = [[0, 'ከሌሊቱ'], [6, 'ከጠዋቱ'], [12, 'ከቀኑ'], [18, 'ከምሽቱ']];
+
+type Lang = 'en' | 'am';
+type SignageText = typeof publicSite.en.signage;
+type TextKey = Exclude<keyof SignageText, 'status'>;
+
+const fill = (template: string, values: Record<string, string | number>): string =>
+    Object.entries(values).reduce((out, [key, value]) => out.split(`:${key}`).join(String(value)), template);
+
+/** The time of day in the court's zone, on the server's clock (read at each refresh), ticking each second. */
 function useCourtClock(serverNow: string, timezone: string) {
-    // The screen's own clock may be wrong; the board keeps the server's, read at each refresh.
     const skew = useMemo(() => {
         const server = new Date(serverNow).getTime();
         return Number.isNaN(server) ? 0 : server - Date.now();
@@ -62,14 +79,22 @@ function useCourtClock(serverNow: string, timezone: string) {
     }, [timezone]);
 
     const parts = Object.fromEntries(format.formatToParts(new Date(tick + skew)).map((part) => [part.type, part.value]));
-    return { tick, hm: `${parts.hour}:${parts.minute}`, hours: parts.hour, minutes: parts.minute, seconds: parts.second, format };
+    const hour = Number(parts.hour);
+    const minute = Number(parts.minute);
+    const dayPart = [...ETH_DAY_PARTS].reverse().find(([from]) => hour >= from)?.[1] ?? '';
+    return {
+        tick,
+        hm: `${parts.hour}:${parts.minute}`,
+        minutesOfDay: hour * 60 + minute,
+        hours: parts.hour,
+        minutes: parts.minute,
+        seconds: parts.second,
+        ethiopian: `${dayPart} ${((hour + 6) % 12) || 12}:${parts.minute}`,
+        format,
+    };
 }
 
-/**
- * The stage for this screen and its scale. A portrait screen (taller than
- * wide) gets the portrait stage; `?orientation=portrait|landscape` fixes it
- * for a kiosk whose browser reports its size wrongly.
- */
+/** The stage for this screen and its scale; `?orientation=portrait|landscape` fixes it for a kiosk. */
 function useStage(): { orientation: Orientation; scale: number } {
     const read = (): { orientation: Orientation; scale: number } => {
         const forced = new URLSearchParams(window.location.search).get('orientation');
@@ -136,28 +161,48 @@ function useWakeLock() {
     }, []);
 }
 
-function Card({ title, aside, children, className = '' }: { title: string; aside?: ReactNode; children: ReactNode; className?: string }) {
+/** A label in the screen's language with the other language beneath it, smaller: the lobby reads both. */
+function Bi({ primary, secondary, className = '', secondaryClassName = '' }: { primary: string; secondary: string; className?: string; secondaryClassName?: string }) {
     return (
-        <section className={`court-signage-card flex min-h-0 min-w-0 flex-col p-7 ${className}`}>
-            <div className="mb-5 flex items-center justify-between gap-4">
-                <h2 className="text-[26px] font-semibold tracking-wide text-(--court-brass-soft)">{title}</h2>
-                {aside}
-            </div>
-            {children}
-        </section>
+        <span className={`sg-bi ${className}`}>
+            <span className="sg-bi-primary">{primary}</span>
+            {secondary && secondary !== primary && <span className={`sg-bi-secondary ${secondaryClassName}`}>{secondary}</span>}
+        </span>
     );
 }
 
-function Dots({ count, active, seconds }: { count: number; active: number; seconds: number }) {
+/** A section's heading: a brass tick, the two-language title, and whatever stands at its end. */
+function SectionHead({ primary, secondary, aside }: { primary: string; secondary: string; aside?: ReactNode }) {
+    return (
+        <div className="sg-section-head">
+            <h2><Bi primary={primary} secondary={secondary} /></h2>
+            {aside}
+        </div>
+    );
+}
+
+/** The court's medallion: the logo set in System Settings, else the scales, inside a turning ring of brass dots. */
+function Medallion({ logoUrl }: { logoUrl: string | null }) {
+    return (
+        <span className="sg-medallion" aria-hidden="true">
+            <svg viewBox="0 0 200 200" className="sg-orbit">
+                <circle cx="100" cy="100" r="96" fill="none" stroke="currentColor" strokeWidth="2.2" strokeDasharray="0.6 9.4" strokeLinecap="round" />
+                <circle cx="100" cy="100" r="88" fill="none" stroke="currentColor" strokeWidth="0.6" />
+            </svg>
+            {logoUrl
+                ? <img src={logoUrl} alt="" className="sg-medallion-logo" />
+                : <span className="sg-medallion-mark"><CourtEmblem className="h-[58%] w-[58%]" /></span>}
+        </span>
+    );
+}
+
+function Progress({ count, active, seconds }: { count: number; active: number; seconds: number }) {
     if (count < 2) return null;
     return (
-        <span aria-hidden="true" className="flex items-center gap-2">
+        <span aria-hidden="true" className="sg-progress">
             {Array.from({ length: Math.min(count, 12) }).map((_, index) => (
-                <span key={index} className="relative h-2.5 w-10 overflow-hidden rounded-full bg-white/15">
-                    {index === active && (
-                        <span key={`${active}-${count}`} className="court-signage-fill absolute inset-0 origin-left rounded-full bg-(--court-brass)" style={{ '--page': `${seconds}s` } as CSSProperties} />
-                    )}
-                    {index < active && <span className="absolute inset-0 rounded-full bg-(--court-brass)/50" />}
+                <span key={index} data-done={index < active ? '' : undefined}>
+                    {index === active && <span key={`${active}-${count}`} className="sg-progress-fill" style={{ '--page': `${seconds}s` } as CSSProperties} />}
                 </span>
             ))}
         </span>
@@ -165,24 +210,43 @@ function Dots({ count, active, seconds }: { count: number; active: number; secon
 }
 
 /**
- * The court's public display (PublicSignageController), for the screen in
- * the lobby, standing (portrait, 1080x1920) or on a wall (landscape,
- * 1920x1080): the court's name and clock, today's cause list paged a screen
- * at a time with the next sitting marked, today's figures and the caseload,
- * and the notices, one after another. It is a screen, not a document: no site
- * header or footer, the stage scaled to the display, the cursor and the
- * full-screen button hidden while nobody moves the mouse, and the screen kept
- * awake. It re-reads its data every minute; a failed read leaves the last
- * figures up and says how old they are, never an error page.
+ * The court's public display (PublicSignageController) for the lobby: the
+ * floor-standing screen (portrait, 1080x1920) or a wall (landscape,
+ * 1920x1080). Composed like the court's letterhead over a departure board:
+ * the crest and the court's name, the clock with the Ethiopian hour and both
+ * calendars' dates, the next sitting with how long until it, today's cause
+ * list a page at a time, today's figures and the caseload, then the notices
+ * and the registry's hours. Every label is in both languages, the screen's
+ * first. It is a screen, not a document: the stage is scaled to the display,
+ * shifts a few pixels now and then against burn-in, hides the cursor while
+ * the mouse is still and keeps the screen awake. It re-reads its data every
+ * minute; a failed read leaves the last figures up and says how old they are.
  */
 export default function PublicSignage(props: PublicSignageProps) {
-    const { t, tx, fill, locale } = usePublicText();
-    const { getBoolean, getString } = useSystemSettings();
-    const courtName = useCourtName();
-    const logoUrl = getString('general.identity_system_logo_url');
-    const { now, timezone, totalCases, filedToday, hearingsToday, statusCounts, categoryCounts, todayCases, todayHearings, announcements, refreshSeconds } = props;
-    const s = (key: string) => t(`court.publicSite.signage.${key}`);
-    const number = useMemo(() => new Intl.NumberFormat(locale === 'am' ? 'am-ET' : 'en-US'), [locale]);
+    const { locale } = useLocale();
+    const { getBoolean } = useSystemSettings();
+    const branding = useBranding();
+    const { now, timezone, totalCases, filedToday, hearingsToday, statusCounts, registry, todayHearings, announcements, refreshSeconds } = props;
+
+    const lang: Lang = locale === 'am' ? 'am' : 'en';
+    const other: Lang = lang === 'am' ? 'en' : 'am';
+    const text = (key: TextKey, values?: Record<string, string | number>) => {
+        const value = (publicSite[lang].signage[key] ?? publicSite.en.signage[key]) as string;
+        return values ? fill(value, values) : value;
+    };
+    const otherText = (key: TextKey, values?: Record<string, string | number>) => {
+        const value = (publicSite[other].signage[key] ?? '') as string;
+        return values ? fill(value, values) : value;
+    };
+    const bi = (key: TextKey, values?: Record<string, string | number>) => ({ primary: text(key, values), secondary: otherText(key, values) });
+    const statusLabel = (label: string, of: Lang) => (publicSite[of].signage.status as Record<string, string>)[label.toLowerCase()] ?? label;
+
+    // The official Amharic name falls back to the English one when it is not set; the Amharic brand name is then better.
+    const names = {
+        am: (branding.officialNameAm && branding.officialNameAm !== branding.officialNameEn ? branding.officialNameAm : '') || branding.brandNameAm,
+        en: branding.officialNameEn || branding.brandNameEn,
+    };
+    const number = useMemo(() => new Intl.NumberFormat(lang === 'am' ? 'am-ET' : 'en-US'), [lang]);
     const formatNumber = (value: number) => number.format(value);
 
     const clock = useCourtClock(now, timezone);
@@ -192,8 +256,22 @@ export default function PublicSignage(props: PublicSignageProps) {
     const listBox = useRef<HTMLDivElement>(null);
     // Re-measured when the orientation changes or the list first appears.
     const rows = useFit(listBox, ROW_HEIGHT, 8, `${orientation}-${todayHearings.length > 0}`);
-    const panelBox = useRef<HTMLDivElement>(null);
     useWakeLock();
+
+    // Today in both calendars, from the server's date in the court's zone.
+    const todayIso = now.slice(0, 10);
+    const dates = useMemo(() => {
+        const [year, month, day] = todayIso.split('-').map(Number);
+        const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+        const eth = gregorianIsoToEthiopian(todayIso);
+        const gregorian = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(Date.UTC(year, month - 1, day)));
+        const weekdayEn = new Intl.DateTimeFormat('en-GB', { weekday: 'long', timeZone: 'UTC' }).format(new Date(Date.UTC(year, month - 1, day)));
+        return {
+            weekday: { am: WEEKDAYS_AM[weekday], en: weekdayEn },
+            ethiopian: eth ? { am: `${ETH_MONTHS.am[eth.month]} ${eth.day} ቀን ${eth.year} ዓ.ም.`, en: `${ETH_MONTHS.en[eth.month]} ${eth.day}, ${eth.year} E.C.` } : null,
+            gregorian,
+        };
+    }, [todayIso]);
 
     // Re-read every minute in place; a failed read keeps what is on screen.
     const [readAt, setReadAt] = useState(() => Date.now());
@@ -235,250 +313,239 @@ export default function PublicSignage(props: PublicSignageProps) {
         else void document.documentElement.requestFullscreen?.().catch(() => undefined);
     };
 
-    // The cause list, a page at a time; the next sitting is marked and the ones before it dimmed.
+    const shift = SHIFTS[Math.floor(clock.tick / (SHIFT_MINUTES * 60_000)) % SHIFTS.length];
+
+    // The next sitting, and the cause list a page at a time.
+    const minutesOf = (time: string | null) => (time ? Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5)) : -1);
+    const nextTime = todayHearings.find((hearing) => hearing.time !== null && minutesOf(hearing.time) >= clock.minutesOfDay)?.time ?? null;
+    const nextHearings = nextTime ? todayHearings.filter((hearing) => hearing.time === nextTime) : [];
+    const next = nextHearings[0] ?? null;
+    const untilNext = next ? minutesOf(next.time) - clock.minutesOfDay : 0;
+    const countdown = (of: Lang) => {
+        const say = of === lang ? text : otherText;
+        if (untilNext <= 0) return say('now');
+        return untilNext < 60 ? say('inMinutes', { m: untilNext }) : say('inHours', { h: Math.floor(untilNext / 60), m: untilNext % 60 });
+    };
+
     const pages = useMemo(() => {
         const out: SignageHearing[][] = [];
         for (let index = 0; index < todayHearings.length; index += rows) out.push(todayHearings.slice(index, index + rows));
         return out;
     }, [todayHearings, rows]);
     const page = useRotation(pages.length, PAGE_SECONDS, `${pages.length}-${rows}`);
-    const nextTime = todayHearings.find((hearing) => hearing.time !== null && hearing.time >= clock.hm)?.time ?? null;
 
     const notice = useRotation(announcements.length, NOTICE_SECONDS, announcements.length);
-    const panel = useRotation(2, PANEL_SECONDS);
-    // The turning panel shows as many filings (44px) or case types (56px) as its box holds.
-    const panelFits = { filings: useFit(panelBox, 44, 3, orientation), types: useFit(panelBox, 56, 3, orientation) };
-    const statusTotal = Math.max(1, statusCounts.reduce((sum, stat) => sum + stat.total, 0));
-    const maxType = Math.max(1, ...categoryCounts.map((category) => category.total));
-    const statusLabel = (label: string) => (label === 'unspecified' ? s('unspecified') : tx(`cm.cases.status.${label.toLowerCase()}`, label));
     const current = announcements[notice];
-    const columns = portrait ? 'grid-cols-[132px_270px_minmax(0,1fr)_190px]' : 'grid-cols-[150px_300px_minmax(0,1fr)_260px]';
-
-    const figures = (
-        <Card title={s('today')} aside={<span className="court-live h-3! w-3!" aria-hidden="true" />} className="court-signage-figures">
-            <dl className="grid grid-cols-3 gap-6">
-                {([
-                    ['hearingsToday', hearingsToday],
-                    ['filedToday', filedToday],
-                    ['totalCases', totalCases],
-                ] as const).map(([key, value]) => (
-                    <div key={key} className="flex min-w-0 flex-col-reverse">
-                        <dt className="mt-2 text-lg leading-snug text-slate-300">{s(key)}</dt>
-                        <dd className={`font-semibold tabular-nums leading-none text-white ${portrait ? 'text-[64px]' : 'text-[56px]'}`}>
-                            <CountUp value={value} format={formatNumber} />
-                        </dd>
-                    </div>
-                ))}
-            </dl>
-        </Card>
-    );
-
-    const caseload = (
-        <Card title={s('caseload')} className="court-signage-caseload">
-            <div className="flex h-4 overflow-hidden rounded-full bg-white/10" aria-hidden="true">
-                {statusCounts.map((stat) => (
-                    <span key={stat.label} style={{ width: `${(stat.total / statusTotal) * 100}%`, background: STATUS_TONES[stat.label.toLowerCase()] ?? '#64748b' }} />
-                ))}
-            </div>
-            <ul className={`mt-5 grid gap-y-3 ${portrait ? 'grid-cols-1' : 'grid-cols-2 gap-x-6'}`}>
-                {statusCounts.map((stat) => (
-                    <li key={stat.label} className="flex items-center justify-between gap-3 text-xl">
-                        <span className="flex min-w-0 items-center gap-2.5 text-slate-200">
-                            <span aria-hidden="true" className="h-3 w-3 shrink-0 rounded-sm" style={{ background: STATUS_TONES[stat.label.toLowerCase()] ?? '#64748b' }} />
-                            <span className="truncate">{statusLabel(stat.label)}</span>
-                        </span>
-                        <span className="tabular-nums text-white">
-                            {formatNumber(stat.total)}
-                            <span className="ml-2 text-slate-400">{Math.round((stat.total / statusTotal) * 100)}%</span>
-                        </span>
-                    </li>
-                ))}
-            </ul>
-        </Card>
-    );
-
-    // Turns between today's filings and the largest case types.
-    const turning = (
-        <Card
-            className="court-signage-panel"
-            title={panel === 0 ? s('filedToday') : s('caseTypes')}
-            aside={<Dots count={2} active={panel} seconds={PANEL_SECONDS} />}
-        >
-            <div ref={panelBox} className="min-h-0 flex-1 overflow-hidden">
-            <div key={panel}>
-                {panel === 0 ? (
-                    todayCases.length === 0 ? (
-                        <p className="court-signage-in text-xl text-slate-300">{s('noneFiled')}</p>
-                    ) : (
-                        <ul className="grid">
-                            {todayCases.slice(0, panelFits.filings).map((item, index) => (
-                                <li key={item.id} className="court-signage-in grid h-11 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 border-b border-white/6" style={stagger(index)}>
-                                    <span className="font-mono text-[22px] font-semibold text-white">{item.case_number ?? '—'}</span>
-                                    <span className="truncate text-lg text-slate-400">{item.case_type ?? s('untyped')}</span>
-                                    <span className="text-lg text-slate-300" title={s('party')}>{item.applicant ?? '—'}</span>
-                                </li>
-                            ))}
-                        </ul>
-                    )
-                ) : (
-                    <ul className="grid">
-                        {categoryCounts.slice(0, panelFits.types).map((category, index) => (
-                            <li key={category.name ?? '—'} className="court-signage-in flex h-14 flex-col justify-center" style={stagger(index)}>
-                                <div className="mb-1.5 flex items-baseline justify-between gap-4 text-xl">
-                                    <span className="truncate text-slate-100">{category.name ?? s('untyped')}</span>
-                                    <span className="tabular-nums text-white">{formatNumber(category.total)}</span>
-                                </div>
-                                <div className="h-2.5 overflow-hidden rounded-full bg-white/10" aria-hidden="true">
-                                    <div className="h-full rounded-full bg-linear-to-r from-(--court-brass-strong) to-(--court-brass)" style={{ width: `${(category.total / maxType) * 100}%` }} />
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                )}
-            </div>
-            </div>
-        </Card>
-    );
+    const statusTotal = Math.max(1, statusCounts.reduce((sum, stat) => sum + stat.total, 0));
 
     return (
         <LocalizedUiProvider>
-            <Head title={`${s('title')} · ${courtName}`} />
+            <Head title={`${text('title')} · ${names[lang]}`} />
 
             <div
                 className="court-site court-signage"
                 data-motion={getBoolean('appearance.enable_ui_animations', true) ? 'on' : 'off'}
                 data-orientation={orientation}
                 data-idle={idle ? '' : undefined}
+                lang={lang}
             >
                 <div
                     className="court-signage-stage"
-                    style={{ width: stage.width, height: stage.height, '--scale': scale } as CSSProperties}
+                    style={{ width: stage.width, height: stage.height, '--scale': scale, '--sx': `${shift[0]}px`, '--sy': `${shift[1]}px` } as CSSProperties}
                 >
-                    {/* The court and the clock. */}
-                    <header className="court-signage-head relative flex items-center justify-between gap-8">
-                        <CourtSeal className="court-signage-seal" />
-                        <div className="flex min-w-0 items-center gap-6">
-                            {logoUrl ? (
-                                <img src={logoUrl} alt="" className="h-24 w-24 shrink-0 rounded-full bg-white object-contain p-1.5 ring-2 ring-(--court-brass)/50" />
-                            ) : (
-                                <span aria-hidden="true" className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-(--court-ink-soft) text-(--court-brass) ring-2 ring-(--court-brass)/50">
-                                    <CourtEmblem className="h-14 w-14" />
-                                </span>
-                            )}
-                            <div className="min-w-0">
-                                <p className="text-lg font-semibold uppercase tracking-[0.2em] text-(--court-brass)">{t('court.publicSite.authority')} · {t('court.publicSite.courtKind')}</p>
-                                <h1 className={`mt-1 font-semibold leading-tight text-white ${portrait ? 'line-clamp-3 text-[40px]' : 'line-clamp-2 text-[44px]'}`}>{courtName}</h1>
-                            </div>
-                        </div>
-                        <div className="shrink-0 text-right">
-                            <p className="font-semibold tabular-nums leading-none text-white" aria-label={clock.hm}>
-                                <span className={portrait ? 'text-[104px]' : 'text-[92px]'}>{clock.hours}<span className="court-signage-colon">:</span>{clock.minutes}</span>
-                                <span className="ml-2 text-4xl text-(--court-brass)">{clock.seconds}</span>
-                            </p>
-                            <p className="mt-2 text-2xl text-slate-300"><LocalizedDateDisplay value={now.slice(0, 10)} /></p>
+                    {/* The crest: the court as its letterhead names it. */}
+                    <header className="sg-crest">
+                        <span className="sg-colonnade" aria-hidden="true" />
+                        <span className="sg-sheen" aria-hidden="true" />
+                        <Medallion logoUrl={branding.logoUrl} />
+                        <div className="sg-crest-text">
+                            <p className="sg-eyebrow">{publicSite[lang].authority} · {publicSite[lang].courtKind}</p>
+                            <h1 className="sg-court" lang={lang}>{names[lang]}</h1>
+                            {names[other] && names[other] !== names[lang] && <p className="sg-court-other" lang={other}>{names[other]}</p>}
                         </div>
                     </header>
 
-                    <div className="court-signage-rule court-signage-line" aria-hidden="true" />
+                    {/* The clock: the hour as hearings are set, the Ethiopian hour, and today in both calendars. */}
+                    <section className="sg-clock" aria-label={clock.hm}>
+                        <div>
+                            <p className="sg-time">
+                                {clock.hours}<span className="sg-colon">:</span>{clock.minutes}
+                                <span className="sg-seconds">{clock.seconds}</span>
+                            </p>
+                            <p className="sg-eth-time" lang="am">
+                                {clock.ethiopian}
+                                <span>{lang === 'am' ? text('ethiopianTime') : `· ${text('ethiopianTime')}`}</span>
+                            </p>
+                        </div>
+                        <div className="sg-dates">
+                            <p className="sg-weekday">{dates.weekday[lang]}<span>{dates.weekday[other]}</span></p>
+                            {dates.ethiopian && <p className="sg-date-eth" lang="am">{dates.ethiopian.am}</p>}
+                            <p className="sg-date-greg">{lang === 'am' ? dates.gregorian : `${dates.gregorian}${dates.ethiopian ? ` · ${dates.ethiopian.en}` : ''}`}</p>
+                        </div>
+                    </section>
 
-                    {/* Today's cause list. */}
-                    <Card
-                        className="court-signage-list"
-                        title={s('causeList')}
-                        aside={(
-                            <span className="flex items-center gap-4 text-xl text-slate-300">
-                                {pages.length > 1 && fill(s('pageOf'), { n: page + 1, total: pages.length })}
-                                <Dots count={pages.length} active={page} seconds={PAGE_SECONDS} />
-                            </span>
-                        )}
-                    >
-                        {todayHearings.length === 0 ? (
-                            <div className="flex flex-1 flex-col items-center justify-center gap-5 text-center">
-                                <CourtEmblem className="h-24 w-24 text-(--court-brass)/60" />
-                                <p className="text-3xl text-slate-300">{s('noneToday')}</p>
-                            </div>
-                        ) : (
-                            <div role="table" aria-label={s('causeList')} className="flex min-h-0 flex-1 flex-col">
-                                <div role="row" className={`grid ${columns} gap-4 border-b border-white/10 px-5 pb-3 text-base font-semibold uppercase tracking-[0.16em] text-slate-400`}>
-                                    <span role="columnheader">{t('court.publicSite.hearings.time')}</span>
-                                    <span role="columnheader">{t('court.publicSite.hearings.case')}</span>
-                                    <span role="columnheader">{t('court.publicSite.hearings.caseType')} · {t('court.publicSite.hearings.sitting')}</span>
-                                    <span role="columnheader">{t('court.publicSite.hearings.room')}</span>
-                                </div>
-                                <div ref={listBox} className="min-h-0 flex-1 overflow-hidden">
-                                <div key={`${page}-${rows}`} role="rowgroup">
-                                    {(pages[page] ?? []).map((hearing, index) => {
-                                        const past = hearing.time !== null && hearing.time < clock.hm;
-                                        const next = hearing.time !== null && hearing.time === nextTime;
-                                        return (
-                                            <div
-                                                key={hearing.id}
-                                                role="row"
-                                                className={`court-signage-row court-signage-in grid ${columns} h-[72px] items-center gap-4 border-b border-white/6 px-5`}
-                                                data-next={next ? '' : undefined}
-                                                data-past={past ? '' : undefined}
-                                                style={stagger(index)}
-                                            >
-                                                <span role="cell" className="text-[32px] font-semibold tabular-nums text-white">{hearing.time ?? '—'}</span>
-                                                <span role="cell" className="truncate font-mono text-[26px] font-semibold text-white">{hearing.case_number ?? '—'}</span>
-                                                <span role="cell" className="min-w-0">
-                                                    <span className="block truncate text-[22px] text-slate-100">{hearing.case_type ?? '—'}</span>
-                                                    {hearing.type && <span className="block truncate text-lg text-slate-400">{hearing.type}</span>}
-                                                </span>
-                                                <span role="cell" className="flex min-w-0 items-center justify-between gap-3">
-                                                    <span className="truncate text-[22px] text-slate-100">{hearing.location ?? '—'}</span>
-                                                    {next && (
-                                                        <span className="shrink-0 rounded-full bg-(--court-brass) px-3 py-1 text-base font-bold uppercase tracking-wider text-(--court-ink)">
-                                                            {s('next')}
-                                                        </span>
-                                                    )}
-                                                </span>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                                </div>
-                                <p className="pt-4 text-lg text-slate-400">{t('court.publicSite.hearings.note')}</p>
-                            </div>
-                        )}
-                    </Card>
-
-                    <div className="court-signage-side">
-                        {figures}
-                        {caseload}
-                        {turning}
-                    </div>
-
-                    {/* The notices, one after another, and how fresh the board is. */}
-                    <footer className="court-signage-foot flex items-center gap-8 border-t border-(--court-brass)/25 bg-black/25">
-                        <span className="inline-flex shrink-0 items-center rounded-md bg-(--court-brass) px-4 py-2 text-xl font-bold uppercase tracking-[0.14em] text-(--court-ink)">
-                            {s('notices')}
-                        </span>
-                        <div className="min-w-0 flex-1" aria-live="off">
-                            {current ? (
-                                <div key={current.id} className="court-signage-in min-w-0">
-                                    <p className="truncate text-[26px] font-semibold text-white">{current.title}</p>
-                                    {current.summary && <p className={`mt-1 text-xl text-slate-300 ${portrait ? 'line-clamp-2' : 'truncate'}`}>{current.summary}</p>}
-                                </div>
-                            ) : (
-                                <p className="text-xl text-slate-400">{s('noNotices')}</p>
+                    {/* The next sitting, large: what most of the lobby is waiting for. */}
+                    <section className="sg-next" data-state={next ? 'next' : todayHearings.length > 0 ? 'done' : 'none'}>
+                        <div className="sg-next-head">
+                            <Bi {...bi('nextSitting')} className="sg-kicker" />
+                            {next && (
+                                <span className="sg-countdown">
+                                    <span className="sg-pulse" aria-hidden="true" />
+                                    {countdown(lang)}
+                                    {lang !== other && <span>{countdown(other)}</span>}
+                                </span>
                             )}
                         </div>
-                        <div className={`flex shrink-0 gap-3 ${portrait ? 'flex-col items-end' : 'items-center gap-8'}`}>
-                            <Dots count={announcements.length} active={notice} seconds={NOTICE_SECONDS} />
-                            <p className={`text-lg ${stale ? 'font-semibold text-amber-300' : 'text-slate-400'}`} role="status">
-                                {fill(s(stale ? 'stale' : 'updated'), { time: readTime })}
+                        {next ? (
+                            <div key={`${next.id}-${nextTime}`} className="sg-next-body court-signage-in">
+                                <p className="sg-next-time">{next.time}</p>
+                                <div className="min-w-0">
+                                    <p className="sg-next-case">{next.case_number ?? '—'}</p>
+                                    <p className="sg-next-matter">{[next.case_type, next.type].filter(Boolean).join(' · ') || '—'}</p>
+                                    {nextHearings.length > 1 && <p className="sg-next-more">{text('alsoAt', { n: nextHearings.length - 1 })}</p>}
+                                </div>
+                                {next.location && (
+                                    <div className="sg-next-room">
+                                        <Bi {...bi('room')} className="sg-mini" />
+                                        <p>{next.location}</p>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <p className="sg-next-empty">
+                                <Bi {...bi(todayHearings.length > 0 ? 'noMoreToday' : 'noneToday')} />
+                            </p>
+                        )}
+                    </section>
+
+                    {/* Today's cause list, as a board. */}
+                    <section className="sg-list">
+                        <SectionHead
+                            {...bi('causeList')}
+                            aside={pages.length > 1 && (
+                                <span className="sg-pages">
+                                    {text('pageOf', { n: page + 1, total: pages.length })}
+                                    <Progress count={pages.length} active={page} seconds={PAGE_SECONDS} />
+                                </span>
+                            )}
+                        />
+                        {todayHearings.length === 0 ? (
+                            <div className="sg-list-empty">
+                                <CourtEmblem className="h-24 w-24" />
+                                <Bi {...bi('noneToday')} />
+                            </div>
+                        ) : (
+                            <div role="table" aria-label={text('causeList')} className="sg-table">
+                                <div role="row" className="sg-row sg-row-head">
+                                    <span aria-hidden="true" />
+                                    {(['time', 'case', 'matter', 'room'] as const).map((key) => (
+                                        <span key={key} role="columnheader"><Bi {...bi(key)} /></span>
+                                    ))}
+                                </div>
+                                <div ref={listBox} className="sg-rows">
+                                    <div key={`${page}-${rows}`} role="rowgroup">
+                                        {(pages[page] ?? []).map((hearing, index) => {
+                                            const past = hearing.time !== null && minutesOf(hearing.time) < clock.minutesOfDay;
+                                            const isNext = hearing.time !== null && hearing.time === nextTime;
+                                            return (
+                                                <div
+                                                    key={hearing.id}
+                                                    role="row"
+                                                    className="sg-row court-signage-in"
+                                                    data-state={isNext ? 'next' : past ? 'past' : 'later'}
+                                                    style={{ '--i': Math.min(index, 10) } as CSSProperties}
+                                                >
+                                                    <span className="sg-marker" aria-hidden="true" />
+                                                    <span role="cell" className="sg-cell-time">{hearing.time ?? '—'}</span>
+                                                    <span role="cell" className="sg-cell-case">{hearing.case_number ?? '—'}</span>
+                                                    <span role="cell" className="sg-cell-matter">
+                                                        <span>{hearing.case_type ?? '—'}</span>
+                                                        {hearing.type && <span>{hearing.type}</span>}
+                                                    </span>
+                                                    <span role="cell" className="sg-cell-room">
+                                                        <span>{hearing.location ?? '—'}</span>
+                                                        {isNext && <span className="sg-tag">{text('next')}</span>}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                                <p className="sg-note">{text('note')}</p>
+                            </div>
+                        )}
+                    </section>
+
+                    {/* Today's figures and the caseload: a printed ledger, ruled in brass. */}
+                    <section className="sg-figures" aria-label={text('today')}>
+                        <dl className="sg-stats">
+                            {([
+                                ['hearingsToday', hearingsToday],
+                                ['filedToday', filedToday],
+                                ['totalCases', totalCases],
+                            ] as const).map(([key, value]) => (
+                                <div key={key}>
+                                    <dt><Bi {...bi(key)} /></dt>
+                                    <dd><CountUp value={value} format={formatNumber} /></dd>
+                                </div>
+                            ))}
+                        </dl>
+                        <div className="sg-caseload">
+                            <p className="sg-caseload-title"><Bi {...bi('caseload')} /></p>
+                            <div className="sg-bar" aria-hidden="true">
+                                {statusCounts.map((stat) => (
+                                    <span key={stat.label} style={{ flexGrow: stat.total, background: STATUS_TONES[stat.label.toLowerCase()] ?? '#64748b' }} />
+                                ))}
+                            </div>
+                            <ul className="sg-legend">
+                                {statusCounts.map((stat) => (
+                                    <li key={stat.label}>
+                                        <span aria-hidden="true" style={{ background: STATUS_TONES[stat.label.toLowerCase()] ?? '#64748b' }} />
+                                        {statusLabel(stat.label, lang)}
+                                        <b>{formatNumber(stat.total)}</b>
+                                        <i>{Math.round((stat.total / statusTotal) * 100)}%</i>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    </section>
+
+                    {/* The notices, one after another, the registry, and how fresh the board is. */}
+                    <footer className="sg-foot">
+                        {announcements.length > 1 && (
+                            <span className="sg-foot-progress" aria-hidden="true">
+                                <span key={notice} className="sg-progress-fill" style={{ '--page': `${NOTICE_SECONDS}s` } as CSSProperties} />
+                            </span>
+                        )}
+                        <span className="sg-foot-label"><Bi {...bi('notices')} /></span>
+                        <div className="sg-foot-notice" aria-live="off">
+                            {current ? (
+                                <div key={current.id} className="court-signage-in">
+                                    <p className="sg-notice-title">{current.title}</p>
+                                    {current.summary && <p className="sg-notice-summary">{current.summary}</p>}
+                                    {announcements.length > 1 && <p className="sg-notice-count">{notice + 1} / {announcements.length}</p>}
+                                </div>
+                            ) : (
+                                <p className="sg-notice-none"><Bi {...bi('noNotices')} /></p>
+                            )}
+                        </div>
+                        <div className="sg-foot-side">
+                            {(registry.office_hours || registry.phone) && (
+                                <div className="sg-registry">
+                                    <p className="sg-mini"><Bi {...bi('registry')} /></p>
+                                    {registry.office_hours && <p>{registry.office_hours}</p>}
+                                    {registry.phone && <p className="tabular-nums">{registry.phone}</p>}
+                                </div>
+                            )}
+                            <p className={stale ? 'sg-fresh is-stale' : 'sg-fresh'} role="status">
+                                {text(stale ? 'stale' : 'updated', { time: readTime })}
                             </p>
                         </div>
                     </footer>
                 </div>
 
-                <button
-                    type="button"
-                    onClick={toggleFullscreen}
-                    className="court-signage-tools fixed left-1/2 top-4 z-20 -translate-x-1/2 rounded-md border border-white/20 bg-(--court-ink)/90 px-4 py-2 text-sm font-semibold text-white shadow-lg hover:bg-(--court-navy) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--court-brass)"
-                >
-                    {fullscreen ? s('exitFullscreen') : s('fullscreen')}
+                <button type="button" onClick={toggleFullscreen} className="court-signage-tools sg-tool">
+                    {fullscreen ? text('exitFullscreen') : text('fullscreen')}
                 </button>
             </div>
         </LocalizedUiProvider>

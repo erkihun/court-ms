@@ -637,105 +637,686 @@
 }
 
 /* ── The public display (Pages/Court/Public/Signage) ────────────────
-   A fixed stage scaled to the screen it is shown on (--scale, set by the
-   page): portrait 1080x1920 for the floor-standing screen, landscape
-   1920x1080 for a wall. Always the court's dark face: a lobby screen is read
-   from across the hall. */
+   The court's letterhead over a departure board, for the lobby screen: a
+   fixed stage (portrait 1080x1920 for the floor-standing screen, landscape
+   1920x1080 for a wall) scaled to the display by --scale and nudged a few
+   pixels by --sx/--sy against burn-in. Always the court's dark face, with
+   brass for what matters now: the hour, the next sitting, the rules. */
 .court-site.court-signage {
+    --sg-pad: 64px;
+    --sg-line: rgb(255 255 255 / 0.08);
+    --sg-brass-line: rgb(200 161 74 / 0.32);
     position: fixed;
     inset: 0;
     overflow: hidden;
     color: #e7eaf0;
     background:
-        radial-gradient(ellipse at 88% -20%, rgb(200 161 74 / 0.16), transparent 55%),
-        radial-gradient(ellipse at -10% 120%, rgb(22 48 90 / 0.9), transparent 60%),
-        var(--court-ink);
+        radial-gradient(ellipse 70% 40% at 50% -8%, rgb(200 161 74 / 0.18), transparent 70%),
+        radial-gradient(ellipse 80% 60% at 50% 115%, rgb(22 48 90 / 0.95), transparent 70%),
+        linear-gradient(180deg, #0b1830 0%, #091427 55%, #0a1a33 100%);
     color-scheme: dark;
 }
+/* A fine grain, as on printed stock, under everything. */
+.court-site.court-signage::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.07;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
 .court-site.court-signage[data-idle] { cursor: none; }
+.court-site.court-signage[data-orientation='landscape'] { --sg-pad: 56px; }
+
 .court-site .court-signage-stage {
     position: absolute;
     left: 50%;
     top: 50%;
+    z-index: 1;
     isolation: isolate;
     display: grid;
-    gap: 24px;
-    transform: translate(-50%, -50%) scale(var(--scale, 1));
+    padding: 0 var(--sg-pad);
+    transform: translate(calc(-50% + var(--sx, 0px)), calc(-50% + var(--sy, 0px))) scale(var(--scale, 1));
     transform-origin: center;
+    transition: transform 2.5s ease;
 }
-.court-site .court-signage-head { grid-area: head; }
-.court-site .court-signage-line { grid-area: line; }
-.court-site .court-signage-list { grid-area: list; }
-.court-site .court-signage-side { grid-area: side; display: grid; gap: 24px; min-height: 0; }
-.court-site .court-signage-foot { grid-area: foot; }
-
-/* Landscape: the cause list beside a column of figures, caseload and the turning panel. */
-.court-site.court-signage[data-orientation='landscape'] .court-signage-stage {
-    padding: 32px 48px 0;
-    grid-template-columns: minmax(0, 1fr) 600px;
-    grid-template-rows: 128px 3px minmax(0, 1fr) 104px;
-    grid-template-areas: 'head head' 'line line' 'list side' 'foot foot';
-}
-.court-site.court-signage[data-orientation='landscape'] .court-signage-side {
-    grid-template-rows: auto auto minmax(0, 1fr);
-}
-/* Portrait: the cause list runs down the screen; the figures, then caseload and panel side by side, below it. */
 .court-site.court-signage[data-orientation='portrait'] .court-signage-stage {
-    padding: 48px 48px 0;
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 200px 3px minmax(0, 1fr) 560px 150px;
-    grid-template-areas: 'head' 'line' 'list' 'side' 'foot';
+    grid-template-rows: 336px 156px 250px minmax(0, 1fr) 276px 156px;
+    grid-template-areas: 'crest' 'clock' 'next' 'list' 'figures' 'foot';
+    row-gap: 0;
 }
-.court-site.court-signage[data-orientation='portrait'] .court-signage-side {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr);
-    grid-template-areas: 'figures figures' 'caseload panel';
+.court-site.court-signage[data-orientation='landscape'] .court-signage-stage {
+    grid-template-columns: 760px minmax(0, 1fr);
+    grid-template-rows: 216px 150px minmax(0, 1fr) 292px 124px;
+    grid-template-areas: 'crest list' 'clock list' 'next list' 'figures list' 'foot foot';
+    column-gap: 56px;
 }
-.court-site.court-signage[data-orientation='portrait'] .court-signage-figures { grid-area: figures; }
-.court-site.court-signage[data-orientation='portrait'] .court-signage-caseload { grid-area: caseload; }
-.court-site.court-signage[data-orientation='portrait'] .court-signage-panel { grid-area: panel; }
-/* The rule and the notices band run to the stage's edges. */
-.court-site .court-signage-line,
-.court-site .court-signage-foot {
-    margin-inline: -48px;
-    padding-inline: 48px;
-}
-.court-site .court-signage-line { padding-inline: 0; }
+.court-site .sg-crest { grid-area: crest; }
+.court-site .sg-clock { grid-area: clock; }
+.court-site .sg-next { grid-area: next; }
+.court-site .sg-list { grid-area: list; }
+.court-site .sg-figures { grid-area: figures; }
+.court-site .sg-foot { grid-area: foot; }
 
-.court-site .court-signage-card {
+/* Two languages: the screen's first, the other beneath it. */
+.court-site .sg-bi { display: inline-flex; flex-direction: column; min-width: 0; }
+.court-site .sg-bi-secondary {
+    margin-top: 0.15em;
+    font-size: 0.64em;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    opacity: 0.62;
+}
+
+/* Ethiopic has no capitals: the wide tracking set for English small caps only spreads it. */
+.court-site.court-signage[lang='am'] :is(.sg-eyebrow, .sg-bi-primary) { letter-spacing: 0.03em; }
+
+/* ── The crest ── */
+.court-site .sg-crest {
     position: relative;
     overflow: hidden;
-    border: 1px solid rgb(200 161 74 / 0.16);
-    border-radius: 14px;
-    background: linear-gradient(180deg, rgb(255 255 255 / 0.05), rgb(255 255 255 / 0.02));
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    margin-inline: calc(var(--sg-pad) * -1);
+    padding-inline: var(--sg-pad);
 }
-.court-site .court-signage-rule {
+.court-site.court-signage[data-orientation='portrait'] .sg-crest {
+    flex-direction: column;
+    justify-content: center;
+    gap: 14px;
+    padding: 8px 0 26px;
+    text-align: center;
+}
+.court-site.court-signage[data-orientation='landscape'] .sg-crest {
+    margin-inline-end: 0;
+}
+/* The double brass rule under the letterhead. */
+.court-site .sg-crest::after {
+    content: '';
+    position: absolute;
+    left: var(--sg-pad);
+    right: var(--sg-pad);
+    bottom: 0;
+    height: 6px;
+    background:
+        linear-gradient(90deg, transparent, var(--court-brass), transparent) top / 100% 1px no-repeat,
+        linear-gradient(90deg, transparent, var(--court-brass-soft) 30%, var(--court-brass) 50%, var(--court-brass-soft) 70%, transparent) bottom / 100% 2px no-repeat;
+}
+/* The colonnade, faint behind the crest. */
+.court-site .sg-colonnade {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: repeating-linear-gradient(90deg, rgb(200 161 74 / 0.07) 0 2px, transparent 2px 84px);
+    mask-image: linear-gradient(180deg, transparent 0%, #000 45%, transparent 100%);
+}
+.court-site .sg-sheen {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(105deg, transparent 38%, rgb(232 214 162 / 0.13) 50%, transparent 62%);
+    opacity: 0;
+}
+.court-site .sg-medallion {
+    position: relative;
+    display: grid;
+    flex-shrink: 0;
+    place-items: center;
+    width: 108px;
+    height: 108px;
+    color: var(--court-brass);
+}
+.court-site .sg-orbit { position: absolute; inset: 0; width: 100%; height: 100%; }
+.court-site .sg-medallion-mark,
+.court-site .sg-medallion-logo {
+    width: 84px;
+    height: 84px;
+    border-radius: 9999px;
+}
+.court-site .sg-medallion-mark {
+    display: grid;
+    place-items: center;
+    background: radial-gradient(circle at 50% 35%, #17305a, var(--court-ink) 75%);
+    box-shadow: inset 0 0 0 1.5px rgb(200 161 74 / 0.6), 0 12px 40px -12px rgb(200 161 74 / 0.45);
+}
+.court-site .sg-medallion-logo {
+    object-fit: contain;
+    padding: 8px;
+    background: #fff;
+    box-shadow: 0 0 0 2px rgb(200 161 74 / 0.6), 0 12px 40px -12px rgb(200 161 74 / 0.45);
+}
+.court-site .sg-crest-text { min-width: 0; }
+.court-site .sg-eyebrow {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: var(--court-brass);
+}
+.court-site .sg-court {
+    margin-top: 6px;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    font-size: 46px;
+    font-weight: 600;
+    line-height: 1.16;
+    letter-spacing: -0.01em;
+    color: #fff;
+}
+.court-site .sg-court:lang(am) {
+    font-family: var(--font-document-am);
+    font-weight: 400;
+    font-size: 50px;
+    letter-spacing: 0;
+}
+.court-site.court-signage[data-orientation='landscape'] .sg-court { font-size: 42px; }
+.court-site.court-signage[data-orientation='landscape'] .sg-court:lang(am) { font-size: 46px; }
+.court-site .sg-court-other {
+    margin-top: 6px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 21px;
+    color: rgb(203 213 225 / 0.7);
+}
+
+/* ── The clock ── */
+.court-site .sg-clock {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+    border-bottom: 1px solid var(--sg-line);
+}
+.court-site .sg-time {
+    font-size: 118px;
+    font-weight: 600;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    color: #fff;
+}
+.court-site.court-signage[data-orientation='landscape'] .sg-time { font-size: 100px; }
+.court-site .sg-colon { position: relative; top: -0.06em; margin-inline: 0.02em; }
+.court-site .sg-seconds {
+    margin-left: 14px;
+    font-size: 0.3em;
+    letter-spacing: 0;
+    color: var(--court-brass);
+    vertical-align: 0.15em;
+}
+.court-site .sg-eth-time {
+    margin-top: 12px;
+    font-size: 25px;
+    color: rgb(226 232 240 / 0.85);
+}
+.court-site .sg-eth-time span {
+    margin-left: 12px;
+    font-size: 17px;
+    letter-spacing: 0.04em;
+    color: rgb(148 163 184 / 0.9);
+}
+.court-site .sg-dates { min-width: 0; text-align: right; }
+.court-site .sg-weekday {
+    font-size: 34px;
+    font-weight: 600;
+    color: #fff;
+}
+.court-site .sg-weekday span {
+    margin-left: 14px;
+    font-size: 20px;
+    font-weight: 500;
+    color: rgb(148 163 184);
+}
+.court-site .sg-date-eth {
+    margin-top: 6px;
+    font-size: 27px;
+    color: var(--court-brass-soft);
+}
+.court-site .sg-date-greg {
+    margin-top: 4px;
+    font-size: 20px;
+    color: rgb(148 163 184);
+}
+
+/* ── The next sitting ── */
+.court-site .sg-next {
+    position: relative;
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+    height: calc(100% - 44px);
+    padding: 26px 36px;
+    border: 1px solid rgb(200 161 74 / 0.42);
+    border-radius: 22px;
+    background:
+        radial-gradient(ellipse 60% 120% at 0% 50%, rgb(200 161 74 / 0.16), transparent 70%),
+        linear-gradient(180deg, rgb(255 255 255 / 0.05), rgb(255 255 255 / 0.015));
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 30px 60px -30px rgb(0 0 0 / 0.7);
+}
+.court-site.court-signage[data-orientation='landscape'] .sg-next { height: calc(100% - 36px); }
+.court-site .sg-next[data-state='done'],
+.court-site .sg-next[data-state='none'] {
+    border-color: var(--sg-line);
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.035), rgb(255 255 255 / 0.01));
+}
+.court-site .sg-next-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+.court-site .sg-kicker .sg-bi-primary {
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--court-brass);
+}
+.court-site .sg-kicker .sg-bi-secondary { font-size: 15px; color: var(--court-brass-soft); }
+.court-site .sg-countdown {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    padding: 10px 20px 10px 16px;
+    border: 1px solid rgb(200 161 74 / 0.45);
+    border-radius: 9999px;
+    background: rgb(200 161 74 / 0.12);
+    font-size: 22px;
+    font-weight: 600;
+    color: #fff;
+}
+.court-site .sg-countdown > span:last-child:not(.sg-pulse) { font-size: 15px; font-weight: 500; color: rgb(203 213 225 / 0.8); }
+.court-site .sg-pulse,
+.court-site .sg-marker {
+    position: relative;
+    flex-shrink: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 9999px;
+}
+.court-site .sg-pulse { background: var(--court-brass); }
+.court-site .sg-pulse::after,
+.court-site .sg-row[data-state='next'] .sg-marker::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--court-brass);
+    opacity: 0;
+}
+.court-site .sg-next-body {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 36px;
+    margin-top: 16px;
+}
+.court-site.court-signage[data-orientation='landscape'] .sg-next-body {
+    grid-template-columns: auto minmax(0, 1fr);
+    row-gap: 14px;
+}
+.court-site .sg-next-time {
+    font-size: 108px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    background: linear-gradient(180deg, #f6e7bb 0%, var(--court-brass) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+.court-site.court-signage[data-orientation='landscape'] .sg-next-time { font-size: 92px; }
+.court-site .sg-next-case {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+    font-size: 44px;
+    font-weight: 600;
+    color: #fff;
+}
+.court-site .sg-next-matter {
+    margin-top: 6px;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    font-size: 23px;
+    line-height: 1.35;
+    color: rgb(226 232 240 / 0.88);
+}
+.court-site .sg-next-more { margin-top: 6px; font-size: 18px; color: var(--court-brass-soft); }
+.court-site .sg-next-room { min-width: 0; max-width: 260px; text-align: right; }
+.court-site.court-signage[data-orientation='landscape'] .sg-next-room {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    max-width: none;
+    padding-top: 12px;
+    border-top: 1px solid var(--sg-line);
+    text-align: left;
+}
+.court-site .sg-next-room p {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 34px;
+    font-weight: 600;
+    color: #fff;
+}
+.court-site .sg-mini .sg-bi-primary,
+.court-site .sg-mini.sg-bi .sg-bi-primary {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgb(148 163 184);
+}
+.court-site .sg-mini .sg-bi-secondary { font-size: 12px; color: rgb(148 163 184); }
+.court-site .sg-next-empty {
+    display: grid;
+    flex: 1;
+    place-items: center;
+    text-align: center;
+    font-size: 32px;
+    color: rgb(203 213 225);
+}
+
+/* ── The cause list ── */
+.court-site .sg-list {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 26px 0 18px;
+}
+.court-site.court-signage[data-orientation='landscape'] .sg-list { padding: 36px 0 24px; }
+.court-site .sg-section-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 14px;
+}
+.court-site .sg-section-head h2 { display: flex; align-items: flex-start; gap: 16px; }
+.court-site .sg-section-head h2::before {
+    content: '';
+    flex-shrink: 0;
+    width: 30px;
     height: 3px;
-    background: linear-gradient(90deg, transparent, var(--court-brass), var(--court-brass-soft), var(--court-brass), transparent);
+    margin-top: 0.65em;
+    border-radius: 9999px;
+    background: var(--court-brass);
 }
-.court-site .court-signage-row[data-next] {
-    background: linear-gradient(90deg, rgb(200 161 74 / 0.2), rgb(200 161 74 / 0.04) 70%, transparent);
+.court-site .sg-section-head .sg-bi-primary { font-size: 27px; font-weight: 600; color: var(--court-brass-soft); }
+.court-site .sg-section-head .sg-bi-secondary { font-size: 16px; color: rgb(148 163 184); opacity: 1; }
+.court-site .sg-section-head h2 .sg-bi { flex-direction: row; align-items: baseline; gap: 14px; }
+.court-site .sg-section-head h2::before { margin-top: 0.62em; }
+.court-site .sg-pages {
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 20px;
+    font-variant-numeric: tabular-nums;
+    color: rgb(203 213 225);
+}
+.court-site .sg-progress { display: inline-flex; gap: 6px; }
+.court-site .sg-progress > span {
+    position: relative;
+    overflow: hidden;
+    width: 36px;
+    height: 6px;
+    border-radius: 9999px;
+    background: rgb(255 255 255 / 0.14);
+}
+.court-site .sg-progress > span[data-done] { background: rgb(200 161 74 / 0.5); }
+.court-site .sg-progress-fill {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--court-brass);
+    transform-origin: left center;
+}
+.court-site .sg-table {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    border: 1px solid var(--sg-line);
+    border-radius: 18px;
+    background: rgb(3 8 20 / 0.35);
+}
+.court-site .sg-row {
+    display: grid;
+    grid-template-columns: 14px 118px 236px minmax(0, 1fr) 190px;
+    align-items: center;
+    gap: 20px;
+    height: 62px;
+    padding: 0 22px;
+    border-bottom: 1px solid rgb(255 255 255 / 0.05);
+}
+.court-site.court-signage[data-orientation='landscape'] .sg-row {
+    grid-template-columns: 14px 132px 280px minmax(0, 1fr) 250px;
+    gap: 24px;
+    padding: 0 28px;
+}
+.court-site .sg-row-head {
+    height: auto;
+    padding-block: 14px 12px;
+    border-bottom: 1px solid var(--sg-brass-line);
+    background: rgb(255 255 255 / 0.03);
+}
+.court-site .sg-row-head .sg-bi-primary {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgb(148 163 184);
+}
+.court-site .sg-row-head .sg-bi-secondary { font-size: 12px; color: rgb(100 116 139); opacity: 1; }
+.court-site .sg-rows { flex: 1; min-height: 0; overflow: hidden; }
+.court-site .sg-rows .sg-row:nth-child(even) { background: rgb(255 255 255 / 0.018); }
+.court-site .sg-marker { box-shadow: inset 0 0 0 2px rgb(200 161 74 / 0.75); }
+.court-site .sg-row[data-state='past'] .sg-marker { box-shadow: inset 0 0 0 2px rgb(100 116 139 / 0.6); }
+.court-site .sg-row[data-state='next'] .sg-marker { background: var(--court-brass); box-shadow: none; }
+.court-site .sg-row[data-state='next'] {
+    background: linear-gradient(90deg, rgb(200 161 74 / 0.22), rgb(200 161 74 / 0.05) 65%, transparent) !important;
     box-shadow: inset 4px 0 0 var(--court-brass);
 }
 /* Its cells, not the row: the row's entrance animation ends at full opacity. */
-.court-site .court-signage-row[data-past] > * { opacity: 0.45; }
-.court-site .court-signage-seal {
-    display: block;
-    top: 50%;
-    width: 220px;
-    height: 220px;
-    translate: 0 -50%;
-    opacity: 0.12;
+.court-site .sg-row[data-state='past'] > * { opacity: 0.42; }
+.court-site .sg-cell-time {
+    font-size: 31px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: #fff;
 }
-.court-site.court-signage[data-orientation='landscape'] .court-signage-seal { right: 330px; }
-.court-site.court-signage[data-orientation='portrait'] .court-signage-seal { right: 0; top: 135%; width: 300px; height: 300px; opacity: 0.08; }
-.court-site .court-signage-tools {
-    transition: opacity 0.3s ease;
+.court-site .sg-row[data-state='next'] .sg-cell-time { color: var(--court-brass-soft); }
+.court-site .sg-cell-case {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+    font-size: 24px;
+    font-weight: 600;
+    color: #fff;
 }
-.court-site.court-signage[data-idle] .court-signage-tools {
-    opacity: 0;
-    pointer-events: none;
+.court-site .sg-cell-matter { display: flex; flex-direction: column; min-width: 0; }
+.court-site .sg-cell-matter > span,
+.court-site .sg-cell-room > span:first-child { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.court-site .sg-cell-matter > span:first-child { font-size: 21px; color: rgb(241 245 249); }
+.court-site .sg-cell-matter > span + span { font-size: 16px; color: rgb(148 163 184); }
+.court-site .sg-cell-room { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; font-size: 21px; color: rgb(241 245 249); }
+.court-site .sg-tag {
+    flex-shrink: 0;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    background: var(--court-brass);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--court-ink);
 }
+.court-site .sg-note {
+    padding: 12px 22px 14px;
+    border-top: 1px solid rgb(255 255 255 / 0.05);
+    font-size: 16px;
+    color: rgb(100 116 139);
+}
+.court-site .sg-list-empty {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    border: 1px dashed var(--sg-line);
+    border-radius: 18px;
+    text-align: center;
+    font-size: 32px;
+    color: rgb(203 213 225);
+}
+.court-site .sg-list-empty svg { color: rgb(200 161 74 / 0.55); }
+
+/* ── The figures ── */
+.court-site .sg-figures {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding-top: 22px;
+    min-height: 0;
+    border-top: 1px solid var(--sg-line);
+}
+.court-site .sg-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.court-site .sg-stats > div {
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: flex-end;
+    min-width: 0;
+    padding: 4px 28px;
+    border-left: 1px solid var(--sg-brass-line);
+}
+.court-site .sg-stats > div:first-child { padding-left: 0; border-left: 0; }
+.court-site .sg-stats dd {
+    font-size: 72px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    color: #fff;
+}
+.court-site.court-signage[data-orientation='landscape'] .sg-stats dd { font-size: 62px; }
+.court-site .sg-stats dt { margin-top: 10px; }
+.court-site .sg-stats dt .sg-bi-primary { font-size: 19px; color: rgb(203 213 225); }
+.court-site .sg-stats dt .sg-bi-secondary { font-size: 14px; color: rgb(148 163 184); opacity: 1; }
+.court-site .sg-caseload { margin-top: 22px; }
+.court-site .sg-caseload-title .sg-bi { flex-direction: row; align-items: baseline; gap: 12px; }
+.court-site .sg-caseload-title .sg-bi-primary { font-size: 16px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: rgb(148 163 184); }
+.court-site .sg-caseload-title .sg-bi-secondary { font-size: 14px; color: rgb(100 116 139); opacity: 1; }
+.court-site .sg-bar {
+    display: flex;
+    gap: 3px;
+    height: 10px;
+    margin: 12px 0 14px;
+    overflow: hidden;
+    border-radius: 9999px;
+}
+.court-site .sg-bar > span { flex-basis: 0; border-radius: 2px; }
+.court-site .sg-legend { display: flex; flex-wrap: wrap; gap: 10px 30px; }
+.court-site .sg-legend li { display: inline-flex; align-items: center; gap: 9px; font-size: 19px; color: rgb(226 232 240); }
+.court-site .sg-legend li > span { width: 12px; height: 12px; border-radius: 3px; }
+.court-site .sg-legend b { margin-left: 4px; font-weight: 600; font-variant-numeric: tabular-nums; color: #fff; }
+.court-site .sg-legend i { font-style: normal; font-variant-numeric: tabular-nums; color: rgb(100 116 139); }
+.court-site.court-signage[data-orientation='landscape'] .sg-caseload { margin-top: 18px; }
+.court-site.court-signage[data-orientation='landscape'] .sg-legend { gap: 8px 22px; }
+.court-site.court-signage[data-orientation='landscape'] .sg-legend li { gap: 7px; font-size: 16px; }
+
+/* ── The notices ── */
+.court-site .sg-foot {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 36px;
+    margin-inline: calc(var(--sg-pad) * -1);
+    padding-inline: var(--sg-pad);
+    border-top: 1px solid var(--sg-brass-line);
+    background: linear-gradient(180deg, rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.42));
+}
+.court-site .sg-foot-progress { position: absolute; top: -1px; left: 0; right: 0; height: 3px; overflow: hidden; }
+.court-site .sg-foot-label {
+    display: inline-flex;
+    padding: 14px 22px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #d9b664, var(--court-brass));
+    color: var(--court-ink);
+    box-shadow: 0 10px 30px -12px rgb(200 161 74 / 0.7);
+}
+.court-site .sg-foot-label .sg-bi-primary { font-size: 20px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; }
+.court-site .sg-foot-label .sg-bi-secondary { font-size: 13px; font-weight: 600; opacity: 0.75; }
+.court-site .sg-foot-notice { min-width: 0; }
+.court-site .sg-notice-title {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 28px;
+    font-weight: 600;
+    color: #fff;
+}
+.court-site .sg-notice-summary {
+    margin-top: 6px;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    font-size: 20px;
+    line-height: 1.4;
+    color: rgb(203 213 225);
+}
+.court-site.court-signage[data-orientation='landscape'] .sg-notice-summary { -webkit-line-clamp: 1; }
+.court-site .sg-notice-count { margin-top: 6px; font-size: 15px; font-variant-numeric: tabular-nums; color: rgb(100 116 139); }
+.court-site.court-signage[data-orientation='landscape'] .sg-notice-count { display: none; }
+.court-site .sg-notice-none { font-size: 22px; color: rgb(148 163 184); }
+.court-site .sg-foot-side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+    max-width: 300px;
+    text-align: right;
+}
+.court-site.court-signage[data-orientation='landscape'] .sg-foot-side { flex-direction: row; align-items: center; gap: 36px; max-width: none; }
+.court-site .sg-registry p:not(.sg-mini) { font-size: 19px; color: rgb(226 232 240); }
+.court-site .sg-registry .sg-mini .sg-bi { flex-direction: row; gap: 10px; justify-content: flex-end; align-items: baseline; }
+.court-site .sg-fresh { font-size: 16px; color: rgb(100 116 139); }
+.court-site .sg-fresh.is-stale { font-weight: 700; color: #fcd34d; }
+
+.court-site .sg-tool {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 20;
+    padding: 8px 16px;
+    border: 1px solid rgb(255 255 255 / 0.2);
+    border-radius: 8px;
+    background: rgb(12 26 49 / 0.92);
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    box-shadow: 0 10px 30px -10px rgb(0 0 0 / 0.6);
+}
+.court-site .sg-tool:hover { background: var(--court-navy); }
+.court-site .sg-tool:focus-visible { outline: 2px solid var(--court-brass); outline-offset: 2px; }
+.court-site .court-signage-tools { transition: opacity 0.3s ease; }
+.court-site.court-signage[data-idle] .court-signage-tools { opacity: 0; pointer-events: none; }
 
 @keyframes cp-board-in {
     from { opacity: 0; transform: translateY(14px); }
@@ -743,18 +1324,29 @@
 }
 @keyframes cp-tick {
     0%, 100% { opacity: 1; }
-    50% { opacity: 0.25; }
+    50% { opacity: 0.3; }
+}
+@keyframes cp-sheen {
+    0% { opacity: 0; transform: translateX(-70%); }
+    8% { opacity: 1; }
+    30% { opacity: 0; transform: translateX(70%); }
+    100% { opacity: 0; transform: translateX(70%); }
+}
+@keyframes cp-breathe {
+    0%, 100% { box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 30px 60px -30px rgb(0 0 0 / 0.7), 0 0 0 0 rgb(200 161 74 / 0); }
+    50% { box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 30px 60px -30px rgb(0 0 0 / 0.7), 0 0 46px -6px rgb(200 161 74 / 0.32); }
 }
 @media (prefers-reduced-motion: no-preference) {
-    /* A page of the cause list, a notice and the side panel arrive in turn as they change. */
+    /* A page of the cause list and a notice arrive in turn as they change. */
     .court-site[data-motion='on'] .court-signage-in {
         animation: cp-board-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
-        animation-delay: calc(var(--i, 0) * 70ms);
+        animation-delay: calc(var(--i, 0) * 60ms);
     }
-    .court-site[data-motion='on'] .court-signage-colon {
-        animation: cp-tick 2s steps(1) infinite;
-    }
-    .court-site[data-motion='on'] .court-signage-fill {
-        animation: cp-fill var(--page, 12s) linear both;
-    }
+    .court-site[data-motion='on'] .sg-colon { animation: cp-tick 2s steps(1) infinite; }
+    .court-site[data-motion='on'] .sg-progress-fill { animation: cp-fill var(--page, 12s) linear both; }
+    .court-site[data-motion='on'] .sg-orbit { animation: cp-turn 90s linear infinite; }
+    .court-site[data-motion='on'] .sg-sheen { animation: cp-sheen 16s ease-in-out 2s infinite; }
+    .court-site[data-motion='on'] .sg-next[data-state='next'] { animation: cp-breathe 5s ease-in-out infinite; }
+    .court-site[data-motion='on'] .sg-pulse::after,
+    .court-site[data-motion='on'] .sg-row[data-state='next'] .sg-marker::after { animation: cp-ping 2.2s cubic-bezier(0, 0, 0.2, 1) infinite; }
 }

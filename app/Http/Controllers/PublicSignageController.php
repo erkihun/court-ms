@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Announcement;
 use App\Models\CourtCase;
+use App\Support\Ui\PublicSiteChrome;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -12,19 +13,16 @@ use Mews\Purifier\Facades\Purifier;
 
 class PublicSignageController extends Controller
 {
-    /** How many of today's sittings the board pages through, and how many filings and case types it lists. */
+    /** How many of today's sittings the board pages through. */
     public const HEARING_LIMIT = 60;
 
-    public const FILING_LIMIT = 6;
-
-    public const CASE_TYPE_LIMIT = 5;
-
     /**
-     * The court's wall board (a 1920x1080 screen in the lobby): today's cause
-     * list with times and rooms, today's figures, the caseload and the active
-     * notices. It is public, so it shows case numbers and types, a filing
-     * party's initials only, and no staff: the board once listed every active
-     * account as "on duty", which was neither true nor the public's to see.
+     * The court's lobby display (a portrait floor screen, or a landscape wall
+     * one): today's cause list with times and rooms and the next sitting,
+     * today's figures, the caseload, the registry's hours and the active
+     * notices. It is public, so it shows case numbers and types, no party and
+     * no staff: the board once listed every active account as "on duty",
+     * which was neither true nor the public's to see.
      */
     public function show()
     {
@@ -41,23 +39,6 @@ class PublicSignageController extends Controller
         )
             ->groupBy('label')
             ->orderByDesc('total')
-            ->get();
-
-        $categoryCounts = DB::table('court_cases as c')
-            ->leftJoin('case_types as t', 't.id', '=', 'c.case_type_id')
-            ->select('t.name', DB::raw('count(*) as total'))
-            ->groupBy('t.name')
-            ->orderByDesc('total')
-            ->limit(self::CASE_TYPE_LIMIT)
-            ->get();
-
-        $filedToday = CourtCase::query()->whereBetween('created_at', [$startOfDay, $endOfDay]);
-
-        $todayCases = (clone $filedToday)
-            ->select('id', 'case_number', 'case_type_id', 'created_at', 'applicant_id')
-            ->with(['caseType:id,name', 'applicant:id,first_name,middle_name,last_name'])
-            ->latest('created_at')
-            ->limit(self::FILING_LIMIT)
             ->get();
 
         $hearingsToday = DB::table('case_hearings as h')
@@ -77,30 +58,20 @@ class PublicSignageController extends Controller
             ->limit(5)
             ->get();
 
+        $footer = PublicSiteChrome::props()['footer'] ?? [];
+
         return Inertia::render('Court/Public/Signage', [
             'now' => $now->toIso8601String(),
             'timezone' => $tz,
             'totalCases' => CourtCase::count(),
-            'filedToday' => (clone $filedToday)->count(),
+            'filedToday' => CourtCase::query()->whereBetween('created_at', [$startOfDay, $endOfDay])->count(),
             'hearingsToday' => (clone $hearingsToday)->count(),
             'statusCounts' => $statusCounts->map(fn ($stat): array => ['label' => (string) $stat->label, 'total' => (int) $stat->total])->values(),
-            'categoryCounts' => $categoryCounts->map(fn ($cat): array => ['name' => $cat->name, 'total' => (int) $cat->total])->values(),
-            'todayCases' => $todayCases->map(function (CourtCase $case): array {
-                // A public screen shows initials only: the party can recognise
-                // their case next to its number, a passer-by cannot identify anyone.
-                $applicant = collect([$case->applicant?->first_name, $case->applicant?->middle_name, $case->applicant?->last_name])
-                    ->map(fn (?string $part): string => trim((string) $part))
-                    ->filter(fn (string $part): bool => $part !== '')
-                    ->map(fn (string $part): string => mb_strtoupper(mb_substr($part, 0, 1)).'.')
-                    ->implode(' ');
-
-                return [
-                    'id' => $case->id,
-                    'case_number' => $case->case_number,
-                    'applicant' => $applicant !== '' ? $applicant : null,
-                    'case_type' => $case->caseType?->name,
-                ];
-            })->values(),
+            // The registry's hours and phone from the landing manager's contact settings, in the request's language.
+            'registry' => [
+                'office_hours' => $footer['office_hours'] ?? null,
+                'phone' => $footer['contact_phone'] ?? null,
+            ],
             'todayHearings' => $todayHearings->map(function (object $row): array {
                 // The stored wall-clock time, as the public site's hearing list shows it.
                 $raw = (string) $row->hearing_at;
