@@ -269,6 +269,8 @@ export default function PublicSignage(props: PublicSignageProps) {
     const clock = useCourtClock(now, timezone);
     const { orientation, scale, rotate } = useStage();
     const stage = STAGES[orientation];
+    // Light by default, as a lobby by day is bright; `?theme=dark` gives the ink face for a dim hall.
+    const theme = useMemo(() => (new URLSearchParams(window.location.search).get('theme') === 'dark' ? 'dark' : 'light'), []);
     useWakeLock();
     const todayLabel = useMemo(() => ethiopianDay(today.date), [today.date]);
 
@@ -362,6 +364,7 @@ export default function PublicSignage(props: PublicSignageProps) {
                 className="court-site court-signage"
                 data-motion={getBoolean('appearance.enable_ui_animations', true) ? 'on' : 'off'}
                 data-orientation={orientation}
+                data-theme={theme}
                 data-idle={idle ? '' : undefined}
                 data-decisions={decisions.length > 0 ? '' : undefined}
                 lang="am"
