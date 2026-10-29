@@ -6,7 +6,6 @@ import publicSite from '@/court/i18n/publicSite';
 import { CountUp } from '@/court/public/motion';
 import type { PublicSignageProps, SignageHearing } from '@/court/types/public';
 import { useBranding } from '@/hooks/useBranding';
-import { useLocale } from '@/hooks/useLocale';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { gregorianIsoToEthiopian } from '@/lib/calendar/ethiopianCalendar';
 import '../../../../css/court-public.css';
@@ -41,15 +40,21 @@ const STATUS_TONES: Record<string, string> = {
     dismissed: '#ee8b8b',
 };
 
-const ETH_MONTHS = {
-    am: ['', 'መስከረም', 'ጥቅምት', 'ኅዳር', 'ታኅሣሥ', 'ጥር', 'የካቲት', 'መጋቢት', 'ሚያዝያ', 'ግንቦት', 'ሰኔ', 'ሐምሌ', 'ነሐሴ', 'ጳጉሜ'],
-    en: ['', 'Meskerem', 'Tikimt', 'Hidar', 'Tahsas', 'Tir', 'Yekatit', 'Megabit', 'Miyazia', 'Ginbot', 'Sene', 'Hamle', 'Nehase', 'Pagume'],
-};
+const ETH_MONTHS_AM = ['', 'መስከረም', 'ጥቅምት', 'ኅዳር', 'ታኅሣሥ', 'ጥር', 'የካቲት', 'መጋቢት', 'ሚያዝያ', 'ግንቦት', 'ሰኔ', 'ሐምሌ', 'ነሐሴ', 'ጳጉሜ'];
 const WEEKDAYS_AM = ['እሑድ', 'ሰኞ', 'ማክሰኞ', 'ረቡዕ', 'ሐሙስ', 'ዓርብ', 'ቅዳሜ'];
 /** The Ethiopian clock counts from dawn: 07:00 is 1 in the morning. The part of the day, by the international hour. */
 const ETH_DAY_PARTS: Array<[number, string]> = [[0, 'ከሌሊቱ'], [6, 'ከጠዋቱ'], [12, 'ከቀኑ'], [18, 'ከምሽቱ']];
 
-type Lang = 'en' | 'am';
+const ethiopianDayPart = (hour: number): string => [...ETH_DAY_PARTS].reverse().find(([from]) => hour >= from)?.[1] ?? '';
+const ethiopianHour = (hour: number): number => ((hour + 6) % 12) || 12;
+
+/** A stored "HH:MM" (international, as hearings are set) on the Ethiopian clock: 14:00 is ከቀኑ 8:00. */
+function ethiopianClock(time: string | null): { part: string; time: string } | null {
+    if (!time || !/^\d{2}:\d{2}/.test(time)) return null;
+    const hour = Number(time.slice(0, 2));
+    return { part: ethiopianDayPart(hour), time: `${ethiopianHour(hour)}:${time.slice(3, 5)}` };
+}
+
 type SignageText = typeof publicSite.en.signage;
 type TextKey = Exclude<keyof SignageText, 'status'>;
 
@@ -86,16 +91,15 @@ function useCourtClock(serverNow: string, timezone: string) {
     const parts = Object.fromEntries(format.formatToParts(new Date(tick + skew)).map((part) => [part.type, part.value]));
     const hour = Number(parts.hour);
     const minute = Number(parts.minute);
-    const dayPart = [...ETH_DAY_PARTS].reverse().find(([from]) => hour >= from)?.[1] ?? '';
     return {
         tick,
         hm: `${parts.hour}:${parts.minute}`,
         minutesOfDay: hour * 60 + minute,
-        hours: parts.hour,
         minutes: parts.minute,
         seconds: parts.second,
-        ethiopianPart: dayPart,
-        ethiopianTime: `${((hour + 6) % 12) || 12}:${parts.minute}`,
+        ethiopianPart: ethiopianDayPart(hour),
+        ethiopianHour: ethiopianHour(hour),
+        ethiopianTime: `${ethiopianHour(hour)}:${parts.minute}`,
         format,
     };
 }
@@ -221,40 +225,33 @@ function Progress({ count, active, seconds }: { count: number; active: number; s
  * The court's public display (PublicSignageController) for the lobby: the
  * floor-standing screen (portrait, 1080x1920) or a wall (landscape,
  * 1920x1080). Composed like the court's letterhead over a departure board:
- * the crest and the court's name, the clock with the Ethiopian hour and both
- * calendars' dates, the next sitting with how long until it, today's cause
- * list a page at a time, today's figures and the caseload, then the notices
- * and the registry's hours. Every label is in both languages, the screen's
- * first. It is a screen, not a document: the stage is scaled to the display,
+ * the logo, the court's name and the Ethiopian hour with today's Ethiopian
+ * date, the next sitting with how long until it, today's cause list a page
+ * at a time, today's figures and the caseload, then the notices and the
+ * registry's hours. It is in Amharic throughout, and every hour is on the
+ * Ethiopian clock (a hearing set for 14:00 reads ከቀኑ 8:00), so nothing on it
+ * mixes languages or calendars. It is a screen, not a document: the stage is scaled to the display,
  * shifts a few pixels now and then against burn-in, hides the cursor while
  * the mouse is still and keeps the screen awake. It re-reads its data every
  * minute; a failed read leaves the last figures up and says how old they are.
  */
 export default function PublicSignage(props: PublicSignageProps) {
-    const { locale } = useLocale();
     const { getBoolean } = useSystemSettings();
     const branding = useBranding();
     const { now, timezone, totalCases, filedToday, hearingsToday, statusCounts, registry, todayHearings, announcements, refreshSeconds } = props;
 
-    const lang: Lang = locale === 'am' ? 'am' : 'en';
-    const other: Lang = lang === 'am' ? 'en' : 'am';
+    // The lobby reads Amharic: the board is Amharic throughout, whatever language the browser was left in.
+    const lang = 'am' as const;
     const text = (key: TextKey, values?: Record<string, string | number>) => {
         const value = (publicSite[lang].signage[key] ?? publicSite.en.signage[key]) as string;
         return values ? fill(value, values) : value;
     };
-    const otherText = (key: TextKey, values?: Record<string, string | number>) => {
-        const value = (publicSite[other].signage[key] ?? '') as string;
-        return values ? fill(value, values) : value;
-    };
-    const bi = (key: TextKey, values?: Record<string, string | number>) => ({ primary: text(key, values), secondary: otherText(key, values) });
-    const statusLabel = (label: string, of: Lang) => (publicSite[of].signage.status as Record<string, string>)[label.toLowerCase()] ?? label;
+    const bi = (key: TextKey, values?: Record<string, string | number>) => ({ primary: text(key, values), secondary: '' });
+    const statusLabel = (label: string) => (publicSite[lang].signage.status as Record<string, string>)[label.toLowerCase()] ?? label;
 
     // The official Amharic name falls back to the English one when it is not set; the Amharic brand name is then better.
-    const names = {
-        am: (branding.officialNameAm && branding.officialNameAm !== branding.officialNameEn ? branding.officialNameAm : '') || branding.brandNameAm,
-        en: branding.officialNameEn || branding.brandNameEn,
-    };
-    const number = useMemo(() => new Intl.NumberFormat(lang === 'am' ? 'am-ET' : 'en-US'), [lang]);
+    const courtName = (branding.officialNameAm && branding.officialNameAm !== branding.officialNameEn ? branding.officialNameAm : '') || branding.brandNameAm;
+    const number = useMemo(() => new Intl.NumberFormat('am-ET'), []);
     const formatNumber = (value: number) => number.format(value);
 
     const clock = useCourtClock(now, timezone);
@@ -267,18 +264,14 @@ export default function PublicSignage(props: PublicSignageProps) {
     const rows = Math.max(1, Math.floor(listHeight / ROW_MIN[orientation]));
     useWakeLock();
 
-    // Today in both calendars, from the server's date in the court's zone.
+    // Today in the Ethiopian calendar, from the server's date in the court's zone.
     const todayIso = now.slice(0, 10);
-    const dates = useMemo(() => {
+    const today = useMemo(() => {
         const [year, month, day] = todayIso.split('-').map(Number);
-        const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
         const eth = gregorianIsoToEthiopian(todayIso);
-        const gregorian = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(Date.UTC(year, month - 1, day)));
-        const weekdayEn = new Intl.DateTimeFormat('en-GB', { weekday: 'long', timeZone: 'UTC' }).format(new Date(Date.UTC(year, month - 1, day)));
         return {
-            weekday: { am: WEEKDAYS_AM[weekday], en: weekdayEn },
-            ethiopian: eth ? { am: `${ETH_MONTHS.am[eth.month]} ${eth.day} ቀን ${eth.year} ዓ.ም.`, en: `${ETH_MONTHS.en[eth.month]} ${eth.day}, ${eth.year} E.C.` } : null,
-            gregorian,
+            weekday: WEEKDAYS_AM[new Date(Date.UTC(year, month - 1, day)).getUTCDay()],
+            date: eth ? `${ETH_MONTHS_AM[eth.month]} ${eth.day} ቀን ${eth.year} ዓ.ም.` : '',
         };
     }, [todayIso]);
 
@@ -294,7 +287,8 @@ export default function PublicSignage(props: PublicSignageProps) {
         return () => window.clearInterval(timer);
     }, [refreshSeconds]);
     const stale = clock.tick - readAt > Math.max(30, refreshSeconds) * 2500;
-    const readTime = clock.format.format(new Date(now)).slice(0, 5);
+    const read = ethiopianClock(clock.format.format(new Date(now)));
+    const readTime = read ? `${read.part} ${read.time}` : '';
 
     // Nobody at the mouse: hide the cursor and the screen tools.
     const [idle, setIdle] = useState(false);
@@ -330,11 +324,10 @@ export default function PublicSignage(props: PublicSignageProps) {
     const nextHearings = nextTime ? todayHearings.filter((hearing) => hearing.time === nextTime) : [];
     const next = nextHearings[0] ?? null;
     const untilNext = next ? minutesOf(next.time) - clock.minutesOfDay : 0;
-    const countdown = (of: Lang) => {
-        const say = of === lang ? text : otherText;
-        if (untilNext <= 0) return say('now');
-        return untilNext < 60 ? say('inMinutes', { m: untilNext }) : say('inHours', { h: Math.floor(untilNext / 60), m: untilNext % 60 });
-    };
+    const countdown = untilNext <= 0
+        ? text('now')
+        : untilNext < 60 ? text('inMinutes', { m: untilNext }) : text('inHours', { h: Math.floor(untilNext / 60), m: untilNext % 60 });
+    const nextClock = next ? ethiopianClock(next.time) : null;
 
     const pages = useMemo(() => {
         const out: SignageHearing[][] = [];
@@ -352,7 +345,7 @@ export default function PublicSignage(props: PublicSignageProps) {
 
     return (
         <LocalizedUiProvider>
-            <Head title={`${text('title')} · ${names[lang]}`} />
+            <Head title={`${text('title')} · ${courtName}`} />
 
             <div
                 className="court-site court-signage"
@@ -372,33 +365,19 @@ export default function PublicSignage(props: PublicSignageProps) {
                         <Medallion logoUrl={branding.logoUrl} />
                         <div className="sg-crest-text">
                             <p className="sg-eyebrow">{publicSite[lang].authority} · {publicSite[lang].courtKind}</p>
-                            <h1 className="sg-court" lang={lang}>{names[lang]}</h1>
-                            {names[other] && names[other] !== names[lang] && <p className="sg-court-other" lang={other}>{names[other]}</p>}
+                            <h1 className="sg-court">{courtName}</h1>
                         </div>
-                        {/* The hour as the city reads it, counted from dawn, at the letterhead's end. */}
-                        <div className="sg-crest-time">
-                            <Bi {...bi('ethiopianTime')} className="sg-mini" />
-                            <p className="sg-eth-time" lang="am">
-                                <span>{clock.ethiopianPart}</span>
-                                {clock.ethiopianTime}
-                            </p>
-                        </div>
-                    </header>
-
-                    {/* The clock: the hour as hearings are set, and today in both calendars. */}
-                    <section className="sg-clock" aria-label={clock.hm}>
-                        <div>
-                            <p className="sg-time">
-                                {clock.hours}<span className="sg-colon">:</span>{clock.minutes}
+                        {/* The hour as the city reads it, counted from dawn, and today's Ethiopian date under it. */}
+                        <div className="sg-crest-time" aria-label={`${clock.ethiopianPart} ${clock.ethiopianTime}`}>
+                            <p className="sg-eth-time">
+                                <span className="sg-eth-part">{clock.ethiopianPart}</span>
+                                {clock.ethiopianHour}<span className="sg-colon">:</span>{clock.minutes}
                                 <span className="sg-seconds">{clock.seconds}</span>
                             </p>
+                            <p className="sg-eth-weekday">{today.weekday}</p>
+                            <p className="sg-eth-date">{today.date}</p>
                         </div>
-                        <div className="sg-dates">
-                            <p className="sg-weekday">{dates.weekday[lang]}<span>{dates.weekday[other]}</span></p>
-                            {dates.ethiopian && <p className="sg-date-eth" lang="am">{dates.ethiopian.am}</p>}
-                            <p className="sg-date-greg">{lang === 'am' ? dates.gregorian : `${dates.gregorian}${dates.ethiopian ? ` · ${dates.ethiopian.en}` : ''}`}</p>
-                        </div>
-                    </section>
+                    </header>
 
                     {/* The next sitting, large: what most of the lobby is waiting for. */}
                     <section className="sg-next" data-state={next ? 'next' : todayHearings.length > 0 ? 'done' : 'none'}>
@@ -407,14 +386,16 @@ export default function PublicSignage(props: PublicSignageProps) {
                             {next && (
                                 <span className="sg-countdown">
                                     <span className="sg-pulse" aria-hidden="true" />
-                                    {countdown(lang)}
-                                    {lang !== other && <span>{countdown(other)}</span>}
+                                    {countdown}
                                 </span>
                             )}
                         </div>
                         {next ? (
                             <div key={`${next.id}-${nextTime}`} className="sg-next-body court-signage-in">
-                                <p className="sg-next-time">{next.time}</p>
+                                <p className="sg-next-time">
+                                    {nextClock && <span className="sg-eth-part">{nextClock.part}</span>}
+                                    <span className="sg-next-hour">{nextClock?.time ?? '—'}</span>
+                                </p>
                                 <div className="min-w-0">
                                     <p className="sg-next-case">{next.case_number ?? '—'}</p>
                                     <p className="sg-next-matter">{[next.case_type, next.type].filter(Boolean).join(' · ') || '—'}</p>
@@ -463,6 +444,7 @@ export default function PublicSignage(props: PublicSignageProps) {
                                         {(pages[page] ?? []).map((hearing, index) => {
                                             const past = hearing.time !== null && minutesOf(hearing.time) < clock.minutesOfDay;
                                             const isNext = hearing.time !== null && hearing.time === nextTime;
+                                            const at = ethiopianClock(hearing.time);
                                             return (
                                                 <div
                                                     key={hearing.id}
@@ -472,7 +454,9 @@ export default function PublicSignage(props: PublicSignageProps) {
                                                     style={{ '--i': Math.min(index, 10) } as CSSProperties}
                                                 >
                                                     <span className="sg-marker" aria-hidden="true" />
-                                                    <span role="cell" className="sg-cell-time">{hearing.time ?? '—'}</span>
+                                                    <span role="cell" className="sg-cell-time">
+                                                        {at ? <><small>{at.part}</small>{at.time}</> : '—'}
+                                                    </span>
                                                     <span role="cell" className="sg-cell-case">{hearing.case_number ?? '—'}</span>
                                                     <span role="cell" className="sg-cell-matter">
                                                         <span>{hearing.case_type ?? '—'}</span>
@@ -517,7 +501,7 @@ export default function PublicSignage(props: PublicSignageProps) {
                                 {statusCounts.map((stat) => (
                                     <li key={stat.label}>
                                         <span aria-hidden="true" style={{ background: STATUS_TONES[stat.label.toLowerCase()] ?? '#64748b' }} />
-                                        {statusLabel(stat.label, lang)}
+                                        {statusLabel(stat.label)}
                                         <b>{formatNumber(stat.total)}</b>
                                         <i>{Math.round((stat.total / statusTotal) * 100)}%</i>
                                     </li>

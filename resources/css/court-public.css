@@ -688,14 +688,14 @@
 }
 .court-site.court-signage[data-orientation='portrait'] .court-signage-stage {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 236px 140px 216px minmax(0, 1fr) 286px 156px;
-    grid-template-areas: 'crest' 'clock' 'next' 'list' 'figures' 'foot';
+    grid-template-rows: 256px 228px minmax(0, 1fr) 286px 156px;
+    grid-template-areas: 'crest' 'next' 'list' 'figures' 'foot';
     row-gap: 0;
 }
 .court-site.court-signage[data-orientation='landscape'] .court-signage-stage {
     grid-template-columns: 760px minmax(0, 1fr);
-    grid-template-rows: 216px 150px minmax(0, 1fr) 292px 124px;
-    grid-template-areas: 'crest list' 'clock list' 'next list' 'figures list' 'foot foot';
+    grid-template-rows: 340px minmax(0, 1fr) 292px 124px;
+    grid-template-areas: 'crest list' 'next list' 'figures list' 'foot foot';
     column-gap: 56px;
 }
 .court-site .sg-crest { grid-area: crest; }
@@ -794,7 +794,19 @@
     border-left: 1px solid var(--sg-brass-line);
     text-align: right;
 }
-.court-site .sg-crest-time .sg-bi { align-items: flex-end; }
+/* Landscape: the column is narrow, so the hour and date sit under the name. */
+.court-site.court-signage[data-orientation='landscape'] .sg-crest { flex-wrap: wrap; align-content: center; row-gap: 16px; }
+.court-site.court-signage[data-orientation='landscape'] .sg-crest-time {
+    display: flex;
+    flex-basis: 100%;
+    align-items: baseline;
+    gap: 20px;
+    padding: 14px 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--sg-brass-line);
+    text-align: left;
+}
+.court-site.court-signage[data-orientation='landscape'] .sg-crest-time p { margin-top: 0; }
 .court-site .sg-eyebrow {
     font-size: 17px;
     font-weight: 600;
@@ -860,22 +872,37 @@
     color: var(--court-brass);
     vertical-align: 0.15em;
 }
+/* The Ethiopian hour at the top, and the Ethiopian date under it. */
 .court-site .sg-eth-time {
-    margin-top: 6px;
-    font-size: 58px;
+    font-size: 66px;
     font-weight: 600;
     line-height: 1;
+    letter-spacing: -0.02em;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
+    color: #fff;
+}
+.court-site .sg-eth-part {
+    margin-right: 12px;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: 0;
+    color: var(--court-brass);
+}
+.court-site .sg-eth-time .sg-seconds { margin-left: 10px; }
+.court-site .sg-eth-weekday {
+    margin-top: 12px;
+    font-size: 26px;
+    font-weight: 600;
     color: var(--court-brass-soft);
 }
-.court-site .sg-eth-time span {
-    margin-right: 10px;
-    font-size: 24px;
-    font-weight: 500;
-    color: rgb(226 232 240 / 0.85);
+.court-site .sg-eth-date {
+    margin-top: 4px;
+    font-size: 22px;
+    white-space: nowrap;
+    color: rgb(203 213 225);
 }
-.court-site.court-signage[data-orientation='landscape'] .sg-eth-time { font-size: 48px; }
+.court-site.court-signage[data-orientation='landscape'] .sg-eth-time { font-size: 56px; }
 .court-site .sg-dates { min-width: 0; text-align: right; }
 .court-site .sg-weekday {
     font-size: 34px;
@@ -986,6 +1013,7 @@
     color: transparent;
 }
 .court-site.court-signage[data-orientation='landscape'] .sg-next-time { font-size: 68px; }
+.court-site .sg-next-time .sg-eth-part { display: block; margin: 0 0 6px; font-size: 24px; }
 .court-site .sg-next-case {
     overflow: hidden;
     white-space: nowrap;
@@ -1166,6 +1194,15 @@
     color: #fff;
 }
 .court-site .sg-row[data-state='next'] .sg-cell-time { color: var(--court-brass-soft); }
+.court-site .sg-cell-time small {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.1;
+    color: rgb(148 163 184);
+}
+.court-site .sg-row[data-state='next'] .sg-cell-time small { color: var(--court-brass); }
 .court-site .sg-cell-case {
     overflow: hidden;
     white-space: nowrap;
