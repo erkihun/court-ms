@@ -95,7 +95,7 @@ Respondent registration and login routes redirect to the applicant login form wi
 - Mark all read: `/respondent/notifications/mark-all`.
 
 ## Other public pages
-- Public display for the lobby screen: `/signage`. It shows today's hearings (time, case number, case type, sitting, room, the next sitting marked), today's figures, the caseload and the active notices, and refreshes every minute. A screen taller than wide (the floor-standing display) gets the portrait layout (1080x1920), a wide one the landscape layout (1920x1080); add `?orientation=portrait` or `?orientation=landscape` to fix it. Open it full screen on the display; the cursor hides when the mouse is still.
+- Public display for the lobby screen: `/signage`. It shows the clock (with the Ethiopian hour and both calendars' dates), the next sitting with a countdown, today's cause list (time, case number, matter, room), today's figures, the caseload, the active notices and the registry's office hours and phone (from the landing manager's contact settings), and refreshes every minute. It is laid out for the court's portrait floor screen (1080x1920); on a screen of another shape the portrait board shows framed in the middle. For a panel stood on its side while its computer still drives it as landscape, add `?rotate=90` (or `?rotate=270` if it reads upside down); for a landscape wall screen, add `?orientation=landscape`. Open it full screen on the display; the cursor hides when the mouse is still.
 - Public letter preview: `/case-letters/{letter}` (access-controlled).
 - Terms and conditions: `/terms`.
 

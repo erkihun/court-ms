@@ -11,14 +11,19 @@ import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { gregorianIsoToEthiopian } from '@/lib/calendar/ethiopianCalendar';
 import '../../../../css/court-public.css';
 
-/** The two stages: the floor-standing screen stands portrait, a wall screen lies landscape. */
+/** The two stages: the floor-standing screen stands portrait (the board's own shape), a wall screen lies landscape. */
 type Orientation = 'portrait' | 'landscape';
 const STAGES: Record<Orientation, { width: number; height: number }> = {
     portrait: { width: 1080, height: 1920 },
     landscape: { width: 1920, height: 1080 },
 };
-/** One sitting on the cause list (stage pixels); a page holds as many as fit. */
-const ROW_HEIGHT = 62;
+/**
+ * One sitting on the cause list (stage pixels): a page holds as many rows of
+ * the least height as fit; a single short page lets its rows grow, up to the
+ * most, so the list fills the column instead of ending halfway down it.
+ */
+const ROW_MIN: Record<Orientation, number> = { portrait: 80, landscape: 62 };
+const ROW_MAX = 116;
 /** The seconds each page and each notice stays. */
 const PAGE_SECONDS = 12;
 const NOTICE_SECONDS = 14;
@@ -94,15 +99,21 @@ function useCourtClock(serverNow: string, timezone: string) {
     };
 }
 
-/** The stage for this screen and its scale; `?orientation=portrait|landscape` fixes it for a kiosk. */
-function useStage(): { orientation: Orientation; scale: number } {
-    const read = (): { orientation: Orientation; scale: number } => {
-        const forced = new URLSearchParams(window.location.search).get('orientation');
-        const orientation: Orientation = forced === 'portrait' || forced === 'landscape'
-            ? forced
-            : (window.innerHeight > window.innerWidth ? 'portrait' : 'landscape');
+/**
+ * The stage and its scale. The board is portrait (the court's floor screen):
+ * on any other screen it shows framed in the middle, as the floor screen
+ * shows it. `?orientation=landscape` lays it out for a wall screen instead;
+ * `?rotate=90` (or 270) turns the portrait board for a panel stood on its
+ * side while its computer still drives it as landscape.
+ */
+function useStage(): { orientation: Orientation; scale: number; rotate: number } {
+    const read = (): { orientation: Orientation; scale: number; rotate: number } => {
+        const query = new URLSearchParams(window.location.search);
+        const orientation: Orientation = query.get('orientation') === 'landscape' ? 'landscape' : 'portrait';
+        const rotate = orientation === 'portrait' && ['90', '270'].includes(query.get('rotate') ?? '') ? Number(query.get('rotate')) : 0;
         const stage = STAGES[orientation];
-        return { orientation, scale: Math.min(window.innerWidth / stage.width, window.innerHeight / stage.height) };
+        const [width, height] = rotate ? [stage.height, stage.width] : [stage.width, stage.height];
+        return { orientation, rotate, scale: Math.min(window.innerWidth / width, window.innerHeight / height) };
     };
     const [state, setState] = useState(read);
     useEffect(() => {
@@ -113,19 +124,19 @@ function useStage(): { orientation: Orientation; scale: number } {
     return state;
 }
 
-/** How many items of a given height fit in a box (stage pixels, so the scale does not matter). */
-function useFit(box: RefObject<HTMLElement | null>, itemHeight: number, fallback: number, watch: unknown): number {
-    const [count, setCount] = useState(fallback);
+/** A box's height in stage pixels (the scale does not matter), followed as it changes. */
+function useBoxHeight(box: RefObject<HTMLElement | null>, fallback: number, watch: unknown): number {
+    const [height, setHeight] = useState(fallback);
     useEffect(() => {
         const element = box.current;
         if (!element || typeof ResizeObserver === 'undefined') return undefined;
-        const measure = () => setCount(Math.max(1, Math.floor(element.clientHeight / itemHeight)));
+        const measure = () => setHeight(element.clientHeight);
         measure();
         const observer = new ResizeObserver(measure);
         observer.observe(element);
         return () => observer.disconnect();
-    }, [box, itemHeight, watch]);
-    return count;
+    }, [box, watch]);
+    return height;
 }
 
 /** Cycles 0..count-1 every `seconds`; restarts when `reset` changes. */
@@ -250,12 +261,13 @@ export default function PublicSignage(props: PublicSignageProps) {
     const formatNumber = (value: number) => number.format(value);
 
     const clock = useCourtClock(now, timezone);
-    const { orientation, scale } = useStage();
+    const { orientation, scale, rotate } = useStage();
     const portrait = orientation === 'portrait';
     const stage = STAGES[orientation];
     const listBox = useRef<HTMLDivElement>(null);
     // Re-measured when the orientation changes or the list first appears.
-    const rows = useFit(listBox, ROW_HEIGHT, 8, `${orientation}-${todayHearings.length > 0}`);
+    const listHeight = useBoxHeight(listBox, 8 * ROW_MIN[orientation], `${orientation}-${todayHearings.length > 0}`);
+    const rows = Math.max(1, Math.floor(listHeight / ROW_MIN[orientation]));
     useWakeLock();
 
     // Today in both calendars, from the server's date in the court's zone.
@@ -333,6 +345,9 @@ export default function PublicSignage(props: PublicSignageProps) {
         return out;
     }, [todayHearings, rows]);
     const page = useRotation(pages.length, PAGE_SECONDS, `${pages.length}-${rows}`);
+    const rowHeight = pages.length === 1
+        ? Math.min(ROW_MAX, Math.max(ROW_MIN[orientation], Math.floor(listHeight / Math.max(1, pages[0].length))))
+        : ROW_MIN[orientation];
 
     const notice = useRotation(announcements.length, NOTICE_SECONDS, announcements.length);
     const current = announcements[notice];
@@ -351,7 +366,7 @@ export default function PublicSignage(props: PublicSignageProps) {
             >
                 <div
                     className="court-signage-stage"
-                    style={{ width: stage.width, height: stage.height, '--scale': scale, '--sx': `${shift[0]}px`, '--sy': `${shift[1]}px` } as CSSProperties}
+                    style={{ width: stage.width, height: stage.height, '--scale': scale, '--rotate': `${rotate}deg`, '--sx': `${shift[0]}px`, '--sy': `${shift[1]}px` } as CSSProperties}
                 >
                     {/* The crest: the court as its letterhead names it. */}
                     <header className="sg-crest">
@@ -442,7 +457,7 @@ export default function PublicSignage(props: PublicSignageProps) {
                                         <span key={key} role="columnheader"><Bi {...bi(key)} /></span>
                                     ))}
                                 </div>
-                                <div ref={listBox} className="sg-rows">
+                                <div ref={listBox} className="sg-rows" style={{ '--row-h': `${rowHeight}px` } as CSSProperties}>
                                     <div key={`${page}-${rows}`} role="rowgroup">
                                         {(pages[page] ?? []).map((hearing, index) => {
                                             const past = hearing.time !== null && minutesOf(hearing.time) < clock.minutesOfDay;

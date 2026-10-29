@@ -650,17 +650,15 @@
     inset: 0;
     overflow: hidden;
     color: #e7eaf0;
-    background:
-        radial-gradient(ellipse 70% 40% at 50% -8%, rgb(200 161 74 / 0.18), transparent 70%),
-        radial-gradient(ellipse 80% 60% at 50% 115%, rgb(22 48 90 / 0.95), transparent 70%),
-        linear-gradient(180deg, #0b1830 0%, #091427 55%, #0a1a33 100%);
+    background: radial-gradient(ellipse at 50% 50%, #0a1428, #04080f 75%);
     color-scheme: dark;
 }
-/* A fine grain, as on printed stock, under everything. */
-.court-site.court-signage::before {
+/* A fine grain, as on printed stock, over the board's surface. */
+.court-site .court-signage-stage::before {
     content: '';
     position: absolute;
     inset: 0;
+    z-index: -1;
     pointer-events: none;
     opacity: 0.07;
     mix-blend-mode: overlay;
@@ -677,13 +675,20 @@
     isolation: isolate;
     display: grid;
     padding: 0 var(--sg-pad);
-    transform: translate(calc(-50% + var(--sx, 0px)), calc(-50% + var(--sy, 0px))) scale(var(--scale, 1));
+    overflow: hidden;
+    transform: translate(calc(-50% + var(--sx, 0px)), calc(-50% + var(--sy, 0px))) rotate(var(--rotate, 0deg)) scale(var(--scale, 1));
     transform-origin: center;
     transition: transform 2.5s ease;
+    background:
+        radial-gradient(ellipse 70% 40% at 50% -8%, rgb(200 161 74 / 0.18), transparent 70%),
+        radial-gradient(ellipse 80% 60% at 50% 115%, rgb(22 48 90 / 0.95), transparent 70%),
+        linear-gradient(180deg, #0b1830 0%, #091427 55%, #0a1a33 100%);
+    /* Seen on a screen of another shape, the board stands framed; on its own screen the frame falls outside. */
+    box-shadow: 0 0 0 1px rgb(200 161 74 / 0.22), 0 40px 120px rgb(0 0 0 / 0.75);
 }
 .court-site.court-signage[data-orientation='portrait'] .court-signage-stage {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 336px 156px 250px minmax(0, 1fr) 276px 156px;
+    grid-template-rows: 336px 158px 248px minmax(0, 1fr) 276px 156px;
     grid-template-areas: 'crest' 'clock' 'next' 'list' 'figures' 'foot';
     row-gap: 0;
 }
@@ -852,7 +857,7 @@
     vertical-align: 0.15em;
 }
 .court-site .sg-eth-time {
-    margin-top: 12px;
+    margin-top: 8px;
     font-size: 25px;
     color: rgb(226 232 240 / 0.85);
 }
@@ -893,8 +898,8 @@
     flex-direction: column;
     justify-content: center;
     min-height: 0;
-    height: calc(100% - 44px);
-    padding: 26px 36px;
+    height: calc(100% - 28px);
+    padding: 24px 36px;
     border: 1px solid rgb(200 161 74 / 0.42);
     border-radius: 22px;
     background:
@@ -1122,6 +1127,7 @@
 }
 .court-site .sg-row-head .sg-bi-secondary { font-size: 12px; color: rgb(100 116 139); opacity: 1; }
 .court-site .sg-rows { flex: 1; min-height: 0; overflow: hidden; }
+.court-site .sg-rows .sg-row { height: var(--row-h, 62px); }
 .court-site .sg-rows .sg-row:nth-child(even) { background: rgb(255 255 255 / 0.018); }
 .court-site .sg-marker { box-shadow: inset 0 0 0 2px rgb(200 161 74 / 0.75); }
 .court-site .sg-row[data-state='past'] .sg-marker { box-shadow: inset 0 0 0 2px rgb(100 116 139 / 0.6); }
@@ -1132,6 +1138,18 @@
 }
 /* Its cells, not the row: the row's entrance animation ends at full opacity. */
 .court-site .sg-row[data-state='past'] > * { opacity: 0.42; }
+.court-site.court-signage[data-orientation='portrait'] .sg-row { grid-template-columns: 16px 128px 250px minmax(0, 1fr) 200px; }
+.court-site.court-signage[data-orientation='portrait'] .sg-cell-time { font-size: 38px; }
+.court-site.court-signage[data-orientation='portrait'] .sg-cell-case { font-size: 28px; }
+.court-site.court-signage[data-orientation='portrait'] .sg-cell-matter > span:first-child { font-size: 24px; }
+.court-site.court-signage[data-orientation='portrait'] .sg-cell-matter > span + span { font-size: 18px; }
+.court-site.court-signage[data-orientation='portrait'] .sg-cell-room { font-size: 24px; }
+.court-site.court-signage[data-orientation='portrait'] .sg-tag { font-size: 16px; padding: 5px 14px; }
+.court-site.court-signage[data-orientation='portrait'] .sg-marker { width: 14px; height: 14px; }
+.court-site.court-signage[data-orientation='portrait'] .sg-row-head .sg-bi-primary { font-size: 16px; }
+.court-site.court-signage[data-orientation='portrait'] .sg-row-head .sg-bi-secondary { font-size: 13px; }
+.court-site.court-signage[data-orientation='portrait'] .sg-notice-title { font-size: 30px; }
+.court-site.court-signage[data-orientation='portrait'] .sg-notice-summary { font-size: 21px; }
 .court-site .sg-cell-time {
     font-size: 31px;
     font-weight: 600;
