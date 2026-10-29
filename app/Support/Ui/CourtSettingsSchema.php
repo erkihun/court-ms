@@ -132,7 +132,8 @@ final class CourtSettingsSchema
         'button_style' => 'rounded',
         'card_radius' => 'xl',
         'logo_position' => 'start',
-        'sidebar_compact_default' => false,
+        // Staff screens open with the side menu collapsed (2026-10-29); each person's own toggle is kept in their browser.
+        'sidebar_compact_default' => true,
         'show_breadcrumbs' => true,
         'show_language_switcher' => true,
         'sticky_table_headers' => true,
