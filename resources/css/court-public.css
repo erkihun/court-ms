@@ -637,11 +637,11 @@
 }
 
 /* ── The public display (Pages/Court/Public/Signage) ────────────────
-   The court's letterhead over a departure board, for the lobby screen: a
-   fixed stage (portrait 1080x1920 for the floor-standing screen, landscape
-   1920x1080 for a wall) scaled to the display by --scale and nudged a few
-   pixels by --sx/--sy against burn-in. Always the court's dark face, with
-   brass for what matters now: the hour, the next sitting, the rules. */
+   The court's door screen: a fixed portrait stage (1080x1920; a landscape
+   1920x1080 one on request) scaled to the display by --scale, turned by
+   --rotate for a panel on its side, and nudged a few pixels by --sx/--sy
+   against burn-in. Amharic throughout. Always the court's dark face, with
+   brass for what matters now, and each bench in its own colour (--bench). */
 .court-site.court-signage {
     --sg-pad: 64px;
     --sg-line: rgb(255 255 255 / 0.08);
@@ -652,6 +652,30 @@
     color: #e7eaf0;
     background: radial-gradient(ellipse at 50% 50%, #0a1428, #04080f 75%);
     color-scheme: dark;
+}
+.court-site.court-signage[data-idle] { cursor: none; }
+.court-site.court-signage[data-orientation='landscape'] { --sg-pad: 56px; }
+/* Ethiopic has no capitals: tracking only spreads it. */
+.court-site.court-signage :is(h1, h2, p, span, dt, dd, li) { letter-spacing: 0; }
+
+.court-site .court-signage-stage {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 1;
+    isolation: isolate;
+    display: grid;
+    overflow: hidden;
+    padding: 0 var(--sg-pad);
+    transform: translate(calc(-50% + var(--sx, 0px)), calc(-50% + var(--sy, 0px))) rotate(var(--rotate, 0deg)) scale(var(--scale, 1));
+    transform-origin: center;
+    transition: transform 2.5s ease;
+    background:
+        radial-gradient(ellipse 70% 40% at 50% -8%, rgb(200 161 74 / 0.18), transparent 70%),
+        radial-gradient(ellipse 80% 60% at 50% 115%, rgb(22 48 90 / 0.95), transparent 70%),
+        linear-gradient(180deg, #0b1830 0%, #091427 55%, #0a1a33 100%);
+    /* Seen on a screen of another shape, the board stands framed; on its own screen the frame falls outside. */
+    box-shadow: 0 0 0 1px rgb(200 161 74 / 0.22), 0 40px 120px rgb(0 0 0 / 0.75);
 }
 /* A fine grain, as on printed stock, over the board's surface. */
 .court-site .court-signage-stage::before {
@@ -664,77 +688,40 @@
     mix-blend-mode: overlay;
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
-.court-site.court-signage[data-idle] { cursor: none; }
-.court-site.court-signage[data-orientation='landscape'] { --sg-pad: 56px; }
-
-.court-site .court-signage-stage {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    z-index: 1;
-    isolation: isolate;
-    display: grid;
-    padding: 0 var(--sg-pad);
-    overflow: hidden;
-    transform: translate(calc(-50% + var(--sx, 0px)), calc(-50% + var(--sy, 0px))) rotate(var(--rotate, 0deg)) scale(var(--scale, 1));
-    transform-origin: center;
-    transition: transform 2.5s ease;
-    background:
-        radial-gradient(ellipse 70% 40% at 50% -8%, rgb(200 161 74 / 0.18), transparent 70%),
-        radial-gradient(ellipse 80% 60% at 50% 115%, rgb(22 48 90 / 0.95), transparent 70%),
-        linear-gradient(180deg, #0b1830 0%, #091427 55%, #0a1a33 100%);
-    /* Seen on a screen of another shape, the board stands framed; on its own screen the frame falls outside. */
-    box-shadow: 0 0 0 1px rgb(200 161 74 / 0.22), 0 40px 120px rgb(0 0 0 / 0.75);
-}
+/* Portrait, top to bottom: the court and the hour, the next sitting, the cause list, the decisions
+   released (when there are any), following a case and the registry, the notices. */
 .court-site.court-signage[data-orientation='portrait'] .court-signage-stage {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 256px 228px minmax(0, 1fr) 286px 156px;
-    grid-template-areas: 'crest' 'next' 'list' 'figures' 'foot';
-    row-gap: 0;
+    grid-template-rows: 248px 236px minmax(0, 1fr) auto 248px 150px;
+    grid-template-areas: 'crest' 'next' 'list' 'decisions' 'info' 'foot';
 }
 .court-site.court-signage[data-orientation='landscape'] .court-signage-stage {
     grid-template-columns: 760px minmax(0, 1fr);
-    grid-template-rows: 340px minmax(0, 1fr) 292px 124px;
-    grid-template-areas: 'crest list' 'next list' 'figures list' 'foot foot';
+    grid-template-rows: 300px minmax(0, 1fr) auto 236px 120px;
+    grid-template-areas: 'crest list' 'next list' 'decisions list' 'info list' 'foot foot';
     column-gap: 56px;
 }
 .court-site .sg-crest { grid-area: crest; }
-.court-site .sg-clock { grid-area: clock; }
 .court-site .sg-next { grid-area: next; }
 .court-site .sg-list { grid-area: list; }
-.court-site .sg-figures { grid-area: figures; }
+.court-site .sg-decisions { grid-area: decisions; }
+.court-site .sg-info { grid-area: info; }
 .court-site .sg-foot { grid-area: foot; }
 
-/* Two languages: the screen's first, the other beneath it. */
-.court-site .sg-bi { display: inline-flex; flex-direction: column; min-width: 0; }
-.court-site .sg-bi-secondary {
-    margin-top: 0.15em;
-    font-size: 0.64em;
-    font-weight: 500;
-    letter-spacing: 0.02em;
-    text-transform: none;
-    opacity: 0.62;
-}
-
-/* Ethiopic has no capitals: the wide tracking set for English small caps only spreads it. */
-.court-site.court-signage[lang='am'] :is(.sg-eyebrow, .sg-bi-primary) { letter-spacing: 0.03em; }
-
-/* ── The crest ── */
+/* ── The court and the hour ── */
 .court-site .sg-crest {
     position: relative;
     overflow: hidden;
     display: flex;
     align-items: center;
-    gap: 28px;
+    gap: 30px;
     margin-inline: calc(var(--sg-pad) * -1);
-    padding-inline: var(--sg-pad);
-}
-/* The mark on the left, the court's name beside it on the right. */
-.court-site.court-signage[data-orientation='portrait'] .sg-crest {
-    gap: 32px;
-    padding: 20px var(--sg-pad) 28px;
+    padding: 18px var(--sg-pad) 26px;
 }
 .court-site.court-signage[data-orientation='landscape'] .sg-crest {
+    flex-wrap: wrap;
+    align-content: center;
+    row-gap: 16px;
     margin-inline-end: 0;
 }
 /* The double brass rule under the letterhead. */
@@ -749,7 +736,6 @@
         linear-gradient(90deg, transparent, var(--court-brass), transparent) top / 100% 1px no-repeat,
         linear-gradient(90deg, transparent, var(--court-brass-soft) 30%, var(--court-brass) 50%, var(--court-brass-soft) 70%, transparent) bottom / 100% 2px no-repeat;
 }
-/* The colonnade, faint behind the crest. */
 .court-site .sg-colonnade {
     position: absolute;
     inset: 0;
@@ -765,37 +751,37 @@
     opacity: 0;
 }
 /* The logo as it is drawn: no plate, no ring. */
-.court-site .sg-medallion {
-    display: flex;
-    flex-shrink: 0;
-    align-items: center;
-    justify-content: center;
-    color: var(--court-brass);
-}
+.court-site .sg-medallion { display: flex; flex-shrink: 0; align-items: center; justify-content: center; color: var(--court-brass); }
 .court-site .sg-medallion-logo {
     display: block;
     width: auto;
-    height: 156px;
-    max-width: 240px;
+    height: 128px;
+    max-width: 200px;
     object-fit: contain;
     filter: drop-shadow(0 10px 28px rgb(0 0 0 / 0.45));
 }
-.court-site .sg-medallion-mark { width: 128px; height: 128px; }
-.court-site.court-signage[data-orientation='landscape'] .sg-medallion-logo { height: 128px; max-width: 200px; }
-.court-site.court-signage[data-orientation='landscape'] .sg-medallion-mark { width: 104px; height: 104px; }
+.court-site .sg-medallion-mark { width: 112px; height: 112px; }
 .court-site .sg-crest-text { flex: 1; min-width: 0; }
-.court-site.court-signage[data-orientation='portrait'] .sg-eyebrow { font-size: 14px; letter-spacing: 0.14em; }
-.court-site.court-signage[data-orientation='portrait'] .sg-medallion-logo { height: 128px; max-width: 200px; }
-.court-site.court-signage[data-orientation='portrait'] .sg-medallion-mark { width: 112px; height: 112px; }
-/* The Ethiopian hour, at the letterhead's right end, ruled off from the name. */
+.court-site .sg-eyebrow { font-size: 17px; font-weight: 600; color: var(--court-brass); }
+.court-site .sg-court {
+    margin-top: 6px;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+    font-family: var(--font-document-am);
+    font-size: 40px;
+    font-weight: 400;
+    line-height: 1.22;
+    color: #fff;
+}
+/* The Ethiopian hour, and today's Ethiopian date under it, ruled off from the name. */
 .court-site .sg-crest-time {
     flex-shrink: 0;
     padding-left: 28px;
     border-left: 1px solid var(--sg-brass-line);
     text-align: right;
 }
-/* Landscape: the column is narrow, so the hour and date sit under the name. */
-.court-site.court-signage[data-orientation='landscape'] .sg-crest { flex-wrap: wrap; align-content: center; row-gap: 16px; }
 .court-site.court-signage[data-orientation='landscape'] .sg-crest-time {
     display: flex;
     flex-basis: 100%;
@@ -806,125 +792,21 @@
     border-top: 1px solid var(--sg-brass-line);
     text-align: left;
 }
-.court-site.court-signage[data-orientation='landscape'] .sg-crest-time p { margin-top: 0; }
-.court-site .sg-eyebrow {
-    font-size: 17px;
-    font-weight: 600;
-    letter-spacing: 0.26em;
-    text-transform: uppercase;
-    color: var(--court-brass);
-}
-.court-site .sg-court {
-    margin-top: 6px;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    overflow: hidden;
-    font-size: 46px;
-    font-weight: 600;
-    line-height: 1.16;
-    letter-spacing: -0.01em;
-    color: #fff;
-}
-.court-site .sg-court:lang(am) {
-    font-family: var(--font-document-am);
-    font-weight: 400;
-    font-size: 50px;
-    letter-spacing: 0;
-}
-.court-site.court-signage[data-orientation='landscape'] .sg-court { font-size: 42px; }
-.court-site.court-signage[data-orientation='landscape'] .sg-court:lang(am) { font-size: 46px; }
-/* Portrait: the name shares its line with the logo and the Ethiopian hour. */
-.court-site.court-signage[data-orientation='portrait'] .sg-court { -webkit-line-clamp: 3; font-size: 36px; }
-.court-site.court-signage[data-orientation='portrait'] .sg-court:lang(am) { font-size: 38px; }
-.court-site.court-signage[data-orientation='portrait'] .sg-court-other { font-size: 18px; }
-.court-site .sg-court-other {
-    margin-top: 6px;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    font-size: 21px;
-    color: rgb(203 213 225 / 0.7);
-}
-
-/* ── The clock ── */
-.court-site .sg-clock {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 32px;
-    border-bottom: 1px solid var(--sg-line);
-}
-.court-site .sg-time {
-    font-size: 84px;
-    font-weight: 600;
-    line-height: 0.95;
-    letter-spacing: -0.03em;
-    font-variant-numeric: tabular-nums;
-    color: #fff;
-}
-.court-site.court-signage[data-orientation='landscape'] .sg-time { font-size: 76px; }
-.court-site .sg-colon { position: relative; top: -0.06em; margin-inline: 0.02em; }
-.court-site .sg-seconds {
-    margin-left: 14px;
-    font-size: 0.3em;
-    letter-spacing: 0;
-    color: var(--court-brass);
-    vertical-align: 0.15em;
-}
-/* The Ethiopian hour at the top, and the Ethiopian date under it. */
 .court-site .sg-eth-time {
     font-size: 66px;
     font-weight: 600;
     line-height: 1;
-    letter-spacing: -0.02em;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
     color: #fff;
 }
-.court-site .sg-eth-part {
-    margin-right: 12px;
-    font-size: 26px;
-    font-weight: 600;
-    letter-spacing: 0;
-    color: var(--court-brass);
-}
-.court-site .sg-eth-time .sg-seconds { margin-left: 10px; }
-.court-site .sg-eth-weekday {
-    margin-top: 12px;
-    font-size: 26px;
-    font-weight: 600;
-    color: var(--court-brass-soft);
-}
-.court-site .sg-eth-date {
-    margin-top: 4px;
-    font-size: 22px;
-    white-space: nowrap;
-    color: rgb(203 213 225);
-}
-.court-site.court-signage[data-orientation='landscape'] .sg-eth-time { font-size: 56px; }
-.court-site .sg-dates { min-width: 0; text-align: right; }
-.court-site .sg-weekday {
-    font-size: 34px;
-    font-weight: 600;
-    color: #fff;
-}
-.court-site .sg-weekday span {
-    margin-left: 14px;
-    font-size: 20px;
-    font-weight: 500;
-    color: rgb(148 163 184);
-}
-.court-site .sg-date-eth {
-    margin-top: 6px;
-    font-size: 27px;
-    color: var(--court-brass-soft);
-}
-.court-site .sg-date-greg {
-    margin-top: 4px;
-    font-size: 20px;
-    color: rgb(148 163 184);
-}
+.court-site .sg-eth-part { margin-right: 12px; font-size: 26px; font-weight: 600; color: var(--court-brass); }
+.court-site .sg-colon { position: relative; top: -0.06em; margin-inline: 0.02em; }
+.court-site .sg-seconds { margin-left: 10px; font-size: 22px; color: var(--court-brass); }
+.court-site .sg-eth-weekday { margin-top: 12px; font-size: 26px; font-weight: 600; color: var(--court-brass-soft); }
+.court-site .sg-eth-date { margin-top: 4px; font-size: 22px; white-space: nowrap; color: rgb(203 213 225); }
+.court-site.court-signage[data-orientation='landscape'] .sg-eth-weekday,
+.court-site.court-signage[data-orientation='landscape'] .sg-eth-date { margin-top: 0; }
 
 /* ── The next sitting ── */
 .court-site .sg-next {
@@ -933,9 +815,9 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    min-height: 0;
     height: calc(100% - 28px);
-    padding: 24px 36px;
+    min-height: 0;
+    padding: 22px 34px;
     border: 1px solid rgb(200 161 74 / 0.42);
     border-radius: 22px;
     background:
@@ -943,21 +825,10 @@
         linear-gradient(180deg, rgb(255 255 255 / 0.05), rgb(255 255 255 / 0.015));
     box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 30px 60px -30px rgb(0 0 0 / 0.7);
 }
-.court-site.court-signage[data-orientation='landscape'] .sg-next { height: calc(100% - 36px); }
-.court-site .sg-next[data-state='done'],
-.court-site .sg-next[data-state='none'] {
-    border-color: var(--sg-line);
-    background: linear-gradient(180deg, rgb(255 255 255 / 0.035), rgb(255 255 255 / 0.01));
-}
+.court-site .sg-next[data-state='none'] { border-color: var(--sg-line); background: linear-gradient(180deg, rgb(255 255 255 / 0.035), rgb(255 255 255 / 0.01)); }
 .court-site .sg-next-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
-.court-site .sg-kicker .sg-bi-primary {
-    font-size: 21px;
-    font-weight: 700;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--court-brass);
-}
-.court-site .sg-kicker .sg-bi-secondary { font-size: 15px; color: var(--court-brass-soft); }
+.court-site .sg-kicker { font-size: 22px; font-weight: 700; color: var(--court-brass); }
+.court-site .sg-kicker span { display: block; margin-top: 4px; font-size: 19px; font-weight: 500; color: var(--court-brass-soft); }
 .court-site .sg-countdown {
     display: inline-flex;
     align-items: center;
@@ -967,17 +838,16 @@
     border: 1px solid rgb(200 161 74 / 0.45);
     border-radius: 9999px;
     background: rgb(200 161 74 / 0.12);
-    font-size: 22px;
+    font-size: 21px;
     font-weight: 600;
     color: #fff;
 }
-.court-site .sg-countdown > span:last-child:not(.sg-pulse) { font-size: 15px; font-weight: 500; color: rgb(203 213 225 / 0.8); }
 .court-site .sg-pulse,
 .court-site .sg-marker {
     position: relative;
     flex-shrink: 0;
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     border-radius: 9999px;
 }
 .court-site .sg-pulse { background: var(--court-brass); }
@@ -994,32 +864,28 @@
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
-    gap: 36px;
-    margin-top: 16px;
+    gap: 32px;
+    margin-top: 14px;
 }
-.court-site.court-signage[data-orientation='landscape'] .sg-next-body {
-    grid-template-columns: auto minmax(0, 1fr);
-    row-gap: 14px;
-}
+.court-site.court-signage[data-orientation='landscape'] .sg-next-body { grid-template-columns: auto minmax(0, 1fr); row-gap: 14px; }
+.court-site.court-signage[data-orientation='landscape'] .sg-next-body .sg-where { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 16px; text-align: left; }
 .court-site .sg-next-time {
-    font-size: 76px;
+    font-size: 80px;
     font-weight: 600;
     line-height: 1;
-    letter-spacing: -0.03em;
     font-variant-numeric: tabular-nums;
     background: linear-gradient(180deg, #f6e7bb 0%, var(--court-brass) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
 }
-.court-site.court-signage[data-orientation='landscape'] .sg-next-time { font-size: 68px; }
 .court-site .sg-next-time .sg-eth-part { display: block; margin: 0 0 6px; font-size: 24px; }
 .court-site .sg-next-case {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
     font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
-    font-size: 44px;
+    font-size: 42px;
     font-weight: 600;
     color: #fff;
 }
@@ -1029,102 +895,56 @@
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
     overflow: hidden;
-    font-size: 23px;
+    font-size: 22px;
     line-height: 1.35;
     color: rgb(226 232 240 / 0.88);
 }
-.court-site .sg-next-more { margin-top: 6px; font-size: 18px; color: var(--court-brass-soft); }
-.court-site .sg-next-room { min-width: 0; max-width: 260px; text-align: right; }
-.court-site.court-signage[data-orientation='landscape'] .sg-next-room {
-    grid-column: 1 / -1;
-    display: flex;
-    align-items: baseline;
-    gap: 16px;
-    max-width: none;
-    padding-top: 12px;
-    border-top: 1px solid var(--sg-line);
-    text-align: left;
-}
-.court-site .sg-next-room p {
+.court-site .sg-next-more { margin-top: 4px; font-size: 18px; color: var(--court-brass-soft); }
+.court-site .sg-next-empty { display: grid; flex: 1; place-items: center; text-align: center; font-size: 32px; color: rgb(203 213 225); }
+
+/* The bench, in its own colour, and the room under it. */
+.court-site .sg-where { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
+.court-site .sg-where-large { align-items: flex-end; max-width: 300px; text-align: right; }
+.court-site .sg-bench {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    padding: 4px 14px;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    font-size: 34px;
-    font-weight: 600;
-    color: #fff;
+    border: 1px solid color-mix(in srgb, var(--bench) 55%, transparent);
+    border-radius: 9999px;
+    background: color-mix(in srgb, var(--bench) 16%, transparent);
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--bench);
 }
-.court-site .sg-mini .sg-bi-primary,
-.court-site .sg-mini.sg-bi .sg-bi-primary {
-    font-size: 15px;
-    font-weight: 600;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: rgb(148 163 184);
-}
-.court-site .sg-mini .sg-bi-secondary { font-size: 12px; color: rgb(148 163 184); }
-.court-site .sg-next-empty {
-    display: grid;
-    flex: 1;
-    place-items: center;
-    text-align: center;
-    font-size: 32px;
-    color: rgb(203 213 225);
-}
+.court-site .sg-bench-none { --bench: #94a3b8; font-size: 15px; font-weight: 500; }
+.court-site .sg-room { max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 18px; color: rgb(203 213 225); }
+.court-site .sg-where-large .sg-bench { padding: 8px 20px; font-size: 26px; }
+.court-site .sg-where-large .sg-room { font-size: 24px; color: #fff; }
 
 /* ── The cause list ── */
-.court-site .sg-list {
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    padding: 26px 0 18px;
-}
+.court-site .sg-list { display: flex; flex-direction: column; min-height: 0; padding: 22px 0 16px; }
 .court-site.court-signage[data-orientation='landscape'] .sg-list { padding: 36px 0 24px; }
-.court-site .sg-section-head {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 24px;
-    padding-bottom: 14px;
-}
-.court-site .sg-section-head h2 { display: flex; align-items: flex-start; gap: 16px; }
+.court-site .sg-section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding-bottom: 14px; }
+.court-site .sg-section-head h2 { display: flex; align-items: baseline; gap: 16px; font-size: 27px; font-weight: 600; color: var(--court-brass-soft); }
 .court-site .sg-section-head h2::before {
     content: '';
     flex-shrink: 0;
+    align-self: center;
     width: 30px;
     height: 3px;
-    margin-top: 0.65em;
     border-radius: 9999px;
     background: var(--court-brass);
 }
-.court-site .sg-section-head .sg-bi-primary { font-size: 27px; font-weight: 600; color: var(--court-brass-soft); }
-.court-site .sg-section-head .sg-bi-secondary { font-size: 16px; color: rgb(148 163 184); opacity: 1; }
-.court-site .sg-section-head h2 .sg-bi { flex-direction: row; align-items: baseline; gap: 14px; }
-.court-site .sg-section-head h2::before { margin-top: 0.62em; }
-.court-site .sg-pages {
-    display: inline-flex;
-    align-items: center;
-    gap: 16px;
-    font-size: 20px;
-    font-variant-numeric: tabular-nums;
-    color: rgb(203 213 225);
-}
+.court-site .sg-count { font-size: 18px; font-weight: 500; color: rgb(148 163 184); }
+.court-site .sg-pages { display: inline-flex; align-items: center; gap: 16px; font-size: 20px; font-variant-numeric: tabular-nums; color: rgb(203 213 225); }
 .court-site .sg-progress { display: inline-flex; gap: 6px; }
-.court-site .sg-progress > span {
-    position: relative;
-    overflow: hidden;
-    width: 36px;
-    height: 6px;
-    border-radius: 9999px;
-    background: rgb(255 255 255 / 0.14);
-}
+.court-site .sg-progress > span { position: relative; overflow: hidden; width: 36px; height: 6px; border-radius: 9999px; background: rgb(255 255 255 / 0.14); }
 .court-site .sg-progress > span[data-done] { background: rgb(200 161 74 / 0.5); }
-.court-site .sg-progress-fill {
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: var(--court-brass);
-    transform-origin: left center;
-}
+.court-site .sg-progress-fill { position: absolute; inset: 0; border-radius: inherit; background: var(--court-brass); transform-origin: left center; }
 .court-site .sg-table {
     display: flex;
     flex: 1;
@@ -1137,34 +957,23 @@
 }
 .court-site .sg-row {
     display: grid;
-    grid-template-columns: 14px 118px 236px minmax(0, 1fr) 190px;
+    grid-template-columns: 14px 112px 226px minmax(0, 1fr) 240px;
     align-items: center;
-    gap: 20px;
-    height: 62px;
+    gap: 18px;
     padding: 0 22px;
     border-bottom: 1px solid rgb(255 255 255 / 0.05);
 }
-.court-site.court-signage[data-orientation='landscape'] .sg-row {
-    grid-template-columns: 14px 132px 280px minmax(0, 1fr) 250px;
-    gap: 24px;
-    padding: 0 28px;
-}
+.court-site.court-signage[data-orientation='landscape'] .sg-row { grid-template-columns: 14px 124px 260px minmax(0, 1fr) 300px; gap: 22px; padding: 0 28px; }
 .court-site .sg-row-head {
-    height: auto;
     padding-block: 14px 12px;
     border-bottom: 1px solid var(--sg-brass-line);
     background: rgb(255 255 255 / 0.03);
-}
-.court-site .sg-row-head .sg-bi-primary {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 600;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
     color: rgb(148 163 184);
 }
-.court-site .sg-row-head .sg-bi-secondary { font-size: 12px; color: rgb(100 116 139); opacity: 1; }
 .court-site .sg-rows { flex: 1; min-height: 0; overflow: hidden; }
-.court-site .sg-rows .sg-row { height: var(--row-h, 62px); }
+.court-site .sg-rows .sg-row { height: var(--row-h, 84px); }
 .court-site .sg-rows .sg-row:nth-child(even) { background: rgb(255 255 255 / 0.018); }
 .court-site .sg-marker { box-shadow: inset 0 0 0 2px rgb(200 161 74 / 0.75); }
 .court-site .sg-row[data-state='past'] .sg-marker { box-shadow: inset 0 0 0 2px rgb(100 116 139 / 0.6); }
@@ -1175,66 +984,34 @@
 }
 /* Its cells, not the row: the row's entrance animation ends at full opacity. */
 .court-site .sg-row[data-state='past'] > * { opacity: 0.42; }
-.court-site.court-signage[data-orientation='portrait'] .sg-row { grid-template-columns: 16px 128px 250px minmax(0, 1fr) 200px; }
-.court-site.court-signage[data-orientation='portrait'] .sg-cell-time { font-size: 38px; }
-.court-site.court-signage[data-orientation='portrait'] .sg-cell-case { font-size: 28px; }
-.court-site.court-signage[data-orientation='portrait'] .sg-cell-matter > span:first-child { font-size: 24px; }
-.court-site.court-signage[data-orientation='portrait'] .sg-cell-matter > span + span { font-size: 18px; }
-.court-site.court-signage[data-orientation='portrait'] .sg-cell-room { font-size: 24px; }
-.court-site.court-signage[data-orientation='portrait'] .sg-tag { font-size: 16px; padding: 5px 14px; }
-.court-site.court-signage[data-orientation='portrait'] .sg-marker { width: 14px; height: 14px; }
-.court-site.court-signage[data-orientation='portrait'] .sg-row-head .sg-bi-primary { font-size: 16px; }
-.court-site.court-signage[data-orientation='portrait'] .sg-row-head .sg-bi-secondary { font-size: 13px; }
-.court-site.court-signage[data-orientation='portrait'] .sg-notice-title { font-size: 30px; }
-.court-site.court-signage[data-orientation='portrait'] .sg-notice-summary { font-size: 21px; }
-.court-site .sg-cell-time {
-    font-size: 31px;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    color: #fff;
-}
+.court-site .sg-cell-time { font-size: 36px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; color: #fff; }
+.court-site .sg-cell-time small { display: block; margin-bottom: 4px; font-size: 15px; font-weight: 600; line-height: 1.1; color: rgb(148 163 184); }
 .court-site .sg-row[data-state='next'] .sg-cell-time { color: var(--court-brass-soft); }
-.court-site .sg-cell-time small {
-    display: block;
-    margin-bottom: 2px;
-    font-size: 15px;
-    font-weight: 600;
-    line-height: 1.1;
-    color: rgb(148 163 184);
-}
 .court-site .sg-row[data-state='next'] .sg-cell-time small { color: var(--court-brass); }
 .court-site .sg-cell-case {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
     font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
-    font-size: 24px;
+    font-size: 27px;
     font-weight: 600;
     color: #fff;
 }
 .court-site .sg-cell-matter { display: flex; flex-direction: column; min-width: 0; }
-.court-site .sg-cell-matter > span,
-.court-site .sg-cell-room > span:first-child { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.court-site .sg-cell-matter > span:first-child { font-size: 21px; color: rgb(241 245 249); }
-.court-site .sg-cell-matter > span + span { font-size: 16px; color: rgb(148 163 184); }
-.court-site .sg-cell-room { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; font-size: 21px; color: rgb(241 245 249); }
+.court-site .sg-cell-matter > span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.court-site .sg-cell-matter > span:first-child { font-size: 23px; color: rgb(241 245 249); }
+.court-site .sg-cell-matter > span + span { font-size: 17px; color: rgb(148 163 184); }
+.court-site .sg-cell-where { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; }
 .court-site .sg-tag {
     flex-shrink: 0;
-    padding: 4px 12px;
+    padding: 5px 12px;
     border-radius: 9999px;
     background: var(--court-brass);
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
     color: var(--court-ink);
 }
-.court-site .sg-note {
-    padding: 12px 22px 14px;
-    border-top: 1px solid rgb(255 255 255 / 0.05);
-    font-size: 16px;
-    color: rgb(100 116 139);
-}
+.court-site .sg-note { padding: 12px 22px 14px; border-top: 1px solid rgb(255 255 255 / 0.05); font-size: 17px; color: rgb(100 116 139); }
 .court-site .sg-list-empty {
     display: flex;
     flex: 1;
@@ -1250,58 +1027,57 @@
 }
 .court-site .sg-list-empty svg { color: rgb(200 161 74 / 0.55); }
 
-/* ── The figures ── */
-.court-site .sg-figures {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    padding-top: 22px;
-    min-height: 0;
-    border-top: 1px solid var(--sg-line);
-}
-.court-site .sg-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.court-site .sg-stats > div {
-    display: flex;
-    flex-direction: column-reverse;
-    justify-content: flex-end;
-    min-width: 0;
-    padding: 4px 28px;
-    border-left: 1px solid var(--sg-brass-line);
-}
-.court-site .sg-stats > div:first-child { padding-left: 0; border-left: 0; }
-.court-site .sg-stats dd {
-    font-size: 72px;
+/* ── Decisions released ── */
+.court-site .sg-decisions { padding: 6px 0 18px; }
+.court-site .sg-decision-list { display: flex; flex-wrap: wrap; gap: 10px; max-height: 106px; overflow: hidden; }
+.court-site .sg-decision-list li {
+    padding: 6px 14px;
+    border: 1px solid var(--sg-brass-line);
+    border-radius: 10px;
+    background: rgb(200 161 74 / 0.08);
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+    font-size: 21px;
     font-weight: 600;
-    line-height: 1;
-    letter-spacing: -0.03em;
-    font-variant-numeric: tabular-nums;
     color: #fff;
 }
-.court-site.court-signage[data-orientation='landscape'] .sg-stats dd { font-size: 62px; }
-.court-site .sg-stats dt { margin-top: 10px; }
-.court-site .sg-stats dt .sg-bi-primary { font-size: 19px; color: rgb(203 213 225); }
-.court-site .sg-stats dt .sg-bi-secondary { font-size: 14px; color: rgb(148 163 184); opacity: 1; }
-.court-site .sg-caseload { margin-top: 22px; }
-.court-site .sg-caseload-title .sg-bi { flex-direction: row; align-items: baseline; gap: 12px; }
-.court-site .sg-caseload-title .sg-bi-primary { font-size: 16px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: rgb(148 163 184); }
-.court-site .sg-caseload-title .sg-bi-secondary { font-size: 14px; color: rgb(100 116 139); opacity: 1; }
-.court-site .sg-bar {
-    display: flex;
-    gap: 3px;
-    height: 10px;
-    margin: 12px 0 14px;
-    overflow: hidden;
-    border-radius: 9999px;
+
+/* ── Following a case, and the registry ── */
+.court-site .sg-info {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+    padding: 10px 0 22px;
 }
-.court-site .sg-bar > span { flex-basis: 0; border-radius: 2px; }
-.court-site .sg-legend { display: flex; flex-wrap: wrap; gap: 10px 30px; }
-.court-site .sg-legend li { display: inline-flex; align-items: center; gap: 9px; font-size: 19px; color: rgb(226 232 240); }
-.court-site .sg-legend li > span { width: 12px; height: 12px; border-radius: 3px; }
-.court-site .sg-legend b { margin-left: 4px; font-weight: 600; font-variant-numeric: tabular-nums; color: #fff; }
-.court-site .sg-legend i { font-style: normal; font-variant-numeric: tabular-nums; color: rgb(100 116 139); }
-.court-site.court-signage[data-orientation='landscape'] .sg-caseload { margin-top: 18px; }
-.court-site.court-signage[data-orientation='landscape'] .sg-legend { gap: 8px 22px; }
-.court-site.court-signage[data-orientation='landscape'] .sg-legend li { gap: 7px; font-size: 16px; }
+.court-site .sg-follow,
+.court-site .sg-registry {
+    min-width: 0;
+    padding: 20px 24px;
+    border: 1px solid var(--sg-line);
+    border-radius: 18px;
+    background: rgb(255 255 255 / 0.03);
+}
+.court-site .sg-follow { display: flex; align-items: center; gap: 22px; }
+.court-site .sg-info[data-registry] { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); }
+.court-site .sg-follow .sg-ask { margin-top: 10px; font-weight: 600; color: var(--court-brass-soft); }
+.court-site .sg-info h2 { font-size: 25px; font-weight: 700; color: var(--court-brass-soft); }
+.court-site .sg-follow p,
+.court-site .sg-registry > p { margin-top: 8px; font-size: 19px; line-height: 1.5; color: rgb(203 213 225); }
+/* A code reads best dark on light, with a quiet margin round it. */
+.court-site .sg-qr {
+    display: block;
+    flex-shrink: 0;
+    width: 168px;
+    height: 168px;
+    padding: 10px;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgb(200 161 74 / 0.5);
+}
+.court-site.court-signage[data-orientation='landscape'] .sg-qr { width: 140px; height: 140px; }
+.court-site .sg-qr svg { display: block; width: 100%; height: 100%; }
+.court-site .sg-registry dl { display: grid; gap: 8px; margin-top: 10px; }
+.court-site .sg-registry dt { font-size: 15px; font-weight: 600; color: rgb(148 163 184); }
+.court-site .sg-registry dd { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 20px; color: #fff; }
 
 /* ── The notices ── */
 .court-site .sg-foot {
@@ -1309,7 +1085,7 @@
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
-    gap: 36px;
+    gap: 32px;
     margin-inline: calc(var(--sg-pad) * -1);
     padding-inline: var(--sg-pad);
     border-top: 1px solid var(--sg-brass-line);
@@ -1317,24 +1093,16 @@
 }
 .court-site .sg-foot-progress { position: absolute; top: -1px; left: 0; right: 0; height: 3px; overflow: hidden; }
 .court-site .sg-foot-label {
-    display: inline-flex;
     padding: 14px 22px;
     border-radius: 12px;
     background: linear-gradient(180deg, #d9b664, var(--court-brass));
+    font-size: 21px;
+    font-weight: 800;
     color: var(--court-ink);
     box-shadow: 0 10px 30px -12px rgb(200 161 74 / 0.7);
 }
-.court-site .sg-foot-label .sg-bi-primary { font-size: 20px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; }
-.court-site .sg-foot-label .sg-bi-secondary { font-size: 13px; font-weight: 600; opacity: 0.75; }
 .court-site .sg-foot-notice { min-width: 0; }
-.court-site .sg-notice-title {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    font-size: 28px;
-    font-weight: 600;
-    color: #fff;
-}
+.court-site .sg-notice-title { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 28px; font-weight: 600; color: #fff; }
 .court-site .sg-notice-summary {
     margin-top: 6px;
     display: -webkit-box;
@@ -1346,20 +1114,9 @@
     color: rgb(203 213 225);
 }
 .court-site.court-signage[data-orientation='landscape'] .sg-notice-summary { -webkit-line-clamp: 1; }
-.court-site .sg-notice-count { margin-top: 6px; font-size: 15px; font-variant-numeric: tabular-nums; color: rgb(100 116 139); }
-.court-site.court-signage[data-orientation='landscape'] .sg-notice-count { display: none; }
 .court-site .sg-notice-none { font-size: 22px; color: rgb(148 163 184); }
-.court-site .sg-foot-side {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 10px;
-    max-width: 300px;
-    text-align: right;
-}
-.court-site.court-signage[data-orientation='landscape'] .sg-foot-side { flex-direction: row; align-items: center; gap: 36px; max-width: none; }
-.court-site .sg-registry p:not(.sg-mini) { font-size: 19px; color: rgb(226 232 240); }
-.court-site .sg-registry .sg-mini .sg-bi { flex-direction: row; gap: 10px; justify-content: flex-end; align-items: baseline; }
+.court-site .sg-foot-side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; text-align: right; }
+.court-site .sg-notice-count { font-size: 16px; font-variant-numeric: tabular-nums; color: rgb(100 116 139); }
 .court-site .sg-fresh { font-size: 16px; color: rgb(100 116 139); }
 .court-site .sg-fresh.is-stale { font-weight: 700; color: #fcd34d; }
 

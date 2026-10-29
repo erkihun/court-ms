@@ -14,6 +14,7 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia;
@@ -213,16 +214,20 @@ test('the public signage board names no party, not even by initials', function (
         'national_id_number' => (string) random_int(1000000000000000, 9999999999999999), 'password' => Hash::make('password'),
         'is_active' => true, 'is_lawyer' => false,
     ]);
-    CourtCase::query()->create([
+    $case = CourtCase::query()->create([
         'case_number' => 'SG/00001/26', 'title' => 'Private dispute', 'case_type_id' => CaseType::query()->create(['name' => 'Labour'])->id,
         'filing_date' => now()->toDateString(), 'status' => 'pending', 'applicant_id' => $applicant->id,
+        'respondent_name' => 'Hidden Respondent Office',
     ]);
+    DB::table('case_hearings')->insert(['case_id' => $case->id, 'hearing_at' => now()->format('Y-m-d').' 10:00:00', 'created_at' => now(), 'updated_at' => now()]);
 
+    // The sitting shows by its case number; nothing names a party.
     $this->get(route('public.signage'))
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page
-            ->where('filedToday', 1)
+            ->where('today.hearings.0.case_number', 'SG/00001/26')
             ->missing('todayCases'))
+        ->assertDontSee('Hidden Respondent Office', false)
         ->assertDontSee('H. B. P.', false)
         ->assertDontSee('Helina', false)
         ->assertDontSee('Birtukan', false)

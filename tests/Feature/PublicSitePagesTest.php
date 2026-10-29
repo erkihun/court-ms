@@ -97,21 +97,24 @@ test('the user manual is not found while it is switched off', function (): void 
     $this->get(route('landing.user-manual'))->assertNotFound();
 });
 
-test('the signage board renders today\'s cause list, figures, caseload and notices', function (): void {
+test('the signage board shows today\'s cause list with each sitting\'s bench and room, and the notices', function (): void {
     $type = CaseType::query()->create(['name' => 'Labour']);
+    $bench = DB::table('teams')->insertGetId(['name' => 'Bench One', 'created_at' => now(), 'updated_at' => now()]);
     $case = CourtCase::query()->create([
         'case_number' => 'SG-0001', 'title' => 'Signage case', 'case_type_id' => $type->id,
         'filing_date' => now()->toDateString(), 'status' => 'pending',
     ]);
-    $hearing = fn (string $time, ?string $room) => DB::table('case_hearings')->insert([
-        'case_id' => $case->id, 'hearing_at' => now()->format('Y-m-d').' '.$time, 'type' => 'Mention', 'location' => $room,
+    $case->forceFill(['assigned_team_id' => $bench])->save();
+    $unassigned = CourtCase::query()->create([
+        'case_number' => 'SG-0002', 'title' => 'Unassigned case', 'case_type_id' => $type->id,
+        'filing_date' => now()->toDateString(), 'status' => 'pending',
+    ]);
+    $hearing = fn (CourtCase $for, string $day, string $time, ?string $room) => DB::table('case_hearings')->insert([
+        'case_id' => $for->id, 'hearing_at' => $day.' '.$time, 'type' => 'Mention', 'location' => $room,
         'created_at' => now(), 'updated_at' => now(),
     ]);
-    $hearing('14:00:00', null);
-    $hearing('10:30:00', 'Bench 2');
-    DB::table('case_hearings')->insert([
-        'case_id' => $case->id, 'hearing_at' => now()->addDay()->format('Y-m-d').' 09:00:00', 'created_at' => now(), 'updated_at' => now(),
-    ]);
+    $hearing($unassigned, now()->format('Y-m-d'), '14:00:00', null);
+    $hearing($case, now()->format('Y-m-d'), '10:30:00', 'Room 2');
     Announcement::query()->create(['title' => 'Holiday', 'content' => '<p>Closed&nbsp;Friday.</p><p>Back Monday.</p><script>x</script>', 'status' => 'active']);
     Announcement::query()->create(['title' => 'Old', 'content' => '<p>Gone.</p>', 'status' => 'inactive']);
 
@@ -119,30 +122,81 @@ test('the signage board renders today\'s cause list, figures, caseload and notic
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('Court/Public/Signage')
-            ->where('totalCases', 1)
-            ->where('filedToday', 1)
-            ->where('hearingsToday', 2)
-            ->where('statusCounts.0', ['label' => 'pending', 'total' => 1])
-            // Today's sittings in time order, with the sitting and the room; tomorrow's is not on today's board.
-            ->has('todayHearings', 2)
-            ->where('todayHearings.0', fn ($row): bool => $row['time'] === '10:30' && $row['case_number'] === 'SG-0001'
-                && $row['case_type'] === 'Labour' && $row['type'] === 'Mention' && $row['location'] === 'Bench 2')
-            ->where('todayHearings.1.time', '14:00')
-            ->where('todayHearings.1.location', null)
+            ->where('today.date', now()->toDateString())
+            // Today's sittings in time order, with the sitting, the case's bench and the room.
+            ->has('today.hearings', 2)
+            ->where('today.hearings.0', fn ($row): bool => $row['time'] === '10:30' && $row['case_number'] === 'SG-0001'
+                && $row['case_type'] === 'Labour' && $row['type'] === 'Mention' && $row['location'] === 'Room 2'
+                && $row['bench_id'] === $bench && $row['bench'] === 'Bench One')
+            ->where('today.hearings.1.time', '14:00')
+            ->where('today.hearings.1.bench', null)
+            ->where('benches', fn ($benches): bool => collect($benches)->contains(fn (array $one): bool => $one['id'] === $bench && $one['name'] === 'Bench One'))
+            ->where('nextDay', null)
             // A notice is one line of plain text: no markup, no script, the paragraphs spaced.
             ->has('announcements', 1)
             ->where('announcements.0.title', 'Holiday')
             ->where('announcements.0.summary', 'Closed Friday. Back Monday.')
+            ->where('registry', ['office_hours' => null, 'phone' => null, 'address' => null])
             ->where('refreshSeconds', 60)
             ->where('timezone', config('app.timezone'))
             ->has('now')
-            ->where('registry', ['office_hours' => null, 'phone' => null])
-            ->missing('activeStaff')->missing('activeAnnouncements')->missing('todayCases')->missing('categoryCounts'));
+            ->missing('activeStaff')->missing('todayCases')->missing('statusCounts'));
+});
+
+test('the signage board looks ahead to the next sitting day within two weeks', function (): void {
+    $type = CaseType::query()->create(['name' => 'Labour']);
+    $case = CourtCase::query()->create([
+        'case_number' => 'SG-0003', 'title' => 'Later case', 'case_type_id' => $type->id,
+        'filing_date' => now()->toDateString(), 'status' => 'pending',
+    ]);
+    $sit = fn (string $at) => DB::table('case_hearings')->insert(['case_id' => $case->id, 'hearing_at' => $at, 'created_at' => now(), 'updated_at' => now()]);
+    $sit(now()->addDays(3)->format('Y-m-d').' 09:00:00');
+    $sit(now()->addDays(3)->format('Y-m-d').' 11:00:00');
+    $sit(now()->addDays(5)->format('Y-m-d').' 09:00:00');
+
+    $this->get(route('public.signage'))->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('today.hearings', [])
+            ->where('nextDay.date', now()->addDays(3)->toDateString())
+            ->where('nextDay.hearings', fn ($rows): bool => collect($rows)->pluck('time')->all() === ['09:00', '11:00']));
+
+    // Nothing within the next two weeks: no next day.
+    DB::table('case_hearings')->delete();
+    $sit(now()->addDays(20)->format('Y-m-d').' 09:00:00');
+    $this->get(route('public.signage'))->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('nextDay', null));
+});
+
+test('the signage board lists decisions released to the parties lately, by case number only', function (): void {
+    $type = CaseType::query()->create(['name' => 'Labour']);
+    $case = CourtCase::query()->create(['case_number' => 'SG-0004', 'title' => 'Decided', 'case_type_id' => $type->id, 'filing_date' => now()->toDateString(), 'status' => 'closed']);
+    $decision = fn (string $number, string $status, ?Carbon $approved) => DB::table('decisions')->insert([
+        'court_case_id' => $case->id, 'case_number' => $number, 'name' => 'Decision', 'decision_content' => '<p>Private reasons</p>',
+        'applicant_full_name' => 'Private Party', 'status' => $status, 'approved_at' => $approved, 'created_at' => now(), 'updated_at' => now(),
+    ]);
+    $decision('SG/REL/01', 'published', now()->subDays(2));
+    $decision('SG/DRAFT/02', 'draft', null);
+    $decision('SG/UNAPPROVED/03', 'published', null);
+    $decision('SG/OLD/04', 'published', now()->subDays(40));
+
+    $this->get(route('public.signage'))->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('decisions', [['case_number' => 'SG/REL/01', 'released' => now()->subDays(2)->toDateString()]]))
+        ->assertDontSee('Private Party', false)
+        ->assertDontSee('Private reasons', false);
+});
+
+test('the signage board points parties to their portal with a QR code', function (): void {
+    $this->get(route('public.signage'))->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('portal.url', fn (string $url): bool => $url !== '')
+            ->where('portal.qr', fn (?string $svg): bool => $svg !== null && str_starts_with($svg, '<svg') && ! str_contains($svg, '<?xml')));
 });
 
 test('the signage board shows the registry\'s hours and phone from the landing manager, in the screen\'s language', function (): void {
     HomeSetting::setJson('footer.settings', [
         'office_hours' => 'Mon-Fri 8:30-17:30', 'office_hours_am' => 'ከሰኞ እስከ ዓርብ 2:30-11:30', 'contact_phone' => '+251 11 000 0000',
+        'contact_address' => 'Arada', 'contact_address_am' => 'አራዳ',
     ]);
     Cache::forget('home_footer');
 
@@ -151,49 +205,41 @@ test('the signage board shows the registry\'s hours and phone from the landing m
             ->where('registry.phone', '+251 11 000 0000')
             ->where('registry.office_hours', 'Mon-Fri 8:30-17:30'));
     $this->withSession(['app_locale' => 'am'])->get(route('public.signage'))->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page->where('registry.office_hours', 'ከሰኞ እስከ ዓርብ 2:30-11:30'));
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('registry.office_hours', 'ከሰኞ እስከ ዓርብ 2:30-11:30')
+            ->where('registry.address', 'አራዳ'));
 });
 
-test('the signage board counts all of today and names no staff', function (): void {
-    $type = CaseType::query()->create(['name' => 'Labour']);
-    foreach (range(1, 8) as $n) {
-        CourtCase::query()->create([
-            'case_number' => sprintf('SG-%04d', $n), 'title' => "Case {$n}", 'case_type_id' => $type->id,
-            'filing_date' => now()->toDateString(), 'status' => 'active',
-        ]);
-    }
-    CourtCase::query()->create(['case_number' => 'SG-NOSTATUS', 'title' => 'No status', 'case_type_id' => $type->id, 'filing_date' => now()->toDateString(), 'status' => '']);
+test('the signage board names no staff', function (): void {
     User::factory()->create(['name' => 'Abebe Kebede', 'status' => 'active', 'position' => 'Registrar']);
 
-    $this->get(route('public.signage'))
-        ->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
-            ->where('filedToday', 9)
-            ->where('totalCases', 9)
-            ->where('statusCounts', fn ($counts): bool => collect($counts)->pluck('total', 'label')->all() === ['active' => 8, 'unspecified' => 1]))
+    $this->get(route('public.signage'))->assertOk()
         ->assertDontSee('Abebe Kebede', false)
         ->assertDontSee('Registrar', false);
 });
 
 test('the signage board\'s today is the day in Addis Ababa, evening included', function (): void {
     $type = CaseType::query()->create(['name' => 'Labour']);
-    $file = fn (string $number, string $at) => tap(CourtCase::query()->create([
-        'case_number' => $number, 'title' => $number, 'case_type_id' => $type->id, 'filing_date' => substr($at, 0, 10), 'status' => 'pending',
-    ]))->forceFill(['created_at' => $at])->save();
+    $case = CourtCase::query()->create(['case_number' => 'SG-0005', 'title' => 'Evening', 'case_type_id' => $type->id, 'filing_date' => '2026-10-28', 'status' => 'pending']);
+    $sit = fn (string $at) => DB::table('case_hearings')->insert(['case_id' => $case->id, 'hearing_at' => $at, 'created_at' => now(), 'updated_at' => now()]);
+    $sit('2026-10-27 23:50:00');
+    $sit('2026-10-28 08:15:00');
+    $sit('2026-10-28 21:45:00');
+    $sit('2026-10-29 00:30:00');
 
     // Late in the evening: past 21:00, where a window in UTC used to end.
     $this->travelTo(Carbon::parse('2026-10-28 22:30:00', 'Africa/Addis_Ababa'));
-    $file('SG-YESTERDAY', '2026-10-27 23:50:00');
-    $file('SG-MORNING', '2026-10-28 08:15:00');
-    $file('SG-EVENING', '2026-10-28 21:45:00');
-
     $this->get(route('public.signage'))->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page->where('filedToday', 2)->where('totalCases', 3));
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('today.date', '2026-10-28')
+            ->where('today.hearings', fn ($rows): bool => collect($rows)->pluck('time')->all() === ['08:15', '21:45'])
+            ->where('nextDay.date', '2026-10-29'));
 
-    // Just after midnight the new day starts empty, and yesterday's evening case is gone.
+    // Just after midnight the new day starts, and yesterday's sittings are gone from it.
     $this->travelTo(Carbon::parse('2026-10-29 00:10:00', 'Africa/Addis_Ababa'));
     $this->get(route('public.signage'))->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page->where('filedToday', 0));
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('today.hearings', fn ($rows): bool => collect($rows)->pluck('time')->all() === ['00:30']));
 });
 
 /* ── Landing-page manager ─────────────────────────────────────────────── */

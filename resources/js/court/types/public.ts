@@ -191,20 +191,33 @@ export interface SignageHearing {
     /** The sitting (a free-text kind of hearing) and the room. */
     type: string | null;
     location: string | null;
+    /** The bench (ችሎት) the case is assigned to; null while it has none. */
+    bench_id: number | null;
+    bench: string | null;
+}
+
+/** One day's cause list: its date (YYYY-MM-DD, the court's zone) and its sittings in time order. */
+export interface SignageDay {
+    date: string;
+    hearings: SignageHearing[];
 }
 
 export interface PublicSignageProps {
     /** The server's clock (ISO 8601, the court's time zone) when the board was read. */
     now: string;
     timezone: string;
-    totalCases: number;
-    filedToday: number;
-    hearingsToday: number;
-    statusCounts: Array<{ label: string; total: number }>;
-    /** The registry's office hours and phone (landing manager contact settings); null when not set. */
-    registry: { office_hours: string | null; phone: string | null };
-    todayHearings: SignageHearing[];
+    /** The court's benches in a fixed order, so each keeps its colour. */
+    benches: Array<{ id: number; name: string }>;
+    today: SignageDay;
+    /** The next day with sittings within two weeks, shown once today's are over; null when none. */
+    nextDay: SignageDay | null;
+    /** Cases whose decision was released to the parties lately (published and approved). */
+    decisions: Array<{ case_number: string; released: string }>;
     announcements: Array<{ id: number; title: string; summary: string; created_at: string | null }>;
+    /** The registry's office hours, phone and address (landing manager contact settings); null when not set. */
+    registry: { office_hours: string | null; phone: string | null; address: string | null };
+    /** Where parties follow their case, with a QR code (SVG markup) to it. */
+    portal: { url: string; qr: string | null };
     /** Seconds between automatic refreshes of the board. */
     refreshSeconds: number;
 }

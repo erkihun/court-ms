@@ -1,16 +1,15 @@
 import { Head, router } from '@inertiajs/react';
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import LocalizedUiProvider from '@/Components/ui/LocalizedUiProvider';
 import { CourtEmblem } from '@/court/components/auth/CourtAuthLayout';
 import publicSite from '@/court/i18n/publicSite';
-import { CountUp } from '@/court/public/motion';
-import type { PublicSignageProps, SignageHearing } from '@/court/types/public';
+import type { PublicSignageProps, SignageDay, SignageHearing } from '@/court/types/public';
 import { useBranding } from '@/hooks/useBranding';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { gregorianIsoToEthiopian } from '@/lib/calendar/ethiopianCalendar';
 import '../../../../css/court-public.css';
 
-/** The two stages: the floor-standing screen stands portrait (the board's own shape), a wall screen lies landscape. */
+/** The two stages: the door screen stands portrait (the board's own shape), a wall screen lies landscape. */
 type Orientation = 'portrait' | 'landscape';
 const STAGES: Record<Orientation, { width: number; height: number }> = {
     portrait: { width: 1080, height: 1920 },
@@ -21,8 +20,8 @@ const STAGES: Record<Orientation, { width: number; height: number }> = {
  * the least height as fit; a single short page lets its rows grow, up to the
  * most, so the list fills the column instead of ending halfway down it.
  */
-const ROW_MIN: Record<Orientation, number> = { portrait: 80, landscape: 62 };
-const ROW_MAX = 116;
+const ROW_MIN: Record<Orientation, number> = { portrait: 84, landscape: 66 };
+const ROW_MAX = 120;
 /** The seconds each page and each notice stays. */
 const PAGE_SECONDS = 12;
 const NOTICE_SECONDS = 14;
@@ -31,14 +30,8 @@ const IDLE_MS = 4000;
 /** Every few minutes the whole stage moves a few pixels, so nothing burns into the panel. */
 const SHIFT_MINUTES = 4;
 const SHIFTS = [[0, 0], [3, 2], [-2, 3], [2, -3], [-3, -2]] as const;
-
-const STATUS_TONES: Record<string, string> = {
-    pending: '#d4ad57',
-    active: '#7fb2ff',
-    adjourned: '#b79cff',
-    closed: '#8b98ab',
-    dismissed: '#ee8b8b',
-};
+/** Each bench keeps one colour, in the benches' fixed order. */
+const BENCH_TONES = ['#d4ad57', '#7fb2ff', '#8fd3a8', '#e7a0c8', '#b79cff', '#f0b37e'];
 
 const ETH_MONTHS_AM = ['', 'መስከረም', 'ጥቅምት', 'ኅዳር', 'ታኅሣሥ', 'ጥር', 'የካቲት', 'መጋቢት', 'ሚያዝያ', 'ግንቦት', 'ሰኔ', 'ሐምሌ', 'ነሐሴ', 'ጳጉሜ'];
 const WEEKDAYS_AM = ['እሑድ', 'ሰኞ', 'ማክሰኞ', 'ረቡዕ', 'ሐሙስ', 'ዓርብ', 'ቅዳሜ'];
@@ -55,11 +48,29 @@ function ethiopianClock(time: string | null): { part: string; time: string } | n
     return { part: ethiopianDayPart(hour), time: `${ethiopianHour(hour)}:${time.slice(3, 5)}` };
 }
 
-type SignageText = typeof publicSite.en.signage;
+/** A Gregorian YYYY-MM-DD as the Ethiopian weekday and date: ሐሙስ, ጥቅምት 19 ቀን 2019 ዓ.ም. */
+function ethiopianDay(iso: string): { weekday: string; date: string; short: string } {
+    const [year, month, day] = iso.slice(0, 10).split('-').map(Number);
+    const eth = gregorianIsoToEthiopian(iso.slice(0, 10));
+    const weekday = WEEKDAYS_AM[new Date(Date.UTC(year, month - 1, day)).getUTCDay()] ?? '';
+    return {
+        weekday,
+        date: eth ? `${ETH_MONTHS_AM[eth.month]} ${eth.day} ቀን ${eth.year} ዓ.ም.` : '',
+        short: eth ? `${weekday} ${ETH_MONTHS_AM[eth.month]} ${eth.day}` : weekday,
+    };
+}
+
+type SignageText = typeof publicSite.am.signage;
 type TextKey = Exclude<keyof SignageText, 'status'>;
 
 const fill = (template: string, values: Record<string, string | number>): string =>
     Object.entries(values).reduce((out, [key, value]) => out.split(`:${key}`).join(String(value)), template);
+
+/** The board's text: Amharic throughout, whatever language the browser was left in. */
+const say = (key: TextKey, values?: Record<string, string | number>): string => {
+    const value = publicSite.am.signage[key] as string;
+    return values ? fill(value, values) : value;
+};
 
 /** The time of day in the court's zone, on the server's clock (read at each refresh), ticking each second. */
 function useCourtClock(serverNow: string, timezone: string) {
@@ -90,23 +101,20 @@ function useCourtClock(serverNow: string, timezone: string) {
 
     const parts = Object.fromEntries(format.formatToParts(new Date(tick + skew)).map((part) => [part.type, part.value]));
     const hour = Number(parts.hour);
-    const minute = Number(parts.minute);
     return {
         tick,
-        hm: `${parts.hour}:${parts.minute}`,
-        minutesOfDay: hour * 60 + minute,
+        minutesOfDay: hour * 60 + Number(parts.minute),
         minutes: parts.minute,
         seconds: parts.second,
         ethiopianPart: ethiopianDayPart(hour),
         ethiopianHour: ethiopianHour(hour),
-        ethiopianTime: `${ethiopianHour(hour)}:${parts.minute}`,
         format,
     };
 }
 
 /**
- * The stage and its scale. The board is portrait (the court's floor screen):
- * on any other screen it shows framed in the middle, as the floor screen
+ * The stage and its scale. The board is portrait (the court's door screen):
+ * on any other screen it shows framed in the middle, as the door screen
  * shows it. `?orientation=landscape` lays it out for a wall screen instead;
  * `?rotate=90` (or 270) turns the portrait board for a panel stood on its
  * side while its computer still drives it as landscape.
@@ -177,26 +185,6 @@ function useWakeLock() {
     }, []);
 }
 
-/** A label in the screen's language with the other language beneath it, smaller: the lobby reads both. */
-function Bi({ primary, secondary, className = '', secondaryClassName = '' }: { primary: string; secondary: string; className?: string; secondaryClassName?: string }) {
-    return (
-        <span className={`sg-bi ${className}`}>
-            <span className="sg-bi-primary">{primary}</span>
-            {secondary && secondary !== primary && <span className={`sg-bi-secondary ${secondaryClassName}`}>{secondary}</span>}
-        </span>
-    );
-}
-
-/** A section's heading: a brass tick, the two-language title, and whatever stands at its end. */
-function SectionHead({ primary, secondary, aside }: { primary: string; secondary: string; aside?: ReactNode }) {
-    return (
-        <div className="sg-section-head">
-            <h2><Bi primary={primary} secondary={secondary} /></h2>
-            {aside}
-        </div>
-    );
-}
-
 /** The court's mark: the logo set in System Settings as it is drawn, else the scales in brass. */
 function Medallion({ logoUrl }: { logoUrl: string | null }) {
     return (
@@ -221,59 +209,58 @@ function Progress({ count, active, seconds }: { count: number; active: number; s
     );
 }
 
+/** A sitting's time on the Ethiopian clock: the part of the day small above the hour. */
+function SittingTime({ time, className = '' }: { time: string | null; className?: string }) {
+    const at = ethiopianClock(time);
+    return <span role="cell" className={className}>{at ? <><small>{at.part}</small>{at.time}</> : '—'}</span>;
+}
+
+/** The bench a case sits before, in its own colour, and the room. */
+function Bench({ hearing, tone, large = false }: { hearing: SignageHearing; tone: string | null; large?: boolean }) {
+    return (
+        <span className={large ? 'sg-where sg-where-large' : 'sg-where'}>
+            {hearing.bench
+                ? <span className="sg-bench" style={{ '--bench': tone ?? '#94a3b8' } as CSSProperties}>{hearing.bench}</span>
+                : <span className="sg-bench sg-bench-none">{say('noBench')}</span>}
+            {hearing.location && <span className="sg-room">{hearing.location}</span>}
+        </span>
+    );
+}
+
 /**
- * The court's public display (PublicSignageController) for the lobby: the
- * floor-standing screen (portrait, 1080x1920) or a wall (landscape,
- * 1920x1080). Composed like the court's letterhead over a departure board:
- * the logo, the court's name and the Ethiopian hour with today's Ethiopian
- * date, the next sitting with how long until it, today's cause list a page
- * at a time, today's figures and the caseload, then the notices and the
- * registry's hours. It is in Amharic throughout, and every hour is on the
- * Ethiopian clock (a hearing set for 14:00 reads ከቀኑ 8:00), so nothing on it
- * mixes languages or calendars. It is a screen, not a document: the stage is scaled to the display,
- * shifts a few pixels now and then against burn-in, hides the cursor while
- * the mouse is still and keeps the screen awake. It re-reads its data every
- * minute; a failed read leaves the last figures up and says how old they are.
+ * The court's door display (PublicSignageController): the portrait screen at
+ * the court's entrance (1080x1920), for the parties arriving. It answers, in
+ * order, what they come to learn: whether their case sits today, when, before
+ * which bench and in which room (the next sitting large, then the cause list
+ * a page at a time, each bench in its own colour); which cases have a
+ * decision released; and how to follow a case (a code to read with a phone)
+ * and reach the registry; then the notices. Once today's sittings are past it
+ * shows the next sitting day.
+ *
+ * It is in Amharic throughout, and every hour and date is Ethiopian (a
+ * sitting set for 14:00 reads ከቀኑ 8:00). It is a screen, not a document: the
+ * stage is scaled to the display, shifts a few pixels now and then against
+ * burn-in, hides the cursor while the mouse is still and keeps the screen
+ * awake. It re-reads its data every minute; a failed read leaves the board up
+ * and says how old it is.
  */
 export default function PublicSignage(props: PublicSignageProps) {
     const { getBoolean } = useSystemSettings();
     const branding = useBranding();
-    const { now, timezone, totalCases, filedToday, hearingsToday, statusCounts, registry, todayHearings, announcements, refreshSeconds } = props;
-
-    // The lobby reads Amharic: the board is Amharic throughout, whatever language the browser was left in.
-    const lang = 'am' as const;
-    const text = (key: TextKey, values?: Record<string, string | number>) => {
-        const value = (publicSite[lang].signage[key] ?? publicSite.en.signage[key]) as string;
-        return values ? fill(value, values) : value;
-    };
-    const bi = (key: TextKey, values?: Record<string, string | number>) => ({ primary: text(key, values), secondary: '' });
-    const statusLabel = (label: string) => (publicSite[lang].signage.status as Record<string, string>)[label.toLowerCase()] ?? label;
+    const { now, timezone, benches, today, nextDay, decisions, announcements, registry, portal, refreshSeconds } = props;
 
     // The official Amharic name falls back to the English one when it is not set; the Amharic brand name is then better.
     const courtName = (branding.officialNameAm && branding.officialNameAm !== branding.officialNameEn ? branding.officialNameAm : '') || branding.brandNameAm;
-    const number = useMemo(() => new Intl.NumberFormat('am-ET'), []);
-    const formatNumber = (value: number) => number.format(value);
+    const benchTone = (id: number | null) => {
+        const index = benches.findIndex((bench) => bench.id === id);
+        return index >= 0 ? BENCH_TONES[index % BENCH_TONES.length] : null;
+    };
 
     const clock = useCourtClock(now, timezone);
     const { orientation, scale, rotate } = useStage();
-    const portrait = orientation === 'portrait';
     const stage = STAGES[orientation];
-    const listBox = useRef<HTMLDivElement>(null);
-    // Re-measured when the orientation changes or the list first appears.
-    const listHeight = useBoxHeight(listBox, 8 * ROW_MIN[orientation], `${orientation}-${todayHearings.length > 0}`);
-    const rows = Math.max(1, Math.floor(listHeight / ROW_MIN[orientation]));
     useWakeLock();
-
-    // Today in the Ethiopian calendar, from the server's date in the court's zone.
-    const todayIso = now.slice(0, 10);
-    const today = useMemo(() => {
-        const [year, month, day] = todayIso.split('-').map(Number);
-        const eth = gregorianIsoToEthiopian(todayIso);
-        return {
-            weekday: WEEKDAYS_AM[new Date(Date.UTC(year, month - 1, day)).getUTCDay()],
-            date: eth ? `${ETH_MONTHS_AM[eth.month]} ${eth.day} ቀን ${eth.year} ዓ.ም.` : '',
-        };
-    }, [todayIso]);
+    const todayLabel = useMemo(() => ethiopianDay(today.date), [today.date]);
 
     // Re-read every minute in place; a failed read keeps what is on screen.
     const [readAt, setReadAt] = useState(() => Date.now());
@@ -318,72 +305,89 @@ export default function PublicSignage(props: PublicSignageProps) {
 
     const shift = SHIFTS[Math.floor(clock.tick / (SHIFT_MINUTES * 60_000)) % SHIFTS.length];
 
-    // The next sitting, and the cause list a page at a time.
+    // Today until its last sitting's hour has come; after that (or on a day without sittings) the next sitting day.
     const minutesOf = (time: string | null) => (time ? Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5)) : -1);
-    const nextTime = todayHearings.find((hearing) => hearing.time !== null && minutesOf(hearing.time) >= clock.minutesOfDay)?.time ?? null;
-    const nextHearings = nextTime ? todayHearings.filter((hearing) => hearing.time === nextTime) : [];
-    const next = nextHearings[0] ?? null;
-    const untilNext = next ? minutesOf(next.time) - clock.minutesOfDay : 0;
-    const countdown = untilNext <= 0
-        ? text('now')
-        : untilNext < 60 ? text('inMinutes', { m: untilNext }) : text('inHours', { h: Math.floor(untilNext / 60), m: untilNext % 60 });
-    const nextClock = next ? ethiopianClock(next.time) : null;
+    const upcomingToday = today.hearings.filter((hearing) => hearing.time !== null && minutesOf(hearing.time) >= clock.minutesOfDay);
+    const onTomorrow = upcomingToday.length === 0 && nextDay !== null;
+    const day: SignageDay = onTomorrow && nextDay ? nextDay : today;
+    const dayLabel = useMemo(() => ethiopianDay(day.date), [day.date]);
 
+    // The next sitting: today's next hour, or the first of the next sitting day.
+    const nextTime = onTomorrow ? (day.hearings[0]?.time ?? null) : (upcomingToday[0]?.time ?? null);
+    const nextHearings = nextTime ? day.hearings.filter((hearing) => hearing.time === nextTime) : [];
+    const next = nextHearings[0] ?? null;
+    const nextClock = next ? ethiopianClock(next.time) : null;
+    const untilNext = next && !onTomorrow ? minutesOf(next.time) - clock.minutesOfDay : 0;
+    const countdown = untilNext <= 0
+        ? say('now')
+        : untilNext < 60 ? say('inMinutes', { m: untilNext }) : say('inHours', { h: Math.floor(untilNext / 60), m: untilNext % 60 });
+
+    // The cause list, a page at a time, as many rows as the column holds.
+    const listBox = useRef<HTMLDivElement>(null);
+    const listHeight = useBoxHeight(listBox, 8 * ROW_MIN[orientation], `${orientation}-${day.hearings.length > 0}-${decisions.length > 0}`);
+    const rows = Math.max(1, Math.floor(listHeight / ROW_MIN[orientation]));
     const pages = useMemo(() => {
         const out: SignageHearing[][] = [];
-        for (let index = 0; index < todayHearings.length; index += rows) out.push(todayHearings.slice(index, index + rows));
+        for (let index = 0; index < day.hearings.length; index += rows) out.push(day.hearings.slice(index, index + rows));
         return out;
-    }, [todayHearings, rows]);
-    const page = useRotation(pages.length, PAGE_SECONDS, `${pages.length}-${rows}`);
+    }, [day.hearings, rows]);
+    const page = useRotation(pages.length, PAGE_SECONDS, `${day.date}-${pages.length}-${rows}`);
     const rowHeight = pages.length === 1
         ? Math.min(ROW_MAX, Math.max(ROW_MIN[orientation], Math.floor(listHeight / Math.max(1, pages[0].length))))
         : ROW_MIN[orientation];
 
     const notice = useRotation(announcements.length, NOTICE_SECONDS, announcements.length);
     const current = announcements[notice];
-    const statusTotal = Math.max(1, statusCounts.reduce((sum, stat) => sum + stat.total, 0));
+    const registryLines = [
+        registry.office_hours && { label: say('officeHours'), value: registry.office_hours },
+        registry.phone && { label: say('phone'), value: registry.phone },
+        registry.address && { label: say('address'), value: registry.address },
+    ].filter(Boolean) as Array<{ label: string; value: string }>;
 
     return (
         <LocalizedUiProvider>
-            <Head title={`${text('title')} · ${courtName}`} />
+            <Head title={`${say('title')} · ${courtName}`} />
 
             <div
                 className="court-site court-signage"
                 data-motion={getBoolean('appearance.enable_ui_animations', true) ? 'on' : 'off'}
                 data-orientation={orientation}
                 data-idle={idle ? '' : undefined}
-                lang={lang}
+                data-decisions={decisions.length > 0 ? '' : undefined}
+                lang="am"
             >
                 <div
                     className="court-signage-stage"
                     style={{ width: stage.width, height: stage.height, '--scale': scale, '--rotate': `${rotate}deg`, '--sx': `${shift[0]}px`, '--sy': `${shift[1]}px` } as CSSProperties}
                 >
-                    {/* The crest: the court as its letterhead names it. */}
+                    {/* The court, and the Ethiopian hour and date. */}
                     <header className="sg-crest">
                         <span className="sg-colonnade" aria-hidden="true" />
                         <span className="sg-sheen" aria-hidden="true" />
                         <Medallion logoUrl={branding.logoUrl} />
                         <div className="sg-crest-text">
-                            <p className="sg-eyebrow">{publicSite[lang].authority} · {publicSite[lang].courtKind}</p>
+                            <p className="sg-eyebrow">{publicSite.am.authority} · {publicSite.am.courtKind}</p>
                             <h1 className="sg-court">{courtName}</h1>
                         </div>
-                        {/* The hour as the city reads it, counted from dawn, and today's Ethiopian date under it. */}
-                        <div className="sg-crest-time" aria-label={`${clock.ethiopianPart} ${clock.ethiopianTime}`}>
+                        <div className="sg-crest-time" aria-label={`${clock.ethiopianPart} ${clock.ethiopianHour}:${clock.minutes}`}>
                             <p className="sg-eth-time">
                                 <span className="sg-eth-part">{clock.ethiopianPart}</span>
                                 {clock.ethiopianHour}<span className="sg-colon">:</span>{clock.minutes}
                                 <span className="sg-seconds">{clock.seconds}</span>
                             </p>
-                            <p className="sg-eth-weekday">{today.weekday}</p>
-                            <p className="sg-eth-date">{today.date}</p>
+                            <p className="sg-eth-weekday">{todayLabel.weekday}</p>
+                            <p className="sg-eth-date">{todayLabel.date}</p>
                         </div>
                     </header>
 
-                    {/* The next sitting, large: what most of the lobby is waiting for. */}
-                    <section className="sg-next" data-state={next ? 'next' : todayHearings.length > 0 ? 'done' : 'none'}>
+                    {/* The next sitting: when, which case, before which bench and where. */}
+                    <section className="sg-next" data-state={next ? 'next' : 'none'}>
                         <div className="sg-next-head">
-                            <Bi {...bi('nextSitting')} className="sg-kicker" />
-                            {next && (
+                            <p className="sg-kicker">
+                                {onTomorrow ? say('nextDay') : say('nextSitting')}
+                                {onTomorrow && <span>{dayLabel.short} · {say('firstSitting')}</span>}
+                            </p>
+                            {next && !onTomorrow && (
                                 <span className="sg-countdown">
                                     <span className="sg-pulse" aria-hidden="true" />
                                     {countdown}
@@ -391,7 +395,7 @@ export default function PublicSignage(props: PublicSignageProps) {
                             )}
                         </div>
                         {next ? (
-                            <div key={`${next.id}-${nextTime}`} className="sg-next-body court-signage-in">
+                            <div key={`${day.date}-${next.id}`} className="sg-next-body court-signage-in">
                                 <p className="sg-next-time">
                                     {nextClock && <span className="sg-eth-part">{nextClock.part}</span>}
                                     <span className="sg-next-hour">{nextClock?.time ?? '—'}</span>
@@ -399,52 +403,48 @@ export default function PublicSignage(props: PublicSignageProps) {
                                 <div className="min-w-0">
                                     <p className="sg-next-case">{next.case_number ?? '—'}</p>
                                     <p className="sg-next-matter">{[next.case_type, next.type].filter(Boolean).join(' · ') || '—'}</p>
-                                    {nextHearings.length > 1 && <p className="sg-next-more">{text('alsoAt', { n: nextHearings.length - 1 })}</p>}
+                                    {nextHearings.length > 1 && <p className="sg-next-more">{say('alsoAt', { n: nextHearings.length - 1 })}</p>}
                                 </div>
-                                {next.location && (
-                                    <div className="sg-next-room">
-                                        <Bi {...bi('room')} className="sg-mini" />
-                                        <p>{next.location}</p>
-                                    </div>
-                                )}
+                                <Bench hearing={next} tone={benchTone(next.bench_id)} large />
                             </div>
                         ) : (
-                            <p className="sg-next-empty">
-                                <Bi {...bi(todayHearings.length > 0 ? 'noMoreToday' : 'noneToday')} />
-                            </p>
+                            <p className="sg-next-empty">{today.hearings.length > 0 ? say('noMoreToday') : say('noneToday')}</p>
                         )}
                     </section>
 
-                    {/* Today's cause list, as a board. */}
+                    {/* The day's cause list. */}
                     <section className="sg-list">
-                        <SectionHead
-                            {...bi('causeList')}
-                            aside={pages.length > 1 && (
+                        <div className="sg-section-head">
+                            <h2>
+                                {onTomorrow ? say('causeListOn', { date: dayLabel.short }) : say('causeList')}
+                                {day.hearings.length > 0 && <span className="sg-count">{say('sittings', { n: day.hearings.length })}</span>}
+                            </h2>
+                            {pages.length > 1 && (
                                 <span className="sg-pages">
-                                    {text('pageOf', { n: page + 1, total: pages.length })}
+                                    {say('pageOf', { n: page + 1, total: pages.length })}
                                     <Progress count={pages.length} active={page} seconds={PAGE_SECONDS} />
                                 </span>
                             )}
-                        />
-                        {todayHearings.length === 0 ? (
+                        </div>
+                        {day.hearings.length === 0 ? (
                             <div className="sg-list-empty">
                                 <CourtEmblem className="h-24 w-24" />
-                                <Bi {...bi('noneToday')} />
+                                <p>{say('noneToday')}</p>
                             </div>
                         ) : (
-                            <div role="table" aria-label={text('causeList')} className="sg-table">
+                            <div role="table" aria-label={say('causeList')} className="sg-table">
                                 <div role="row" className="sg-row sg-row-head">
                                     <span aria-hidden="true" />
-                                    {(['time', 'case', 'matter', 'room'] as const).map((key) => (
-                                        <span key={key} role="columnheader"><Bi {...bi(key)} /></span>
-                                    ))}
+                                    <span role="columnheader">{say('time')}</span>
+                                    <span role="columnheader">{say('case')}</span>
+                                    <span role="columnheader">{say('matter')}</span>
+                                    <span role="columnheader">{say('where')}</span>
                                 </div>
                                 <div ref={listBox} className="sg-rows" style={{ '--row-h': `${rowHeight}px` } as CSSProperties}>
-                                    <div key={`${page}-${rows}`} role="rowgroup">
+                                    <div key={`${day.date}-${page}-${rows}`} role="rowgroup">
                                         {(pages[page] ?? []).map((hearing, index) => {
-                                            const past = hearing.time !== null && minutesOf(hearing.time) < clock.minutesOfDay;
+                                            const past = !onTomorrow && hearing.time !== null && minutesOf(hearing.time) < clock.minutesOfDay;
                                             const isNext = hearing.time !== null && hearing.time === nextTime;
-                                            const at = ethiopianClock(hearing.time);
                                             return (
                                                 <div
                                                     key={hearing.id}
@@ -454,98 +454,98 @@ export default function PublicSignage(props: PublicSignageProps) {
                                                     style={{ '--i': Math.min(index, 10) } as CSSProperties}
                                                 >
                                                     <span className="sg-marker" aria-hidden="true" />
-                                                    <span role="cell" className="sg-cell-time">
-                                                        {at ? <><small>{at.part}</small>{at.time}</> : '—'}
-                                                    </span>
+                                                    <SittingTime time={hearing.time} className="sg-cell-time" />
                                                     <span role="cell" className="sg-cell-case">{hearing.case_number ?? '—'}</span>
                                                     <span role="cell" className="sg-cell-matter">
                                                         <span>{hearing.case_type ?? '—'}</span>
                                                         {hearing.type && <span>{hearing.type}</span>}
                                                     </span>
-                                                    <span role="cell" className="sg-cell-room">
-                                                        <span>{hearing.location ?? '—'}</span>
-                                                        {isNext && <span className="sg-tag">{text('next')}</span>}
+                                                    <span role="cell" className="sg-cell-where">
+                                                        <Bench hearing={hearing} tone={benchTone(hearing.bench_id)} />
+                                                        {isNext && <span className="sg-tag">{say('next')}</span>}
                                                     </span>
                                                 </div>
                                             );
                                         })}
                                     </div>
                                 </div>
-                                <p className="sg-note">{text('note')}</p>
+                                <p className="sg-note">{say('note')}</p>
                             </div>
                         )}
                     </section>
 
-                    {/* Today's figures and the caseload: a printed ledger, ruled in brass. */}
-                    <section className="sg-figures" aria-label={text('today')}>
-                        <dl className="sg-stats">
-                            {([
-                                ['hearingsToday', hearingsToday],
-                                ['filedToday', filedToday],
-                                ['totalCases', totalCases],
-                            ] as const).map(([key, value]) => (
-                                <div key={key}>
-                                    <dt><Bi {...bi(key)} /></dt>
-                                    <dd><CountUp value={value} format={formatNumber} /></dd>
-                                </div>
-                            ))}
-                        </dl>
-                        <div className="sg-caseload">
-                            <p className="sg-caseload-title"><Bi {...bi('caseload')} /></p>
-                            <div className="sg-bar" aria-hidden="true">
-                                {statusCounts.map((stat) => (
-                                    <span key={stat.label} style={{ flexGrow: stat.total, background: STATUS_TONES[stat.label.toLowerCase()] ?? '#64748b' }} />
-                                ))}
+                    {/* Decisions released lately, by case number. */}
+                    {decisions.length > 0 && (
+                        <section className="sg-decisions">
+                            <div className="sg-section-head">
+                                <h2>
+                                    {say('decisionsTitle')}
+                                    <span className="sg-count">{say('decisionsWhen', { days: 14 })}</span>
+                                </h2>
                             </div>
-                            <ul className="sg-legend">
-                                {statusCounts.map((stat) => (
-                                    <li key={stat.label}>
-                                        <span aria-hidden="true" style={{ background: STATUS_TONES[stat.label.toLowerCase()] ?? '#64748b' }} />
-                                        {statusLabel(stat.label)}
-                                        <b>{formatNumber(stat.total)}</b>
-                                        <i>{Math.round((stat.total / statusTotal) * 100)}%</i>
-                                    </li>
-                                ))}
+                            <ul className="sg-decision-list">
+                                {decisions.map((decision) => <li key={decision.case_number}>{decision.case_number}</li>)}
                             </ul>
+                        </section>
+                    )}
+
+                    {/* How to follow a case, and the registry. */}
+                    <section className="sg-info" data-registry={registryLines.length > 0 ? '' : undefined}>
+                        <div className="sg-follow">
+                            {portal.qr && (
+                                <span className="sg-qr" aria-hidden="true" dangerouslySetInnerHTML={{ __html: portal.qr }} />
+                            )}
+                            <div className="min-w-0">
+                                <h2>{say('followTitle')}</h2>
+                                <p>{say('followText')}</p>
+                                {/* Without the registry's details set, the one line about it goes here. */}
+                                {registryLines.length === 0 && <p className="sg-ask">{say('askRegistry')}</p>}
+                            </div>
                         </div>
+                        {registryLines.length > 0 && (
+                            <div className="sg-registry">
+                                <h2>{say('registry')}</h2>
+                                <dl>
+                                    {registryLines.map((line) => (
+                                        <div key={line.label}>
+                                            <dt>{line.label}</dt>
+                                            <dd>{line.value}</dd>
+                                        </div>
+                                    ))}
+                                </dl>
+                            </div>
+                        )}
                     </section>
 
-                    {/* The notices, one after another, the registry, and how fresh the board is. */}
+                    {/* The notices, one after another, and how fresh the board is. */}
                     <footer className="sg-foot">
                         {announcements.length > 1 && (
                             <span className="sg-foot-progress" aria-hidden="true">
                                 <span key={notice} className="sg-progress-fill" style={{ '--page': `${NOTICE_SECONDS}s` } as CSSProperties} />
                             </span>
                         )}
-                        <span className="sg-foot-label"><Bi {...bi('notices')} /></span>
+                        <span className="sg-foot-label">{say('notices')}</span>
                         <div className="sg-foot-notice" aria-live="off">
                             {current ? (
                                 <div key={current.id} className="court-signage-in">
                                     <p className="sg-notice-title">{current.title}</p>
                                     {current.summary && <p className="sg-notice-summary">{current.summary}</p>}
-                                    {announcements.length > 1 && <p className="sg-notice-count">{notice + 1} / {announcements.length}</p>}
                                 </div>
                             ) : (
-                                <p className="sg-notice-none"><Bi {...bi('noNotices')} /></p>
+                                <p className="sg-notice-none">{say('noNotices')}</p>
                             )}
                         </div>
                         <div className="sg-foot-side">
-                            {(registry.office_hours || registry.phone) && (
-                                <div className="sg-registry">
-                                    <p className="sg-mini"><Bi {...bi('registry')} /></p>
-                                    {registry.office_hours && <p>{registry.office_hours}</p>}
-                                    {registry.phone && <p className="tabular-nums">{registry.phone}</p>}
-                                </div>
-                            )}
+                            {announcements.length > 1 && <p className="sg-notice-count">{notice + 1} / {announcements.length}</p>}
                             <p className={stale ? 'sg-fresh is-stale' : 'sg-fresh'} role="status">
-                                {text(stale ? 'stale' : 'updated', { time: readTime })}
+                                {say(stale ? 'stale' : 'updated', { time: readTime })}
                             </p>
                         </div>
                     </footer>
                 </div>
 
                 <button type="button" onClick={toggleFullscreen} className="court-signage-tools sg-tool">
-                    {fullscreen ? text('exitFullscreen') : text('fullscreen')}
+                    {fullscreen ? say('exitFullscreen') : say('fullscreen')}
                 </button>
             </div>
         </LocalizedUiProvider>
