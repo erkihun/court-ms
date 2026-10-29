@@ -270,6 +270,26 @@ const PATCHES = [
         from: 'route("profile.devices.destroy-others")',
         to: 'route("profile.sessions.destroyOthers")',
     },
+    {
+        // The staff menu (home admin.dashboard) is long: its groups start closed, the current page's group open.
+        // The portals' short menus keep every group open, as in EUISIS.
+        file: 'Components/AppSidebar.tsx',
+        from: '    const groupsOpenByDefault = isEmployeeUser || coreSections !== null;',
+        to: [
+            "    // court-ms: the staff menu's groups start closed (the current page's group opens); the portals' stay open.",
+            "    const groupsOpenByDefault = isEmployeeUser || (coreSections !== null && (workspace as { home?: string } | null)?.home !== 'admin.dashboard');",
+        ].join('\n'),
+    },
+    {
+        // ...and each visit closes the other groups, so a group opened on one page does not stay open on the next.
+        file: 'Components/AppSidebar.tsx',
+        from: '            const next = { ...previous };\n            for (const key of activeGroupKeys) next[key] = true;',
+        to: [
+            "            // court-ms: in the staff menu each visit leaves only the current page's group open.",
+            '            const next = groupsOpenByDefault ? { ...previous } : {};',
+            '            for (const key of activeGroupKeys) next[key] = true;',
+        ].join('\n'),
+    },
 ];
 
 function resolveImport(from, spec) {

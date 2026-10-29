@@ -916,7 +916,8 @@ export default function AppSidebar({ onClose, collapsed = false, onToggleCollaps
             : [...visibleGroups, ...(visibleAdminNav.length ? [adminGroup] : [])];
     const homeNav = coreSections ? { ...coreHomeNav, routeName: (workspace as { home?: string } | null)?.home ?? coreHomeNav.routeName } : isEmployeeUser || !canViewDashboard ? portalDashboard : dashboardNav;
     // My Portal and Core are short enough to show every group open until the person collapses one.
-    const groupsOpenByDefault = isEmployeeUser || coreSections !== null;
+    // court-ms: the staff menu's groups start closed (the current page's group opens); the portals' stay open.
+    const groupsOpenByDefault = isEmployeeUser || (coreSections !== null && (workspace as { home?: string } | null)?.home !== 'admin.dashboard');
     const currentRoute = String(route().current() ?? '');
     const currentItem = activeRoute([homeNav, ...allGroups.flatMap((group) => group.items)], currentRoute);
     const activeGroupKeys = allGroups.filter((group) => group.items.some((item) => item.routeName === currentItem)).map((group) => group.key);
@@ -934,7 +935,8 @@ export default function AppSidebar({ onClose, collapsed = false, onToggleCollaps
 
     useEffect(() => {
         setOpenGroups((previous) => {
-            const next = { ...previous };
+            // court-ms: in the staff menu each visit leaves only the current page's group open.
+            const next = groupsOpenByDefault ? { ...previous } : {};
             for (const key of activeGroupKeys) next[key] = true;
             return next;
         });
